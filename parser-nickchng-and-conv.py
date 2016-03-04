@@ -6,8 +6,9 @@ import matplotlib.pyplot as plt
 import pylab
 import pygraphviz as pygraphviz
 
-log_directory = "/home/rohan/IRCLogParser_Files/2013/"
+log_directory = "/home/rohan/parser_files/2013/"
 channel_name= "#kubuntu-devel" #channel name
+output_directory = "/home/rohan/parser_files/Output/"
 
 startingMonth = 11
 endingMonth = 12
@@ -113,11 +114,11 @@ for folderiterator in range(startingMonth, endingMonth + 1):
   for u,v,d in graph_nickchanges.edges(data=True):
       d['label'] = d.get('weight','')
 
-  output_dir=channel_name+"_"+str(fileiterator)+"_"+str(folderiterator)+"_2013_nickchanges.png"
-  print(output_dir)
+  output_file=output_directory+channel_name+"_"+str(fileiterator)+"_"+str(folderiterator)+"_2013_nickchng.png"
+  print "Generated "+ output_file
   A = nx.drawing.nx_agraph.to_agraph(graph_nickchanges)
   A.layout(prog='dot')
-  A.draw(output_dir) #graphviz helps to convert a dot file to PNG format for visualization
+  A.draw(output_file) #graphviz helps to convert a dot file to PNG format for visualization
   
 
   '''=========================== Plotting the conversation graph =========================== '''
@@ -197,8 +198,8 @@ for folderiterator in range(startingMonth, endingMonth + 1):
       
   for u,v,d in graph_conversation.edges(data=True):
       d['label'] = d.get('weight','')
-  output_dir=channel_name+"_"+str(fileiterator)+"_"+str(folderiterator)+"_2013_conversation.png"
-  print(output_dir)
+  output_file=output_directory+channel_name+"_"+str(fileiterator)+"_"+str(folderiterator)+"_2013_conv.png"
+  print "Generated " + output_file
   A = nx.drawing.nx_agraph.to_agraph(graph_conversation)
   A.layout(prog='dot')
-  A.draw(output_dir)
+  A.draw(output_file)
