@@ -82,7 +82,7 @@ for folderiterator in range(startingMonth, endingMonth + 1):
        break
       for k in xrange(0,len(rec_list)):
        if(rec_list[k]):
-        correctLastCharCR(rec_list[k])
+        rec_list[k] = correctLastCharCR(rec_list[k])
       for z in rec_list:
        if(z==i):
         if(var != i): 	
@@ -93,7 +93,7 @@ for folderiterator in range(startingMonth, endingMonth + 1):
        rec_list_2=[e.strip() for e in rec_list[1].split(',')]
        for x in xrange(0,len(rec_list_2)):
         if(rec_list_2[x]):
-         correctLastCharCR(rec_list_2[x])
+         rec_list_2[x] = correctLastCharCR(rec_list_2[x])
        for j in rec_list_2:
         if(j==i):
          if(var != i): 	

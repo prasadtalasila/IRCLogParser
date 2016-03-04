@@ -103,9 +103,8 @@ for folderiterator in range(startingMonth, endingMonth + 1):
      if not rec_list[1]:
       break
      for x in xrange(0,len(rec_list)):
-      if(rec_list[x] and rec_list[x][len(rec_list[x])-1]=='\\'):
-       rec_list[x]=rec_list[x][:-1]
-       rec_list[x]=rec_list[x] + 'CR'
+      if(rec_list[x]):
+       rec_list[x] = correctLastCharCR(rec_list[x])
      for z in rec_list:
       if(z==i):
        if(var != i): 	
@@ -130,10 +129,9 @@ for folderiterator in range(startingMonth, endingMonth + 1):
      if "," in rec_list[1]: 
       flag_comma = 1
       rec_list_2=[e.strip() for e in rec_list[1].split(',')]
-      for ij in xrange(0,len(rec_list_2)):
-       if(rec_list_2[ij] and rec_list_2[ij][len(rec_list_2[ij])-1]=='\\'):
-        rec_list_2[ij]=rec_list_2[ij][:-1]
-        rec_list_2[ij]=rec_list_2[ij] + 'CR'
+      for y in xrange(0,len(rec_list_2)):
+       if(rec_list_2[y]):
+        rec_list_2[y] = correctLastCharCR(rec_list_2[y])
       for j in rec_list_2:
        if(j==i):
         if(var != i): 	

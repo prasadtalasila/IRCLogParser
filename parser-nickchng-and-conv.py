@@ -141,9 +141,8 @@ for folderiterator in range(startingMonth, endingMonth + 1):
      if not rec_list[1]: #index 0 will contain time 14:02
       break
      for k in xrange(0,len(rec_list)):
-      if(rec_list[k] and rec_list[k][len(rec_list[k])-1]=='\\'):#checking for \
-       rec_list[k]=rec_list[k][:-1]
-       rec_list[k]=rec_list[k] + 'CR'
+      if(rec_list[k]): #checking for \
+       rec_list[k] = correctLastCharCR(rec_list[k])
      for z in rec_list:
       if(z==i):
        if(var != i):  
@@ -160,9 +159,8 @@ for folderiterator in range(startingMonth, endingMonth + 1):
       flag_comma = 1
       rec_list_2=[e.strip() for e in rec_list[1].split(',')]
       for y in xrange(0,len(rec_list_2)):
-       if(rec_list_2[y] and rec_list_2[y][len(rec_list_2[y])-1]=='\\'): #checking for \
-        rec_list_2[y]=rec_list_2[y][:-1]
-        rec_list_2[y]=rec_list_2[y] + 'CR'
+       if(rec_list_2[y]): #checking for \
+        rec_list_2[y]=correctLastCharCR(rec_list_2[y])
       for j in rec_list_2:
        if(j==i):
         if(var != i):   
