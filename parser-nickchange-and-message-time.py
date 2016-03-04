@@ -5,10 +5,20 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pylab
 import pygraphviz as pygraphviz
+import os
 
 log_directory = "/home/rohan/parser_files/2013/"
 channel_name= "#kubuntu-devel" #channel name
-output_directory = "/home/rohan/parser_files/Output/nickchng-conv/"
+output_directory = "/home/rohan/parser_files/Output/"
+
+out_dir_nick_change = output_directory+"nick-changes/"
+out_dir_msg_time = output_directory+"message-time/"
+
+print "Creating a new output folders"
+os.system("rm -rf "+out_dir_nick_change)
+os.system("rm -rf "+out_dir_msg_time)
+os.system("mkdir "+out_dir_nick_change)
+os.system("mkdir "+out_dir_msg_time)
 
 startingMonth = 11
 endingMonth = 12
@@ -111,7 +121,7 @@ for folderiterator in range(startingMonth, endingMonth + 1):
   for u,v,d in graph_nickchanges.edges(data=True):
       d['label'] = d.get('weight','')
 
-  output_file=output_directory+channel_name+"_"+str(fileiterator)+"_"+str(folderiterator)+"_2013_nickchng.png"
+  output_file=out_dir_nick_change+channel_name+"_2013_"+str(folderiterator)+"_"+str(fileiterator)+"_nick_change.png"
   print "Generated "+ output_file
   A = nx.drawing.nx_agraph.to_agraph(graph_nickchanges)
   A.layout(prog='dot')
@@ -190,7 +200,7 @@ for folderiterator in range(startingMonth, endingMonth + 1):
       
   for u,v,d in graph_conversation.edges(data=True):
       d['label'] = d.get('weight','')
-  output_file=output_directory+channel_name+"_"+str(fileiterator)+"_"+str(folderiterator)+"_2013_conv.png"
+  output_file=out_dir_msg_time+channel_name+"_2013_"+str(folderiterator)+"_"+str(fileiterator)+"_msg_time.png"
   print "Generated " + output_file
   A = nx.drawing.nx_agraph.to_agraph(graph_conversation)
   A.layout(prog='dot')

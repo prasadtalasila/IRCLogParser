@@ -24,7 +24,7 @@ for i in xrange(0,5000):
 nicks = [] #list of all the nicknames
 aggregate_graph = nx.DiGraph()  #graph with multiple directed edges between clients used 
 
-for folderiterator in range(1, 3):
+for folderiterator in range(1, 13):
  temp1 = "0" if folderiterator < 10 else ""
  for fileiterator in range(1,32):
   temp2 = "0" if fileiterator < 10 else ""

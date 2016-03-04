@@ -8,7 +8,13 @@ import pygraphviz as pygraphviz
 
 log_directory = "/home/rohan/parser_files/2013/"
 channel_name= "#kubuntu-devel" #channel name
-output_directory = "/home/rohan/parser_files/Output/simpledirected/"
+output_directory = "/home/rohan/parser_files/Output/"
+
+out_dir_msg_num = output_directory+"number-of-messages-simple_directed/"
+
+print "Creating a new output folder"
+os.system("rm -rf "+out_dir_msg_num)
+os.system("mkdir "+out_dir_msg_num)
 
 startingMonth = 11
 endingMonth = 12
@@ -31,7 +37,7 @@ for folderiterator in range(startingMonth, endingMonth + 1):
       content = f.readlines() #contents stores all the lines of the file channel_name
     
   nicks = [] #list of all the nicknames     
-   	
+    
   '''
    Getting all the nicknames in a list nicks[]
   '''
@@ -94,7 +100,7 @@ for folderiterator in range(startingMonth, endingMonth + 1):
       nick_sender = nick_same_list[d][0]
       break
      else:
-   	  nick_sender=var
+      nick_sender=var
       
     for i in nicks:
      rec_list=[e.strip() for e in line.split(':')]
@@ -107,13 +113,13 @@ for folderiterator in range(startingMonth, endingMonth + 1):
        rec_list[x] = correctLastCharCR(rec_list[x])
      for z in rec_list:
       if(z==i):
-       if(var != i): 	
+       if(var != i):  
         for d in range(len(nicks)):
          if i in nick_same_list[d]:
-       	  nick_receiver=nick_same_list[d][0]
-       	  break
+          nick_receiver=nick_same_list[d][0]
+          break
          else:
-       	  nick_receiver=i
+          nick_receiver=i
           
         for k in xrange(0,100):
          if (nick_sender in conversations[k] and nick_receiver in conversations[k]):
@@ -134,14 +140,14 @@ for folderiterator in range(startingMonth, endingMonth + 1):
         rec_list_2[y] = correctLastCharCR(rec_list_2[y])
       for j in rec_list_2:
        if(j==i):
-        if(var != i): 	
+        if(var != i):   
          for d in range(len(nicks)):
           if i in nick_same_list[d]:
-       	   nick_receiver=nick_same_list[d][0]
-       	   break
+           nick_receiver=nick_same_list[d][0]
+           break
           else:
-       	   nick_receiver=i
-       	  
+           nick_receiver=i
+          
          for k in xrange(0,100):
           if (nick_sender in conversations[k] and nick_receiver in conversations[k]):
            if (nick_sender == conversations[k][1] and nick_receiver == conversations[k][2]):
@@ -160,13 +166,13 @@ for folderiterator in range(startingMonth, endingMonth + 1):
        if(var != i):
         for d in range(len(nicks)):
          if i in nick_same_list[d]:
-       	  nick_receiver=nick_same_list[d][0]
-       	  break
+          nick_receiver=nick_same_list[d][0]
+          break
          else:
-       	  nick_receiver=i
-       	 
+          nick_receiver=i
+         
         for k in xrange(0,100):
-         if (nick_sender in conversations[k] and nick_receiver in conversations[k]):	
+         if (nick_sender in conversations[k] and nick_receiver in conversations[k]):  
           if (nick_sender == conversations[k][1] and nick_receiver == conversations[k][2]):
            conversations[k][0]=conversations[k][0]+1
            break
@@ -180,11 +186,11 @@ for folderiterator in range(startingMonth, endingMonth + 1):
 
   for y in xrange(0,100):
    if(len(conversations[y])==3):
-    msg_num_graph.add_edge(conversations[y][1],conversations[y][2],weight=conversations[y][0])	 
+    msg_num_graph.add_edge(conversations[y][1],conversations[y][2],weight=conversations[y][0])   
 
   for u,v,d in msg_num_graph.edges(data=True):
       d['label'] = d.get('weight','')
-  output_file=output_directory+channel_name+"_"+str(fileiterator)+"_"+str(folderiterator)+"_2013_simpledirectedgraph.png"
+  output_file=out_dir_msg_num+channel_name+"_2013_"+str(folderiterator)+"_"+str(fileiterator)+"_msg_num.png"
   print "Generated " + output_file
   A = nx.drawing.nx_agraph.to_agraph(msg_num_graph)
   A.layout(prog='dot')
