@@ -8,12 +8,10 @@ import pygraphviz as pygraphviz
 
 log_directory = "/home/rohan/parser_files/2013/"
 channel_name= "#kubuntu-devel" #channel name
-output_directory = "/home/rohan/parser_files/Output/nickchng-conv/"
+output_directory = "/home/rohan/parser_files/Output/simpledirected/"
 
 startingMonth = 11
 endingMonth = 12
-
-rem_time= None #remembers the time of the last message of the file parsed before the current file
 
 def correctLastCharCR(inText):#if the last letter of the nick is '\' replace it by 'CR' for example rohan\ becomes rohanCR to avoid complications in nx because of \
  if(inText[len(inText)-1]=='\\'):
@@ -33,7 +31,7 @@ for folderiterator in range(startingMonth, endingMonth + 1):
       content = f.readlines() #contents stores all the lines of the file channel_name
     
   nicks = [] #list of all the nicknames     
-
+   	
   '''
    Getting all the nicknames in a list nicks[]
   '''
@@ -50,16 +48,13 @@ for folderiterator in range(startingMonth, endingMonth + 1):
    nicks[i]=correctLastCharCR(nicks[i])
 
   for line in content:
-   if(line[0]=='=' and "changed the topic of" not in line): #excluding the condition when user changes the topic. Search for only nick changes
+   if(line[0]=='=' and "changed the topic of" not in line):
     nick1=correctLastCharCR(line[line.find("=")+1:line.find(" is")][3:])
     nick2=correctLastCharCR(line[line.find("wn as")+1:line.find("\n")][5:])
     if nick1 not in nicks:
      nicks.append(nick1)
     if nick2 not in nicks:
      nicks.append(nick2)
-   
-  #print("printing nicks***********************************")
-  #print(nicks)
     
   '''
    Forming list of lists for avoiding nickname duplicacy
@@ -78,122 +73,121 @@ for folderiterator in range(startingMonth, endingMonth + 1):
      if not nick_same_list[i]:
       nick_same_list[i].append(nick1)
       nick_same_list[i].append(nick2)
-      break
+      break  
 
-  #print("printing nick_same_list****************************")
-  #print(nick_same_list)     
+  '''
+   Making relation map between client
+  '''
+  conversations=[[] for i in range(100)] #format of each list [num_messages,sender_nick,receiver_nick]
 
-  '''=========================== Plotting the nickname changes graph =========================== '''
-
-  graph_nickchanges=nx.MultiDiGraph()   #using networkx
-  y=-1
-  for i in content:
-   y=y+1
-   if(i[0] =='=' and "changed the topic of" not in i):  #excluding the condition when user changes the topic. Search for only nick changes
-    nick1=correctLastCharCR(i[i.find("=")+1:i.find(" is")][3:])
-    nick2=correctLastCharCR(i[i.find("wn as")+1:i.find("\n")][5:])
-    z=y
-    while z>=0:
-     z=z-1
-     if(content[z][0]!='='):
-      graph_nickchanges.add_edge(nick1,nick2,weight=content[z][1:6])
-      break                             # these lines extract the from-to nicknames and strip them appropriately to make 
-    if(z==-1):
-     graph_nickchanges.add_edge(nick1,nick2,weight=rem_time)                                            #edge between them  
+  for i in xrange(0,100):
+   conversations[i].append(0)
   
-  count=len(content)-1 #setting up the rem_time for next file, by noting the last message sent on that file.
-  while(count>=0):
-   if(content[count][0]!='='):
-    rem_time=content[count][1:6]
-    break
-   count=count-1
-
-  for u,v,d in graph_nickchanges.edges(data=True):
-      d['label'] = d.get('weight','')
-
-  output_file=output_directory+channel_name+"_"+str(fileiterator)+"_"+str(folderiterator)+"_2013_nickchng.png"
-  print "Generated "+ output_file
-  A = nx.drawing.nx_agraph.to_agraph(graph_nickchanges)
-  A.layout(prog='dot')
-  A.draw(output_file) #graphviz helps to convert a dot file to PNG format for visualization
-  
-
-  '''=========================== Plotting the conversation graph =========================== '''
-
-  graph_conversation = nx.MultiDiGraph()  #graph with multiple directed edges between clients used
   for line in content:
    flag_comma = 0
    if(line[0] != '=' and "] <" in line and "> " in line):
     m = re.search(r"\<(.*?)\>", line)
     var = m.group(0)[1:-1]
-    var = correctLastCharCR(var)
+    var = correctLastCharCR(var) 
     for d in range(len(nicks)):
      if var in nick_same_list[d]:
       nick_sender = nick_same_list[d][0]
       break
      else:
-      nick_sender = var
+   	  nick_sender=var
       
     for i in nicks:
-     rec_list=[e.strip() for e in line.split(':')] #receiver list splited about :
+     rec_list=[e.strip() for e in line.split(':')]
      rec_list[1]=rec_list[1][rec_list[1].find(">")+1:len(rec_list[1])]
      rec_list[1]=rec_list[1][1:]
-     if not rec_list[1]: #index 0 will contain time 14:02
+     if not rec_list[1]:
       break
-     for k in xrange(0,len(rec_list)):
-      if(rec_list[k] and rec_list[k][len(rec_list[k])-1]=='\\'):#checking for \
-       rec_list[k]=rec_list[k][:-1]
-       rec_list[k]=rec_list[k] + 'CR'
+     for x in xrange(0,len(rec_list)):
+      if(rec_list[x] and rec_list[x][len(rec_list[x])-1]=='\\'):
+       rec_list[x]=rec_list[x][:-1]
+       rec_list[x]=rec_list[x] + 'CR'
      for z in rec_list:
       if(z==i):
-       if(var != i):  
+       if(var != i): 	
         for d in range(len(nicks)):
          if i in nick_same_list[d]:
-          nick_receiver=nick_same_list[d][0]
-          break
+       	  nick_receiver=nick_same_list[d][0]
+       	  break
          else:
-          nick_receiver=i
+       	  nick_receiver=i
           
-        graph_conversation.add_edge(nick_sender,nick_receiver,weight=line[1:6])  
+        for k in xrange(0,100):
+         if (nick_sender in conversations[k] and nick_receiver in conversations[k]):
+          if (nick_sender == conversations[k][1] and nick_receiver == conversations[k][2]):
+           conversations[k][0]=conversations[k][0]+1
+           break
+         if(len(conversations[k])==1):
+          conversations[k].append(nick_sender)
+          conversations[k].append(nick_receiver)
+          conversations[k][0]=conversations[k][0]+1
+          break
        
-     if "," in rec_list[1]: #receiver list may of the form <Dhruv> Rohan, Ram :
+     if "," in rec_list[1]: 
       flag_comma = 1
       rec_list_2=[e.strip() for e in rec_list[1].split(',')]
-      for y in xrange(0,len(rec_list_2)):
-       if(rec_list_2[y] and rec_list_2[y][len(rec_list_2[y])-1]=='\\'): #checking for \
-        rec_list_2[y]=rec_list_2[y][:-1]
-        rec_list_2[y]=rec_list_2[y] + 'CR'
+      for ij in xrange(0,len(rec_list_2)):
+       if(rec_list_2[ij] and rec_list_2[ij][len(rec_list_2[ij])-1]=='\\'):
+        rec_list_2[ij]=rec_list_2[ij][:-1]
+        rec_list_2[ij]=rec_list_2[ij] + 'CR'
       for j in rec_list_2:
        if(j==i):
-        if(var != i):   
+        if(var != i): 	
          for d in range(len(nicks)):
           if i in nick_same_list[d]:
-           nick_receiver=nick_same_list[d][0]
-           break
+       	   nick_receiver=nick_same_list[d][0]
+       	   break
           else:
-           nick_receiver=i
-          
-         graph_conversation.add_edge(nick_sender,nick_receiver,weight=line[1:6])   
+       	   nick_receiver=i
+       	  
+         for k in xrange(0,100):
+          if (nick_sender in conversations[k] and nick_receiver in conversations[k]):
+           if (nick_sender == conversations[k][1] and nick_receiver == conversations[k][2]):
+            conversations[k][0]=conversations[k][0]+1
+            break
+          if(len(conversations[k])==1):
+           conversations[k].append(nick_sender)
+           conversations[k].append(nick_receiver)
+           conversations[k][0]=conversations[k][0]+1
+           break
 
-     if(flag_comma == 0): #receiver list can be <Dhruv> Rohan, Hi!
-      rec=line[line.find(">")+1:line.find(", ")] 
-      rec=rec[1:]
-      rec=correctLastCharCR(rec)
+     if(flag_comma == 0):
+      rec=line[line.find(">")+1:line.find(", ")][1:]
+      rec = correctLastCharCR(rec)
       if(rec==i):
        if(var != i):
         for d in range(len(nicks)):
          if i in nick_same_list[d]:
-          nick_receiver=nick_same_list[d][0]
-          break
+       	  nick_receiver=nick_same_list[d][0]
+       	  break
          else:
-          nick_receiver=i
-         
-        graph_conversation.add_edge(nick_sender,nick_receiver,weight=line[1:6])  
-      
-  for u,v,d in graph_conversation.edges(data=True):
+       	  nick_receiver=i
+       	 
+        for k in xrange(0,100):
+         if (nick_sender in conversations[k] and nick_receiver in conversations[k]):	
+          if (nick_sender == conversations[k][1] and nick_receiver == conversations[k][2]):
+           conversations[k][0]=conversations[k][0]+1
+           break
+         if(len(conversations[k])==1):
+          conversations[k].append(nick_sender)
+          conversations[k].append(nick_receiver)
+          conversations[k][0]=conversations[k][0]+1
+          break
+ 
+  msg_num_graph = nx.DiGraph()  #graph with multiple directed edges between clients used 
+
+  for y in xrange(0,100):
+   if(len(conversations[y])==3):
+    msg_num_graph.add_edge(conversations[y][1],conversations[y][2],weight=conversations[y][0])	 
+
+  for u,v,d in msg_num_graph.edges(data=True):
       d['label'] = d.get('weight','')
-  output_file=output_directory+channel_name+"_"+str(fileiterator)+"_"+str(folderiterator)+"_2013_conv.png"
+  output_file=output_directory+channel_name+"_"+str(fileiterator)+"_"+str(folderiterator)+"_2013_simpledirectedgraph.png"
   print "Generated " + output_file
-  A = nx.drawing.nx_agraph.to_agraph(graph_conversation)
+  A = nx.drawing.nx_agraph.to_agraph(msg_num_graph)
   A.layout(prog='dot')
   A.draw(output_file)
