@@ -40,8 +40,6 @@ for iterator in range(1,13):
     if m.group(0) not in picks:                       
      picks.append(m.group(0))  	#used regex to get the string between <> and appended it to the nicks list
 
-
-
   for i in xrange(0,len(picks)):
    if picks[i][1:-1] not in nicks:
     nicks.append(picks[i][1:-1])     #removed <> from the nicknames
@@ -69,10 +67,7 @@ for iterator in range(1,13):
      nicks.append(line2)
    
   
-  
-    
  #code for forming list of lists for avoiding nickname duplicacy
-
   
   for line in content:
    if(line[0]=='=' and "changed the topic of" not in line):
@@ -97,11 +92,7 @@ for iterator in range(1,13):
       break
 
   
-  
-
 #code for making relation map between clients
-
-
   
   for line in content:
    flag_comma = 0
@@ -117,7 +108,6 @@ for iterator in range(1,13):
       break
      else:
    	  pehla=var
-      
 
     for i in nicks:
      data=[e.strip() for e in line.split(':')]
@@ -206,9 +196,6 @@ for iterator in range(1,13):
           xarr[rt].append(second)
           xarr[rt][0]=xarr[rt][0]+1
           break
-      
- 
-  
 
   for fin in xrange(0,5000):
    if(len(xarr[fin])==3):
@@ -230,14 +217,3 @@ A = nx.to_agraph(G)
 A.layout(prog='dot')
 A.draw(n_brilli)
 print("Done.")
-
-  
-
-
-
-
-
-
-
-
-
