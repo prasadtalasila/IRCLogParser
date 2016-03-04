@@ -2,26 +2,42 @@ import os.path
 import re
 import numpy as np
 import csv
+import os
 
-for iterator in range(1,13):
+log_directory = "/home/rohan/parser_files/2013/"
+channel_name= "#kubuntu-devel" #channel name
+output_directory = "/home/rohan/parser_files/Output/"
+
+startingMonth = 1
+endingMonth = 12
+
+output_file = output_directory + "output-parser-bins.csv"
+print "Creating a new output file"
+os.system("rm "+output_file)
+os.system("touch "+output_file)
+
+def correctLastCharCR(inText):#if the last letter of the nick is '\' replace it by 'CR' for example rohan\ becomes rohanCR to avoid complications in nx because of \
+ if(inText[len(inText)-1]=='\\'):
+  inText = inText[:-1]+'CR'
+ return inText
+
+for folderiterator in range(startingMonth, endingMonth + 1):
+ temp1 = "0" if folderiterator < 10 else ""
  for fileiterator in range(1,32):
-  if(fileiterator<10):	
-   sttring="/home/dhruvie/LOP/2013/"+str(iterator)+"/0"	
-   sttring=sttring+str(fileiterator)+"/#kubuntu-devel.txt"
-  else:
-   sttring="/home/dhruvie/LOP/2013/"+str(iterator)+"/"	
-   sttring=sttring+str(fileiterator)+"/#kubuntu-devel.txt" 
-  if not os.path.exists(sttring):
+  temp2 = "0" if fileiterator < 10 else ""
+  filePath=log_directory+temp1+str(folderiterator)+"/"+temp2+str(fileiterator)+"/"+channel_name+".txt"   
+  if not os.path.exists(filePath):
+   if not((folderiterator==2 and (fileiterator ==29 or fileiterator ==30 or fileiterator ==31)) or ((folderiterator==4 or folderiterator==6 or folderiterator==9 or folderiterator==11) and fileiterator==31 )): 
+    print "[Error] Path "+filePath+" doesn't exist"
    continue 
-  with open(sttring) as f:
-      content = f.readlines()                               #contents stores all the lines of the file kubunutu-devel
+  with open(filePath) as f:
+      content = f.readlines() #contents stores all the lines of the file channel_name
+
   nicks = [] #list of all the nicknames
-  send_time = [] #list of all the times a user sends a message to another user
-  countit = []
-  channel= "#kubuntu-devel" #channel name
+  bins = []
     	
   for i in range(0,48):
-   countit.append(0)
+   bins.append(0)
 
 #code for getting all the nicknames in a list
   for i in content:
@@ -30,96 +46,73 @@ for iterator in range(1,13):
     if m.group(0) not in nicks:                       
      nicks.append(m.group(0))  	#used regex to get the string between <> and appended it to the nicks list
 
-
-
   for i in xrange(0,len(nicks)):
    nicks[i] = nicks[i][1:-1]     #removed <> from the nicknames
     
   for i in xrange(0,len(nicks)):
-   if(nicks[i][len(nicks[i])-1]=='\\'):
-    nicks[i]=nicks[i][:-1]
-    nicks[i]=nicks[i]+'CR'
+   nicks[i]=correctLastCharCR(nicks[i])
 
-  for j in content:
-   if(j[0]=='=' and "changed the topic of" not in j):
-    line1=j[j.find("=")+1:j.find(" is")]
-    line2=j[j.find("wn as")+1:j.find("\n")]
-    line1=line1[3:]
-    line2=line2[5:]
-    if(line1[len(line1)-1]=='\\'):
-     line1=line1[:-1]
-     line1=line1 + 'CR' 
-    if(line2[len(line2)-1]=='\\'):
-     line2=line2[:-1]
-     line2=line2 + 'CR'
-    if line1 not in nicks:
-     nicks.append(line1)
-    if line2 not in nicks:
-     nicks.append(line2)
-   
-  
-  
+  for line in content:
+   if(line[0]=='=' and "changed the topic of" not in line):
+    nick1=correctLastCharCR(line[line.find("=")+1:line.find(" is")][3:])
+    nick2=correctLastCharCR(line[line.find("wn as")+1:line.find("\n")][5:])
+    if nick1 not in nicks:
+     nicks.append(nick1)
+    if nick2 not in nicks:
+     nicks.append(nick2)
   
   for line in content:
    if(line[0] != '='):	
-    num1=int(line[1:3])*60+int(line[4:6])
-    if(num1 < int(line[1:3])*60+30):
-  	 th=int(line[1:3])*2	
+    time_in_min=int(line[1:3])*60+int(line[4:6])
+    if(time_in_min < int(line[1:3])*60+30):
+  	  bin_index=int(line[1:3])*2	
     else:
-   	 th=int(line[1:3])*2+1
+   	 bin_index=int(line[1:3])*2+1
     flag_comma = 0
     if(line[0] != '=' and "] <" in line and "> " in line):
      m = re.search(r"\<(.*?)\>", line)
      var = m.group(0)[1:-1]
-     if(var[len(var)-1]=='\\'):
-      var=var[:-1]
-      var=var + 'CR'  
+     var = correctLastCharCR(var) 
 
      for i in nicks:
-      data=[e.strip() for e in line.split(':')]
-      data[1]=data[1][data[1].find(">")+1:len(data[1])]
-      data[1]=data[1][1:]
-      if not data[1]:
+      rec_list=[e.strip() for e in line.split(':')]
+      rec_list[1]=rec_list[1][rec_list[1].find(">")+1:len(rec_list[1])]
+      rec_list[1]=rec_list[1][1:]
+      if not rec_list[1]:
        break
-      for ik in xrange(0,len(data)):
-       if(data[ik] and data[ik][len(data[ik])-1]=='\\'):
-        data[ik]=data[ik][:-1]
-        data[ik]=data[ik] + 'CR'
-      for z in data:
+      for k in xrange(0,len(rec_list)):
+       if(rec_list[k]):
+        correctLastCharCR(rec_list[k])
+      for z in rec_list:
        if(z==i):
         if(var != i): 	
-         countit[th]=countit[th]+1
+         bins[bin_index]=bins[bin_index]+1
           
-        
-       
-      if "," in data[1]: 
+      if "," in rec_list[1]: 
        flag_comma = 1
-       data1=[e.strip() for e in data[1].split(',')]
-       for ij in xrange(0,len(data1)):
-        if(data1[ij] and data1[ij][len(data1[ij])-1]=='\\'):
-         data1[ij]=data1[ij][:-1]
-         data1[ij]=data1[ij] + 'CR'
-       for j in data1:
+       rec_list_2=[e.strip() for e in rec_list[1].split(',')]
+       for x in xrange(0,len(rec_list_2)):
+        if(rec_list_2[x]):
+         correctLastCharCR(rec_list_2[x])
+       for j in rec_list_2:
         if(j==i):
          if(var != i): 	
-          countit[th]=countit[th]+1
+          bins[bin_index]=bins[bin_index]+1
      
       if(flag_comma == 0):
-       search2=line[line.find(">")+1:line.find(", ")] 
-       search2=search2[1:]
-       if(search2[len(search2)-1]=='\\'):
-        search2=search2[:-1]
-        search2=search2 + 'CR' 
-       if(search2==i):
+       rec=line[line.find(">")+1:line.find(", ")] 
+       rec=rec[1:]
+       rec = correctLastCharCR(rec) 
+       if(rec==i):
         if(var != i):
-         countit[th]=countit[th]+1
+         bins[bin_index]=bins[bin_index]+1
     
-  print(sttring)
-  print(countit)
+  print filePath
+  print bins
 
-  with open('/home/dhruvie/LOP/logs.csv', 'a+') as myfile:
+  with open(output_file, 'a+') as myfile:
       wr = csv.writer(myfile, quoting=csv.QUOTE_ALL)
-      wr.writerow(countit)
+      wr.writerow(bins)
 
 
 
