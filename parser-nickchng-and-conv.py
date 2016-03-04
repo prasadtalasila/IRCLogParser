@@ -15,8 +15,7 @@ endingMonth = 12
 
 rem_time= None #remembers the time of the last message of the file parsed before the current file
 
-def correctLastCharCR(inText):
- #if the last letter of the nick is '\' replace it by 'CR' for example rohan\ becomes rohanCR to avoid complications in nx because of \
+def correctLastCharCR(inText):#if the last letter of the nick is '\' replace it by 'CR' for example rohan\ becomes rohanCR to avoid complications in nx because of \
  if(inText[len(inText)-1]=='\\'):
   inText = inText[:-1]+'CR'
  return inText
@@ -35,7 +34,6 @@ for folderiterator in range(startingMonth, endingMonth + 1):
       content = f.readlines() #contents stores all the lines of the file channel_name
     
   nicks = [] #list of all the nicknames
-  send_time = [] #list of all the times a user sends a message to another user
 
   '''
    Getting all the nicknames in a list nicks[]
@@ -104,7 +102,7 @@ for folderiterator in range(startingMonth, endingMonth + 1):
     if(z==-1):
      graph_nickchanges.add_edge(nick1,nick2,weight=rem_time)                                            #edge between them  
   
-  count=len(content)-1
+  count=len(content)-1 #setting up the rem_time for next file, by noting the last message sent on that file.
   while(count>=0):
    if(content[count][0]!='='):
     rem_time=content[count][1:6]
@@ -138,18 +136,17 @@ for folderiterator in range(startingMonth, endingMonth + 1):
       nick_sender = var
       
     for i in nicks:
-     data=[e.strip() for e in line.split(':')]
-     data[1]=data[1][data[1].find(">")+1:len(data[1])]
-     data[1]=data[1][1:]
-     if not data[1]:
+     rec_list=[e.strip() for e in line.split(':')] #receiver list splited about :
+     rec_list[1]=rec_list[1][rec_list[1].find(">")+1:len(rec_list[1])]
+     rec_list[1]=rec_list[1][1:]
+     if not rec_list[1]: #index 0 will contain time 14:02
       break
-     for k in xrange(0,len(data)):
-      if(data[k] and data[k][len(data[k])-1]=='\\'):
-       data[k]=data[k][:-1]
-       data[k]=data[k] + 'CR'
-     for z in data:
+     for k in xrange(0,len(rec_list)):
+      if(rec_list[k] and rec_list[k][len(rec_list[k])-1]=='\\'):#checking for \
+       rec_list[k]=rec_list[k][:-1]
+       rec_list[k]=rec_list[k] + 'CR'
+     for z in rec_list:
       if(z==i):
-       send_time.append(line[1:6])
        if(var != i):  
         for d in range(len(nicks)):
          if i in nick_same_list[d]:
@@ -160,16 +157,15 @@ for folderiterator in range(startingMonth, endingMonth + 1):
           
         graph_conversation.add_edge(nick_sender,nick_receiver,weight=line[1:6])  
        
-     if "," in data[1]: 
+     if "," in rec_list[1]: #receiver list may of the form <Dhruv> Rohan, Ram :
       flag_comma = 1
-      data1=[e.strip() for e in data[1].split(',')]
-      for ij in xrange(0,len(data1)):
-       if(data1[ij] and data1[ij][len(data1[ij])-1]=='\\'):
-        data1[ij]=data1[ij][:-1]
-        data1[ij]=data1[ij] + 'CR'
-      for j in data1:
+      rec_list_2=[e.strip() for e in rec_list[1].split(',')]
+      for y in xrange(0,len(rec_list_2)):
+       if(rec_list_2[y] and rec_list_2[y][len(rec_list_2[y])-1]=='\\'): #checking for \
+        rec_list_2[y]=rec_list_2[y][:-1]
+        rec_list_2[y]=rec_list_2[y] + 'CR'
+      for j in rec_list_2:
        if(j==i):
-        send_time.append(line[1:6])
         if(var != i):   
          for d in range(len(nicks)):
           if i in nick_same_list[d]:
@@ -180,12 +176,11 @@ for folderiterator in range(startingMonth, endingMonth + 1):
           
          graph_conversation.add_edge(nick_sender,nick_receiver,weight=line[1:6])   
 
-     if(flag_comma == 0):
-      search2=line[line.find(">")+1:line.find(", ")] 
-      search2=search2[1:]
-      search=correctLastCharCR(search2)
-      if(search2==i):
-       send_time.append(line[1:6])
+     if(flag_comma == 0): #receiver list can be <Dhruv> Rohan, Hi!
+      rec=line[line.find(">")+1:line.find(", ")] 
+      rec=rec[1:]
+      rec=correctLastCharCR(rec)
+      if(rec==i):
        if(var != i):
         for d in range(len(nicks)):
          if i in nick_same_list[d]:
