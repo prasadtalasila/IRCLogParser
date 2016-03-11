@@ -68,19 +68,21 @@ def createNickChangesGraph(log_directory, channel_name, output_directory, starti
     Forming list of lists for avoiding nickname duplicacy
    '''
    nick_same_list=[[] for i in range(len(nicks))] #list of list with each list having all the nicks for that particular person
-   
+
    for line in content:
-    if(line[0]=='=' and "changed the topic of" not in line): #excluding the condition when user changes the topic. Search for only nick changes
-     nick1=correctLastCharCR(line[line.find("=")+1:line.find(" is")][3:])
-     nick2=correctLastCharCR(line[line.find("wn as")+1:line.find("\n")][5:])
-     for i in range(len(nicks)):
-      if nick1 in nick_same_list[i]:
-       nick_same_list[i].append(nick1)
-       nick_same_list[i].append(nick2)
+    if(line[0]=='=' and "changed the topic of" not in line):
+     line1=line[line.find("=")+1:line.find(" is")][3:]
+     line2=line[line.find("wn as")+1:line.find("\n")][5:]
+     line1=correctLastCharCR(line1)
+     line2=correctLastCharCR(line2)
+     for i in range(5000):
+      if line1 in nick_same_list[i] or line2 in nick_same_list[i]:
+       nick_same_list[i].append(line1)
+       nick_same_list[i].append(line2)
        break
       if not nick_same_list[i]:
-       nick_same_list[i].append(nick1)
-       nick_same_list[i].append(nick2)
+       nick_same_list[i].append(line1)
+       nick_same_list[i].append(line2)
        break
 
    #print("printing nick_same_list****************************")

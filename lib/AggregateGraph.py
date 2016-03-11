@@ -67,7 +67,7 @@ def createAggregateGraph(log_directory, channel_name, output_directory, starting
      line1=line[line.find("=")+1:line.find(" is")][3:]
      line2=line[line.find("wn as")+1:line.find("\n")][5:]
      line1=correctLastCharCR(line1)
-     line2=correctLastCharCR(line1)
+     line2=correctLastCharCR(line2)
      for i in range(5000):
       if line1 in nick_same_list[i] or line2 in nick_same_list[i]:
        nick_same_list[i].append(line1)
