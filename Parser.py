@@ -4,6 +4,7 @@ import lib.MessageNumberGraph as MNG
 import lib.MessageNumberBinsCSV as MNBC
 import lib.AggregateGraph as AG
 import lib.ChannelsOfNickGraph as CNG
+import lib.createKeyWords as CKW
 
 def createNickChangesGraph(log_directory, channel_name, output_directory, startingMonth, endingMonth):
 	NCG.createNickChangesGraph(log_directory, channel_name, output_directory, startingMonth, endingMonth)
@@ -22,3 +23,6 @@ def createAggregateGraph(log_directory, channel_name, output_directory, starting
 
 def createChannelsOfNickGraph(log_directory, output_directory, startingMonth, endingMonth):
 	CNG.createChannelsOfNickGraph(log_directory, output_directory, startingMonth, endingMonth)
+
+def createKeyWords(log_directory, channel_name, output_directory, startingMonth, endingMonth):
+	CKW.createKeyWords(log_directory, channel_name, output_directory, startingMonth, endingMonth)
