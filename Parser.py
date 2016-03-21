@@ -6,23 +6,23 @@ import lib.AggregateGraph as AG
 import lib.ChannelsOfNickGraph as CNG
 import lib.createKeyWords as CKW
 
-def createNickChangesGraph(log_directory, channel_name, output_directory, startingMonth, endingMonth):
-	NCG.createNickChangesGraph(log_directory, channel_name, output_directory, startingMonth, endingMonth)
+def createNickChangesGraph(log_directory, channel_name, output_directory, startingDate, startingMonth, endingDate, endingMonth):
+	NCG.createNickChangesGraph(log_directory, channel_name, output_directory, startingDate, startingMonth, endingDate, endingMonth)
 
-def createMessageTimeGraph(log_directory, channel_name, output_directory, startingMonth, endingMonth):
-	MTG.createMessageTimeGraph(log_directory, channel_name, output_directory, startingMonth, endingMonth)
+def createMessageTimeGraph(log_directory, channel_name, output_directory, startingDate, startingMonth, endingDate, endingMonth):
+	MTG.createMessageTimeGraph(log_directory, channel_name, output_directory, startingDate, startingMonth, endingDate, endingMonth)
 
-def createMessageNumberGraph(log_directory, channel_name, output_directory, startingMonth, endingMonth):
-	MNG.createMessageNumberGraph(log_directory, channel_name, output_directory, startingMonth, endingMonth)
+def createMessageNumberGraph(log_directory, channel_name, output_directory, startingDate, startingMonth, endingDate, endingMonth):
+	MNG.createMessageNumberGraph(log_directory, channel_name, output_directory, startingDate, startingMonth, endingDate, endingMonth)
 
-def createMessageNumberBinsCSV(log_directory, channel_name, output_directory, startingMonth, endingMonth):
-	MNBC.createMessageNumberBinsCSV(log_directory, channel_name, output_directory, startingMonth, endingMonth)
+def createMessageNumberBinsCSV(log_directory, channel_name, output_directory, startingDate, startingMonth, endingDate, endingMonth):
+	MNBC.createMessageNumberBinsCSV(log_directory, channel_name, output_directory, startingDate, startingMonth, endingDate, endingMonth)
 	
-def createAggregateGraph(log_directory, channel_name, output_directory, startingMonth, endingMonth):
-	AG.createAggregateGraph(log_directory, channel_name, output_directory, startingMonth, endingMonth)
+def createAggregateGraph(log_directory, channel_name, output_directory, startingDate, startingMonth, endingDate, endingMonth):
+	AG.createAggregateGraph(log_directory, channel_name, output_directory, startingDate, startingMonth, endingDate, endingMonth)
 
-def createChannelsOfNickGraph(log_directory, output_directory, startingMonth, endingMonth):
-	CNG.createChannelsOfNickGraph(log_directory, output_directory, startingMonth, endingMonth)
+def createChannelsOfNickGraph(log_directory, output_directory, startingDate, startingMonth, endingDate, endingMonth):
+	CNG.createChannelsOfNickGraph(log_directory, output_directory, startingDate, startingMonth, endingDate, endingMonth)
 
-def createKeyWords(log_directory, channel_name, output_directory, startingMonth, endingMonth):
-	CKW.createKeyWords(log_directory, channel_name, output_directory, startingMonth, endingMonth)
+def createKeyWords(log_directory, channel_name, output_directory, startingDate, startingMonth, endingDate, endingMonth):
+	CKW.createKeyWords(log_directory, channel_name, output_directory, startingDate, startingMonth, endingDate, endingMonth)

@@ -13,7 +13,7 @@ def correctLastCharCR(inText):#if the last letter of the nick is '\' replace it 
  return inText
 
 
-def createMessageNumberGraph(log_directory, channel_name, output_directory, startingMonth, endingMonth):
+def createMessageNumberGraph(log_directory, channel_name, output_directory, startingDate, startingMonth, endingDate, endingMonth):
 
  out_dir_msg_num = output_directory+"number-of-messages/"
 
@@ -23,7 +23,7 @@ def createMessageNumberGraph(log_directory, channel_name, output_directory, star
 
  for folderiterator in range(startingMonth, endingMonth + 1):
   temp1 = "0" if folderiterator < 10 else ""
-  for fileiterator in range(1,32):
+  for fileiterator in range(startingDate if folderiterator == startingMonth else 1, endingDate if folderiterator == endingMonth else 32):
    temp2 = "0" if fileiterator < 10 else ""
    filePath=log_directory+temp1+str(folderiterator)+"/"+temp2+str(fileiterator)+"/"+channel_name+".txt"   
    if not os.path.exists(filePath):

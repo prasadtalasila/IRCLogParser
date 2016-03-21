@@ -16,7 +16,7 @@ def correctLastCharCR(inText):#if the last letter of the nick is '\' replace it 
   inText = inText[:-1]+'CR'
  return inText
 
-def createChannelsOfNickGraph(log_directory, output_directory, startingMonth, endingMonth):
+def createChannelsOfNickGraph(log_directory, output_directory, startingDate, startingMonth, endingDate, endingMonth):
  nick_channel_dict = []
  # nicks = []
  nick_same_list=[[] for i in range(100000)] #list of list with each list having all the nicks for that particular person
@@ -28,7 +28,7 @@ def createChannelsOfNickGraph(log_directory, output_directory, startingMonth, en
 
  for folderiterator in range(startingMonth, endingMonth + 1):
   temp1 = "0" if folderiterator < 10 else ""
-  for fileiterator in range(1, 32):
+  for fileiterator in range(startingDate if folderiterator == startingMonth else 1, endingDate if folderiterator == endingMonth else 32):
    temp2 = "0" if fileiterator < 10 else ""
    if not ((folderiterator==2 and (fileiterator ==29 or fileiterator ==30 or fileiterator ==31)) or ((folderiterator==4 or folderiterator==6 or folderiterator==9 or folderiterator==11) and fileiterator==31 )):
     for channel_searched in os.listdir(log_directory+temp1+str(folderiterator)+"/"+temp2+str(fileiterator)+"/"):
