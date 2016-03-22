@@ -8,7 +8,7 @@ import pygraphviz as pygraphviz
 import os
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.feature_extraction import text 
-stop_words_new = text.ENGLISH_STOP_WORDS.union(["hey","hi"])
+import ext.common_english_words as common_english_words
 
 def correctLastCharCR(inText):#if the last letter of the nick is '\' replace it by 'CR' for example rohan\ becomes rohanCR to avoid complications in nx because of \
  if(inText[len(inText)-1]=='\\'):
@@ -24,6 +24,7 @@ def createKeyWords(log_directory, channel_name, output_directory, startingDate, 
  
  out_dir_nick_change = output_directory+"key-words/"
  user_words_dict = []
+ user_keyword_freq_dict = []
  nick_same_list=[[] for i in range(5000)] #list of list with each list having all the nicks for that particular person
 
  print "Creating a new output folder"
@@ -165,7 +166,7 @@ def createKeyWords(log_directory, channel_name, output_directory, startingDate, 
      correctedNickReciever = correctNickFor_(nick_receiver)
      if correctedNickReciever in message:
       message.remove(correctedNickReciever)
-     # print nick_sender, "XXXXX", ":".join(message), "YYYY"  
+     # print nick_sender, "Message", ":".join(message), "end"  
      word_list = ":".join(message).split(" ")
      fr = 1
      for dic in user_words_dict:
@@ -175,12 +176,26 @@ def createKeyWords(log_directory, channel_name, output_directory, startingDate, 
      if fr:
       user_words_dict.append({'sender':nick_sender, 'words':word_list }) 
  
- count_vect = CountVectorizer(analyzer = 'word', stop_words='english')
+ stop_words_extended = text.ENGLISH_STOP_WORDS.union(common_english_words.words)
+ count_vect = CountVectorizer(analyzer = 'word', stop_words=stop_words_extended, min_df = 1)
  for dictonary in user_words_dict:
   # print dictonary['sender']
   # print dictonary['words']
-  matrix = count_vect.fit_transform(dictonary['words'])
-  freqs = [(word, matrix.getcol(idx).sum()) for word, idx in count_vect.vocabulary_.items()]
-  print dictonary['sender']
-  print sorted(freqs, key = lambda x: -x[1])
-  print "\n"
+  try:
+    matrix = count_vect.fit_transform(dictonary['words'])
+    freqs = [[word, matrix.getcol(idx).sum()] for word, idx in count_vect.vocabulary_.items()]
+    keywords = sorted(freqs, key = lambda x: -x[1])
+    # print dictonary['sender']
+    total_freq = 0.0
+    for freq_tuple in keywords:
+     total_freq+=freq_tuple[1]
+    # print total_freq
+    for freq_tuple in keywords:
+     freq_tuple.append(round(freq_tuple[1]/float(total_freq),4))
+    # print keywords
+    # print "\n"
+    user_keyword_freq_dict.append({'nick':dictonary['sender'], 'keywords': keywords })
+  except ValueError:
+    pass
+ 
+ print user_keyword_freq_dict
