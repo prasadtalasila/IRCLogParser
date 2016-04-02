@@ -22,6 +22,23 @@ def correctNickFor_(inText):#last letter of nick maybe _ and this produces error
   inText = inText[:-1]
  return inText
 
+def dataForNick(data, nick, threshold): 
+ keywords = None
+ for dicts in data:
+  if dicts['nick'] == nick:
+   keywords = dicts['keywords']
+   break
+
+ if keywords:
+  # selected_keywords = [keyword for keyword in keywords if keyword[2] >= threshold]
+  selected_keywords = [keyword[0].encode('ascii', 'ignore') for keyword in keywords if keyword[2] >= threshold]
+
+ else:
+  print "[ERROR] No such nickname as ", nick
+  selected_keywords = None
+
+ return selected_keywords
+
 def createKeyWords(log_directory, channel_name, output_directory, startingDate, startingMonth, endingDate, endingMonth):
  
  out_dir_nick_change = output_directory+"key-words/"
@@ -217,4 +234,6 @@ def createKeyWords(log_directory, channel_name, output_directory, startingDate, 
   except ValueError:
     pass
  
- print user_keyword_freq_dict
+ # print user_keyword_freq_dict
+
+ print dataForNick(user_keyword_freq_dict, 'smartboyhw', 0.01)
