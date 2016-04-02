@@ -9,6 +9,8 @@ import os
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.feature_extraction import text 
 import ext.common_english_words as common_english_words
+from nltk.stem.wordnet import WordNetLemmatizer
+import string
 
 def correctLastCharCR(inText):#if the last letter of the nick is '\' replace it by 'CR' for example rohan\ becomes rohanCR to avoid complications in nx because of \
  if(inText[len(inText)-1]=='\\'):
@@ -167,17 +169,34 @@ def createKeyWords(log_directory, channel_name, output_directory, startingDate, 
      if correctedNickReciever in message:
       message.remove(correctedNickReciever)
      # print nick_sender, "Message", ":".join(message), "end"  
-     word_list = ":".join(message).split(" ")
+     
+     lmtzr = WordNetLemmatizer()
+     word_list_temp = ":".join(message).split(" ")
+     word_list = []
+     #remove punctuations
+     for word in word_list_temp:
+      word_list.append(word.translate(None, string.punctuation))
+     word_list_lemmatized = []
+     try:     
+      word_list_lemmatized = map(lmtzr.lemmatize, map(lambda x: lmtzr.lemmatize(x, 'v'), word_list))
+     except UnicodeDecodeError:
+      pass
+     # print "=====>original", word_list
+     # print "===>lemmatized", word_list_lemmatized
+
      fr = 1
      for dic in user_words_dict:
       if dic['sender'] == nick_sender:
-        dic['words'].extend(word_list)
+        # print '1========',word_list_lemmatized
+        dic['words'].extend(word_list_lemmatized)
         fr = 0
      if fr:
-      user_words_dict.append({'sender':nick_sender, 'words':word_list }) 
- 
+      # print '2========',word_list_lemmatized
+      user_words_dict.append({'sender':nick_sender, 'words':word_list_lemmatized }) 
+
  stop_words_extended = text.ENGLISH_STOP_WORDS.union(common_english_words.words)
  count_vect = CountVectorizer(analyzer = 'word', stop_words=stop_words_extended, min_df = 1)
+ 
  for dictonary in user_words_dict:
   # print dictonary['sender']
   # print dictonary['words']
@@ -191,7 +210,7 @@ def createKeyWords(log_directory, channel_name, output_directory, startingDate, 
      total_freq+=freq_tuple[1]
     # print total_freq
     for freq_tuple in keywords:
-     freq_tuple.append(round(freq_tuple[1]/float(total_freq),4))
+     freq_tuple.append(round(freq_tuple[1]/float(total_freq),5))
     # print keywords
     # print "\n"
     user_keyword_freq_dict.append({'nick':dictonary['sender'], 'keywords': keywords })
