@@ -22,21 +22,27 @@ def correctNickFor_(inText):#last letter of nick maybe _ and this produces error
   inText = inText[:-1]
  return inText
 
-def dataForNick(data, nick, threshold): 
+def dataForNick(data, nick, threshold, min_words_spoken): 
  keywords = None
  for dicts in data:
   if dicts['nick'] == nick:
    keywords = dicts['keywords']
    break
-
- if keywords:
-  # selected_keywords = [keyword for keyword in keywords if keyword[2] >= threshold]
-  selected_keywords = [keyword[0].encode('ascii', 'ignore') for keyword in keywords if keyword[2] >= threshold]
-
+ total_freq = 0.0
+ for freq_tuple in keywords:
+  total_freq+=freq_tuple[1]
+ selected_keywords = None
+ if total_freq > min_words_spoken:
+  if keywords:
+   # selected_keywords = [keyword for keyword in keywords if keyword[2] >= threshold]
+   selected_keywords = [keyword[0].encode('ascii', 'ignore') for keyword in keywords if keyword[2] >= threshold]
+   if len(selected_keywords) == 0:
+    print "No word's normalised score crosses the value of", threshold
+    selected_keywords = None
+  else:
+   print "No message sent by nick", nick
  else:
-  print "[ERROR] No such nickname as ", nick
-  selected_keywords = None
-
+  print "Not enough words spoken by", nick, "; spoke" ,int(total_freq), "words only, required", min_words_spoken
  return selected_keywords
 
 def createKeyWords(log_directory, channel_name, output_directory, startingDate, startingMonth, endingDate, endingMonth):
@@ -188,16 +194,18 @@ def createKeyWords(log_directory, channel_name, output_directory, startingDate, 
      # print nick_sender, "Message", ":".join(message), "end"  
      
      lmtzr = WordNetLemmatizer()
-     word_list_temp = ":".join(message).split(" ")
+     word_list_temp = ":".join(message).replace(","," ").split(" ")
      word_list = []
      #remove punctuations
      for word in word_list_temp:
-      word_list.append(word.translate(None, string.punctuation))
+      word = word.lower()
+      word_list.append(word.replace("'",""))
      word_list_lemmatized = []
      try:     
       word_list_lemmatized = map(lmtzr.lemmatize, map(lambda x: lmtzr.lemmatize(x, 'v'), word_list))
      except UnicodeDecodeError:
       pass
+     # word_list_lemmatized = [ unicode(s) for s in word_list_lemmatized]
      # print "=====>original", word_list
      # print "===>lemmatized", word_list_lemmatized
 
@@ -211,7 +219,19 @@ def createKeyWords(log_directory, channel_name, output_directory, startingDate, 
       # print '2========',word_list_lemmatized
       user_words_dict.append({'sender':nick_sender, 'words':word_list_lemmatized }) 
 
- stop_words_extended = text.ENGLISH_STOP_WORDS.union(common_english_words.words)
+ nicks_for_stop_words = []
+ stop_word_without_apostrophe=[]
+
+ for l in nick_same_list:
+  nicks_for_stop_words.extend(l)
+
+ for dictonary in user_words_dict:
+  nicks_for_stop_words.append(dictonary['sender'])
+
+ for words in common_english_words.words:
+  stop_word_without_apostrophe.append(words.replace("'",""))
+  
+ stop_words_extended = text.ENGLISH_STOP_WORDS.union(common_english_words.words).union(nicks_for_stop_words).union(stop_word_without_apostrophe)
  count_vect = CountVectorizer(analyzer = 'word', stop_words=stop_words_extended, min_df = 1)
  
  for dictonary in user_words_dict:
@@ -221,19 +241,27 @@ def createKeyWords(log_directory, channel_name, output_directory, startingDate, 
     matrix = count_vect.fit_transform(dictonary['words'])
     freqs = [[word, matrix.getcol(idx).sum()] for word, idx in count_vect.vocabulary_.items()]
     keywords = sorted(freqs, key = lambda x: -x[1])
-    # print dictonary['sender']
+    # print 'Nick:', dictonary['sender']
     total_freq = 0.0
     for freq_tuple in keywords:
      total_freq+=freq_tuple[1]
     # print total_freq
+    
     for freq_tuple in keywords:
      freq_tuple.append(round(freq_tuple[1]/float(total_freq),5))
+    user_keyword_freq_dict.append({'nick':dictonary['sender'], 'keywords': keywords })
+
+    # print 'Keywords: (Format : [<word>, <frequency>, <normalised_score>])'
     # print keywords
     # print "\n"
-    user_keyword_freq_dict.append({'nick':dictonary['sender'], 'keywords': keywords })
+    
   except ValueError:
     pass
  
  # print user_keyword_freq_dict
+ # print dataForNick(user_keyword_freq_dict, 'BluesKaj', 0.01)
 
- print dataForNick(user_keyword_freq_dict, 'smartboyhw', 0.01)
+ for data in user_keyword_freq_dict:
+  print "Nick:", data['nick']
+  print "Keywords with normalised score > 0.01\n", dataForNick(user_keyword_freq_dict, data['nick'], 0.01, 100)
+  print "\n"
