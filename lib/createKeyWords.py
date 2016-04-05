@@ -9,6 +9,7 @@ import os
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.feature_extraction import text 
 import ext.common_english_words as common_english_words
+import ext.extend_stop_words as custom_stop_words
 from nltk.stem.wordnet import WordNetLemmatizer
 import string
 
@@ -231,7 +232,7 @@ def createKeyWords(log_directory, channel_name, output_directory, startingDate, 
  for words in common_english_words.words:
   stop_word_without_apostrophe.append(words.replace("'",""))
   
- stop_words_extended = text.ENGLISH_STOP_WORDS.union(common_english_words.words).union(nicks_for_stop_words).union(stop_word_without_apostrophe)
+ stop_words_extended = text.ENGLISH_STOP_WORDS.union(common_english_words.words).union(nicks_for_stop_words).union(stop_word_without_apostrophe).union(custom_stop_words.words).union(custom_stop_words.slangs)
  count_vect = CountVectorizer(analyzer = 'word', stop_words=stop_words_extended, min_df = 1)
  
  for dictonary in user_words_dict:
