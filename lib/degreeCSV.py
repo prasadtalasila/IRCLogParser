@@ -6,56 +6,34 @@ import matplotlib.pyplot as plt
 import pylab
 import pygraphviz as pygraphviz
 import os
-from sklearn.feature_extraction.text import CountVectorizer
-from sklearn.feature_extraction import text 
-import ext.common_english_words as common_english_words
-import ext.extend_stop_words as custom_stop_words
-from nltk.stem.wordnet import WordNetLemmatizer
-import string
+import csv
 
 def correctLastCharCR(inText):#if the last letter of the nick is '\' replace it by 'CR' for example rohan\ becomes rohanCR to avoid complications in nx because of \
  if(inText[len(inText)-1]=='\\'):
   inText = inText[:-1]+'CR'
  return inText
 
-def correctNickFor_(inText):#last letter of nick maybe _ and this produces error in nickmatching
- if(inText and inText[len(inText)-1]=='_'):
-  inText = inText[:-1]
- return inText
-
-def dataForNick(data, nick, threshold, min_words_spoken): 
- keywords = None
- for dicts in data:
-  if dicts['nick'] == nick:
-   keywords = dicts['keywords']
-   break
- total_freq = 0.0
- for freq_tuple in keywords:
-  total_freq+=freq_tuple[1]
- selected_keywords = None
- if total_freq > min_words_spoken:
-  if keywords:
-   # selected_keywords = [keyword for keyword in keywords if keyword[2] >= threshold]
-   selected_keywords = [keyword[0].encode('ascii', 'ignore') for keyword in keywords if keyword[2] >= threshold]
-   if len(selected_keywords) == 0:
-    print "No word's normalised score crosses the value of", threshold
-    selected_keywords = None
-  else:
-   print "No message sent by nick", nick
- else:
-  print "Not enough words spoken by", nick, "; spoke" ,int(total_freq), "words only, required", min_words_spoken
- return selected_keywords
-
-def createKeyWords(log_directory, channel_name, output_directory, startingDate, startingMonth, endingDate, endingMonth):
+def degreeCSV(log_directory, channel_name, output_directory, startingDate, startingMonth, endingDate, endingMonth):
  
- out_dir_nick_change = output_directory+"key-words/"
- user_words_dict = []
- user_keyword_freq_dict = []
- nick_same_list=[[] for i in range(5000)] #list of list with each list having all the nicks for that particular person
+ nodes_with_OUT_degree_per_day = []
+ nodes_with_IN_degree_per_day = []
+
+ max_degree_possible = 1000
+
+ output_dir_degree = output_directory+"degreeCSV/"
+ 
+ output_file_out_degree = output_dir_degree + "out_degree.csv"
+ output_file_in_degree = output_dir_degree + "in_degree.csv"
 
  print "Creating a new output folder"
- os.system("rm -rf "+out_dir_nick_change)
- os.system("mkdir "+out_dir_nick_change)
+ os.system("rm -rf "+output_dir_degree)
+ os.system("mkdir "+output_dir_degree)
+
+ os.system("rm "+output_file_out_degree)
+ os.system("touch "+output_file_out_degree)
+ os.system("rm "+output_file_in_degree)
+ os.system("touch "+output_file_in_degree)
+
 
  rem_time= None #remembers the time of the last message of the file parsed before the current file
 
@@ -70,9 +48,7 @@ def createKeyWords(log_directory, channel_name, output_directory, startingDate, 
     continue 
    with open(filePath) as f:
        content = f.readlines() #contents stores all the lines of the file channel_name
-   
-   print "Analysing ",filePath 
-   
+     
    nicks = [] #list of all the nicknames     
 
    '''
@@ -105,6 +81,7 @@ def createKeyWords(log_directory, channel_name, output_directory, startingDate, 
    '''
     Forming list of lists for avoiding nickname duplicacy
    '''
+   nick_same_list=[[] for i in range(len(nicks))] #list of list with each list having all the nicks for that particular person
    
    for line in content:
     if(line[0]=='=' and "changed the topic of" not in line):
@@ -121,8 +98,14 @@ def createKeyWords(log_directory, channel_name, output_directory, startingDate, 
        nick_same_list[i].append(line1)
        nick_same_list[i].append(line2)
        break
+
    #print("printing nick_same_list****************************")
    #print(nick_same_list)     
+
+
+   '''=========================== Plotting the conversation graph =========================== '''
+
+   graph_conversation = nx.MultiDiGraph()  #graph with multiple directed edges between clients used
    for line in content:
     flag_comma = 0
     if(line[0] != '=' and "] <" in line and "> " in line):
@@ -135,9 +118,7 @@ def createKeyWords(log_directory, channel_name, output_directory, startingDate, 
        break
       else:
        nick_sender = var
-     
-     nick_receiver=''
-
+       
      for i in nicks:
       rec_list=[e.strip() for e in line.split(':')] #receiver list splited about :
       rec_list[1]=rec_list[1][rec_list[1].find(">")+1:len(rec_list[1])]
@@ -156,7 +137,9 @@ def createKeyWords(log_directory, channel_name, output_directory, startingDate, 
            break
           else:
            nick_receiver=i
-    
+           
+         graph_conversation.add_edge(nick_sender,nick_receiver,weight=line[1:6])  
+        
       if "," in rec_list[1]: #receiver list may of the form <Dhruv> Rohan, Ram :
        flag_comma = 1
        rec_list_2=[e.strip() for e in rec_list[1].split(',')]
@@ -171,7 +154,9 @@ def createKeyWords(log_directory, channel_name, output_directory, startingDate, 
             nick_receiver=nick_same_list[d][0]
             break
            else:
-            nick_receiver=i  
+            nick_receiver=i
+           
+          graph_conversation.add_edge(nick_sender,nick_receiver,weight=line[1:6])   
 
       if(flag_comma == 0): #receiver list can be <Dhruv> Rohan, Hi!
        rec=line[line.find(">")+1:line.find(", ")] 
@@ -185,84 +170,56 @@ def createKeyWords(log_directory, channel_name, output_directory, startingDate, 
            break
           else:
            nick_receiver=i
-     
-     #generating the words written by the sender
+          
+         graph_conversation.add_edge(nick_sender,nick_receiver,weight=line[1:6])  
+       
+   for u,v,d in graph_conversation.edges(data=True):
+       d['label'] = d.get('weight','')
+   # output_file_out_degree=out_dir_msg_time+channel_name+"_2013_"+str(folderiterator)+"_"+str(fileiterator)+"_msg_time.png"
+   # print "Generated " + output_file_out_degree
+   # A = nx.drawing.nx_agraph.to_agraph(graph_conversation)
+   # A.layout(prog='dot')
+   # A.draw(output_file_out_degree)
+   nodes_with_OUT_degree = [0]*max_degree_possible
+   nodes_with_IN_degree = [0]*max_degree_possible
 
-     message = rec_list[1:]
-     correctedNickReciever = correctNickFor_(nick_receiver)
-     if correctedNickReciever in message:
-      message.remove(correctedNickReciever)
-     # print nick_sender, "Message", ":".join(message), "end"  
-     
-     lmtzr = WordNetLemmatizer()
-     word_list_temp = ":".join(message).replace(","," ").split(" ")
-     word_list = []
-     #remove punctuations
-     for word in word_list_temp:
-      word = word.lower()
-      word_list.append(word.replace("'",""))
-     word_list_lemmatized = []
-     try:     
-      word_list_lemmatized = map(lmtzr.lemmatize, map(lambda x: lmtzr.lemmatize(x, 'v'), word_list))
-     except UnicodeDecodeError:
-      pass
-     # word_list_lemmatized = [ unicode(s) for s in word_list_lemmatized]
-     # print "=====>original", word_list
-     # print "===>lemmatized", word_list_lemmatized
+   print graph_conversation.out_degree(), graph_conversation.in_degree()
+   print graph_conversation.out_degree().values()
+   print graph_conversation.in_degree().values()
 
-     fr = 1
-     for dic in user_words_dict:
-      if dic['sender'] == nick_sender:
-        # print '1========',word_list_lemmatized
-        dic['words'].extend(word_list_lemmatized)
-        fr = 0
-     if fr:
-      # print '2========',word_list_lemmatized
-      user_words_dict.append({'sender':nick_sender, 'words':word_list_lemmatized }) 
+   for degree in graph_conversation.out_degree().values():
+    nodes_with_OUT_degree[degree]+=1
 
- nicks_for_stop_words = []
- stop_word_without_apostrophe=[]
+   for degree in graph_conversation.in_degree().values():
+    nodes_with_IN_degree[degree]+=1
 
- for l in nick_same_list:
-  nicks_for_stop_words.extend(l)
+   print "\n"
+   nodes_with_OUT_degree.insert(0, str(folderiterator)+"-"+str(fileiterator))
+   nodes_with_OUT_degree_per_day.append(nodes_with_OUT_degree)
 
- for dictonary in user_words_dict:
-  nicks_for_stop_words.append(dictonary['sender'])
+   nodes_with_IN_degree.insert(0, str(folderiterator)+"-"+str(fileiterator))
+   nodes_with_IN_degree_per_day.append(nodes_with_IN_degree)
 
- for words in common_english_words.words:
-  stop_word_without_apostrophe.append(words.replace("'",""))
-  
- stop_words_extended = text.ENGLISH_STOP_WORDS.union(common_english_words.words).union(nicks_for_stop_words).union(stop_word_without_apostrophe).union(custom_stop_words.words).union(custom_stop_words.slangs)
- count_vect = CountVectorizer(analyzer = 'word', stop_words=stop_words_extended, min_df = 1)
+ print nodes_with_OUT_degree_per_day
+ print nodes_with_IN_degree_per_day
  
- for dictonary in user_words_dict:
-  # print dictonary['sender']
-  # print dictonary['words']
-  try:
-    matrix = count_vect.fit_transform(dictonary['words'])
-    freqs = [[word, matrix.getcol(idx).sum()] for word, idx in count_vect.vocabulary_.items()]
-    keywords = sorted(freqs, key = lambda x: -x[1])
-    # print 'Nick:', dictonary['sender']
-    total_freq = 0.0
-    for freq_tuple in keywords:
-     total_freq+=freq_tuple[1]
-    # print total_freq
-    
-    for freq_tuple in keywords:
-     freq_tuple.append(round(freq_tuple[1]/float(total_freq),5))
-    user_keyword_freq_dict.append({'nick':dictonary['sender'], 'keywords': keywords })
+ temp = ['deg'+str(i) for i in xrange(max_degree_possible)]
+ temp.insert(0, 'out-degree/day>')
 
-    # print 'Keywords: (Format : [<word>, <frequency>, <normalised_score>])'
-    # print keywords
-    # print "\n"
-    
-  except ValueError:
-    pass
- 
- # print user_keyword_freq_dict
- # print dataForNick(user_keyword_freq_dict, 'BluesKaj', 0.01)
+ nodes_with_OUT_degree_per_day.insert(0, temp)
+ column_wise = zip(*nodes_with_OUT_degree_per_day)
+ with open(output_file_out_degree, 'wb') as myfile:
+  wr = csv.writer(myfile, quoting=csv.QUOTE_ALL)
+  for col in column_wise:
+   wr.writerow(col)
 
- for data in user_keyword_freq_dict:
-  print "Nick:", data['nick']
-  print "Keywords with normalised score > 0.01\n", dataForNick(user_keyword_freq_dict, data['nick'], 0.01, 100)
-  print "\n"
+ temp = ['deg'+str(i) for i in xrange(max_degree_possible)]
+ temp.insert(0, 'in-degree/day>')
+
+ nodes_with_IN_degree_per_day.insert(0, temp)
+ column_wise = zip(*nodes_with_IN_degree_per_day)
+ with open(output_file_in_degree, 'wb') as myfile2:
+  wr = csv.writer(myfile2, quoting=csv.QUOTE_ALL)
+  for col in column_wise:
+   wr.writerow(col)
+
