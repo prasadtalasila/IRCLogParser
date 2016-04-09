@@ -9,5 +9,7 @@ Functions presently implemented are:
 - **createMessageNumberBinsCSV** - creates a CSV file which tracks the number of message exchanged in a channel for 48 bins of half an hour each distributed all over the day aggragated over the year. 
 - **createAggregateGraph** - creates a directed graph for a longer frame of time with each node representing an IRC user, and each directed edge has a weight which mentions the number messages sent and recieved by that user in the selected time frame.
 - **createChannelsOfNickGraph** - creates a directed graph for each nick, each edge from which points to the IRC Channels that nick has participated in. (Nick changes are tracked here and only the initial nick is shown if a user changed his nick) 
+- **createKeyWords** - outputs the keywords for each user on a particular channel
+- **degreeCSV** - creates two csv files having no. of nodes with a certain in and out-degree respectively
 
 `TestingScript.py` demonstrates the use of these funtions.
