@@ -17,6 +17,7 @@ def degreeCSV(log_directory, channel_name, output_directory, startingDate, start
  
  nodes_with_OUT_degree_per_day = []
  nodes_with_IN_degree_per_day = []
+ nodes_with_TOTAL_degree_per_day = []
 
  max_degree_possible = 1000
 
@@ -24,6 +25,8 @@ def degreeCSV(log_directory, channel_name, output_directory, startingDate, start
  
  output_file_out_degree = output_dir_degree + "out_degree.csv"
  output_file_in_degree = output_dir_degree + "in_degree.csv"
+ output_file_total_degree = output_dir_degree + "total_degree.csv"
+
 
  print "Creating a new output folder"
  os.system("rm -rf "+output_dir_degree)
@@ -33,7 +36,8 @@ def degreeCSV(log_directory, channel_name, output_directory, startingDate, start
  os.system("touch "+output_file_out_degree)
  os.system("rm "+output_file_in_degree)
  os.system("touch "+output_file_in_degree)
-
+ os.system("rm "+output_file_total_degree)
+ os.system("touch "+output_file_total_degree)
 
  rem_time= None #remembers the time of the last message of the file parsed before the current file
 
@@ -182,10 +186,12 @@ def degreeCSV(log_directory, channel_name, output_directory, startingDate, start
    # A.draw(output_file_out_degree)
    nodes_with_OUT_degree = [0]*max_degree_possible
    nodes_with_IN_degree = [0]*max_degree_possible
+   nodes_with_TOTAL_degree = [0]*max_degree_possible
 
-   print graph_conversation.out_degree(), graph_conversation.in_degree()
+   print graph_conversation.out_degree(), graph_conversation.in_degree(), graph_conversation.degree()
    print graph_conversation.out_degree().values()
    print graph_conversation.in_degree().values()
+   print graph_conversation.degree().values()
 
    for degree in graph_conversation.out_degree().values():
     nodes_with_OUT_degree[degree]+=1
@@ -193,17 +199,28 @@ def degreeCSV(log_directory, channel_name, output_directory, startingDate, start
    for degree in graph_conversation.in_degree().values():
     nodes_with_IN_degree[degree]+=1
 
+   for degree in graph_conversation.degree().values():
+    nodes_with_TOTAL_degree[degree]+=1
+
    print "\n"
+   nodes_with_OUT_degree.insert(0, sum(nodes_with_OUT_degree))
    nodes_with_OUT_degree.insert(0, str(folderiterator)+"-"+str(fileiterator))
    nodes_with_OUT_degree_per_day.append(nodes_with_OUT_degree)
 
+   nodes_with_IN_degree.insert(0, sum(nodes_with_IN_degree))
    nodes_with_IN_degree.insert(0, str(folderiterator)+"-"+str(fileiterator))
    nodes_with_IN_degree_per_day.append(nodes_with_IN_degree)
 
- print nodes_with_OUT_degree_per_day
- print nodes_with_IN_degree_per_day
+   nodes_with_TOTAL_degree.insert(0, sum(nodes_with_TOTAL_degree))
+   nodes_with_TOTAL_degree.insert(0, str(folderiterator)+"-"+str(fileiterator))
+   nodes_with_TOTAL_degree_per_day.append(nodes_with_TOTAL_degree)
+
+ # print nodes_with_OUT_degree_per_day
+ # print nodes_with_IN_degree_per_day
+ # print nodes_with_TOTAL_degree_per_day
  
  temp = ['deg'+str(i) for i in xrange(max_degree_possible)]
+ temp.insert(0, 'total')
  temp.insert(0, 'out-degree/day>')
 
  nodes_with_OUT_degree_per_day.insert(0, temp)
@@ -214,12 +231,24 @@ def degreeCSV(log_directory, channel_name, output_directory, startingDate, start
    wr.writerow(col)
 
  temp = ['deg'+str(i) for i in xrange(max_degree_possible)]
+ temp.insert(0, 'total')
  temp.insert(0, 'in-degree/day>')
 
  nodes_with_IN_degree_per_day.insert(0, temp)
  column_wise = zip(*nodes_with_IN_degree_per_day)
  with open(output_file_in_degree, 'wb') as myfile2:
   wr = csv.writer(myfile2, quoting=csv.QUOTE_ALL)
+  for col in column_wise:
+   wr.writerow(col)
+
+ temp = ['deg'+str(i) for i in xrange(max_degree_possible)]
+ temp.insert(0, 'total')
+ temp.insert(0, 'degree/day>')
+
+ nodes_with_TOTAL_degree_per_day.insert(0, temp)
+ column_wise = zip(*nodes_with_TOTAL_degree_per_day)
+ with open(output_file_total_degree, 'wb') as myfile3:
+  wr = csv.writer(myfile3, quoting=csv.QUOTE_ALL)
   for col in column_wise:
    wr.writerow(col)
 
