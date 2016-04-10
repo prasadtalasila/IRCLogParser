@@ -108,7 +108,7 @@ def createMessageNumberBinsCSV(log_directory, channel_name, output_directory, st
      
    print "Working on "+filePath
    # print bins
-
+   print bins
    with open(output_file, 'a+') as myfile:
        wr = csv.writer(myfile, quoting=csv.QUOTE_ALL)
        wr.writerow(bins)
