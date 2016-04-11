@@ -19,4 +19,5 @@ endingMonth = 2
 # Parser.createAggregateGraph(log_directory, channel_name, startingDate, startingMonth, endingDate, endingMonth)
 # Parser.createChannelsOfNickGraph(log_directory, output_directory, startingDate, startingMonth, endingDate, endingMonth)
 # Parser.createKeyWords(log_directory, channel_name, output_directory, startingDate, startingMonth, endingDate, endingMonth)
-Parser.degreeCSV(log_directory, channel_name, output_directory, startingDate, startingMonth, endingDate, endingMonth)
+Parser.degreeMessageNumberCSV(log_directory, channel_name, output_directory, startingDate, startingMonth, endingDate, endingMonth)
+Parser.degreeNodeNumberCSV(log_directory, channel_name, output_directory, startingDate, startingMonth, endingDate, endingMonth)
