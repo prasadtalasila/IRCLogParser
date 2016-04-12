@@ -7,6 +7,7 @@ import pylab
 import pygraphviz as pygraphviz
 import os
 import csv
+import math
 
 def correctLastCharCR(inText):#if the last letter of the nick is '\' replace it by 'CR' for example rohan\ becomes rohanCR to avoid complications in nx because of \
  if(inText[len(inText)-1]=='\\'):
@@ -23,7 +24,7 @@ def degreeNodeNumberCSV(log_directory, channel_name, output_directory, startingD
  max_degree_possible = 1000
 
  output_dir_degree = output_directory+"degreeNodeNumberCSV/"
- 
+ output_dir_degree_img = output_dir_degree + "individual-images/"
  output_file_out_degree = output_dir_degree + "node_no_out_degree.csv"
  output_file_in_degree = output_dir_degree + "node_no_in_degree.csv"
  output_file_total_degree = output_dir_degree + "node_no_total_degree.csv"
@@ -32,6 +33,9 @@ def degreeNodeNumberCSV(log_directory, channel_name, output_directory, startingD
  print "Creating a new output folder"
  os.system("rm -rf "+output_dir_degree)
  os.system("mkdir "+output_dir_degree)
+
+ os.system("rm -rf "+output_dir_degree_img)
+ os.system("mkdir "+output_dir_degree_img)
 
  os.system("rm "+output_file_out_degree)
  os.system("touch "+output_file_out_degree)
@@ -231,6 +235,25 @@ def degreeNodeNumberCSV(log_directory, channel_name, output_directory, startingD
 
    for degree in msg_num_graph.degree().values():
     nodes_with_TOTAL_degree[degree]+=1
+   
+
+   x_axis_log = [math.log10(i) for i in xrange(1, 20)]#ignore degree 0
+   y_axis_log = [math.log10(i) if i>0 else 0 for i in nodes_with_TOTAL_degree[1:20] ]#ignore degree 0
+   #plot1
+   plt.plot(x_axis_log, y_axis_log) 
+   #plot2
+   plt.plot([1,2], [1,2])
+   plt.xlabel("log(degree)")
+   plt.ylabel("log(no_of_nodes)")
+
+   plt.xticks(x_axis_log, ['log'+str(i) for i in xrange(1, len(x_axis_log))])
+   plt.yticks(x_axis_log, ['log'+str(i) for i in xrange(1, len(x_axis_log))])
+
+   plt.legend(['Required', 'y = x'], loc='upper left')
+
+   # Save it in png and svg formats
+   plt.savefig(output_dir_degree_img+"/total_out_degree"+str(folderiterator)+"-"+str(fileiterator)+".png")
+   plt.close()
 
    print "\n"
    nodes_with_OUT_degree.insert(0, sum(nodes_with_OUT_degree))
@@ -281,5 +304,30 @@ def degreeNodeNumberCSV(log_directory, channel_name, output_directory, startingD
   wr = csv.writer(myfile3, quoting=csv.QUOTE_ALL)
   for col in column_wise:
    wr.writerow(col)
+
+ sum_each_row = []
+ for row in column_wise[3:]: #ignore degree 0 and text, starting from degree 1
+  sum_each_row.append(sum(row[1:]))
+
+ # print sum_each_row
+ x_axis_log = [math.log10(i) for i in xrange(1, 20)]#ignore degree 0
+ y_axis_log = [math.log10(i) if i>0 else 0 for i in sum_each_row[1:20] ]#ignore degree 0
+ #plot1
+ plt.plot(x_axis_log, y_axis_log) 
+ #plot2
+ plt.plot([1,2], [1,2])
+ plt.xlabel("log(degree)")
+ plt.ylabel("log(no_of_nodes)")
+
+ plt.xticks(x_axis_log, ['log'+str(i) for i in xrange(1, len(x_axis_log))])
+ plt.yticks([math.log10(i) for i in xrange(1, 100)], ['log'+str(i) for i in xrange(1, 100)])
+
+ plt.legend(['Required', 'y = x'], loc='upper left')
+
+ # Save it in png and svg formats
+ plt.savefig(output_dir_degree+"/total_graph.png")
+ plt.close()
+
+ print output_dir_degree +"/total_graph.png"
 
 
