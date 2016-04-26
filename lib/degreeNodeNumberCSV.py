@@ -8,6 +8,9 @@ import pygraphviz as pygraphviz
 import os
 import csv
 import math
+import numpy as np
+from numpy.random import normal
+from scipy.optimize import curve_fit
 
 def correctLastCharCR(inText):#if the last letter of the nick is '\' replace it by 'CR' for example rohan\ becomes rohanCR to avoid complications in nx because of \
  if(inText[len(inText)-1]=='\\'):
@@ -312,17 +315,29 @@ def degreeNodeNumberCSV(log_directory, channel_name, output_directory, startingD
  # print sum_each_row
  x_axis_log = [math.log10(i) for i in xrange(1, 20)]#ignore degree 0
  y_axis_log = [math.log10(i) if i>0 else 0 for i in sum_each_row[1:20] ]#ignore degree 0
+
+ def func(x, a, b):
+  return a - b*x
+ 
+ parameter, covariance_matrix = curve_fit(func, x_axis_log, y_axis_log)
+
+ a,b = parameter
+ 
+ print a, b
+
+ x = np.linspace(min(x_axis_log), max(x_axis_log), 1000)
+
  #plot1
- plt.plot(x_axis_log, y_axis_log) 
+ plt.plot(x_axis_log, y_axis_log, 'rx') 
  #plot2
- plt.plot([1,2], [1,2])
+ plt.plot(x, func(x, *parameter), 'b-', label='fit')
  plt.xlabel("log(degree)")
  plt.ylabel("log(no_of_nodes)")
 
  plt.xticks(x_axis_log, ['log'+str(i) for i in xrange(1, len(x_axis_log))])
  plt.yticks([math.log10(i) for i in xrange(1, 100)], ['log'+str(i) for i in xrange(1, 100)])
 
- plt.legend(['Required', 'y = x'], loc='upper left')
+ plt.legend(['Data', 'Curve Fit'], loc='upper left')
 
  # Save it in png and svg formats
  plt.savefig(output_dir_degree+"/total_graph.png")
