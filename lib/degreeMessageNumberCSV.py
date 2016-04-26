@@ -13,7 +13,7 @@ def correctLastCharCR(inText):#if the last letter of the nick is '\' replace it 
   inText = inText[:-1]+'CR'
  return inText
 
-def degreeCSV(log_directory, channel_name, output_directory, startingDate, startingMonth, endingDate, endingMonth):
+def degreeMessageNumberCSV(log_directory, channel_name, output_directory, startingDate, startingMonth, endingDate, endingMonth):
  
  nodes_with_OUT_degree_per_day = []
  nodes_with_IN_degree_per_day = []
@@ -21,11 +21,11 @@ def degreeCSV(log_directory, channel_name, output_directory, startingDate, start
 
  max_degree_possible = 1000
 
- output_dir_degree = output_directory+"degreeCSV/"
+ output_dir_degree = output_directory+"degreeMessageNumberCSV/"
  
- output_file_out_degree = output_dir_degree + "out_degree.csv"
- output_file_in_degree = output_dir_degree + "in_degree.csv"
- output_file_total_degree = output_dir_degree + "total_degree.csv"
+ output_file_out_degree = output_dir_degree + "msg_no_out_degree.csv"
+ output_file_in_degree = output_dir_degree + "msg_no_in_degree.csv"
+ output_file_total_degree = output_dir_degree + "msg_no_total_degree.csv"
 
 
  print "Creating a new output folder"

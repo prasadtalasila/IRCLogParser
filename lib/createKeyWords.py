@@ -52,6 +52,7 @@ def createKeyWords(log_directory, channel_name, output_directory, startingDate, 
  user_words_dict = []
  user_keyword_freq_dict = []
  nick_same_list=[[] for i in range(5000)] #list of list with each list having all the nicks for that particular person
+ keywords_filtered = []
 
  print "Creating a new output folder"
  os.system("rm -rf "+out_dir_nick_change)
@@ -263,6 +264,11 @@ def createKeyWords(log_directory, channel_name, output_directory, startingDate, 
  # print dataForNick(user_keyword_freq_dict, 'BluesKaj', 0.01)
 
  for data in user_keyword_freq_dict:
+  keywords = dataForNick(user_keyword_freq_dict, data['nick'], 0.01, 100)
   print "Nick:", data['nick']
-  print "Keywords with normalised score > 0.01\n", dataForNick(user_keyword_freq_dict, data['nick'], 0.01, 100)
+  print "Keywords with normalised score > 0.01\n", keywords
   print "\n"
+  if keywords:
+   keywords_filtered.append({'nick':data['nick'],'keywords': keywords})
+   
+ return keywords_filtered, user_keyword_freq_dict
