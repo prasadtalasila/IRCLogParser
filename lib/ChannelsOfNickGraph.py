@@ -128,22 +128,23 @@ def createChannelsOfNickGraph(log_directory, output_directory, startingDate, sta
        done.append(user_nick)
  # print nick_same_list
  print nick_channel_dict
+ myGraph = nx.DiGraph()
 
  for dicts in nick_channel_dict:
   # print dicts
-  myGraph = nx.DiGraph()
-  no_of_channels = 0
+  # no_of_channels = 0
   for channel in dicts['channels']:
-   myGraph.add_edge(dicts['nickname'],channel[0],weight=channel[1])
-   no_of_channels+=1
+   if channel[1] == 2:
+    myGraph.add_edge(dicts['nickname'],channel[0],weight=channel[1])
+   # no_of_channels+=1
    # print dicts
 
-  for u,v,d in myGraph.edges(data=True):
-   d['label'] = d.get('weight','')
+ for u,v,d in myGraph.edges(data=True):
+  d['label'] = d.get('weight','')
 
-  output_file=out_dir_channel_user_time+str(no_of_channels)+"_"+dicts['nickname']+"_channels-of-nick-graph.png"
-  print "Generating "+output_file
+ output_file=out_dir_channel_user_time+"_channels-of-nick-graph.png"
+ print "Generating "+output_file
 
-  A = nx.drawing.nx_agraph.to_agraph(myGraph)
-  A.layout(prog='dot')
-  A.draw(output_file) 
+ A = nx.drawing.nx_agraph.to_agraph(myGraph)
+ A.layout(prog='dot')
+ A.draw(output_file) 
