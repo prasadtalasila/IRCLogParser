@@ -7,14 +7,21 @@ import pylab
 import pygraphviz as pygraphviz
 import os
 
-'''
- RANGE FOR MONTH AND DAY HARDCODED AT THE MOME
-'''
-
 def correctLastCharCR(inText):#if the last letter of the nick is '\' replace it by 'CR' for example rohan\ becomes rohanCR to avoid complications in nx because of \
  if(inText and inText[len(inText)-1]=='\\'):
   inText = inText[:-1]+'CR'
  return inText
+
+def searchChannel(channel, channel_list):
+ ans = -1
+ i = 0
+ for c_tuple in channel_list:
+  if c_tuple[0] == channel:
+   ans = i
+   break
+  i+=1 
+
+ return ans
 
 def createChannelsOfNickGraph(log_directory, output_directory, startingDate, startingMonth, endingDate, endingMonth):
  nick_channel_dict = []
@@ -91,6 +98,7 @@ def createChannelsOfNickGraph(log_directory, output_directory, startingDate, sta
       Creating list of dictionaries nick_channel_dict of the format : [{'nickname':'rohan', 'channels':['#abc','#bcd']},{}]
      # '''
      # print nicks
+     done = []
      for d in range(len(nicks)): 
       var = nicks[d]
       f = 1
@@ -104,25 +112,35 @@ def createChannelsOfNickGraph(log_directory, output_directory, startingDate, sta
       # print user_nick
       flag = 1
       for dictionary in nick_channel_dict:
-       if dictionary['nickname'] == user_nick:
-        if channel_searched not in dictionary['channels']:
-         dictionary['channels'].append(channel_searched)
+       if dictionary['nickname'] == user_nick and user_nick not in done:
+        # print user_nick, done
+        # if channel_searched not in dictionary['channels']:
+        index = searchChannel(channel_searched, dictionary['channels'])
+        if index == -1:
+         dictionary['channels'].append([channel_searched,1])
+        else:
+         dictionary['channels'][index][1]+=1
         flag = 0
+        done.append(user_nick)
         break
       if flag:
-       nick_channel_dict.append({'nickname':user_nick, 'channels': [channel_searched]})
-
+       nick_channel_dict.append({'nickname':user_nick, 'channels': [[channel_searched, 1]]})
+       done.append(user_nick)
  # print nick_same_list
- # print nick_channel_dict
+ print nick_channel_dict
 
  for dicts in nick_channel_dict:
   # print dicts
   myGraph = nx.DiGraph()
   no_of_channels = 0
   for channel in dicts['channels']:
-   myGraph.add_edge(dicts['nickname'],channel)
+   myGraph.add_edge(dicts['nickname'],channel[0],weight=channel[1])
    no_of_channels+=1
    # print dicts
+
+  for u,v,d in myGraph.edges(data=True):
+   d['label'] = d.get('weight','')
+
   output_file=out_dir_channel_user_time+str(no_of_channels)+"_"+dicts['nickname']+"_channels-of-nick-graph.png"
   print "Generating "+output_file
 
