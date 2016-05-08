@@ -29,6 +29,11 @@ def createChannelsOfNickGraph(log_directory, output_directory, startingDate, sta
  nick_same_list=[[] for i in range(100000)] #list of list with each list having all the nicks for that particular person
  out_dir_channel_user_time = output_directory+"channel-nick/"
 
+ nicks_hash = []
+ channels_hash = []
+ users_on_channel = {}
+
+
  print "Creating a new output folder"
  os.system("rm -rf "+out_dir_channel_user_time)
  os.system("mkdir "+out_dir_channel_user_time)
@@ -95,7 +100,7 @@ def createChannelsOfNickGraph(log_directory, output_directory, startingDate, sta
          break
 
      '''
-      Creating list of dictionaries nick_channel_dict of the format : [{'nickname':'rohan', 'channels':['#abc','#bcd']},{}]
+      Creating list of dictionaries nick_channel_dict of the format : [{'nickname':'rohan', 'channels':['[#abc', 0],['#bcd', 0]]},{}]
      # '''
      # print nicks
      done = []
@@ -128,23 +133,73 @@ def createChannelsOfNickGraph(log_directory, output_directory, startingDate, sta
        done.append(user_nick)
  # print nick_same_list
  print nick_channel_dict
- myGraph = nx.DiGraph()
+ 
+ # myGraph = nx.DiGraph()
+ # for dicts in nick_channel_dict:
+ #  # print dicts
+ #  # no_of_channels = 0
+ #  nick = dicts['nickname']
+ #  if nick not in nicks_hash:
+ #   nicks_hash.append(nick)
+
+ #  for channel in dicts['channels']:
+ #   if channel[1] > 20:
+ #    myGraph.add_edge(nick ,channel[0],weight=channel[1])
+ #   if channel[0] not in channels_hash:
+ #    channels_hash.append(channel[0])
+ #   # no_of_channels+=1
+ #   # print dicts
+
+ # for u,v,d in myGraph.edges(data=True):
+ #  d['label'] = d.get('weight','')
+
+ # output_file=out_dir_channel_user_time+"_channels-of-nick-graph.png"
+ # print "Generating "+output_file
+
+ # A = nx.drawing.nx_agraph.to_agraph(myGraph)
+ # A.layout(prog='dot')
+ # A.draw(output_file) 
+ 
+ '''!!!!!!!!!!!! Reptition if use above!!!!!!!!!!!!!!!!! '''
 
  for dicts in nick_channel_dict:
-  # print dicts
-  # no_of_channels = 0
+  nick = dicts['nickname']
+  if nick not in nicks_hash:
+   nicks_hash.append(nick)
+
   for channel in dicts['channels']:
-   if channel[1] == 2:
-    myGraph.add_edge(dicts['nickname'],channel[0],weight=channel[1])
-   # no_of_channels+=1
-   # print dicts
+   if channel[0] not in channels_hash:
+    channels_hash.append(channel[0])
 
- for u,v,d in myGraph.edges(data=True):
-  d['label'] = d.get('weight','')
+ print len(nicks_hash)
+ print len(channels_hash)
+ 
+ channel_user_graph = nx.Graph()
 
- output_file=out_dir_channel_user_time+"_channels-of-nick-graph.png"
- print "Generating "+output_file
+ for adjlist in nick_channel_dict:
+  for channel in adjlist['channels']:
+   channel_user_graph.add_edge(nicks_hash.index(adjlist['nickname']) ,channels_hash.index(channel[0]), weight=channel[1])
+   # print nicks_hash.index(adjlist['nickname']),adjlist['nickname'], channels_hash.index(channel[0]),channel[0], channel[1]
+   if users_on_channel.has_key(channel[0]):
+    if adjlist['nickname'] not in users_on_channel[channel[0]]:
+     users_on_channel[channel[0]].append(adjlist['nickname'])
+   else:
+    users_on_channel[channel[0]] = [adjlist['nickname']]
 
- A = nx.drawing.nx_agraph.to_agraph(myGraph)
- A.layout(prog='dot')
- A.draw(output_file) 
+ CU_adjacency_matrix = nx.adjacency_matrix(channel_user_graph) #channel-user adj matrix
+ print CU_adjacency_matrix
+ print users_on_channel #used for channel-channel graph
+
+ '''adj matrix for channel-channel'''
+
+ CC_adjacency_matrix = [[0]*len(channels_hash) for i in xrange(0,  len(channels_hash))]
+
+ # print len(channels_hash), len(users_on_channel.keys())
+ for i in xrange(0, len(users_on_channel.keys())):
+  for j in xrange(i+1, len(users_on_channel.keys())):
+   common_users = list(set(users_on_channel[users_on_channel.keys()[i]]) & set(users_on_channel[users_on_channel.keys()[j]]))
+   # print users_on_channel.keys()[i], users_on_channel.keys()[j], common_users
+   CC_adjacency_matrix[i][j] = len(common_users)
+   CC_adjacency_matrix[j][i] = len(common_users)
+
+ print CC_adjacency_matrix #channel-user adj matrix
