@@ -32,6 +32,8 @@ def createChannelsOfNickGraph(log_directory, output_directory, startingDate, sta
  nicks_hash = []
  channels_hash = []
  users_on_channel = {}
+ channel_for_users_for_all_days = []
+ channel_for_user_for_the_day = {}
 
 
  print "Creating a new output folder"
@@ -114,6 +116,15 @@ def createChannelsOfNickGraph(log_directory, output_directory, startingDate, sta
         break
       if f:
        user_nick = var
+
+      '''for channels of user on a day'''
+      # print channel_searched, user_nick
+         
+      if channel_for_user_for_the_day.has_key(user_nick) and channel_searched not in channel_for_user_for_the_day[user_nick]:
+       channel_for_user_for_the_day[user_nick].append(channel_searched)
+      else:
+       channel_for_user_for_the_day[user_nick] = [channel_searched]
+
       # print user_nick
       flag = 1
       for dictionary in nick_channel_dict:
@@ -131,8 +142,14 @@ def createChannelsOfNickGraph(log_directory, output_directory, startingDate, sta
       if flag:
        nick_channel_dict.append({'nickname':user_nick, 'channels': [[channel_searched, 1]]})
        done.append(user_nick)
+
+    # print "checking", fileiterator, folderiterator
+    # print channel_for_user_for_the_day
+    channel_for_users_for_all_days.append(channel_for_user_for_the_day)
+    channel_for_user_for_the_day = {}#empty for next day usage
+
  # print nick_same_list
- print nick_channel_dict
+ # print nick_channel_dict
  
  # myGraph = nx.DiGraph()
  # for dicts in nick_channel_dict:
@@ -171,8 +188,8 @@ def createChannelsOfNickGraph(log_directory, output_directory, startingDate, sta
    if channel[0] not in channels_hash:
     channels_hash.append(channel[0])
 
- print len(nicks_hash)
- print len(channels_hash)
+ # print len(nicks_hash)
+ # print len(channels_hash)
  
  channel_user_graph = nx.Graph()
 
@@ -187,8 +204,11 @@ def createChannelsOfNickGraph(log_directory, output_directory, startingDate, sta
     users_on_channel[channel[0]] = [adjlist['nickname']]
 
  CU_adjacency_matrix = nx.adjacency_matrix(channel_user_graph) #channel-user adj matrix
- print CU_adjacency_matrix
- print users_on_channel #used for channel-channel graph
+ 
+ print "CU Adj Matrix", CU_adjacency_matrix  #channel-user adj matrix
+ # print users_on_channel #used for channel-channel graph
+
+
 
  '''adj matrix for channel-channel'''
 
@@ -202,4 +222,28 @@ def createChannelsOfNickGraph(log_directory, output_directory, startingDate, sta
    CC_adjacency_matrix[i][j] = len(common_users)
    CC_adjacency_matrix[j][i] = len(common_users)
 
- print CC_adjacency_matrix #channel-user adj matrix
+   # channel_user_graph.add_edge(users_on_channel.keys()[i] ,users_on_channel.keys()[j], weight=len(common_users))
+
+ print "CC Adj Matrix", CC_adjacency_matrix #channel-channel adj matrix
+
+
+
+ '''adj matrix for user-user'''
+ UU_adjacency_matrix = [[0]*len(nicks_hash) for i in xrange(0,  len(nicks_hash))]
+
+ # print channel_for_users_for_all_days
+ for user_channel_dict in channel_for_users_for_all_days:
+  # user_channel_dict format : {nick : [channels on that day], }
+  for i in xrange(0, len(user_channel_dict.keys())):
+   for j in xrange(i+1, len(user_channel_dict.keys())):
+    common_channels_on_that_day = list(set(user_channel_dict[user_channel_dict.keys()[i]]) & set(user_channel_dict[user_channel_dict.keys()[j]]))
+    # print "common_channels_on_that_day"
+    # print user_channel_dict.keys()[i], user_channel_dict.keys()[j], common_channels_on_that_day
+    user1 = user_channel_dict.keys()[i]
+    user2 = user_channel_dict.keys()[j]
+    no_of_common_channels_day = len(common_channels_on_that_day)
+
+    UU_adjacency_matrix[nicks_hash.index(user1)][nicks_hash.index(user2)] += no_of_common_channels_day
+    UU_adjacency_matrix[nicks_hash.index(user2)][nicks_hash.index(user1)] += no_of_common_channels_day
+
+ print "UU Adj Matrix", UU_adjacency_matrix #user-user matrix
