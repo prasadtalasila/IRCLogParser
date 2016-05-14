@@ -5,8 +5,8 @@ channel_name= "#kubuntu-devel" #channel name
 output_directory = "/home/rohan/parser_files/Output/"
 startingDate = 1
 startingMonth = 1
-endingDate = 3
-endingMonth = 1
+endingDate = 1
+endingMonth = 2
 
 '''
 	TRY LARGE TIME RANGES ON THE FOLLOWING GRAPHS WITH UTMOST CARE
