@@ -191,23 +191,29 @@ def createChannelsOfNickGraph(log_directory, output_directory, startingDate, sta
  # print len(nicks_hash)
  # print len(channels_hash)
  
- channel_user_graph = nx.Graph()
+ # channel_user_graph = nx.Graph()
+
+ CU_adjacency_matrix = [[0]*len(nicks_hash) for i in xrange(0,  len(channels_hash))]
 
  for adjlist in nick_channel_dict:
   for channel in adjlist['channels']:
-   channel_user_graph.add_edge(nicks_hash.index(adjlist['nickname']) ,channels_hash.index(channel[0]), weight=channel[1])
+   # channel_user_graph.add_edge(nicks_hash.index(adjlist['nickname']) ,channels_hash.index(channel[0]), weight=channel[1])
    # print nicks_hash.index(adjlist['nickname']),adjlist['nickname'], channels_hash.index(channel[0]),channel[0], channel[1]
+   CU_adjacency_matrix[channels_hash.index(channel[0])][nicks_hash.index(adjlist['nickname'])] = channel[1]
+
    if users_on_channel.has_key(channel[0]):
     if adjlist['nickname'] not in users_on_channel[channel[0]]:
      users_on_channel[channel[0]].append(adjlist['nickname'])
    else:
     users_on_channel[channel[0]] = [adjlist['nickname']]
 
- CU_adjacency_matrix = nx.adjacency_matrix(channel_user_graph) #channel-user adj matrix
+ # CU_adjacency_matrix = nx.adjacency_matrix(channel_user_graph) #channel-user adj matrix
  
- print "CU Adj Matrix", CU_adjacency_matrix  #channel-user adj matrix
+ # print "CU Adj Matrix", CU_adjacency_matrix  #channel-user adj matrix
  # print users_on_channel #used for channel-channel graph
-
+ # print "Saving CU Adjacency Matrix"
+ # np.savetxt("/home/rohan/Desktop/CU_adjacency_matrix.csv", CU_adjacency_matrix, delimiter=",")
+ print "Reduced CU Adjacency Matrix will be saved"
 
 
  '''adj matrix for channel-channel'''
@@ -224,7 +230,10 @@ def createChannelsOfNickGraph(log_directory, output_directory, startingDate, sta
 
    # channel_user_graph.add_edge(users_on_channel.keys()[i] ,users_on_channel.keys()[j], weight=len(common_users))
 
- print "CC Adj Matrix", CC_adjacency_matrix #channel-channel adj matrix
+ # print "CC Adj Matrix", CC_adjacency_matrix #channel-channel adj matrix
+ print "Saving CC Adjacency Matrix"
+ np.savetxt("/home/rohan/Desktop/CC_adjacency_matrix.csv", CC_adjacency_matrix, delimiter=",")
+ print "Done!"
 
 
 
@@ -246,4 +255,50 @@ def createChannelsOfNickGraph(log_directory, output_directory, startingDate, sta
     UU_adjacency_matrix[nicks_hash.index(user1)][nicks_hash.index(user2)] += no_of_common_channels_day
     UU_adjacency_matrix[nicks_hash.index(user2)][nicks_hash.index(user1)] += no_of_common_channels_day
 
- print "UU Adj Matrix", UU_adjacency_matrix #user-user matrix
+ # print "UU Adj Matrix", UU_adjacency_matrix #user-user matrix
+ # print "Saving UU Adjacency Matrix"
+ # np.savetxt("/home/rohan/Desktop/UU_adjacency_matrix.csv", UU_adjacency_matrix, delimiter=",")
+ print "Reduced UU Adjacency Matrix will be saved"
+
+ '''
+  We have around 20k users and most of them just visit a channel once, 
+  hence we filter out the top 500 users
+  This inturns reduces the CU and UU matrices
+ '''
+
+ '''
+  calculate top <how_many_top> users
+  this is achieved by taking top users from CU matrix on the basis of the column sum (total number of days active on a channel)
+ '''
+ how_many_top = 500
+
+ #to calculate sum first take the transpose of CU matrix so users in row
+ UC_adjacency_matrix = zip(*CU_adjacency_matrix)
+ sum_for_each_user = []
+
+
+ for user_row in UC_adjacency_matrix:
+  sum_for_each_user.append(sum(user_row))
+
+ #filter out top <how_many_top> indices
+ top_indices = sorted(range(len(sum_for_each_user)), key=lambda i: sum_for_each_user[i], reverse=True)[:how_many_top]
+ indices_to_delete = list(set([i for i in xrange(0, len(nicks_hash))]) - set(top_indices))
+
+ # print len(top_indices), top_indices
+ # print len(indices_to_delete), indices_to_delete
+
+ #update the nick_hash
+ reduced_nick_hash = np.delete(nicks_hash, indices_to_delete)
+
+ #update the CU matrix by deleting particular columns which are not in top_indices
+ reduced_CU_adjacency_matrix = np.delete(CU_adjacency_matrix, indices_to_delete, 1)
+ print "Saving Reduced CU Adjacency Matrix"
+ np.savetxt("/home/rohan/Desktop/reduced_CU_adjacency_matrix.csv", reduced_CU_adjacency_matrix, delimiter=",")
+ print "Done!"
+
+ #update the UU matrix by deleting both columns and rows
+ temp = np.delete(UU_adjacency_matrix, indices_to_delete, 1) #delete columns
+ reduced_UU_adjacency_matrix = np.delete(temp, indices_to_delete, 0) #delete rows
+ print "Saving Reduced UU Adjacency Matrix"
+ np.savetxt("/home/rohan/Desktop/reduced_UU_adjacency_matrix.csv", reduced_UU_adjacency_matrix, delimiter=",")
+ print "Done!"
