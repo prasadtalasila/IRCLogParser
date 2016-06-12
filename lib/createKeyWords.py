@@ -32,11 +32,17 @@ def dataForNick(data, nick, threshold, min_words_spoken):
  total_freq = 0.0
  for freq_tuple in keywords:
   total_freq+=freq_tuple[1]
- selected_keywords = None
+ selected_keywords = []
+ selected_keywords_normal_freq = []
  if total_freq > min_words_spoken:
   if keywords:
    # selected_keywords = [keyword for keyword in keywords if keyword[2] >= threshold]
-   selected_keywords = [keyword[0].encode('ascii', 'ignore') for keyword in keywords if keyword[2] >= threshold]
+   # selected_keywords = [keyword[0].encode('ascii', 'ignore') for keyword in keywords if keyword[2] >= threshold]
+   for keyword in keywords:
+    if keyword[2] >= threshold:
+      selected_keywords.append(keyword[0].encode('ascii', 'ignore'))
+      selected_keywords_normal_freq.append(keyword[2])
+
    if len(selected_keywords) == 0:
     print "No word's normalised score crosses the value of", threshold
     selected_keywords = None
@@ -44,7 +50,7 @@ def dataForNick(data, nick, threshold, min_words_spoken):
    print "No message sent by nick", nick
  else:
   print "Not enough words spoken by", nick, "; spoke" ,int(total_freq), "words only, required", min_words_spoken
- return selected_keywords
+ return (selected_keywords, selected_keywords_normal_freq)
 
 def createKeyWords(log_directory, channel_name, output_directory, startingDate, startingMonth, endingDate, endingMonth):
  
@@ -266,9 +272,10 @@ def createKeyWords(log_directory, channel_name, output_directory, startingDate, 
  # print dataForNick(user_keyword_freq_dict, 'BluesKaj', 0.01)
 
  for data in user_keyword_freq_dict:
-  keywords = dataForNick(user_keyword_freq_dict, data['nick'], 0.01, 100)
+  keywords, normal_scores = dataForNick(user_keyword_freq_dict, data['nick'], 0.01, 100)
   print "Nick:", data['nick']
   print "Keywords with normalised score > 0.01\n", keywords
+  print "Their Normal scores\n", normal_scores
   print "\n"
   if keywords:
    keywords_filtered.append({'nick':data['nick'],'keywords': keywords})
