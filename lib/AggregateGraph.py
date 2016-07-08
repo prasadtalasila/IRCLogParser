@@ -1,11 +1,13 @@
 import os.path
 import re
 import networkx as nx
+from networkx.algorithms.components.connected import connected_components
 import numpy as np
 import matplotlib.pyplot as plt
 import pylab
 import pygraphviz as pygraphviz
 import os
+import sys
 
 def correctLastCharCR(inText):#if the last letter of the nick is '\' replace it by 'CR' for example rohan\ becomes rohanCR to avoid complications in nx because of \
  if(inText[len(inText)-1]=='\\'):
@@ -13,19 +15,51 @@ def correctLastCharCR(inText):#if the last letter of the nick is '\' replace it 
  return inText
 
 
-def createAggregateGraph(log_directory, channel_name, output_directory, startingDate, startingMonth, endingDate, endingMonth):
- nick_same_list=[[] for i in range(5000)]
+def to_graph(l):
+    G = nx.Graph()
+    for part in l:
+        # each sublist is a bunch of nodes
+        G.add_nodes_from(part)
+        # it also imlies a number of edges:
+        G.add_edges_from(to_edges(part))
+    return G
 
- conversations=[[] for i in range(5000)]
+def to_edges(l):
+    """ 
+        treat `l` as a Graph and returns it's edges 
+        to_edges(['a','b','c','d']) -> [(a,b), (b,c),(c,d)]
+    """
+    it = iter(l)
+    last = next(it)
+
+    for current in it:
+        yield last, current
+        last = current    
+
+
+
+
+
+def createAggregateGraph(log_directory, channel_name, output_directory, startingDate, startingMonth, endingDate, endingMonth):
+ 
+ nick_same_list=[[] for i in range(5000)]  #x
+
+ conversations=[[] for i in range(5000)]   #xarr
  for i in xrange(0,5000):
   conversations[i].append(0)
 
  nicks = [] #list of all the nicknames
  aggregate_graph = nx.DiGraph()  #graph with multiple directed edges between clients used 
 
- for folderiterator in range(startingMonth, endingMonth+1):
+ findingNicks_startingDate=1   #all are hardcoded as we need to find all nicks for entire year beforehand itself. Later we can chill out and just use
+ findingNicks_startingMonth=1  #this list throughout our code wherever we want.
+ findingNicks_endingDate=32
+ findingNicks_endingMonth=12
+
+
+ for folderiterator in range(findingNicks_startingMonth, findingNicks_endingMonth+1):
   temp1 = "0" if folderiterator < 10 else ""
-  for fileiterator in range(startingDate if folderiterator == startingMonth else 1, endingDate if folderiterator == endingMonth else 32):
+  for fileiterator in range(findingNicks_startingDate if folderiterator == findingNicks_startingMonth else 1, findingNicks_endingDate if folderiterator == findingNicks_endingMonth else 32):
    temp2 = "0" if fileiterator < 10 else ""
    filePath=log_directory+temp1+str(folderiterator)+"/"+temp2+str(fileiterator)+"/"+channel_name+".txt"   
    if not os.path.exists(filePath):
@@ -54,31 +88,74 @@ def createAggregateGraph(log_directory, channel_name, output_directory, starting
    
    for line in content:
     if(line[0]=='=' and "changed the topic of" not in line):
-     nick1=correctLastCharCR(line[line.find("=")+1:line.find(" is")][3:])
-     nick2=correctLastCharCR(line[line.find("wn as")+1:line.find("\n")][5:])
+     nick1=line[line.find("=")+1:line.find(" is")]
+     nick2=line[line.find("wn as")+1:line.find("\n")]
+     nick1=nick1[3:]
+     nick2=nick2[5:]
+     nick1=correctLastCharCR(nick1)
+     nick2=correctLastCharCR(nick2)
      if nick1 not in nicks:
       nicks.append(nick1)
      if nick2 not in nicks:
       nicks.append(nick2)
     
-   ''' Forming list of lists for avoiding nickname duplicacy '''  
+   
    for line in content:
     if(line[0]=='=' and "changed the topic of" not in line):
-     line1=line[line.find("=")+1:line.find(" is")][3:]
-     line2=line[line.find("wn as")+1:line.find("\n")][5:]
+     line1=line[line.find("=")+1:line.find(" is")]
+     line2=line[line.find("wn as")+1:line.find("\n")]
+     line1=line1[3:]
+     line2=line2[5:]
      line1=correctLastCharCR(line1)
      line2=correctLastCharCR(line2)
      for i in range(5000):
       if line1 in nick_same_list[i] or line2 in nick_same_list[i]:
-       nick_same_list[i].append(line1)
-       nick_same_list[i].append(line2)
-       break
+       if line1 in nick_same_list[i] and line2 not in nick_same_list[i]:
+        nick_same_list[i].append(line2)
+        break
+       if line2 in nick_same_list[i] and line1 not in nick_same_list[i]: 
+        nick_same_list[i].append(line1)
+        break
+       if line2 in nick_same_list[i] and line1 in nick_same_list[i]:
+        break  
       if not nick_same_list[i]:
        nick_same_list[i].append(line1)
        nick_same_list[i].append(line2)
        break
 
-   '''Making relation map between clients'''
+
+ for ni in nicks:
+  for ind in range(5000):
+   if ni in nick_same_list[ind]:
+    break
+   if not nick_same_list[ind]:
+    nick_same_list[ind].append(ni)
+    break
+
+
+
+ G = to_graph(nick_same_list)
+ L = connected_components(G)
+
+ 
+
+ for i in range(1,len(L)+1):
+  L[i-1] = [str(i)]+L[i-1]
+
+
+ for folderiterator in range(startingMonth, endingMonth+1):
+  temp1 = "0" if folderiterator < 10 else ""
+  for fileiterator in range(startingDate if folderiterator == startingMonth else 1, endingDate if folderiterator == endingMonth else 32):
+   temp2 = "0" if fileiterator < 10 else ""
+   filePath=log_directory+temp1+str(folderiterator)+"/"+temp2+str(fileiterator)+"/"+channel_name+".txt"   
+   if not os.path.exists(filePath):
+    if not((folderiterator==2 and (fileiterator ==29 or fileiterator ==30 or fileiterator ==31)) or ((folderiterator==4 or folderiterator==6 or folderiterator==9 or folderiterator==11) and fileiterator==31 )): 
+     print "[Error] Path "+filePath+" doesn't exist"
+    continue 
+   with open(filePath) as f:
+       content = f.readlines() #contents stores all the lines of the file channel_name                             #contents stores all the lines of the file kubunutu-devel   
+
+   print(filePath)
    for line in content:
     flag_comma = 0
     if(line[0] != '=' and "] <" in line and "> " in line):
@@ -86,12 +163,11 @@ def createAggregateGraph(log_directory, channel_name, output_directory, starting
      var=m.group(0)[1:-1]
      var=correctLastCharCR(var)
      for d in range(5000):
-      if var in nick_same_list[d]:
-       nick_sender = nick_same_list[d][0]
+      if ((d < len(L)) and (var in L[d])):  #change nick_same_list to L because L is the main list of all users and nicks now
+       nick_sender = L[d][0]
        break
-      else:
-       nick_sender=var
-
+      
+    
      for i in nicks:
       rec_list=[e.strip() for e in line.split(':')]
       rec_list[1]=rec_list[1][rec_list[1].find(">")+1:len(rec_list[1])]
@@ -105,11 +181,11 @@ def createAggregateGraph(log_directory, channel_name, output_directory, starting
        if(z==i):
         if(var != i):  
          for d in range(5000):
-          if i in nick_same_list[d]:
-           nick_receiver=nick_same_list[d][0]
+          if ((d<len(L)) and (i in L[d])):
+           nick_receiver=L[d][0]
            break
-          else:
-           nick_receiver=i
+           
+   
            
          for r in xrange(0,5000):
           if (nick_sender in conversations[r] and nick_receiver in conversations[r]):
@@ -125,19 +201,19 @@ def createAggregateGraph(log_directory, channel_name, output_directory, starting
       if "," in rec_list[1]: 
        flag_comma = 1
        rec_list_2=[e.strip() for e in rec_list[1].split(',')]
-       for i in xrange(0,len(rec_list_2)):
-        if(rec_list_2[i]):
-         rec_list_2[i] = correctLastCharCR(rec_list_2[i])
+       for ij in xrange(0,len(rec_list_2)):                       #changed variable from i to ij as i has been used above. We are in nested for loop. Same variables name will overlap.
+        if(rec_list_2[ij]):
+         rec_list_2[ij] = correctLastCharCR(rec_list_2[ij])
        for j in rec_list_2:
         if(j==i):
          if(var != i):  
           for d in range(5000):
-           if i in nick_same_list[d]:
-            nick_receiver=nick_same_list[d][0]
+           if i in L[d]:
+            nick_receiver=L[d][0]
             break
-           else:
-            nick_receiver=i
+            
            
+        
           for r in xrange(0,5000):
            if (nick_sender in conversations[r] and nick_receiver in conversations[r]):
             if (nick_sender == conversations[r][1] and nick_receiver == conversations[r][2]):
@@ -150,16 +226,17 @@ def createAggregateGraph(log_directory, channel_name, output_directory, starting
             break
 
       if(flag_comma == 0):
-       rec=line[line.find(">")+1:line.find(", ")][1:]
+       rec=line[line.find(">")+1:line.find(", ")]
+       rec=rec[1:]
        rec = correctLastCharCR(rec) 
        if(rec==i):
         if(var != i):
          for d in range(5000):
-          if i in nick_same_list[d]:
-           nick_receiver=nick_same_list[d][0]
+          if i in L[d]:
+           nick_receiver=L[d][0]
            break
-          else:
-           nick_receiver=i
+           
+          
           
          for r in xrange(0,5000):
           if (nick_sender in conversations[r] and nick_receiver in conversations[r]): 
@@ -172,6 +249,9 @@ def createAggregateGraph(log_directory, channel_name, output_directory, starting
            conversations[r][0]=conversations[r][0]+1
            break
 
+
+   
+
    for index in xrange(0,5000):
     if(len(conversations[index])==3):
      aggregate_graph.add_edge(conversations[index][1],conversations[index][2],weight=conversations[index][0])  
@@ -182,7 +262,7 @@ def createAggregateGraph(log_directory, channel_name, output_directory, starting
  # print(nick_same_list)
  # print("========> conversations")
  # print(conversations)
-
+ 
  for u,v,d in aggregate_graph.edges(data=True):
      d['label'] = d.get('weight','')
 
@@ -190,7 +270,7 @@ def createAggregateGraph(log_directory, channel_name, output_directory, starting
  print "Generating "+output_file
  print "Please wait ...."
 
- A = nx.drawing.nx_agraph.to_agraph(aggregate_graph)
+ A = nx.to_agraph(aggregate_graph)
  A.layout(prog='dot')
  A.draw(output_file)
  print("Done Generating")
