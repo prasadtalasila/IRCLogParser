@@ -39,12 +39,12 @@ def to_edges(l):
 def implementWithIgraphs(log_directory, channel_name, output_directory, startingDate, startingMonth, endingDate, endingMonth):
 
 
- x=[[] for i in range(5000)]
+ nick_same_list=[[] for i in range(5000)]
  nicks = [] #list of all the nicknames
 
- xarr=[[] for i in range(5000)]
+ conversations=[[] for i in range(5000)]
  for i in xrange(0,5000):
-  xarr[i].append(0)
+  conversations[i].append(0)
 
  findingNicks_startingDate=1   #all are hardcoded as we need to find all nicks for entire year beforehand itself. Later we can chill out and just use
  findingNicks_startingMonth=1  #this list throughout our code wherever we want.
@@ -66,7 +66,7 @@ def implementWithIgraphs(log_directory, channel_name, output_directory, starting
  
    print(filePath)
    send_time = [] #list of all the times a user sends a message to another user
-   picks = []
+   nicks_for_the_day = []
    channel= "#kubuntu-devel" #channel name
    
   
@@ -74,14 +74,14 @@ def implementWithIgraphs(log_directory, channel_name, output_directory, starting
    for i in content:
     if(i[0] != '=' and "] <" in i and "> " in i):
      m = re.search(r"\<(.*?)\>", i)
-     if m.group(0) not in picks:                       
-      picks.append(m.group(0))   #used regex to get the string between <> and appended it to the nicks list
+     if m.group(0) not in nicks_for_the_day:                       
+      nicks_for_the_day.append(m.group(0))   #used regex to get the string between <> and appended it to the nicks list
 
 
 
-   for i in xrange(0,len(picks)):
-    if picks[i][1:-1] not in nicks:
-     nicks.append(picks[i][1:-1])     #removed <> from the nicknames
+   for i in xrange(0,len(nicks_for_the_day)):
+    if nicks_for_the_day[i][1:-1] not in nicks:
+     nicks.append(nicks_for_the_day[i][1:-1])     #removed <> from the nicknames
     
    for i in xrange(0,len(nicks)):
     if(nicks[i][len(nicks[i])-1]=='\\'):
@@ -124,18 +124,18 @@ def implementWithIgraphs(log_directory, channel_name, output_directory, starting
       line2=line2[:-1]
       line2=line2 + 'CR'
      for i in range(5000):
-      if line1 in x[i] or line2 in x[i]:
-       if line1 in x[i] and line2 not in x[i]:
-        x[i].append(line2)
+      if line1 in nick_same_list[i] or line2 in nick_same_list[i]:
+       if line1 in nick_same_list[i] and line2 not in nick_same_list[i]:
+        nick_same_list[i].append(line2)
         break
-       if line2 in x[i] and line1 not in x[i]: 
-        x[i].append(line1)
+       if line2 in nick_same_list[i] and line1 not in nick_same_list[i]: 
+        nick_same_list[i].append(line1)
         break
-       if line2 in x[i] and line1 in x[i]:
+       if line2 in nick_same_list[i] and line1 in nick_same_list[i]:
         break  
-      if not x[i]:
-       x[i].append(line1)
-       x[i].append(line2)
+      if not nick_same_list[i]:
+       nick_same_list[i].append(line1)
+       nick_same_list[i].append(line2)
        break
 
 
@@ -144,17 +144,17 @@ def implementWithIgraphs(log_directory, channel_name, output_directory, starting
  #print(x)  
  for ni in nicks:
   for ind in range(5000):
-   if ni in x[ind]:
+   if ni in nick_same_list[ind]:
     break
-   if not x[ind]:
-    x[ind].append(ni)
+   if not nick_same_list[ind]:
+    nick_same_list[ind].append(ni)
     break
 
  #print("*********************x**********************************")
- #print(x)
+ #print(nick_same_list)
 
 
- G = to_graph(x)
+ G = to_graph(nick_same_list)
  L = connected_components(G)
 
  
@@ -189,7 +189,7 @@ def implementWithIgraphs(log_directory, channel_name, output_directory, starting
       var=var + 'CR' 
      for d in range(len(nicks)):
       if var in L[d]:
-       pehla = L[d][0]
+       nick_sender = L[d][0]
        break
       
 
@@ -209,18 +209,18 @@ def implementWithIgraphs(log_directory, channel_name, output_directory, starting
         if(var != i):  
          for d in range(len(nicks)):
           if i in L[d]:
-           second=L[d][0]
+           nick_receiver=L[d][0]
            break
           
          for rt in xrange(0,5000):
-          if (pehla in xarr[rt] and second in xarr[rt]):
-           if (pehla == xarr[rt][1] and second == xarr[rt][2]):
-            xarr[rt][0]=xarr[rt][0]+1
+          if (nick_sender in conversations[rt] and nick_receiver in conversations[rt]):
+           if (nick_sender == conversations[rt][1] and nick_receiver == conversations[rt][2]):
+            conversations[rt][0]=conversations[rt][0]+1
             break
-          if(len(xarr[rt])==1):
-           xarr[rt].append(pehla)
-           xarr[rt].append(second)
-           xarr[rt][0]=xarr[rt][0]+1
+          if(len(conversations[rt])==1):
+           conversations[rt].append(nick_sender)
+           conversations[rt].append(nick_receiver)
+           conversations[rt][0]=conversations[rt][0]+1
            break
        
       if "," in data[1]: 
@@ -236,18 +236,18 @@ def implementWithIgraphs(log_directory, channel_name, output_directory, starting
          if(var != i):   
           for d in range(len(nicks)):
            if i in L[d]:
-            second=L[d][0]
+            nick_receiver=L[d][0]
             break
           
           for rt in xrange(0,5000):
-           if (pehla in xarr[rt] and second in xarr[rt]):
-            if (pehla == xarr[rt][1] and second == xarr[rt][2]):
-             xarr[rt][0]=xarr[rt][0]+1
+           if (nick_sender in conversations[rt] and nick_receiver in conversations[rt]):
+            if (nick_sender == conversations[rt][1] and nick_receiver == conversations[rt][2]):
+             conversations[rt][0]=conversations[rt][0]+1
              break
-           if(len(xarr[rt])==1):
-            xarr[rt].append(pehla)
-            xarr[rt].append(second)
-            xarr[rt][0]=xarr[rt][0]+1
+           if(len(conversations[rt])==1):
+            conversations[rt].append(nick_sender)
+            conversations[rt].append(nick_receiver)
+            conversations[rt][0]=conversations[rt][0]+1
             break
 
       if(flag_comma == 0):
@@ -261,18 +261,18 @@ def implementWithIgraphs(log_directory, channel_name, output_directory, starting
         if(var != i):
          for d in range(len(nicks)):
           if i in L[d]:
-           second=L[d][0]
+           nick_receiver=L[d][0]
            break
          
          for rt in xrange(0,5000):
-          if (pehla in xarr[rt] and second in xarr[rt]): 
-           if (pehla == xarr[rt][1] and second == xarr[rt][2]):
-            xarr[rt][0]=xarr[rt][0]+1
+          if (nick_sender in conversations[rt] and nick_receiver in conversations[rt]): 
+           if (nick_sender == conversations[rt][1] and nick_receiver == conversations[rt][2]):
+            conversations[rt][0]=conversations[rt][0]+1
             break
-          if(len(xarr[rt])==1):
-           xarr[rt].append(pehla)
-           xarr[rt].append(second)
-           xarr[rt][0]=xarr[rt][0]+1
+          if(len(conversations[rt])==1):
+           conversations[rt].append(nick_sender)
+           conversations[rt].append(nick_receiver)
+           conversations[rt][0]=conversations[rt][0]+1
            break
       
   
@@ -283,15 +283,15 @@ def implementWithIgraphs(log_directory, channel_name, output_directory, starting
  vertex1=[]
  edge1=[]
  for fin in xrange(0,5000):
-  if(len(xarr[fin])==3):
-   if(str(xarr[fin][1]) not in vertex1):
-    G.add_vertex(str(xarr[fin][1]))
-    vertex1.append(str(xarr[fin][1]))
-   if(str(xarr[fin][2]) not in vertex1):
-    G.add_vertex(str(xarr[fin][2]))
-    vertex1.append(str(xarr[fin][2]))  #vertex1 contains the vertex names.
-   edge1.append(xarr[fin][0])          #edge1 contains the edge weights
-   G.add_edge(str(xarr[fin][1]),str(xarr[fin][2]))  
+  if(len(conversations[fin])==3):
+   if(str(conversations[fin][1]) not in vertex1):
+    G.add_vertex(str(conversations[fin][1]))
+    vertex1.append(str(conversations[fin][1]))
+   if(str(conversations[fin][2]) not in vertex1):
+    G.add_vertex(str(conversations[fin][2]))
+    vertex1.append(str(conversations[fin][2]))  #vertex1 contains the vertex names.
+   edge1.append(conversations[fin][0])          #edge1 contains the edge weights
+   G.add_edge(str(conversations[fin][1]),str(conversations[fin][2]))  
 
  G.vs['name'] = vertex1
  G.es['label'] = edge1       #Here we add all the labels like color,name,id,weights etc that we want in our graph
@@ -300,7 +300,7 @@ def implementWithIgraphs(log_directory, channel_name, output_directory, starting
  G.es['width'] = edge1
 
  #print(vertex1)
- #print(xarr)
+ #print(conversations)
  #G.write_adjacency("adja_wholeyear.csv",sep=',') #Igraphs has a simple function for printing the adjacency matrix of a graph to a csv file.
  
  G.write_pajek("checkpajek.net")  #writes a graph in pajek format.

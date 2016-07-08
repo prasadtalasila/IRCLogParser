@@ -44,7 +44,7 @@ def to_edges(l):
 def findConvLength_ConvRefreshTime(log_directory, channel_name, output_directory, startingDate, startingMonth, endingDate, endingMonth):
 
  out_dir_msg_num = output_directory+"CL_CRT_Values/"
- x=[[] for i in range(7000)]
+ nick_same_list=[[] for i in range(7000)]
  nicks = [] #list of all the nicknames
  conv = []
  conv_diff = []
@@ -66,7 +66,7 @@ def findConvLength_ConvRefreshTime(log_directory, channel_name, output_directory
      
    
    send_time = [] #list of all the times a user sends a message to another user
-   picks = []
+   nicks_for_the_day = []
    
    print(filePath)   
   
@@ -74,14 +74,14 @@ def findConvLength_ConvRefreshTime(log_directory, channel_name, output_directory
    for i in content:
     if(i[0] != '=' and "] <" in i and "> " in i):
      m = re.search(r"\<(.*?)\>", i)
-     if m.group(0) not in picks:                       
-      picks.append(m.group(0))   #used regex to get the string between <> and appended it to the nicks list
+     if m.group(0) not in nicks_for_the_day:                       
+      nicks_for_the_day.append(m.group(0))   #used regex to get the string between <> and appended it to the nicks list
 
 
 
-   for i in xrange(0,len(picks)):
-    if picks[i][1:-1] not in nicks:
-     nicks.append(picks[i][1:-1])     #removed <> from the nicknames
+   for i in xrange(0,len(nicks_for_the_day)):
+    if nicks_for_the_day[i][1:-1] not in nicks:
+     nicks.append(nicks_for_the_day[i][1:-1])     #removed <> from the nicknames
     
    for i in xrange(0,len(nicks)):
     if(len(nicks[i])!=0):
@@ -123,18 +123,18 @@ def findConvLength_ConvRefreshTime(log_directory, channel_name, output_directory
       line2=correctLastCharCR(line2)
       
      for i in range(7000):
-      if line1 in x[i] or line2 in x[i]:
-       if line1 in x[i] and line2 not in x[i]:
-        x[i].append(line2)
+      if line1 in nick_same_list[i] or line2 in nick_same_list[i]:
+       if line1 in nick_same_list[i] and line2 not in nick_same_list[i]:
+        nick_same_list[i].append(line2)
         break
-       if line2 in x[i] and line1 not in x[i]: 
-        x[i].append(line1)
+       if line2 in nick_same_list[i] and line1 not in nick_same_list[i]: 
+        nick_same_list[i].append(line1)
         break
-       if line2 in x[i] and line1 in x[i]:
+       if line2 in nick_same_list[i] and line1 in nick_same_list[i]:
         break  
-      if not x[i]:
-       x[i].append(line1)
-       x[i].append(line2)
+      if not nick_same_list[i]:
+       nick_same_list[i].append(line1)
+       nick_same_list[i].append(line2)
        break
 
 
@@ -143,15 +143,15 @@ def findConvLength_ConvRefreshTime(log_directory, channel_name, output_directory
 
  for ni in nicks:
   for ind in range(7000):
-   if ni in x[ind]:
+   if ni in nick_same_list[ind]:
     break
-   if not x[ind]:
-    x[ind].append(ni)
+   if not nick_same_list[ind]:
+    nick_same_list[ind].append(ni)
     break
 
 
 
- G = to_graph(x)
+ G = to_graph(nick_same_list)
  L = connected_components(G)
 
  
@@ -162,7 +162,7 @@ def findConvLength_ConvRefreshTime(log_directory, channel_name, output_directory
  # We use connected components algorithm to group all those nick clusters that have atleast one nick common in their clusters. So e.g. 
  #Cluster 1- nick1,nick2,nick3,nick4(some nicks of a user) #Cluster 2 -nick5,nick6,nick2,nick7. Then we would get - nick1,nick2,nick3,nick4,nick5,nick6,nick7 and we can safely assume they belong to the same user.
 
- xarr=[[] for i in range(10000)] #This might need to be incremented from 10000 if we have more users. Same logic as the above 7000 one. Applies to all the other codes too.
+ conversations=[[] for i in range(10000)] #This might need to be incremented from 10000 if we have more users. Same logic as the above 7000 one. Applies to all the other codes too.
  graph_to_sir = []                ## I would advice on using a different data structure which does not have an upper bound like we do in arrays. 
  graph_x_axis = []
  graph_y_axis = []
@@ -214,7 +214,7 @@ def findConvLength_ConvRefreshTime(log_directory, channel_name, output_directory
      var=correctLastCharCR(var)
      for d in range(len(nicks)):                              #E.g. if names are rohan1,rohan2,rohan3...,then var will store rohan1.
       if((d < len(L)) and (var in L[d])):
-       pehla = L[d][0]
+       nick_sender = L[d][0]
        break
       
 
@@ -234,17 +234,17 @@ def findConvLength_ConvRefreshTime(log_directory, channel_name, output_directory
         if(var != i): 	
          for d in range(len(nicks)):
           if((d<len(L)) and (i in L[d])):
-       	   second=L[d][0]
+       	   nick_receiver=L[d][0]
        	   break
           
          for rt in xrange(0,10000):
-          if (pehla in xarr[rt] and second in xarr[rt]):
-           xarr[rt].append(24*60*dateadd + int(line[1:6][0:2])*60+int(line[1:6][3:5])) # We add response times in xarr for every conversation 
+          if (nick_sender in conversations[rt] and nick_receiver in conversations[rt]):
+           conversations[rt].append(24*60*dateadd + int(line[1:6][0:2])*60+int(line[1:6][3:5])) # We add response times in conversations for every conversation 
            break                                                                     #between userA and userB. If they havent already conversed 
-          if(len(xarr[rt])==0):                                            #before than add time at a new array index and later append to it.
-           xarr[rt].append(pehla)
-           xarr[rt].append(second)
-           xarr[rt].append(24*60*dateadd + int(line[1:6][0:2])*60+int(line[1:6][3:5]))
+          if(len(conversations[rt])==0):                                            #before than add time at a new array index and later append to it.
+           conversations[rt].append(nick_sender)
+           conversations[rt].append(nick_receiver)
+           conversations[rt].append(24*60*dateadd + int(line[1:6][0:2])*60+int(line[1:6][3:5]))
            break
        
       if "," in data[1]: 
@@ -260,17 +260,17 @@ def findConvLength_ConvRefreshTime(log_directory, channel_name, output_directory
          if(var != i): 	
           for d in range(len(nicks)):
            if((d<len(L)) and (i in L[d])):   #Lines 212-255 consider all cases in which messages are addressed such as - nick1:nick2 or nick1,nick2,
-       	    second=L[d][0]                   #or nick1,nick2:
+       	    nick_receiver=L[d][0]                   #or nick1,nick2:
        	    break
        	  
           for rt in xrange(0,10000):
-           if (pehla in xarr[rt] and second in xarr[rt]):
-            xarr[rt].append(24*60*dateadd + int(line[1:6][0:2])*60+int(line[1:6][3:5])) 
+           if (nick_sender in conversations[rt] and nick_receiver in conversations[rt]):
+            conversations[rt].append(24*60*dateadd + int(line[1:6][0:2])*60+int(line[1:6][3:5])) 
             break
-           if(len(xarr[rt])==0):
-            xarr[rt].append(pehla)
-            xarr[rt].append(second)
-            xarr[rt].append(24*60*dateadd + int(line[1:6][0:2])*60+int(line[1:6][3:5]))
+           if(len(conversations[rt])==0):
+            conversations[rt].append(nick_sender)
+            conversations[rt].append(nick_receiver)
+            conversations[rt].append(24*60*dateadd + int(line[1:6][0:2])*60+int(line[1:6][3:5]))
             break
 
       if(flag_comma == 0):
@@ -284,40 +284,40 @@ def findConvLength_ConvRefreshTime(log_directory, channel_name, output_directory
         if(var != i):
          for d in range(len(nicks)):
           if ((d<len(L)) and (i in L[d])):
-       	   second=L[d][0]
+       	   nick_receiver=L[d][0]
        	   break
        	 
          for rt in xrange(0,10000):
-          if (pehla in xarr[rt] and second in xarr[rt]):	
-           xarr[rt].append(24*60*dateadd + int(line[1:6][0:2])*60+int(line[1:6][3:5]))
+          if (nick_sender in conversations[rt] and nick_receiver in conversations[rt]):	
+           conversations[rt].append(24*60*dateadd + int(line[1:6][0:2])*60+int(line[1:6][3:5]))
            break
-          if(len(xarr[rt])==0):
-           xarr[rt].append(pehla)
-           xarr[rt].append(second)
-           xarr[rt].append(24*60*dateadd + int(line[1:6][0:2])*60+int(line[1:6][3:5]))
+          if(len(conversations[rt])==0):
+           conversations[rt].append(nick_sender)
+           conversations[rt].append(nick_receiver)
+           conversations[rt].append(24*60*dateadd + int(line[1:6][0:2])*60+int(line[1:6][3:5]))
            break
   
-#Lines 212-290 consider all cases in which messages are addressed as - (nick1:nick2 or nick1,nick2 or nick1,nick2:) and stores their response times in xarr. xarr[i] contains all the response times between userA and userB throughout an entire year.
+#Lines 212-290 consider all cases in which messages are addressed as - (nick1:nick2 or nick1,nick2 or nick1,nick2:) and stores their response times in conversations. conversations[i] contains all the response times between userA and userB throughout an entire year.
 
 
 
- for ty in range(0,len(xarr)):       #Lines 295-297 remove the first two elements from every xarr[i] as they are the UIDS of sender and receiver respectively(and not RTs) 
-  if(len(xarr[ty])!=0):              # response times are calculated starting from index 2. So now we have all the response times in xarr.
-   del xarr[ty][0:2]
+ for ty in range(0,len(conversations)):       #Lines 295-297 remove the first two elements from every conversations[i] as they are the UIDS of sender and receiver respectively(and not RTs) 
+  if(len(conversations[ty])!=0):              # response times are calculated starting from index 2. So now we have all the response times in conversations.
+   del conversations[ty][0:2]
 
- for fg in range(0,len(xarr)):
-  if(len(xarr[fg])!=0):
-   first=xarr[fg][0]
-   for gh in range(1,len(xarr[fg])):
-     if(xarr[fg][gh]-xarr[fg][gh-1]>9):
+ for fg in range(0,len(conversations)):
+  if(len(conversations[fg])!=0):
+   first=conversations[fg][0]
+   for gh in range(1,len(conversations[fg])):
+     if(conversations[fg][gh]-conversations[fg][gh-1]>9):
      
-      conv.append(xarr[fg][gh-1]-first)    #We are recording the conversation length in conv and CRT in conv_diff. Here 9 is the average response
+      conv.append(conversations[fg][gh-1]-first)    #We are recording the conversation length in conv and CRT in conv_diff. Here 9 is the average response
                                           #time we have already found before(see parser-RT.py). For every channel this value differs and would have to be changed in the code.
-      conv_diff.append(xarr[fg][gh]-xarr[fg][gh-1])
-      first=xarr[fg][gh]
-     if(gh==(len(xarr[fg])-1)):
+      conv_diff.append(conversations[fg][gh]-conversations[fg][gh-1])
+      first=conversations[fg][gh]
+     if(gh==(len(conversations[fg])-1)):
      
-      conv.append(xarr[fg][gh]-first)
+      conv.append(conversations[fg][gh]-first)
      
       break
 
@@ -334,56 +334,56 @@ def findConvLength_ConvRefreshTime(log_directory, channel_name, output_directory
 #To plot CDF we store the CL and CRT values and their number of occurences as shown above.
 
 
- rowt = zip(graphx1,graphy1)
+ row_cl = zip(graphx1,graphy1)
  filename1= out_dir_msg_num+channel_name+"_CL.csv"
  with open(filename1, 'a+') as myfile:
      wr = csv.writer(myfile, quoting=csv.QUOTE_ALL)
-     for row in rowt:
+     for row in row_cl:
       wr.writerow(row)
 
 
 
 
- roww = zip(graphx2,graphy2)
+ row_crt = zip(graphx2,graphy2)
  filename2= out_dir_msg_num+channel_name+"_CRT.csv"
  with open(filename2, 'a+') as myfile:
      wr = csv.writer(myfile, quoting=csv.QUOTE_ALL)
-     for row in roww:
+     for row in row_crt:
       wr.writerow(row)
 
 
 #These values are then written to conv_length and conv_diff csv files.
 
 #The below commented out code is for finding the RT(the 9 value which we used above for finding CRT and CL.) #Refer to parser-RT.py. Of note is that for finding RT
-#we do not append xarr like we did above. Instead we append the time in the format (eg. 10:15) straight from the log file(value between [] when the message is sent).
+#we do not append conversations like we did above. Instead we append the time in the format (eg. 10:15) straight from the log file(value between [] when the message is sent).
 '''
   for ing in range(0,100):
-   if(len(xarr[ing])!=0):                 #These lines convert the time from 10:15 format to 615 seconds format. This is simpler for subtraction
-   	for ing1 in range(2,len(xarr[ing])):
-   	 time_in_min[ing].append(int(xarr[ing][ing1][0:2])*60+int(xarr[ing][ing1][3:5]))
+   if(len(conversations[ing])!=0):                 #These lines convert the time from 10:15 format to 615 seconds format. This is simpler for subtraction
+   	for ing1 in range(2,len(conversations[ing])):
+   	 time_in_min[ing].append(int(conversations[ing][ing1][0:2])*60+int(conversations[ing][ing1][3:5]))
    
    
   for index in range(0,100):
-   if(len(xarr[index])!=0):             #These lines subtract the consecutive time values to get the response times for a conversation.
-    for index1 in range(2,len(xarr[index])-1):
-     xarr[index][index1]=(int(xarr[index][index1+1][0:2])*60+int(xarr[index][index1+1][3:5])) - (int(xarr[index][index1][0:2])*60+int(xarr[index][index1][3:5]))
+   if(len(conversations[index])!=0):             #These lines subtract the consecutive time values to get the response times for a conversation.
+    for index1 in range(2,len(conversations[index])-1):
+     conversations[index][index1]=(int(conversations[index][index1+1][0:2])*60+int(conversations[index][index1+1][3:5])) - (int(conversations[index][index1][0:2])*60+int(conversations[index][index1][3:5]))
  
 
   
-  for index in range(0,100):        #if there are only 3 elements in xarr[i] -uid1,uid2,time, then we make convert time to seconds format.
-   if(len(xarr[index])!=0): 
-    if(len(xarr[index])==3):                
-     xarr[index][2] = int(xarr[index][2][0:2])*60+int(xarr[index][2][3:5])     
+  for index in range(0,100):        #if there are only 3 elements in conversations[i] -uid1,uid2,time, then we make convert time to seconds format.
+   if(len(conversations[index])!=0): 
+    if(len(conversations[index])==3):                
+     conversations[index][2] = int(conversations[index][2][0:2])*60+int(conversations[index][2][3:5])     
     else: 
-     del xarr[index][-1]             #else we delete the last element from every xarr[i] since we dont need it after subtraction operation.
+     del conversations[index][-1]             #else we delete the last element from every conversations[i] since we dont need it after subtraction operation.
                                       #i.e we remove xi as x(i)-x(i-1) has already been recorded at i-1 index.
-  print(xarr) 
+  print(conversations) 
   
 
   for index in range(0,100):
-   if(len(xarr[index])!=0):
-    for index1 in range(2,len(xarr[index])):        #we append all values after subtraction operation without the UIDs. Thats why second for
-     totalmeanstd_list.append(xarr[index][index1])  # loop starts with 2. 0 and 1 index are UIDs. Values are appended to totalmean_std.
+   if(len(conversations[index])!=0):
+    for index1 in range(2,len(conversations[index])):        #we append all values after subtraction operation without the UIDs. Thats why second for
+     totalmeanstd_list.append(conversations[index][index1])  # loop starts with 2. 0 and 1 index are UIDs. Values are appended to totalmean_std.
 
   if(len(totalmeanstd_list)!=0):  
 
@@ -435,11 +435,11 @@ def findConvLength_ConvRefreshTime(log_directory, channel_name, output_directory
   
   
   for index in range(0,100):
-   if(len(xarr[index])!=0):
-    for index1 in range(2,len(xarr[index])):   #Again we are appending mean and std values for RTs of a conversation between two users.
-     meanstd_list.append(xarr[index][index1])   #This time appending to xarr.
-    xarr[index].append(numpy.mean(meanstd_list))
-    xarr[index].append(numpy.mean(meanstd_list)+(2*numpy.std(meanstd_list)))
+   if(len(conversations[index])!=0):
+    for index1 in range(2,len(conversations[index])):   #Again we are appending mean and std values for RTs of a conversation between two users.
+     meanstd_list.append(conversations[index][index1])   #This time appending to conversations.
+    conversations[index].append(numpy.mean(meanstd_list))
+    conversations[index].append(numpy.mean(meanstd_list)+(2*numpy.std(meanstd_list)))
     meanstd_list[:] = []
 
   #Ignore the part below this. Its wrong.

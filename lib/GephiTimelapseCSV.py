@@ -85,7 +85,7 @@ def createGephiTimelapseCSV(log_directory, channel_name, output_directory, start
  sum=0  #ignore this 
 
 
- x=[[] for i in range(5000)]
+ nick_same_list=[[] for i in range(5000)]
 
  nicks = [] #list of all the nicknames
 
@@ -108,7 +108,7 @@ def createGephiTimelapseCSV(log_directory, channel_name, output_directory, start
        content = f.readlines() #contents stores all the lines of the file channel_name                             #contents stores all the lines of the file kubunutu-devel   
  
    send_time = [] #list of all the times a user sends a message to another user
-   picks = []
+   nicks_for_the_day = []
    
    print(filePath+ "For Nicks")
   
@@ -116,14 +116,14 @@ def createGephiTimelapseCSV(log_directory, channel_name, output_directory, start
    for i in content:
     if(i[0] != '=' and "] <" in i and "> " in i):
      m = re.search(r"\<(.*?)\>", i)
-     if m.group(0) not in picks:                       
-      picks.append(m.group(0))   #used regex to get the string between <> and appended it to the nicks list
+     if m.group(0) not in nicks_for_the_day:                       
+      nicks_for_the_day.append(m.group(0))   #used regex to get the string between <> and appended it to the nicks list
 
 
 
-   for i in xrange(0,len(picks)):
-    if picks[i][1:-1] not in nicks:
-     nicks.append(picks[i][1:-1])     #removed <> from the nicknames
+   for i in xrange(0,len(nicks_for_the_day)):
+    if nicks_for_the_day[i][1:-1] not in nicks:
+     nicks.append(nicks_for_the_day[i][1:-1])     #removed <> from the nicknames
     
    for i in xrange(0,len(nicks)):
     if(nicks[i] and nicks[i][len(nicks[i])-1]=='\\'):
@@ -166,18 +166,18 @@ def createGephiTimelapseCSV(log_directory, channel_name, output_directory, start
       line2=line2[:-1]
       line2=line2 + 'CR'
      for i in range(5000):
-      if line1 in x[i] or line2 in x[i]:
-       if line1 in x[i] and line2 not in x[i]:
-        x[i].append(line2)
+      if line1 in nick_same_list[i] or line2 in nick_same_list[i]:
+       if line1 in nick_same_list[i] and line2 not in nick_same_list[i]:
+        nick_same_list[i].append(line2)
         break
-       if line2 in x[i] and line1 not in x[i]: 
-        x[i].append(line1)
+       if line2 in nick_same_list[i] and line1 not in nick_same_list[i]: 
+        nick_same_list[i].append(line1)
         break
-       if line2 in x[i] and line1 in x[i]:
+       if line2 in nick_same_list[i] and line1 in nick_same_list[i]:
         break  
-      if not x[i]:
-       x[i].append(line1)
-       x[i].append(line2)
+      if not nick_same_list[i]:
+       nick_same_list[i].append(line1)
+       nick_same_list[i].append(line2)
        break
 
 
@@ -186,17 +186,17 @@ def createGephiTimelapseCSV(log_directory, channel_name, output_directory, start
  #print(x)  
  for ni in nicks:
   for ind in range(5000):
-   if ni in x[ind]:
+   if ni in nick_same_list[ind]:
     break
-   if not x[ind]:
-    x[ind].append(ni)
+   if not nick_same_list[ind]:
+    nick_same_list[ind].append(ni)
     break
 
  #print("*********************x**********************************")
- #print(x)
+ #print(nick_same_list)
 
 
- G = to_graph(x)
+ G = to_graph(nick_same_list)
  L = connected_components(G)
 
 
@@ -224,7 +224,7 @@ def createGephiTimelapseCSV(log_directory, channel_name, output_directory, start
    with open(filePath) as f:
        content = f.readlines() #contents stores all the lines of the file channel_name                             #contents stores all the lines of the file kubunutu-devel   
    createvar = createvar + 1
-   picks_again = []
+   nicks_for_the_day_2 = []
    print(filePath+ "For Nodes")
    
   
@@ -232,11 +232,11 @@ def createGephiTimelapseCSV(log_directory, channel_name, output_directory, start
    for il in content:
     if(il[0] != '=' and "] <" in il and "> " in il):
      m = re.search(r"\<(.*?)\>", il)
-     if m.group(0) not in picks_again:                       
-      picks_again.append(m.group(0))   #used regex to get the string between <> and appended it to the nicks list
+     if m.group(0) not in nicks_for_the_day_2:                       
+      nicks_for_the_day_2.append(m.group(0))   #used regex to get the string between <> and appended it to the nicks list
    
-   #print(picks_again)
-   for nx in picks_again:
+   
+   for nx in nicks_for_the_day_2:
     for dk in range(len(nicks)):
      if (dk<len(L) and nx[1:-1] in L[dk]):
       col1.append(str(L[dk][0]))
@@ -288,7 +288,7 @@ def createGephiTimelapseCSV(log_directory, channel_name, output_directory, start
       var=var + 'CR' 
      for d in range(len(nicks)):
       if (d<len(L) and var in L[d]):
-       pehla = L[d][0]
+       nick_sender = L[d][0]
        break
       
 
@@ -308,21 +308,21 @@ def createGephiTimelapseCSV(log_directory, channel_name, output_directory, start
         if(var != i): 	
          for d in range(len(nicks)):
           if i in L[d]:
-       	   second=L[d][0]
+       	   nick_receiver=L[d][0]
        	   break
-         col_edge1.append(pehla)
-         col_edge2.append(second)			#We are going to add all these columns in a csv file for Gephi's use.
+         col_edge1.append(nick_sender)
+         col_edge2.append(nick_receiver)			#We are going to add all these columns in a csv file for Gephi's use.
          col_edge3.append("Directed")
          col_edge4.append(1.0)
          col_edge5.append(today1[createvar_used]+" "+line[1:6]+":00")
          col_edge6.append(today2[createvar_used])
          sum=sum+1
 
-  #       G1.add_edge(pehla,second,weight=line[1:6])
-         if pehla not in nickplots:
-          nickplots.append(pehla)	 
-         if second not in nickplots:	#Right time to append to nickplots.
-          nickplots.append(second) 
+  #       G1.add_edge(nick_sender,nick_receiver,weight=line[1:6])
+         if nick_sender not in nickplots:
+          nickplots.append(nick_sender)	 
+         if nick_receiver not in nickplots:	#Right time to append to nickplots.
+          nickplots.append(nick_receiver) 
        
       if "," in data[1]: 
        flag_comma = 1
@@ -337,20 +337,20 @@ def createGephiTimelapseCSV(log_directory, channel_name, output_directory, start
          if(var != i): 	
           for d in range(len(nicks)):
            if i in L[d]:
-       	    second=L[d][0]
+       	    nick_receiver=L[d][0]
        	    break
-          col_edge1.append(pehla)
-          col_edge2.append(second)
+          col_edge1.append(nick_sender)
+          col_edge2.append(nick_receiver)
           col_edge3.append("Directed")
           col_edge4.append(1.0)
           col_edge5.append(today1[createvar_used]+" "+line[1:6]+":00")
           col_edge6.append(today2[createvar_used])           	  
           sum=sum+1
-   #       G1.add_edge(pehla,second,weight=line[1:6])	 
-          if pehla not in nickplots:
-           nickplots.append(pehla)   
-          if second not in nickplots:
-           nickplots.append(second) 
+   #       G1.add_edge(nick_sender,nick_receiver,weight=line[1:6])	 
+          if nick_sender not in nickplots:
+           nickplots.append(nick_sender)   
+          if nick_receiver not in nickplots:
+           nickplots.append(nick_receiver) 
 
       if(flag_comma == 0):
        search2=line[line.find(">")+1:line.find(", ")] 
@@ -363,27 +363,27 @@ def createGephiTimelapseCSV(log_directory, channel_name, output_directory, start
         if(var != i):
          for d in range(len(nicks)):
           if i in L[d]:
-       	   second=L[d][0]
+       	   nick_receiver=L[d][0]
        	   break
-       	 col_edge1.append(pehla)
-         col_edge2.append(second)
+       	 col_edge1.append(nick_sender)
+         col_edge2.append(nick_receiver)
          col_edge3.append("Directed")
          col_edge4.append(1.0)
          col_edge5.append(today1[createvar_used]+" "+line[1:6]+":00")
          col_edge6.append(today2[createvar_used]) 
          sum=sum+1
-    #     G1.add_edge(pehla,second,weight=line[1:6])	 
-         if pehla not in nickplots:
-          nickplots.append(pehla)   
-         if second not in nickplots:
-          nickplots.append(second) 
+    #     G1.add_edge(nick_sender,nick_receiver,weight=line[1:6])	 
+         if nick_sender not in nickplots:
+          nickplots.append(nick_sender)   
+         if nick_receiver not in nickplots:
+          nickplots.append(nick_receiver) 
       
   
   
- bitsfc = zip(col_edge1,col_edge2,col_edge3,col_edge4,col_edge5,col_edge6)   
+ edge_rows = zip(col_edge1,col_edge2,col_edge3,col_edge4,col_edge5,col_edge6)   
  with open('/home/dhruvie/LOP/edgesgephi_unchained.csv', 'a+') as myfile:
      wr = csv.writer(myfile, quoting=csv.QUOTE_ALL)
-     for rz in bitsfc:
+     for rz in edge_rows:
       wr.writerow(rz)  
 
 

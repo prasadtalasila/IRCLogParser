@@ -43,7 +43,7 @@ def to_edges(l):
 def findResponseTime(log_directory, channel_name, output_directory, startingDate, startingMonth, endingDate, endingMonth):
 
  out_dir_msg_num = output_directory+"RT_Values/"
- x=[[] for i in range(7000)]
+ nick_same_list=[[] for i in range(7000)]
  nicks = [] #list of all the nicknames
  conv = []
  conv_diff = []
@@ -65,7 +65,7 @@ def findResponseTime(log_directory, channel_name, output_directory, startingDate
      
    
    send_time = [] #list of all the times a user sends a message to another user
-   picks = []
+   nicks_for_the_day = []
    
    print(filePath)   
   
@@ -73,14 +73,14 @@ def findResponseTime(log_directory, channel_name, output_directory, startingDate
    for i in content:
     if(i[0] != '=' and "] <" in i and "> " in i):
      m = re.search(r"\<(.*?)\>", i)
-     if m.group(0) not in picks:                       
-      picks.append(m.group(0))   #used regex to get the string between <> and appended it to the nicks list
+     if m.group(0) not in nicks_for_the_day:                       
+      nicks_for_the_day.append(m.group(0))   #used regex to get the string between <> and appended it to the nicks list
 
 
 
-   for i in xrange(0,len(picks)):
-    if picks[i][1:-1] not in nicks:
-     nicks.append(picks[i][1:-1])     #removed <> from the nicknames
+   for i in xrange(0,len(nicks_for_the_day)):
+    if nicks_for_the_day[i][1:-1] not in nicks:
+     nicks.append(nicks_for_the_day[i][1:-1])     #removed <> from the nicknames
     
    for i in xrange(0,len(nicks)):
     if(len(nicks[i])!=0):
@@ -122,18 +122,18 @@ def findResponseTime(log_directory, channel_name, output_directory, startingDate
       line2=correctLastCharCR(line2)
       
      for i in range(7000):
-      if line1 in x[i] or line2 in x[i]:
-       if line1 in x[i] and line2 not in x[i]:
-        x[i].append(line2)
+      if line1 in nick_same_list[i] or line2 in nick_same_list[i]:
+       if line1 in nick_same_list[i] and line2 not in nick_same_list[i]:
+        nick_same_list[i].append(line2)
         break
-       if line2 in x[i] and line1 not in x[i]: 
-        x[i].append(line1)
+       if line2 in nick_same_list[i] and line1 not in nick_same_list[i]: 
+        nick_same_list[i].append(line1)
         break
-       if line2 in x[i] and line1 in x[i]:
+       if line2 in nick_same_list[i] and line1 in nick_same_list[i]:
         break  
-      if not x[i]:
-       x[i].append(line1)
-       x[i].append(line2)
+      if not nick_same_list[i]:
+       nick_same_list[i].append(line1)
+       nick_same_list[i].append(line2)
        break
 
 
@@ -142,15 +142,15 @@ def findResponseTime(log_directory, channel_name, output_directory, startingDate
 
  for ni in nicks:
   for ind in range(7000):
-   if ni in x[ind]:
+   if ni in nick_same_list[ind]:
     break
-   if not x[ind]:
-    x[ind].append(ni)
+   if not nick_same_list[ind]:
+    nick_same_list[ind].append(ni)
     break
 
 
 
- G = to_graph(x)
+ G = to_graph(nick_same_list)
  L = connected_components(G)
 
  
@@ -191,8 +191,8 @@ def findResponseTime(log_directory, channel_name, output_directory, startingDate
    
    print(filePath)
 
-   xarr=[[] for i in range(200)]   
-  
+   conversations=[[] for i in range(200)]   
+
   
 
  #code for making relation map between clients
@@ -209,7 +209,7 @@ def findResponseTime(log_directory, channel_name, output_directory, startingDate
      var=correctLastCharCR(var)
      for d in range(len(nicks)):
       if((d < len(L)) and (var in L[d])):
-       pehla = L[d][0]
+       nick_sender = L[d][0]
        break
       
 
@@ -228,17 +228,17 @@ def findResponseTime(log_directory, channel_name, output_directory, startingDate
         if(var != i):  
          for d in range(len(nicks)):
           if((d<len(L)) and (i in L[d])):
-           second=L[d][0]
+           nick_receiver=L[d][0]
            break
           
          for rt in xrange(0,200):
-          if (pehla in xarr[rt] and second in xarr[rt]):
-           xarr[rt].append(line[1:6])
+          if (nick_sender in conversations[rt] and nick_receiver in conversations[rt]):
+           conversations[rt].append(line[1:6])
            break
-          if(len(xarr[rt])==0):
-           xarr[rt].append(pehla)
-           xarr[rt].append(second)
-           xarr[rt].append(line[1:6])
+          if(len(conversations[rt])==0):
+           conversations[rt].append(nick_sender)
+           conversations[rt].append(nick_receiver)
+           conversations[rt].append(line[1:6])
            break
        
       if "," in data[1]: 
@@ -254,17 +254,17 @@ def findResponseTime(log_directory, channel_name, output_directory, startingDate
          if(var != i):   
           for d in range(len(nicks)):
            if((d<len(L)) and (i in L[d])):
-            second=L[d][0]
+            nick_receiver=L[d][0]
             break
           
           for rt in xrange(0,200):
-           if (pehla in xarr[rt] and second in xarr[rt]):
-            xarr[rt].append(line[1:6]) 
+           if (nick_sender in conversations[rt] and nick_receiver in conversations[rt]):
+            conversations[rt].append(line[1:6]) 
             break
-           if(len(xarr[rt])==0):
-            xarr[rt].append(pehla)
-            xarr[rt].append(second)
-            xarr[rt].append(line[1:6])
+           if(len(conversations[rt])==0):
+            conversations[rt].append(nick_sender)
+            conversations[rt].append(nick_receiver)
+            conversations[rt].append(line[1:6])
             break
 
       if(flag_comma == 0):
@@ -276,43 +276,43 @@ def findResponseTime(log_directory, channel_name, output_directory, startingDate
         if(var != i):
          for d in range(len(nicks)):
           if ((d<len(L)) and (i in L[d])):
-           second=L[d][0]
+           nick_receiver=L[d][0]
            break
          
          for rt in xrange(0,200):
-          if (pehla in xarr[rt] and second in xarr[rt]): 
-           xarr[rt].append(line[1:6])
+          if (nick_sender in conversations[rt] and nick_receiver in conversations[rt]): 
+           conversations[rt].append(line[1:6])
            break
-          if(len(xarr[rt])==0):
-           xarr[rt].append(pehla)
-           xarr[rt].append(second)
-           xarr[rt].append(line[1:6])
+          if(len(conversations[rt])==0):
+           conversations[rt].append(nick_sender)
+           conversations[rt].append(nick_receiver)
+           conversations[rt].append(line[1:6])
            break
   
 
 
      
    for index in range(0,200):
-    if(len(xarr[index])!=0):  
-     for index1 in range(2,len(xarr[index])-1):
-      xarr[index][index1]=(int(xarr[index][index1+1][0:2])*60+int(xarr[index][index1+1][3:5])) - (int(xarr[index][index1][0:2])*60+int(xarr[index][index1][3:5]))
+    if(len(conversations[index])!=0):  
+     for index1 in range(2,len(conversations[index])-1):
+      conversations[index][index1]=(int(conversations[index][index1+1][0:2])*60+int(conversations[index][index1+1][3:5])) - (int(conversations[index][index1][0:2])*60+int(conversations[index][index1][3:5]))
  
 
   
    for index in range(0,200):
-    if(len(xarr[index])!=0): 
-     if(len(xarr[index])==3):
-      xarr[index][2] = int(xarr[index][2][0:2])*60+int(xarr[index][2][3:5])     
+    if(len(conversations[index])!=0): 
+     if(len(conversations[index])==3):
+      conversations[index][2] = int(conversations[index][2][0:2])*60+int(conversations[index][2][3:5])     
      else: 
-      del xarr[index][-1]
+      del conversations[index][-1]
 
   
   #Explanation provided in parser-CL+CRT.py
 
    for index in range(0,200):
-    if(len(xarr[index])!=0):
-     for index1 in range(2,len(xarr[index])):
-      totalmeanstd_list.append(xarr[index][index1])
+    if(len(conversations[index])!=0):
+     for index1 in range(2,len(conversations[index])):
+      totalmeanstd_list.append(conversations[index][index1])
 
    if(len(totalmeanstd_list)!=0):
 
@@ -340,17 +340,17 @@ def findResponseTime(log_directory, channel_name, output_directory, startingDate
   
   
    for index in range(0,200):
-    if(len(xarr[index])!=0):
-     for index1 in range(2,len(xarr[index])):
-      meanstd_list.append(xarr[index][index1])
-     xarr[index].append(numpy.mean(meanstd_list))
-     xarr[index].append(numpy.mean(meanstd_list)+(2*numpy.std(meanstd_list)))
+    if(len(conversations[index])!=0):
+     for index1 in range(2,len(conversations[index])):
+      meanstd_list.append(conversations[index][index1])
+     conversations[index].append(numpy.mean(meanstd_list))
+     conversations[index].append(numpy.mean(meanstd_list)+(2*numpy.std(meanstd_list)))
      meanstd_list[:] = []
 
   
 
   #print("Conversation RT Info")
-  #print(xarr)
+  #print(conversations)
  
   #print("Total Response-Time")
   #print(totalmeanstd_list)
