@@ -214,15 +214,15 @@ def findResponseTime(log_directory, channel_name, output_directory, startingDate
       
 
      for i in nicks:
-      data=[e.strip() for e in line.split(':')]
-      data[1]=data[1][data[1].find(">")+1:len(data[1])]
-      data[1]=data[1][1:]
-      if not data[1]:
+      rec_list=[e.strip() for e in line.split(':')]
+      rec_list[1]=rec_list[1][rec_list[1].find(">")+1:len(rec_list[1])]
+      rec_list[1]=rec_list[1][1:]
+      if not rec_list[1]:
        break
-      for ik in xrange(0,len(data)):
-       if(data[ik]):
-        data[ik]=correctLastCharCR(data[ik])
-      for z in data:
+      for ik in xrange(0,len(rec_list)):
+       if(rec_list[ik]):
+        rec_list[ik]=correctLastCharCR(rec_list[ik])
+      for z in rec_list:
        if(z==i):
         send_time.append(line[1:6])
         if(var != i):  
@@ -241,14 +241,14 @@ def findResponseTime(log_directory, channel_name, output_directory, startingDate
            conversations[rt].append(line[1:6])
            break
        
-      if "," in data[1]: 
+      if "," in rec_list[1]: 
        flag_comma = 1
-       data1=[e.strip() for e in data[1].split(',')]
-       for ij in xrange(0,len(data1)):
-        if(data1[ij]):
-         data1[ij]=correctLastCharCR(data1[ij])
+       rec_list_2=[e.strip() for e in rec_list[1].split(',')]
+       for ij in xrange(0,len(rec_list_2)):
+        if(rec_list_2[ij]):
+         rec_list_2[ij]=correctLastCharCR(rec_list_2[ij])
          
-       for j in data1:
+       for j in rec_list_2:
         if(j==i):
          send_time.append(line[1:6])
          if(var != i):   
@@ -268,10 +268,10 @@ def findResponseTime(log_directory, channel_name, output_directory, startingDate
             break
 
       if(flag_comma == 0):
-       search2=line[line.find(">")+1:line.find(", ")] 
-       search2=search2[1:]
-       search2=correctLastCharCR(search2)
-       if(search2==i):
+       rec=line[line.find(">")+1:line.find(", ")] 
+       rec=rec[1:]
+       rec=correctLastCharCR(rec)
+       if(rec==i):
         send_time.append(line[1:6])
         if(var != i):
          for d in range(len(nicks)):

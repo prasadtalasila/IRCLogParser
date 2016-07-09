@@ -14,6 +14,12 @@ from igraph import *
 def remove_values_from_list(the_list, val):
    return [value for value in the_list if value != val]
 
+def correctLastCharCR(inText):#if the last letter of the nick is '\' replace it by 'CR' for example rohan\ becomes rohanCR to avoid complications in nx because of \
+ if(inText[len(inText)-1]=='\\'):
+  inText = inText[:-1]+'CR'
+ return inText
+
+
 def to_graph(l):
     G = nx.Graph()
     for part in l:
@@ -84,9 +90,8 @@ def implementWithIgraphs(log_directory, channel_name, output_directory, starting
      nicks.append(nicks_for_the_day[i][1:-1])     #removed <> from the nicknames
     
    for i in xrange(0,len(nicks)):
-    if(nicks[i][len(nicks[i])-1]=='\\'):
-     nicks[i]=nicks[i][:-1]
-     nicks[i]=nicks[i]+'CR'
+    if(len(nicks[i])!=0):
+      nicks[i]=correctLastCharCR(nicks[i])
 
    for j in content:
     if(j[0]=='=' and "changed the topic of" not in j):
@@ -94,12 +99,11 @@ def implementWithIgraphs(log_directory, channel_name, output_directory, starting
      line2=j[j.find("wn as")+1:j.find("\n")]
      line1=line1[3:]
      line2=line2[5:]
-     if(line1[len(line1)-1]=='\\'):
-      line1=line1[:-1]
-      line1=line1 + 'CR' 
-     if(line2[len(line2)-1]=='\\'):
-      line2=line2[:-1]
-      line2=line2 + 'CR'
+     if(len(line1)!=0):
+      line1=correctLastCharCR(line1)
+      
+     if(len(line2)!=0):
+      line2=correctLastCharCR(line2)
      if line1 not in nicks:
       nicks.append(line1)
      if line2 not in nicks:
@@ -117,12 +121,11 @@ def implementWithIgraphs(log_directory, channel_name, output_directory, starting
      line2=line[line.find("wn as")+1:line.find("\n")]
      line1=line1[3:]
      line2=line2[5:]
-     if(line1[len(line1)-1]=='\\'):
-      line1=line1[:-1]
-      line1=line1 + 'CR' 
-     if(line2[len(line2)-1]=='\\'):
-      line2=line2[:-1]
-      line2=line2 + 'CR'
+     if(len(line1)!=0):
+      line1=correctLastCharCR(line1)
+      
+     if(len(line2)!=0):
+      line2=correctLastCharCR(line2)
      for i in range(5000):
       if line1 in nick_same_list[i] or line2 in nick_same_list[i]:
        if line1 in nick_same_list[i] and line2 not in nick_same_list[i]:
@@ -184,9 +187,7 @@ def implementWithIgraphs(log_directory, channel_name, output_directory, starting
     if(line[0] != '=' and "] <" in line and "> " in line):
      m = re.search(r"\<(.*?)\>", line)
      var = m.group(0)[1:-1]
-     if(var[len(var)-1]=='\\'):
-      var=var[:-1]
-      var=var + 'CR' 
+     var=correctLastCharCR(var)
      for d in range(len(nicks)):
       if var in L[d]:
        nick_sender = L[d][0]
@@ -194,16 +195,15 @@ def implementWithIgraphs(log_directory, channel_name, output_directory, starting
       
 
      for i in nicks:
-      data=[e.strip() for e in line.split(':')]
-      data[1]=data[1][data[1].find(">")+1:len(data[1])]
-      data[1]=data[1][1:]
-      if not data[1]:
+      rec_list=[e.strip() for e in line.split(':')]
+      rec_list[1]=rec_list[1][rec_list[1].find(">")+1:len(rec_list[1])]
+      rec_list[1]=rec_list[1][1:]
+      if not rec_list[1]:
        break
-      for ik in xrange(0,len(data)):
-       if(data[ik] and data[ik][len(data[ik])-1]=='\\'):
-        data[ik]=data[ik][:-1]
-        data[ik]=data[ik] + 'CR'
-      for z in data:
+      for ik in xrange(0,len(rec_list)):
+       if(rec_list[ik]):
+        rec_list[ik]=correctLastCharCR(rec_list[ik])
+      for z in rec_list:
        if(z==i):
         send_time.append(line[1:6])
         if(var != i):  
@@ -223,14 +223,13 @@ def implementWithIgraphs(log_directory, channel_name, output_directory, starting
            conversations[rt][0]=conversations[rt][0]+1
            break
        
-      if "," in data[1]: 
+      if "," in rec_list[1]: 
        flag_comma = 1
-       data1=[e.strip() for e in data[1].split(',')]
-       for ij in xrange(0,len(data1)):
-        if(data1[ij] and data1[ij][len(data1[ij])-1]=='\\'):
-         data1[ij]=data1[ij][:-1]
-         data1[ij]=data1[ij] + 'CR'
-       for j in data1:
+       rec_list_2=[e.strip() for e in rec_list[1].split(',')]
+       for ij in xrange(0,len(rec_list_2)):
+        if(rec_list_2[ij]):
+         rec_list_2[ij]=correctLastCharCR(rec_list_2[ij])
+       for j in rec_list_2:
         if(j==i):
          send_time.append(line[1:6])
          if(var != i):   
@@ -251,12 +250,10 @@ def implementWithIgraphs(log_directory, channel_name, output_directory, starting
             break
 
       if(flag_comma == 0):
-       search2=line[line.find(">")+1:line.find(", ")] 
-       search2=search2[1:]
-       if(search2[len(search2)-1]=='\\'):
-        search2=search2[:-1]
-        search2=search2 + 'CR' 
-       if(search2==i):
+       rec=line[line.find(">")+1:line.find(", ")] 
+       rec=rec[1:]
+       rec=correctLastCharCR(rec)
+       if(rec==i):
         send_time.append(line[1:6])
         if(var != i):
          for d in range(len(nicks)):
