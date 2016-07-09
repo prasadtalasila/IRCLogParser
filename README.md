@@ -15,7 +15,7 @@ Functions presently implemented are:
 - **svdOnKeywords** - uses createKeyWords function and then tries to form clusters by extracting more meaningful keywords. Performs a  Singular Value Decomposition(SVD) after doing a Term Frequency–Inverse Document Frequency(TF-IDF).
 - **findResponseTime** - finds the response time of a message i.e. the best guess for the time at which one can expect a reply for his/her message.
 - **findConvLength_ConvRefreshTime** - Calculates the conversation length that is the length of time for which two users communicate i.e. if a message is not replied to within RT, then it is considered as a part of another conversation.This function also calculates the conversation refresh time. For a pair of users, this is the time when one conversation ends and another one starts.
-- **createGephiTimelapseCSV** - Produces node and edge csv files that contain information relevant for creating a timelapse of user interactions on Gephi. Most importantly, these csv files contain the node/edge appear and disappear times and can be easily imported into Gephi.
+- **createGephiTimelapseCSV** - Produces node and edge csv files that contain information relevant for creating a timelapse of user interactions on Gephi. Most importantly, these csv files contain the node/edge appear and disappear times and can easily be imported into Gephi.
 - **implementWithIgraphs** - This performs various tasks utilizing the python-igraphs library. Tasks include producing graphs, writing to pajek, community detection, calculating modularity,rescaling edge width, assigning graph attributes such as color etc.
 
 `TestingScript.py` demonstrates the use of these funtions.
