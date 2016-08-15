@@ -212,7 +212,7 @@ def createChannelsOfNickGraph(log_directory, output_directory, startingDate, sta
  # print "CU Adj Matrix", CU_adjacency_matrix  #channel-user adj matrix
  # print users_on_channel #used for channel-channel graph
  # print "Saving CU Adjacency Matrix"
- # np.savetxt("/home/rohan/Desktop/CU_adjacency_matrix.csv", CU_adjacency_matrix, delimiter=",")
+ # np.savetxt(output_directory+"/CU_adjacency_matrix_"+str(startingMonth)+"_"+str(endingMonth)+"_.csv", CU_adjacency_matrix, delimiter=",")
  print "Reduced CU Adjacency Matrix will be saved"
 
 
@@ -232,7 +232,7 @@ def createChannelsOfNickGraph(log_directory, output_directory, startingDate, sta
 
  # print "CC Adj Matrix", CC_adjacency_matrix #channel-channel adj matrix
  # print "Saving CC Adjacency Matrix"
- # np.savetxt("/home/rohan/Desktop/CC_adjacency_matrix.csv", CC_adjacency_matrix, delimiter=",")
+ # np.savetxt(output_directory+"/CC_adjacency_matrix_"+str(startingMonth)+"_"+str(endingMonth)+"_.csv", CC_adjacency_matrix, delimiter=",")
  # print "Done!"
  print "Reduced CC Adjacency Matrix will be saved"
 
@@ -257,7 +257,7 @@ def createChannelsOfNickGraph(log_directory, output_directory, startingDate, sta
 
  # print "UU Adj Matrix", UU_adjacency_matrix #user-user matrix
  # print "Saving UU Adjacency Matrix"
- # np.savetxt("/home/rohan/Desktop/UU_adjacency_matrix.csv", UU_adjacency_matrix, delimiter=",")
+ # np.savetxt(output_directory+"/UU_adjacency_matrix_"+str(startingMonth)+"_"+str(endingMonth)+"_.csv", UU_adjacency_matrix, delimiter=",")
  print "Reduced UU Adjacency Matrix will be saved"
 
  '''
@@ -288,7 +288,7 @@ def createChannelsOfNickGraph(log_directory, output_directory, startingDate, sta
  temp_channels = np.delete(CC_adjacency_matrix, indices_to_delete_channels, 1) #delete columns
  reduced_CC_adjacency_matrix = np.delete(temp_channels, indices_to_delete_channels, 0) #delete rows
  print "Saving Reduced CC Adjacency Matrix"
- np.savetxt("/home/rohan/Desktop/reduced_CC_adjacency_matrix.csv", reduced_CC_adjacency_matrix, delimiter=",")
+ np.savetxt(output_directory+"/"+str(startingMonth)+"_"+str(endingMonth)+"reduced_CC_adjacency_matrix.csv", reduced_CC_adjacency_matrix, delimiter=",")
  print "Done!"
 
  #to calculate sum first take the transpose of CU matrix so users in row
@@ -316,12 +316,12 @@ def createChannelsOfNickGraph(log_directory, output_directory, startingDate, sta
  reduced_CU_adjacency_matrix = np.delete(temp_user_channel, indices_to_delete_channels, 0) #delete rows
 
  print "Saving Reduced CU Adjacency Matrix"
- np.savetxt("/home/rohan/Desktop/reduced_CU_adjacency_matrix.csv", reduced_CU_adjacency_matrix, delimiter=",")
+ np.savetxt(output_directory+"/"+str(startingMonth)+"_"+str(endingMonth)+"reduced_CU_adjacency_matrix.csv", reduced_CU_adjacency_matrix, delimiter=",")
  print "Done!"
 
  #update the UU matrix by deleting both columns and rows
  temp_users = np.delete(UU_adjacency_matrix, indices_to_delete_users, 1) #delete columns
  reduced_UU_adjacency_matrix = np.delete(temp_users, indices_to_delete_users, 0) #delete rows
  print "Saving Reduced UU Adjacency Matrix"
- np.savetxt("/home/rohan/Desktop/reduced_UU_adjacency_matrix.csv", reduced_UU_adjacency_matrix, delimiter=",")
+ np.savetxt(output_directory+"/"+str(startingMonth)+"_"+str(endingMonth)+"reduced_UU_adjacency_matrix.csv", reduced_UU_adjacency_matrix, delimiter=",")
  print "Done!"
