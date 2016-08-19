@@ -240,8 +240,8 @@ def degreeNodeNumberCSV(log_directory, channel_name, output_directory, startingD
     nodes_with_TOTAL_degree[degree]+=1
    
 
-   x_axis_log = [math.log10(i) for i in xrange(1, 20)]#ignore degree 0
-   y_axis_log = [math.log10(i) if i>0 else 0 for i in nodes_with_TOTAL_degree[1:20] ]#ignore degree 0
+   x_axis_log = [math.log(i) for i in xrange(1, 20)]#ignore degree 0
+   y_axis_log = [math.log(i) if i>0 else 0 for i in nodes_with_TOTAL_degree[1:20] ]#ignore degree 0
    #plot1
    plt.plot(x_axis_log, y_axis_log) 
    #plot2
@@ -313,8 +313,8 @@ def degreeNodeNumberCSV(log_directory, channel_name, output_directory, startingD
   sum_each_row.append(sum(row[1:]))
 
  # print sum_each_row
- x_axis_log = [math.log10(i) for i in xrange(1, 20)]#ignore degree 0
- y_axis_log = [math.log10(i) if i>0 else 0 for i in sum_each_row[1:20] ]#ignore degree 0
+ x_axis_log = [math.log(i) for i in xrange(1, 20)]#ignore degree 0
+ y_axis_log = [math.log(i) if i>0 else 0 for i in sum_each_row[1:20] ]#ignore degree 0
 
  def func(x, a, b):
   return a - b*x
@@ -335,14 +335,12 @@ def degreeNodeNumberCSV(log_directory, channel_name, output_directory, startingD
  plt.ylabel("log(no_of_nodes)")
 
  plt.xticks(x_axis_log, ['log'+str(i) for i in xrange(1, len(x_axis_log))])
- plt.yticks([math.log10(i) for i in xrange(1, 100)], ['log'+str(i) for i in xrange(1, 100)])
+ plt.yticks([math.log(i) for i in xrange(1, 100)], ['log'+str(i) for i in xrange(1, 100)])
 
  plt.legend(['Data', 'Curve Fit'], loc='upper left')
 
  # Save it in png and svg formats
- plt.savefig(output_dir_degree+"/total_graph.png")
+ plt.savefig(output_dir_degree+"/total_graph_"+str(startingDate)+"-"+str(startingMonth)+"_"+str(endingDate)+"-"+str(endingMonth)+".png")
  plt.close()
 
- print output_dir_degree +"/total_graph.png"
-
-
+ print output_dir_degree +"/total_graph_"+str(startingDate)+"-"+str(startingMonth)+"_"+str(endingDate)+"-"+str(endingMonth)+".png"

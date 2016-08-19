@@ -6,7 +6,7 @@ import lib.AggregateGraph as AG
 import lib.ChannelsOfNickGraph as CNG
 # import lib.createKeyWords as CKW
 # import lib.degreeMessageNumberCSV as DCSV
-# import lib.degreeNodeNumberCSV as DNCSV
+import lib.degreeNodeNumberCSV as DNCSV
 # import lib.svdOnKeywords as SOK
 import lib.ResponseTime as RT
 import lib.ConvL_ConvRT as CL_CRT
