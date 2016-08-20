@@ -10,7 +10,7 @@ import os
 import sys
 
 def correctLastCharCR(inText):#if the last letter of the nick is '\' replace it by 'CR' for example rohan\ becomes rohanCR to avoid complications in nx because of \
- if(inText[len(inText)-1]=='\\'):
+ if(len(inText) > 1 and inText[len(inText)-1]=='\\'):
   inText = inText[:-1]+'CR'
  return inText
 
