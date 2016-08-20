@@ -28,10 +28,9 @@ def degreeNodeNumberCSV(log_directory, channel_name, output_directory, startingD
 
  output_dir_degree = output_directory+"degreeNodeNumberCSV/"
  output_dir_degree_img = output_dir_degree + "individual-images/"
- output_file_out_degree = output_dir_degree + "node_no_out_degree.csv"
- output_file_in_degree = output_dir_degree + "node_no_in_degree.csv"
- output_file_total_degree = output_dir_degree + "node_no_total_degree.csv"
-
+ output_file_out_degree = output_dir_degree + channel_name+"_out_degree"+str(startingDate)+"-"+str(startingMonth)+"_"+str(endingDate)+"-"+str(endingMonth)+".csv"
+ output_file_in_degree = output_dir_degree + channel_name+"_in_degree"+str(startingDate)+"-"+str(startingMonth)+"_"+str(endingDate)+"-"+str(endingMonth)+".csv"
+ output_file_total_degree = output_dir_degree + channel_name+"_total_degree"+str(startingDate)+"-"+str(startingMonth)+"_"+str(endingDate)+"-"+str(endingMonth)+".csv"
 
  print "Creating a new output folder"
  os.system("rm -rf "+output_dir_degree)
@@ -280,10 +279,10 @@ def degreeNodeNumberCSV(log_directory, channel_name, output_directory, startingD
  temp.insert(0, 'out-degree/day>')
 
  nodes_with_OUT_degree_per_day.insert(0, temp)
- column_wise = zip(*nodes_with_OUT_degree_per_day)
+ column_wise_OUT = zip(*nodes_with_OUT_degree_per_day)
  with open(output_file_out_degree, 'wb') as myfile:
   wr = csv.writer(myfile, quoting=csv.QUOTE_ALL)
-  for col in column_wise:
+  for col in column_wise_OUT:
    wr.writerow(col)
 
  temp = ['deg'+str(i) for i in xrange(max_degree_possible)]
@@ -291,10 +290,10 @@ def degreeNodeNumberCSV(log_directory, channel_name, output_directory, startingD
  temp.insert(0, 'in-degree/day>')
 
  nodes_with_IN_degree_per_day.insert(0, temp)
- column_wise = zip(*nodes_with_IN_degree_per_day)
+ column_wise_IN = zip(*nodes_with_IN_degree_per_day)
  with open(output_file_in_degree, 'wb') as myfile2:
   wr = csv.writer(myfile2, quoting=csv.QUOTE_ALL)
-  for col in column_wise:
+  for col in column_wise_IN:
    wr.writerow(col)
 
  temp = ['deg'+str(i) for i in xrange(max_degree_possible)]
@@ -302,45 +301,51 @@ def degreeNodeNumberCSV(log_directory, channel_name, output_directory, startingD
  temp.insert(0, 'degree/day>')
 
  nodes_with_TOTAL_degree_per_day.insert(0, temp)
- column_wise = zip(*nodes_with_TOTAL_degree_per_day)
+ column_wise_TOTAL = zip(*nodes_with_TOTAL_degree_per_day)
  with open(output_file_total_degree, 'wb') as myfile3:
   wr = csv.writer(myfile3, quoting=csv.QUOTE_ALL)
-  for col in column_wise:
+  for col in column_wise_TOTAL:
    wr.writerow(col)
 
+ generateCumulativeGraph("TOTAL", 13, column_wise_TOTAL, channel_name, startingDate, startingMonth, endingDate, endingMonth, output_dir_degree)
+ generateCumulativeGraph("IN", 13, column_wise_IN, channel_name, startingDate, startingMonth, endingDate, endingMonth, output_dir_degree)
+ generateCumulativeGraph("OUT", 13, column_wise_OUT, channel_name, startingDate, startingMonth, endingDate, endingMonth, output_dir_degree)
+
+
+'''-------------------------------helper function to gen graph-------------------'''
+def generateCumulativeGraph(typeOfDegree, filter_val, column_wise, channel_name, startingDate, startingMonth, endingDate, endingMonth, output_dir_degree):
  sum_each_row = []
  for row in column_wise[3:]: #ignore degree 0 and text, starting from degree 1
   sum_each_row.append(sum(row[1:]))
 
  # print sum_each_row
- x_axis_log = [math.log(i) for i in xrange(1, 20)]#ignore degree 0
- y_axis_log = [math.log(i) if i>0 else 0 for i in sum_each_row[1:20] ]#ignore degree 0
+ x_axis_log = [math.log(i) for i in xrange(1, filter_val)]#ignore degree 0
+ y_axis_log = [math.log(i) if i>0 else 0 for i in sum_each_row[1:filter_val] ]#ignore degree 0
 
- def func(x, a, b):
-  return a - b*x
+ # get x and y vectors
+ x = np.array(x_axis_log)
+ y = np.array(y_axis_log)
  
- parameter, covariance_matrix = curve_fit(func, x_axis_log, y_axis_log)
-
- a,b = parameter
- 
- print a, b
-
- x = np.linspace(min(x_axis_log), max(x_axis_log), 1000)
-
- #plot1
- plt.plot(x_axis_log, y_axis_log, 'rx') 
- #plot2
- plt.plot(x, func(x, *parameter), 'b-', label='fit')
+ #graph config
+ axes = plt.gca()
+ axes.set_xlim([0,3])
+ axes.set_ylim([0,6])
  plt.xlabel("log(degree)")
  plt.ylabel("log(no_of_nodes)")
 
- plt.xticks(x_axis_log, ['log'+str(i) for i in xrange(1, len(x_axis_log))])
- plt.yticks([math.log(i) for i in xrange(1, 100)], ['log'+str(i) for i in xrange(1, 100)])
+ # fit with np.polyfit
+ m, b = np.polyfit(x, y, 1)
 
- plt.legend(['Data', 'Curve Fit'], loc='upper left')
-
- # Save it in png and svg formats
- plt.savefig(output_dir_degree+"/total_graph_"+str(startingDate)+"-"+str(startingMonth)+"_"+str(endingDate)+"-"+str(endingMonth)+".png")
+ plt.plot(x, y, '-')
+ plt.plot(x, m*x + b, '-')
+ plt.legend(['Data', 'Fit'], loc='upper right')
+ plt.savefig(output_dir_degree+"/"+channel_name+"_"+typeOfDegree+"_graph_"+str(startingDate)+"-"+str(startingMonth)+"_"+str(endingDate)+"-"+str(endingMonth)+".png")
  plt.close()
 
- print output_dir_degree +"/total_graph_"+str(startingDate)+"-"+str(startingMonth)+"_"+str(endingDate)+"-"+str(endingMonth)+".png"
+ print b, m
+
+ # # Save it in png and svg formats
+ # plt.savefig(output_dir_degree+"/"+channel_name+"_"+typeOfDegree+"_graph_"+str(startingDate)+"-"+str(startingMonth)+"_"+str(endingDate)+"-"+str(endingMonth)+".png")
+ # plt.close()
+
+ # print output_dir_degree +"/"+channel_name+"_"+typeOfDegree+"_graph_"+str(startingDate)+"-"+str(startingMonth)+"_"+str(endingDate)+"-"+str(endingMonth)+".png"
