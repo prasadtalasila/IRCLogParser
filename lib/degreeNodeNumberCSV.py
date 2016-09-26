@@ -11,6 +11,8 @@ import math
 import numpy as np
 from numpy.random import normal
 from scipy.optimize import curve_fit
+from scipy import stats
+from sklearn.metrics import mean_squared_error
 
 def correctLastCharCR(inText):#if the last letter of the nick is '\' replace it by 'CR' for example rohan\ becomes rohanCR to avoid complications in nx because of \
  if(len(inText) > 1 and inText[len(inText)-1]=='\\'):
@@ -25,24 +27,24 @@ def degreeNodeNumberCSV(log_directory, channel_name, output_directory, startingD
 
  max_degree_possible = 1000
 
- output_dir_degree = output_directory+"degreeNodeNumberCSV/"
- output_dir_degree_img = output_dir_degree + "individual-images/"
- output_file_out_degree = output_dir_degree + channel_name+"_out_degree"+str(startingDate)+"-"+str(startingMonth)+"_"+str(endingDate)+"-"+str(endingMonth)+".csv"
- output_file_in_degree = output_dir_degree + channel_name+"_in_degree"+str(startingDate)+"-"+str(startingMonth)+"_"+str(endingDate)+"-"+str(endingMonth)+".csv"
- output_file_total_degree = output_dir_degree + channel_name+"_total_degree"+str(startingDate)+"-"+str(startingMonth)+"_"+str(endingDate)+"-"+str(endingMonth)+".csv"
+ output_dir_degree = output_directory+"degreeNode/"
+ # output_dir_degree_img = output_dir_degree + "individual-images/"
+ output_file_out_degree = output_dir_degree + channel_name+"_out_degree"+str(startingMonth)+"-"+str(startingDate)+"_"+str(endingMonth)+"-"+str(endingDate)+".csv"
+ output_file_in_degree = output_dir_degree + channel_name+"_in_degree"+str(startingMonth)+"-"+str(startingDate)+"_"+str(endingMonth)+"-"+str(endingDate)+".csv"
+ output_file_total_degree = output_dir_degree + channel_name+"_total_degree"+str(startingMonth)+"-"+str(startingDate)+"_"+str(endingMonth)+"-"+str(endingDate)+".csv"
 
- print "Creating a new output folder"
- os.system("rm -rf "+output_dir_degree)
- os.system("mkdir "+output_dir_degree)
+ # print "Creating a new output folder"
+ # os.system("rm -rf "+output_dir_degree)
+ # os.system("mkdir "+output_dir_degree)
 
- os.system("rm -rf "+output_dir_degree_img)
- os.system("mkdir "+output_dir_degree_img)
+ # os.system("rm -rf "+output_dir_degree_img)
+ # os.system("mkdir "+output_dir_degree_img)
 
- os.system("rm "+output_file_out_degree)
+ # os.system("rm "+output_file_out_degree)
  os.system("touch "+output_file_out_degree)
- os.system("rm "+output_file_in_degree)
+ # os.system("rm "+output_file_in_degree)
  os.system("touch "+output_file_in_degree)
- os.system("rm "+output_file_total_degree)
+ # os.system("rm "+output_file_total_degree)
  os.system("touch "+output_file_total_degree)
 
  for folderiterator in range(startingMonth, endingMonth + 1):
@@ -223,10 +225,10 @@ def degreeNodeNumberCSV(log_directory, channel_name, output_directory, startingD
    nodes_with_IN_degree = [0]*max_degree_possible
    nodes_with_TOTAL_degree = [0]*max_degree_possible
 
-   print msg_num_graph.out_degree(), msg_num_graph.in_degree(), msg_num_graph.degree()
-   print msg_num_graph.out_degree().values()
-   print msg_num_graph.in_degree().values()
-   print msg_num_graph.degree().values()
+   # print msg_num_graph.out_degree(), msg_num_graph.in_degree(), msg_num_graph.degree()
+   # print msg_num_graph.out_degree().values()
+   # print msg_num_graph.in_degree().values()
+   # print msg_num_graph.degree().values()
 
    for degree in msg_num_graph.out_degree().values():
     nodes_with_OUT_degree[degree]+=1
@@ -253,10 +255,10 @@ def degreeNodeNumberCSV(log_directory, channel_name, output_directory, startingD
    plt.legend(['Required', 'y = x'], loc='upper left')
 
    # Save it in png and svg formats
-   plt.savefig(output_dir_degree_img+"/total_out_degree"+str(folderiterator)+"-"+str(fileiterator)+".png")
+   # plt.savefig(output_dir_degree_img+"/total_out_degree"+str(folderiterator)+"-"+str(fileiterator)+".png")
    plt.close()
 
-   print "\n"
+   # print "\n"
    nodes_with_OUT_degree.insert(0, sum(nodes_with_OUT_degree))
    nodes_with_OUT_degree.insert(0, str(folderiterator)+"-"+str(fileiterator))
    nodes_with_OUT_degree_per_day.append(nodes_with_OUT_degree)
@@ -306,13 +308,13 @@ def degreeNodeNumberCSV(log_directory, channel_name, output_directory, startingD
   for col in column_wise_TOTAL:
    wr.writerow(col)
 
- generateCumulativeGraph("TOTAL", 13, column_wise_TOTAL, channel_name, startingDate, startingMonth, endingDate, endingMonth, output_dir_degree)
- generateCumulativeGraph("IN", 13, column_wise_IN, channel_name, startingDate, startingMonth, endingDate, endingMonth, output_dir_degree)
- generateCumulativeGraph("OUT", 13, column_wise_OUT, channel_name, startingDate, startingMonth, endingDate, endingMonth, output_dir_degree)
+ # generateFitGraphOverTime("TOTAL", 10, column_wise_TOTAL, channel_name, startingDate, startingMonth, endingDate, endingMonth, output_dir_degree)
+ generateFitGraphOverTime("OUT", 9, column_wise_OUT, channel_name, startingDate, startingMonth, endingDate, endingMonth, output_dir_degree)
+ generateFitGraphOverTime("IN", 9, column_wise_IN, channel_name, startingDate, startingMonth, endingDate, endingMonth, output_dir_degree)
 
 
 '''-------------------------------helper function to gen graph-------------------'''
-def generateCumulativeGraph(typeOfDegree, filter_val, column_wise, channel_name, startingDate, startingMonth, endingDate, endingMonth, output_dir_degree):
+def generateFitGraphOverTime(typeOfDegree, filter_val, column_wise, channel_name, startingDate, startingMonth, endingDate, endingMonth, output_dir_degree):
  sum_each_row = []
  for row in column_wise[3:]: #ignore degree 0 and text, starting from degree 1
   sum_each_row.append(sum(row[1:]))
@@ -325,6 +327,45 @@ def generateCumulativeGraph(typeOfDegree, filter_val, column_wise, channel_name,
  x = np.array(x_axis_log)
  y = np.array(y_axis_log)
  
+ '''WAY TWO OF REGRESSION'''
+ slope, intercept, r_value, p_value, std_err = stats.linregress(x_axis_log,y_axis_log)
+ line = [slope*xi+intercept for xi in x_axis_log]
+
+ print str(typeOfDegree)+"\t"+str(slope)+"\t"+str(intercept)+"\t"+str(r_value**2)+"\t"+str(mean_squared_error(y, line))
+ # import plotly.plotly as py
+ # py.sign_in('rohangoel963', 'vh6le8no26')
+ # import plotly.graph_objs as go
+
+ # trace1 = go.Scatter(
+ #                   x=x, 
+ #                   y=y, 
+ #                   mode='lines',
+ #                   marker=go.Marker(color='rgb(255, 127, 14)'),
+ #                   name='Data'
+ #                   )
+
+ # trace2 = go.Scatter(
+ #                   x=x, 
+ #                   y=line, 
+ #                   mode='lines',
+ #                   marker=go.Marker(color='rgb(31, 119, 180)'),
+ #                   name='Fit'
+ #                   )
+
+ # layout = go.Layout(
+ #                 title='DegreeNode',
+ #                 # plot_bgcolor='rgb(229, 229, 229)',
+ #                   xaxis=go.XAxis(zerolinecolor='rgb(255,255,255)', gridcolor='rgb(255,255,255)'),
+ #                   # yaxis=go.YAxis(zerolinecolor='rgb(255,255,255)', gridcolor='rgb(255,255,255)')
+ #                 )
+
+ # data = [trace1, trace2]
+ # fig = go.Figure(data=data, layout=layout)
+
+ # py.image.save_as(fig, typeOfDegree+"temp.png")
+
+ '''END'''
+
  #graph config
  axes = plt.gca()
  axes.set_xlim([0,3])
@@ -338,13 +379,13 @@ def generateCumulativeGraph(typeOfDegree, filter_val, column_wise, channel_name,
  plt.plot(x, y, '-')
  plt.plot(x, m*x + b, '-')
  plt.legend(['Data', 'Fit'], loc='upper right')
- plt.savefig(output_dir_degree+"/"+channel_name+"_"+typeOfDegree+"_graph_"+str(startingDate)+"-"+str(startingMonth)+"_"+str(endingDate)+"-"+str(endingMonth)+".png")
+ plt.savefig(output_dir_degree+"/"+channel_name+"_"+typeOfDegree+"_graph_"+str(startingMonth)+"-"+str(startingDate)+"_"+str(endingMonth)+"-"+str(endingDate)+".png")
  plt.close()
 
- print b, m
+ # print typeOfDegree, b, m
 
  # # Save it in png and svg formats
- # plt.savefig(output_dir_degree+"/"+channel_name+"_"+typeOfDegree+"_graph_"+str(startingDate)+"-"+str(startingMonth)+"_"+str(endingDate)+"-"+str(endingMonth)+".png")
+ # plt.savefig(output_dir_degree+"/"+channel_name+"_"+typeOfDegree+"_graph_"+str(startingMonth)+"-"+str(startingDate)+"_"+str(endingMonth)+"-"+str(endingDate)+".png")
  # plt.close()
 
- # print output_dir_degree +"/"+channel_name+"_"+typeOfDegree+"_graph_"+str(startingDate)+"-"+str(startingMonth)+"_"+str(endingDate)+"-"+str(endingMonth)+".png"
+ # print output_dir_degree +"/"+channel_name+"_"+typeOfDegree+"_graph_"+str(startingMonth)+"-"+str(startingDate)+"_"+str(endingMonth)+"-"+str(endingDate)+".png"

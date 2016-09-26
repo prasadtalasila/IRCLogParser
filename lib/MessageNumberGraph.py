@@ -42,21 +42,12 @@ def createMessageNumberGraph(log_directory, channel_name, output_directory, star
  out_dir_msg_num = output_directory+"number-of-messages/"
 
  nick_same_list=[[] for i in range(5000)] #list of list with each list having all the nicks for that particular person
-
-
  
  nicks = [] #list of all the nicknames
- 
 
- findingNicks_startingDate=1   #all are hardcoded as we need to find all nicks for entire year beforehand itself. Later we can chill out and just use
- findingNicks_startingMonth=1  #this list throughout our code wherever we want.
- findingNicks_endingDate=32
- findingNicks_endingMonth=12
-
-
- for folderiterator in range(findingNicks_startingMonth, findingNicks_endingMonth+1):
+ for folderiterator in range(startingMonth, endingMonth+1):
   temp1 = "0" if folderiterator < 10 else ""
-  for fileiterator in range(findingNicks_startingDate if folderiterator == findingNicks_startingMonth else 1, findingNicks_endingDate if folderiterator == findingNicks_endingMonth else 32):
+  for fileiterator in range(startingDate if folderiterator == startingMonth else 1, endingDate if folderiterator == endingMonth else 32):
    temp2 = "0" if fileiterator < 10 else ""
    filePath=log_directory+temp1+str(folderiterator)+"/"+temp2+str(fileiterator)+"/"+channel_name+".txt"   
    if not os.path.exists(filePath):
