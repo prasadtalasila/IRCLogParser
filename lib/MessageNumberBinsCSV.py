@@ -9,16 +9,18 @@ import os
 import csv
 
 def correctLastCharCR(inText):#if the last letter of the nick is '\' replace it by 'CR' for example rohan\ becomes rohanCR to avoid complications in nx because of \
- if(inText[len(inText)-1]=='\\'):
+ if(len(inText) > 1 and inText[len(inText)-1]=='\\'):
   inText = inText[:-1]+'CR'
  return inText
 
 def createMessageNumberBinsCSV(log_directory, channel_name, output_directory, startingDate, startingMonth, endingDate, endingMonth):
 
  output_file = output_directory + channel_name+"_2013_"+str(startingMonth)+"_"+str(endingMonth)+"_output-parser-bins.csv"
- print "Creating a new output file"
+ # print "Creating a new output file"
  os.system("rm "+output_file)
  os.system("touch "+output_file)
+ ans = [ 0 for i in range(48)]
+
 
  for folderiterator in range(startingMonth, endingMonth + 1):
   temp1 = "0" if folderiterator < 10 else ""
@@ -106,11 +108,14 @@ def createMessageNumberBinsCSV(log_directory, channel_name, output_directory, st
          if(var != i):
           bins[bin_index]=bins[bin_index]+1
      
-   print "Working on "+filePath
+   # print "Working on "+filePath
    # print bins
-   print bins
+   # print bins
    with open(output_file, 'a+') as myfile:
        wr = csv.writer(myfile, quoting=csv.QUOTE_ALL)
        wr.writerow(bins)
+       ans = [ans[i] + bins[i] for i in range(len(bins))]
+
+ print sum(ans)
 
 

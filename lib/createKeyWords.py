@@ -12,9 +12,10 @@ import ext.common_english_words as common_english_words
 import ext.extend_stop_words as custom_stop_words
 from nltk.stem.wordnet import WordNetLemmatizer
 import string
+import re
 
 def correctLastCharCR(inText):#if the last letter of the nick is '\' replace it by 'CR' for example rohan\ becomes rohanCR to avoid complications in nx because of \
- if(inText[len(inText)-1]=='\\'):
+ if(len(inText) > 1 and inText[len(inText)-1]=='\\'):
   inText = inText[:-1]+'CR'
  return inText
 
@@ -44,12 +45,14 @@ def dataForNick(data, nick, threshold, min_words_spoken):
       selected_keywords_normal_freq.append(keyword[2])
 
    if len(selected_keywords) == 0:
-    print "No word's normalised score crosses the value of", threshold
+    # print "No word's normalised score crosses the value of", threshold
     selected_keywords = None
   else:
-   print "No message sent by nick", nick
+   # print "No message sent by nick", nick
+   pass
  else:
-  print "Not enough words spoken by", nick, "; spoke" ,int(total_freq), "words only, required", min_words_spoken
+  # print "Not enough words spoken by", nick, "; spoke" ,int(total_freq), "words only, required", min_words_spoken
+  pass
  return (selected_keywords, selected_keywords_normal_freq)
 
 def createKeyWords(log_directory, channel_name, output_directory, startingDate, startingMonth, endingDate, endingMonth):
@@ -59,8 +62,9 @@ def createKeyWords(log_directory, channel_name, output_directory, startingDate, 
  user_keyword_freq_dict = []
  nick_same_list=[[] for i in range(5000)] #list of list with each list having all the nicks for that particular person
  keywords_filtered = []
+ no_messages = 0
 
- print "Creating a new output folder"
+ # print "Creating a new output folder"
  os.system("rm -rf "+out_dir_nick_change)
  os.system("mkdir "+out_dir_nick_change)
 
@@ -78,7 +82,7 @@ def createKeyWords(log_directory, channel_name, output_directory, startingDate, 
    with open(filePath) as f:
        content = f.readlines() #contents stores all the lines of the file channel_name
    
-   print "Analysing ",filePath 
+   # print "Analysing ",filePath 
    
    nicks = [] #list of all the nicknames     
 
@@ -196,13 +200,15 @@ def createKeyWords(log_directory, channel_name, output_directory, startingDate, 
      #generating the words written by the sender
 
      message = rec_list[1:]
+     no_messages += 1
      correctedNickReciever = correctNickFor_(nick_receiver)
      if correctedNickReciever in message:
       message.remove(correctedNickReciever)
      # print nick_sender, "Message", ":".join(message), "end"  
-     
+
      lmtzr = WordNetLemmatizer()
-     word_list_temp = ":".join(message).replace(","," ").split(" ")
+     #limit word size = 3, drop numbers.
+     word_list_temp = re.sub(r'\d+', '', " ".join(re.findall(r'\w{3,}', ":".join(message).replace(","," ")))).split(" ")
      word_list = []
      #remove punctuations
      for word in word_list_temp:
@@ -273,11 +279,18 @@ def createKeyWords(log_directory, channel_name, output_directory, startingDate, 
 
  for data in user_keyword_freq_dict:
   keywords, normal_scores = dataForNick(user_keyword_freq_dict, data['nick'], 0.01, 100)
-  print "Nick:", data['nick']
-  print "Keywords with normalised score > 0.01\n", keywords
-  print "Their Normal scores\n", normal_scores
-  print "\n"
+  # print "Nick:", data['nick']
+  # print "Keywords with normalised score > 0.01\n", keywords
+  # print "Their Normal scores\n", normal_scores
+  # print "\n"
   if keywords:
    keywords_filtered.append({'nick':data['nick'],'keywords': keywords})
    
- return keywords_filtered, user_keyword_freq_dict
+ # print "KEYWORDS!"
+ # print keywords_filtered
+ # print "DICT"
+ # print user_keyword_freq_dict
+
+
+ print str(startingMonth)+"\t"+str(no_messages)+"\t"+str(len(user_words_dict))
+ return keywords_filtered, user_keyword_freq_dict, user_words_dict, nicks_for_stop_words

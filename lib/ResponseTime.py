@@ -13,7 +13,7 @@ import sys
 import csv
 
 def correctLastCharCR(inText):#if the last letter of the nick is '\' replace it by 'CR' for example rohan\ becomes rohanCR to avoid complications in nx because of \
- if(inText[len(inText)-1]=='\\'):
+ if(len(inText) > 1 and inText[len(inText)-1]=='\\'):
   inText = inText[:-1]+'CR'
  return inText
 
@@ -42,14 +42,14 @@ def to_edges(l):
 
 def findResponseTime(log_directory, channel_name, output_directory, startingDate, startingMonth, endingDate, endingMonth):
 
- out_dir_msg_num = output_directory+"RT_Values/"
+ out_dir_msg_num = output_directory+"RT/"
  nick_same_list=[[] for i in range(7000)]
  nicks = [] #list of all the nicknames
  conv = []
  conv_diff = []
- print "Creating a new output folder"
- os.system("rm -rf "+out_dir_msg_num)
- os.system("mkdir "+out_dir_msg_num)
+ # print "Creating a new output folder"
+ # os.system("rm -rf "+out_dir_msg_num)
+ # os.system("mkdir "+out_dir_msg_num)
 
  for folderiterator in range(startingMonth, endingMonth + 1):
   temp1 = "0" if folderiterator < 10 else ""
@@ -368,14 +368,14 @@ def findResponseTime(log_directory, channel_name, output_directory, startingDate
   graph_x_axis.append(ti)
 
 
- print(graph_y_axis)
+ # print(graph_y_axis)
 #print(graph_x_axis)
 #print(len(graph_y_axis))
 #print(len(graph_x_axis))
 
 #Finally storing the RT values along with their frequencies in a csv file. 
  rows = zip(graph_x_axis,graph_y_axis)
- filename=out_dir_msg_num+channel_name+"_RT.csv"
+ filename=out_dir_msg_num+channel_name+"_"+str(startingMonth)+"-"+str(startingDate)+"_"+str(endingMonth)+"-"+str(endingDate)+"_RT.csv"
  with open(filename, 'a+') as myfile:
      wr = csv.writer(myfile, quoting=csv.QUOTE_ALL)
      for row in rows:
