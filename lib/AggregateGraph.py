@@ -47,6 +47,13 @@ def createAggregateGraph(log_directory, channel_name, output_directory, starting
 	nicks = [] #list of all the nicknames
 	aggregate_graph = nx.DiGraph()  #graph with multiple directed edges between clients used 
 
+	if not os.path.exists(os.path.dirname(output_directory)):
+		try:
+			os.makedirs(os.path.dirname(output_directory))
+		except OSError as exc: # Guard against race condition
+			if exc.errno != errno.EEXIST:
+				raise
+				
 	for folderiterator in range(startingMonth, endingMonth+1):
 		temp1 = "0" if folderiterator < 10 else ""
 		for fileiterator in range(startingDate if folderiterator == startingMonth else 1, endingDate + 1 if folderiterator == endingMonth else 32):

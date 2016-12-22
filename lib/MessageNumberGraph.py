@@ -35,13 +35,17 @@ def to_edges(l):
 		last = current    
 
 def createMessageNumberGraph(log_directory, channel_name, output_directory, startingDate, startingMonth, endingDate, endingMonth):
-	out_dir_msg_num = output_directory+"number-of-messages/"
 	nick_same_list=[[] for i in range(5000)] #list of list with each list having all the nicks for that particular person
 	nicks = [] #list of all the nicknames
 
-	print "Creating a new output folder"
-	os.system("rm -rf "+out_dir_msg_num)
-	os.system("mkdir "+out_dir_msg_num)
+	# out_dir_msg_num = output_directory+"number-of-messages/"
+	out_dir_msg_num = output_directory
+	if not os.path.exists(os.path.dirname(out_dir_msg_num)):
+		try:
+			os.makedirs(os.path.dirname(out_dir_msg_num))
+		except OSError as exc: # Guard against race condition
+			if exc.errno != errno.EEXIST:
+				raise
 
 	for folderiterator in range(startingMonth, endingMonth+1):
 		temp1 = "0" if folderiterator < 10 else ""

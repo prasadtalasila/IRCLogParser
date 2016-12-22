@@ -5,14 +5,14 @@ import lib.MessageNumberBinsCSV as MNBC
 import lib.AggregateGraph as AG
 import lib.ChannelsOfNickGraph as CNG
 import lib.createKeyWords as CKW
-# import lib.degreeMessageNumberCSV as DCSV
+import lib.degreeMessageNumberCSV as DCSV
 import lib.degreeNodeNumberCSV as DNCSV
-# import lib.svdOnKeywords as SOK
+import lib.svdOnKeywords as SOK
 import lib.ResponseTime as RT
 import lib.ConvL_ConvRT as CL_CRT
 import lib.GephiTimelapseCSV as GT
 import lib.IgraphsImplementation as II
-import lib.KMeansTFIDF as TF
+import lib.keyWordsCluster_KMeansTFIDF as TF
 import lib.fuzzyCMeans as CM
 
 def createNickChangesGraph(log_directory, channel_name, output_directory, startingDate, startingMonth, endingDate, endingMonth):
@@ -30,8 +30,8 @@ def createMessageNumberBinsCSV(log_directory, channel_name, output_directory, st
 def createAggregateGraph(log_directory, channel_name, output_directory, startingDate, startingMonth, endingDate, endingMonth):
 	AG.createAggregateGraph(log_directory, channel_name, output_directory, startingDate, startingMonth, endingDate, endingMonth)
 
-def createChannelsOfNickGraph(log_directory, output_directory, startingDate, startingMonth, endingDate, endingMonth):
-	CNG.createChannelsOfNickGraph(log_directory, output_directory, startingDate, startingMonth, endingDate, endingMonth)
+def createChannelsOfNickGraph(log_directory, channel_name, output_directory, startingDate, startingMonth, endingDate, endingMonth):
+	CNG.createChannelsOfNickGraph(log_directory, channel_name, output_directory, startingDate, startingMonth, endingDate, endingMonth)
 
 def createKeyWords(log_directory, channel_name, output_directory, startingDate, startingMonth, endingDate, endingMonth):
 	return CKW.createKeyWords(log_directory, channel_name, output_directory, startingDate, startingMonth, endingDate, endingMonth)
@@ -58,8 +58,8 @@ def createGephiTimelapseCSV(log_directory, channel_name, output_directory, start
 def implementWithIgraphs(log_directory, channel_name, output_directory, startingDate, startingMonth, endingDate, endingMonth):
 	II.implementWithIgraphs(log_directory, channel_name, output_directory, startingDate, startingMonth, endingDate, endingMonth)
 
-def KMeansTFIDF(log_directory, channel_name, output_directory, startingDate, startingMonth, endingDate, endingMonth):
-	TF.KMeansTFIDF(log_directory, channel_name, output_directory, startingDate, startingMonth, endingDate, endingMonth)
+def keyWordsCluster_KMeansTFIDF(log_directory, channel_name, output_directory, startingDate, startingMonth, endingDate, endingMonth):
+	TF.keyWordsCluster_KMeansTFIDF(log_directory, channel_name, output_directory, startingDate, startingMonth, endingDate, endingMonth)
 
 def fuzzyCMeans(log_directory, channel_name, output_directory, startingDate, startingMonth, endingDate, endingMonth):
 	CM.fuzzyCMeans(log_directory, channel_name, output_directory, startingDate, startingMonth, endingDate, endingMonth)

@@ -64,8 +64,8 @@ def createKeyWords(log_directory, channel_name, output_directory, startingDate, 
 	no_messages = 0
 
 	# print "Creating a new output folder"
-	os.system("rm -rf "+out_dir_nick_change)
-	os.system("mkdir "+out_dir_nick_change)
+	# os.system("rm -rf "+out_dir_nick_change)
+	# os.system("mkdir "+out_dir_nick_change)
 
 	rem_time= None #remembers the time of the last message of the file parsed before the current file
 

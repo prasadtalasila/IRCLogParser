@@ -22,10 +22,9 @@ def searchChannel(channel, channel_list):
 		i+=1 
 	return ans
 
-def createChannelsOfNickGraph(log_directory, output_directory, startingDate, startingMonth, endingDate, endingMonth):
+def createChannelsOfNickGraph(log_directory, channel_name, output_directory, startingDate, startingMonth, endingDate, endingMonth):
 	nick_channel_dict = []
 	nick_same_list=[[] for i in range(100000)] #list of list with each list having all the nicks for that particular person
-	out_dir_channel_user_time = output_directory+"channel-nick/"
 
 	nicks_hash = []
 	channels_hash = []
@@ -33,9 +32,14 @@ def createChannelsOfNickGraph(log_directory, output_directory, startingDate, sta
 	channel_for_users_for_all_days = []
 	channel_for_user_for_the_day = {}
 
-	print "Creating a new output folder"
-	os.system("rm -rf "+out_dir_channel_user_time)
-	os.system("mkdir "+out_dir_channel_user_time)
+	# out_dir_channel_user_time = output_directory+"channel-nick/"
+	out_dir_channel_user_time = output_directory
+	if not os.path.exists(os.path.dirname(out_dir_channel_user_time)):
+		try:
+			os.makedirs(os.path.dirname(out_dir_channel_user_time))
+		except OSError as exc: # Guard against race condition
+			if exc.errno != errno.EEXIST:
+				raise
 
 	for folderiterator in range(startingMonth, endingMonth + 1):
 		temp1 = "0" if folderiterator < 10 else ""

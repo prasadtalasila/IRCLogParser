@@ -14,11 +14,14 @@ def correctLastCharCR(inText):#if the last letter of the nick is '\' replace it 
 
 
 def createNickChangesGraph(log_directory, channel_name, output_directory, startingDate, startingMonth, endingDate, endingMonth):
-	out_dir_nick_change = output_directory+"nick-changes/"
-
-	print "Creating a new output folder"
-	os.system("rm -rf "+out_dir_nick_change)
-	os.system("mkdir "+out_dir_nick_change)
+	# out_dir_nick_change = output_directory+"nick-changes/"
+	out_dir_nick_change = output_directory
+	if not os.path.exists(os.path.dirname(out_dir_nick_change)):
+		try:
+			os.makedirs(os.path.dirname(out_dir_nick_change))
+		except OSError as exc: # Guard against race condition
+			if exc.errno != errno.EEXIST:
+				raise
 
 	rem_time= None #remembers the time of the last message of the file parsed before the current file
 
@@ -114,7 +117,7 @@ def createNickChangesGraph(log_directory, channel_name, output_directory, starti
 			for u,v,d in graph_nickchanges.edges(data=True):
 				d['label'] = d.get('weight','')
 
-			output_file=out_dir_nick_change+channel_name+"_2013_"+str(folderiterator)+"_"+str(fileiterator)+"_nick_change.png"
+			output_file=out_dir_nick_change+channel_name+"_"+str(folderiterator)+"_"+str(fileiterator)+"_nick_change.png"
 			print "Generated "+ output_file
 			A = nx.drawing.nx_agraph.to_agraph(graph_nickchanges)
 			A.layout(prog='dot')

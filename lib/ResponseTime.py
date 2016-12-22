@@ -40,14 +40,20 @@ def to_edges(l):
 
 
 def findResponseTime(log_directory, channel_name, output_directory, startingDate, startingMonth, endingDate, endingMonth):
-	out_dir_msg_num = output_directory+"RT/"
 	nick_same_list=[[] for i in range(7000)]
 	nicks = [] #list of all the nicknames
 	conv = []
 	conv_diff = []
-	print "Creating a new output folder"
-	os.system("rm -rf "+out_dir_msg_num)
-	os.system("mkdir "+out_dir_msg_num)
+
+	# out_dir_msg_num = output_directory+"RT/"
+	out_dir_msg_num = output_directory
+	if not os.path.exists(os.path.dirname(out_dir_msg_num)):
+		try:
+			os.makedirs(os.path.dirname(out_dir_msg_num))
+		except OSError as exc: # Guard against race condition
+			if exc.errno != errno.EEXIST:
+				raise
+
 
 	for folderiterator in range(startingMonth, endingMonth + 1):
 		temp1 = "0" if folderiterator < 10 else ""

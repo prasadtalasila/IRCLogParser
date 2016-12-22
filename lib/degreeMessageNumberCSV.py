@@ -21,21 +21,28 @@ def degreeMessageNumberCSV(log_directory, channel_name, output_directory, starti
 
 	max_degree_possible = 1000
 
-	output_dir_degree = output_directory+"degreeMessageNumberCSV/"	
+	# output_dir_degree = output_directory+"degreeMessageNumberCSV/"	
+	output_dir_degree = output_directory
 	output_file_out_degree = output_dir_degree + "msg_no_out_degree.csv"
 	output_file_in_degree = output_dir_degree + "msg_no_in_degree.csv"
 	output_file_total_degree = output_dir_degree + "msg_no_total_degree.csv"
 
-	print "Creating a new output folder"
-	os.system("rm -rf "+output_dir_degree)
-	os.system("mkdir "+output_dir_degree)
+	# print "Creating a new output folder"
+	# os.system("rm -rf "+output_dir_degree)
+	# os.system("mkdir "+output_dir_degree)
 
-	os.system("rm "+output_file_out_degree)
-	os.system("touch "+output_file_out_degree)
-	os.system("rm "+output_file_in_degree)
-	os.system("touch "+output_file_in_degree)
-	os.system("rm "+output_file_total_degree)
-	os.system("touch "+output_file_total_degree)
+	if not os.path.exists(os.path.dirname(output_dir_degree)):
+		try:
+			os.makedirs(os.path.dirname(output_dir_degree))
+			os.system("rm "+output_file_out_degree)
+			os.system("touch "+output_file_out_degree)
+			os.system("rm "+output_file_in_degree)
+			os.system("touch "+output_file_in_degree)
+			os.system("rm "+output_file_total_degree)
+			os.system("touch "+output_file_total_degree)
+		except OSError as exc: # Guard against race condition
+			if exc.errno != errno.EEXIST:
+				raise
 
 	rem_time= None #remembers the time of the last message of the file parsed before the current file
 

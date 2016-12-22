@@ -26,23 +26,32 @@ def degreeNodeNumberCSV(log_directory, channel_name, output_directory, startingD
 
 	max_degree_possible = 1000
 
-	output_dir_degree = output_directory+"degreeNode/"
+	# output_dir_degree = output_directory+"degreeNode/"
+	output_dir_degree = output_directory
 	output_dir_degree_img = output_dir_degree + "individual-images/"
 	output_file_out_degree = output_dir_degree + channel_name+"_out_degree"+str(startingMonth)+"-"+str(startingDate)+"_"+str(endingMonth)+"-"+str(endingDate)+".csv"
 	output_file_in_degree = output_dir_degree + channel_name+"_in_degree"+str(startingMonth)+"-"+str(startingDate)+"_"+str(endingMonth)+"-"+str(endingDate)+".csv"
 	output_file_total_degree = output_dir_degree + channel_name+"_total_degree"+str(startingMonth)+"-"+str(startingDate)+"_"+str(endingMonth)+"-"+str(endingDate)+".csv"
 
 	# print "Creating a new output folder"
-	os.system("rm -rf "+output_dir_degree)
-	os.system("mkdir "+output_dir_degree)
-	os.system("rm -rf "+output_dir_degree_img)
-	os.system("mkdir "+output_dir_degree_img)
-	os.system("rm "+output_file_out_degree)
-	os.system("touch "+output_file_out_degree)
-	os.system("rm "+output_file_in_degree)
-	os.system("touch "+output_file_in_degree)
-	os.system("rm "+output_file_total_degree)
-	os.system("touch "+output_file_total_degree)
+	# os.system("rm -rf "+output_dir_degree)
+	# os.system("mkdir "+output_dir_degree)
+
+	if not os.path.exists(os.path.dirname(output_dir_degree)):
+		try:
+			os.makedirs(os.path.dirname(output_dir_degree))
+			# os.system("rm -rf "+output_dir_degree_img)
+			os.system("mkdir "+output_dir_degree_img)
+			# os.system("rm "+output_file_out_degree)
+			os.system("touch "+output_file_out_degree)
+			# os.system("rm "+output_file_in_degree)
+			os.system("touch "+output_file_in_degree)
+			# os.system("rm "+output_file_total_degree)
+			os.system("touch "+output_file_total_degree)
+
+		except OSError as exc: # Guard against race condition
+			if exc.errno != errno.EEXIST:
+				raise
 
 	for folderiterator in range(startingMonth, endingMonth + 1):
 		temp1 = "0" if folderiterator < 10 else ""
@@ -250,7 +259,7 @@ def degreeNodeNumberCSV(log_directory, channel_name, output_directory, startingD
 			plt.legend(['Required', 'y = x'], loc='upper left')
 
 			# Save it in png and svg formats
-			# plt.savefig(output_dir_degree_img+"/total_out_degree"+str(folderiterator)+"-"+str(fileiterator)+".png")
+			plt.savefig(output_dir_degree_img+"/total_out_degree"+str(folderiterator)+"-"+str(fileiterator)+".png")
 			plt.close()
 
 			# print "\n"

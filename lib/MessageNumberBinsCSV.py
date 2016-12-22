@@ -16,9 +16,13 @@ def correctLastCharCR(inText):#if the last letter of the nick is '\' replace it 
 def createMessageNumberBinsCSV(log_directory, channel_name, output_directory, startingDate, startingMonth, endingDate, endingMonth):
 
 	output_file = output_directory + channel_name+"_2013_"+str(startingMonth)+"_"+str(endingMonth)+"_output-parser-bins.csv"
-	# print "Creating a new output file"
-	os.system("rm "+output_file)
-	os.system("touch "+output_file)
+	if not os.path.exists(os.path.dirname(output_file)):
+		try:
+			os.makedirs(os.path.dirname(output_file))
+		except OSError as exc: # Guard against race condition
+			if exc.errno != errno.EEXIST:
+				raise
+
 	ans = [ 0 for i in range(48)]
 
 	for folderiterator in range(startingMonth, endingMonth + 1):

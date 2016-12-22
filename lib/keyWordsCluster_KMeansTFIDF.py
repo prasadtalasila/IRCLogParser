@@ -14,7 +14,7 @@ from sklearn.pipeline import make_pipeline
 from scipy.spatial.distance import cdist
 import matplotlib.pyplot as plt
 
-def KMeansTFIDF(log_directory, channel_name, output_directory, startingDate, startingMonth, endingDate, endingMonth):
+def keyWordsCluster_KMeansTFIDF(log_directory, channel_name, output_directory, startingDate, startingMonth, endingDate, endingMonth):
 
 	do_SVD = False
 	words_to_show_per_cluster = 10

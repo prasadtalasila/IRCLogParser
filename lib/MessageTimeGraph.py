@@ -36,11 +36,14 @@ def to_edges(l):
 
 
 def createMessageTimeGraph(log_directory, channel_name, output_directory, startingDate, startingMonth, endingDate, endingMonth):
-	out_dir_msg_time = output_directory+"message-time/"
-
-	print "Creating a new output folder"
-	os.system("rm -rf "+out_dir_msg_time)
-	os.system("mkdir "+out_dir_msg_time)
+	# out_dir_msg_time = output_directory+"message-time/"
+	out_dir_msg_time = output_directory
+	if not os.path.exists(os.path.dirname(out_dir_msg_time)):
+		try:
+			os.makedirs(os.path.dirname(out_dir_msg_time))
+		except OSError as exc: # Guard against race condition
+			if exc.errno != errno.EEXIST:
+				raise
 
 	rem_time= None #remembers the time of the last message of the file parsed before the current file
 	nick_same_list=[[] for i in range(5000)]  #x
