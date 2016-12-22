@@ -1,6 +1,6 @@
 #IRC Log Parser
 
-Import `Parser.py` in your file to use the library functions.
+Import `parser.py` in your file to use the library functions.
 
 Functions presently implemented are:
 - **createNickChangesGraph** - creates a graph which tracks the nick changes of the users, each edge has a time stamp denoting the time at which the nick was changed
@@ -18,4 +18,22 @@ Functions presently implemented are:
 - **createGephiTimelapseCSV** - Produces node and edge csv files that contain information relevant for creating a timelapse of user interactions on Gephi. Most importantly, these csv files contain the node/edge appear and disappear times and can easily be imported into Gephi.
 - **implementWithIgraphs** - This performs various tasks utilizing the python-igraphs library. Tasks include producing graphs, writing to pajek, obtaining adjacency matrix, community detection, calculating modularity,rescaling edge width, assigning graph attributes such as color etc.
 
-`TestingScript.py` demonstrates the use of these funtions.
+<hr>
+
+Also `module.py` can be used in the command line to run various methods provided by the library.
+
+It has the following parameters:
+
+**Neccessary Arguments**
+- `funcPerform` : which method to run / all
+
+**Optional arguments**
+- `(-i) --in_directory` : log_directory
+- `(-c) --channel` : channel_name
+- `(-o) --out_directory` : output_directory
+- `(-f) --from` : start_date in dd-mm format
+- `(-t) --to` : end_date in dd-mm format
+
+
+A typical usage of the module is as follows:
+`python module.py "nickChange" -f="1-1" -t="31-1"`
