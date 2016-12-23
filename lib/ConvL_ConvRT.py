@@ -11,36 +11,28 @@ import pylab
 import pygraphviz as pygraphviz
 import sys
 import csv
-
-def correctLastCharCR(inText):#if the last letter of the nick is '\' replace it by 'CR' for example rohan\ becomes rohanCR to avoid complications in nx because of \
-	if(len(inText) > 1 and inText[len(inText)-1]=='\\'):
-		inText = inText[:-1]+'CR'
-	return inText
-
-#methods used later for clustering nicks of same user.
-def to_graph(l):
-	G = nx.Graph()
-	for part in l:
-		# each sublist is a bunch of nodes
-		G.add_nodes_from(part)
-		# it also imlies a number of edges:
-		G.add_edges_from(to_edges(part))
-	return G
-
-def to_edges(l):
-	""" 
-	treat `l` as a Graph and returns it's edges 
-	to_edges(['a','b','c','d']) -> [(a,b), (b,c),(c,d)]
-	"""
-	it = iter(l)
-	last = next(it)
-
-	for current in it:
-		yield last, current
-		last = current    
+import ext.util
 
 def findConvLength_ConvRefreshTime(log_directory, channel_name, output_directory, startingDate, startingMonth, endingDate, endingMonth):
+	""" Calculates the conversation length that is the length of time for which two users communicate 
+	i.e. if a message is not replied to within RT, 
+	then it is considered as a part of another conversation.
+	This function also calculates the conversation refresh time. 
+	For a pair of users, this is the time when one conversation ends and another one starts.
 
+    Args:
+        log_directory (str): Location of the logs (Assumed to be arranged in directory structure as : <year>/<month>/<day>/<log-file-for-channel>.txt)
+        channel_name (str): Channel to be perform analysis on
+        output_directory (str): Location of output directory
+        startingDate (int): Date to start the analysis (in conjunction with startingMonth)
+        startingMonth (int): Date to start the analysis (in conjunction with startingDate)
+        endingDate (int): Date to end the analysis (in conjunction with endingMonth)
+        endingMonth (int): Date to end the analysis (in conjunction with endingDate)
+
+    Returns:
+       null 
+
+    """
 	nick_same_list=[[] for i in range(7000)]
 	nicks = [] #list of all the nicknames
 	conv = []
@@ -84,7 +76,7 @@ def findConvLength_ConvRefreshTime(log_directory, channel_name, output_directory
 				
 			for i in xrange(0,len(nicks)):
 				if(len(nicks[i])!=0):
-						nicks[i]=correctLastCharCR(nicks[i])
+						nicks[i]=ext.util.correctLastCharCR(nicks[i])
 
 			for j in content:
 				if(j[0]=='=' and "changed the topic of" not in j):
@@ -93,10 +85,10 @@ def findConvLength_ConvRefreshTime(log_directory, channel_name, output_directory
 					line1=line1[3:]
 					line2=line2[5:]
 					if(len(line1)!=0):
-						line1=correctLastCharCR(line1)
+						line1=ext.util.correctLastCharCR(line1)
 						
 					if(len(line2)!=0):
-						line2=correctLastCharCR(line2)
+						line2=ext.util.correctLastCharCR(line2)
 						
 					if line1 not in nicks:
 						nicks.append(line1)
@@ -111,10 +103,10 @@ def findConvLength_ConvRefreshTime(log_directory, channel_name, output_directory
 					line1=line1[3:]
 					line2=line2[5:]
 					if(len(line1)!=0):
-						line1=correctLastCharCR(line1)
+						line1=ext.util.correctLastCharCR(line1)
 						
 					if(len(line2)!=0):
-						line2=correctLastCharCR(line2)
+						line2=ext.util.correctLastCharCR(line2)
 						
 					for i in range(7000):
 						if line1 in nick_same_list[i] or line2 in nick_same_list[i]:
@@ -139,7 +131,7 @@ def findConvLength_ConvRefreshTime(log_directory, channel_name, output_directory
 				nick_same_list[ind].append(ni)
 				break
 
-	G = to_graph(nick_same_list)
+	G = ext.util.to_graph(nick_same_list)
 	L = connected_components(G)
 
 	for i in range(1,len(L)+1):
@@ -186,7 +178,7 @@ def findConvLength_ConvRefreshTime(log_directory, channel_name, output_directory
 				if(line[0] != '=' and "] <" in line and "> " in line):
 					m = re.search(r"\<(.*?)\>", line)
 					var = m.group(0)[1:-1]
-					var=correctLastCharCR(var)
+					var=ext.util.correctLastCharCR(var)
 					for d in range(len(nicks)):                              #E.g. if names are rohan1,rohan2,rohan3...,then var will store rohan1.
 						if((d < len(L)) and (var in L[d])):
 							nick_sender = L[d][0]
@@ -200,7 +192,7 @@ def findConvLength_ConvRefreshTime(log_directory, channel_name, output_directory
 							break
 						for ik in xrange(0,len(rec_list)):
 							if(rec_list[ik]):
-								rec_list[ik]=correctLastCharCR(rec_list[ik])
+								rec_list[ik]=ext.util.correctLastCharCR(rec_list[ik])
 
 						for z in rec_list:
 							if(z==i):
@@ -226,7 +218,7 @@ def findConvLength_ConvRefreshTime(log_directory, channel_name, output_directory
 							rec_list_2=[e.strip() for e in rec_list[1].split(',')]
 							for ij in xrange(0,len(rec_list_2)):
 								if(rec_list_2[ij]):
-									rec_list_2[ij]=correctLastCharCR(rec_list_2[ij])
+									rec_list_2[ij]=ext.util.correctLastCharCR(rec_list_2[ij])
 
 							for j in rec_list_2:
 								if(j==i):
@@ -250,7 +242,7 @@ def findConvLength_ConvRefreshTime(log_directory, channel_name, output_directory
 						if(flag_comma == 0):
 							rec=line[line.find(">")+1:line.find(", ")] 
 							rec=rec[1:]
-							rec=correctLastCharCR(rec)
+							rec=ext.util.correctLastCharCR(rec)
 								
 							if(rec==i):
 								send_time.append(line[1:6])

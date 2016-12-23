@@ -1,0 +1,520 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>lib.ConvL_ConvRT &#8212; IRC Log Parser 0.1 documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for lib.ConvL_ConvRT</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">numpy</span>
+<span class="kn">import</span> <span class="nn">datetime</span>
+<span class="kn">import</span> <span class="nn">time</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">import</span> <span class="nn">os.path</span>
+<span class="kn">import</span> <span class="nn">re</span>
+<span class="kn">import</span> <span class="nn">networkx</span> <span class="k">as</span> <span class="nn">nx</span>
+<span class="kn">from</span> <span class="nn">networkx.algorithms.components.connected</span> <span class="k">import</span> <span class="n">connected_components</span>
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+<span class="kn">import</span> <span class="nn">pylab</span>
+<span class="kn">import</span> <span class="nn">pygraphviz</span> <span class="k">as</span> <span class="nn">pygraphviz</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">import</span> <span class="nn">csv</span>
+<span class="kn">import</span> <span class="nn">ext.util</span>
+
+<div class="viewcode-block" id="findConvLength_ConvRefreshTime"><a class="viewcode-back" href="../../doc_for_code.html#lib.ConvL_ConvRT.findConvLength_ConvRefreshTime">[docs]</a><span class="k">def</span> <span class="nf">findConvLength_ConvRefreshTime</span><span class="p">(</span><span class="n">log_directory</span><span class="p">,</span> <span class="n">channel_name</span><span class="p">,</span> <span class="n">output_directory</span><span class="p">,</span> <span class="n">startingDate</span><span class="p">,</span> <span class="n">startingMonth</span><span class="p">,</span> <span class="n">endingDate</span><span class="p">,</span> <span class="n">endingMonth</span><span class="p">):</span>
+	<span class="sd">&quot;&quot;&quot; Calculates the conversation length that is the length of time for which two users communicate </span>
+<span class="sd">	i.e. if a message is not replied to within RT, </span>
+<span class="sd">	then it is considered as a part of another conversation.</span>
+<span class="sd">	This function also calculates the conversation refresh time. </span>
+<span class="sd">	For a pair of users, this is the time when one conversation ends and another one starts.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        log_directory (str): Location of the logs (Assumed to be arranged in directory structure as : &lt;year&gt;/&lt;month&gt;/&lt;day&gt;/&lt;log-file-for-channel&gt;.txt)</span>
+<span class="sd">        channel_name (str): Channel to be perform analysis on</span>
+<span class="sd">        output_directory (str): Location of output directory</span>
+<span class="sd">        startingDate (int): Date to start the analysis (in conjunction with startingMonth)</span>
+<span class="sd">        startingMonth (int): Date to start the analysis (in conjunction with startingDate)</span>
+<span class="sd">        endingDate (int): Date to end the analysis (in conjunction with endingMonth)</span>
+<span class="sd">        endingMonth (int): Date to end the analysis (in conjunction with endingDate)</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">       null </span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+	<span class="n">nick_same_list</span><span class="o">=</span><span class="p">[[]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">7000</span><span class="p">)]</span>
+	<span class="n">nicks</span> <span class="o">=</span> <span class="p">[]</span> <span class="c1">#list of all the nicknames</span>
+	<span class="n">conv</span> <span class="o">=</span> <span class="p">[]</span>
+	<span class="n">conv_diff</span> <span class="o">=</span> <span class="p">[]</span>
+	
+	<span class="c1"># out_dir_msg_num = output_directory+&quot;CL/&quot;</span>
+	<span class="n">out_dir_msg_num</span> <span class="o">=</span> <span class="n">output_directory</span>
+	<span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">out_dir_msg_num</span><span class="p">)):</span>
+		<span class="k">try</span><span class="p">:</span>
+			<span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">out_dir_msg_num</span><span class="p">))</span>
+		<span class="k">except</span> <span class="ne">OSError</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span> <span class="c1"># Guard against race condition</span>
+			<span class="k">if</span> <span class="n">exc</span><span class="o">.</span><span class="n">errno</span> <span class="o">!=</span> <span class="n">errno</span><span class="o">.</span><span class="n">EEXIST</span><span class="p">:</span>
+				<span class="k">raise</span>
+
+	<span class="k">for</span> <span class="n">folderiterator</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">startingMonth</span><span class="p">,</span> <span class="n">endingMonth</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
+		<span class="n">temp1</span> <span class="o">=</span> <span class="s2">&quot;0&quot;</span> <span class="k">if</span> <span class="n">folderiterator</span> <span class="o">&lt;</span> <span class="mi">10</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span>
+		<span class="k">for</span> <span class="n">fileiterator</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">startingDate</span> <span class="k">if</span> <span class="n">folderiterator</span> <span class="o">==</span> <span class="n">startingMonth</span> <span class="k">else</span> <span class="mi">1</span><span class="p">,</span> <span class="n">endingDate</span> <span class="o">+</span> <span class="mi">1</span> <span class="k">if</span> <span class="n">folderiterator</span> <span class="o">==</span> <span class="n">endingMonth</span> <span class="k">else</span> <span class="mi">32</span><span class="p">):</span>
+			<span class="n">temp2</span> <span class="o">=</span> <span class="s2">&quot;0&quot;</span> <span class="k">if</span> <span class="n">fileiterator</span> <span class="o">&lt;</span> <span class="mi">10</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span>
+			<span class="n">filePath</span><span class="o">=</span><span class="n">log_directory</span><span class="o">+</span><span class="n">temp1</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">folderiterator</span><span class="p">)</span><span class="o">+</span><span class="s2">&quot;/&quot;</span><span class="o">+</span><span class="n">temp2</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">fileiterator</span><span class="p">)</span><span class="o">+</span><span class="s2">&quot;/&quot;</span><span class="o">+</span><span class="n">channel_name</span><span class="o">+</span><span class="s2">&quot;.txt&quot;</span>   
+			<span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">filePath</span><span class="p">):</span>
+				<span class="k">if</span> <span class="ow">not</span><span class="p">((</span><span class="n">folderiterator</span><span class="o">==</span><span class="mi">2</span> <span class="ow">and</span> <span class="p">(</span><span class="n">fileiterator</span> <span class="o">==</span><span class="mi">29</span> <span class="ow">or</span> <span class="n">fileiterator</span> <span class="o">==</span><span class="mi">30</span> <span class="ow">or</span> <span class="n">fileiterator</span> <span class="o">==</span><span class="mi">31</span><span class="p">))</span> <span class="ow">or</span> <span class="p">((</span><span class="n">folderiterator</span><span class="o">==</span><span class="mi">4</span> <span class="ow">or</span> <span class="n">folderiterator</span><span class="o">==</span><span class="mi">6</span> <span class="ow">or</span> <span class="n">folderiterator</span><span class="o">==</span><span class="mi">9</span> <span class="ow">or</span> <span class="n">folderiterator</span><span class="o">==</span><span class="mi">11</span><span class="p">)</span> <span class="ow">and</span> <span class="n">fileiterator</span><span class="o">==</span><span class="mi">31</span> <span class="p">)):</span> 
+					<span class="nb">print</span> <span class="s2">&quot;[Error] Path &quot;</span><span class="o">+</span><span class="n">filePath</span><span class="o">+</span><span class="s2">&quot; doesn&#39;t exist&quot;</span>
+				<span class="k">continue</span> 
+			<span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">filePath</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+							<span class="n">content</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">readlines</span><span class="p">()</span> <span class="c1">#contents stores all the lines of the file channel_name</span>
+					
+			<span class="n">send_time</span> <span class="o">=</span> <span class="p">[]</span> <span class="c1">#list of all the times a user sends a message to another user</span>
+			<span class="n">nicks_for_the_day</span> <span class="o">=</span> <span class="p">[]</span>
+			
+			<span class="nb">print</span><span class="p">(</span><span class="n">filePath</span><span class="p">)</span>   
+			<span class="c1">#code for getting all the nicknames in a list</span>
+			<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">content</span><span class="p">:</span>
+				<span class="k">if</span><span class="p">(</span><span class="n">i</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">!=</span> <span class="s1">&#39;=&#39;</span> <span class="ow">and</span> <span class="s2">&quot;] &lt;&quot;</span> <span class="ow">in</span> <span class="n">i</span> <span class="ow">and</span> <span class="s2">&quot;&gt; &quot;</span> <span class="ow">in</span> <span class="n">i</span><span class="p">):</span>
+					<span class="n">m</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="s2">r&quot;\&lt;(.*?)\&gt;&quot;</span><span class="p">,</span> <span class="n">i</span><span class="p">)</span>
+					<span class="k">if</span> <span class="n">m</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">nicks_for_the_day</span><span class="p">:</span>                       
+						<span class="n">nicks_for_the_day</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">0</span><span class="p">))</span>   <span class="c1">#used regex to get the string between &lt;&gt; and appended it to the nicks list</span>
+
+			<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">xrange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="nb">len</span><span class="p">(</span><span class="n">nicks_for_the_day</span><span class="p">)):</span>
+				<span class="k">if</span> <span class="n">nicks_for_the_day</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">nicks</span><span class="p">:</span>
+					<span class="n">nicks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">nicks_for_the_day</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>     <span class="c1">#removed &lt;&gt; from the nicknames</span>
+				
+			<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">xrange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="nb">len</span><span class="p">(</span><span class="n">nicks</span><span class="p">)):</span>
+				<span class="k">if</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">nicks</span><span class="p">[</span><span class="n">i</span><span class="p">])</span><span class="o">!=</span><span class="mi">0</span><span class="p">):</span>
+						<span class="n">nicks</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">=</span><span class="n">ext</span><span class="o">.</span><span class="n">util</span><span class="o">.</span><span class="n">correctLastCharCR</span><span class="p">(</span><span class="n">nicks</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+
+			<span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="n">content</span><span class="p">:</span>
+				<span class="k">if</span><span class="p">(</span><span class="n">j</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">==</span><span class="s1">&#39;=&#39;</span> <span class="ow">and</span> <span class="s2">&quot;changed the topic of&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">j</span><span class="p">):</span>
+					<span class="n">line1</span><span class="o">=</span><span class="n">j</span><span class="p">[</span><span class="n">j</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s2">&quot;=&quot;</span><span class="p">)</span><span class="o">+</span><span class="mi">1</span><span class="p">:</span><span class="n">j</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s2">&quot; is&quot;</span><span class="p">)]</span>
+					<span class="n">line2</span><span class="o">=</span><span class="n">j</span><span class="p">[</span><span class="n">j</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s2">&quot;wn as&quot;</span><span class="p">)</span><span class="o">+</span><span class="mi">1</span><span class="p">:</span><span class="n">j</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)]</span>
+					<span class="n">line1</span><span class="o">=</span><span class="n">line1</span><span class="p">[</span><span class="mi">3</span><span class="p">:]</span>
+					<span class="n">line2</span><span class="o">=</span><span class="n">line2</span><span class="p">[</span><span class="mi">5</span><span class="p">:]</span>
+					<span class="k">if</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">line1</span><span class="p">)</span><span class="o">!=</span><span class="mi">0</span><span class="p">):</span>
+						<span class="n">line1</span><span class="o">=</span><span class="n">ext</span><span class="o">.</span><span class="n">util</span><span class="o">.</span><span class="n">correctLastCharCR</span><span class="p">(</span><span class="n">line1</span><span class="p">)</span>
+						
+					<span class="k">if</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">line2</span><span class="p">)</span><span class="o">!=</span><span class="mi">0</span><span class="p">):</span>
+						<span class="n">line2</span><span class="o">=</span><span class="n">ext</span><span class="o">.</span><span class="n">util</span><span class="o">.</span><span class="n">correctLastCharCR</span><span class="p">(</span><span class="n">line2</span><span class="p">)</span>
+						
+					<span class="k">if</span> <span class="n">line1</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">nicks</span><span class="p">:</span>
+						<span class="n">nicks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">line1</span><span class="p">)</span>
+					<span class="k">if</span> <span class="n">line2</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">nicks</span><span class="p">:</span>
+						<span class="n">nicks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">line2</span><span class="p">)</span>
+			
+			<span class="c1">#code for forming list of lists for avoiding nickname duplicacy</span>
+			<span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">content</span><span class="p">:</span>
+				<span class="k">if</span><span class="p">(</span><span class="n">line</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">==</span><span class="s1">&#39;=&#39;</span> <span class="ow">and</span> <span class="s2">&quot;changed the topic of&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">line</span><span class="p">):</span>
+					<span class="n">line1</span><span class="o">=</span><span class="n">line</span><span class="p">[</span><span class="n">line</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s2">&quot;=&quot;</span><span class="p">)</span><span class="o">+</span><span class="mi">1</span><span class="p">:</span><span class="n">line</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s2">&quot; is&quot;</span><span class="p">)]</span>
+					<span class="n">line2</span><span class="o">=</span><span class="n">line</span><span class="p">[</span><span class="n">line</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s2">&quot;wn as&quot;</span><span class="p">)</span><span class="o">+</span><span class="mi">1</span><span class="p">:</span><span class="n">line</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)]</span>
+					<span class="n">line1</span><span class="o">=</span><span class="n">line1</span><span class="p">[</span><span class="mi">3</span><span class="p">:]</span>
+					<span class="n">line2</span><span class="o">=</span><span class="n">line2</span><span class="p">[</span><span class="mi">5</span><span class="p">:]</span>
+					<span class="k">if</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">line1</span><span class="p">)</span><span class="o">!=</span><span class="mi">0</span><span class="p">):</span>
+						<span class="n">line1</span><span class="o">=</span><span class="n">ext</span><span class="o">.</span><span class="n">util</span><span class="o">.</span><span class="n">correctLastCharCR</span><span class="p">(</span><span class="n">line1</span><span class="p">)</span>
+						
+					<span class="k">if</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">line2</span><span class="p">)</span><span class="o">!=</span><span class="mi">0</span><span class="p">):</span>
+						<span class="n">line2</span><span class="o">=</span><span class="n">ext</span><span class="o">.</span><span class="n">util</span><span class="o">.</span><span class="n">correctLastCharCR</span><span class="p">(</span><span class="n">line2</span><span class="p">)</span>
+						
+					<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">7000</span><span class="p">):</span>
+						<span class="k">if</span> <span class="n">line1</span> <span class="ow">in</span> <span class="n">nick_same_list</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="ow">or</span> <span class="n">line2</span> <span class="ow">in</span> <span class="n">nick_same_list</span><span class="p">[</span><span class="n">i</span><span class="p">]:</span>
+							<span class="k">if</span> <span class="n">line1</span> <span class="ow">in</span> <span class="n">nick_same_list</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="ow">and</span> <span class="n">line2</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">nick_same_list</span><span class="p">[</span><span class="n">i</span><span class="p">]:</span>
+								<span class="n">nick_same_list</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">line2</span><span class="p">)</span>
+								<span class="k">break</span>
+							<span class="k">if</span> <span class="n">line2</span> <span class="ow">in</span> <span class="n">nick_same_list</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="ow">and</span> <span class="n">line1</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">nick_same_list</span><span class="p">[</span><span class="n">i</span><span class="p">]:</span> 
+								<span class="n">nick_same_list</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">line1</span><span class="p">)</span>
+								<span class="k">break</span>
+							<span class="k">if</span> <span class="n">line2</span> <span class="ow">in</span> <span class="n">nick_same_list</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="ow">and</span> <span class="n">line1</span> <span class="ow">in</span> <span class="n">nick_same_list</span><span class="p">[</span><span class="n">i</span><span class="p">]:</span>
+								<span class="k">break</span>  
+						<span class="k">if</span> <span class="ow">not</span> <span class="n">nick_same_list</span><span class="p">[</span><span class="n">i</span><span class="p">]:</span>
+							<span class="n">nick_same_list</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">line1</span><span class="p">)</span>
+							<span class="n">nick_same_list</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">line2</span><span class="p">)</span>
+							<span class="k">break</span>
+
+	<span class="k">for</span> <span class="n">ni</span> <span class="ow">in</span> <span class="n">nicks</span><span class="p">:</span>
+		<span class="k">for</span> <span class="n">ind</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">7000</span><span class="p">):</span>
+			<span class="k">if</span> <span class="n">ni</span> <span class="ow">in</span> <span class="n">nick_same_list</span><span class="p">[</span><span class="n">ind</span><span class="p">]:</span>
+				<span class="k">break</span>
+			<span class="k">if</span> <span class="ow">not</span> <span class="n">nick_same_list</span><span class="p">[</span><span class="n">ind</span><span class="p">]:</span>
+				<span class="n">nick_same_list</span><span class="p">[</span><span class="n">ind</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ni</span><span class="p">)</span>
+				<span class="k">break</span>
+
+	<span class="n">G</span> <span class="o">=</span> <span class="n">ext</span><span class="o">.</span><span class="n">util</span><span class="o">.</span><span class="n">to_graph</span><span class="p">(</span><span class="n">nick_same_list</span><span class="p">)</span>
+	<span class="n">L</span> <span class="o">=</span> <span class="n">connected_components</span><span class="p">(</span><span class="n">G</span><span class="p">)</span>
+
+	<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="nb">len</span><span class="p">(</span><span class="n">L</span><span class="p">)</span><span class="o">+</span><span class="mi">1</span><span class="p">):</span>
+		<span class="n">L</span><span class="p">[</span><span class="n">i</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">+</span><span class="n">L</span><span class="p">[</span><span class="n">i</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+
+	<span class="c1"># We use connected components algorithm to group all those nick clusters that have atleast one nick common in their clusters. So e.g. </span>
+	<span class="c1">#Cluster 1- nick1,nick2,nick3,nick4(some nicks of a user) #Cluster 2 -nick5,nick6,nick2,nick7. Then we would get - nick1,nick2,nick3,nick4,nick5,nick6,nick7 and we can safely assume they belong to the same user.</span>
+
+	<span class="n">conversations</span><span class="o">=</span><span class="p">[[]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">10000</span><span class="p">)]</span> <span class="c1">#This might need to be incremented from 10000 if we have more users. Same logic as the above 7000 one. Applies to all the other codes too.</span>
+	<span class="n">graph_to_sir</span> <span class="o">=</span> <span class="p">[]</span>                <span class="c1">## I would advice on using a different data structure which does not have an upper bound like we do in arrays. </span>
+	<span class="n">graph_x_axis</span> <span class="o">=</span> <span class="p">[]</span>
+	<span class="n">graph_y_axis</span> <span class="o">=</span> <span class="p">[]</span>
+	<span class="n">graphx1</span> <span class="o">=</span><span class="p">[]</span>
+	<span class="n">graphy1</span> <span class="o">=</span><span class="p">[]</span>
+	<span class="n">graphx2</span> <span class="o">=</span><span class="p">[]</span>
+	<span class="n">graphy2</span> <span class="o">=</span><span class="p">[]</span>
+
+	<span class="n">dateadd</span><span class="o">=-</span><span class="mi">1</span> <span class="c1">#Variable used for response time calculation. Varies from 0-365.</span>
+	<span class="k">for</span> <span class="n">folderiterator</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">startingMonth</span><span class="p">,</span> <span class="n">endingMonth</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
+		<span class="n">temp1</span> <span class="o">=</span> <span class="s2">&quot;0&quot;</span> <span class="k">if</span> <span class="n">folderiterator</span> <span class="o">&lt;</span> <span class="mi">10</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span>
+		<span class="k">for</span> <span class="n">fileiterator</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">startingDate</span> <span class="k">if</span> <span class="n">folderiterator</span> <span class="o">==</span> <span class="n">startingMonth</span> <span class="k">else</span> <span class="mi">1</span><span class="p">,</span> <span class="n">endingDate</span> <span class="o">+</span> <span class="mi">1</span> <span class="k">if</span> <span class="n">folderiterator</span> <span class="o">==</span> <span class="n">endingMonth</span> <span class="k">else</span> <span class="mi">32</span><span class="p">):</span>
+			<span class="n">temp2</span> <span class="o">=</span> <span class="s2">&quot;0&quot;</span> <span class="k">if</span> <span class="n">fileiterator</span> <span class="o">&lt;</span> <span class="mi">10</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span>
+			<span class="n">filePath</span><span class="o">=</span><span class="n">log_directory</span><span class="o">+</span><span class="n">temp1</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">folderiterator</span><span class="p">)</span><span class="o">+</span><span class="s2">&quot;/&quot;</span><span class="o">+</span><span class="n">temp2</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">fileiterator</span><span class="p">)</span><span class="o">+</span><span class="s2">&quot;/&quot;</span><span class="o">+</span><span class="n">channel_name</span><span class="o">+</span><span class="s2">&quot;.txt&quot;</span>   
+			<span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">filePath</span><span class="p">):</span>
+				<span class="k">if</span> <span class="ow">not</span><span class="p">((</span><span class="n">folderiterator</span><span class="o">==</span><span class="mi">2</span> <span class="ow">and</span> <span class="p">(</span><span class="n">fileiterator</span> <span class="o">==</span><span class="mi">29</span> <span class="ow">or</span> <span class="n">fileiterator</span> <span class="o">==</span><span class="mi">30</span> <span class="ow">or</span> <span class="n">fileiterator</span> <span class="o">==</span><span class="mi">31</span><span class="p">))</span> <span class="ow">or</span> <span class="p">((</span><span class="n">folderiterator</span><span class="o">==</span><span class="mi">4</span> <span class="ow">or</span> <span class="n">folderiterator</span><span class="o">==</span><span class="mi">6</span> <span class="ow">or</span> <span class="n">folderiterator</span><span class="o">==</span><span class="mi">9</span> <span class="ow">or</span> <span class="n">folderiterator</span><span class="o">==</span><span class="mi">11</span><span class="p">)</span> <span class="ow">and</span> <span class="n">fileiterator</span><span class="o">==</span><span class="mi">31</span> <span class="p">)):</span> 
+					<span class="nb">print</span> <span class="s2">&quot;[Error] Path &quot;</span><span class="o">+</span><span class="n">filePath</span><span class="o">+</span><span class="s2">&quot; doesn&#39;t exist&quot;</span>
+				<span class="k">continue</span> 
+			<span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">filePath</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+							<span class="n">content</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">readlines</span><span class="p">()</span> <span class="c1">#contents stores all the lines of the file channel_name  </span>
+			<span class="n">dateadd</span><span class="o">=</span><span class="n">dateadd</span><span class="o">+</span><span class="mi">1</span>
+			<span class="n">send_time</span> <span class="o">=</span> <span class="p">[]</span> <span class="c1">#list of all the times a user sends a message to another user</span>
+			<span class="n">meanstd_list</span> <span class="o">=</span> <span class="p">[]</span>
+			<span class="n">totalmeanstd_list</span> <span class="o">=</span> <span class="p">[]</span>
+			<span class="n">x_axis</span> <span class="o">=</span> <span class="p">[]</span>
+			<span class="n">y_axis</span> <span class="o">=</span> <span class="p">[]</span>
+			<span class="n">real_y_axis</span> <span class="o">=</span> <span class="p">[]</span>
+			<span class="n">time_in_min</span> <span class="o">=</span> <span class="p">[[]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1000</span><span class="p">)]</span>
+			
+			<span class="nb">print</span><span class="p">(</span><span class="n">filePath</span><span class="p">)</span>
+
+			<span class="c1">#code for making relation map between clients		</span>
+			<span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">content</span><span class="p">:</span>
+				<span class="n">flag_comma</span> <span class="o">=</span> <span class="mi">0</span>
+				<span class="k">if</span><span class="p">(</span><span class="n">line</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">!=</span> <span class="s1">&#39;=&#39;</span> <span class="ow">and</span> <span class="s2">&quot;] &lt;&quot;</span> <span class="ow">in</span> <span class="n">line</span> <span class="ow">and</span> <span class="s2">&quot;&gt; &quot;</span> <span class="ow">in</span> <span class="n">line</span><span class="p">):</span>
+					<span class="n">m</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="s2">r&quot;\&lt;(.*?)\&gt;&quot;</span><span class="p">,</span> <span class="n">line</span><span class="p">)</span>
+					<span class="n">var</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">0</span><span class="p">)[</span><span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+					<span class="n">var</span><span class="o">=</span><span class="n">ext</span><span class="o">.</span><span class="n">util</span><span class="o">.</span><span class="n">correctLastCharCR</span><span class="p">(</span><span class="n">var</span><span class="p">)</span>
+					<span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">nicks</span><span class="p">)):</span>                              <span class="c1">#E.g. if names are rohan1,rohan2,rohan3...,then var will store rohan1.</span>
+						<span class="k">if</span><span class="p">((</span><span class="n">d</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">L</span><span class="p">))</span> <span class="ow">and</span> <span class="p">(</span><span class="n">var</span> <span class="ow">in</span> <span class="n">L</span><span class="p">[</span><span class="n">d</span><span class="p">])):</span>
+							<span class="n">nick_sender</span> <span class="o">=</span> <span class="n">L</span><span class="p">[</span><span class="n">d</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+							<span class="k">break</span>
+						
+					<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">nicks</span><span class="p">:</span>
+						<span class="n">rec_list</span><span class="o">=</span><span class="p">[</span><span class="n">e</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">line</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;:&#39;</span><span class="p">)]</span>
+						<span class="n">rec_list</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">=</span><span class="n">rec_list</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="n">rec_list</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s2">&quot;&gt;&quot;</span><span class="p">)</span><span class="o">+</span><span class="mi">1</span><span class="p">:</span><span class="nb">len</span><span class="p">(</span><span class="n">rec_list</span><span class="p">[</span><span class="mi">1</span><span class="p">])]</span>
+						<span class="n">rec_list</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">=</span><span class="n">rec_list</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="mi">1</span><span class="p">:]</span>
+						<span class="k">if</span> <span class="ow">not</span> <span class="n">rec_list</span><span class="p">[</span><span class="mi">1</span><span class="p">]:</span>
+							<span class="k">break</span>
+						<span class="k">for</span> <span class="n">ik</span> <span class="ow">in</span> <span class="n">xrange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="nb">len</span><span class="p">(</span><span class="n">rec_list</span><span class="p">)):</span>
+							<span class="k">if</span><span class="p">(</span><span class="n">rec_list</span><span class="p">[</span><span class="n">ik</span><span class="p">]):</span>
+								<span class="n">rec_list</span><span class="p">[</span><span class="n">ik</span><span class="p">]</span><span class="o">=</span><span class="n">ext</span><span class="o">.</span><span class="n">util</span><span class="o">.</span><span class="n">correctLastCharCR</span><span class="p">(</span><span class="n">rec_list</span><span class="p">[</span><span class="n">ik</span><span class="p">])</span>
+
+						<span class="k">for</span> <span class="n">z</span> <span class="ow">in</span> <span class="n">rec_list</span><span class="p">:</span>
+							<span class="k">if</span><span class="p">(</span><span class="n">z</span><span class="o">==</span><span class="n">i</span><span class="p">):</span>
+								<span class="n">send_time</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">line</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="mi">6</span><span class="p">])</span>
+								<span class="k">if</span><span class="p">(</span><span class="n">var</span> <span class="o">!=</span> <span class="n">i</span><span class="p">):</span> 	
+									<span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">nicks</span><span class="p">)):</span>
+										<span class="k">if</span><span class="p">((</span><span class="n">d</span><span class="o">&lt;</span><span class="nb">len</span><span class="p">(</span><span class="n">L</span><span class="p">))</span> <span class="ow">and</span> <span class="p">(</span><span class="n">i</span> <span class="ow">in</span> <span class="n">L</span><span class="p">[</span><span class="n">d</span><span class="p">])):</span>
+											<span class="n">nick_receiver</span><span class="o">=</span><span class="n">L</span><span class="p">[</span><span class="n">d</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+											<span class="k">break</span>
+										
+									<span class="k">for</span> <span class="n">rt</span> <span class="ow">in</span> <span class="n">xrange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">10000</span><span class="p">):</span>
+										<span class="k">if</span> <span class="p">(</span><span class="n">nick_sender</span> <span class="ow">in</span> <span class="n">conversations</span><span class="p">[</span><span class="n">rt</span><span class="p">]</span> <span class="ow">and</span> <span class="n">nick_receiver</span> <span class="ow">in</span> <span class="n">conversations</span><span class="p">[</span><span class="n">rt</span><span class="p">]):</span>
+											<span class="n">conversations</span><span class="p">[</span><span class="n">rt</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="mi">24</span><span class="o">*</span><span class="mi">60</span><span class="o">*</span><span class="n">dateadd</span> <span class="o">+</span> <span class="nb">int</span><span class="p">(</span><span class="n">line</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="mi">6</span><span class="p">][</span><span class="mi">0</span><span class="p">:</span><span class="mi">2</span><span class="p">])</span><span class="o">*</span><span class="mi">60</span><span class="o">+</span><span class="nb">int</span><span class="p">(</span><span class="n">line</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="mi">6</span><span class="p">][</span><span class="mi">3</span><span class="p">:</span><span class="mi">5</span><span class="p">]))</span> <span class="c1"># We add response times in conversations for every conversation </span>
+											<span class="k">break</span>                                                                     <span class="c1">#between userA and userB. If they havent already conversed </span>
+										<span class="k">if</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">conversations</span><span class="p">[</span><span class="n">rt</span><span class="p">])</span><span class="o">==</span><span class="mi">0</span><span class="p">):</span>                                            <span class="c1">#before than add time at a new array index and later append to it.</span>
+											<span class="n">conversations</span><span class="p">[</span><span class="n">rt</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">nick_sender</span><span class="p">)</span>
+											<span class="n">conversations</span><span class="p">[</span><span class="n">rt</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">nick_receiver</span><span class="p">)</span>
+											<span class="n">conversations</span><span class="p">[</span><span class="n">rt</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="mi">24</span><span class="o">*</span><span class="mi">60</span><span class="o">*</span><span class="n">dateadd</span> <span class="o">+</span> <span class="nb">int</span><span class="p">(</span><span class="n">line</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="mi">6</span><span class="p">][</span><span class="mi">0</span><span class="p">:</span><span class="mi">2</span><span class="p">])</span><span class="o">*</span><span class="mi">60</span><span class="o">+</span><span class="nb">int</span><span class="p">(</span><span class="n">line</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="mi">6</span><span class="p">][</span><span class="mi">3</span><span class="p">:</span><span class="mi">5</span><span class="p">]))</span>
+											<span class="k">break</span>
+							
+						<span class="k">if</span> <span class="s2">&quot;,&quot;</span> <span class="ow">in</span> <span class="n">rec_list</span><span class="p">[</span><span class="mi">1</span><span class="p">]:</span> 
+							<span class="n">flag_comma</span> <span class="o">=</span> <span class="mi">1</span>
+							<span class="n">rec_list_2</span><span class="o">=</span><span class="p">[</span><span class="n">e</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">rec_list</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;,&#39;</span><span class="p">)]</span>
+							<span class="k">for</span> <span class="n">ij</span> <span class="ow">in</span> <span class="n">xrange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="nb">len</span><span class="p">(</span><span class="n">rec_list_2</span><span class="p">)):</span>
+								<span class="k">if</span><span class="p">(</span><span class="n">rec_list_2</span><span class="p">[</span><span class="n">ij</span><span class="p">]):</span>
+									<span class="n">rec_list_2</span><span class="p">[</span><span class="n">ij</span><span class="p">]</span><span class="o">=</span><span class="n">ext</span><span class="o">.</span><span class="n">util</span><span class="o">.</span><span class="n">correctLastCharCR</span><span class="p">(</span><span class="n">rec_list_2</span><span class="p">[</span><span class="n">ij</span><span class="p">])</span>
+
+							<span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="n">rec_list_2</span><span class="p">:</span>
+								<span class="k">if</span><span class="p">(</span><span class="n">j</span><span class="o">==</span><span class="n">i</span><span class="p">):</span>
+									<span class="n">send_time</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">line</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="mi">6</span><span class="p">])</span>
+									<span class="k">if</span><span class="p">(</span><span class="n">var</span> <span class="o">!=</span> <span class="n">i</span><span class="p">):</span> 	
+										<span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">nicks</span><span class="p">)):</span>
+											<span class="k">if</span><span class="p">((</span><span class="n">d</span><span class="o">&lt;</span><span class="nb">len</span><span class="p">(</span><span class="n">L</span><span class="p">))</span> <span class="ow">and</span> <span class="p">(</span><span class="n">i</span> <span class="ow">in</span> <span class="n">L</span><span class="p">[</span><span class="n">d</span><span class="p">])):</span>   <span class="c1">#Lines 212-255 consider all cases in which messages are addressed such as - nick1:nick2 or nick1,nick2,</span>
+												<span class="n">nick_receiver</span><span class="o">=</span><span class="n">L</span><span class="p">[</span><span class="n">d</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>                   <span class="c1">#or nick1,nick2:</span>
+												<span class="k">break</span>
+										
+										<span class="k">for</span> <span class="n">rt</span> <span class="ow">in</span> <span class="n">xrange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">10000</span><span class="p">):</span>
+											<span class="k">if</span> <span class="p">(</span><span class="n">nick_sender</span> <span class="ow">in</span> <span class="n">conversations</span><span class="p">[</span><span class="n">rt</span><span class="p">]</span> <span class="ow">and</span> <span class="n">nick_receiver</span> <span class="ow">in</span> <span class="n">conversations</span><span class="p">[</span><span class="n">rt</span><span class="p">]):</span>
+												<span class="n">conversations</span><span class="p">[</span><span class="n">rt</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="mi">24</span><span class="o">*</span><span class="mi">60</span><span class="o">*</span><span class="n">dateadd</span> <span class="o">+</span> <span class="nb">int</span><span class="p">(</span><span class="n">line</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="mi">6</span><span class="p">][</span><span class="mi">0</span><span class="p">:</span><span class="mi">2</span><span class="p">])</span><span class="o">*</span><span class="mi">60</span><span class="o">+</span><span class="nb">int</span><span class="p">(</span><span class="n">line</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="mi">6</span><span class="p">][</span><span class="mi">3</span><span class="p">:</span><span class="mi">5</span><span class="p">]))</span> 
+												<span class="k">break</span>
+											<span class="k">if</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">conversations</span><span class="p">[</span><span class="n">rt</span><span class="p">])</span><span class="o">==</span><span class="mi">0</span><span class="p">):</span>
+												<span class="n">conversations</span><span class="p">[</span><span class="n">rt</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">nick_sender</span><span class="p">)</span>
+												<span class="n">conversations</span><span class="p">[</span><span class="n">rt</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">nick_receiver</span><span class="p">)</span>
+												<span class="n">conversations</span><span class="p">[</span><span class="n">rt</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="mi">24</span><span class="o">*</span><span class="mi">60</span><span class="o">*</span><span class="n">dateadd</span> <span class="o">+</span> <span class="nb">int</span><span class="p">(</span><span class="n">line</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="mi">6</span><span class="p">][</span><span class="mi">0</span><span class="p">:</span><span class="mi">2</span><span class="p">])</span><span class="o">*</span><span class="mi">60</span><span class="o">+</span><span class="nb">int</span><span class="p">(</span><span class="n">line</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="mi">6</span><span class="p">][</span><span class="mi">3</span><span class="p">:</span><span class="mi">5</span><span class="p">]))</span>
+												<span class="k">break</span>
+
+						<span class="k">if</span><span class="p">(</span><span class="n">flag_comma</span> <span class="o">==</span> <span class="mi">0</span><span class="p">):</span>
+							<span class="n">rec</span><span class="o">=</span><span class="n">line</span><span class="p">[</span><span class="n">line</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s2">&quot;&gt;&quot;</span><span class="p">)</span><span class="o">+</span><span class="mi">1</span><span class="p">:</span><span class="n">line</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s2">&quot;, &quot;</span><span class="p">)]</span> 
+							<span class="n">rec</span><span class="o">=</span><span class="n">rec</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
+							<span class="n">rec</span><span class="o">=</span><span class="n">ext</span><span class="o">.</span><span class="n">util</span><span class="o">.</span><span class="n">correctLastCharCR</span><span class="p">(</span><span class="n">rec</span><span class="p">)</span>
+								
+							<span class="k">if</span><span class="p">(</span><span class="n">rec</span><span class="o">==</span><span class="n">i</span><span class="p">):</span>
+								<span class="n">send_time</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">line</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="mi">6</span><span class="p">])</span>
+								<span class="k">if</span><span class="p">(</span><span class="n">var</span> <span class="o">!=</span> <span class="n">i</span><span class="p">):</span>
+									<span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">nicks</span><span class="p">)):</span>
+										<span class="k">if</span> <span class="p">((</span><span class="n">d</span><span class="o">&lt;</span><span class="nb">len</span><span class="p">(</span><span class="n">L</span><span class="p">))</span> <span class="ow">and</span> <span class="p">(</span><span class="n">i</span> <span class="ow">in</span> <span class="n">L</span><span class="p">[</span><span class="n">d</span><span class="p">])):</span>
+											<span class="n">nick_receiver</span><span class="o">=</span><span class="n">L</span><span class="p">[</span><span class="n">d</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+											<span class="k">break</span>
+									
+									<span class="k">for</span> <span class="n">rt</span> <span class="ow">in</span> <span class="n">xrange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">10000</span><span class="p">):</span>
+										<span class="k">if</span> <span class="p">(</span><span class="n">nick_sender</span> <span class="ow">in</span> <span class="n">conversations</span><span class="p">[</span><span class="n">rt</span><span class="p">]</span> <span class="ow">and</span> <span class="n">nick_receiver</span> <span class="ow">in</span> <span class="n">conversations</span><span class="p">[</span><span class="n">rt</span><span class="p">]):</span>	
+											<span class="n">conversations</span><span class="p">[</span><span class="n">rt</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="mi">24</span><span class="o">*</span><span class="mi">60</span><span class="o">*</span><span class="n">dateadd</span> <span class="o">+</span> <span class="nb">int</span><span class="p">(</span><span class="n">line</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="mi">6</span><span class="p">][</span><span class="mi">0</span><span class="p">:</span><span class="mi">2</span><span class="p">])</span><span class="o">*</span><span class="mi">60</span><span class="o">+</span><span class="nb">int</span><span class="p">(</span><span class="n">line</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="mi">6</span><span class="p">][</span><span class="mi">3</span><span class="p">:</span><span class="mi">5</span><span class="p">]))</span>
+											<span class="k">break</span>
+										<span class="k">if</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">conversations</span><span class="p">[</span><span class="n">rt</span><span class="p">])</span><span class="o">==</span><span class="mi">0</span><span class="p">):</span>
+											<span class="n">conversations</span><span class="p">[</span><span class="n">rt</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">nick_sender</span><span class="p">)</span>
+											<span class="n">conversations</span><span class="p">[</span><span class="n">rt</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">nick_receiver</span><span class="p">)</span>
+											<span class="n">conversations</span><span class="p">[</span><span class="n">rt</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="mi">24</span><span class="o">*</span><span class="mi">60</span><span class="o">*</span><span class="n">dateadd</span> <span class="o">+</span> <span class="nb">int</span><span class="p">(</span><span class="n">line</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="mi">6</span><span class="p">][</span><span class="mi">0</span><span class="p">:</span><span class="mi">2</span><span class="p">])</span><span class="o">*</span><span class="mi">60</span><span class="o">+</span><span class="nb">int</span><span class="p">(</span><span class="n">line</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="mi">6</span><span class="p">][</span><span class="mi">3</span><span class="p">:</span><span class="mi">5</span><span class="p">]))</span>
+											<span class="k">break</span>
+		
+	<span class="c1">#Lines 212-290 consider all cases in which messages are addressed as - (nick1:nick2 or nick1,nick2 or nick1,nick2:) and stores their response times in conversations. conversations[i] contains all the response times between userA and userB throughout an entire year.</span>
+
+	<span class="k">for</span> <span class="n">ty</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="nb">len</span><span class="p">(</span><span class="n">conversations</span><span class="p">)):</span>       <span class="c1">#Lines 295-297 remove the first two elements from every conversations[i] as they are the UIDS of sender and receiver respectively(and not RTs) </span>
+		<span class="k">if</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">conversations</span><span class="p">[</span><span class="n">ty</span><span class="p">])</span><span class="o">!=</span><span class="mi">0</span><span class="p">):</span>              <span class="c1"># response times are calculated starting from index 2. So now we have all the response times in conversations.</span>
+			<span class="k">del</span> <span class="n">conversations</span><span class="p">[</span><span class="n">ty</span><span class="p">][</span><span class="mi">0</span><span class="p">:</span><span class="mi">2</span><span class="p">]</span>
+
+	<span class="k">for</span> <span class="n">fg</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="nb">len</span><span class="p">(</span><span class="n">conversations</span><span class="p">)):</span>
+		<span class="k">if</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">conversations</span><span class="p">[</span><span class="n">fg</span><span class="p">])</span><span class="o">!=</span><span class="mi">0</span><span class="p">):</span>
+			<span class="n">first</span><span class="o">=</span><span class="n">conversations</span><span class="p">[</span><span class="n">fg</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+			<span class="k">for</span> <span class="n">gh</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="nb">len</span><span class="p">(</span><span class="n">conversations</span><span class="p">[</span><span class="n">fg</span><span class="p">])):</span>
+					<span class="k">if</span><span class="p">(</span><span class="n">conversations</span><span class="p">[</span><span class="n">fg</span><span class="p">][</span><span class="n">gh</span><span class="p">]</span><span class="o">-</span><span class="n">conversations</span><span class="p">[</span><span class="n">fg</span><span class="p">][</span><span class="n">gh</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">&gt;</span><span class="mi">9</span><span class="p">):</span>
+					
+						<span class="n">conv</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">conversations</span><span class="p">[</span><span class="n">fg</span><span class="p">][</span><span class="n">gh</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">-</span><span class="n">first</span><span class="p">)</span>    <span class="c1">#We are recording the conversation length in conv and CRT in conv_diff. Here 9 is the average response</span>
+																																										<span class="c1">#time we have already found before(see parser-RT.py). For every channel this value differs and would have to be changed in the code.</span>
+						<span class="n">conv_diff</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">conversations</span><span class="p">[</span><span class="n">fg</span><span class="p">][</span><span class="n">gh</span><span class="p">]</span><span class="o">-</span><span class="n">conversations</span><span class="p">[</span><span class="n">fg</span><span class="p">][</span><span class="n">gh</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+						<span class="n">first</span><span class="o">=</span><span class="n">conversations</span><span class="p">[</span><span class="n">fg</span><span class="p">][</span><span class="n">gh</span><span class="p">]</span>
+					<span class="k">if</span><span class="p">(</span><span class="n">gh</span><span class="o">==</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">conversations</span><span class="p">[</span><span class="n">fg</span><span class="p">])</span><span class="o">-</span><span class="mi">1</span><span class="p">)):</span>
+						<span class="n">conv</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">conversations</span><span class="p">[</span><span class="n">fg</span><span class="p">][</span><span class="n">gh</span><span class="p">]</span><span class="o">-</span><span class="n">first</span><span class="p">)</span>					
+						<span class="k">break</span>
+
+	<span class="k">for</span> <span class="n">op</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="nb">max</span><span class="p">(</span><span class="n">conv</span><span class="p">)):</span>
+		<span class="n">graphx1</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">op</span><span class="p">)</span>
+		<span class="n">graphy1</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">conv</span><span class="o">.</span><span class="n">count</span><span class="p">(</span><span class="n">op</span><span class="p">))</span>
+
+	<span class="k">for</span> <span class="n">po</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="nb">max</span><span class="p">(</span><span class="n">conv_diff</span><span class="p">)):</span>
+		<span class="n">graphx2</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">po</span><span class="p">)</span>
+		<span class="n">graphy2</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">conv_diff</span><span class="o">.</span><span class="n">count</span><span class="p">(</span><span class="n">po</span><span class="p">))</span>
+
+<span class="c1">#To plot CDF we store the CL and CRT values and their number of occurences as shown above.</span>
+
+	<span class="n">row_cl</span> <span class="o">=</span> <span class="nb">zip</span><span class="p">(</span><span class="n">graphx1</span><span class="p">,</span><span class="n">graphy1</span><span class="p">)</span>
+	<span class="n">filename1</span><span class="o">=</span> <span class="n">out_dir_msg_num</span><span class="o">+</span><span class="n">channel_name</span><span class="o">+</span><span class="s2">&quot;_&quot;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">startingMonth</span><span class="p">)</span><span class="o">+</span><span class="s2">&quot;-&quot;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">startingDate</span><span class="p">)</span><span class="o">+</span><span class="s2">&quot;_&quot;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">endingMonth</span><span class="p">)</span><span class="o">+</span><span class="s2">&quot;-&quot;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">endingDate</span><span class="p">)</span><span class="o">+</span><span class="s2">&quot;_CL.csv&quot;</span>
+	<span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">filename1</span><span class="p">,</span> <span class="s1">&#39;a+&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">myfile</span><span class="p">:</span>
+					<span class="n">wr</span> <span class="o">=</span> <span class="n">csv</span><span class="o">.</span><span class="n">writer</span><span class="p">(</span><span class="n">myfile</span><span class="p">,</span> <span class="n">quoting</span><span class="o">=</span><span class="n">csv</span><span class="o">.</span><span class="n">QUOTE_ALL</span><span class="p">)</span>
+					<span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">row_cl</span><span class="p">:</span>
+						<span class="n">wr</span><span class="o">.</span><span class="n">writerow</span><span class="p">(</span><span class="n">row</span><span class="p">)</span>
+
+	<span class="n">row_crt</span> <span class="o">=</span> <span class="nb">zip</span><span class="p">(</span><span class="n">graphx2</span><span class="p">,</span><span class="n">graphy2</span><span class="p">)</span>
+	<span class="n">filename2</span><span class="o">=</span> <span class="n">out_dir_msg_num</span><span class="o">+</span><span class="n">channel_name</span><span class="o">+</span><span class="s2">&quot;_&quot;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">startingMonth</span><span class="p">)</span><span class="o">+</span><span class="s2">&quot;-&quot;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">startingDate</span><span class="p">)</span><span class="o">+</span><span class="s2">&quot;_&quot;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">endingMonth</span><span class="p">)</span><span class="o">+</span><span class="s2">&quot;-&quot;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">endingDate</span><span class="p">)</span><span class="o">+</span><span class="s2">&quot;_CRT.csv&quot;</span>
+	<span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">filename2</span><span class="p">,</span> <span class="s1">&#39;a+&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">myfile</span><span class="p">:</span>
+					<span class="n">wr</span> <span class="o">=</span> <span class="n">csv</span><span class="o">.</span><span class="n">writer</span><span class="p">(</span><span class="n">myfile</span><span class="p">,</span> <span class="n">quoting</span><span class="o">=</span><span class="n">csv</span><span class="o">.</span><span class="n">QUOTE_ALL</span><span class="p">)</span>
+					<span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">row_crt</span><span class="p">:</span>
+						<span class="n">wr</span><span class="o">.</span><span class="n">writerow</span><span class="p">(</span><span class="n">row</span><span class="p">)</span></div>
+
+<span class="c1">#These values are then written to conv_length and conv_diff csv files.</span>
+
+<span class="c1">#The below commented out code is for finding the RT(the 9 value which we used above for finding CRT and CL.) #Refer to parser-RT.py. Of note is that for finding RT</span>
+<span class="c1">#we do not append conversations like we did above. Instead we append the time in the format (eg. 10:15) straight from the log file(value between [] when the message is sent).</span>
+<span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">		for ing in range(0,100):</span>
+<span class="sd">			if(len(conversations[ing])!=0):                 #These lines convert the time from 10:15 format to 615 seconds format. This is simpler for subtraction</span>
+<span class="sd">				for ing1 in range(2,len(conversations[ing])):</span>
+<span class="sd">					time_in_min[ing].append(int(conversations[ing][ing1][0:2])*60+int(conversations[ing][ing1][3:5]))</span>
+<span class="sd">			</span>
+<span class="sd">			</span>
+<span class="sd">		for index in range(0,100):</span>
+<span class="sd">			if(len(conversations[index])!=0):             #These lines subtract the consecutive time values to get the response times for a conversation.</span>
+<span class="sd">				for index1 in range(2,len(conversations[index])-1):</span>
+<span class="sd">					conversations[index][index1]=(int(conversations[index][index1+1][0:2])*60+int(conversations[index][index1+1][3:5])) - (int(conversations[index][index1][0:2])*60+int(conversations[index][index1][3:5]))</span>
+<span class="sd">	</span>
+
+<span class="sd">		for index in range(0,100):        #if there are only 3 elements in conversations[i] -uid1,uid2,time, then we make convert time to seconds format.</span>
+<span class="sd">			if(len(conversations[index])!=0): </span>
+<span class="sd">				if(len(conversations[index])==3):                </span>
+<span class="sd">					conversations[index][2] = int(conversations[index][2][0:2])*60+int(conversations[index][2][3:5])     </span>
+<span class="sd">				else: </span>
+<span class="sd">					del conversations[index][-1]             #else we delete the last element from every conversations[i] since we dont need it after subtraction operation.</span>
+<span class="sd">																																						#i.e we remove xi as x(i)-x(i-1) has already been recorded at i-1 index.</span>
+<span class="sd">		print(conversations) </span>
+<span class="sd">		</span>
+<span class="sd">		for index in range(0,100):</span>
+<span class="sd">			if(len(conversations[index])!=0):</span>
+<span class="sd">				for index1 in range(2,len(conversations[index])):        #we append all values after subtraction operation without the UIDs. Thats why second for</span>
+<span class="sd">					totalmeanstd_list.append(conversations[index][index1])  # loop starts with 2. 0 and 1 index are UIDs. Values are appended to totalmean_std.</span>
+
+<span class="sd">		if(len(totalmeanstd_list)!=0):  </span>
+
+<span class="sd">			for iy in range(0, max(totalmeanstd_list)+1):</span>
+<span class="sd">				x_axis.append(iy)</span>
+
+<span class="sd">			for ui in x_axis:</span>
+<span class="sd">				y_axis.append(float(totalmeanstd_list.count(ui))/float(len(totalmeanstd_list)))</span>
+<span class="sd">			</span>
+<span class="sd">			real_y_axis.append(y_axis[0])</span>
+<span class="sd">			for ix in range(1, len(y_axis)):</span>
+<span class="sd">				real_y_axis.append(float(real_y_axis[ix-1])+float(y_axis[ix]))</span>
+
+<span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">			data = {&#39;Response time&#39;: x_axis, </span>
+<span class="sd">									&#39;CDF&#39;: real_y_axis}</span>
+<span class="sd">			df = pd.DataFrame(data, columns = [&#39;Response time&#39;, &#39;CDF&#39;])</span>
+<span class="sd">			df.index = df[&#39;Response time&#39;]</span>
+<span class="sd">			del df[&#39;Response time&#39;]</span>
+<span class="sd">			df</span>
+<span class="sd">																																																		#Here we plot the response time and CDF using pandas library.</span>
+<span class="sd">			axes = plt.gca()</span>
+<span class="sd">			#axes.set_xlim([0,300])</span>
+<span class="sd">			axes.set_ylim([0,1.2])</span>
+<span class="sd">			df.plot(ax=axes)</span>
+<span class="sd">			name = channel+&quot;_&quot;+str(fileiterator)+&quot;_&quot;+str(iterator)+&quot;_2013_response_time_CDF.pdf&quot;</span>
+<span class="sd">			#plt.show()</span>
+<span class="sd">			plt.savefig(name)</span>
+<span class="sd">			plt.close()</span>
+<span class="sd">			</span>
+<span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">		for hi in range(0,len(totalmeanstd_list)):</span>
+<span class="sd">			graph_to_sir.append(totalmeanstd_list[hi])</span>
+
+<span class="sd">		totalmeanstd_list.append(numpy.mean(totalmeanstd_list))     #Here we are basically appending the mean and std values for RTs just for timepass</span>
+<span class="sd">		totalmeanstd_list.append(numpy.mean(totalmeanstd_list)+2*numpy.std(totalmeanstd_list))</span>
+<span class="sd">		</span>
+<span class="sd">		for index in range(0,100):</span>
+<span class="sd">			if(len(conversations[index])!=0):</span>
+<span class="sd">				for index1 in range(2,len(conversations[index])):   #Again we are appending mean and std values for RTs of a conversation between two users.</span>
+<span class="sd">					meanstd_list.append(conversations[index][index1])   #This time appending to conversations.</span>
+<span class="sd">				conversations[index].append(numpy.mean(meanstd_list))</span>
+<span class="sd">				conversations[index].append(numpy.mean(meanstd_list)+(2*numpy.std(meanstd_list)))</span>
+<span class="sd">				meanstd_list[:] = []</span>
+
+<span class="sd">		#Ignore the part below this. Its wrong.</span>
+<span class="sd">		#____________________________________________________________________________________________________________________________________________</span>
+<span class="sd">		for fina in range(0,100):</span>
+<span class="sd">			if(len(xarr[fina])!=0):</span>
+<span class="sd">				calc = time_in_min[fina][0] + xarr[fina][len(xarr[fina])-1]</span>
+<span class="sd">				for somet in range(0,len(time_in_min[fina])):</span>
+<span class="sd">					if (time_in_min[fina][somet] &gt; calc):</span>
+<span class="sd">						subtr = time_in_min[fina][somet-1] - time_in_min[fina][0]</span>
+<span class="sd">						xarr[fina].append(subtr)</span>
+<span class="sd">						break</span>
+<span class="sd">					else:</span>
+<span class="sd">						subtr = time_in_min[fina][len(time_in_min[fina])-1] - time_in_min[fina][0]</span>
+<span class="sd">						xarr[fina].append(subtr)</span>
+<span class="sd">						break</span>
+
+<span class="sd">		#print(&quot;Conversation RT Info&quot;)</span>
+<span class="sd">		#print(xarr)</span>
+<span class="sd">	</span>
+<span class="sd">		#print(&quot;Total Response-Time&quot;)</span>
+<span class="sd">		#print(totalmeanstd_list)</span>
+<span class="sd">		#print(&quot;\n\n&quot;)</span>
+<span class="sd">		</span>
+<span class="sd">#print(&quot;grpahs to graph_to_sir&quot;)  </span>
+<span class="sd">#print(graph_to_sir)</span>
+
+<span class="sd">graph_to_sir.sort()</span>
+<span class="sd">#print(graph_to_sir)</span>
+
+
+<span class="sd">for ti in range(0,graph_to_sir[len(graph_to_sir)-1]+1):</span>
+<span class="sd">	graph_y_axis.append(graph_to_sir.count(ti))</span>
+<span class="sd">	graph_x_axis.append(ti)</span>
+
+
+<span class="sd">#print(graph_y_axis)</span>
+<span class="sd">#print(graph_x_axis)</span>
+<span class="sd">#print(len(graph_y_axis))</span>
+<span class="sd">#print(len(graph_x_axis))</span>
+
+<span class="sd">rows = zip(graph_x_axis,graph_y_axis)         #Storing the RT values and their frequencies in csv file.</span>
+<span class="sd">with open(&#39;/home/dhruvie/LOP/graphforsir2.csv&#39;, &#39;a+&#39;) as myfile:</span>
+<span class="sd">				wr = csv.writer(myfile, quoting=csv.QUOTE_ALL)</span>
+<span class="sd">				for row in rows:</span>
+<span class="sd">					wr.writerow(row)</span>
+
+
+<span class="sd">&#39;&#39;&#39;</span>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2016, Prasad Talasila, Rohan Goel, Dhruv Shekhawat.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.5.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.9</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

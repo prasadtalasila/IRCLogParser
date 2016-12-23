@@ -44,7 +44,9 @@ def to_edges(l):
 		last = current    
 
 def createGephiTimelapseCSV(log_directory, channel_name, output_directory, startingDate, startingMonth, endingDate, endingMonth):
-
+	"""[Deprecated]
+	Produces node and edge csv files that contain information relevant for creating a timelapse of user interactions on Gephi. Most importantly, these csv files contain the node/edge appear and disappear times and can easily be imported into Gephi.
+	"""
 	today1= []
 	today2 =[]
 	col1 = []

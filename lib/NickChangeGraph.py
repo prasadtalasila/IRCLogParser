@@ -6,14 +6,27 @@ import matplotlib.pyplot as plt
 import pylab
 import pygraphviz as pygraphviz
 import os
-
-def correctLastCharCR(inText):#if the last letter of the nick is '\' replace it by 'CR' for example rohan\ becomes rohanCR to avoid complications in nx because of \
-	if(len(inText) > 1 and inText[len(inText)-1]=='\\'):
-		inText = inText[:-1]+'CR'
-	return inText
-
+import ext.util
 
 def createNickChangesGraph(log_directory, channel_name, output_directory, startingDate, startingMonth, endingDate, endingMonth):
+	""" creates a graph which tracks the nick changes of the users
+	where each edge has a time stamp denoting the time 
+	at which the nick was changed by the user
+
+    Args:
+        log_directory (str): Location of the logs (Assumed to be arranged in directory structure as : <year>/<month>/<day>/<log-file-for-channel>.txt)
+        channel_name (str): Channel to be perform analysis on
+        output_directory (str): Location of output directory
+        startingDate (int): Date to start the analysis (in conjunction with startingMonth)
+        startingMonth (int): Date to start the analysis (in conjunction with startingDate)
+        endingDate (int): Date to end the analysis (in conjunction with endingMonth)
+        endingMonth (int): Date to end the analysis (in conjunction with endingDate)
+
+    Returns:
+       null 
+
+    """
+    
 	# out_dir_nick_change = output_directory+"nick-changes/"
 	out_dir_nick_change = output_directory
 	if not os.path.exists(os.path.dirname(out_dir_nick_change)):
@@ -51,12 +64,12 @@ def createNickChangesGraph(log_directory, channel_name, output_directory, starti
 				nicks[i] = nicks[i][1:-1]     #removed <> from the nicknames
 					
 			for i in xrange(0,len(nicks)):
-				nicks[i]=correctLastCharCR(nicks[i])
+				nicks[i]=ext.util.correctLastCharCR(nicks[i])
 
 			for line in content:
 				if(line[0]=='=' and "changed the topic of" not in line): #excluding the condition when user changes the topic. Search for only nick changes
-					nick1=correctLastCharCR(line[line.find("=")+1:line.find(" is")][3:])
-					nick2=correctLastCharCR(line[line.find("wn as")+1:line.find("\n")][5:])
+					nick1=ext.util.correctLastCharCR(line[line.find("=")+1:line.find(" is")][3:])
+					nick2=ext.util.correctLastCharCR(line[line.find("wn as")+1:line.find("\n")][5:])
 					if nick1 not in nicks:
 						nicks.append(nick1)
 					if nick2 not in nicks:
@@ -74,8 +87,8 @@ def createNickChangesGraph(log_directory, channel_name, output_directory, starti
 				if(line[0]=='=' and "changed the topic of" not in line):
 					line1=line[line.find("=")+1:line.find(" is")][3:]
 					line2=line[line.find("wn as")+1:line.find("\n")][5:]
-					line1=correctLastCharCR(line1)
-					line2=correctLastCharCR(line2)
+					line1=ext.util.correctLastCharCR(line1)
+					line2=ext.util.correctLastCharCR(line2)
 					for i in range(5000):
 						if line1 in nick_same_list[i] or line2 in nick_same_list[i]:
 							nick_same_list[i].append(line1)
@@ -96,8 +109,8 @@ def createNickChangesGraph(log_directory, channel_name, output_directory, starti
 			for i in content:
 				y=y+1
 				if(i[0] =='=' and "changed the topic of" not in i):  #excluding the condition when user changes the topic. Search for only nick changes
-					nick1=correctLastCharCR(i[i.find("=")+1:i.find(" is")][3:])
-					nick2=correctLastCharCR(i[i.find("wn as")+1:i.find("\n")][5:])
+					nick1=ext.util.correctLastCharCR(i[i.find("=")+1:i.find(" is")][3:])
+					nick2=ext.util.correctLastCharCR(i[i.find("wn as")+1:i.find("\n")][5:])
 					z=y
 					while z>=0:
 						z=z-1

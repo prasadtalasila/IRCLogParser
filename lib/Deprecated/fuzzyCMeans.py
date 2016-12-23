@@ -16,6 +16,9 @@ import matplotlib.pyplot as plt
 import skfuzzy as fuzz
 
 def fuzzyCMeans(log_directory, channel_name, output_directory, startingDate, startingMonth, endingDate, endingMonth):
+	"""[Deprecated]
+	Fuzzy C Means clustering on key-words instead of KMeans
+	"""
 	do_SVD = True
 	words_to_show_per_cluster = 20
 	number_of_clusters = 8

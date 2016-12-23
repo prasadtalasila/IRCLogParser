@@ -15,7 +15,21 @@ from scipy.spatial.distance import cdist
 import matplotlib.pyplot as plt
 
 def keyWordsCluster_KMeansTFIDF(log_directory, channel_name, output_directory, startingDate, startingMonth, endingDate, endingMonth):
+	""" Uses `createKeyWords` to form clusters of words post TF IDF (optional).
 
+    Args:
+        log_directory (str): Location of the logs (Assumed to be arranged in directory structure as : <year>/<month>/<day>/<log-file-for-channel>.txt)
+        channel_name (str): Channel to be perform analysis on
+        output_directory (str): Location of output directory
+        startingDate (int): Date to start the analysis (in conjunction with startingMonth)
+        startingMonth (int): Date to start the analysis (in conjunction with startingDate)
+        endingDate (int): Date to end the analysis (in conjunction with endingMonth)
+        endingMonth (int): Date to end the analysis (in conjunction with endingDate)
+
+    Returns:
+       null 
+
+    """
 	do_SVD = False
 	words_to_show_per_cluster = 10
 	elbow_method_for_finding_K = False

@@ -43,7 +43,9 @@ def to_edges(l):
 
 
 def implementWithIgraphs(log_directory, channel_name, output_directory, startingDate, startingMonth, endingDate, endingMonth):
-
+	"""[Deprecated]
+	This performs various tasks utilizing the python-igraphs library. Tasks include producing graphs, writing to pajek, obtaining adjacency matrix, community detection, calculating modularity,rescaling edge width, assigning graph attributes such as color etc.
+	"""
 	nick_same_list=[[] for i in range(5000)]
 	nicks = [] #list of all the nicknames
 

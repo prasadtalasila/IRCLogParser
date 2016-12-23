@@ -4,10 +4,9 @@ import numpy
 import math
 
 def svdOnKeywords(log_directory, channel_name, output_directory, startingDate, startingMonth, endingDate, endingMonth):
-	'''
-		each user's normalised frequency stored in rows
-		all the keywords (unfiltered)
-	'''
+	"""[Deprecated]
+	uses createKeyWords function and then tries to form clusters by extracting more meaningful keywords. Performs a  Singular Value Decomposition(SVD) after doing a Term Frequency–Inverse Document Frequency(TF-IDF).tered)
+	"""
 	keyword_list = []
 	user_list = []
 

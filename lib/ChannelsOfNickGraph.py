@@ -6,11 +6,7 @@ import matplotlib.pyplot as plt
 import pylab
 import pygraphviz as pygraphviz
 import os
-
-def correctLastCharCR(inText):#if the last letter of the nick is '\' replace it by 'CR' for example rohan\ becomes rohanCR to avoid complications in nx because of \
-	if(len(inText) > 1 and inText[len(inText)-1]=='\\'):
-		inText = inText[:-1]+'CR'
-	return inText
+import ext.util
 
 def searchChannel(channel, channel_list):
 	ans = -1
@@ -23,6 +19,24 @@ def searchChannel(channel, channel_list):
 	return ans
 
 def createChannelsOfNickGraph(log_directory, channel_name, output_directory, startingDate, startingMonth, endingDate, endingMonth):
+	""" creates a directed graph for each nick, 
+	each edge from which points to the IRC Channels that nick has participated in. 
+	(Nick changes are tracked here and only the initial nick is shown if a user changed his nick) 
+
+    Args:
+        log_directory (str): Location of the logs (Assumed to be arranged in directory structure as : <year>/<month>/<day>/<log-file-for-channel>.txt)
+        channel_name (str): Channel to be perform analysis on
+        output_directory (str): Location of output directory
+        startingDate (int): Date to start the analysis (in conjunction with startingMonth)
+        startingMonth (int): Date to start the analysis (in conjunction with startingDate)
+        endingDate (int): Date to end the analysis (in conjunction with endingMonth)
+        endingMonth (int): Date to end the analysis (in conjunction with endingDate)
+
+    Returns:
+       null 
+
+    """
+
 	nick_channel_dict = []
 	nick_same_list=[[] for i in range(100000)] #list of list with each list having all the nicks for that particular person
 
@@ -70,12 +84,12 @@ def createChannelsOfNickGraph(log_directory, channel_name, output_directory, sta
 						nicks[i] = nicks[i][1:-1]   #removed <> from the nicknames
 							
 					for i in xrange(0,len(nicks)):
-						nicks[i] = correctLastCharCR(nicks[i])
+						nicks[i] = ext.util.correctLastCharCR(nicks[i])
 
 					for line in content:
 						if(line[0]=='=' and "changed the topic of" not in line):
-							nick1=correctLastCharCR(line[line.find("=")+1:line.find(" is")][3:])
-							nick2=correctLastCharCR(line[line.find("wn as")+1:line.find("\n")][5:])
+							nick1=ext.util.correctLastCharCR(line[line.find("=")+1:line.find(" is")][3:])
+							nick2=ext.util.correctLastCharCR(line[line.find("wn as")+1:line.find("\n")][5:])
 							if nick1 not in nicks:
 								nicks.append(nick1)
 							if nick2 not in nicks:
@@ -86,8 +100,8 @@ def createChannelsOfNickGraph(log_directory, channel_name, output_directory, sta
 						if(line[0]=='=' and "changed the topic of" not in line):
 							line1=line[line.find("=")+1:line.find(" is")][3:]
 							line2=line[line.find("wn as")+1:line.find("\n")][5:]
-							line1=correctLastCharCR(line1)
-							line2=correctLastCharCR(line2)
+							line1=ext.util.correctLastCharCR(line1)
+							line2=ext.util.correctLastCharCR(line2)
 							for i in range(5000):
 								if line1 in nick_same_list[i] or line2 in nick_same_list[i]:
 									if line1 not in nick_same_list[i]:

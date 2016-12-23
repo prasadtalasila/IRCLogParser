@@ -7,34 +7,26 @@ import matplotlib.pyplot as plt
 import pylab
 import pygraphviz as pygraphviz
 import os
-
-def correctLastCharCR(inText):#if the last letter of the nick is '\' replace it by 'CR' for example rohan\ becomes rohanCR to avoid complications in nx because of \
-	if(len(inText) > 1 and inText[len(inText)-1]=='\\'):
-		inText = inText[:-1]+'CR'
-	return inText
-
-def to_graph(l):
-	G = nx.Graph()
-	for part in l:
-		# each sublist is a bunch of nodes
-		G.add_nodes_from(part)
-		# it also imlies a number of edges:
-		G.add_edges_from(to_edges(part))
-	return G
-
-def to_edges(l):
-	""" 
-	treat `l` as a Graph and returns it's edges 
-	to_edges(['a','b','c','d']) -> [(a,b), (b,c),(c,d)]
-	"""
-	it = iter(l)
-	last = next(it)
-
-	for current in it:
-		yield last, current
-		last = current    
+import ext.util
 
 def createMessageNumberGraph(log_directory, channel_name, output_directory, startingDate, startingMonth, endingDate, endingMonth):
+	""" creates a directed graph with each edge having an associated weight 
+	which denotes the number of messages exchanged between users 
+	for that particular day.
+
+    Args:
+        log_directory (str): Location of the logs (Assumed to be arranged in directory structure as : <year>/<month>/<day>/<log-file-for-channel>.txt)
+        channel_name (str): Channel to be perform analysis on
+        output_directory (str): Location of output directory
+        startingDate (int): Date to start the analysis (in conjunction with startingMonth)
+        startingMonth (int): Date to start the analysis (in conjunction with startingDate)
+        endingDate (int): Date to end the analysis (in conjunction with endingMonth)
+        endingMonth (int): Date to end the analysis (in conjunction with endingDate)
+
+    Returns:
+       null 
+
+    """
 	nick_same_list=[[] for i in range(5000)] #list of list with each list having all the nicks for that particular person
 	nicks = [] #list of all the nicknames
 
@@ -74,7 +66,7 @@ def createMessageNumberGraph(log_directory, channel_name, output_directory, star
 					nicks.append(nicks_for_the_day[i][1:-1])     #removed <> from the nicknames
 					
 			for i in xrange(0,len(nicks)):
-				nicks[i] = correctLastCharCR(nicks[i])
+				nicks[i] = ext.util.correctLastCharCR(nicks[i])
 			
 			for line in content:
 				if(line[0]=='=' and "changed the topic of" not in line):
@@ -82,8 +74,8 @@ def createMessageNumberGraph(log_directory, channel_name, output_directory, star
 					nick2=line[line.find("wn as")+1:line.find("\n")]
 					nick1=nick1[3:]
 					nick2=nick2[5:]
-					nick1=correctLastCharCR(nick1)
-					nick2=correctLastCharCR(nick2)
+					nick1=ext.util.correctLastCharCR(nick1)
+					nick2=ext.util.correctLastCharCR(nick2)
 					if nick1 not in nicks:
 						nicks.append(nick1)
 					if nick2 not in nicks:
@@ -95,8 +87,8 @@ def createMessageNumberGraph(log_directory, channel_name, output_directory, star
 					line2=line[line.find("wn as")+1:line.find("\n")]
 					line1=line1[3:]
 					line2=line2[5:]
-					line1=correctLastCharCR(line1)
-					line2=correctLastCharCR(line2)
+					line1=ext.util.correctLastCharCR(line1)
+					line2=ext.util.correctLastCharCR(line2)
 					for i in range(5000):
 						if line1 in nick_same_list[i] or line2 in nick_same_list[i]:
 							if line1 in nick_same_list[i] and line2 not in nick_same_list[i]:
@@ -120,7 +112,7 @@ def createMessageNumberGraph(log_directory, channel_name, output_directory, star
 				nick_same_list[ind].append(ni)
 				break
 
-	G = to_graph(nick_same_list)
+	G = ext.util.to_graph(nick_same_list)
 	L = connected_components(G)
 
 	for i in range(1,len(L)+1):
@@ -148,7 +140,7 @@ def createMessageNumberGraph(log_directory, channel_name, output_directory, star
 				if(line[0] != '=' and "] <" in line and "> " in line):
 					m = re.search(r"\<(.*?)\>", line)
 					var = m.group(0)[1:-1]
-					var = correctLastCharCR(var) 
+					var = ext.util.correctLastCharCR(var) 
 					for d in range(len(nicks)):
 						if((d < len(L)) and (var in L[d])):
 							nick_sender = L[d][0]
@@ -162,7 +154,7 @@ def createMessageNumberGraph(log_directory, channel_name, output_directory, star
 							break
 						for x in xrange(0,len(rec_list)):
 							if(rec_list[x]):
-								rec_list[x] = correctLastCharCR(rec_list[x])
+								rec_list[x] = ext.util.correctLastCharCR(rec_list[x])
 						for z in rec_list:
 							if(z==i):
 								if(var != i):  
@@ -187,7 +179,7 @@ def createMessageNumberGraph(log_directory, channel_name, output_directory, star
 							rec_list_2=[e.strip() for e in rec_list[1].split(',')]
 							for y in xrange(0,len(rec_list_2)):
 								if(rec_list_2[y]):
-									rec_list_2[y] = correctLastCharCR(rec_list_2[y])
+									rec_list_2[y] = ext.util.correctLastCharCR(rec_list_2[y])
 							for j in rec_list_2:
 								if(j==i):
 									if(var != i):   
@@ -209,7 +201,7 @@ def createMessageNumberGraph(log_directory, channel_name, output_directory, star
 
 						if(flag_comma == 0):
 							rec=line[line.find(">")+1:line.find(", ")][1:]
-							rec = correctLastCharCR(rec)
+							rec = ext.util.correctLastCharCR(rec)
 							if(rec==i):
 								if(var != i):
 									for d in range(len(nicks)):
