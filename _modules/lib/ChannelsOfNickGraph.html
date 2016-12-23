@@ -1,0 +1,513 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>lib.ChannelsOfNickGraph &#8212; IRC Log Parser 0.1 documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for lib.ChannelsOfNickGraph</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">os.path</span>
+<span class="kn">import</span> <span class="nn">re</span>
+<span class="kn">import</span> <span class="nn">networkx</span> <span class="k">as</span> <span class="nn">nx</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+<span class="kn">import</span> <span class="nn">pylab</span>
+<span class="kn">import</span> <span class="nn">pygraphviz</span> <span class="k">as</span> <span class="nn">pygraphviz</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">ext.util</span>
+
+<span class="k">def</span> <span class="nf">searchChannel</span><span class="p">(</span><span class="n">channel</span><span class="p">,</span> <span class="n">channel_list</span><span class="p">):</span>
+	<span class="n">ans</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
+	<span class="n">i</span> <span class="o">=</span> <span class="mi">0</span>
+	<span class="k">for</span> <span class="n">c_tuple</span> <span class="ow">in</span> <span class="n">channel_list</span><span class="p">:</span>
+		<span class="k">if</span> <span class="n">c_tuple</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">channel</span><span class="p">:</span>
+			<span class="n">ans</span> <span class="o">=</span> <span class="n">i</span>
+			<span class="k">break</span>
+		<span class="n">i</span><span class="o">+=</span><span class="mi">1</span> 
+	<span class="k">return</span> <span class="n">ans</span>
+
+<div class="viewcode-block" id="createChannelsOfNickGraph"><a class="viewcode-back" href="../../doc_for_code.html#lib.ChannelsOfNickGraph.createChannelsOfNickGraph">[docs]</a><span class="k">def</span> <span class="nf">createChannelsOfNickGraph</span><span class="p">(</span><span class="n">log_directory</span><span class="p">,</span> <span class="n">channel_name</span><span class="p">,</span> <span class="n">output_directory</span><span class="p">,</span> <span class="n">startingDate</span><span class="p">,</span> <span class="n">startingMonth</span><span class="p">,</span> <span class="n">endingDate</span><span class="p">,</span> <span class="n">endingMonth</span><span class="p">):</span>
+	<span class="sd">&quot;&quot;&quot; creates a directed graph for each nick, </span>
+<span class="sd">	each edge from which points to the IRC Channels that nick has participated in. </span>
+<span class="sd">	(Nick changes are tracked here and only the initial nick is shown if a user changed his nick) </span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        log_directory (str): Location of the logs (Assumed to be arranged in directory structure as : &lt;year&gt;/&lt;month&gt;/&lt;day&gt;/&lt;log-file-for-channel&gt;.txt)</span>
+<span class="sd">        channel_name (str): Channel to be perform analysis on</span>
+<span class="sd">        output_directory (str): Location of output directory</span>
+<span class="sd">        startingDate (int): Date to start the analysis (in conjunction with startingMonth)</span>
+<span class="sd">        startingMonth (int): Date to start the analysis (in conjunction with startingDate)</span>
+<span class="sd">        endingDate (int): Date to end the analysis (in conjunction with endingMonth)</span>
+<span class="sd">        endingMonth (int): Date to end the analysis (in conjunction with endingDate)</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">       null </span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+	<span class="n">nick_channel_dict</span> <span class="o">=</span> <span class="p">[]</span>
+	<span class="n">nick_same_list</span><span class="o">=</span><span class="p">[[]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">100000</span><span class="p">)]</span> <span class="c1">#list of list with each list having all the nicks for that particular person</span>
+
+	<span class="n">nicks_hash</span> <span class="o">=</span> <span class="p">[]</span>
+	<span class="n">channels_hash</span> <span class="o">=</span> <span class="p">[]</span>
+	<span class="n">users_on_channel</span> <span class="o">=</span> <span class="p">{}</span>
+	<span class="n">channel_for_users_for_all_days</span> <span class="o">=</span> <span class="p">[]</span>
+	<span class="n">channel_for_user_for_the_day</span> <span class="o">=</span> <span class="p">{}</span>
+
+	<span class="c1"># out_dir_channel_user_time = output_directory+&quot;channel-nick/&quot;</span>
+	<span class="n">out_dir_channel_user_time</span> <span class="o">=</span> <span class="n">output_directory</span>
+	<span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">out_dir_channel_user_time</span><span class="p">)):</span>
+		<span class="k">try</span><span class="p">:</span>
+			<span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">out_dir_channel_user_time</span><span class="p">))</span>
+		<span class="k">except</span> <span class="ne">OSError</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span> <span class="c1"># Guard against race condition</span>
+			<span class="k">if</span> <span class="n">exc</span><span class="o">.</span><span class="n">errno</span> <span class="o">!=</span> <span class="n">errno</span><span class="o">.</span><span class="n">EEXIST</span><span class="p">:</span>
+				<span class="k">raise</span>
+
+	<span class="k">for</span> <span class="n">folderiterator</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">startingMonth</span><span class="p">,</span> <span class="n">endingMonth</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
+		<span class="n">temp1</span> <span class="o">=</span> <span class="s2">&quot;0&quot;</span> <span class="k">if</span> <span class="n">folderiterator</span> <span class="o">&lt;</span> <span class="mi">10</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span>
+		<span class="k">for</span> <span class="n">fileiterator</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">startingDate</span> <span class="k">if</span> <span class="n">folderiterator</span> <span class="o">==</span> <span class="n">startingMonth</span> <span class="k">else</span> <span class="mi">1</span><span class="p">,</span> <span class="n">endingDate</span> <span class="o">+</span> <span class="mi">1</span> <span class="k">if</span> <span class="n">folderiterator</span> <span class="o">==</span> <span class="n">endingMonth</span> <span class="k">else</span> <span class="mi">32</span><span class="p">):</span>
+			<span class="n">temp2</span> <span class="o">=</span> <span class="s2">&quot;0&quot;</span> <span class="k">if</span> <span class="n">fileiterator</span> <span class="o">&lt;</span> <span class="mi">10</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span>
+			<span class="k">if</span> <span class="ow">not</span> <span class="p">((</span><span class="n">folderiterator</span><span class="o">==</span><span class="mi">2</span> <span class="ow">and</span> <span class="p">(</span><span class="n">fileiterator</span> <span class="o">==</span><span class="mi">29</span> <span class="ow">or</span> <span class="n">fileiterator</span> <span class="o">==</span><span class="mi">30</span> <span class="ow">or</span> <span class="n">fileiterator</span> <span class="o">==</span><span class="mi">31</span><span class="p">))</span> <span class="ow">or</span> <span class="p">((</span><span class="n">folderiterator</span><span class="o">==</span><span class="mi">4</span> <span class="ow">or</span> <span class="n">folderiterator</span><span class="o">==</span><span class="mi">6</span> <span class="ow">or</span> <span class="n">folderiterator</span><span class="o">==</span><span class="mi">9</span> <span class="ow">or</span> <span class="n">folderiterator</span><span class="o">==</span><span class="mi">11</span><span class="p">)</span> <span class="ow">and</span> <span class="n">fileiterator</span><span class="o">==</span><span class="mi">31</span> <span class="p">)):</span>
+				<span class="k">for</span> <span class="n">channel_searched</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">listdir</span><span class="p">(</span><span class="n">log_directory</span><span class="o">+</span><span class="n">temp1</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">folderiterator</span><span class="p">)</span><span class="o">+</span><span class="s2">&quot;/&quot;</span><span class="o">+</span><span class="n">temp2</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">fileiterator</span><span class="p">)</span><span class="o">+</span><span class="s2">&quot;/&quot;</span><span class="p">):</span>
+					<span class="n">channel_searched</span> <span class="o">=</span> <span class="n">channel_searched</span><span class="p">[:</span><span class="o">-</span><span class="mi">4</span><span class="p">]</span>
+					<span class="n">filePath</span><span class="o">=</span><span class="n">log_directory</span><span class="o">+</span><span class="n">temp1</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">folderiterator</span><span class="p">)</span><span class="o">+</span><span class="s2">&quot;/&quot;</span><span class="o">+</span><span class="n">temp2</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">fileiterator</span><span class="p">)</span><span class="o">+</span><span class="s2">&quot;/&quot;</span><span class="o">+</span><span class="n">channel_searched</span><span class="o">+</span><span class="s2">&quot;.txt&quot;</span>   
+					<span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">filePath</span><span class="p">):</span>
+						<span class="nb">print</span> <span class="s2">&quot;[Error] Path &quot;</span><span class="o">+</span><span class="n">filePath</span><span class="o">+</span><span class="s2">&quot; doesn&#39;t exist&quot;</span>
+						<span class="k">continue</span> 
+					<span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">filePath</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+						<span class="n">content</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">readlines</span><span class="p">()</span> <span class="c1">#contents stores all the lines of the file channel_searched</span>
+					
+					<span class="c1">#print &quot;Working on &quot; + filePath</span>
+
+					<span class="n">nicks</span> <span class="o">=</span> <span class="p">[]</span> <span class="c1">#list of all the nicknames     </span>
+
+					<span class="sd">&#39;&#39;&#39;Getting all the nicknames in a list&#39;&#39;&#39;</span>
+					<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">content</span><span class="p">:</span>
+						<span class="k">if</span><span class="p">(</span><span class="n">i</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">!=</span> <span class="s1">&#39;=&#39;</span> <span class="ow">and</span> <span class="s2">&quot;] &lt;&quot;</span> <span class="ow">in</span> <span class="n">i</span> <span class="ow">and</span> <span class="s2">&quot;&gt; &quot;</span> <span class="ow">in</span> <span class="n">i</span><span class="p">):</span>
+							<span class="n">m</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="s2">r&quot;\&lt;(.*?)\&gt;&quot;</span><span class="p">,</span> <span class="n">i</span><span class="p">)</span>
+							<span class="k">if</span> <span class="n">m</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">nicks</span><span class="p">:</span>                       
+								<span class="n">nicks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">0</span><span class="p">))</span>   <span class="c1">#used regex to get the string between &lt;&gt; and appended it to the nicks list</span>
+
+					<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">xrange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="nb">len</span><span class="p">(</span><span class="n">nicks</span><span class="p">)):</span>
+						<span class="n">nicks</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">nicks</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>   <span class="c1">#removed &lt;&gt; from the nicknames</span>
+							
+					<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">xrange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="nb">len</span><span class="p">(</span><span class="n">nicks</span><span class="p">)):</span>
+						<span class="n">nicks</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">ext</span><span class="o">.</span><span class="n">util</span><span class="o">.</span><span class="n">correctLastCharCR</span><span class="p">(</span><span class="n">nicks</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+
+					<span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">content</span><span class="p">:</span>
+						<span class="k">if</span><span class="p">(</span><span class="n">line</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">==</span><span class="s1">&#39;=&#39;</span> <span class="ow">and</span> <span class="s2">&quot;changed the topic of&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">line</span><span class="p">):</span>
+							<span class="n">nick1</span><span class="o">=</span><span class="n">ext</span><span class="o">.</span><span class="n">util</span><span class="o">.</span><span class="n">correctLastCharCR</span><span class="p">(</span><span class="n">line</span><span class="p">[</span><span class="n">line</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s2">&quot;=&quot;</span><span class="p">)</span><span class="o">+</span><span class="mi">1</span><span class="p">:</span><span class="n">line</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s2">&quot; is&quot;</span><span class="p">)][</span><span class="mi">3</span><span class="p">:])</span>
+							<span class="n">nick2</span><span class="o">=</span><span class="n">ext</span><span class="o">.</span><span class="n">util</span><span class="o">.</span><span class="n">correctLastCharCR</span><span class="p">(</span><span class="n">line</span><span class="p">[</span><span class="n">line</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s2">&quot;wn as&quot;</span><span class="p">)</span><span class="o">+</span><span class="mi">1</span><span class="p">:</span><span class="n">line</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)][</span><span class="mi">5</span><span class="p">:])</span>
+							<span class="k">if</span> <span class="n">nick1</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">nicks</span><span class="p">:</span>
+								<span class="n">nicks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">nick1</span><span class="p">)</span>
+							<span class="k">if</span> <span class="n">nick2</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">nicks</span><span class="p">:</span>
+								<span class="n">nicks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">nick2</span><span class="p">)</span>
+						
+					<span class="sd">&#39;&#39;&#39; Forming list of lists for avoiding nickname duplicacy &#39;&#39;&#39;</span>  
+					<span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">content</span><span class="p">:</span>
+						<span class="k">if</span><span class="p">(</span><span class="n">line</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">==</span><span class="s1">&#39;=&#39;</span> <span class="ow">and</span> <span class="s2">&quot;changed the topic of&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">line</span><span class="p">):</span>
+							<span class="n">line1</span><span class="o">=</span><span class="n">line</span><span class="p">[</span><span class="n">line</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s2">&quot;=&quot;</span><span class="p">)</span><span class="o">+</span><span class="mi">1</span><span class="p">:</span><span class="n">line</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s2">&quot; is&quot;</span><span class="p">)][</span><span class="mi">3</span><span class="p">:]</span>
+							<span class="n">line2</span><span class="o">=</span><span class="n">line</span><span class="p">[</span><span class="n">line</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s2">&quot;wn as&quot;</span><span class="p">)</span><span class="o">+</span><span class="mi">1</span><span class="p">:</span><span class="n">line</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)][</span><span class="mi">5</span><span class="p">:]</span>
+							<span class="n">line1</span><span class="o">=</span><span class="n">ext</span><span class="o">.</span><span class="n">util</span><span class="o">.</span><span class="n">correctLastCharCR</span><span class="p">(</span><span class="n">line1</span><span class="p">)</span>
+							<span class="n">line2</span><span class="o">=</span><span class="n">ext</span><span class="o">.</span><span class="n">util</span><span class="o">.</span><span class="n">correctLastCharCR</span><span class="p">(</span><span class="n">line2</span><span class="p">)</span>
+							<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">5000</span><span class="p">):</span>
+								<span class="k">if</span> <span class="n">line1</span> <span class="ow">in</span> <span class="n">nick_same_list</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="ow">or</span> <span class="n">line2</span> <span class="ow">in</span> <span class="n">nick_same_list</span><span class="p">[</span><span class="n">i</span><span class="p">]:</span>
+									<span class="k">if</span> <span class="n">line1</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">nick_same_list</span><span class="p">[</span><span class="n">i</span><span class="p">]:</span>
+										<span class="n">nick_same_list</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">line1</span><span class="p">)</span>
+									<span class="k">if</span> <span class="n">line2</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">nick_same_list</span><span class="p">[</span><span class="n">i</span><span class="p">]:</span>
+										<span class="n">nick_same_list</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">line2</span><span class="p">)</span>
+									<span class="k">break</span>
+								<span class="k">if</span> <span class="ow">not</span> <span class="n">nick_same_list</span><span class="p">[</span><span class="n">i</span><span class="p">]:</span>
+									<span class="k">if</span> <span class="n">line1</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">nick_same_list</span><span class="p">[</span><span class="n">i</span><span class="p">]:</span>
+										<span class="n">nick_same_list</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">line1</span><span class="p">)</span>
+									<span class="k">if</span> <span class="n">line2</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">nick_same_list</span><span class="p">[</span><span class="n">i</span><span class="p">]:</span>
+										<span class="n">nick_same_list</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">line2</span><span class="p">)</span>
+									<span class="k">break</span>
+
+					<span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">						Creating list of dictionaries nick_channel_dict of the format : [{&#39;nickname&#39;:&#39;rohan&#39;, &#39;channels&#39;:[&#39;[#abc&#39;, 0],[&#39;#bcd&#39;, 0]]},{}]</span>
+<span class="sd">					# &#39;&#39;&#39;</span>
+					<span class="c1"># print nicks</span>
+					<span class="n">done</span> <span class="o">=</span> <span class="p">[]</span>
+					<span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">nicks</span><span class="p">)):</span> 
+						<span class="n">var</span> <span class="o">=</span> <span class="n">nicks</span><span class="p">[</span><span class="n">d</span><span class="p">]</span>
+						<span class="n">f</span> <span class="o">=</span> <span class="mi">1</span>
+						<span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">nick_same_list</span><span class="p">:</span>
+							<span class="k">if</span> <span class="n">var</span> <span class="ow">in</span> <span class="n">x</span><span class="p">:</span>
+								<span class="n">user_nick</span> <span class="o">=</span> <span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+								<span class="n">f</span> <span class="o">=</span> <span class="mi">0</span>
+								<span class="k">break</span>
+						<span class="k">if</span> <span class="n">f</span><span class="p">:</span>
+							<span class="n">user_nick</span> <span class="o">=</span> <span class="n">var</span>
+
+						<span class="sd">&#39;&#39;&#39;for channels of user on a day&#39;&#39;&#39;</span>
+						<span class="c1"># print channel_searched, user_nick</span>
+						<span class="k">if</span> <span class="n">channel_for_user_for_the_day</span><span class="o">.</span><span class="n">has_key</span><span class="p">(</span><span class="n">user_nick</span><span class="p">)</span> <span class="ow">and</span> <span class="n">channel_searched</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">channel_for_user_for_the_day</span><span class="p">[</span><span class="n">user_nick</span><span class="p">]:</span>
+							<span class="n">channel_for_user_for_the_day</span><span class="p">[</span><span class="n">user_nick</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">channel_searched</span><span class="p">)</span>
+						<span class="k">else</span><span class="p">:</span>
+							<span class="n">channel_for_user_for_the_day</span><span class="p">[</span><span class="n">user_nick</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">channel_searched</span><span class="p">]</span>
+
+						<span class="c1"># print user_nick</span>
+						<span class="n">flag</span> <span class="o">=</span> <span class="mi">1</span>
+						<span class="k">for</span> <span class="n">dictionary</span> <span class="ow">in</span> <span class="n">nick_channel_dict</span><span class="p">:</span>
+							<span class="k">if</span> <span class="n">dictionary</span><span class="p">[</span><span class="s1">&#39;nickname&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="n">user_nick</span> <span class="ow">and</span> <span class="n">user_nick</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">done</span><span class="p">:</span>
+								<span class="c1"># print user_nick, done</span>
+								<span class="c1"># if channel_searched not in dictionary[&#39;channels&#39;]:</span>
+								<span class="n">index</span> <span class="o">=</span> <span class="n">searchChannel</span><span class="p">(</span><span class="n">channel_searched</span><span class="p">,</span> <span class="n">dictionary</span><span class="p">[</span><span class="s1">&#39;channels&#39;</span><span class="p">])</span>
+								<span class="k">if</span> <span class="n">index</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span>
+									<span class="n">dictionary</span><span class="p">[</span><span class="s1">&#39;channels&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">([</span><span class="n">channel_searched</span><span class="p">,</span><span class="mi">1</span><span class="p">])</span>
+								<span class="k">else</span><span class="p">:</span>
+									<span class="n">dictionary</span><span class="p">[</span><span class="s1">&#39;channels&#39;</span><span class="p">][</span><span class="n">index</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span><span class="o">+=</span><span class="mi">1</span>
+								<span class="n">flag</span> <span class="o">=</span> <span class="mi">0</span>
+								<span class="n">done</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">user_nick</span><span class="p">)</span>
+								<span class="k">break</span>
+						<span class="k">if</span> <span class="n">flag</span><span class="p">:</span>
+							<span class="n">nick_channel_dict</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s1">&#39;nickname&#39;</span><span class="p">:</span><span class="n">user_nick</span><span class="p">,</span> <span class="s1">&#39;channels&#39;</span><span class="p">:</span> <span class="p">[[</span><span class="n">channel_searched</span><span class="p">,</span> <span class="mi">1</span><span class="p">]]})</span>
+							<span class="n">done</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">user_nick</span><span class="p">)</span>
+
+				<span class="c1"># print &quot;checking&quot;, fileiterator, folderiterator</span>
+				<span class="c1"># print channel_for_user_for_the_day</span>
+				<span class="n">channel_for_users_for_all_days</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">channel_for_user_for_the_day</span><span class="p">)</span>
+				<span class="n">channel_for_user_for_the_day</span> <span class="o">=</span> <span class="p">{}</span><span class="c1">#empty for next day usage</span>
+
+	<span class="c1"># print nick_same_list</span>
+	<span class="c1"># print nick_channel_dict</span>
+	
+	<span class="c1"># myGraph = nx.DiGraph()</span>
+	<span class="c1"># for dicts in nick_channel_dict:</span>
+	<span class="c1">#  # print dicts</span>
+	<span class="c1">#  # no_of_channels = 0</span>
+	<span class="c1">#  nick = dicts[&#39;nickname&#39;]</span>
+	<span class="c1">#  if nick not in nicks_hash:</span>
+	<span class="c1">#   nicks_hash.append(nick)</span>
+
+	<span class="c1">#  for channel in dicts[&#39;channels&#39;]:</span>
+	<span class="c1">#   if channel[1] &gt; 20:</span>
+	<span class="c1">#    myGraph.add_edge(nick ,channel[0],weight=channel[1])</span>
+	<span class="c1">#   if channel[0] not in channels_hash:</span>
+	<span class="c1">#    channels_hash.append(channel[0])</span>
+	<span class="c1">#   # no_of_channels+=1</span>
+	<span class="c1">#   # print dicts</span>
+
+	<span class="c1"># for u,v,d in myGraph.edges(data=True):</span>
+	<span class="c1">#  d[&#39;label&#39;] = d.get(&#39;weight&#39;,&#39;&#39;)</span>
+
+	<span class="c1"># output_file=out_dir_channel_user_time+&quot;_channels-of-nick-graph.png&quot;</span>
+	<span class="c1"># print &quot;Generating &quot;+output_file</span>
+
+	<span class="c1"># A = nx.drawing.nx_agraph.to_agraph(myGraph)</span>
+	<span class="c1"># A.layout(prog=&#39;dot&#39;)</span>
+	<span class="c1"># A.draw(output_file) </span>
+
+	<span class="sd">&#39;&#39;&#39;!!!!!!!!!!!! Reptition if use above!!!!!!!!!!!!!!!!! &#39;&#39;&#39;</span>
+
+	<span class="k">for</span> <span class="n">dicts</span> <span class="ow">in</span> <span class="n">nick_channel_dict</span><span class="p">:</span>
+		<span class="n">nick</span> <span class="o">=</span> <span class="n">dicts</span><span class="p">[</span><span class="s1">&#39;nickname&#39;</span><span class="p">]</span>
+		<span class="k">if</span> <span class="n">nick</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">nicks_hash</span><span class="p">:</span>
+			<span class="n">nicks_hash</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">nick</span><span class="p">)</span>
+
+		<span class="k">for</span> <span class="n">channel</span> <span class="ow">in</span> <span class="n">dicts</span><span class="p">[</span><span class="s1">&#39;channels&#39;</span><span class="p">]:</span>
+			<span class="k">if</span> <span class="n">channel</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">channels_hash</span><span class="p">:</span>
+				<span class="n">channels_hash</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">channel</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+
+	<span class="c1"># print len(nicks_hash)</span>
+	<span class="c1"># print len(channels_hash)</span>
+	
+	<span class="n">channel_user_graph</span> <span class="o">=</span> <span class="n">nx</span><span class="o">.</span><span class="n">Graph</span><span class="p">()</span>
+	<span class="c1"># # myGraph = nx.DiGraph() #directed</span>
+
+	<span class="n">CU_adjacency_matrix</span> <span class="o">=</span> <span class="p">[[</span><span class="mi">0</span><span class="p">]</span><span class="o">*</span><span class="nb">len</span><span class="p">(</span><span class="n">nicks_hash</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">xrange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span>  <span class="nb">len</span><span class="p">(</span><span class="n">channels_hash</span><span class="p">))]</span>
+	<span class="n">temp2</span> <span class="o">=</span> <span class="p">[]</span>
+	<span class="k">for</span> <span class="n">adjlist</span> <span class="ow">in</span> <span class="n">nick_channel_dict</span><span class="p">:</span>
+		<span class="k">for</span> <span class="n">channel</span> <span class="ow">in</span> <span class="n">adjlist</span><span class="p">[</span><span class="s1">&#39;channels&#39;</span><span class="p">]:</span>
+			<span class="c1"># channel_user_graph.add_edge(nicks_hash.index(adjlist[&#39;nickname&#39;]) ,(1000000+channels_hash.index(channel[0])), weight=channel[1])</span>
+	<span class="c1">#   # print nicks_hash.index(adjlist[&#39;nickname&#39;]),adjlist[&#39;nickname&#39;], channels_hash.index(channel[0]),channel[0], channel[1]</span>
+			<span class="c1"># CU_adjacency_matrix[channels_hash.index(channel[0])][nicks_hash.index(adjlist[&#39;nickname&#39;])] = channel[1]</span>
+			<span class="c1"># print adjlist[&#39;nickname&#39;], channel[0]</span>
+			<span class="c1"># channel_user_graph.add_edge(adjlist[&#39;nickname&#39;], channel[0], weight=int(channel[1]))</span>
+	<span class="c1">#   # if channel[1] &gt; 25 :</span>
+	<span class="c1">#    # print str(nicks_hash.index(adjlist[&#39;nickname&#39;]))+&quot;\t&quot;+str(1000000+channels_hash.index(channel[0]))</span>
+			<span class="k">if</span> <span class="n">users_on_channel</span><span class="o">.</span><span class="n">has_key</span><span class="p">(</span><span class="n">channel</span><span class="p">[</span><span class="mi">0</span><span class="p">]):</span>
+				<span class="k">if</span> <span class="n">adjlist</span><span class="p">[</span><span class="s1">&#39;nickname&#39;</span><span class="p">]</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">users_on_channel</span><span class="p">[</span><span class="n">channel</span><span class="p">[</span><span class="mi">0</span><span class="p">]]:</span>
+					<span class="n">users_on_channel</span><span class="p">[</span><span class="n">channel</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">adjlist</span><span class="p">[</span><span class="s1">&#39;nickname&#39;</span><span class="p">])</span>
+			<span class="k">else</span><span class="p">:</span>
+				<span class="n">users_on_channel</span><span class="p">[</span><span class="n">channel</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[</span><span class="n">adjlist</span><span class="p">[</span><span class="s1">&#39;nickname&#39;</span><span class="p">]]</span>
+
+	<span class="c1"># # # CU_adjacency_matrix = nx.adjacency_matrix(channel_user_graph) #channel-user adj matrix</span>
+	
+	<span class="c1"># # # print &quot;CU Adj Matrix&quot;, CU_adjacency_matrix  #channel-user adj matrix</span>
+	<span class="c1"># # # print users_on_channel #used for channel-channel graph</span>
+	<span class="c1"># # # print &quot;Saving CU Adjacency Matrix&quot;</span>
+	<span class="c1"># # # np.savetxt(output_directory+&quot;/CU_adjacency_matrix_&quot;+str(startingMonth)+&quot;_&quot;+str(endingMonth)+&quot;_.csv&quot;, CU_adjacency_matrix, delimiter=&quot;,&quot;)</span>
+	<span class="nb">print</span> <span class="s2">&quot;Reduced CU Adjacency Matrix will be saved&quot;</span>
+	<span class="n">nx</span><span class="o">.</span><span class="n">write_pajek</span><span class="p">(</span><span class="n">channel_user_graph</span><span class="p">,</span> <span class="s2">&quot;adjCU.net&quot;</span><span class="p">)</span>
+	<span class="nb">print</span> <span class="s2">&quot;saved CU .net&quot;</span>
+	<span class="c1"># channel_channel_graph = nx.Graph()</span>
+
+	<span class="c1"># &#39;&#39;&#39;adj matrix for channel-channel&#39;&#39;&#39;</span>
+
+	<span class="c1"># CC_adjacency_matrix = [[0]*len(channels_hash) for i in xrange(0,  len(channels_hash))]</span>
+
+	<span class="c1"># print len(channels_hash), len(users_on_channel.keys())</span>
+	<span class="c1"># for i in xrange(0, len(channels_hash)):</span>
+	<span class="c1">#  for j in xrange(i+1, len(channels_hash)):</span>
+	<span class="c1">#   common_users = list(set(users_on_channel[channels_hash[i]]) &amp; set(users_on_channel[channels_hash[j]]))</span>
+	<span class="c1">#   # print channels_hash[i]</span>
+	<span class="c1">#   # print users_on_channel.keys()[i], users_on_channel.keys()[j], common_users</span>
+	<span class="c1">#   # CC_adjacency_matrix[i][j] = len(common_users)</span>
+	<span class="c1">#   # CC_adjacency_matrix[j][i] = len(common_users)</span>
+	<span class="c1">#   # if len(common_users) &gt; 0:</span>
+	<span class="c1">#   	# myGraph.add_edge(users_on_channel.keys()[i] ,users_on_channel.keys()[j], weight=len(common_users))</span>
+	<span class="c1">#   	# myGraph.add_edge(users_on_channel.keys()[j] ,users_on_channel.keys()[i], weight=len(common_users))</span>
+	<span class="c1">#   if len(common_users) &gt; 0:</span>
+	<span class="c1">#   	# print str(channels_hash.index(users_on_channel.keys()[i]))+&quot;\t&quot;+str(channels_hash.index(users_on_channel.keys()[j]))</span>
+	<span class="c1">#   # &quot;Uncomment for directed version&quot;</span>
+	<span class="c1">#   # print str(channels_hash.index(users_on_channel.keys()[j]))+&quot;\t&quot;+str(channels_hash.index(users_on_channel.keys()[i]))</span>
+	<span class="c1">#   	# print channels_hash[i],channels_hash[j]</span>
+	<span class="c1">#   	channel_channel_graph.add_edge(channels_hash[i] ,channels_hash[j], weight=len(common_users))</span>
+
+	<span class="c1"># # print &quot;CC Adj Matrix&quot;, CC_adjacency_matrix #channel-channel adj matrix</span>
+	<span class="c1"># # print &quot;Saving CC Adjacency Matrix&quot;</span>
+	<span class="c1"># # # np.savetxt(output_directory+&quot;/CC_adjacency_matrix_&quot;+str(startingMonth)+&quot;_&quot;+str(endingMonth)+&quot;_.csv&quot;, CC_adjacency_matrix, delimiter=&quot;,&quot;)</span>
+	<span class="c1"># # # print &quot;Done!&quot;</span>
+	<span class="c1"># print &quot;Reduced CC Adjacency Matrix will be saved&quot;</span>
+	<span class="c1"># nx.write_pajek(channel_channel_graph, &quot;adjCC.net&quot;)</span>
+	<span class="c1"># print &quot;saved CC .net&quot;</span>
+	<span class="n">user_user_graph</span> <span class="o">=</span> <span class="n">nx</span><span class="o">.</span><span class="n">Graph</span><span class="p">()</span>
+
+	<span class="c1"># &#39;&#39;&#39;adj matrix for user-user&#39;&#39;&#39;</span>
+	<span class="n">UU_adjacency_matrix</span> <span class="o">=</span> <span class="p">[[</span><span class="mi">0</span><span class="p">]</span><span class="o">*</span><span class="nb">len</span><span class="p">(</span><span class="n">nicks_hash</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">xrange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span>  <span class="nb">len</span><span class="p">(</span><span class="n">nicks_hash</span><span class="p">))]</span>
+
+	<span class="c1"># # print channel_for_users_for_all_days</span>
+	<span class="k">for</span> <span class="n">user_channel_dict</span> <span class="ow">in</span> <span class="n">channel_for_users_for_all_days</span><span class="p">:</span>
+	<span class="c1">#  # user_channel_dict format : {nick : [channels on that day], }</span>
+		<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">xrange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">user_channel_dict</span><span class="o">.</span><span class="n">keys</span><span class="p">())):</span>
+			<span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="n">xrange</span><span class="p">(</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">user_channel_dict</span><span class="o">.</span><span class="n">keys</span><span class="p">())):</span>
+				<span class="n">common_channels_on_that_day</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">user_channel_dict</span><span class="p">[</span><span class="n">user_channel_dict</span><span class="o">.</span><span class="n">keys</span><span class="p">()[</span><span class="n">i</span><span class="p">]])</span> <span class="o">&amp;</span> <span class="nb">set</span><span class="p">(</span><span class="n">user_channel_dict</span><span class="p">[</span><span class="n">user_channel_dict</span><span class="o">.</span><span class="n">keys</span><span class="p">()[</span><span class="n">j</span><span class="p">]]))</span>
+	<span class="c1">#    # print &quot;common_channels_on_that_day&quot;</span>
+	<span class="c1">#    # print user_channel_dict.keys()[i], user_channel_dict.keys()[j], common_channels_on_that_day</span>
+				<span class="n">user1</span> <span class="o">=</span> <span class="n">user_channel_dict</span><span class="o">.</span><span class="n">keys</span><span class="p">()[</span><span class="n">i</span><span class="p">]</span>
+				<span class="n">user2</span> <span class="o">=</span> <span class="n">user_channel_dict</span><span class="o">.</span><span class="n">keys</span><span class="p">()[</span><span class="n">j</span><span class="p">]</span>
+				<span class="n">no_of_common_channels_day</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">common_channels_on_that_day</span><span class="p">)</span>
+
+				<span class="c1"># if not user_user_graph.has_edge(user1, user2):</span>
+				<span class="c1">#  user_user_graph.add_edge(user1 ,user2, weight=0)</span>
+				<span class="c1">#  user_user_graph.add_edge(user2 ,user1, weight=0)</span>
+					
+				<span class="c1"># user_user_graph[user1][user2][&#39;weight&#39;] += no_of_common_channels_day</span>
+				<span class="c1"># user_user_graph[user2][user1][&#39;weight&#39;] += no_of_common_channels_day</span>
+
+				<span class="c1"># print str(nicks_hash.index(user1))+&quot;\t&quot;+str(nicks_hash.index(user2))</span>
+	<span class="c1">#    # &quot;Uncomment for directed version&quot;</span>
+	<span class="c1">#    # print str(nicks_hash.index(user2))+&quot;\t&quot;+str(nicks_hash.index(user1))</span>
+				
+	<span class="c1">#    # print user1, user2</span>
+				<span class="n">UU_adjacency_matrix</span><span class="p">[</span><span class="n">nicks_hash</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">user1</span><span class="p">)][</span><span class="n">nicks_hash</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">user2</span><span class="p">)]</span> <span class="o">+=</span> <span class="n">no_of_common_channels_day</span>
+				<span class="n">UU_adjacency_matrix</span><span class="p">[</span><span class="n">nicks_hash</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">user2</span><span class="p">)][</span><span class="n">nicks_hash</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">user1</span><span class="p">)]</span> <span class="o">+=</span> <span class="n">no_of_common_channels_day</span>
+
+	<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">nicks_hash</span><span class="p">)):</span>
+		<span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">i</span><span class="p">):</span>
+			<span class="k">if</span> <span class="n">UU_adjacency_matrix</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">j</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+				<span class="c1"># print str(i)+&#39;\t&#39;+str(j)</span>
+				<span class="n">user_user_graph</span><span class="o">.</span><span class="n">add_edge</span><span class="p">(</span><span class="n">i</span> <span class="p">,</span><span class="n">j</span><span class="p">,</span> <span class="n">weight</span><span class="o">=</span><span class="n">UU_adjacency_matrix</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">j</span><span class="p">])</span>
+
+	<span class="c1"># print &quot;UU Adj Matrix&quot;, UU_adjacency_matrix #user-user matrix</span>
+	<span class="c1"># print &quot;Saving UU Adjacency Matrix&quot;</span>
+	<span class="c1"># np.savetxt(output_directory+&quot;/UU_adjacency_matrix_&quot;+str(startingMonth)+&quot;_&quot;+str(endingMonth)+&quot;_.csv&quot;, UU_adjacency_matrix, delimiter=&quot;,&quot;)</span>
+	<span class="nb">print</span> <span class="s2">&quot;Reduced UU Adjacency Matrix will be saved&quot;</span>
+	<span class="n">nx</span><span class="o">.</span><span class="n">write_pajek</span><span class="p">(</span><span class="n">user_user_graph</span><span class="p">,</span> <span class="s2">&quot;adjUU.net&quot;</span><span class="p">)</span>
+	<span class="nb">print</span> <span class="s2">&quot;saved UU .net&quot;</span>
+
+	<span class="c1"># output_file=out_dir_channel_user_time+&quot;_channels-of-nick-graph.png&quot;</span>
+	<span class="c1"># print &quot;Generating &quot;+output_file</span>
+	<span class="c1"># max_degree_possible = 10000</span>
+
+	<span class="c1"># nodes_with_OUT_degree = [0]*max_degree_possible</span>
+	<span class="c1"># nodes_with_IN_degree = [0]*max_degree_possible</span>
+	<span class="c1"># nodes_with_TOTAL_degree = [0]*max_degree_possible</span>
+	
+	<span class="c1"># print myGraph.out_degree().values()</span>
+
+	<span class="c1"># for degree in myGraph.out_degree().values():</span>
+	<span class="c1">#  if not degree &lt; max_degree_possible:</span>
+	<span class="c1">#   print &quot;===error&quot;, degree</span>
+	<span class="c1">#  nodes_with_OUT_degree[degree]+=1</span>
+
+	<span class="c1"># for degree in myGraph.in_degree().values():</span>
+	<span class="c1">#  if not degree &lt; max_degree_possible:</span>
+	<span class="c1">#   print &quot;===error&quot;, degree</span>
+	<span class="c1">#  nodes_with_IN_degree[degree]+=1</span>
+
+	<span class="c1"># for degree in myGraph.degree().values():</span>
+	<span class="c1">#  if not degree &lt; max_degree_possible:</span>
+	<span class="c1">#   print &quot;===error&quot;, degree</span>
+	<span class="c1">#  nodes_with_TOTAL_degree[degree]+=1</span>
+
+	<span class="c1"># print &quot;========= OUT DEGREE =======&quot;</span>
+	<span class="c1"># for i in xrange(max_degree_possible):</span>
+	<span class="c1">#  print &quot;deg&quot;+str(i)+&#39;\t&#39;+str(nodes_with_OUT_degree[i])</span>
+
+	<span class="c1"># print &quot;========= IN DEGREE =======&quot;</span>
+	<span class="c1"># for i in xrange(max_degree_possible):</span>
+	<span class="c1">#  print &quot;deg&quot;+str(i)+&#39;\t&#39;+str(nodes_with_IN_degree[i])</span>
+
+	<span class="c1"># print &quot;========= TOTAL DEGREE =======&quot;</span>
+	<span class="c1"># for i in xrange(max_degree_possible):</span>
+		<span class="c1"># print &quot;deg&quot;+str(i)+&#39;\t&#39;+str(nodes_with_TOTAL_degree[i])</span>
+
+	<span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">		We have around 20k users and most of them just visit a channel once, </span>
+<span class="sd">		hence we filter out the top 100 users</span>
+<span class="sd">		This inturns reduces the CU and UU matrices</span>
+<span class="sd">	&#39;&#39;&#39;</span>
+
+	<span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">		calculate top &lt;how_many_top_users&gt; users</span>
+<span class="sd">		this is achieved by taking top users from CU matrix on the basis of the column sum (total number of days active on a channel)</span>
+<span class="sd">	# &#39;&#39;&#39;</span></div>
+	<span class="c1"># how_many_top_users = 100</span>
+
+	<span class="c1"># &#39;&#39;&#39;</span>
+	<span class="c1">#  we also need to filter the channels and are filtered on the basis of row sum of CC matrix</span>
+	<span class="c1"># &#39;&#39;&#39;</span>
+	<span class="c1"># how_many_top_channels = 30</span>
+
+	<span class="c1"># sum_for_each_channel = []</span>
+	<span class="c1"># for channel_row in CC_adjacency_matrix:</span>
+	<span class="c1">#  sum_for_each_channel.append(sum(channel_row))</span>
+
+	<span class="c1"># #filter out top &lt;how_many_top_channels&gt; indices</span>
+	<span class="c1"># top_indices_channels = sorted(range(len(sum_for_each_channel)), key=lambda i: sum_for_each_channel[i], reverse=True)[:how_many_top_channels]</span>
+	<span class="c1"># indices_to_delete_channels = list(set([i for i in xrange(0, len(channels_hash))]) - set(top_indices_channels))</span>
+
+	<span class="c1"># temp_channels = np.delete(CC_adjacency_matrix, indices_to_delete_channels, 1) #delete columns</span>
+	<span class="c1"># reduced_CC_adjacency_matrix = np.delete(temp_channels, indices_to_delete_channels, 0) #delete rows</span>
+	<span class="c1"># print &quot;Saving Reduced CC Adjacency Matrix&quot;</span>
+	<span class="c1"># np.savetxt(output_directory+&quot;/&quot;+str(startingMonth)+&quot;_&quot;+str(endingMonth)+&quot;reduced_CC_adjacency_matrix.csv&quot;, reduced_CC_adjacency_matrix, delimiter=&quot;,&quot;)</span>
+	<span class="c1"># print &quot;Done!&quot;</span>
+
+	<span class="c1"># #to calculate sum first take the transpose of CU matrix so users in row</span>
+	<span class="c1"># UC_adjacency_matrix = zip(*CU_adjacency_matrix)</span>
+	<span class="c1"># sum_for_each_user = []</span>
+
+
+	<span class="c1"># for user_row in UC_adjacency_matrix:</span>
+	<span class="c1">#  sum_for_each_user.append(sum(user_row))</span>
+
+	<span class="c1"># #filter out top &lt;how_many_top_users&gt; indices</span>
+	<span class="c1"># top_indices_users = sorted(range(len(sum_for_each_user)), key=lambda i: sum_for_each_user[i], reverse=True)[:how_many_top_users]</span>
+	<span class="c1"># indices_to_delete_users = list(set([i for i in xrange(0, len(nicks_hash))]) - set(top_indices_users))</span>
+
+	<span class="c1"># # print len(top_indices_users), top_indices_users</span>
+	<span class="c1"># # print len(indices_to_delete_users), indices_to_delete_users</span>
+
+	<span class="c1"># #update the nick_hash, channel_hash</span>
+	<span class="c1"># reduced_nick_hash = np.delete(nicks_hash, indices_to_delete_users)</span>
+	<span class="c1"># reduced_channel_hash = np.delete(channels_hash, indices_to_delete_channels)</span>
+
+
+	<span class="c1"># #update the CU matrix by deleting particular columns, and rows which are not in top_indices_users, channels</span>
+	<span class="c1"># temp_user_channel = np.delete(CU_adjacency_matrix, indices_to_delete_users, 1) #delete columns</span>
+	<span class="c1"># reduced_CU_adjacency_matrix = np.delete(temp_user_channel, indices_to_delete_channels, 0) #delete rows</span>
+
+	<span class="c1"># print &quot;Saving Reduced CU Adjacency Matrix&quot;</span>
+	<span class="c1"># np.savetxt(output_directory+&quot;/&quot;+str(startingMonth)+&quot;_&quot;+str(endingMonth)+&quot;reduced_CU_adjacency_matrix.csv&quot;, reduced_CU_adjacency_matrix, delimiter=&quot;,&quot;)</span>
+	<span class="c1"># print &quot;Done!&quot;</span>
+
+	<span class="c1"># #update the UU matrix by deleting both columns and rows</span>
+	<span class="c1"># temp_users = np.delete(UU_adjacency_matrix, indices_to_delete_users, 1) #delete columns</span>
+	<span class="c1"># reduced_UU_adjacency_matrix = np.delete(temp_users, indices_to_delete_users, 0) #delete rows</span>
+	<span class="c1"># print &quot;Saving Reduced UU Adjacency Matrix&quot;</span>
+	<span class="c1"># np.savetxt(output_directory+&quot;/&quot;+str(startingMonth)+&quot;_&quot;+str(endingMonth)+&quot;reduced_UU_adjacency_matrix.csv&quot;, reduced_UU_adjacency_matrix, delimiter=&quot;,&quot;)</span>
+	<span class="c1"># print &quot;Done!&quot;</span>
+
+
+	<span class="c1"># print &quot;==================================================&quot;</span>
+
+	<span class="c1"># print &quot;========= REDUCED NICK HASH =========&quot;</span>
+	<span class="c1"># for i in range(len(reduced_nick_hash)):</span>
+	<span class="c1">#  print str(i)+&quot;\t&quot;+reduced_nick_hash[i]</span>
+	
+	<span class="c1"># print &quot;========= REDUCED CHANNEL HASH =========&quot;</span>
+	<span class="c1"># for i in range(len(reduced_channel_hash)):</span>
+	<span class="c1">#  print str(1000000+i)+&quot;\t&quot;+reduced_channel_hash[i]</span>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2016, Prasad Talasila, Rohan Goel, Dhruv Shekhawat.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.5.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.9</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>
