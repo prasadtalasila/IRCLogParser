@@ -1,5 +1,12 @@
 #IRC Log Parser
 
+The objective of this project is to utilize social network analysis techniques to examine the relationships between actors on the Internet Relay Chat(IRC) social networking service. The IRCLogParser is an application that accepts IRC log files from different channels and parses them to analyse the principles of interaction between IRC users. Study of these interactions on different levels helps us in deriving the local and global communication patterns between users on different channels. Therefore, IRCLogParser draws its inspiration from various fields such as data mining, graph theory and inferential modeling in order to form predictive models that help in understanding certain intricate characteristics of a social network. This involves analyzing graphs with IRC users(nodes) and their connections(edges), to study the details about various network graph properties such as density, size, node centrality, degree, connectedness etc.
+
+![img](https://github.com/prasadtalasila/IRCLogParser/raw/master/Archive/sample_img/kubuntu-devel_4_10_2013_conversation.png)
+
+
+##Functionality
+
 Import `parser.py` in your file to use the library functions.
 
 Functions presently implemented are:
@@ -17,10 +24,13 @@ Functions presently implemented are:
 - **findConvLength_ConvRefreshTime** - Calculates the conversation length that is the length of time for which two users communicate i.e. if a message is not replied to within RT, then it is considered as a part of another conversation.This function also calculates the conversation refresh time. For a pair of users, this is the time when one conversation ends and another one starts.
 - **createGephiTimelapseCSV** - Produces node and edge csv files that contain information relevant for creating a timelapse of user interactions on Gephi. Most importantly, these csv files contain the node/edge appear and disappear times and can easily be imported into Gephi.
 - **implementWithIgraphs** - This performs various tasks utilizing the python-igraphs library. Tasks include producing graphs, writing to pajek, obtaining adjacency matrix, community detection, calculating modularity,rescaling edge width, assigning graph attributes such as color etc.
+- **keyWordsCluster_KMeansTFIDF** - Used `createKeyWords` to form clusters of words post TF IDF (optional).
 
 <hr>
 
-Also `module.py` can be used in the command line to run various methods provided by the library.
+## Usage
+
+`module.py` can be used in the command line to run various methods provided by the library.
 
 It has the following parameters:
 
