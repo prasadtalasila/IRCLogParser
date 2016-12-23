@@ -7,11 +7,7 @@ import pylab
 import pygraphviz as pygraphviz
 import os
 import csv
-
-def correctLastCharCR(inText):#if the last letter of the nick is '\' replace it by 'CR' for example rohan\ becomes rohanCR to avoid complications in nx because of \
-	if(len(inText) > 1 and inText[len(inText)-1]=='\\'):
-		inText = inText[:-1]+'CR'
-	return inText
+import ext.util
 
 def degreeMessageNumberCSV(log_directory, channel_name, output_directory, startingDate, startingMonth, endingDate, endingMonth):
 	
@@ -72,12 +68,12 @@ def degreeMessageNumberCSV(log_directory, channel_name, output_directory, starti
 				nicks[i] = nicks[i][1:-1]     #removed <> from the nicknames
 					
 			for i in xrange(0,len(nicks)):
-				nicks[i]=correctLastCharCR(nicks[i])
+				nicks[i]=ext.util.correctLastCharCR(nicks[i])
 
 			for line in content:
 				if(line[0]=='=' and "changed the topic of" not in line): #excluding the condition when user changes the topic. Search for only nick changes
-					nick1=correctLastCharCR(line[line.find("=")+1:line.find(" is")][3:])
-					nick2=correctLastCharCR(line[line.find("wn as")+1:line.find("\n")][5:])
+					nick1=ext.util.correctLastCharCR(line[line.find("=")+1:line.find(" is")][3:])
+					nick2=ext.util.correctLastCharCR(line[line.find("wn as")+1:line.find("\n")][5:])
 					if nick1 not in nicks:
 						nicks.append(nick1)
 					if nick2 not in nicks:
@@ -94,8 +90,8 @@ def degreeMessageNumberCSV(log_directory, channel_name, output_directory, starti
 				if(line[0]=='=' and "changed the topic of" not in line):
 					line1=line[line.find("=")+1:line.find(" is")][3:]
 					line2=line[line.find("wn as")+1:line.find("\n")][5:]
-					line1=correctLastCharCR(line1)
-					line2=correctLastCharCR(line2)
+					line1=ext.util.correctLastCharCR(line1)
+					line2=ext.util.correctLastCharCR(line2)
 					for i in range(5000):
 						if line1 in nick_same_list[i] or line2 in nick_same_list[i]:
 							nick_same_list[i].append(line1)
@@ -116,7 +112,7 @@ def degreeMessageNumberCSV(log_directory, channel_name, output_directory, starti
 				if(line[0] != '=' and "] <" in line and "> " in line):
 					m = re.search(r"\<(.*?)\>", line)
 					var = m.group(0)[1:-1]
-					var = correctLastCharCR(var)
+					var = ext.util.correctLastCharCR(var)
 					for d in range(len(nicks)):
 						if var in nick_same_list[d]:
 							nick_sender = nick_same_list[d][0]
@@ -132,7 +128,7 @@ def degreeMessageNumberCSV(log_directory, channel_name, output_directory, starti
 							break
 						for k in xrange(0,len(rec_list)):
 							if(rec_list[k]): #checking for \
-								rec_list[k] = correctLastCharCR(rec_list[k])
+								rec_list[k] = ext.util.correctLastCharCR(rec_list[k])
 						for z in rec_list:
 							if(z==i):
 								if(var != i):  
@@ -150,7 +146,7 @@ def degreeMessageNumberCSV(log_directory, channel_name, output_directory, starti
 							rec_list_2=[e.strip() for e in rec_list[1].split(',')]
 							for y in xrange(0,len(rec_list_2)):
 								if(rec_list_2[y]): #checking for \
-									rec_list_2[y]=correctLastCharCR(rec_list_2[y])
+									rec_list_2[y]=ext.util.correctLastCharCR(rec_list_2[y])
 							for j in rec_list_2:
 								if(j==i):
 									if(var != i):   
@@ -166,7 +162,7 @@ def degreeMessageNumberCSV(log_directory, channel_name, output_directory, starti
 						if(flag_comma == 0): #receiver list can be <Dhruv> Rohan, Hi!
 							rec=line[line.find(">")+1:line.find(", ")] 
 							rec=rec[1:]
-							rec=correctLastCharCR(rec)
+							rec=ext.util.correctLastCharCR(rec)
 							if(rec==i):
 								if(var != i):
 									for d in range(len(nicks)):

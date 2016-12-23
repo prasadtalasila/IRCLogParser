@@ -7,33 +7,7 @@ import matplotlib.pyplot as plt
 import pylab
 import pygraphviz as pygraphviz
 import os
-
-def correctLastCharCR(inText):#if the last letter of the nick is '\' replace it by 'CR' for example rohan\ becomes rohanCR to avoid complications in nx because of \
-	if(len(inText) > 1 and inText[len(inText)-1]=='\\'):
-		inText = inText[:-1]+'CR'
-	return inText
-
-def to_graph(l):
-	G = nx.Graph()
-	for part in l:
-		# each sublist is a bunch of nodes
-		G.add_nodes_from(part)
-		# it also imlies a number of edges:
-		G.add_edges_from(to_edges(part))
-	return G
-
-def to_edges(l):
-	""" 
-	treat `l` as a Graph and returns it's edges 
-	to_edges(['a','b','c','d']) -> [(a,b), (b,c),(c,d)]
-	"""
-	it = iter(l)
-	last = next(it)
-
-	for current in it:
-		yield last, current
-		last = current    
-
+import ext.util
 
 def createMessageTimeGraph(log_directory, channel_name, output_directory, startingDate, startingMonth, endingDate, endingMonth):
 	# out_dir_msg_time = output_directory+"message-time/"
@@ -76,7 +50,7 @@ def createMessageTimeGraph(log_directory, channel_name, output_directory, starti
 					nicks.append(nicks_for_the_day[i][1:-1])     #removed <> from the nicknames
 					
 			for i in xrange(0,len(nicks)):
-				nicks[i] = correctLastCharCR(nicks[i])
+				nicks[i] = ext.util.correctLastCharCR(nicks[i])
 			
 			for line in content:
 				if(line[0]=='=' and "changed the topic of" not in line):
@@ -84,8 +58,8 @@ def createMessageTimeGraph(log_directory, channel_name, output_directory, starti
 					nick2=line[line.find("wn as")+1:line.find("\n")]
 					nick1=nick1[3:]
 					nick2=nick2[5:]
-					nick1=correctLastCharCR(nick1)
-					nick2=correctLastCharCR(nick2)
+					nick1=ext.util.correctLastCharCR(nick1)
+					nick2=ext.util.correctLastCharCR(nick2)
 					if nick1 not in nicks:
 						nicks.append(nick1)
 					if nick2 not in nicks:
@@ -97,8 +71,8 @@ def createMessageTimeGraph(log_directory, channel_name, output_directory, starti
 					line2=line[line.find("wn as")+1:line.find("\n")]
 					line1=line1[3:]
 					line2=line2[5:]
-					line1=correctLastCharCR(line1)
-					line2=correctLastCharCR(line2)
+					line1=ext.util.correctLastCharCR(line1)
+					line2=ext.util.correctLastCharCR(line2)
 					for i in range(5000):
 						if line1 in nick_same_list[i] or line2 in nick_same_list[i]:
 							if line1 in nick_same_list[i] and line2 not in nick_same_list[i]:
@@ -122,7 +96,7 @@ def createMessageTimeGraph(log_directory, channel_name, output_directory, starti
 				nick_same_list[ind].append(ni)
 				break
 
-	G = to_graph(nick_same_list)
+	G = ext.util.to_graph(nick_same_list)
 	L = connected_components(G)
 
 	for i in range(1,len(L)+1):
@@ -147,7 +121,7 @@ def createMessageTimeGraph(log_directory, channel_name, output_directory, starti
 				if(line[0] != '=' and "] <" in line and "> " in line):
 					m = re.search(r"\<(.*?)\>", line)
 					var = m.group(0)[1:-1]
-					var = correctLastCharCR(var)
+					var = ext.util.correctLastCharCR(var)
 					for d in range(5000):
 						if ((d < len(L)) and (var in L[d])): 
 							nick_sender = L[d][0]
@@ -161,7 +135,7 @@ def createMessageTimeGraph(log_directory, channel_name, output_directory, starti
 							break
 						for k in xrange(0,len(rec_list)):
 							if(rec_list[k]): #checking for \
-								rec_list[k] = correctLastCharCR(rec_list[k])
+								rec_list[k] = ext.util.correctLastCharCR(rec_list[k])
 						for z in rec_list:
 							if(z==i):
 								if(var != i):  
@@ -176,7 +150,7 @@ def createMessageTimeGraph(log_directory, channel_name, output_directory, starti
 							rec_list_2=[e.strip() for e in rec_list[1].split(',')]
 							for y in xrange(0,len(rec_list_2)):
 								if(rec_list_2[y]): #checking for \
-									rec_list_2[y]=correctLastCharCR(rec_list_2[y])
+									rec_list_2[y]=ext.util.correctLastCharCR(rec_list_2[y])
 							for j in rec_list_2:
 								if(j==i):
 									if(var != i):   
@@ -189,7 +163,7 @@ def createMessageTimeGraph(log_directory, channel_name, output_directory, starti
 						if(flag_comma == 0): #receiver list can be <Dhruv> Rohan, Hi!
 							rec=line[line.find(">")+1:line.find(", ")] 
 							rec=rec[1:]
-							rec=correctLastCharCR(rec)
+							rec=ext.util.correctLastCharCR(rec)
 							if(rec==i):
 								if(var != i):
 									for d in range(5000):
