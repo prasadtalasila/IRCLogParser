@@ -29,4 +29,4 @@ A typical usage of the module is as follows:
 
 ## Documentation
 
-You can view the documentation for IRCLogParser by [clicking here](https://cdn.rawgit.com/prasadtalasila/IRCLogParser/master/docs/build/html/index.html).
+You can view the documentation for IRCLogParser by [clicking here](http://rohangoel96.github.io/IRCLogParser).
