@@ -132,12 +132,12 @@ def findConvLength_ConvRefreshTime(log_directory, channel_name, output_directory
 				break
 
 	G = ext.util.to_graph(nick_same_list)
-	L = connected_components(G)
+	L = list(connected_components(G))
 
 	for i in range(1,len(L)+1):
-		L[i-1] = [i]+L[i-1]
+                L[i-1] = list(L[i-1])
 
-	# We use connected components algorithm to group all those nick clusters that have atleast one nick common in their clusters. So e.g. 
+	# We use connected components algorithm to group all those nick clusters that have atleast one nick common in their clusters. So e.g.
 	#Cluster 1- nick1,nick2,nick3,nick4(some nicks of a user) #Cluster 2 -nick5,nick6,nick2,nick7. Then we would get - nick1,nick2,nick3,nick4,nick5,nick6,nick7 and we can safely assume they belong to the same user.
 
 	conversations=[[] for i in range(10000)] #This might need to be incremented from 10000 if we have more users. Same logic as the above 7000 one. Applies to all the other codes too.

@@ -141,10 +141,10 @@ def implementWithIgraphs(log_directory, channel_name, output_directory, starting
 	#print(nick_same_list)
 
 	G = to_graph(nick_same_list)
-	L = connected_components(G)
+	L = list(connected_components(G))
 
 	for i in range(1,len(L)+1):
-		L[i-1] = [i]+L[i-1]
+                L[i-1] = list(L[i-1])
 
 	#print(L)
 	#Uptil here we have all the nicks of the same user clustered together.

@@ -124,10 +124,10 @@ def createAggregateGraph(log_directory, channel_name, output_directory, starting
 				break
 
 	G = ext.util.to_graph(nick_same_list)
-	L = connected_components(G)
+	L = list(connected_components(G))
 
 	for i in range(1,len(L)+1):
-		L[i-1] = [str(i)]+L[i-1]
+		L[i-1] = list(L[i-1])
 
 	for folderiterator in range(startingMonth, endingMonth+1):
 		temp1 = "0" if folderiterator < 10 else ""
@@ -246,7 +246,7 @@ def createAggregateGraph(log_directory, channel_name, output_directory, starting
 	print "Generating "+output_file
 	print "Please wait ...."
 
-	A = nx.to_agraph(aggregate_graph)
+	A = nx.nx_agraph.to_agraph(aggregate_graph)
 	A.layout(prog='dot')
 	A.draw(output_file)
 	print("Done Generating")

@@ -169,10 +169,10 @@ def createGephiTimelapseCSV(log_directory, channel_name, output_directory, start
 	#print(nick_same_list)
 
 	G = to_graph(nick_same_list)
-	L = connected_components(G)
+	L = list(connected_components(G))
 
 	for i in range(1,len(L)+1):
-		L[i-1] = [str(i)]+L[i-1]
+                L[i-1] = list(L[i-1])
 
 	#The explanation for the aforementioned code has already been given in parser-RT.py.
 

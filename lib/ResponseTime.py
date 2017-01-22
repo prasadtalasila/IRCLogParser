@@ -131,10 +131,10 @@ def findResponseTime(log_directory, channel_name, output_directory, startingDate
 				break
 
 	G = ext.util.to_graph(nick_same_list)
-	L = connected_components(G)
+	L = list(connected_components(G))
 
 	for i in range(1,len(L)+1):
-		L[i-1] = [i]+L[i-1]
+                L[i-1] = list(L[i-1])
 
 	graph_to_sir = []
 	graph_x_axis = []

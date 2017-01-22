@@ -147,12 +147,12 @@ for ni in nicks:
 
 
 G = to_graph(x)
-L = connected_components(G)
+L = list(connected_components(G))
 
  
 
 for i in range(1,len(L)+1):
- L[i-1] = [i]+L[i-1]
+ L[i-1] = list(L[i-1])
 
 #print(L)
  
