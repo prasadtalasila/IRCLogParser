@@ -14,13 +14,13 @@ echo "--------------------------------------------------------"
 
 echo "Installing networkx"
 #Install newtworkx package
-wget https://github.com/networkx/networkx/archive/networkx-1.8.1.tar.gz
-tar -xvzf networkx-1.8.1.tar.gz
-cd ./networkx-networkx-1.8.1
+wget https://github.com/networkx/networkx/archive/networkx-1.11.tar.gz
+tar -xvzf networkx-1.11.tar.gz
+cd ./networkx-networkx-1.11
 sudo python ./setup.py install
 cd ..
-sudo rm -rf ./networkx-1.8.1.tar.gz
-sudo rm -rf ./networkx-networkx-1.8.1
+sudo rm -rf ./networkx-1.11.tar.gz
+sudo rm -rf ./networkx-networkx-1.11
 echo "Finished installing networkx"
 
 echo "--------------------------------------------------------"
@@ -49,7 +49,7 @@ echo "--------------------------------------------------------"
 echo "Installing scipy and scikit learn"
 #Install scipy and sklearn
 sudo apt-get install python-scipy
-pip install -U scikit-learn
+sudo pip install -U scikit-learn
 echo "Finished installing scipy and scikit learn"
 
 echo "--------------------------------------------------------"
@@ -66,6 +66,23 @@ echo "Installing Python Pandas"
 #Install pandas
 sudo apt-get install python-pandas
 echo "Finished installing Python-Pandas"
+
+echo "--------------------------------------------------------"
+echo "Installing Sphinx documentation and it's dependencies"
+#Install Sphinx
+sudo pip install --upgrade pip
+sudo pip install --upgrade sphinx
+sudo pip install --upgrade pyyaml
+sudo pip install --upgrade t3SphinxThemeRtd
+sudo pip install --upgrade t3fieldlisttable
+sudo pip install --upgrade t3tablerows
+sudo pip install --upgrade t3targets
+sudo pip install --upgrade sphinxcontrib-googlechart
+sudo pip install --upgrade sphinxcontrib-googlemaps
+sudo pip install --upgrade sphinxcontrib-httpdomain
+sudo pip install --upgrade sphinxcontrib-slide
+sudo pip install --upgrade sphinxcontrib.youtube
+echo "Finished installing Sphinx"
 
 echo "--------------------------------------------------------"
 echo "### Finished Installing package dependencies for IRC LogParser ###"
