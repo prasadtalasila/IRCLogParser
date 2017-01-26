@@ -2,7 +2,6 @@ import networkx as nx
 import igraph
 from random import randint
 
-
 def diff_plot(g, membership=None):
     if membership is not None:
         gcopy = g.copy()

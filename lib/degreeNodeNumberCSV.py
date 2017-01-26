@@ -14,6 +14,11 @@ from scipy.optimize import curve_fit
 from scipy import stats
 from sklearn.metrics import mean_squared_error
 import ext.util
+import plotly.plotly as py
+py.sign_in('rohangoel963', 'vh6le8no26')
+import plotly.graph_objs as go
+
+USE_PYPLOT = False
 
 def degreeNodeNumberCSV(log_directory, channel_name, output_directory, startingDate, startingMonth, endingDate, endingMonth):
 	""" creates two csv files having no. of nodes with a certain in and out-degree 
@@ -351,39 +356,37 @@ def generateFitGraphOverTime(typeOfDegree, filter_val, column_wise, channel_name
 	line = [slope*xi+intercept for xi in x_axis_log]
 
 	print str(typeOfDegree)+"\t"+str(slope)+"\t"+str(intercept)+"\t"+str(r_value**2)+"\t"+str(mean_squared_error(y, line))
-	# import plotly.plotly as py
-	# py.sign_in('rohangoel963', 'vh6le8no26')
-	# import plotly.graph_objs as go
 
-	# trace1 = go.Scatter(
-	#                   x=x, 
-	#                   y=y, 
-	#                   mode='lines',
-	#                   marker=go.Marker(color='rgb(255, 127, 14)'),
-	#                   name='Data'
-	#                   )
+	if USE_PYPLOT:
+		trace1 = go.Scatter(
+		                  x=x, 
+		                  y=y, 
+		                  mode='lines',
+		                  marker=go.Marker(color='rgb(255, 127, 14)'),
+		                  name='Data'
+		                  )
 
-	# trace2 = go.Scatter(
-	#                   x=x, 
-	#                   y=line, 
-	#                   mode='lines',
-	#                   marker=go.Marker(color='rgb(31, 119, 180)'),
-	#                   name='Fit'
-	#                   )
+		trace2 = go.Scatter(
+		                  x=x, 
+		                  y=line, 
+		                  mode='lines',
+		                  marker=go.Marker(color='rgb(31, 119, 180)'),
+		                  name='Fit'
+		                  )
 
-	# layout = go.Layout(
-	#                 title='DegreeNode',
-	#                 # plot_bgcolor='rgb(229, 229, 229)',
-	#                   xaxis=go.XAxis(zerolinecolor='rgb(255,255,255)', gridcolor='rgb(255,255,255)'),
-	#                   # yaxis=go.YAxis(zerolinecolor='rgb(255,255,255)', gridcolor='rgb(255,255,255)')
-	#                 )
+		layout = go.Layout(
+		                title='DegreeNode',
+		                # plot_bgcolor='rgb(229, 229, 229)',
+		                  xaxis=go.XAxis(zerolinecolor='rgb(255,255,255)', gridcolor='rgb(255,255,255)'),
+		                  # yaxis=go.YAxis(zerolinecolor='rgb(255,255,255)', gridcolor='rgb(255,255,255)')
+		                )
 
-	# data = [trace1, trace2]
-	# fig = go.Figure(data=data, layout=layout)
+		data = [trace1, trace2]
+		fig = go.Figure(data=data, layout=layout)
 
-	# py.image.save_as(fig, typeOfDegree+"temp.png")
+		py.image.save_as(fig, typeOfDegree+"temp.png")
 
-	'''END'''
+
 
 	#graph config
 	axes = plt.gca()

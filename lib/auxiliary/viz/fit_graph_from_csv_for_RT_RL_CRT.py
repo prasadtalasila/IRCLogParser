@@ -18,47 +18,36 @@ def generateProbDistFunction(filePath, howManyTopRows):
 
 	f.close()
 
-# def generateFitGraphForLogged(filePath, channel_name, startingDate):
-#  x_pdf, y_pdf = generateProbDistFunction(filePath, 20)
-
-#  def func(x, a, b, c):
-# 	 return a * np.exp(-b * x) + c
-#  # print sum(y_pdf)
-#  x = np.array(x_pdf)
-#  y = np.array(y_pdf)
-
-#  popt, pcov = curve_fit(func, x, y)
-#  [a, b, c] = popt
-#  mse = mean_squared_error(func(x, *popt), y)
-#  print a, b, c, "MSE="+str(mse)
-#  # print y
-#  # print func(x, *popt)
-#  plt.figure()
-#  plt.plot(x, y, 'b-', label="Data")
-#  plt.plot(x, func(x, *popt), 'r-', label="Fitted Curve")
- 
-#  axes = plt.gca()
-#  axes.set_xlim([0,20])
-#  axes.set_ylim([0,1])
-#  plt.legend()
-#  # plt.show()
-#  plt.savefig("/home/rohan/Desktop/Graph/"+filePath.split("/")[-1][:-4]+".png")
-#  plt.close()
-
-# print "a * np.exp(-b * x) + c"
-# for file in sorted(os.listdir("/home/rohan/Desktop/CL/")):
-# 	print "\n",file.split("/")[-1][:-4]
-# 	try:
-# 		generateFitGraphForLogged("/home/rohan/Desktop/CL/"+file, file.split("_")[0], file.split("_")[1])
-# 	except ValueError:
-# 		print "[ERROR: Value Error]"
-
-
-
-
-
-'''IGNORING ZERO'''
 def generateFitGraphForLogged(filePath, channel_name, startingDate):
+ x_pdf, y_pdf = generateProbDistFunction(filePath, 20)
+
+ def func(x, a, b, c):
+	 return a * np.exp(-b * x) + c
+ # print sum(y_pdf)
+ x = np.array(x_pdf)
+ y = np.array(y_pdf)
+
+ popt, pcov = curve_fit(func, x, y)
+ [a, b, c] = popt
+ mse = mean_squared_error(func(x, *popt), y)
+ print a, b, c, "MSE="+str(mse)
+ # print y
+ # print func(x, *popt)
+ plt.figure()
+ plt.plot(x, y, 'b-', label="Data")
+ plt.plot(x, func(x, *popt), 'r-', label="Fitted Curve")
+ 
+ axes = plt.gca()
+ axes.set_xlim([0,20])
+ axes.set_ylim([0,1])
+ plt.legend()
+ # plt.show()
+ plt.savefig("/home/rohan/Desktop/Graph/"+filePath.split("/")[-1][:-4]+".png")
+ plt.close()
+
+
+'''IGNORING INITIAL ZEROS IN CRT'''
+def generateFitGraphForLogged_CRT(filePath, channel_name, startingDate):
  howManyTopRows = 30
  x_pdf, y_pdf = generateProbDistFunction(filePath, howManyTopRows)
 
@@ -94,7 +83,10 @@ print "a * np.exp(-b * x) + c"
 for file in sorted(os.listdir("/home/rohan/Desktop/CRT/")):
 	print "\n",file.split("/")[-1][:-4]
 	try:
-		generateFitGraphForLogged("/home/rohan/Desktop/CRT/"+file, file.split("_")[0], file.split("_")[1])
+		if CRT:
+			generateFitGraphForLogged_CRT("/home/rohan/Desktop/CRT/"+file, file.split("_")[0], file.split("_")[1])
+		else:
+			generateFitGraphForLogged_CRT("/home/rohan/Desktop/CL/"+file, file.split("_")[0], file.split("_")[1])
 	except ValueError:
 		print "[ERROR: Value Error]"
 	except RuntimeError:

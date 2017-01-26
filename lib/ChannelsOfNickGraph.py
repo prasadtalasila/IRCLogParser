@@ -45,6 +45,10 @@ def createChannelsOfNickGraph(log_directory, channel_name, output_directory, sta
 	users_on_channel = {}
 	channel_for_users_for_all_days = []
 	channel_for_user_for_the_day = {}
+	GENERATE_GRAPH = False
+	GENERATE_DEGREE_ANAL = False
+	ENABLE_FILTER = False
+	PRINT_HASH = False
 
 	# out_dir_channel_user_time = output_directory+"channel-nick/"
 	out_dir_channel_user_time = output_directory
@@ -232,23 +236,24 @@ def createChannelsOfNickGraph(log_directory, channel_name, output_directory, sta
 	# # # print "Saving CU Adjacency Matrix"
 	# # # np.savetxt(output_directory+"/CU_adjacency_matrix_"+str(startingMonth)+"_"+str(endingMonth)+"_.csv", CU_adjacency_matrix, delimiter=",")
 	print "Reduced CU Adjacency Matrix will be saved"
-	nx.write_pajek(channel_user_graph, "adjCU.net")
+	nx.write_pajek(channel_user_graph, output_directory+"adjCU.net")
 	print "saved CU .net"
-	# channel_channel_graph = nx.Graph()
+	
+	channel_channel_graph = nx.Graph()
 
 	# '''adj matrix for channel-channel'''
 
 	# CC_adjacency_matrix = [[0]*len(channels_hash) for i in xrange(0,  len(channels_hash))]
 
 	# print len(channels_hash), len(users_on_channel.keys())
-	# for i in xrange(0, len(channels_hash)):
-	#  for j in xrange(i+1, len(channels_hash)):
-	#   common_users = list(set(users_on_channel[channels_hash[i]]) & set(users_on_channel[channels_hash[j]]))
+	for i in xrange(0, len(channels_hash)):
+	 for j in xrange(i+1, len(channels_hash)):
+	  common_users = list(set(users_on_channel[channels_hash[i]]) & set(users_on_channel[channels_hash[j]]))
 	#   # print channels_hash[i]
 	#   # print users_on_channel.keys()[i], users_on_channel.keys()[j], common_users
 	#   # CC_adjacency_matrix[i][j] = len(common_users)
 	#   # CC_adjacency_matrix[j][i] = len(common_users)
-	#   # if len(common_users) > 0:
+	  if len(common_users) > 0:
 	#   	# myGraph.add_edge(users_on_channel.keys()[i] ,users_on_channel.keys()[j], weight=len(common_users))
 	#   	# myGraph.add_edge(users_on_channel.keys()[j] ,users_on_channel.keys()[i], weight=len(common_users))
 	#   if len(common_users) > 0:
@@ -256,15 +261,15 @@ def createChannelsOfNickGraph(log_directory, channel_name, output_directory, sta
 	#   # "Uncomment for directed version"
 	#   # print str(channels_hash.index(users_on_channel.keys()[j]))+"\t"+str(channels_hash.index(users_on_channel.keys()[i]))
 	#   	# print channels_hash[i],channels_hash[j]
-	#   	channel_channel_graph.add_edge(channels_hash[i] ,channels_hash[j], weight=len(common_users))
+	  	channel_channel_graph.add_edge(channels_hash[i] ,channels_hash[j], weight=len(common_users))
 
 	# # print "CC Adj Matrix", CC_adjacency_matrix #channel-channel adj matrix
 	# # print "Saving CC Adjacency Matrix"
 	# # # np.savetxt(output_directory+"/CC_adjacency_matrix_"+str(startingMonth)+"_"+str(endingMonth)+"_.csv", CC_adjacency_matrix, delimiter=",")
 	# # # print "Done!"
-	# print "Reduced CC Adjacency Matrix will be saved"
-	# nx.write_pajek(channel_channel_graph, "adjCC.net")
-	# print "saved CC .net"
+	print "Reduced CC Adjacency Matrix will be saved"
+	nx.write_pajek(channel_channel_graph, output_directory+"adjCC.net")
+	print "saved CC .net"
 	user_user_graph = nx.Graph()
 
 	# '''adj matrix for user-user'''
@@ -307,119 +312,124 @@ def createChannelsOfNickGraph(log_directory, channel_name, output_directory, sta
 	# print "Saving UU Adjacency Matrix"
 	# np.savetxt(output_directory+"/UU_adjacency_matrix_"+str(startingMonth)+"_"+str(endingMonth)+"_.csv", UU_adjacency_matrix, delimiter=",")
 	print "Reduced UU Adjacency Matrix will be saved"
-	nx.write_pajek(user_user_graph, "adjUU.net")
+	nx.write_pajek(user_user_graph, output_directory+"adjUU.net")
 	print "saved UU .net"
 
-	# output_file=out_dir_channel_user_time+"_channels-of-nick-graph.png"
-	# print "Generating "+output_file
-	# max_degree_possible = 10000
-
-	# nodes_with_OUT_degree = [0]*max_degree_possible
-	# nodes_with_IN_degree = [0]*max_degree_possible
-	# nodes_with_TOTAL_degree = [0]*max_degree_possible
+	if GENERATE_GRAPH:
+		output_file=out_dir_channel_user_time+"_channels-of-nick-graph.png"
+		print "Generating "+output_file
 	
-	# print myGraph.out_degree().values()
+	if GENERATE_DEGREE_ANAL:
 
-	# for degree in myGraph.out_degree().values():
-	#  if not degree < max_degree_possible:
-	#   print "===error", degree
-	#  nodes_with_OUT_degree[degree]+=1
+		max_degree_possible = 10000
 
-	# for degree in myGraph.in_degree().values():
-	#  if not degree < max_degree_possible:
-	#   print "===error", degree
-	#  nodes_with_IN_degree[degree]+=1
+		nodes_with_OUT_degree = [0]*max_degree_possible
+		nodes_with_IN_degree = [0]*max_degree_possible
+		nodes_with_TOTAL_degree = [0]*max_degree_possible
+		
+		print myGraph.out_degree().values()
 
-	# for degree in myGraph.degree().values():
-	#  if not degree < max_degree_possible:
-	#   print "===error", degree
-	#  nodes_with_TOTAL_degree[degree]+=1
+		for degree in myGraph.out_degree().values():
+		 if not degree < max_degree_possible:
+		  print "===error", degree
+		 nodes_with_OUT_degree[degree]+=1
 
-	# print "========= OUT DEGREE ======="
-	# for i in xrange(max_degree_possible):
-	#  print "deg"+str(i)+'\t'+str(nodes_with_OUT_degree[i])
+		for degree in myGraph.in_degree().values():
+		 if not degree < max_degree_possible:
+		  print "===error", degree
+		 nodes_with_IN_degree[degree]+=1
 
-	# print "========= IN DEGREE ======="
-	# for i in xrange(max_degree_possible):
-	#  print "deg"+str(i)+'\t'+str(nodes_with_IN_degree[i])
+		for degree in myGraph.degree().values():
+		 if not degree < max_degree_possible:
+		  print "===error", degree
+		 nodes_with_TOTAL_degree[degree]+=1
 
-	# print "========= TOTAL DEGREE ======="
-	# for i in xrange(max_degree_possible):
-		# print "deg"+str(i)+'\t'+str(nodes_with_TOTAL_degree[i])
+		print "========= OUT DEGREE ======="
+		for i in xrange(max_degree_possible):
+		 print "deg"+str(i)+'\t'+str(nodes_with_OUT_degree[i])
 
-	'''
-		We have around 20k users and most of them just visit a channel once, 
-		hence we filter out the top 100 users
-		This inturns reduces the CU and UU matrices
-	'''
+		print "========= IN DEGREE ======="
+		for i in xrange(max_degree_possible):
+		 print "deg"+str(i)+'\t'+str(nodes_with_IN_degree[i])
 
-	'''
-		calculate top <how_many_top_users> users
-		this is achieved by taking top users from CU matrix on the basis of the column sum (total number of days active on a channel)
-	# '''
-	# how_many_top_users = 100
+		print "========= TOTAL DEGREE ======="
+		for i in xrange(max_degree_possible):
+			print "deg"+str(i)+'\t'+str(nodes_with_TOTAL_degree[i])
 
-	# '''
-	#  we also need to filter the channels and are filtered on the basis of row sum of CC matrix
-	# '''
-	# how_many_top_channels = 30
+	if ENABLE_FILTER:
+		'''
+			We have around 20k users and most of them just visit a channel once, 
+			hence we filter out the top 100 users
+			This inturns reduces the CU and UU matrices
+		'''
 
-	# sum_for_each_channel = []
-	# for channel_row in CC_adjacency_matrix:
-	#  sum_for_each_channel.append(sum(channel_row))
+		'''
+			calculate top <how_many_top_users> users
+			this is achieved by taking top users from CU matrix on the basis of the column sum (total number of days active on a channel)
+		# '''
+		how_many_top_users = 100
 
-	# #filter out top <how_many_top_channels> indices
-	# top_indices_channels = sorted(range(len(sum_for_each_channel)), key=lambda i: sum_for_each_channel[i], reverse=True)[:how_many_top_channels]
-	# indices_to_delete_channels = list(set([i for i in xrange(0, len(channels_hash))]) - set(top_indices_channels))
+		'''
+		 we also need to filter the channels and are filtered on the basis of row sum of CC matrix
+		'''
+		how_many_top_channels = 30
 
-	# temp_channels = np.delete(CC_adjacency_matrix, indices_to_delete_channels, 1) #delete columns
-	# reduced_CC_adjacency_matrix = np.delete(temp_channels, indices_to_delete_channels, 0) #delete rows
-	# print "Saving Reduced CC Adjacency Matrix"
-	# np.savetxt(output_directory+"/"+str(startingMonth)+"_"+str(endingMonth)+"reduced_CC_adjacency_matrix.csv", reduced_CC_adjacency_matrix, delimiter=",")
-	# print "Done!"
+		sum_for_each_channel = []
+		for channel_row in CC_adjacency_matrix:
+		 sum_for_each_channel.append(sum(channel_row))
 
-	# #to calculate sum first take the transpose of CU matrix so users in row
-	# UC_adjacency_matrix = zip(*CU_adjacency_matrix)
-	# sum_for_each_user = []
+		#filter out top <how_many_top_channels> indices
+		top_indices_channels = sorted(range(len(sum_for_each_channel)), key=lambda i: sum_for_each_channel[i], reverse=True)[:how_many_top_channels]
+		indices_to_delete_channels = list(set([i for i in xrange(0, len(channels_hash))]) - set(top_indices_channels))
 
+		temp_channels = np.delete(CC_adjacency_matrix, indices_to_delete_channels, 1) #delete columns
+		reduced_CC_adjacency_matrix = np.delete(temp_channels, indices_to_delete_channels, 0) #delete rows
+		print "Saving Reduced CC Adjacency Matrix"
+		np.savetxt(output_directory+"/"+str(startingMonth)+"_"+str(endingMonth)+"reduced_CC_adjacency_matrix.csv", reduced_CC_adjacency_matrix, delimiter=",")
+		print "Done!"
 
-	# for user_row in UC_adjacency_matrix:
-	#  sum_for_each_user.append(sum(user_row))
-
-	# #filter out top <how_many_top_users> indices
-	# top_indices_users = sorted(range(len(sum_for_each_user)), key=lambda i: sum_for_each_user[i], reverse=True)[:how_many_top_users]
-	# indices_to_delete_users = list(set([i for i in xrange(0, len(nicks_hash))]) - set(top_indices_users))
-
-	# # print len(top_indices_users), top_indices_users
-	# # print len(indices_to_delete_users), indices_to_delete_users
-
-	# #update the nick_hash, channel_hash
-	# reduced_nick_hash = np.delete(nicks_hash, indices_to_delete_users)
-	# reduced_channel_hash = np.delete(channels_hash, indices_to_delete_channels)
+		#to calculate sum first take the transpose of CU matrix so users in row
+		UC_adjacency_matrix = zip(*CU_adjacency_matrix)
+		sum_for_each_user = []
 
 
-	# #update the CU matrix by deleting particular columns, and rows which are not in top_indices_users, channels
-	# temp_user_channel = np.delete(CU_adjacency_matrix, indices_to_delete_users, 1) #delete columns
-	# reduced_CU_adjacency_matrix = np.delete(temp_user_channel, indices_to_delete_channels, 0) #delete rows
+		for user_row in UC_adjacency_matrix:
+		 sum_for_each_user.append(sum(user_row))
 
-	# print "Saving Reduced CU Adjacency Matrix"
-	# np.savetxt(output_directory+"/"+str(startingMonth)+"_"+str(endingMonth)+"reduced_CU_adjacency_matrix.csv", reduced_CU_adjacency_matrix, delimiter=",")
-	# print "Done!"
+		#filter out top <how_many_top_users> indices
+		top_indices_users = sorted(range(len(sum_for_each_user)), key=lambda i: sum_for_each_user[i], reverse=True)[:how_many_top_users]
+		indices_to_delete_users = list(set([i for i in xrange(0, len(nicks_hash))]) - set(top_indices_users))
 
-	# #update the UU matrix by deleting both columns and rows
-	# temp_users = np.delete(UU_adjacency_matrix, indices_to_delete_users, 1) #delete columns
-	# reduced_UU_adjacency_matrix = np.delete(temp_users, indices_to_delete_users, 0) #delete rows
-	# print "Saving Reduced UU Adjacency Matrix"
-	# np.savetxt(output_directory+"/"+str(startingMonth)+"_"+str(endingMonth)+"reduced_UU_adjacency_matrix.csv", reduced_UU_adjacency_matrix, delimiter=",")
-	# print "Done!"
+		# print len(top_indices_users), top_indices_users
+		# print len(indices_to_delete_users), indices_to_delete_users
+
+		#update the nick_hash, channel_hash
+		reduced_nick_hash = np.delete(nicks_hash, indices_to_delete_users)
+		reduced_channel_hash = np.delete(channels_hash, indices_to_delete_channels)
 
 
-	# print "=================================================="
+		#update the CU matrix by deleting particular columns, and rows which are not in top_indices_users, channels
+		temp_user_channel = np.delete(CU_adjacency_matrix, indices_to_delete_users, 1) #delete columns
+		reduced_CU_adjacency_matrix = np.delete(temp_user_channel, indices_to_delete_channels, 0) #delete rows
 
-	# print "========= REDUCED NICK HASH ========="
-	# for i in range(len(reduced_nick_hash)):
-	#  print str(i)+"\t"+reduced_nick_hash[i]
-	
-	# print "========= REDUCED CHANNEL HASH ========="
-	# for i in range(len(reduced_channel_hash)):
-	#  print str(1000000+i)+"\t"+reduced_channel_hash[i]
+		print "Saving Reduced CU Adjacency Matrix"
+		np.savetxt(output_directory+"/"+str(startingMonth)+"_"+str(endingMonth)+"reduced_CU_adjacency_matrix.csv", reduced_CU_adjacency_matrix, delimiter=",")
+		print "Done!"
+
+		#update the UU matrix by deleting both columns and rows
+		temp_users = np.delete(UU_adjacency_matrix, indices_to_delete_users, 1) #delete columns
+		reduced_UU_adjacency_matrix = np.delete(temp_users, indices_to_delete_users, 0) #delete rows
+		print "Saving Reduced UU Adjacency Matrix"
+		np.savetxt(output_directory+"/"+str(startingMonth)+"_"+str(endingMonth)+"reduced_UU_adjacency_matrix.csv", reduced_UU_adjacency_matrix, delimiter=",")
+		print "Done!"
+
+	if PRINT_HASH:
+		print "=================================================="
+
+		print "========= REDUCED NICK HASH ========="
+		for i in range(len(reduced_nick_hash)):
+		 print str(i)+"\t"+reduced_nick_hash[i]
+		
+		print "========= REDUCED CHANNEL HASH ========="
+		for i in range(len(reduced_channel_hash)):
+		 print str(1000000+i)+"\t"+reduced_channel_hash[i]
