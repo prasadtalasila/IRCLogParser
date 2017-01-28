@@ -15,7 +15,7 @@ from scipy import stats
 from sklearn.metrics import mean_squared_error
 import ext.util
 import plotly.plotly as py
-py.sign_in('rohangoel963', 'vh6le8no26')
+# py.sign_in('rohangoel963', 'vh6le8no26')
 import plotly.graph_objs as go
 
 USE_PYPLOT = False

@@ -6,7 +6,6 @@ from scipy.optimize import curve_fit
 from sklearn.metrics import mean_squared_error
 
 def generateProbDistFunction(filePath, howManyTopRows):
-	import csv
 	f = open(filePath, 'rb')
 	reader = csv.reader(f)
 	# for row in reader:
@@ -18,7 +17,7 @@ def generateProbDistFunction(filePath, howManyTopRows):
 
 	f.close()
 
-def generateFitGraphForLogged(filePath, channel_name, startingDate):
+def generateFitGraphForLogged(filePath, output):
  x_pdf, y_pdf = generateProbDistFunction(filePath, 20)
 
  def func(x, a, b, c):
@@ -42,12 +41,13 @@ def generateFitGraphForLogged(filePath, channel_name, startingDate):
  axes.set_ylim([0,1])
  plt.legend()
  # plt.show()
- plt.savefig("/home/rohan/Desktop/Graph/"+filePath.split("/")[-1][:-4]+".png")
+ plt.savefig(output+"/"+filePath.split("/")[-1][:-4]+".png")
  plt.close()
+ return [a, b, c, mse]
 
 
 '''IGNORING INITIAL ZEROS IN CRT'''
-def generateFitGraphForLogged_CRT(filePath, channel_name, startingDate):
+def generateFitGraphForLogged_CRT(filePath, output):
  howManyTopRows = 30
  x_pdf, y_pdf = generateProbDistFunction(filePath, howManyTopRows)
 
@@ -76,20 +76,22 @@ def generateFitGraphForLogged_CRT(filePath, channel_name, startingDate):
  
  plt.legend()
  # plt.show()
- plt.savefig("/home/rohan/Desktop/Graph/"+filePath.split("/")[-1][:-4]+".png")
+ plt.savefig(output+"/"+filePath.split("/")[-1][:-4]+".png")
  plt.close()
 
-print "a * np.exp(-b * x) + c"
-for file in sorted(os.listdir("/home/rohan/Desktop/CRT/")):
-	print "\n",file.split("/")[-1][:-4]
-	try:
-		if CRT:
-			generateFitGraphForLogged_CRT("/home/rohan/Desktop/CRT/"+file, file.split("_")[0], file.split("_")[1])
-		else:
-			generateFitGraphForLogged_CRT("/home/rohan/Desktop/CL/"+file, file.split("_")[0], file.split("_")[1])
-	except ValueError:
-		print "[ERROR: Value Error]"
-	except RuntimeError:
-		print "No optimal parameter for curve fit"
+ return [a, b, c, first_non_zero_index, mse]
+
+# print "a * np.exp(-b * x) + c"
+# for file in sorted(os.listdir("/home/rohan/Desktop/CRT/")):
+# 	print "\n",file.split("/")[-1][:-4]
+# 	try:
+# 		if CRT:
+# 			generateFitGraphForLogged_CRT("/home/rohan/Desktop/CRT/"+file, file.split("_")[0], file.split("_")[1])
+# 		else:
+# 			generateFitGraphForLogged("/home/rohan/Desktop/CL/"+file, file.split("_")[0], file.split("_")[1])
+# 	except ValueError:
+# 		print "[ERROR: Value Error]"
+# 	except RuntimeError:
+# 		print "No optimal parameter for curve fit"
 
 
