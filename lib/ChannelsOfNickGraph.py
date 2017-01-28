@@ -23,19 +23,19 @@ def createChannelsOfNickGraph(log_directory, channel_name, output_directory, sta
 	each edge from which points to the IRC Channels that nick has participated in. 
 	(Nick changes are tracked here and only the initial nick is shown if a user changed his nick) 
 
-    Args:
-        log_directory (str): Location of the logs (Assumed to be arranged in directory structure as : <year>/<month>/<day>/<log-file-for-channel>.txt)
-        channel_name (str): Channel to be perform analysis on
-        output_directory (str): Location of output directory
-        startingDate (int): Date to start the analysis (in conjunction with startingMonth)
-        startingMonth (int): Date to start the analysis (in conjunction with startingDate)
-        endingDate (int): Date to end the analysis (in conjunction with endingMonth)
-        endingMonth (int): Date to end the analysis (in conjunction with endingDate)
+	Args:
+		log_directory (str): Location of the logs (Assumed to be arranged in directory structure as : <year>/<month>/<day>/<log-file-for-channel>.txt)
+		channel_name (str): Channel to be perform analysis on
+		output_directory (str): Location of output directory
+		startingDate (int): Date to start the analysis (in conjunction with startingMonth)
+		startingMonth (int): Date to start the analysis (in conjunction with startingDate)
+		endingDate (int): Date to end the analysis (in conjunction with endingMonth)
+		endingMonth (int): Date to end the analysis (in conjunction with endingDate)
 
-    Returns:
-       null 
+	Returns:
+	   null 
 
-    """
+	"""
 
 	nick_channel_dict = []
 	nick_same_list=[[] for i in range(100000)] #list of list with each list having all the nicks for that particular person
@@ -49,6 +49,7 @@ def createChannelsOfNickGraph(log_directory, channel_name, output_directory, sta
 	GENERATE_DEGREE_ANAL = False
 	ENABLE_FILTER = False
 	PRINT_HASH = False
+	SAVE_ADJ_MATRICES = False
 
 	# out_dir_channel_user_time = output_directory+"channel-nick/"
 	out_dir_channel_user_time = output_directory
@@ -166,37 +167,6 @@ def createChannelsOfNickGraph(log_directory, channel_name, output_directory, sta
 				channel_for_users_for_all_days.append(channel_for_user_for_the_day)
 				channel_for_user_for_the_day = {}#empty for next day usage
 
-	# print nick_same_list
-	# print nick_channel_dict
-	
-	# myGraph = nx.DiGraph()
-	# for dicts in nick_channel_dict:
-	#  # print dicts
-	#  # no_of_channels = 0
-	#  nick = dicts['nickname']
-	#  if nick not in nicks_hash:
-	#   nicks_hash.append(nick)
-
-	#  for channel in dicts['channels']:
-	#   if channel[1] > 20:
-	#    myGraph.add_edge(nick ,channel[0],weight=channel[1])
-	#   if channel[0] not in channels_hash:
-	#    channels_hash.append(channel[0])
-	#   # no_of_channels+=1
-	#   # print dicts
-
-	# for u,v,d in myGraph.edges(data=True):
-	#  d['label'] = d.get('weight','')
-
-	# output_file=out_dir_channel_user_time+"_channels-of-nick-graph.png"
-	# print "Generating "+output_file
-
-	# A = nx.drawing.nx_agraph.to_agraph(myGraph)
-	# A.layout(prog='dot')
-	# A.draw(output_file) 
-
-	'''!!!!!!!!!!!! Reptition if use above!!!!!!!!!!!!!!!!! '''
-
 	for dicts in nick_channel_dict:
 		nick = dicts['nickname']
 		if nick not in nicks_hash:
@@ -209,32 +179,33 @@ def createChannelsOfNickGraph(log_directory, channel_name, output_directory, sta
 	# print len(nicks_hash)
 	# print len(channels_hash)
 	
+	completeGraph = nx.DiGraph() #directed
 	channel_user_graph = nx.Graph()
-	# # myGraph = nx.DiGraph() #directed
 
 	CU_adjacency_matrix = [[0]*len(nicks_hash) for i in xrange(0,  len(channels_hash))]
 	temp2 = []
 	for adjlist in nick_channel_dict:
 		for channel in adjlist['channels']:
-			# channel_user_graph.add_edge(nicks_hash.index(adjlist['nickname']) ,(1000000+channels_hash.index(channel[0])), weight=channel[1])
-	#   # print nicks_hash.index(adjlist['nickname']),adjlist['nickname'], channels_hash.index(channel[0]),channel[0], channel[1]
-			# CU_adjacency_matrix[channels_hash.index(channel[0])][nicks_hash.index(adjlist['nickname'])] = channel[1]
+			channel_user_graph.add_edge(nicks_hash.index(adjlist['nickname']) ,(1000000+channels_hash.index(channel[0])), weight=channel[1])
+			completeGraph.add_edge(nicks_hash.index(adjlist['nickname']) ,(1000000+channels_hash.index(channel[0])), weight=channel[1])
+			# print nicks_hash.index(adjlist['nickname']),adjlist['nickname'], channels_hash.index(channel[0]),channel[0], channel[1]
+			CU_adjacency_matrix[channels_hash.index(channel[0])][nicks_hash.index(adjlist['nickname'])] = channel[1]
 			# print adjlist['nickname'], channel[0]
-			# channel_user_graph.add_edge(adjlist['nickname'], channel[0], weight=int(channel[1]))
-	#   # if channel[1] > 25 :
-	#    # print str(nicks_hash.index(adjlist['nickname']))+"\t"+str(1000000+channels_hash.index(channel[0]))
+			# if channel[1] > 25 :
+				# print str(nicks_hash.index(adjlist['nickname']))+"\t"+str(1000000+channels_hash.index(channel[0]))
 			if users_on_channel.has_key(channel[0]):
 				if adjlist['nickname'] not in users_on_channel[channel[0]]:
 					users_on_channel[channel[0]].append(adjlist['nickname'])
 			else:
 				users_on_channel[channel[0]] = [adjlist['nickname']]
-
-	# # # CU_adjacency_matrix = nx.adjacency_matrix(channel_user_graph) #channel-user adj matrix
 	
-	# # # print "CU Adj Matrix", CU_adjacency_matrix  #channel-user adj matrix
-	# # # print users_on_channel #used for channel-channel graph
-	# # # print "Saving CU Adjacency Matrix"
-	# # # np.savetxt(output_directory+"/CU_adjacency_matrix_"+str(startingMonth)+"_"+str(endingMonth)+"_.csv", CU_adjacency_matrix, delimiter=",")
+	if SAVE_ADJ_MATRICES:
+		CU_adjacency_matrix = nx.adjacency_matrix(channel_user_graph) #channel-user adj matrix  
+		print "CU Adj Matrix", CU_adjacency_matrix  #channel-user adj matrix
+		print users_on_channel #used for channel-channel graph
+		print "Saving CU Adjacency Matrix"
+		np.savetxt(output_directory+"/CU_adjacency_matrix_"+str(startingMonth)+"_"+str(endingMonth)+"_.csv", CU_adjacency_matrix, delimiter=",")
+	
 	print "Reduced CU Adjacency Matrix will be saved"
 	nx.write_pajek(channel_user_graph, output_directory+"adjCU.net")
 	print "saved CU .net"
@@ -243,30 +214,29 @@ def createChannelsOfNickGraph(log_directory, channel_name, output_directory, sta
 
 	# '''adj matrix for channel-channel'''
 
-	# CC_adjacency_matrix = [[0]*len(channels_hash) for i in xrange(0,  len(channels_hash))]
-
+	CC_adjacency_matrix = [[0]*len(channels_hash) for i in xrange(0,  len(channels_hash))]
 	# print len(channels_hash), len(users_on_channel.keys())
 	for i in xrange(0, len(channels_hash)):
-	 for j in xrange(i+1, len(channels_hash)):
-	  common_users = list(set(users_on_channel[channels_hash[i]]) & set(users_on_channel[channels_hash[j]]))
-	#   # print channels_hash[i]
-	#   # print users_on_channel.keys()[i], users_on_channel.keys()[j], common_users
-	#   # CC_adjacency_matrix[i][j] = len(common_users)
-	#   # CC_adjacency_matrix[j][i] = len(common_users)
-	  if len(common_users) > 0:
-	#   	# myGraph.add_edge(users_on_channel.keys()[i] ,users_on_channel.keys()[j], weight=len(common_users))
-	#   	# myGraph.add_edge(users_on_channel.keys()[j] ,users_on_channel.keys()[i], weight=len(common_users))
-	#   if len(common_users) > 0:
-	#   	# print str(channels_hash.index(users_on_channel.keys()[i]))+"\t"+str(channels_hash.index(users_on_channel.keys()[j]))
-	#   # "Uncomment for directed version"
-	#   # print str(channels_hash.index(users_on_channel.keys()[j]))+"\t"+str(channels_hash.index(users_on_channel.keys()[i]))
-	#   	# print channels_hash[i],channels_hash[j]
-	  	channel_channel_graph.add_edge(channels_hash[i] ,channels_hash[j], weight=len(common_users))
+		for j in xrange(i+1, len(channels_hash)):
+			common_users = list(set(users_on_channel[channels_hash[i]]) & set(users_on_channel[channels_hash[j]]))
+			# print users_on_channel.keys()[i], users_on_channel.keys()[j], common_users
+			# CC_adjacency_matrix[i][j] = len(common_users)
+			# CC_adjacency_matrix[j][i] = len(common_users)
+			if len(common_users) > 0:
+				completeGraph.add_edge(str(1000000+ i) ,str(1000000+ j), weight=len(common_users))
+				completeGraph.add_edge(str(1000000+ i) ,str(1000000+ j), weight=len(common_users))
+				# print str(channels_hash.index(users_on_channel.keys()[i]))+"\t"+str(channels_hash.index(users_on_channel.keys()[j]))
+				# "Uncomment for directed version"
+				# print str(channels_hash.index(users_on_channel.keys()[j]))+"\t"+str(channels_hash.index(users_on_channel.keys()[i]))
+				# print channels_hash[i],channels_hash[j]
+				channel_channel_graph.add_edge(str(1000000+ i) ,str(1000000+ j), weight=len(common_users))
 
-	# # print "CC Adj Matrix", CC_adjacency_matrix #channel-channel adj matrix
-	# # print "Saving CC Adjacency Matrix"
-	# # # np.savetxt(output_directory+"/CC_adjacency_matrix_"+str(startingMonth)+"_"+str(endingMonth)+"_.csv", CC_adjacency_matrix, delimiter=",")
-	# # # print "Done!"
+	if SAVE_ADJ_MATRICES:
+		print "CC Adj Matrix", CC_adjacency_matrix #channel-channel adj matrix
+		print "Saving CC Adjacency Matrix"
+		np.savetxt(output_directory+"/CC_adjacency_matrix_"+str(startingMonth)+"_"+str(endingMonth)+"_.csv", CC_adjacency_matrix, delimiter=",")
+		print "Done!"
+		
 	print "Reduced CC Adjacency Matrix will be saved"
 	nx.write_pajek(channel_channel_graph, output_directory+"adjCC.net")
 	print "saved CC .net"
@@ -281,24 +251,16 @@ def createChannelsOfNickGraph(log_directory, channel_name, output_directory, sta
 		for i in xrange(0, len(user_channel_dict.keys())):
 			for j in xrange(i+1, len(user_channel_dict.keys())):
 				common_channels_on_that_day = list(set(user_channel_dict[user_channel_dict.keys()[i]]) & set(user_channel_dict[user_channel_dict.keys()[j]]))
-	#    # print "common_channels_on_that_day"
-	#    # print user_channel_dict.keys()[i], user_channel_dict.keys()[j], common_channels_on_that_day
+				# print "common_channels_on_that_day"
+				# print user_channel_dict.keys()[i], user_channel_dict.keys()[j], common_channels_on_that_day
 				user1 = user_channel_dict.keys()[i]
 				user2 = user_channel_dict.keys()[j]
 				no_of_common_channels_day = len(common_channels_on_that_day)
 
-				# if not user_user_graph.has_edge(user1, user2):
-				#  user_user_graph.add_edge(user1 ,user2, weight=0)
-				#  user_user_graph.add_edge(user2 ,user1, weight=0)
-					
-				# user_user_graph[user1][user2]['weight'] += no_of_common_channels_day
-				# user_user_graph[user2][user1]['weight'] += no_of_common_channels_day
-
 				# print str(nicks_hash.index(user1))+"\t"+str(nicks_hash.index(user2))
-	#    # "Uncomment for directed version"
-	#    # print str(nicks_hash.index(user2))+"\t"+str(nicks_hash.index(user1))
-				
-	#    # print user1, user2
+				# "Uncomment for directed version"
+				# print str(nicks_hash.index(user2))+"\t"+str(nicks_hash.index(user1))
+				# print user1, user2
 				UU_adjacency_matrix[nicks_hash.index(user1)][nicks_hash.index(user2)] += no_of_common_channels_day
 				UU_adjacency_matrix[nicks_hash.index(user2)][nicks_hash.index(user1)] += no_of_common_channels_day
 
@@ -308,16 +270,27 @@ def createChannelsOfNickGraph(log_directory, channel_name, output_directory, sta
 				# print str(i)+'\t'+str(j)
 				user_user_graph.add_edge(i ,j, weight=UU_adjacency_matrix[i][j])
 
-	# print "UU Adj Matrix", UU_adjacency_matrix #user-user matrix
-	# print "Saving UU Adjacency Matrix"
-	# np.savetxt(output_directory+"/UU_adjacency_matrix_"+str(startingMonth)+"_"+str(endingMonth)+"_.csv", UU_adjacency_matrix, delimiter=",")
-	print "Reduced UU Adjacency Matrix will be saved"
+	if SAVE_ADJ_MATRICES:
+		print "UU Adj Matrix", UU_adjacency_matrix #user-user matrix
+		print "Saving UU Adjacency Matrix"
+		np.savetxt(output_directory+"/UU_adjacency_matrix_"+str(startingMonth)+"_"+str(endingMonth)+"_.csv", UU_adjacency_matrix, delimiter=",")
+		print "Reduced UU Adjacency Matrix will be saved"
+
 	nx.write_pajek(user_user_graph, output_directory+"adjUU.net")
 	print "saved UU .net"
 
 	if GENERATE_GRAPH:
 		output_file=out_dir_channel_user_time+"_channels-of-nick-graph.png"
+		for u,v,d in completeGraph.edges(data=True):
+		 d['label'] = d.get('weight','')
+
+		output_file=out_dir_channel_user_time+"_channels-of-nick-graph.png"
 		print "Generating "+output_file
+
+		A = nx.drawing.nx_agraph.to_agraph(completeGraph)
+		A.layout(prog='dot')
+		print "Generating "+output_file
+		A.draw(output_file) 
 	
 	if GENERATE_DEGREE_ANAL:
 
@@ -327,19 +300,19 @@ def createChannelsOfNickGraph(log_directory, channel_name, output_directory, sta
 		nodes_with_IN_degree = [0]*max_degree_possible
 		nodes_with_TOTAL_degree = [0]*max_degree_possible
 		
-		print myGraph.out_degree().values()
+		print completeGraph.out_degree().values()
 
-		for degree in myGraph.out_degree().values():
+		for degree in completeGraph.out_degree().values():
 		 if not degree < max_degree_possible:
 		  print "===error", degree
 		 nodes_with_OUT_degree[degree]+=1
 
-		for degree in myGraph.in_degree().values():
+		for degree in completeGraph.in_degree().values():
 		 if not degree < max_degree_possible:
 		  print "===error", degree
 		 nodes_with_IN_degree[degree]+=1
 
-		for degree in myGraph.degree().values():
+		for degree in completeGraph.degree().values():
 		 if not degree < max_degree_possible:
 		  print "===error", degree
 		 nodes_with_TOTAL_degree[degree]+=1
