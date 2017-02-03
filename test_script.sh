@@ -9,7 +9,7 @@ degNodeNumberCSV
 aggregate
 keyWords
 responseTime
-convLenRefresh" 
+convLenRefresh"
 
 CONSIDERED_CHANNELS="#kubuntu-devel
 #kubuntu
