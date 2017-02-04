@@ -14,13 +14,7 @@ echo "--------------------------------------------------------"
 
 echo "Installing networkx"
 #Install newtworkx package
-wget https://github.com/networkx/networkx/archive/networkx-1.11.tar.gz
-tar -xvzf networkx-1.11.tar.gz
-cd ./networkx-networkx-1.11
-sudo python ./setup.py install
-cd ..
-sudo rm -rf ./networkx-1.11.tar.gz
-sudo rm -rf ./networkx-networkx-1.11
+sudo pip install networkx
 echo "Finished installing networkx"
 
 echo "--------------------------------------------------------"
@@ -38,11 +32,9 @@ echo "Finished installing Matplotlib"
 echo "--------------------------------------------------------"
 echo "Installing pygraphviz"
 #Install pygraphviz
-git clone https://github.com/pygraphviz/pygraphviz.git
-cd pygraphviz
-sudo python ./setup.py install
-cd ..
-sudo rm -rf pygraphviz
+sudo apt-get install graphviz libgraphviz-dev pkg-config
+sudo apt-get install python-pip python-virtualenv
+sudo pip install pygraphviz
 echo "Finished installing pygraphviz"
 
 echo "--------------------------------------------------------"
