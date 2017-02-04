@@ -35,7 +35,7 @@ do
 				#RUN THE FUNCTION
 				python module.py $METHOD \
 					-c=$CHANNEL \
-					-i=$IN_DIR$YEAR"/" \
+					-i=$IN_DIR"/"$YEAR"/" \
 					-o=$OUT_DIR"/"$CHANNEL"/"$METHOD"/"$YEAR"/"$MONTH"/" \
 					-f="1-"$MONTH \
 					-t="31-"$MONTH \
