@@ -193,6 +193,6 @@ def createMessageTimeGraph(log_directory, channel_name, output_directory, starti
 				d['label'] = d.get('weight','')
 			output_file=out_dir_msg_time+channel_name+"_2013_"+str(folderiterator)+"_"+str(fileiterator)+"_msg_time.png"
 			print "Generated " + output_file
-			A = nx.to_agraph(graph_conversation)
+			A = nx.drawing.nx_agraph.to_agraph(graph_conversation)
 			A.layout(prog='dot')
 			A.draw(output_file)

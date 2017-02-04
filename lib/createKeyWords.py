@@ -11,6 +11,7 @@ from sklearn.feature_extraction import text
 import ext.common_english_words as common_english_words
 import ext.extend_stop_words as custom_stop_words
 from nltk.stem.wordnet import WordNetLemmatizer
+from nltk.corpus import wordnet
 import string
 import re
 import ext.util
