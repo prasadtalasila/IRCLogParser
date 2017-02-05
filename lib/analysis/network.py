@@ -9,8 +9,8 @@ import config
 
 
 
-def createAggregateGraph(log_data, nicks, nick_same_list):
-    """ Creates a directed graph for a longer time frames 
+def message_number_graph(log_data, nicks, nick_same_list):
+    """ Creates a directed graph
         with each node representing an IRC user
         and each directed edge has a weight which 
         mentions the number messages sent and recieved by that user 
@@ -26,13 +26,13 @@ def createAggregateGraph(log_data, nicks, nick_same_list):
         endingMonth (int): Date to end the analysis (in conjunction with endingDate)
 
     Returns:
-       aggregate_graph (nx graph object) 
+       message_number_graph (nx graph object) 
 
     """
 
     conversations=[[0] for i in range(config.MAX_EXPECTED_DIFF_NICKS)]   
     
-    aggregate_graph = nx.DiGraph()  #graph with multiple directed edges between clients used 
+    message_number_graph = nx.DiGraph()  #graph with multiple directed edges between clients used 
 
     G = util.to_graph(nick_same_list)
     conn_comp_list = list(connected_components(G))
@@ -128,7 +128,7 @@ def createAggregateGraph(log_data, nicks, nick_same_list):
 
     for index in xrange(config.MAX_EXPECTED_DIFF_NICKS):
         if(len(conversations[index]) == 3):
-            aggregate_graph.add_edge(conversations[index][1], conversations[index][2], weight = conversations[index][0]) 
+            message_number_graph.add_edge(conversations[index][1], conversations[index][2], weight = conversations[index][0]) 
 
     if config.DEBUGGER:
         print "========> nicks"
@@ -138,4 +138,4 @@ def createAggregateGraph(log_data, nicks, nick_same_list):
         print "========> conversations"
         print conversations[:30]
     
-    return aggregate_graph
+    return message_number_graph
