@@ -1,3 +1,6 @@
+import sys
+sys.path.insert(0, '/media/krishna/Media/IRCLP/IRCLogParser/')
+
 import os.path
 import re
 import networkx as nx
@@ -6,7 +9,7 @@ import matplotlib.pyplot as plt
 import pylab
 import pygraphviz as pygraphviz
 import os
-import ext.util
+import util
 
 def createNickChangesGraph(log_directory, channel_name, output_directory, startingDate, startingMonth, endingDate, endingMonth):
 	""" creates a graph which tracks the nick changes of the users
@@ -49,7 +52,8 @@ def createNickChangesGraph(log_directory, channel_name, output_directory, starti
 				continue 
 			with open(filePath) as f:
 				content = f.readlines() #contents stores all the lines of the file channel_name
-					
+			
+			"""		
 			nicks = [] #list of all the nicknames     
 			'''
 				Getting all the nicknames in a list nicks[]
@@ -97,7 +101,7 @@ def createNickChangesGraph(log_directory, channel_name, output_directory, starti
 						if not nick_same_list[i]:
 							nick_same_list[i].append(line1)
 							nick_same_list[i].append(line2)
-							break
+							break"""
 
 			#print("printing nick_same_list****************************")
 			#print(nick_same_list)     
@@ -109,8 +113,8 @@ def createNickChangesGraph(log_directory, channel_name, output_directory, starti
 			for i in content:
 				y=y+1
 				if(i[0] =='=' and "changed the topic of" not in i):  #excluding the condition when user changes the topic. Search for only nick changes
-					nick1=ext.util.correctLastCharCR(i[i.find("=")+1:i.find(" is")][3:])
-					nick2=ext.util.correctLastCharCR(i[i.find("wn as")+1:i.find("\n")][5:])
+					nick1=util.correctLastCharCR(i[i.find("=")+1:i.find(" is")][3:])
+					nick2=util.correctLastCharCR(i[i.find("wn as")+1:i.find("\n")][5:])
 					z=y
 					while z>=0:
 						z=z-1
