@@ -17,8 +17,8 @@ nicks, nick_same_list = nickTracker.nick_tracker(log_data)
 
 
 #analysis
-aggregate_graph = network.createAggregateGraph(log_data, nicks, nick_same_list)
+message_number_graph = network.message_number_graph(log_data, nicks, nick_same_list)
 
 
 #output
-saver.draw_nx_graph(aggregate_graph, "/home/rohan/Desktop", "agg_graph")
+saver.draw_nx_graph(message_number_graph, "/home/rohan/Desktop", "message_time_graph")
