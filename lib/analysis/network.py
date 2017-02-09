@@ -1,15 +1,13 @@
 import re
 import networkx as nx
 from networkx.algorithms.components.connected import connected_components
-
+from datetime import date
 import util
 import sys
 sys.path.append('../lib')
 import config
 
-
-
-def message_number_graph(log_data, nicks, nick_same_list):
+def message_number_graph(log_dict, nicks, nick_same_list):
     """ Creates a directed graph
         with each node representing an IRC user
         and each directed edge has a weight which 
@@ -17,7 +15,7 @@ def message_number_graph(log_data, nicks, nick_same_list):
         in the selected time frame.
 
     Args:
-        log_directory (str): conn_comp_listocation of the logs (Assumed to be arranged in directory structure as : <year>/<month>/<day>/<log-file-for-channel>.txt)
+        log_dict (dict): with key as dateTime.date object and value as {"data":datalist,"channel_name":channels name}
         channel_name (str): Channel to be perform analysis on
         output_directory (str): conn_comp_listocation of output directory
         startingDate (int): Date to start the analysis (in conjunction with startingMonth)
@@ -28,11 +26,10 @@ def message_number_graph(log_data, nicks, nick_same_list):
     Returns:
        message_number_graph (nx graph object) 
 
-    """
+    """   
 
-    conversations=[[0] for i in range(config.MAX_EXPECTED_DIFF_NICKS)]   
-    
-    message_number_graph = nx.DiGraph()  #graph with multiple directed edges between clients used 
+    conversations=[[0] for i in range(config.MAX_EXPECTED_DIFF_NICKS)]       
+    message_number_graph = nx.DiGraph()  #graph with multiple directed edges between clients used    
 
     G = util.to_graph(nick_same_list)
     conn_comp_list = list(connected_components(G))
@@ -40,8 +37,8 @@ def message_number_graph(log_data, nicks, nick_same_list):
     for i in range(len(conn_comp_list)):
         conn_comp_list[i] = list(conn_comp_list[i])
 
-    for day_content in log_data:
-       for line in day_content:
+    for day_content in log_dict.values():
+       for line in day_content["log_data"]:
             flag_comma = 0
             if(line[0] != '=' and "] <" in line and "> " in line):
                 m = re.search(r"\<(.*?)\>", line)
@@ -131,11 +128,11 @@ def message_number_graph(log_data, nicks, nick_same_list):
             message_number_graph.add_edge(conversations[index][1], conversations[index][2], weight = conversations[index][0]) 
 
     if config.DEBUGGER:
-        print "========> nicks"
+        print "========> 30 nicks"
         print nicks[:30]
-        print "========> nick_same_list"
+        print "========> 30 nick_same_list"
         print nick_same_list[:30]
-        print "========> conversations"
+        print "========> 30 conversations"
         print conversations[:30]
     
     return message_number_graph
