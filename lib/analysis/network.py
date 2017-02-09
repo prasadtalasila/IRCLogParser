@@ -1,23 +1,21 @@
 import re
 import networkx as nx
 from networkx.algorithms.components.connected import connected_components
-
+from datetime import date
 import util
 import sys
 sys.path.append('../lib')
 import config
 
-
-
-def createAggregateGraph(log_data, nicks, nick_same_list):
-    """ Creates a directed graph for a longer time frames 
+def message_number_graph(log_dict, nicks, nick_same_list):
+    """ Creates a directed graph
         with each node representing an IRC user
         and each directed edge has a weight which 
         mentions the number messages sent and recieved by that user 
         in the selected time frame.
 
     Args:
-        log_directory (str): conn_comp_listocation of the logs (Assumed to be arranged in directory structure as : <year>/<month>/<day>/<log-file-for-channel>.txt)
+        log_dict (dict): with key as dateTime.date object and value as {"data":datalist,"channel_name":channels name}
         channel_name (str): Channel to be perform analysis on
         output_directory (str): conn_comp_listocation of output directory
         startingDate (int): Date to start the analysis (in conjunction with startingMonth)
@@ -26,13 +24,17 @@ def createAggregateGraph(log_data, nicks, nick_same_list):
         endingMonth (int): Date to end the analysis (in conjunction with endingDate)
 
     Returns:
-       aggregate_graph (nx graph object) 
+       message_number_graph (nx graph object) 
 
     """
+    log_data=[] # stores day by data in list of list 
 
-    conversations=[[0] for i in range(config.MAX_EXPECTED_DIFF_NICKS)]   
-    
-    aggregate_graph = nx.DiGraph()  #graph with multiple directed edges between clients used 
+    for key in sorted(log_dict):        #sorted so that the keys are consecutive days
+        log_data.append(log_dict[key]["data"]) # collecting the day data in a the log_data list      
+
+    conversations=[[0] for i in range(config.MAX_EXPECTED_DIFF_NICKS)]       
+    message_number_graph = nx.DiGraph()  #graph with multiple directed edges between clients used    
+
 
     G = util.to_graph(nick_same_list)
     conn_comp_list = list(connected_components(G))
@@ -128,7 +130,7 @@ def createAggregateGraph(log_data, nicks, nick_same_list):
 
     for index in xrange(config.MAX_EXPECTED_DIFF_NICKS):
         if(len(conversations[index]) == 3):
-            aggregate_graph.add_edge(conversations[index][1], conversations[index][2], weight = conversations[index][0]) 
+            message_number_graph.add_edge(conversations[index][1], conversations[index][2], weight = conversations[index][0]) 
 
     if config.DEBUGGER:
         print "========> nicks"
@@ -138,4 +140,4 @@ def createAggregateGraph(log_data, nicks, nick_same_list):
         print "========> conversations"
         print conversations[:30]
     
-    return aggregate_graph
+    return message_number_graph
