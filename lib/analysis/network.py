@@ -37,59 +37,36 @@ def message_number_graph(log_dict, nicks, nick_same_list):
     for i in range(len(conn_comp_list)):
         conn_comp_list[i] = list(conn_comp_list[i])
 
-    for day_content in log_dict.values():
-       for line in day_content["log_data"]:
-            flag_comma = 0
-            if(line[0] != '=' and "] <" in line and "> " in line):
-                m = re.search(r"\<(.*?)\>", line)
-                var = util.correctLastCharCR(m.group(0)[1:-1])
-                for d in range(config.MAX_EXPECTED_DIFF_NICKS):
-                    if ((d < len(conn_comp_list)) and (var in conn_comp_list[d])):  #change nick_same_list to conn_comp_list because conn_comp_list is the main list of all users and nicks now
-                        nick_sender = conn_comp_list[d][0]
-                        break
-                    
-                for i in nicks:
-                    rec_list = [e.strip() for e in line.split(':')]
-                    rec_list[1] = rec_list[1][rec_list[1].find(">")+1:len(rec_list[1])]
-                    rec_list[1] = rec_list[1][1:]
-                    if not rec_list[1]:
-                        break
-                    for k in xrange(len(rec_list)):
-                        if(rec_list[k]):
-                            rec_list[k] = util.correctLastCharCR(rec_list[k])
-                    for z in rec_list:
-                        if(z == i):
-                            if(var != i):  
-                                for d in range(config.MAX_EXPECTED_DIFF_NICKS):
-                                    if ((d<len(conn_comp_list)) and (i in conn_comp_list[d])):
-                                        nick_receiver=conn_comp_list[d][0]
-                                        break
-                            
-                                for r in xrange(0,config.MAX_EXPECTED_DIFF_NICKS):
-                                    if (nick_sender in conversations[r] and nick_receiver in conversations[r]):
-                                        if (nick_sender == conversations[r][1] and nick_receiver == conversations[r][2]):
-                                            conversations[r][0]=conversations[r][0]+1
-                                            break
-                                    if(len(conversations[r])==1):
-                                        conversations[r].append(nick_sender)
-                                        conversations[r].append(nick_receiver)
-                                        conversations[r][0]=conversations[r][0]+1
-                                        break
-                            
-                    if "," in rec_list[1]: 
-                        flag_comma = 1
-                        rec_list_2=[e.strip() for e in rec_list[1].split(',')]
-                        for ij in xrange(0,len(rec_list_2)):                       #changed variable from i to ij as i has been used above. We are in nested for loop. Same variables name will overlap.
-                            if(rec_list_2[ij]):
-                                rec_list_2[ij] = util.correctLastCharCR(rec_list_2[ij])
-                        for j in rec_list_2:
-                            if(j==i):
+    for day_content_all_channels in log_dict.values():
+        for day_content in day_content_all_channels:
+            day_log = day_content["log_data"]
+            for line in day_log:
+                flag_comma = 0
+                if(line[0] != '=' and "] <" in line and "> " in line):
+                    m = re.search(r"\<(.*?)\>", line)
+                    var = util.correctLastCharCR(m.group(0)[1:-1])
+                    for d in range(config.MAX_EXPECTED_DIFF_NICKS):
+                        if ((d < len(conn_comp_list)) and (var in conn_comp_list[d])):  #change nick_same_list to conn_comp_list because conn_comp_list is the main list of all users and nicks now
+                            nick_sender = conn_comp_list[d][0]
+                            break
+                        
+                    for i in nicks:
+                        rec_list = [e.strip() for e in line.split(':')]
+                        rec_list[1] = rec_list[1][rec_list[1].find(">")+1:len(rec_list[1])]
+                        rec_list[1] = rec_list[1][1:]
+                        if not rec_list[1]:
+                            break
+                        for k in xrange(len(rec_list)):
+                            if(rec_list[k]):
+                                rec_list[k] = util.correctLastCharCR(rec_list[k])
+                        for z in rec_list:
+                            if(z == i):
                                 if(var != i):  
                                     for d in range(config.MAX_EXPECTED_DIFF_NICKS):
-                                        if i in conn_comp_list[d]:
+                                        if ((d<len(conn_comp_list)) and (i in conn_comp_list[d])):
                                             nick_receiver=conn_comp_list[d][0]
                                             break
-                                            
+                                
                                     for r in xrange(0,config.MAX_EXPECTED_DIFF_NICKS):
                                         if (nick_sender in conversations[r] and nick_receiver in conversations[r]):
                                             if (nick_sender == conversations[r][1] and nick_receiver == conversations[r][2]):
@@ -100,39 +77,63 @@ def message_number_graph(log_dict, nicks, nick_same_list):
                                             conversations[r].append(nick_receiver)
                                             conversations[r][0]=conversations[r][0]+1
                                             break
+                                
+                        if "," in rec_list[1]: 
+                            flag_comma = 1
+                            rec_list_2=[e.strip() for e in rec_list[1].split(',')]
+                            for ij in xrange(0,len(rec_list_2)):                       #changed variable from i to ij as i has been used above. We are in nested for loop. Same variables name will overlap.
+                                if(rec_list_2[ij]):
+                                    rec_list_2[ij] = util.correctLastCharCR(rec_list_2[ij])
+                            for j in rec_list_2:
+                                if(j==i):
+                                    if(var != i):  
+                                        for d in range(config.MAX_EXPECTED_DIFF_NICKS):
+                                            if i in conn_comp_list[d]:
+                                                nick_receiver=conn_comp_list[d][0]
+                                                break
+                                                
+                                        for r in xrange(0,config.MAX_EXPECTED_DIFF_NICKS):
+                                            if (nick_sender in conversations[r] and nick_receiver in conversations[r]):
+                                                if (nick_sender == conversations[r][1] and nick_receiver == conversations[r][2]):
+                                                    conversations[r][0]=conversations[r][0]+1
+                                                    break
+                                            if(len(conversations[r])==1):
+                                                conversations[r].append(nick_sender)
+                                                conversations[r].append(nick_receiver)
+                                                conversations[r][0]=conversations[r][0]+1
+                                                break
 
-                    if(flag_comma == 0):
-                        rec=line[line.find(">")+1:line.find(", ")]
-                        rec=rec[1:]
-                        rec = util.correctLastCharCR(rec) 
-                        if(rec==i):
-                            if(var != i):
-                                for d in range(config.MAX_EXPECTED_DIFF_NICKS):
-                                    if i in conn_comp_list[d]:
-                                        nick_receiver=conn_comp_list[d][0]
-                                        break
-                                        
-                                for r in xrange(0,config.MAX_EXPECTED_DIFF_NICKS):
-                                    if (nick_sender in conversations[r] and nick_receiver in conversations[r]): 
-                                        if (nick_sender == conversations[r][1] and nick_receiver == conversations[r][2]):
-                                            conversations[r][0]=conversations[r][0] + 1
+                        if(flag_comma == 0):
+                            rec=line[line.find(">")+1:line.find(", ")]
+                            rec=rec[1:]
+                            rec = util.correctLastCharCR(rec) 
+                            if(rec==i):
+                                if(var != i):
+                                    for d in range(config.MAX_EXPECTED_DIFF_NICKS):
+                                        if i in conn_comp_list[d]:
+                                            nick_receiver=conn_comp_list[d][0]
                                             break
-                                    if(len(conversations[r])==1):
-                                        conversations[r].append(nick_sender)
-                                        conversations[r].append(nick_receiver)
-                                        conversations[r][0]=conversations[r][0]+ 1
-                                        break
+                                            
+                                    for r in xrange(0,config.MAX_EXPECTED_DIFF_NICKS):
+                                        if (nick_sender in conversations[r] and nick_receiver in conversations[r]): 
+                                            if (nick_sender == conversations[r][1] and nick_receiver == conversations[r][2]):
+                                                conversations[r][0]=conversations[r][0] + 1
+                                                break
+                                        if(len(conversations[r])==1):
+                                            conversations[r].append(nick_sender)
+                                            conversations[r].append(nick_receiver)
+                                            conversations[r][0]=conversations[r][0]+ 1
+                                            break
+
+    
+    print "\nBuilding graph object with EDGE WEIGHT THRESHOLD:", config.THRESHOLD_MESSAGE_NUMBER_GRAPH                                        
 
     for index in xrange(config.MAX_EXPECTED_DIFF_NICKS):
-        if(len(conversations[index]) == 3):
+        if(len(conversations[index]) == 3 and conversations[index][0] >= config.THRESHOLD_MESSAGE_NUMBER_GRAPH):
             message_number_graph.add_edge(conversations[index][1], conversations[index][2], weight = conversations[index][0]) 
 
     if config.DEBUGGER:
-        print "========> 30 nicks"
-        print nicks[:30]
-        print "========> 30 nick_same_list"
-        print nick_same_list[:30]
-        print "========> 30 conversations"
+        print "========> 30 on " + str(len(conversations)) + " conversations"
         print conversations[:30]
     
     return message_number_graph

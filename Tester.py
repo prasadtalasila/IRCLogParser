@@ -18,6 +18,5 @@ nicks, nick_same_list = nickTracker.nick_tracker(log_data)
 #analysis
 message_number_graph = network.message_number_graph(log_data, nicks, nick_same_list)
 
-
 #output
 saver.draw_nx_graph(message_number_graph, output_directory, "message_time_graph")

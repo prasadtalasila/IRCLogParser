@@ -19,44 +19,46 @@ def nick_tracker(log_dict):
     """
 
     #Getting all the nicknames in a list
-    for day_content in log_dict.values():
-        day_log = day_content["log_data"]
-        
-        for i in day_log:
-            # use regex to get the string between <> and appended it to the nicks list
-            if(i[0] != '=' and "] <" in i and "> " in i):
-                m = re.search(r"\<(.*?)\>", i)
-                nick = util.correctLastCharCR(m.group(0)[1:-1])
-                if nick not in nicks:
-                    nicks.append(nick)
 
-        for line in day_log:
-            if(line[0] == '=' and "changed the topic of" not in line):
-                old_nick = util.correctLastCharCR(line[line.find("=") + 1:line.find(" is")][3:])
-                new_nick = util.correctLastCharCR(line[line.find("wn as") + 1:line.find("\n")][5:])
-                if old_nick not in nicks:
-                    nicks.append(old_nick)
-                if new_nick not in nicks:
-                    nicks.append(new_nick)
+    for day_content_all_channels in log_dict.values():
+        #traverse over data of different channels for that day
+        for day_content in day_content_all_channels:
+            day_log = day_content["log_data"]
+            for i in day_log:
+                # use regex to get the string between <> and appended it to the nicks list
+                if(i[0] != '=' and "] <" in i and "> " in i):
+                    m = re.search(r"\<(.*?)\>", i)
+                    nick = util.correctLastCharCR(m.group(0)[1:-1])
+                    if nick not in nicks:
+                        nicks.append(nick)
 
-        ''' Forming list of lists for avoiding nickname duplicacy '''
-        for line in day_log:
-            if(line[0] == '=' and "changed the topic of" not in line):
-                old_nick = util.correctLastCharCR(line[line.find("=") + 1:line.find(" is")][3:])
-                new_nick = util.correctLastCharCR(line[line.find("wn as") + 1:line.find("\n")][5:])
-                for i in range(config.MAX_EXPECTED_DIFF_NICKS):
-                    if old_nick in nick_same_list[i] or new_nick in nick_same_list[i]:
-                        if old_nick not in nick_same_list[i]:
-                            nick_same_list[i].append(old_nick)
-                        if new_nick not in nick_same_list[i]:
-                            nick_same_list[i].append(new_nick)
-                        break
-                    if not nick_same_list[i]:
-                        if old_nick not in nick_same_list[i]:
-                            nick_same_list[i].append(old_nick)
-                        if new_nick not in nick_same_list[i]:
-                            nick_same_list[i].append(new_nick)
-                        break
+            for line in day_log:
+                if(line[0] == '=' and "changed the topic of" not in line):
+                    old_nick = util.correctLastCharCR(line[line.find("=") + 1:line.find(" is")][3:])
+                    new_nick = util.correctLastCharCR(line[line.find("wn as") + 1:line.find("\n")][5:])
+                    if old_nick not in nicks:
+                        nicks.append(old_nick)
+                    if new_nick not in nicks:
+                        nicks.append(new_nick)
+
+            ''' Forming list of lists for avoiding nickname duplicacy '''
+            for line in day_log:
+                if(line[0] == '=' and "changed the topic of" not in line):
+                    old_nick = util.correctLastCharCR(line[line.find("=") + 1:line.find(" is")][3:])
+                    new_nick = util.correctLastCharCR(line[line.find("wn as") + 1:line.find("\n")][5:])
+                    for i in range(config.MAX_EXPECTED_DIFF_NICKS):
+                        if old_nick in nick_same_list[i] or new_nick in nick_same_list[i]:
+                            if old_nick not in nick_same_list[i]:
+                                nick_same_list[i].append(old_nick)
+                            if new_nick not in nick_same_list[i]:
+                                nick_same_list[i].append(new_nick)
+                            break
+                        if not nick_same_list[i]:
+                            if old_nick not in nick_same_list[i]:
+                                nick_same_list[i].append(old_nick)
+                            if new_nick not in nick_same_list[i]:
+                                nick_same_list[i].append(new_nick)
+                            break
     for nick in nicks:
         for index in range(config.MAX_EXPECTED_DIFF_NICKS):
             if nick in nick_same_list[index]:
@@ -64,5 +66,11 @@ def nick_tracker(log_dict):
             if not nick_same_list[index]:
                 nick_same_list[index].append(nick)
                 break
+
+    if config.DEBUGGER:
+        print "========> 30 on " + str(len(nicks)) + " nicks"
+        print nicks[:30]
+        print "========> 30 on " + str(len(nick_same_list)) + " nick_same_list"
+        print nick_same_list[:30]
 
     return nicks, nick_same_list
