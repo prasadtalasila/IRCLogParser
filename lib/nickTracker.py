@@ -1,22 +1,26 @@
 import re
 import config
 import util
-
+from datetime import date
 nicks = []  # list of all the nicknames
 nick_same_list = [[] for i in range(config.MAX_EXPECTED_DIFF_NICKS)]  
 
-def nick_tracker(log_data):
+def nick_tracker(log_dict):
     """ 
         Tracks all nicks and the identifies nicks which point to same user
 
     Args:
-        log_data(list): list of lists contaning log data for every day
+        log_dict(dictionary): with key as dateTime.date object and value as {"data":datalist,"channel_name":channels name}
 
     Returns:
        nicks(list): all nicks
        nick_same_list(list): list of lists with each list corresponding to nicks of same user 
 
     """
+    log_data=[]
+    for key in sorted(log_dict):        #sorted so that the keys are consecutive days
+        log_data.append(log_dict[key]["data"]) # collecting the day data in a the log_data list  
+
     #Getting all the nicknames in a list
     for day_content in log_data:
         for i in day_content:
