@@ -1,5 +1,6 @@
 import networkx as nx
 import os
+import numpy as np
 
 def check_if_dir_exists(output_directory):
     """ 
@@ -47,3 +48,39 @@ def draw_nx_graph(nx_graph, output_directory, output_file_name):
     A.draw(output_file)
 
     print "Done Generating" + output_file
+
+def save_net_nx_graph(nx_graph, output_directory, output_file_name):
+    """ 
+        Saves the input graph in pajek (.net) format
+
+    Args:
+        nx_graph(str): networkx graph object to be saved
+        output_drectory(str): location to save graph
+        output_file_name(str): name of the image file to be saved
+
+    Returns:
+       null
+
+    """
+    print "SAVING", output_file_name + ".net"
+    check_if_dir_exists(output_directory) #create output directory if doesn't exist
+    nx.write_pajek(nx_graph, output_directory + "/" + output_file_name +".net")
+
+
+def save_csv(matrix, output_directory, output_file_name):
+    """ 
+        Saves the input matrix as a CSV File
+
+    Args:
+        nx_graph(str): networkx graph object to be drawn
+        output_drectory(str): location to save graph
+        output_file_name(str): name of the image file to be saved
+
+    Returns:
+       null
+
+    """
+    print "SAVING", output_file_name + ".csv"
+    check_if_dir_exists(output_directory) #create output directory if doesn't exist
+    np.savetxt(output_directory + "/" + output_file_name +".csv", matrix, delimiter=",")
+    
