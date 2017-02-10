@@ -2,10 +2,15 @@ import re
 import config
 import util
 from datetime import date
+
 nicks = []  # list of all the nicknames
 nick_same_list = [[] for i in range(config.MAX_EXPECTED_DIFF_NICKS)]  
+nick_channel_dict = []
+channels_for_user = []
+nicks_hash = []
+channels_hash = []
 
-def nick_tracker(log_dict):
+def nick_tracker(log_dict, track_users_on_channels = False):
     """ 
         Tracks all nicks and the identifies nicks which point to same user
 
@@ -22,30 +27,35 @@ def nick_tracker(log_dict):
 
     for day_content_all_channels in log_dict.values():
         #traverse over data of different channels for that day
+        
+        channels_for_user_day = {}#empty for next day usage
+
         for day_content in day_content_all_channels:
+            
             day_log = day_content["log_data"]
+            channel_name = day_content["auxiliary_data"]["channel"]
+            nicks_today = []
+
             for i in day_log:
                 # use regex to get the string between <> and appended it to the nicks list
                 if(i[0] != '=' and "] <" in i and "> " in i):
                     m = re.search(r"\<(.*?)\>", i)
                     nick = util.correctLastCharCR(m.group(0)[1:-1])
-                    if nick not in nicks:
+                    if nick not in nicks_today:
+                        nicks_today.append(nick)
                         nicks.append(nick)
-
-            for line in day_log:
-                if(line[0] == '=' and "changed the topic of" not in line):
-                    old_nick = util.correctLastCharCR(line[line.find("=") + 1:line.find(" is")][3:])
-                    new_nick = util.correctLastCharCR(line[line.find("wn as") + 1:line.find("\n")][5:])
-                    if old_nick not in nicks:
-                        nicks.append(old_nick)
-                    if new_nick not in nicks:
-                        nicks.append(new_nick)
 
             ''' Forming list of lists for avoiding nickname duplicacy '''
             for line in day_log:
                 if(line[0] == '=' and "changed the topic of" not in line):
                     old_nick = util.correctLastCharCR(line[line.find("=") + 1:line.find(" is")][3:])
                     new_nick = util.correctLastCharCR(line[line.find("wn as") + 1:line.find("\n")][5:])
+                    if old_nick not in nicks_today:
+                        nicks_today.append(old_nick)
+                        nicks.append(nick)
+                    if new_nick not in nicks_today:
+                        nicks_today.append(new_nick)
+                        nicks.append(nick)
                     for i in range(config.MAX_EXPECTED_DIFF_NICKS):
                         if old_nick in nick_same_list[i] or new_nick in nick_same_list[i]:
                             if old_nick not in nick_same_list[i]:
@@ -59,6 +69,50 @@ def nick_tracker(log_dict):
                             if new_nick not in nick_same_list[i]:
                                 nick_same_list[i].append(new_nick)
                             break
+
+            if track_users_on_channels:
+                '''
+                    Creating list of dictionaries nick_channel_dict of the format : 
+                        [{'nickname':'rohan', 'channels':['[#abc', 0],['#bcd', 0]]},{}]
+                '''
+                considered_nicks = []
+                if config.DEBUGGER:
+                    print "Analysis on", str(day_content["auxiliary_data"]["day"]) + "-" + str(day_content["auxiliary_data"]["month"]), channel_name
+                
+                for user in nicks_today: 
+                    f = 1
+                    for nick_tuple in nick_same_list:
+                        if user in nick_tuple:
+                            user_nick = nick_tuple[0]
+                            f = 0
+                            break
+                    if f:
+                        user_nick = user
+
+                    '''for channels of user on a day'''
+                    if channels_for_user_day.has_key(user_nick) and channel_name not in channels_for_user_day[user_nick]:
+                        channels_for_user_day[user_nick].append(channel_name)
+                    else:
+                        channels_for_user_day[user_nick] = [channel_name]
+
+                    flag = 1
+                    for dictionary in nick_channel_dict:
+                        if dictionary['nickname'] == user_nick and user_nick not in considered_nicks:
+                            index = searchChannel(channel_name, dictionary['channels'])
+                            if index == -1:
+                                dictionary['channels'].append([channel_name,1])
+                            else:
+                                dictionary['channels'][index][1]+=1
+                            flag = 0
+                            considered_nicks.append(user_nick)
+                            break
+                    if flag:
+                        nick_channel_dict.append({'nickname':user_nick, 'channels': [[channel_name, 1]]})
+                        considered_nicks.append(user_nick)
+
+        channels_for_user.append(channels_for_user_day)
+        
+
     for nick in nicks:
         for index in range(config.MAX_EXPECTED_DIFF_NICKS):
             if nick in nick_same_list[index]:
@@ -73,4 +127,28 @@ def nick_tracker(log_dict):
         print "========> 30 on " + str(len(nick_same_list)) + " nick_same_list"
         print nick_same_list[:30]
 
-    return nicks, nick_same_list
+    if not track_users_on_channels:
+        return [nicks, nick_same_list]
+
+    else:
+        for dicts in nick_channel_dict:
+            nick = dicts['nickname']
+            if nick not in nicks_hash:
+                nicks_hash.append(nick)
+
+            for channel in dicts['channels']:
+                if channel[0] not in channels_hash:
+                    channels_hash.append(channel[0])
+        
+        return [nicks, nick_same_list, channels_for_user, nick_channel_dict, nicks_hash, channels_hash]
+
+
+def searchChannel(channel, channel_list):
+    ans = -1
+    i = 0
+    for c_tuple in channel_list:
+        if c_tuple[0] == channel:
+            ans = i
+            break
+        i += 1 
+    return ans
