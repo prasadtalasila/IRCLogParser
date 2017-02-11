@@ -40,32 +40,34 @@ def linux_input(log_directory, channel_list, starting_date, ending_date):
                     str(month_iterator) + "/" + extra0_2 + \
                     str(day_iterator) + "/"
                 #select relevant channels
-                for channel_searched in os.listdir(work_path):
-                    channel_name = channel_searched[:-4]
-                    if channel_name in channel_list or (len(channel_list) == 1 and channel_list[0] == "ALL"):
-                        file_path = work_path + channel_name + ".txt"
-                        if not os.path.exists(file_path):
-                            if not((month_iterator == 2 and (day_iterator == 29 or day_iterator == 30 or day_iterator == 31)) or ((month_iterator == 4 or month_iterator == 6 or month_iterator == 9 or month_iterator == 11) and day_iterator == 31)):
-                                print "[Error | io/linuxInput] Path " + file_path + " doesn't exist"
-                            continue
-                        with open(file_path) as f:
-                            """ day_data stores all the lines of the file channel_name """
-                            if config.DEBUGGER:
-                                print "Working on: " + file_path
+                if os.path.exists(work_path):
+                    for channel_searched in os.listdir(work_path):
+                        channel_name = channel_searched[:-4]
+                        if channel_name in channel_list or (len(channel_list) == 1 and channel_list[0] == "ALL"):
+                            file_path = work_path + channel_name + ".txt"
+                            if not os.path.exists(file_path):
+                                if not((month_iterator == 2 and (day_iterator == 29 or day_iterator == 30 or day_iterator == 31)) or ((month_iterator == 4 or month_iterator == 6 or month_iterator == 9 or month_iterator == 11) and day_iterator == 31)):
+                                    print "[Error | io/linuxInput] Path " + file_path + " doesn't exist"
+                                continue
+                            with open(file_path) as f:
+                                """ day_data stores all the lines of the file channel_name """
+                                if config.DEBUGGER:
+                                    print "Working on: " + file_path
+                                
+                                day_data = f.readlines()             
                             
-                            day_data = f.readlines()             
-                        
-                        date_key = date(year_iterator, month_iterator, day_iterator)
-                        value = {
-                            "log_data": day_data, 
-                            "auxiliary_data": {
-                                    "channel": channel_name,
-                                    "year": year_iterator,
-                                    "month": month_iterator,
-                                    "day": day_iterator
-                                }
-                            }
-    
-                        logs[date_key].append(value)
+                            date_key = date(year_iterator, month_iterator, day_iterator)
+                            value = {
+                                "log_data": day_data, 
+                                "auxiliary_data": {
+                                        "channel": channel_name,
+                                        "year": year_iterator,
+                                        "month": month_iterator,
+                                        "day": day_iterator
+                                    }
+                                }     
+                                
+                            logs[date_key].append(value)
+
                     
     return collections.OrderedDict(sorted(logs.items()))
