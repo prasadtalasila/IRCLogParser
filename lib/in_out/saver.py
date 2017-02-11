@@ -43,7 +43,7 @@ def draw_nx_graph(nx_graph, output_directory, output_file_name):
     print "Generating " + output_file
     print "Please wait ...."
 
-    A = nx.nx_agraph.to_agraph(nx_graph)
+    A = nx.drawing.nx_agraph.to_agraph(nx_graph)
     A.layout(prog='dot')
     A.draw(output_file)
 
