@@ -34,15 +34,15 @@ def nick_tracker(log_dict, track_users_on_channels = False):
             
             day_log = day_content["log_data"]
             channel_name = day_content["auxiliary_data"]["channel"]
-            nicks_today = []
+            nicks_today_on_this_channel = []
 
             for i in day_log:
                 # use regex to get the string between <> and appended it to the nicks list
                 if(i[0] != '=' and "] <" in i and "> " in i):
                     m = re.search(r"\<(.*?)\>", i)
                     nick = util.correctLastCharCR(m.group(0)[1:-1])
-                    if nick not in nicks_today:
-                        nicks_today.append(nick)
+                    if nick not in nicks_today_on_this_channel: #not nicks as there are same nicks spread across multiple channels
+                        nicks_today_on_this_channel.append(nick)
                         nicks.append(nick)
 
             ''' Forming list of lists for avoiding nickname duplicacy '''
@@ -50,12 +50,12 @@ def nick_tracker(log_dict, track_users_on_channels = False):
                 if(line[0] == '=' and "changed the topic of" not in line):
                     old_nick = util.correctLastCharCR(line[line.find("=") + 1:line.find(" is")][3:])
                     new_nick = util.correctLastCharCR(line[line.find("wn as") + 1:line.find("\n")][5:])
-                    if old_nick not in nicks_today:
-                        nicks_today.append(old_nick)
-                        nicks.append(nick)
-                    if new_nick not in nicks_today:
-                        nicks_today.append(new_nick)
-                        nicks.append(nick)
+                    if old_nick not in nicks_today_on_this_channel:
+                        nicks_today_on_this_channel.append(old_nick)
+                        nicks.append(old_nick)
+                    if new_nick not in nicks_today_on_this_channel:
+                        nicks_today_on_this_channel.append(new_nick)
+                        nicks.append(new_nick)
                     for i in range(config.MAX_EXPECTED_DIFF_NICKS):
                         if old_nick in nick_same_list[i] or new_nick in nick_same_list[i]:
                             if old_nick not in nick_same_list[i]:
@@ -79,7 +79,7 @@ def nick_tracker(log_dict, track_users_on_channels = False):
                 if config.DEBUGGER:
                     print "Analysis on", str(day_content["auxiliary_data"]["day"]) + "-" + str(day_content["auxiliary_data"]["month"]), channel_name
                 
-                for user in nicks_today: 
+                for user in nicks_today_on_this_channel: 
                     f = 1
                     for nick_tuple in nick_same_list:
                         if user in nick_tuple:
