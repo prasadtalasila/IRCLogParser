@@ -1,7 +1,7 @@
 import networkx as nx
 import os
 import numpy as np
-
+import errno
 
 def check_if_dir_exists(output_directory):
     """ 
