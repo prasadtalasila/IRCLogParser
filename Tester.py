@@ -7,31 +7,27 @@ from lib import config
 
 log_directory = config.LOG_DIRECTORY
 channel_name = config.CHANNEL_NAME
-starting_date= config.STARTING_DATE
+starting_date = config.STARTING_DATE
 ending_date = config.ENDING_DATE
 output_directory = config.OUTPUT_DIRECTORY
 
 #input
-log_data = reader.linux_input(log_directory, channel_name, starting_date, ending_date)                
+log_data = reader.linux_input(log_directory, channel_name, starting_date, ending_date)              
 nicks, nick_same_list = nickTracker.nick_tracker(log_data)
 
 #analysis
 # message_number_graph = network.message_number_graph(log_data, nicks, nick_same_list)
 #nick_change_graph_list =  user.nick_change_graph(log_data)
+conv_len, conv_ref_time = channel.conv_len_conv_refr_time(log_data, nicks, nick_same_list)
+resp_time = channel.response_time(log_data, nicks, nick_same_list)
 
 #output
 # saver.draw_nx_graph(message_number_graph, output_directory, "message_time_graph")
 #for i in range(len(nick_change_graph_list)):
 #	saver.draw_nx_graph(nick_change_graph_list[i], output_directory, "nick_change_graph_" + str(i))
-
-# Test for Conversation Length and Conversation Refresh Time
-CL,CRT = channel.conv_len_conv_refr_time(log_data,nicks,nick_same_list)
-saver.save_csv(CL,output_directory,"CL")
-saver.save_csv(CRT,output_directory,"CRT")
-
-# Test for Response Time
-RT = channel.find_response_time(log_data,nicks,nick_same_list)
-saver.save_csv(RT,output_directory,"RT")
+saver.save_csv(conv_len, output_directory, "CL")
+saver.save_csv(conv_ref_time, output_directory, "CRT")
+saver.save_csv(resp_time, output_directory, "RT")
 
 '''PRESENCE'''
 #Change analysis to all channels
