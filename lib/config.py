@@ -4,6 +4,8 @@ OUTPUT_DIRECTORY = "/home/rohan/Desktop/"
 STARTING_DATE = "2013-1-1"
 ENDING_DATE = "2013-1-31"
 DAY_BY_DAY_ANALYSIS = True
+MINIMUM_NICK_LENGTH = 3
+
 
 #change to ["ALL"] if want to perform analysis over all channels
 CHANNEL_NAME = ["#kubuntu-devel"]

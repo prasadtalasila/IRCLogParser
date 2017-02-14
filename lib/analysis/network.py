@@ -127,7 +127,8 @@ def message_number_graph(log_dict, nicks, nick_same_list):
 
     for index in xrange(config.MAX_EXPECTED_DIFF_NICKS):
         if(len(conversations[index]) == 3 and conversations[index][0] >= config.THRESHOLD_MESSAGE_NUMBER_GRAPH):
-            message_number_graph.add_edge(conversations[index][1], conversations[index][2], weight = conversations[index][0]) 
+            if len(conversations[index][1]) >= config.MINIMUM_NICK_LENGTH and len(conversations[index][2]) >= config.MINIMUM_NICK_LENGTH:
+                message_number_graph.add_edge(conversations[index][1], conversations[index][2], weight = conversations[index][0]) 
 
     if config.DEBUGGER:
         print "========> 30 on " + str(len(conversations)) + " conversations"
