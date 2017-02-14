@@ -2,7 +2,7 @@ import sys
 sys.path.insert(0, "lib/")
 from in_out import reader, saver
 import nickTracker
-from analysis import network, user
+from analysis import network, user, channel
 from lib import config
 
 log_directory = config.LOG_DIRECTORY
@@ -17,13 +17,21 @@ nicks, nick_same_list = nickTracker.nick_tracker(log_data)
 
 #analysis
 # message_number_graph = network.message_number_graph(log_data, nicks, nick_same_list)
-nick_change_graph_list =  user.nick_change_graph(log_data)
+#nick_change_graph_list =  user.nick_change_graph(log_data)
 
 #output
 # saver.draw_nx_graph(message_number_graph, output_directory, "message_time_graph")
-for i in range(len(nick_change_graph_list)):
-	saver.draw_nx_graph(nick_change_graph_list[i], output_directory, "nick_change_graph_" + str(i))
+#for i in range(len(nick_change_graph_list)):
+#	saver.draw_nx_graph(nick_change_graph_list[i], output_directory, "nick_change_graph_" + str(i))
 
+# Test for Conversation Length and Conversation Refresh Time
+CL,CRT = channel.conv_len_conv_refr_time(log_data,nicks,nick_same_list)
+saver.save_csv(CL,output_directory,"CL")
+saver.save_csv(CRT,output_directory,"CRT")
+
+# Test for Response Time
+RT = channel.find_response_time(log_data,nicks,nick_same_list)
+saver.save_csv(RT,output_directory,"RT")
 
 '''PRESENCE'''
 #Change analysis to all channels
