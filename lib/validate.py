@@ -1,37 +1,23 @@
-import csv
-import sys
-sys.path.append('../lib')
-from auxiliary.viz import fit_graph_from_csv_for_RT_RL_CRT as fit
+def validate_RT_RL(in_data, range_a, range_b, range_c, range_mse, fileName):
+    a, b, c, mse = in_data
 
-def validate_RT_RL(file, range_a, range_b, range_c, range_mse):
-	a, b, c, mse = fit.generateFitGraphForLogged(file, "/tmp/")
+    if not range_a[0] <= a <= range_a[1]:
+        print "[Unexpected Value] a      @", fileName, "| EXPECTED_RANGE:", range_a, "| GOT:", a
 
-	if not range_a[0] <= a <= range_a[1]:
-		print "[Unexpected Value] a | " + file		
+    if not range_b[0] <= b <= range_b[1]:
+        print "[Unexpected Value] b      @", fileName, "| EXPECTED_RANGE:", range_b, "| GOT:", b
 
-	if not range_b[0] <= b <= range_b[1]:
-		print "[Unexpected Value] b | " + file
+    if not range_c[0] <= c <= range_c[1]:
+        print "[Unexpected Value] c      @", fileName, "| EXPECTED_RANGE:", range_c, "| GOT:", c
 
-	if not range_c[0] <= c <= range_c[1]:
-		print "[Unexpected Value] c | " + file
+    if not range_mse[0] <= mse <= range_mse[1]:
+        print "[Unexpected Value] mse    @", fileName, "| EXPECTED_RANGE:", range_mse, "| GOT:", mse
 
-	if not range_mse[0] <= mse <= range_mse[1]:
-		print "[Unexpected Value] mse | " + file 
 
-def validate_CRT(file, range_a, range_b, range_c, expected_first_non_zero_index, range_mse):
-	a, b, c, first_non_zero_index, mse = fit.generateFitGraphForLogged_CRT(file, "/tmp/")
+def validate_CRT(in_data, range_a, range_b, range_c, range_mse, expected_x_shift, fileName):
+    a, b, c, mse, x_shift = in_data
 
-	if not range_a[0] <= a <= range_a[1]:
-		print "[Unexpected Value] a | " + file		
+    validate_RT_RL([a, b, c, mse], range_a, range_b, range_c, range_mse, fileName)
 
-	if not range_b[0] <= b <= range_b[1]:
-		print "[Unexpected Value] b | " + file
-
-	if not range_c[0] <= c <= range_c[1]:
-		print "[Unexpected Value] c | " + file
-
-	if not first_non_zero_index[0] <= expected_first_non_zero_index <= first_non_zero_index[1]:
-		print "[Unexpected Value] first_non_zero_index | " + file 
-
-	if not range_mse[0] <= mse <= range_mse[1]:
-		print "[Unexpected Value] mse | " + file 
+    if not expected_x_shift[0] <= x_shift <= expected_x_shift[1]:
+        print "[Unexpected Value] x_shift @", fileName, "| EXPECTED_RANGE:", expected_x_shift, "| GOT:", x_shift
