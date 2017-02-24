@@ -327,8 +327,9 @@ def response_time(log_dict, nicks, nick_same_list):
 			for i in range(len(totalmeanstd_list)):
 				graph_cumulative.append(totalmeanstd_list[i])
 
-			totalmeanstd_list.append(numpy.mean(totalmeanstd_list))
-			totalmeanstd_list.append(numpy.mean(totalmeanstd_list)+2*numpy.std(totalmeanstd_list))
+			if len(totalmeanstd_list) > 0:
+				totalmeanstd_list.append(numpy.mean(totalmeanstd_list))
+				totalmeanstd_list.append(numpy.mean(totalmeanstd_list)+2*numpy.std(totalmeanstd_list))
 		
 			for i in range(config.MAX_RESPONSE_CONVERSATIONS):
 				if(len(conversations[i]) != 0):

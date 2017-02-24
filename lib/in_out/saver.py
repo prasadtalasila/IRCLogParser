@@ -2,6 +2,9 @@ import networkx as nx
 import os
 import numpy as np
 import errno
+import sys
+sys.path.append('../lib')
+import config
 
 def check_if_dir_exists(output_directory):
     """ 
@@ -42,7 +45,8 @@ def draw_nx_graph(nx_graph, output_directory, output_file_name):
         d['label'] = d.get('weight', '')
 
     output_file = output_directory + "/" + output_file_name + ".png"
-    print "Generating", output_file_name + ".png"
+    if config.DEBUGGER:
+        print "Generating", (output_file_name + ".png")
 
     A = nx.nx.drawing.nx_agraph.to_agraph(nx_graph)
     A.layout(prog='dot')
@@ -62,7 +66,8 @@ def save_net_nx_graph(nx_graph, output_directory, output_file_name):
        null
 
     """
-    print "Generating", output_file_name + ".net"
+    if config.DEBUGGER:
+        print "Generating", (output_file_name + ".net")
     check_if_dir_exists(output_directory) #create output directory if doesn't exist
     nx.write_pajek(nx_graph, output_directory + "/" + output_file_name +".net")
 
@@ -80,7 +85,8 @@ def save_csv(matrix, output_directory, output_file_name):
        null
 
     """
-    print "Generating", output_file_name + ".csv"
+    if config.DEBUGGER:
+        print "Generating", (output_file_name + ".csv")
     check_if_dir_exists(output_directory) #create output directory if doesn't exist
     np.savetxt(output_directory + "/" + output_file_name +".csv", matrix, delimiter=",")
     

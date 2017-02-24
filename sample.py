@@ -42,9 +42,9 @@ conv_ref_time_curve_fit_parameters = vis.exponential_curve_fit_and_plot_x_shifte
 
 
 # ============== VALIDATION ==============
-validate.validate_RT_RL(conv_len_curve_fit_parameters, [0.5, 0.6], [2.12, 2.32], [0, 0.2], [0, 0.0002], "conv_len")
-validate.validate_RT_RL(resp_time_curve_fit_parameters, [0.3, 0.4], [0.3, 0.4], [-0.002, 0.002], [0, 0.002], "resp_time")
-validate.validate_CRT(conv_ref_time_curve_fit_parameters, [0.05, 0.1], [0.1, 0.2], [0.02, 0.04], [0, 0.0002], [9, 11], "conv_ref_time")
+validate.validate_RT_RL_CRT(conv_len_curve_fit_parameters, [[10.5, 10.6], [2.12, 2.32], [0, 0.2], [0, 0.0002]], "conv_len")
+validate.validate_RT_RL_CRT(resp_time_curve_fit_parameters, [[0.3, 10.4], [10.3, 30.4], [-0.002, 0.002], [0, 0.002]], "resp_time")
+validate.validate_RT_RL_CRT(conv_ref_time_curve_fit_parameters, [[10.05, 10.1], [0.1, 0.2], [0.02, 0.04], [0, 0.0002], [9, 11]], "conv_ref_time")
 
 
 # ============== PRESENCE ACROSS MULTIPLE CHANNELS ==============

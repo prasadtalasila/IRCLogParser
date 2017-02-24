@@ -83,7 +83,7 @@ def nick_tracker(log_dict, track_users_on_channels = False):
                 '''
                 considered_nicks = []
                 if config.DEBUGGER:
-                    print "Analysis on", str(day_content["auxiliary_data"]["day"]) + "-" + str(day_content["auxiliary_data"]["month"]), channel_name
+                    print "Analysis on", (str(day_content["auxiliary_data"]["day"]) + "-" + str(day_content["auxiliary_data"]["month"])), channel_name
                 
                 for user in nicks_today_on_this_channel: 
                     f = 1
