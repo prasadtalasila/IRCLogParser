@@ -1,6 +1,6 @@
 import networkx as nx
 import os
-import numpy as np
+import csv
 import errno
 import sys
 sys.path.append('../lib')
@@ -77,9 +77,9 @@ def save_csv(matrix, output_directory, output_file_name):
         Saves the input matrix as a CSV File
 
     Args:
-        nx_graph(str): networkx graph object to be drawn
+        matrix(list):  an array containing data to be saved
         output_drectory(str): location to save graph
-        output_file_name(str): name of the image file to be saved
+        output_file_name(str): name of the csv file to be saved
 
     Returns:
        null
@@ -88,5 +88,8 @@ def save_csv(matrix, output_directory, output_file_name):
     if config.DEBUGGER:
         print "Generating", (output_file_name + ".csv")
     check_if_dir_exists(output_directory) #create output directory if doesn't exist
-    np.savetxt(output_directory + "/" + output_file_name +".csv", matrix, delimiter=",")
-    
+    output_file = output_directory + "/" + output_file_name +".csv"
+    with open(output_file, 'wb') as myfile:
+        wr = csv.writer(myfile, quoting=csv.QUOTE_ALL)
+        for col in matrix:
+            wr.writerow(col)
