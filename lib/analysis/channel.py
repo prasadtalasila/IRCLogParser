@@ -213,6 +213,8 @@ def response_time(log_dict, nicks, nick_same_list):
 			for line in day_log:
 				flag_comma = 0
 				if(line[0] != '=' and "] <" in line and "> " in line):
+					nick_sender = ""
+					nick_receiver = ""
 					m = re.search(r"\<(.*?)\>", line)
 					nick_to_search = util.correctLastCharCR(m.group(0)[1:-1])
 					for d in range(len(nicks)):

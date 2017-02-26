@@ -16,17 +16,21 @@ nicks, nick_same_list = nickTracker.nick_tracker(log_data)
 
 
 # ============== ANALYSIS =============
-# message_number_graph = network.message_number_graph(log_data, nicks, nick_same_list)
+message_number_graph = network.message_number_graph(log_data, nicks, nick_same_list)
+degree_anal_message_numder = network.degree_analysis_on_graph(message_number_graph)
 
 # nick_change_graph_list =  user.nick_change_graph(log_data)
 
 # conv_len, conv_ref_time = channel.conv_len_conv_refr_time(log_data, nicks, nick_same_list)
 # resp_time = channel.response_time(log_data, nicks, nick_same_list)
 
-user.keywords_clusters(log_data, nicks, nick_same_list)
+# user.keywords_clusters(log_data, nicks, nick_same_list)
 
 # ============== OUTPUT ================
 # saver.draw_nx_graph(message_number_graph, output_directory, "message_time_graph")
+saver.save_csv(degree_anal_message_numder["out_degree"]["formatted_for_csv"], output_directory, "out_degree")
+saver.save_csv(degree_anal_message_numder["in_degree"]["formatted_for_csv"], output_directory, "in_degree")
+saver.save_csv(degree_anal_message_numder["total_degree"]["formatted_for_csv"], output_directory, "total_degree")
 
 # for i in range(len(nick_change_graph_list)):
 #   saver.draw_nx_graph(nick_change_graph_list[i], output_directory, "nick_change_graph_" + str(i))
@@ -34,7 +38,6 @@ user.keywords_clusters(log_data, nicks, nick_same_list)
 # saver.save_csv(conv_len, output_directory, "conv_len")
 # saver.save_csv(resp_time, output_directory, "resp_time")
 # saver.save_csv(conv_ref_time, output_directory, "conv_ref_time")
-
 
 # =============== VIZ ===================
 # conv_len_curve_fit_parameters = vis.exponential_curve_fit_and_plot(conv_len, 20, output_directory, "conv_len")
