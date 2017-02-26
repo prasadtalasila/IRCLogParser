@@ -3,6 +3,7 @@ import networkx as nx
 from networkx.algorithms.components.connected import connected_components
 from datetime import date
 import util
+import csv
 import sys
 import numpy as np
 sys.path.append('../lib')
@@ -42,6 +43,8 @@ def message_number_graph(log_dict, nicks, nick_same_list):
                 if(line[0] != '=' and "] <" in line and "> " in line):
                     m = re.search(r"\<(.*?)\>", line)
                     var = util.correctLastCharCR(m.group(0)[1:-1])
+                    nick_sender = ""
+                    nick_receiver = ""
                     for d in range(config.MAX_EXPECTED_DIFF_NICKS):
                         if ((d < len(conn_comp_list)) and (var in conn_comp_list[d])):  #change nick_same_list to conn_comp_list because conn_comp_list is the main list of all users and nicks now
                             nick_sender = conn_comp_list[d][0]
@@ -370,3 +373,79 @@ def channel_user_presence_graph_and_csv(nicks, nick_same_list, channels_for_user
             print str(config.STARTING_HASH_CHANNEL +i)+"\t"+reduced_channel_hash[i]
 
     return presence_graph_and_matrix, full_presence_graph
+
+
+def degree_analysis_on_graph(nx_graph):
+    """
+        perform degree analysis of input graph object
+
+    Arguments:
+        nx_graph (nx_object): object to perform analysis on
+
+    Returns:
+        null
+    """
+
+    nodes_with_OUT_degree = [["nodes_w_out_deg" + str(i), 0, ''] for i in xrange((max(nx_graph.out_degree().values())+1))]
+    nodes_with_IN_degree = [["nodes_w_in_deg" + str(i), 0, ''] for i in xrange((max(nx_graph.in_degree().values())+1))]
+    nodes_with_TOTAL_degree = [["nodes_w_deg" + str(i), 0, ''] for i in xrange((max(nx_graph.degree().values())+1))]
+
+    if config.DEBUGGER:
+        print nx_graph.out_degree()
+        print nx_graph.in_degree()
+        print nx_graph.degree()
+
+        print nx_graph.out_degree().values()
+        print nx_graph.in_degree().values()
+        print nx_graph.degree().values()
+
+    for degree in nx_graph.out_degree().values():
+        nodes_with_OUT_degree[degree][1] += 1
+
+    for degree in nx_graph.in_degree().values():
+        nodes_with_IN_degree[degree][1] += 1
+
+    for degree in nx_graph.degree().values():
+        nodes_with_TOTAL_degree[degree][1] += 1
+
+    def give_userlist_where_degree(degree_dict, degree):
+        key_list = ""
+        for key in degree_dict:
+            if degree_dict[key] == degree:
+                key_list+= (key + ", ")
+        return key_list
+
+    nodes_with_OUT_degree.insert(0, ["total_nodes", sum(data[1] for data in nodes_with_OUT_degree)])
+    nodes_with_IN_degree.insert(0, ["total_nodes", sum(data[1] for data in nodes_with_IN_degree)])
+    nodes_with_TOTAL_degree.insert(0, ["total_nodes", sum(data[1] for data in nodes_with_TOTAL_degree)])
+
+    raw_out = []
+    raw_in = []
+    raw_total = []
+
+    for i in range(1, len(nodes_with_OUT_degree)):
+        raw_out.append(nodes_with_OUT_degree[i][1])
+        nodes_with_OUT_degree[i][2] = give_userlist_where_degree(nx_graph.out_degree(), i - 1)
+
+    for i in range(1, len(nodes_with_IN_degree)):
+        raw_in.append(nodes_with_IN_degree[i][1])
+        nodes_with_IN_degree[i][2] = give_userlist_where_degree(nx_graph.in_degree(), i - 1)
+
+    for i in range(1, len(nodes_with_TOTAL_degree)):
+        raw_total.append(nodes_with_TOTAL_degree[i][1])
+        nodes_with_TOTAL_degree[i][2] = give_userlist_where_degree(nx_graph.degree(), i - 1)
+
+    return {
+        "out_degree": {
+            "formatted_for_csv": nodes_with_OUT_degree,
+            "raw_for_vis": raw_out
+        },
+        "in_degree": {
+            "formatted_for_csv": nodes_with_IN_degree,
+            "raw_for_vis": raw_in
+        },
+        "total_degree": {
+            "formatted_for_csv": nodes_with_TOTAL_degree,
+            "raw_for_vis": raw_total
+        }
+    }
