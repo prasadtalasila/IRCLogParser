@@ -11,13 +11,14 @@ ending_date = config.ENDING_DATE
 output_directory = config.OUTPUT_DIRECTORY
 
 # ============== INPUT==================
-log_data = reader.linux_input(log_directory, channel_name, starting_date, ending_date)              
+log_data = reader.linux_input(log_directory, channel_name, starting_date, ending_date)             
 nicks, nick_same_list = nickTracker.nick_tracker(log_data)
 
 
 # ============== ANALYSIS =============
-message_number_graph = network.message_number_graph(log_data, nicks, nick_same_list)
-degree_anal_message_numder = network.degree_analysis_on_graph(message_number_graph)
+#message_number_graph = network.message_number_graph(log_data, nicks, nick_same_list)
+#degree_anal_message_numder = network.degree_analysis_on_graph(message_number_graph)
+message_time_graph = network.create_message_time_graph(log_data, nicks, nick_same_list)
 
 # nick_change_graph_list =  user.nick_change_graph(log_data)
 
@@ -28,13 +29,13 @@ degree_anal_message_numder = network.degree_analysis_on_graph(message_number_gra
 
 # ============== OUTPUT ================
 # saver.draw_nx_graph(message_number_graph, output_directory, "message_time_graph")
-saver.save_csv(degree_anal_message_numder["out_degree"]["formatted_for_csv"], output_directory, "out_degree")
-saver.save_csv(degree_anal_message_numder["in_degree"]["formatted_for_csv"], output_directory, "in_degree")
-saver.save_csv(degree_anal_message_numder["total_degree"]["formatted_for_csv"], output_directory, "total_degree")
+#saver.save_csv(degree_anal_message_numder["out_degree"]["formatted_for_csv"], output_directory, "out_degree")
+#saver.save_csv(degree_anal_message_numder["in_degree"]["formatted_for_csv"], output_directory, "in_degree")
+#saver.save_csv(degree_anal_message_numder["total_degree"]["formatted_for_csv"], output_directory, "total_degree")
 
-# for i in range(len(nick_change_graph_list)):
-#   saver.draw_nx_graph(nick_change_graph_list[i], output_directory, "nick_change_graph_" + str(i))
-
+for i in range(len(message_time_graph)):
+    saver.draw_nx_graph(message_time_graph[i], output_directory, "mtg" + str(i+1))
+#saver.draw_nx_graph(message_time_graph, output_directory, "mtgagg")
 # saver.save_csv(conv_len, output_directory, "conv_len")
 # saver.save_csv(resp_time, output_directory, "resp_time")
 # saver.save_csv(conv_ref_time, output_directory, "conv_ref_time")

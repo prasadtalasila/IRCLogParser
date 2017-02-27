@@ -449,3 +449,92 @@ def degree_analysis_on_graph(nx_graph):
             "raw_for_vis": raw_total
         }
     }
+
+def create_message_time_graph(log_dict, nicks, nick_same_list):
+    """ creates a directed graph where each edge denotes a message sent from a user to another user
+    with the stamp denoting the time at which the message was sent
+
+    Args:
+        log_dict (dictionary): Dictionary of logs data created using reader.py
+        nicks(List) : List of nickname created using nickTracker.py
+        nick_same_list(List) :List of same_nick names created using nickTracker.py
+
+    Returns:
+       msg_time_list(List): List of message time graphs for different days
+       msg_aggr_graph: aggregate message time graph where edges are date + time when sender sends a message to receiver
+    """    
+    msg_time_list = []
+    msg_aggr_graph = nx.MultiDiGraph()
+    G = util.to_graph(nick_same_list)
+    conn_comp_list = list(connected_components(G))
+
+    for i in range(len(conn_comp_list)):
+        conn_comp_list[i] = list(conn_comp_list[i])
+
+    for day_content_all_channels in log_dict.values():
+        for day_content in day_content_all_channels:
+            day_log = day_content["log_data"]
+            year, month, day = str(day_content["auxiliary_data"]["year"]), str(day_content["auxiliary_data"]["month"]), str(day_content["auxiliary_data"]["day"])       
+            graph_conversation = nx.MultiDiGraph()  #graph with multiple directed edges between clients used
+            for line in day_log:
+                flag_comma = 0
+                if(line[0] != '=' and "] <" in line and "> " in line):
+                    m = re.search(r"\<(.*?)\>", line)         
+                    spliced_nick = util.correctLastCharCR(m.group(0)[1:-1])
+                    for i in range(config.MAX_EXPECTED_DIFF_NICKS):
+                        if ((i < len(conn_comp_list)) and (spliced_nick in conn_comp_list[i])):
+                            nick_sender = conn_comp_list[i][0]
+                            break
+
+                    for nick_name in nicks:
+                        rec_list = [e.strip() for e in line.split(':')]  #receiver list splited about :
+                        rec_list[1] = rec_list[1][rec_list[1].find(">")+1:len(rec_list[1])][1:]                    
+                        if not rec_list[1]:  #index 0 will contain time 14:02
+                            break
+                        for i in range(len(rec_list)):
+                            if(rec_list[i]):  #checking for \
+                                rec_list[i] = util.correctLastCharCR(rec_list[i])
+                        for nick_to_search in rec_list:
+                            if(nick_to_search == nick_name):
+                                if(spliced_nick != nick_name):
+                                    for i in range(config.MAX_EXPECTED_DIFF_NICKS):
+                                        if ((i < len(conn_comp_list)) and (nick_name in conn_comp_list[i])):
+                                            nick_receiver = conn_comp_list[i][0]
+                                            break
+                                    graph_conversation.add_edge(nick_sender, nick_receiver, weight=line[1:6])
+                                    msg_aggr_graph.add_edge(nick_sender, nick_receiver, weight=year+"/" + month + "/" + day + " - " + line[1:6])
+
+                        if "," in rec_list[1]:  #receiver list may of the form <Dhruv> Rohan, Ram :
+                            flag_comma = 1
+                            rec_list_2 = [e.strip() for e in rec_list[1].split(',')]
+                            for i in range(len(rec_list_2)):
+                                if(rec_list_2[i]):  #checking for \
+                                    rec_list_2[i] = util.correctLastCharCR(rec_list_2[i])
+                            for nick_to_search in rec_list_2:
+                                if(nick_to_search == nick_name):
+                                    if(spliced_nick != nick_name):
+                                        for i in range(config.MAX_EXPECTED_DIFF_NICKS):
+                                            if nick_name in conn_comp_list[i]:
+                                                nick_receiver = conn_comp_list[i][0]
+                                                break
+                                        graph_conversation.add_edge(nick_sender, nick_receiver, weight=line[1:6])
+                                        msg_aggr_graph.add_edge(nick_sender, nick_receiver, weight=year+"/" + month + "/" + day + " - " + line[1:6])
+
+                        if(flag_comma == 0):  #receiver list can be <Dhruv> Rohan, Hi!
+                            rec = line[line.find(">") + 1:line.find(", ")]
+                            rec = util.correctLastCharCR(rec[1:])
+                            if(rec == nick_name):
+                                if(spliced_nick != nick_name):
+                                    for i in range(config.MAX_EXPECTED_DIFF_NICKS):
+                                        if nick_name in conn_comp_list[i]:
+                                            nick_receiver = conn_comp_list[i][0]
+                                            break
+                                    graph_conversation.add_edge(nick_sender, nick_receiver, weight=line[1:6])
+                                    msg_aggr_graph.add_edge(nick_sender, nick_receiver, weight=year+"/" + month + "/" + day + " - " + line[1:6])
+
+            msg_time_list.append(graph_conversation)
+
+    if config.DAY_BY_DAY_ANALYSIS:
+        return msg_time_list
+    else:
+        return msg_aggr_graph
