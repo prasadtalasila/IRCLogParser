@@ -18,6 +18,7 @@ nicks, nick_same_list = nickTracker.nick_tracker(log_data)
 # ============== ANALYSIS =============
 message_number_graph = network.message_number_graph(log_data, nicks, nick_same_list)
 degree_anal_message_numder = network.degree_analysis_on_graph(message_number_graph)
+out,in_,total = network.degreeNodeNumberCSV(log_data, nicks, nick_same_list)
 
 # nick_change_graph_list =  user.nick_change_graph(log_data)
 
@@ -31,7 +32,9 @@ degree_anal_message_numder = network.degree_analysis_on_graph(message_number_gra
 saver.save_csv(degree_anal_message_numder["out_degree"]["formatted_for_csv"], output_directory, "out_degree")
 saver.save_csv(degree_anal_message_numder["in_degree"]["formatted_for_csv"], output_directory, "in_degree")
 saver.save_csv(degree_anal_message_numder["total_degree"]["formatted_for_csv"], output_directory, "total_degree")
-
+saver.save_csv(out, output_directory, "node_out_degree")
+saver.save_csv(in_, output_directory, "node_in_degree")
+saver.save_csv(total, output_directory, "node_total_degree")
 # for i in range(len(nick_change_graph_list)):
 #   saver.draw_nx_graph(nick_change_graph_list[i], output_directory, "nick_change_graph_" + str(i))
 

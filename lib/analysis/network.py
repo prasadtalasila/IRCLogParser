@@ -8,8 +8,10 @@ import sys
 import numpy as np
 sys.path.append('../lib')
 import config
+import math
+import matplotlib.pyplot as plt
 
-def message_number_graph(log_dict, nicks, nick_same_list):
+def message_number_graph(log_dict, nicks, nick_same_list, DAY_BY_DAY_ANALYSIS = False):
     """ Creates a directed graph
         with each node representing an IRC user
         and each directed edge has a weight which 
@@ -22,12 +24,13 @@ def message_number_graph(log_dict, nicks, nick_same_list):
         nick_same_list(list): list of lists mentioning nicks which belong to same users
 
     Returns:
-       message_number_graph (nx graph object) 
+       message_number_graph (nx graph object)
 
-    """   
+    """
 
-    conversations=[[0] for i in range(config.MAX_EXPECTED_DIFF_NICKS)]       
+    conversations=[]
     message_number_graph = nx.DiGraph()  #graph with multiple directed edges between clients used    
+    message_number_day_graphs = []
 
     G = util.to_graph(nick_same_list)
     conn_comp_list = list(connected_components(G))
@@ -38,6 +41,8 @@ def message_number_graph(log_dict, nicks, nick_same_list):
     for day_content_all_channels in log_dict.values():
         for day_content in day_content_all_channels:
             day_log = day_content["log_data"]
+            today_msg_number_graph = nx.DiGraph()
+            day_conversation = [[0] for i in range(config.MAX_EXPECTED_DIFF_NICKS)]
             for line in day_log:
                 flag_comma = 0
                 if(line[0] != '=' and "] <" in line and "> " in line):
@@ -66,16 +71,16 @@ def message_number_graph(log_dict, nicks, nick_same_list):
                                         if ((d<len(conn_comp_list)) and (i in conn_comp_list[d])):
                                             nick_receiver=conn_comp_list[d][0]
                                             break
-                                
-                                    for r in xrange(0,config.MAX_EXPECTED_DIFF_NICKS):
-                                        if (nick_sender in conversations[r] and nick_receiver in conversations[r]):
-                                            if (nick_sender == conversations[r][1] and nick_receiver == conversations[r][2]):
-                                                conversations[r][0]=conversations[r][0]+1
+
+                                    for r in xrange(config.MAX_EXPECTED_DIFF_NICKS):
+                                        if (nick_sender in day_conversation[r] and nick_receiver in day_conversation[r]):
+                                            if (nick_sender == day_conversation[r][1] and nick_receiver == day_conversation[r][2]):
+                                                day_conversation[r][0]=day_conversation[r][0]+1
                                                 break
-                                        if(len(conversations[r])==1):
-                                            conversations[r].append(nick_sender)
-                                            conversations[r].append(nick_receiver)
-                                            conversations[r][0]=conversations[r][0]+1
+                                        if(len(day_conversation[r])==1):
+                                            day_conversation[r].append(nick_sender)
+                                            day_conversation[r].append(nick_receiver)
+                                            day_conversation[r][0]=day_conversation[r][0]+1
                                             break
                                 
                         if "," in rec_list[1]: 
@@ -86,57 +91,63 @@ def message_number_graph(log_dict, nicks, nick_same_list):
                                     rec_list_2[ij] = util.correctLastCharCR(rec_list_2[ij])
                             for j in rec_list_2:
                                 if(j==i):
-                                    if(var != i):  
+                                    if(var != i):
                                         for d in range(config.MAX_EXPECTED_DIFF_NICKS):
                                             if i in conn_comp_list[d]:
                                                 nick_receiver=conn_comp_list[d][0]
                                                 break
-                                                
-                                        for r in xrange(0,config.MAX_EXPECTED_DIFF_NICKS):
-                                            if (nick_sender in conversations[r] and nick_receiver in conversations[r]):
-                                                if (nick_sender == conversations[r][1] and nick_receiver == conversations[r][2]):
-                                                    conversations[r][0]=conversations[r][0]+1
+
+                                        for r in xrange(config.MAX_EXPECTED_DIFF_NICKS):
+                                            if (nick_sender in day_conversation[r] and nick_receiver in day_conversation[r]):
+                                                if (nick_sender == day_conversation[r][1] and nick_receiver == day_conversation[r][2]):
+                                                    day_conversation[r][0]=day_conversation[r][0]+1
                                                     break
-                                            if(len(conversations[r])==1):
-                                                conversations[r].append(nick_sender)
-                                                conversations[r].append(nick_receiver)
-                                                conversations[r][0]=conversations[r][0]+1
+                                            if(len(day_conversation[r])==1):
+                                                day_conversation[r].append(nick_sender)
+                                                day_conversation[r].append(nick_receiver)
+                                                day_conversation[r][0]=day_conversation[r][0]+1
                                                 break
 
                         if(flag_comma == 0):
                             rec=line[line.find(">")+1:line.find(", ")]
                             rec=rec[1:]
-                            rec = util.correctLastCharCR(rec) 
+                            rec = util.correctLastCharCR(rec)
                             if(rec==i):
                                 if(var != i):
                                     for d in range(config.MAX_EXPECTED_DIFF_NICKS):
                                         if i in conn_comp_list[d]:
                                             nick_receiver=conn_comp_list[d][0]
                                             break
-                                            
-                                    for r in xrange(0,config.MAX_EXPECTED_DIFF_NICKS):
-                                        if (nick_sender in conversations[r] and nick_receiver in conversations[r]): 
-                                            if (nick_sender == conversations[r][1] and nick_receiver == conversations[r][2]):
-                                                conversations[r][0]=conversations[r][0] + 1
+
+                                    for r in xrange(config.MAX_EXPECTED_DIFF_NICKS):
+                                        if (nick_sender in day_conversation[r] and nick_receiver in day_conversation[r]):
+                                            if (nick_sender == day_conversation[r][1] and nick_receiver == day_conversation[r][2]):
+                                                day_conversation[r][0]=day_conversation[r][0] + 1
                                                 break
-                                        if(len(conversations[r])==1):
-                                            conversations[r].append(nick_sender)
-                                            conversations[r].append(nick_receiver)
-                                            conversations[r][0]=conversations[r][0]+ 1
+                                        if(len(day_conversation[r])==1):
+                                            day_conversation[r].append(nick_sender)
+                                            day_conversation[r].append(nick_receiver)
+                                            day_conversation[r][0]=day_conversation[r][0]+ 1
                                             break
+            for index in xrange(config.MAX_EXPECTED_DIFF_NICKS):
+                if(len(day_conversation[index]) == 3):
+                    today_msg_number_graph.add_edge(day_conversation[index][1], day_conversation[index][2], weight = day_conversation[index][0])
+            message_number_day_graphs.append(today_msg_number_graph)
+            conversations.append(day_conversation)
 
-    
-    print "\nBuilding graph object with EDGE WEIGHT THRESHOLD:", config.THRESHOLD_MESSAGE_NUMBER_GRAPH                                        
+    print "\nBuilding graph object with EDGE WEIGHT THRESHOLD:", config.THRESHOLD_MESSAGE_NUMBER_GRAPH
 
-    for index in xrange(config.MAX_EXPECTED_DIFF_NICKS):
-        if(len(conversations[index]) == 3 and conversations[index][0] >= config.THRESHOLD_MESSAGE_NUMBER_GRAPH):
-            if len(conversations[index][1]) >= config.MINIMUM_NICK_LENGTH and len(conversations[index][2]) >= config.MINIMUM_NICK_LENGTH:
-                message_number_graph.add_edge(conversations[index][1], conversations[index][2], weight = conversations[index][0]) 
-
+    for day_conversation in conversations:
+        for index in range(len(day_conversation)):
+            if(len(day_conversation[index]) == 3 and day_conversation[index][0] >= config.THRESHOLD_MESSAGE_NUMBER_GRAPH):
+                if len(day_conversation[index][1]) >= config.MINIMUM_NICK_LENGTH and len(day_conversation[index][2]) >= config.MINIMUM_NICK_LENGTH:
+                    message_number_graph.add_edge(day_conversation[index][1], day_conversation[index][2], weight = day_conversation[index][0])
     if config.DEBUGGER:
         print "========> 30 on " + str(len(conversations)) + " conversations"
         print conversations[:30]
-    
+
+    if (DAY_BY_DAY_ANALYSIS):
+        return message_number_day_graphs
     return message_number_graph
 
 
@@ -449,3 +460,72 @@ def degree_analysis_on_graph(nx_graph):
             "raw_for_vis": raw_total
         }
     }
+
+def degreeNodeNumberCSV(log_dict, nicks, nick_same_list):
+    """ creates two csv files having no. of nodes with a certain in and out-degree
+        for number of nodes it interacted with, respectively.
+        Also gives graphs for log(degree) vs log(no. of nodes)
+        and tries to find it's equation by curve fitting
+
+
+    Args:
+        log_dict (dict): with key as dateTime.date object and value as {"data":datalist,"channel_name":channels name}
+        nicks(list): list of all the nicks
+        nick_same_list(list): list of lists mentioning nicks which belong to same users
+    Returns:
+
+
+    """
+
+    msg_num_graph = message_number_graph(log_dict, nicks, nick_same_list, True)  #graph with multiple directed edges between clients used
+    day = 0;
+    degree_analysis_day_list = []
+    for day_graph in msg_num_graph:
+        day = day + 1
+
+        if not day_graph.degree().values():
+            continue
+
+        degree_analysis_day_list.append(degree_analysis_on_graph(day_graph))
+
+        for u,v,d in day_graph.edges(data=True):
+            d['label'] = d.get('weight','')
+        total_degree = [0]*1000;
+        for degree in day_graph.degree().values():
+            total_degree[degree]+=1
+        x_axis_log = [math.log(i) for i in xrange(1, 20)]#ignore degree 0
+        y_axis_log = [math.log(i) if i>0 else 0 for i in total_degree[1:20]]#ignore degree 0
+        #plot1
+        plt.plot(x_axis_log, y_axis_log)
+        #plot2
+        plt.plot([1,2], [1,2])
+        plt.xlabel("log(degree)")
+        plt.ylabel("log(no_of_nodes)")
+
+        plt.xticks(x_axis_log, ['log'+str(i) for i in xrange(1, len(x_axis_log))])
+        plt.yticks(x_axis_log, ['log'+str(i) for i in xrange(1, len(x_axis_log))])
+
+        plt.legend(['Required', 'y = x'], loc='upper left')
+
+        # Save it in png and svg formats
+        plt.savefig(config.OUTPUT_DIRECTORY + "total_degree"+"day"+str(day)+".png")
+        plt.close()
+
+
+    # output_file=out_dir_msg_num+channel_name+"_2013_"+str(folderiterator)+"_"+str(fileiterator)+"_msg_num.png"
+    # print "Generated " + output_file
+    # A = nx.drawing.nx_agraph.to_agraph(msg_num_graph)
+    # A.layout(prog='dot')
+    # A.draw(output_file)
+    out = []
+    in_ = []
+    total = []
+    for deg_analysis in degree_analysis_day_list:
+        out.append(tuple(deg_analysis["out_degree"]["raw_for_vis"]))
+        in_.append(tuple(deg_analysis["out_degree"]["raw_for_vis"]))
+        total.append(tuple(deg_analysis["total_degree"]["raw_for_vis"]))
+
+    #generateFitGraphOverTime("TOTAL", 10, column_wise_TOTAL, channel_name, startingDate, startingMonth, endingDate, endingMonth, output_dir_degree)
+    #generateFitGraphOverTime("OUT", 9, column_wise_OUT, channel_name, startingDate, startingMonth, endingDate, endingMonth, output_dir_degree)
+    #generateFitGraphOverTime("IN", 9, column_wise_IN, channel_name, startingDate, startingMonth, endingDate, endingMonth, output_dir_degree)
+    return out,in_,total
