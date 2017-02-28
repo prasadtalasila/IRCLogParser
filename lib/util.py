@@ -62,3 +62,29 @@ def to_edges(l):
 
 def exponential_curve_func(x, a, b, c):
     return a * np.exp(-b * x) + c
+
+def get_year_month_day(day_content):
+    """ A generator which
+        takes a day_content and gives the associated year, month and date associated with it       
+
+        Args:
+        day_content(dictionary)=
+                    {
+                    "log_data": day_data, 
+                    "auxiliary_data": {
+                            "channel": channel_name,
+                            "year": year_iterator,
+                            "month": month_iterator,
+                            "day": day_iterator
+                            }
+                    }
+
+        Returns:
+            str:year, str:month, str:day
+    """
+    year, month, day = str(day_content["auxiliary_data"]["year"]), str(day_content["auxiliary_data"]["month"]), str(day_content["auxiliary_data"]["day"])
+    return year, month, day
+
+def rec_list_splice(rec_list):
+    rec_list[1] = rec_list[1][rec_list[1].find(">") + 1:len(rec_list[1])][1:]
+    
