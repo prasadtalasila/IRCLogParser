@@ -88,3 +88,22 @@ def get_year_month_day(day_content):
 def rec_list_splice(rec_list):
     rec_list[1] = rec_list[1][rec_list[1].find(">") + 1:len(rec_list[1])][1:]
     
+
+def build_graphs(nick_sender, nick_receiver, time, year, month, day, day_graph, aggr_graph):
+    """    
+        Args:
+            nick_sender(str): person who has sent the message
+            nick_receiver(str): person who receives the message
+            time(str): time when message is sent
+            year(str): year  when message is sent
+            month(str): month  when message is sent
+            day(str): day when message is sent
+            day_graph(networkx directed graph): a single days graph to which we add edges
+            aggr_graph(networkx directed graph): a whole time spans aggregate graph to which we add edges
+
+        Returns:
+            None
+    """
+    day_graph.add_edge(nick_sender, nick_receiver, weight=time)
+    aggr_graph.add_edge(nick_sender, nick_receiver, weight=year+"/" + month + "/" + day + " - " + time)
+        

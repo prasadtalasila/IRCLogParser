@@ -459,17 +459,13 @@ def create_message_time_graph(log_dict, nicks, nick_same_list):
         nick_same_list(List) :List of same_nick names created using nickTracker.py
 
     Returns:
-       msg_time_list(List): List of message time graphs for different days
-       msg_aggr_graph: aggregate message time graph where edges are date + time when sender sends a message to receiver
-    """    
-    msg_time_list = []
-    msg_aggr_graph = nx.MultiDiGraph()
+       msg_time_graph_list(List): List of message time graphs for different days
+       msg_time_aggr_graph: aggregate message time graph where edges are date + time when sender sends a message to receiver
+    """  
+    msg_time_graph_list = []
+    msg_time_aggr_graph = nx.MultiDiGraph()
     G = util.to_graph(nick_same_list)
-    conn_comp_list = list(connected_components(G))
-
-    def build_graphs(nick_sender,nick_receiver,line):
-        graph_conversation.add_edge(nick_sender, nick_receiver, weight = line[1:6])
-        msg_aggr_graph.add_edge(nick_sender, nick_receiver, weight = year+"/" + month + "/" + day + " - " + line[1:6])
+    conn_comp_list = list(connected_components(G)) 
 
     def compare_spliced_nick(nick_to_compare, spliced_nick, nick_name, line):
         if(nick_to_compare == nick_name):
@@ -478,7 +474,7 @@ def create_message_time_graph(log_dict, nicks, nick_same_list):
                     if nick_name in conn_comp_list[i]:
                         nick_receiver = conn_comp_list[i][0]
                         break
-                build_graphs(nick_sender,nick_receiver,line)              
+                util.build_graphs(nick_sender, nick_receiver, line[1:6], year, month, day, graph_conversation, msg_time_aggr_graph)             
      
     for i in range(len(conn_comp_list)):
         conn_comp_list[i] = list(conn_comp_list[i])
@@ -513,7 +509,7 @@ def create_message_time_graph(log_dict, nicks, nick_same_list):
                                         if ((i < len(conn_comp_list)) and (nick_name in conn_comp_list[i])):
                                             nick_receiver = conn_comp_list[i][0]
                                             break                                    
-                                    build_graphs(nick_sender,nick_receiver,line)
+                                    util.build_graphs(nick_sender, nick_receiver, line[1:6], year, month, day, graph_conversation, msg_time_aggr_graph)
 
                         if "," in rec_list[1]:  #receiver list may of the form <Dhruv> Rohan, Ram :
                             flag_comma = 1
@@ -522,16 +518,16 @@ def create_message_time_graph(log_dict, nicks, nick_same_list):
                                 if(rec_list_2[i]):  #checking for \
                                     rec_list_2[i] = util.correctLastCharCR(rec_list_2[i])
                             for nick_to_search in rec_list_2:                              
-                                compare_spliced_nick(nick_to_search,spliced_nick,nick_name,line)   
+                                compare_spliced_nick(nick_to_search, spliced_nick, nick_name, line)   
 
                         if(flag_comma == 0):  #receiver list can be <Dhruv> Rohan, Hi!
                             rec = line[line.find(">") + 1:line.find(", ")]
                             rec = util.correctLastCharCR(rec[1:])                           
-                            compare_spliced_nick(rec,spliced_nick,nick_name,line)    
+                            compare_spliced_nick(rec, spliced_nick, nick_name, line)    
 
-            msg_time_list.append(graph_conversation)                
+            msg_time_graph_list.append(graph_conversation)
 
     if config.DAY_BY_DAY_ANALYSIS:
-        return msg_time_list
+        return msg_time_graph_list
     else:
-        return msg_aggr_graph
+        return msg_time_aggr_graph
