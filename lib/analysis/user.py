@@ -24,7 +24,7 @@ import ext
 import ext.common_english_words as common_english_words
 import ext.extend_stop_words as custom_stop_words
 
-def nick_change_graph(log_dict):
+def nick_change_graph(log_dict, DAY_BY_DAY_ANALYSIS = False):
 
     """ creates a graph which tracks the nick changes of the users
     where each edge has a time stamp denoting the time 
@@ -81,7 +81,7 @@ def nick_change_graph(log_dict):
                 
                 nick_change_day_list.append(today_nick_change_graph)    
                         
-    if config.DAY_BY_DAY_ANALYSIS:
+    if DAY_BY_DAY_ANALYSIS:
         return nick_change_day_list
     else:
         return aggregate_nick_change_graph
