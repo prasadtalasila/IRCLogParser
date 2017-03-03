@@ -1,6 +1,6 @@
 import networkx as nx
 import numpy as np
-
+import config
 
 def correctLastCharCR(inText):#
     """ if the last letter of the nick is '\\' replace it by 'CR'
@@ -87,7 +87,6 @@ def get_year_month_day(day_content):
 
 def rec_list_splice(rec_list):
     rec_list[1] = rec_list[1][rec_list[1].find(">") + 1:len(rec_list[1])][1:]
-    
 
 def build_graphs(nick_sender, nick_receiver, time, year, month, day, day_graph, aggr_graph):
     """    
@@ -107,3 +106,25 @@ def build_graphs(nick_sender, nick_receiver, time, year, month, day, day_graph, 
     day_graph.add_edge(nick_sender, nick_receiver, weight=time)
     aggr_graph.add_edge(nick_sender, nick_receiver, weight=year+"/" + month + "/" + day + " - " + time)
         
+
+def extend_conversation_list(nick_sender, nick_receiver, conversation):
+    """ A functions that takes the nick_sender and nick_reciver and add them
+        the conversation list and increase the weight.
+        Args:
+            nick_sender : nick of user sending a message
+            nick_receiver: nick of user to whom message is being send_time
+            conversation: list of nick_sender's and nick_reciever along with number of time message shared btw them
+        Returns:
+            conversation (list): list containg all the nick between whom messages have been shared
+    """
+    for i in xrange(0,config.MAX_EXPECTED_DIFF_NICKS):
+        if (nick_sender in conversation[i] and nick_receiver in conversation[i]):
+            if (nick_sender == conversation[i][1] and nick_receiver == conversation[i][2]):
+                conversation[i][0]=conversation[i][0] + 1
+                break
+        if(len(conversation[i])==1):
+            conversation[i].append(nick_sender)
+            conversation[i].append(nick_receiver)
+            conversation[i][0]=conversation[i][0]+ 1
+            break
+    return conversation
