@@ -18,9 +18,9 @@ nicks, nick_same_list = nickTracker.nick_tracker(log_data)
 # ============== ANALYSIS =============
 #message_number_graph = network.message_number_graph(log_data, nicks, nick_same_list)
 #degree_anal_message_numder = network.degree_analysis_on_graph(message_number_graph)
-message_time_graph = network.create_message_time_graph(log_data, nicks, nick_same_list)
+message_time_graph_list = network.create_message_time_graph(log_data, nicks, nick_same_list)
 
-# nick_change_graph_list =  user.nick_change_graph(log_data)
+#nick_change_graph_list =  user.nick_change_graph(log_data)
 
 # conv_len, conv_ref_time = channel.conv_len_conv_refr_time(log_data, nicks, nick_same_list)
 # resp_time = channel.response_time(log_data, nicks, nick_same_list)
@@ -28,13 +28,13 @@ message_time_graph = network.create_message_time_graph(log_data, nicks, nick_sam
 # user.keywords_clusters(log_data, nicks, nick_same_list)
 
 # ============== OUTPUT ================
-# saver.draw_nx_graph(message_number_graph, output_directory, "message_time_graph")
+#saver.draw_nx_graph(message_number_graph, output_directory, "message_number_graph")
 #saver.save_csv(degree_anal_message_numder["out_degree"]["formatted_for_csv"], output_directory, "out_degree")
 #saver.save_csv(degree_anal_message_numder["in_degree"]["formatted_for_csv"], output_directory, "in_degree")
 #saver.save_csv(degree_anal_message_numder["total_degree"]["formatted_for_csv"], output_directory, "total_degree")
 
-for i in range(len(message_time_graph)):
-    saver.draw_nx_graph(message_time_graph[i], output_directory, "mtg" + str(i+1))
+for i in range(len(message_time_graph_list)):
+    saver.draw_nx_graph(message_time_graph_list[i], output_directory, "mtg" + str(i+1))
 #saver.draw_nx_graph(message_time_graph, output_directory, "mtgagg")
 # saver.save_csv(conv_len, output_directory, "conv_len")
 # saver.save_csv(resp_time, output_directory, "resp_time")
