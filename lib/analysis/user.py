@@ -62,7 +62,7 @@ def nick_change_graph(log_dict):
                             earlier_line_no = earlier_line_no - 1
                             if(day_log[earlier_line_no][0] != '='):                             
                                 today_nick_change_graph.add_edge(nick1, nick2, weight=day_log[earlier_line_no][1:6])
-                                year, month, day = str(day_content["auxiliary_data"]["year"]), str(day_content["auxiliary_data"]["month"]),str(day_content["auxiliary_data"]["day"])
+                                year, month, day = util.get_year_month_day(day_content)
                                 aggregate_nick_change_graph.add_edge(nick1, nick2, 
                                     weight=year+"/" + month+ "/" + day + " - "+day_log[earlier_line_no][1:6])
                                 break
@@ -176,7 +176,7 @@ def keywords(log_dict, nicks, nick_same_list):
                     nick_receiver = ''
                     for i in nicks:
                         rec_list = [e.strip() for e in line.split(':')] #receiver list splited about :
-                        rec_list[1] = (rec_list[1][rec_list[1].find(">") + 1:len(rec_list[1])])[1:] 
+                        util.rec_list_splice(rec_list)
                         if not rec_list[1]: #index 0 will contain time 14:02
                             break
                         for k in xrange(len(rec_list)):

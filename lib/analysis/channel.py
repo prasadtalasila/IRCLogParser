@@ -61,8 +61,7 @@ def conv_len_conv_refr_time(log_dict, nicks, nick_same_list):
 						
 					for nick in nicks:
 						rec_list = [e.strip() for e in line.split(':')]
-						rec_list[1] = (rec_list[1][rec_list[1].find(">") + 1:len(rec_list[1])])[1:] 
-						
+						util.rec_list_splice(rec_list)						
 						if not rec_list[1]:
 							break
 						for i in range(len(rec_list)):
@@ -223,7 +222,7 @@ def response_time(log_dict, nicks, nick_same_list):
 							break           
 					for nick in nicks:
 						rec_list = [e.strip() for e in line.split(':')]
-						rec_list[1] = rec_list[1][rec_list[1].find(">") + 1:len(rec_list[1])][1:]
+						util.rec_list_splice(rec_list)
 
 						if not rec_list[1]:
 							break
