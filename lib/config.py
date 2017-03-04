@@ -3,7 +3,6 @@ LOG_DIRECTORY = "/home/rohan/parser_files/YearlyLogFiles/"
 OUTPUT_DIRECTORY = "/home/rohan/Desktop/"
 STARTING_DATE = "2013-1-1"
 ENDING_DATE = "2013-1-31"
-DAY_BY_DAY_ANALYSIS = True
 MINIMUM_NICK_LENGTH = 3
 
 
@@ -16,7 +15,13 @@ MAX_EXPECTED_DIFF_NICKS = 5000
 # MAX_EXPECTED_DIFF_NICKS = 100000
 
 # message_number_graph
-THRESHOLD_MESSAGE_NUMBER_GRAPH = 10
+THRESHOLD_MESSAGE_NUMBER_GRAPH = 0
+
+#number of entries in log plot
+NUMBER_OF_ENTRIES_IN_LOG_PLOTS = 20
+
+#use pyplot
+USE_PYPLOT = True
 
 # channel_user_presence
 STARTING_HASH_CHANNEL = 1000000

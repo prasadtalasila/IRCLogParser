@@ -7,7 +7,7 @@ import pylab
 import pygraphviz as pygraphviz
 import os
 import csv
-import ext.util
+import util
 
 def createMessageNumberBinsCSV(log_directory, channel_name, output_directory, startingDate, startingMonth, endingDate, endingMonth):
 	""" creates a CSV file which tracks the number of message exchanged in a channel 
@@ -85,7 +85,7 @@ def createMessageNumberBinsCSV(log_directory, channel_name, output_directory, st
 					else:
 						bin_index=int(line[1:3])*2+1
 					flag_comma = 0
-					if(line[0] != '=' and "] <" in line and "> " in line):
+					if(util.check_if_msg_line (line))
 						m = re.search(r"\<(.*?)\>", line)
 						var = m.group(0)[1:-1]
 						var = ext.util.correctLastCharCR(var) 

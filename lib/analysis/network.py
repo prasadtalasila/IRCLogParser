@@ -6,28 +6,26 @@ import util
 import csv
 import sys
 import numpy as np
-sys.path.append('../lib')
 import config
+from itertools import izip_longest as zip_longest
+sys.path.append('../lib')
 
-def message_number_graph(log_dict, nicks, nick_same_list):
+def message_number_graph(log_dict, nicks, nick_same_list, DAY_BY_DAY_ANALYSIS = False):
     """ Creates a directed graph
         with each node representing an IRC user
         and each directed edge has a weight which 
         mentions the number messages sent and recieved by that user 
         in the selected time frame.
-
     Args:
         log_dict (dict): with key as dateTime.date object and value as {"data":datalist,"channel_name":channels name}
         nicks(list): list of all the nicks
         nick_same_list(list): list of lists mentioning nicks which belong to same users
-
     Returns:
-       message_number_graph (nx graph object) 
-
-    """   
-
-    conversations=[[0] for i in range(config.MAX_EXPECTED_DIFF_NICKS)]       
-    message_number_graph = nx.DiGraph()  #graph with multiple directed edges between clients used    
+       message_number_graph (nx graph object)
+    """
+    message_number_day_list = []
+    conversations=[[0] for i in range(config.MAX_EXPECTED_DIFF_NICKS)]
+    aggregate_message_number_graph = nx.DiGraph()  #graph with multiple directed edges between clients used
 
     G = util.to_graph(nick_same_list)
     conn_comp_list = list(connected_components(G))
@@ -38,111 +36,99 @@ def message_number_graph(log_dict, nicks, nick_same_list):
     for day_content_all_channels in log_dict.values():
         for day_content in day_content_all_channels:
             day_log = day_content["log_data"]
+            today_conversation = [[0] for i in range(config.MAX_EXPECTED_DIFF_NICKS)]
             for line in day_log:
                 flag_comma = 0
-                if(line[0] != '=' and "] <" in line and "> " in line):
-                    m = re.search(r"\<(.*?)\>", line)
-                    var = util.correctLastCharCR(m.group(0)[1:-1])
+
+                if(util.check_if_msg_line (line)):
+                    parsed_nick = re.search(r"\<(.*?)\>", line)
+                    corrected_nick = util.correctLastCharCR(parsed_nick.group(0)[1:-1])
                     nick_sender = ""
                     nick_receiver = ""
-                    for d in range(config.MAX_EXPECTED_DIFF_NICKS):
-                        if ((d < len(conn_comp_list)) and (var in conn_comp_list[d])):  #change nick_same_list to conn_comp_list because conn_comp_list is the main list of all users and nicks now
-                            nick_sender = conn_comp_list[d][0]
+                    for i in range(config.MAX_EXPECTED_DIFF_NICKS):
+                        if ((i < len(conn_comp_list)) and (corrected_nick in conn_comp_list[i])):  #change nick_same_list to conn_comp_list because conn_comp_list is the main list of all users and nicks now
+                            nick_sender = conn_comp_list[i][0]
                             break
-                        
-                    for i in nicks:
-                        rec_list = [e.strip() for e in line.split(':')]                    
+
+                    for nick in nicks:
+                        rec_list = [e.strip() for e in line.split(':')]
                         util.rec_list_splice(rec_list)
                         if not rec_list[1]:
                             break
                         for k in xrange(len(rec_list)):
                             if(rec_list[k]):
                                 rec_list[k] = util.correctLastCharCR(rec_list[k])
-                        for z in rec_list:
-                            if(z == i):
-                                if(var != i):  
-                                    for d in range(config.MAX_EXPECTED_DIFF_NICKS):
-                                        if ((d<len(conn_comp_list)) and (i in conn_comp_list[d])):
-                                            nick_receiver=conn_comp_list[d][0]
+                        for receiver in rec_list:
+                            if(receiver == nick):
+                                if(corrected_nick != nick):
+                                    for i in range(config.MAX_EXPECTED_DIFF_NICKS):
+                                        if ((i<len(conn_comp_list)) and (nick in conn_comp_list[i])):
+                                            nick_receiver=conn_comp_list[i][0]
                                             break
-                                
-                                    for r in xrange(0,config.MAX_EXPECTED_DIFF_NICKS):
-                                        if (nick_sender in conversations[r] and nick_receiver in conversations[r]):
-                                            if (nick_sender == conversations[r][1] and nick_receiver == conversations[r][2]):
-                                                conversations[r][0]=conversations[r][0]+1
-                                                break
-                                        if(len(conversations[r])==1):
-                                            conversations[r].append(nick_sender)
-                                            conversations[r].append(nick_receiver)
-                                            conversations[r][0]=conversations[r][0]+1
-                                            break
-                                
-                        if "," in rec_list[1]: 
+                                    if DAY_BY_DAY_ANALYSIS:
+                                        today_conversation = util.extend_conversation_list(nick_sender, nick_receiver, today_conversation)
+                                    else:
+                                        conversations = util.extend_conversation_list(nick_sender, nick_receiver, conversations)
+                        if "," in rec_list[1]:
                             flag_comma = 1
                             rec_list_2=[e.strip() for e in rec_list[1].split(',')]
-                            for ij in xrange(0,len(rec_list_2)):                       #changed variable from i to ij as i has been used above. We are in nested for loop. Same variables name will overlap.
-                                if(rec_list_2[ij]):
-                                    rec_list_2[ij] = util.correctLastCharCR(rec_list_2[ij])
-                            for j in rec_list_2:
-                                if(j==i):
-                                    if(var != i):  
-                                        for d in range(config.MAX_EXPECTED_DIFF_NICKS):
-                                            if i in conn_comp_list[d]:
-                                                nick_receiver=conn_comp_list[d][0]
+                            for i in xrange(0,len(rec_list_2)):
+                                if(rec_list_2[i]):
+                                    rec_list_2[i] = util.correctLastCharCR(rec_list_2[i])
+                            for receiver2 in rec_list_2:
+                                if(receiver2==nick):
+                                    if(corrected_nick != nick):
+                                        for i in range(config.MAX_EXPECTED_DIFF_NICKS):
+                                            if nick in conn_comp_list[i]:
+                                                nick_receiver=conn_comp_list[i][0]
                                                 break
-                                                
-                                        for r in xrange(0,config.MAX_EXPECTED_DIFF_NICKS):
-                                            if (nick_sender in conversations[r] and nick_receiver in conversations[r]):
-                                                if (nick_sender == conversations[r][1] and nick_receiver == conversations[r][2]):
-                                                    conversations[r][0]=conversations[r][0]+1
-                                                    break
-                                            if(len(conversations[r])==1):
-                                                conversations[r].append(nick_sender)
-                                                conversations[r].append(nick_receiver)
-                                                conversations[r][0]=conversations[r][0]+1
-                                                break
+                                        if DAY_BY_DAY_ANALYSIS:
+                                            today_conversation = util.extend_conversation_list(nick_sender, nick_receiver, today_conversation)
+                                        else:
+                                            conversations =  util.extend_conversation_list(nick_sender, nick_receiver, conversations)
 
                         if(flag_comma == 0):
                             rec=line[line.find(">")+1:line.find(", ")]
                             rec=rec[1:]
-                            rec = util.correctLastCharCR(rec) 
-                            if(rec==i):
-                                if(var != i):
-                                    for d in range(config.MAX_EXPECTED_DIFF_NICKS):
-                                        if i in conn_comp_list[d]:
-                                            nick_receiver=conn_comp_list[d][0]
-                                            break
-                                            
-                                    for r in xrange(0,config.MAX_EXPECTED_DIFF_NICKS):
-                                        if (nick_sender in conversations[r] and nick_receiver in conversations[r]): 
-                                            if (nick_sender == conversations[r][1] and nick_receiver == conversations[r][2]):
-                                                conversations[r][0]=conversations[r][0] + 1
-                                                break
-                                        if(len(conversations[r])==1):
-                                            conversations[r].append(nick_sender)
-                                            conversations[r].append(nick_receiver)
-                                            conversations[r][0]=conversations[r][0]+ 1
+                            rec = util.correctLastCharCR(rec)
+                            if(rec==nick):
+                                if(corrected_nick != nick):
+                                    for i in range(config.MAX_EXPECTED_DIFF_NICKS):
+                                        if nick in conn_comp_list[i]:
+                                            nick_receiver=conn_comp_list[i][0]
                                             break
 
-    
-    print "\nBuilding graph object with EDGE WEIGHT THRESHOLD:", config.THRESHOLD_MESSAGE_NUMBER_GRAPH                                        
+            if DAY_BY_DAY_ANALYSIS:
+                today_message_number_graph = nx.DiGraph()
+                for index in xrange(config.MAX_EXPECTED_DIFF_NICKS):
+                    if(len(today_conversation[index]) == 3 and today_conversation[index][0] >= config.THRESHOLD_MESSAGE_NUMBER_GRAPH):
+                        if len(today_conversation[index][1]) >= config.MINIMUM_NICK_LENGTH and len(today_conversation[index][2]) >= config.MINIMUM_NICK_LENGTH:
+                            today_message_number_graph.add_edge(today_conversation[index][1], today_conversation[index][2], weight = today_conversation[index][0])
+                year, month, day = util.get_year_month_day(day_content)
+                message_number_day_list.append([today_message_number_graph, year+'-'+month+'-'+day])
 
-    for index in xrange(config.MAX_EXPECTED_DIFF_NICKS):
-        if(len(conversations[index]) == 3 and conversations[index][0] >= config.THRESHOLD_MESSAGE_NUMBER_GRAPH):
-            if len(conversations[index][1]) >= config.MINIMUM_NICK_LENGTH and len(conversations[index][2]) >= config.MINIMUM_NICK_LENGTH:
-                message_number_graph.add_edge(conversations[index][1], conversations[index][2], weight = conversations[index][0]) 
+    print "\nBuilding graph object with EDGE WEIGHT THRESHOLD:", config.THRESHOLD_MESSAGE_NUMBER_GRAPH
+
+    if not DAY_BY_DAY_ANALYSIS:
+        for index in xrange(config.MAX_EXPECTED_DIFF_NICKS):
+            if(len(conversations[index]) == 3 and conversations[index][0] >= config.THRESHOLD_MESSAGE_NUMBER_GRAPH):
+                if len(conversations[index][1]) >= config.MINIMUM_NICK_LENGTH and len(conversations[index][2]) >= config.MINIMUM_NICK_LENGTH:
+                    aggregate_message_number_graph.add_edge(conversations[index][1], conversations[index][2], weight = conversations[index][0])
 
     if config.DEBUGGER:
         print "========> 30 on " + str(len(conversations)) + " conversations"
         print conversations[:30]
-    
-    return message_number_graph
+
+    if DAY_BY_DAY_ANALYSIS:
+        return message_number_day_list
+    else:
+        return aggregate_message_number_graph
 
 
 def channel_user_presence_graph_and_csv(nicks, nick_same_list, channels_for_user, nick_channel_dict, nicks_hash, channels_hash):
-    """ creates a directed graph for each nick, 
-    each edge from which points to the IRC Channels that nick has participated in. 
-    (Nick changes are tracked here and only the initial nick is shown if a user changed his nick) 
+    """ creates a directed graph for each nick,
+    each edge from which points to the IRC Channels that nick has participated in.
+    (Nick changes are tracked here and only the initial nick is shown if a user changed his nick)
 
     Args:
         nicks(list): list of all the nicks
@@ -374,40 +360,32 @@ def channel_user_presence_graph_and_csv(nicks, nick_same_list, channels_for_user
     return presence_graph_and_matrix, full_presence_graph
 
 
-def degree_analysis_on_graph(nx_graph):
+def degree_analysis_on_graph(nx_graph, date=None):
     """
         perform degree analysis of input graph object
-
     Arguments:
         nx_graph (nx_object): object to perform analysis on
-
     Returns:
         null
     """
+    
+    def nodes_with_degree_populator(degree_values, label):    
+        nodes_with_degree = []
+        if len(degree_values):
+            nodes_with_degree = [[label + str(i), 0, ''] for i in xrange((max(degree_values)+1))]
+        else:
+            nodes_with_degree = [["NA", 0, "NA"]]
 
-    nodes_with_OUT_degree = [["nodes_w_out_deg" + str(i), 0, ''] for i in xrange((max(nx_graph.out_degree().values())+1))]
-    nodes_with_IN_degree = [["nodes_w_in_deg" + str(i), 0, ''] for i in xrange((max(nx_graph.in_degree().values())+1))]
-    nodes_with_TOTAL_degree = [["nodes_w_deg" + str(i), 0, ''] for i in xrange((max(nx_graph.degree().values())+1))]
+        for degree in degree_values:
+            nodes_with_degree[degree][1] += 1
 
-    if config.DEBUGGER:
-        print nx_graph.out_degree()
-        print nx_graph.in_degree()
-        print nx_graph.degree()
+        return nodes_with_degree
 
-        print nx_graph.out_degree().values()
-        print nx_graph.in_degree().values()
-        print nx_graph.degree().values()
+    nodes_with_OUT_degree = nodes_with_degree_populator(nx_graph.out_degree().values(), "nodes_w_out_deg")
+    nodes_with_IN_degree = nodes_with_degree_populator(nx_graph.in_degree().values(), "nodes_w_in_deg")
+    nodes_with_TOTAL_degree = nodes_with_degree_populator(nx_graph.degree().values(), "nodes_w_deg")
 
-    for degree in nx_graph.out_degree().values():
-        nodes_with_OUT_degree[degree][1] += 1
-
-    for degree in nx_graph.in_degree().values():
-        nodes_with_IN_degree[degree][1] += 1
-
-    for degree in nx_graph.degree().values():
-        nodes_with_TOTAL_degree[degree][1] += 1
-
-    def give_userlist_where_degree(degree_dict, degree):
+    def give_userlist_where_degree_helper(degree_dict, degree):
         key_list = ""
         for key in degree_dict:
             if degree_dict[key] == degree:
@@ -418,21 +396,21 @@ def degree_analysis_on_graph(nx_graph):
     nodes_with_IN_degree.insert(0, ["total_nodes", sum(data[1] for data in nodes_with_IN_degree)])
     nodes_with_TOTAL_degree.insert(0, ["total_nodes", sum(data[1] for data in nodes_with_TOTAL_degree)])
 
-    raw_out = []
-    raw_in = []
-    raw_total = []
+    raw_out = [str(date)]
+    raw_in = [str(date)]
+    raw_total = [str(date)]
 
     for i in range(1, len(nodes_with_OUT_degree)):
         raw_out.append(nodes_with_OUT_degree[i][1])
-        nodes_with_OUT_degree[i][2] = give_userlist_where_degree(nx_graph.out_degree(), i - 1)
+        nodes_with_OUT_degree[i][2] = give_userlist_where_degree_helper(nx_graph.out_degree(), i - 1)
 
     for i in range(1, len(nodes_with_IN_degree)):
         raw_in.append(nodes_with_IN_degree[i][1])
-        nodes_with_IN_degree[i][2] = give_userlist_where_degree(nx_graph.in_degree(), i - 1)
+        nodes_with_IN_degree[i][2] = give_userlist_where_degree_helper(nx_graph.in_degree(), i - 1)
 
     for i in range(1, len(nodes_with_TOTAL_degree)):
         raw_total.append(nodes_with_TOTAL_degree[i][1])
-        nodes_with_TOTAL_degree[i][2] = give_userlist_where_degree(nx_graph.degree(), i - 1)
+        nodes_with_TOTAL_degree[i][2] = give_userlist_where_degree_helper(nx_graph.degree(), i - 1)
 
     return {
         "out_degree": {
@@ -448,6 +426,7 @@ def degree_analysis_on_graph(nx_graph):
             "raw_for_vis": raw_total
         }
     }
+
 
 def create_message_time_graph(log_dict, nicks, nick_same_list):
     """ creates a directed graph where each edge denotes a message sent from a user to another user
@@ -486,7 +465,7 @@ def create_message_time_graph(log_dict, nicks, nick_same_list):
             graph_conversation = nx.MultiDiGraph()  #graph with multiple directed edges between clients used
             for line in day_log:
                 flag_comma = 0
-                if(line[0] != '=' and "] <" in line and "> " in line):
+                if(util.check_if_msg_line (line)):
                     m = re.search(r"\<(.*?)\>", line)         
                     spliced_nick = util.correctLastCharCR(m.group(0)[1:-1])
                     for i in range(config.MAX_EXPECTED_DIFF_NICKS):
@@ -531,3 +510,54 @@ def create_message_time_graph(log_dict, nicks, nick_same_list):
         return msg_time_graph_list
     else:
         return msg_time_aggr_graph
+
+def degreeNodeNumberCSV(log_dict, nicks, nick_same_list):
+    """ creates two csv files having no. of nodes with a certain in and out-degree
+        for number of nodes it interacted with, respectively.
+        Also gives graphs for log(degree) vs log(no. of nodes)
+        and tries to find it's equation by curve fitting
+    Args:
+        log_dict (dict): with key as dateTime.date object and value as {"data":datalist,"channel_name":channels name}
+        nicks(list): list of all the nicks
+        nick_same_list(list): list of lists mentioning nicks which belong to same users
+    Returns:
+        out_degree (list)
+        in_degree (list)
+        total_degree (list)
+    """
+
+    msg_num_graph_day_list = message_number_graph(log_dict, nicks, nick_same_list, True)
+    degree_analysis_day_list = []
+
+    for day_graph_list in msg_num_graph_day_list:
+        day_graph = day_graph_list[0]
+        degree_analysis_day_list.append(degree_analysis_on_graph(day_graph,day_graph_list[1]))
+
+    out_degree = []
+    in_degree = []
+    total_degree = []
+    max_in_degree = 0
+    max_out_degree = 0
+    max_total_degree = 0
+
+    for degree_analysis in degree_analysis_day_list:
+        out_degree.append(degree_analysis["out_degree"]["raw_for_vis"])
+        in_degree.append(degree_analysis["in_degree"]["raw_for_vis"])
+        total_degree.append(degree_analysis["total_degree"]["raw_for_vis"])
+        max_out_degree = max(max_out_degree,len(degree_analysis["out_degree"]["raw_for_vis"]))
+        max_in_degree = max(max_in_degree,len(degree_analysis["in_degree"]["raw_for_vis"]))
+        max_total_degree = max(max_total_degree,len(degree_analysis["total_degree"]["raw_for_vis"]))
+
+    def format_degree_list (degree_list, max_range, degree_type):
+        degree_head_row = ["deg"+str(i) for i in range(max_range)]
+        degree_head_row.insert(0, degree_type)
+        degree_list.insert(0,degree_head_row)
+        degree_list = list(zip_longest(*degree_list,fillvalue=0))
+
+        return degree_list
+
+    out_degree = format_degree_list(out_degree, max_out_degree, "out_degree")
+    in_degree = format_degree_list(in_degree, max_in_degree, "in_degree")
+    total_degree = format_degree_list(total_degree, max_total_degree, "total_degree")
+
+    return out_degree, in_degree, total_degree

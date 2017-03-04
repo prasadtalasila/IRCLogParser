@@ -6,6 +6,16 @@ import config
 import util
 import igraph
 from random import randint
+import math
+import matplotlib.pyplot as plt
+import os
+import in_out.saver as saver
+from numpy.random import normal
+from scipy.optimize import curve_fit
+from scipy import stats
+import plotly.plotly as py
+py.sign_in('rohangoel963', 'vh6le8no26')
+import plotly.graph_objs as go
 
 def generate_probability_distribution(data, initial_rows_filter):
     """ 
@@ -65,6 +75,7 @@ def exponential_curve_fit_and_plot(data, initial_rows_filter, output_directory, 
     axes.set_ylim([0, 1])
     plt.legend()
     # plt.show()
+    saver.check_if_dir_exists(output_directory)
     plt.savefig(output_directory + "/" + output_file_name + ".png")
     plt.close()
     
@@ -119,6 +130,7 @@ def exponential_curve_fit_and_plot_x_shifted(data, initial_rows_filter, output_d
     
     plt.legend()
     # plt.show()
+    saver.check_if_dir_exists(output_directory)
     plt.savefig(output_directory + "/" + output_file_name + ".png")
     plt.close()
 
@@ -191,8 +203,103 @@ def plot_infomap_igraph(nx_graph, membership, output_directory, output_file_name
             # vertex["color"] = "red" if int(vertex["id"]) >= 1000000 else "#00ff00"
         visual_style["vertex_color"] = nx_graph.vs["color"]
         visual_style["vertex_shape"] = nx_graph.vs["vertex_shape"]
-    
+
+    saver.check_if_dir_exists(output_directory)
     igraph.plot(nx_graph, (output_directory + "/" + output_file_name + ".png"), **visual_style)
 
     if config.DEBUGGER:
         print "INFOMAPS visualisation for", output_file_name, "completed"
+
+
+def generate_log_plots(filter_val, plot_data, output_file_name, output_directory):
+    """
+        Generate log plots for given time frame selecting first filter_val number ofan
+        elements and plotting log of value on y axis.
+
+
+    Args:
+        filter_val (int): number of values to be used from data for plotting
+        plot_data (list of list): data to be plotted
+        output_drectory(str): location to save graph
+        output_file_name(str): name of the image file to be saved
+
+    Returns:
+        null
+    """
+
+    sum_each_row = []
+
+    for row in plot_data[2:]:   #ignore degree 0 and text, starting from degree 1
+        sum_each_row.append(sum(row[1:]))
+
+    # print sum_each_row
+    x_axis_log = [math.log(i) for i in xrange(1, filter_val)]   # ignore degree 0
+    y_axis_log = [math.log(i) if i>0 else 0 for i in sum_each_row[1:filter_val] ]   # ignore degree 01
+
+    calc_plot_linear_fit(x_axis_log, y_axis_log, output_file_name, output_directory)
+
+
+def calc_plot_linear_fit(x_in, y_in, output_file_name, output_directory):
+    """
+        Calculate and plot linar fit for data
+
+
+    Args:
+        x_in (list of int): x_axis data
+        y_in (list of int): y_axis data
+        output_drectory(str): location to save graph
+        output_file_name(str): name of the image file to be saved
+
+    Returns:
+        null
+    """
+    # get x and y vectors
+    x = np.array(x_in)
+    y = np.array(y_in)
+
+    slope, intercept, r_value, p_value, std_err = stats.linregress(x_in, y_in)
+    line = [slope*xi+intercept for xi in x_in]
+
+    print str(slope)+"\t"+str(intercept)+"\t"+str(r_value**2)+"\t"+str(mean_squared_error(y, line))
+    saver.check_if_dir_exists(output_directory)
+
+    if config.USE_PYPLOT:
+        def trace_helper_pyplot(x, y, label, color):
+            return go.Scatter(
+                          x=x,
+                          y=y,
+                          mode='lines',
+                          marker=go.Marker(color=color),
+                          name=label
+                          )
+
+        trace1 = trace_helper_pyplot(x, y, 'Data', 'rgb(255, 127, 14)')
+        trace2 = trace_helper_pyplot(x, line, 'Fit', 'rgb(31, 119, 180)')
+
+        layout = go.Layout(
+                        title='DegreeNode',
+                        xaxis=go.XAxis(zerolinecolor='rgb(255,255,255)', gridcolor='rgb(255,255,255)'),
+                        # yaxis=go.YAxis(zerolinecolor='rgb(255,255,255)', gridcolor='rgb(255,255,255)')
+                        )
+
+        data = [trace1, trace2]
+        fig = go.Figure(data=data, layout=layout)
+
+        py.image.save_as(fig, output_directory+"/"+output_file_name + ".png")
+
+    else:
+        # graph config
+        axes = plt.gca()
+        axes.set_xlim([0, 3])
+        axes.set_ylim([0, 6])
+        plt.xlabel("log(degree)")
+        plt.ylabel("log(no_of_nodes)")
+
+        # fit with np.polyfit
+        m, b = np.polyfit(x, y, 1)
+
+        plt.plot(x, y, '-')
+        plt.plot(x, m*x + b, '-')
+        plt.legend(['Data', 'Fit'], loc='upper right')
+        plt.savefig(output_directory+"/" + output_file_name+".png")
+        plt.close()
