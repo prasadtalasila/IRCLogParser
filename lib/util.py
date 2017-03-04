@@ -1,6 +1,6 @@
 import networkx as nx
 import numpy as np
-
+import config
 
 def correctLastCharCR(inText):#
     """ if the last letter of the nick is '\\' replace it by 'CR'
@@ -62,3 +62,72 @@ def to_edges(l):
 
 def exponential_curve_func(x, a, b, c):
     return a * np.exp(-b * x) + c
+
+def get_year_month_day(day_content):
+    """ A generator which
+        takes a day_content and gives the associated year, month and date associated with it       
+
+        Args:
+        day_content(dictionary)=
+                    {
+                    "log_data": day_data, 
+                    "auxiliary_data": {
+                            "channel": channel_name,
+                            "year": year_iterator,
+                            "month": month_iterator,
+                            "day": day_iterator
+                            }
+                    }
+
+        Returns:
+            str:year, str:month, str:day
+    """
+    year, month, day = str(day_content["auxiliary_data"]["year"]), str(day_content["auxiliary_data"]["month"]), str(day_content["auxiliary_data"]["day"])
+    return year, month, day
+
+def check_if_msg_line (line):
+    return (line[0] != '=' and "] <" in line and "> " in line)
+
+def rec_list_splice(rec_list):
+    rec_list[1] = rec_list[1][rec_list[1].find(">") + 1:len(rec_list[1])][1:]
+
+def build_graphs(nick_sender, nick_receiver, time, year, month, day, day_graph, aggr_graph):
+    """    
+        Args:
+            nick_sender(str): person who has sent the message
+            nick_receiver(str): person who receives the message
+            time(str): time when message is sent
+            year(str): year  when message is sent
+            month(str): month  when message is sent
+            day(str): day when message is sent
+            day_graph(networkx directed graph): a single days graph to which we add edges
+            aggr_graph(networkx directed graph): a whole time spans aggregate graph to which we add edges
+
+        Returns:
+            None
+    """
+    day_graph.add_edge(nick_sender, nick_receiver, weight=time)
+    aggr_graph.add_edge(nick_sender, nick_receiver, weight=year+"/" + month + "/" + day + " - " + time)
+        
+
+def extend_conversation_list(nick_sender, nick_receiver, conversation):
+    """ A functions that takes the nick_sender and nick_reciver and add them
+        the conversation list and increase the weight.
+        Args:
+            nick_sender : nick of user sending a message
+            nick_receiver: nick of user to whom message is being send_time
+            conversation: list of nick_sender's and nick_reciever along with number of time message shared btw them
+        Returns:
+            conversation (list): list containg all the nick between whom messages have been shared
+    """
+    for i in xrange(0,config.MAX_EXPECTED_DIFF_NICKS):
+        if (nick_sender in conversation[i] and nick_receiver in conversation[i]):
+            if (nick_sender == conversation[i][1] and nick_receiver == conversation[i][2]):
+                conversation[i][0] += 1
+                break
+        if(len(conversation[i])==1):
+            conversation[i].append(nick_sender)
+            conversation[i].append(nick_receiver)
+            conversation[i][0]=conversation[i][0]+ 1
+            break
+    return conversation

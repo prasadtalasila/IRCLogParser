@@ -49,7 +49,7 @@ def conv_len_conv_refr_time(log_dict, nicks, nick_same_list):
 			#code for making relation map between clients       
 			for line in day_log:
 				flag_comma = 0
-				if(line[0] != '=' and "] <" in line and "> " in line):
+				if(util.check_if_msg_line (line)):
 					nick_sender = ""
 					nick_receiver = ""
 					m = re.search(r"\<(.*?)\>", line)
@@ -61,8 +61,7 @@ def conv_len_conv_refr_time(log_dict, nicks, nick_same_list):
 						
 					for nick in nicks:
 						rec_list = [e.strip() for e in line.split(':')]
-						rec_list[1] = (rec_list[1][rec_list[1].find(">") + 1:len(rec_list[1])])[1:] 
-						
+						util.rec_list_splice(rec_list)						
 						if not rec_list[1]:
 							break
 						for i in range(len(rec_list)):
@@ -212,7 +211,9 @@ def response_time(log_dict, nicks, nick_same_list):
 			#code for making relation map between clients       
 			for line in day_log:
 				flag_comma = 0
-				if(line[0] != '=' and "] <" in line and "> " in line):
+				if(util.check_if_msg_line (line)):
+					nick_sender = ""
+					nick_receiver = ""
 					m = re.search(r"\<(.*?)\>", line)
 					nick_to_search = util.correctLastCharCR(m.group(0)[1:-1])
 					for d in range(len(nicks)):
@@ -221,7 +222,7 @@ def response_time(log_dict, nicks, nick_same_list):
 							break           
 					for nick in nicks:
 						rec_list = [e.strip() for e in line.split(':')]
-						rec_list[1] = rec_list[1][rec_list[1].find(">") + 1:len(rec_list[1])][1:]
+						util.rec_list_splice(rec_list)
 
 						if not rec_list[1]:
 							break
