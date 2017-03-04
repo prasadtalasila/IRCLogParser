@@ -15,6 +15,7 @@ from sklearn.preprocessing import Normalizer
 from sklearn.pipeline import make_pipeline
 from scipy.spatial.distance import cdist
 import matplotlib.pyplot as plt
+import util
 
 sys.path.append('../lib')
 import config
@@ -61,10 +62,8 @@ def nick_change_graph(log_dict, DAY_BY_DAY_ANALYSIS = False):
                         while earlier_line_no >= 0: #to find the line just before "=="" so as to find time of Nick Change
                             earlier_line_no = earlier_line_no - 1
                             if(day_log[earlier_line_no][0] != '='):                             
-                                today_nick_change_graph.add_edge(nick1, nick2, weight=day_log[earlier_line_no][1:6])
                                 year, month, day = util.get_year_month_day(day_content)
-                                aggregate_nick_change_graph.add_edge(nick1, nick2, 
-                                    weight=year+"/" + month+ "/" + day + " - "+day_log[earlier_line_no][1:6])
+                                util.build_graphs (nick1, nick2, day_log[earlier_line_no][1:6], year, month, day, today_nick_change_graph, aggregate_nick_change_graph)
                                 break
 
                         if(earlier_line_no == -1):
@@ -163,7 +162,7 @@ def keywords(log_dict, nicks, nick_same_list):
             day_log = day_content["log_data"]
             for line in day_log:
                 flag_comma = 0
-                if(line[0] != '=' and "] <" in line and "> " in line):
+                if(util.check_if_msg_line (line)):
                     m = re.search(r"\<(.*?)\>", line)
                     var = util.correctLastCharCR((m.group(0)[1:-1]))
                     for d in range(len(nicks)):
