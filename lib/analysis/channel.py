@@ -49,7 +49,7 @@ def conv_len_conv_refr_time(log_dict, nicks, nick_same_list):
 			#code for making relation map between clients       
 			for line in day_log:
 				flag_comma = 0
-				if(line[0] != '=' and "] <" in line and "> " in line):
+				if(util.check_if_msg_line (line)):
 					nick_sender = ""
 					nick_receiver = ""
 					m = re.search(r"\<(.*?)\>", line)
@@ -211,7 +211,7 @@ def response_time(log_dict, nicks, nick_same_list):
 			#code for making relation map between clients       
 			for line in day_log:
 				flag_comma = 0
-				if(line[0] != '=' and "] <" in line and "> " in line):
+				if(util.check_if_msg_line (line)):
 					nick_sender = ""
 					nick_receiver = ""
 					m = re.search(r"\<(.*?)\>", line)

@@ -1,6 +1,10 @@
 import networkx as nx
 import numpy as np
+<<<<<<< HEAD
 import igraph
+=======
+import config
+>>>>>>> 320ffc0b9c9476488e4f9d44738780d1f6a8b880
 
 def correctLastCharCR(inText):#
     """ if the last letter of the nick is '\\' replace it by 'CR'
@@ -85,10 +89,18 @@ def get_year_month_day(day_content):
     year, month, day = str(day_content["auxiliary_data"]["year"]), str(day_content["auxiliary_data"]["month"]), str(day_content["auxiliary_data"]["day"])
     return year, month, day
 
+<<<<<<< HEAD
 
 def rec_list_splice(rec_list):
     rec_list[1] = rec_list[1][rec_list[1].find(">") + 1:len(rec_list[1])][1:]
 
+=======
+def check_if_msg_line (line):
+    return (line[0] != '=' and "] <" in line and "> " in line)
+
+def rec_list_splice(rec_list):
+    rec_list[1] = rec_list[1][rec_list[1].find(">") + 1:len(rec_list[1])][1:]
+>>>>>>> 320ffc0b9c9476488e4f9d44738780d1f6a8b880
 
 def build_graphs(nick_sender, nick_receiver, time, year, month, day, day_graph, aggr_graph):
     """    
@@ -114,3 +126,26 @@ def HACK_convert_nx_igraph(nx_graph):
     ig_graph = igraph.Graph()
     ig_graph = igraph.read("/tmp/rohan.net", format="pajek")
     return ig_graph
+
+
+def extend_conversation_list(nick_sender, nick_receiver, conversation):
+    """ A functions that takes the nick_sender and nick_reciver and add them
+        the conversation list and increase the weight.
+        Args:
+            nick_sender : nick of user sending a message
+            nick_receiver: nick of user to whom message is being send_time
+            conversation: list of nick_sender's and nick_reciever along with number of time message shared btw them
+        Returns:
+            conversation (list): list containg all the nick between whom messages have been shared
+    """
+    for i in xrange(0,config.MAX_EXPECTED_DIFF_NICKS):
+        if (nick_sender in conversation[i] and nick_receiver in conversation[i]):
+            if (nick_sender == conversation[i][1] and nick_receiver == conversation[i][2]):
+                conversation[i][0] += 1
+                break
+        if(len(conversation[i])==1):
+            conversation[i].append(nick_sender)
+            conversation[i].append(nick_receiver)
+            conversation[i][0]=conversation[i][0]+ 1
+            break
+    return conversation

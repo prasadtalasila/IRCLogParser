@@ -6,6 +6,16 @@ import config
 import util
 import igraph
 from random import randint
+import math
+import matplotlib.pyplot as plt
+import os
+import in_out.saver as saver
+from numpy.random import normal
+from scipy.optimize import curve_fit
+from scipy import stats
+import plotly.plotly as py
+py.sign_in('rohangoel963', 'vh6le8no26')
+import plotly.graph_objs as go
 
 def generate_probability_distribution(data, initial_rows_filter):
     """ 
@@ -191,8 +201,89 @@ def plot_infomap_igraph(nx_graph, membership, output_directory, output_file_name
             # vertex["color"] = "red" if int(vertex["id"]) >= 1000000 else "#00ff00"
         visual_style["vertex_color"] = nx_graph.vs["color"]
         visual_style["vertex_shape"] = nx_graph.vs["vertex_shape"]
-    
+
     igraph.plot(nx_graph, (output_directory + "/" + output_file_name + ".png"), **visual_style)
 
     if config.DEBUGGER:
         print "INFOMAPS visualisation for", output_file_name, "completed"
+
+def generate_log_plots (filter_val, plot_data, output_file_name, output_directory):
+	"""
+		Generate log plots for given time frame selecting first filter_val number ofan
+		elements and plotting log of value on y axis.
+
+
+	Args:
+		filter_val (int): number of values to be used from data for plotting
+		column_wise (list of list): data to be plotted
+		output_drectory(str): location to save graph
+		output_file_name(str): name of the image file to be saved
+
+	Returns:
+		null
+	"""
+
+	sum_each_row = []
+
+	for row in plot_data[2:]: #ignore degree 0 and text, starting from degree 1
+		sum_each_row.append(sum(row[1:]))
+
+	# print sum_each_row
+	x_axis_log = [math.log(i) for i in xrange(1, filter_val)]#ignore degree 0
+	y_axis_log = [math.log(i) if i>0 else 0 for i in sum_each_row[1:filter_val] ]#ignore degree 01
+
+	# get x and y vectors
+	x = np.array(x_axis_log)
+	y = np.array(y_axis_log)
+
+	'''WAY TWO OF REGRESSION'''
+	slope, intercept, r_value, p_value, std_err = stats.linregress(x_axis_log,y_axis_log)
+	line = [slope*xi+intercept for xi in x_axis_log]
+
+	print str(slope)+"\t"+str(intercept)+"\t"+str(r_value**2)+"\t"+str(mean_squared_error(y, line))
+
+	if config.USE_PYPLOT:
+		trace1 = go.Scatter(
+		                  x=x,
+		                  y=y,
+		                  mode='lines',
+		                  marker=go.Marker(color='rgb(255, 127, 14)'),
+		                  name='Data'
+		                  )
+
+		trace2 = go.Scatter(
+		                  x=x,
+		                  y=line,
+		                  mode='lines',
+		                  marker=go.Marker(color='rgb(31, 119, 180)'),
+		                  name='Fit'
+		                  )
+
+		layout = go.Layout(
+		                title='DegreeNode',
+		                # plot_bgcolor='rgb(229, 229, 229)',
+		                  xaxis=go.XAxis(zerolinecolor='rgb(255,255,255)', gridcolor='rgb(255,255,255)'),
+		                  # yaxis=go.YAxis(zerolinecolor='rgb(255,255,255)', gridcolor='rgb(255,255,255)')
+		                )
+
+		data = [trace1, trace2]
+		fig = go.Figure(data=data, layout=layout)
+
+		py.image.save_as(fig, output_directory+"/"+output_file_name + ".png")
+
+	else:
+		#graph config
+		axes = plt.gca()
+		axes.set_xlim([0,3])
+		axes.set_ylim([0,6])
+		plt.xlabel("log(degree)")
+		plt.ylabel("log(no_of_nodes)")
+
+		# fit with np.polyfit
+		m, b = np.polyfit(x, y, 1)
+
+		plt.plot(x, y, '-')
+		plt.plot(x, m*x + b, '-')
+		plt.legend(['Data', 'Fit'], loc='upper right')
+		plt.savefig(output_directory+"/" + output_file_name+".png")
+		plt.close()
