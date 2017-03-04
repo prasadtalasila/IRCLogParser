@@ -1,6 +1,6 @@
 import networkx as nx
 import numpy as np
-
+import igraph
 
 def correctLastCharCR(inText):#
     """ if the last letter of the nick is '\\' replace it by 'CR'
@@ -85,9 +85,10 @@ def get_year_month_day(day_content):
     year, month, day = str(day_content["auxiliary_data"]["year"]), str(day_content["auxiliary_data"]["month"]), str(day_content["auxiliary_data"]["day"])
     return year, month, day
 
+
 def rec_list_splice(rec_list):
     rec_list[1] = rec_list[1][rec_list[1].find(">") + 1:len(rec_list[1])][1:]
-    
+
 
 def build_graphs(nick_sender, nick_receiver, time, year, month, day, day_graph, aggr_graph):
     """    
@@ -107,3 +108,9 @@ def build_graphs(nick_sender, nick_receiver, time, year, month, day, day_graph, 
     day_graph.add_edge(nick_sender, nick_receiver, weight=time)
     aggr_graph.add_edge(nick_sender, nick_receiver, weight=year+"/" + month + "/" + day + " - " + time)
         
+
+def HACK_convert_nx_igraph(nx_graph):
+    nx.write_pajek(nx_graph, "/tmp/rohan.net")
+    ig_graph = igraph.Graph()
+    ig_graph = igraph.read("/tmp/rohan.net", format="pajek")
+    return ig_graph
