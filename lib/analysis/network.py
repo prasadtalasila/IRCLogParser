@@ -368,30 +368,24 @@ def degree_analysis_on_graph(nx_graph, date=None):
     Returns:
         null
     """
+    
+    def nodes_with_degree_populator(degree_values, label):    
+        nodes_with_degree = []
+        if len(degree_values):
+            nodes_with_degree = [[label + str(i), 0, ''] for i in xrange((max(degree_values)+1))]
+        else:
+            nodes_with_degree = [["NA", 0, "NA"]]
 
-    if len(nx_graph.out_degree().values()):
-        nodes_with_OUT_degree = [["nodes_w_out_deg" + str(i), 0, ''] for i in xrange((max(nx_graph.out_degree().values())+1))]
-    else:
-        nodes_with_OUT_degree = [["NA", 0, "NA"]]
-    if len(nx_graph.in_degree().values()):
-        nodes_with_IN_degree = [["nodes_w_in_deg" + str(i), 0, ''] for i in xrange((max(nx_graph.in_degree().values())+1))]
-    else:
-        nodes_with_IN_degree = [["NA", 0, "NA"]]
-    if len(nx_graph.degree().values()):
-        nodes_with_TOTAL_degree = [["nodes_w_deg" + str(i), 0, ''] for i in xrange((max(nx_graph.degree().values())+1))]
-    else:
-        nodes_with_TOTAL_degree = [["NA", 0, "NA"]]
+        for degree in degree_values:
+            nodes_with_degree[degree][1] += 1
 
-    for degree in nx_graph.out_degree().values():
-        nodes_with_OUT_degree[degree][1] += 1
+        return nodes_with_degree
 
-    for degree in nx_graph.in_degree().values():
-        nodes_with_IN_degree[degree][1] += 1
+    nodes_with_OUT_degree = nodes_with_degree_populator(nx_graph.out_degree().values(), "nodes_w_out_deg")
+    nodes_with_IN_degree = nodes_with_degree_populator(nx_graph.in_degree().values(), "nodes_w_in_deg")
+    nodes_with_TOTAL_degree = nodes_with_degree_populator(nx_graph.degree().values(), "nodes_w_deg")
 
-    for degree in nx_graph.degree().values():
-        nodes_with_TOTAL_degree[degree][1] += 1
-
-    def give_userlist_where_degree(degree_dict, degree):
+    def give_userlist_where_degree_helper(degree_dict, degree):
         key_list = ""
         for key in degree_dict:
             if degree_dict[key] == degree:
@@ -408,15 +402,15 @@ def degree_analysis_on_graph(nx_graph, date=None):
 
     for i in range(1, len(nodes_with_OUT_degree)):
         raw_out.append(nodes_with_OUT_degree[i][1])
-        nodes_with_OUT_degree[i][2] = give_userlist_where_degree(nx_graph.out_degree(), i - 1)
+        nodes_with_OUT_degree[i][2] = give_userlist_where_degree_helper(nx_graph.out_degree(), i - 1)
 
     for i in range(1, len(nodes_with_IN_degree)):
         raw_in.append(nodes_with_IN_degree[i][1])
-        nodes_with_IN_degree[i][2] = give_userlist_where_degree(nx_graph.in_degree(), i - 1)
+        nodes_with_IN_degree[i][2] = give_userlist_where_degree_helper(nx_graph.in_degree(), i - 1)
 
     for i in range(1, len(nodes_with_TOTAL_degree)):
         raw_total.append(nodes_with_TOTAL_degree[i][1])
-        nodes_with_TOTAL_degree[i][2] = give_userlist_where_degree(nx_graph.degree(), i - 1)
+        nodes_with_TOTAL_degree[i][2] = give_userlist_where_degree_helper(nx_graph.degree(), i - 1)
 
     return {
         "out_degree": {
