@@ -38,7 +38,7 @@ def nick_tracker(log_dict, track_users_on_channels = False):
 
             for i in day_log:
                 # use regex to get the string between <> and appended it to the nicks list
-                if(i[0] != '=' and "] <" in i and "> " in i):
+                if(util.check_if_msg_line (i)):
                     m = re.search(r"\<(.*?)\>", i)
                     nick = util.correctLastCharCR(m.group(0)[1:-1])
                     if track_users_on_channels and (nick not in nicks_today_on_this_channel):

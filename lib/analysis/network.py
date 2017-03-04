@@ -40,7 +40,7 @@ def message_number_graph(log_dict, nicks, nick_same_list, DAY_BY_DAY_ANALYSIS = 
             for line in day_log:
                 flag_comma = 0
 
-                if(line[0] != '=' and "] <" in line and "> " in line):
+                if(util.check_if_msg_line (line)):
                     parsed_nick = re.search(r"\<(.*?)\>", line)
                     corrected_nick = util.correctLastCharCR(parsed_nick.group(0)[1:-1])
                     nick_sender = ""
@@ -471,7 +471,7 @@ def create_message_time_graph(log_dict, nicks, nick_same_list):
             graph_conversation = nx.MultiDiGraph()  #graph with multiple directed edges between clients used
             for line in day_log:
                 flag_comma = 0
-                if(line[0] != '=' and "] <" in line and "> " in line):
+                if(util.check_if_msg_line (line)):
                     m = re.search(r"\<(.*?)\>", line)         
                     spliced_nick = util.correctLastCharCR(m.group(0)[1:-1])
                     for i in range(config.MAX_EXPECTED_DIFF_NICKS):

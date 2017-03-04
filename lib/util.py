@@ -85,6 +85,9 @@ def get_year_month_day(day_content):
     year, month, day = str(day_content["auxiliary_data"]["year"]), str(day_content["auxiliary_data"]["month"]), str(day_content["auxiliary_data"]["day"])
     return year, month, day
 
+def check_if_msg_line (line):
+    return (line[0] != '=' and "] <" in line and "> " in line)
+
 def rec_list_splice(rec_list):
     rec_list[1] = rec_list[1][rec_list[1].find(">") + 1:len(rec_list[1])][1:]
 
@@ -120,7 +123,7 @@ def extend_conversation_list(nick_sender, nick_receiver, conversation):
     for i in xrange(0,config.MAX_EXPECTED_DIFF_NICKS):
         if (nick_sender in conversation[i] and nick_receiver in conversation[i]):
             if (nick_sender == conversation[i][1] and nick_receiver == conversation[i][2]):
-                conversation[i][0]=conversation[i][0] + 1
+                conversation[i][0] += 1
                 break
         if(len(conversation[i])==1):
             conversation[i].append(nick_sender)
