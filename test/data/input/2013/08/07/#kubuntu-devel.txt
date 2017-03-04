@@ -1,0 +1,264 @@
+[04:06] <smartboyhw> Probably my best blog post ever: http://smartboyhwubuntu.wordpress.com/2013/08/07/ubuntu-edge-target-too-high-but-a-phone-that-one-will-want/ (LOL)
+=== jono is now known as Guest5052
+[05:49] <valorie> gah, I wish wordstar would allow me to make comments, etc.!
+[05:49] <valorie> good one, smartboyhw
+[05:49] <valorie> and your meeting is on my calendar, so if I can wake so early, I'll listen in at least
+[05:50] <valorie> I do have a KDE devel account....
+[06:12] <soee> good morning
+[08:13] <smartboyhw> valorie, thank you:)
+[08:19] <yofel> smartboyhw: could you please look at the libgphoto issue in backports? What did you backport it for?
+[08:19] <yofel> and nice blog post :)
+[08:24] <smartboyhw> yofel, I forgotten, for sure it's one of the 4.10.97 quantal things
+[08:24] <smartboyhw> I probably should have put it into staging, sigh
+[08:24] <smartboyhw> My damn fault, sorry.
+[08:24] <yofel> even then it's a bad idea as I wrote on the bug
+[08:24] <yofel> well, don't worry about it too much, I've seen worse happen ^^
+[08:25] <yofel> I wrote a backport rule that uses the old libgphoto on << saucy
+[08:25] <yofel> so it won't be needed for 4.11.00 
+[08:26] <shadeslayer> yofel: can we move precise backports to the beta backports repo?
+[08:26] <yofel> considering the rdepends list of libgphoto2-2 isn't really long, we *could* do a transition in the backports, but I don't think it's worth it unless we really need it
+[08:27] <yofel> shadeslayer: no, I just hit
+[08:27] <yofel> Unpacking replacement plasma-widget-kimpanel ...
+[08:27] <yofel> dpkg: error processing /var/cache/apt/archives/plasma-widget-kimpanel_4%3a4.10.97-0ubuntu1~ubuntu12.04.1~ppa1_amd64.deb (--unpack):
+[08:27] <yofel>  trying to overwrite '/usr/share/kde4/services/plasma-dataengine-kimpanel.desktop', which is also in package plasma-dataengines-addons 4:4.8.5-0ubuntu0.1
+[08:27] <yofel> on 4.8 -> 4.11
+[08:27] <shadeslayer> ( assuming it has been tested ... right )
+[08:27]  * shadeslayer will have a look in the evening
+[08:27] <yofel> I'll try to fix what I find till then, at least stuff like ^
+[08:29] <shadeslayer> cool
+[08:34] <smartboyhw> Yawn
+[08:35] <smartboyhw> I'm a bit tired with packaging stuff today:P
+[08:36] <shadeslayer> then do QA :D
+[08:36] <smartboyhw> shadeslayer, hey, when are you going to review ktp 0.6.3?
+[08:36] <shadeslayer> oh drat
+[08:36] <smartboyhw> LO
+[08:36] <smartboyhw> LOL
+[08:36] <shadeslayer> so much to do
+[08:37] <yofel> on that topic, let me look at PMC ^^
+[08:49] <smartboyhw> LOL thanks shadeslayer yofel :)
+[08:50] <shadeslayer> smartboyhw: we can drop set_cmp_policy.patch in ktp-common-internals now 
+[08:51] <shadeslayer> it was upstreamed
+[08:51] <shadeslayer> and we have cdbs-*-list in there 0.o
+[08:52] <shadeslayer> yofel: ^ we can drop cdbs-install-list and cdbs-package-list right?
+[08:53] <yofel> sure, unless you still use cdbs ^^
+[08:55] <yofel> shadeslayer: actually, those are supposed to be temporary files, no?
+[08:55] <shadeslayer> yofel: yeah, however dh_clean didn't remove them
+[08:55] <shadeslayer> which is why I thought best to ask :)
+[08:55] <yofel> build system stuff I guess, as I have here dhmk-install-list and dhmk-package-list in a build
+[08:56] <yofel> maybe got left over in the buildsystem transition
+[08:56] <shadeslayer> not sure, I wonder if ktp was ever cdbs
+[09:00] <yofel> smartboyhw: PMC: as you're shipping the headers, please make a libplasmamediacenter1.1 package and add a symbols file
+[09:01] <shadeslayer> smartboyhw: ktp contact list and common internals uploaded
+[09:05] <yofel> wow, PMC licensing can give you a headache http://paste.kde.org/p0c59d2c0
+[09:05] <yofel> I think someone didn't  understand licensing if I see that random mix of GPL and LGPL
+[09:07] <smartboyhw> yofel, licensing?:O
+[09:07] <smartboyhw> shadeslayer, thank you
+[09:07] <yofel> not sure if it's worth to update, the copyright file is wrong though
+[09:08] <smartboyhw> yofel, OK
+[09:08] <shadeslayer> accounts KCM up as well
+[09:14] <shadeslayer> smartboyhw: you forget to package ktp-approver
+[09:14] <smartboyhw> shadeslayer, oy, sorry:P
+[09:14] <shadeslayer> plz do that
+[09:14] <shadeslayer> while I do the rest
+[09:18] <smartboyhw> yofel, which package should I move those usr/lib/kde4/*.so to?
+[09:18] <smartboyhw> And no need for the symbols files for these right?
+[09:18] <yofel> you can only make symbols files for libs that have a SOVERSION, and only needed if there's headers and the dev symlink shipped
+[09:18] <yofel> leave the usr/lib/kde4/ stuff where it is
+[09:19] <smartboyhw> yofel, OK
+[09:21] <smartboyhw> yofel, wait, the package should be named libplasmamediacenter1 or libplasmamediacenter1.1?
+[09:21] <yofel> SOVERSION is 1.1, so latter
+[09:24] <smartboyhw> shadeslayer, ktp-approver uploaded to ppa
+[09:24] <shadeslayer> ok
+[09:25] <smartboyhw> yofel, uh I'm facing the debug-file-with-no-debug-symbols again
+[09:25] <yofel> can't help you with that
+[09:26] <smartboyhw> Cry :(
+[09:27] <smartboyhw> yofel, actually 1 thing
+[09:33] <yofel> hm?
+[09:34] <shadeslayer> ufff
+[09:35] <shadeslayer> I'm tired of uploading ktp
+[09:35] <smartboyhw> shadeslayer, LOL
+[09:35] <smartboyhw> yofel, I'm doing an experiment
+[09:35] <yofel> uh... of what kind? ^^
+[09:35] <smartboyhw> Because I suddenly remember something
+[09:36] <smartboyhw> yofel, if I update dh from 8 to 9 and update symbols, the debug-file-has-no-debug-symbols lintian warning should disappear....
+[09:36] <yofel> well, try it
+[09:36] <shadeslayer> booorrreeddd
+[09:36] <yofel> go rewrite some copyright files
+[09:37] <smartboyhw> yofel, it does:P
+[09:37] <smartboyhw> Now, the copyright
+[09:38] <smartboyhw> yofel, the lintian warning debug-file-has-no-debug-symbols does disappear after the things I did as above
+[09:38] <yofel> ya
+[09:38] <yofel> y
+[09:39] <smartboyhw> yofel, so you want me to retain the changes or undo it back?
+[09:39] <yofel> what changes?
+[09:40] <smartboyhw> yofel, a.k.a yofel, if I update dh from 8 to 9 and update symbols, the debug-file-has-no-debug-symbols lintian warning should disappear....
+[09:40] <smartboyhw> yofel, what the
+[09:40] <smartboyhw> yofel, if I update dh from 8 to 9 and update symbols, the debug-file-has-no-debug-symbols lintian warning should disappear....
+[09:41] <smartboyhw> Oops
+[09:41] <smartboyhw> libs/mediacenter/pmccoverartprovider.cpp: BSD (2 clause) LGPL (v2.1 or later)
+[09:41] <smartboyhw> A file with two licenses!?
+[09:41] <yofel> yeah, can happen, check the header
+[09:41] <yofel> and just use dh9 if it works better
+[09:41] <smartboyhw> yofel, sure:)
+[09:42] <yofel> this is a great copyright...
+[09:42] <yofel> Copyright (C) <year>  <name of author>
+[09:42] <smartboyhw> yofel, um, I checked the header and two licenses exist
+[09:43] <smartboyhw> One is from 2004
+[09:43] <smartboyhw> One is from 2011 and 2012
+[09:43] <smartboyhw> BSD -> 2004, LGPL-> 2011-2012
+[09:44] <yofel> hm, I would have to look up what to do here...
+[09:44] <yofel> shadeslayer:  ^ ?
+[09:44] <shadeslayer> uhm, too long, and I'm slightly busy with something else
+[09:44] <yofel> is that a simple 'or' then? because the file simply has 2 copyrights in it...
+[09:45] <yofel> anyway, lunch
+[09:45]  * yofel runs :P
+[09:46] <smartboyhw> yofel, duh
+[09:46] <smartboyhw> No "or"
+[09:46] <smartboyhw> I should ask upstream to fix it next time....
+[10:02] <smartboyhw> kubotu: newversion plasma-mediacenter 1.0.90
+[10:02] <kubotu> https://bugs.launchpad.net/bugs/1209159
+[10:02] <smartboyhw> Hmm, obviously I didn't report such a bug:P
+[10:08] <shadeslayer> hmm
+[10:08] <shadeslayer> smartboyhw: I don't think it's required to bump the version on meta-kde-telepathy
+[10:08] <smartboyhw> shadeslayer, hey, you told me to do that.
+[10:08] <shadeslayer> I did?
+[10:09] <shadeslayer> actually, I don't think it's useful to update the meta-ktp package
+[10:09] <shadeslayer> sorry if I told you otherwise
+[10:11] <shadeslayer> smartboyhw: everything uploaded
+[10:12] <smartboyhw> shadeslayer, great
+[10:12] <shadeslayer> plz double check that everything is uploaded
+[10:13] <smartboyhw> shadeslayer, sure
+[10:15] <smartboyhw> shadeslayer, yes, everything is uploaded
+[10:15] <shadeslayer> aweswome \o/
+[10:24] <smartboyhw> yofel, is there any command to check on the names and the authors of the files?
+[10:28] <shadeslayer> licensecheck
+[10:29] <jussi> poor Aaron, wrting to a free software list with a signature of "Sent from Windows Mail" :P
+[10:30] <shadeslayer> ^^
+[10:31] <smartboyhw> jussi, LOL
+[10:31] <Tm_T> jussi: UDS session with Windows user can also happen in this community
+[10:38] <yofel> smartboyhw: to get the copyright holder for a specific license I use something like:
+[10:38] <yofel> licensecheck -r * | grep LGPL | grep \(v2\) | cut -f 1 -d \: | xargs grep Copyright
+[10:38] <yofel> extend as needed
+[10:44] <smartboyhw> yofel, what if a copyright holder has no year attached?
+[11:31] <smartboyhw> Meh, can anybody tell me the solution to that? ^
+[11:32] <shadeslayer> smartboyhw: then don't mention it ?
+[11:32] <smartboyhw> shadeslayer, really?
+[11:32] <shadeslayer> though I suppose ScottK can advise better
+[12:00]  * yofel just got some rather curious mails from bdmurray: e.g. http://paste.kde.org/padb4d067
+[12:01] <yofel> we get regression reports from errors.u.c now o.O?
+[12:03] <smartboyhw> yofel, a new thing I heard from #ubuntu-release
+[12:04] <smartboyhw> yofel, what's your point of view of the copyright stuff?
+[12:05] <yofel> uh, not sure. I don't think a copyright without a year is even valid. Then again, the copyright field in dep5 is formless, so just leave the year away for now
+[12:06] <smartboyhw> yofel, alright
+[12:06] <smartboyhw> Uh, the changelog is really packed now...
+[12:08] <yofel> hm, one mail was about an increase of crash rate in the last 2 weeks for nepomuk-core
+[12:08] <yofel> the graph on https://errors.ubuntu.com/?release=Ubuntu%2013.04&package=nepomuk-core&version=4:4.10.5-0ubuntu0.1 doesn't tell me a thing though :(
+[12:08] <smartboyhw> yofel, LOL
+[12:11] <smartboyhw> yofel, https://launchpad.net/~smartboyhw/+archive/packaging-staging-1/+files/plasma-mediacenter_1.0.90-0ubuntu1.dsc for you:)
+[12:11] <smartboyhw> i386 	5 	70 jobs (41 minutes) 
+[12:12] <smartboyhw> That's the official distribution machines:O
+[12:18] <shadeslayer> yofel: that looks like fun
+[12:19] <shadeslayer> and kdeartwork? :D
+[12:19]  * smartboyhw wonders how many of these emails did ScottK, Riddell and shadeslayer receive:P
+[12:19] <shadeslayer> none
+[12:19] <shadeslayer> because we're awesome and don't introduce regressions :P
+[12:19] <yofel> well, I got mails for kdeartwork, kde-runtime, kde-workspace, kactivites, konsole and nepomuk-core. nepomuk-core got an additional one about increase in crash rate
+[12:20] <yofel> I think only the *uploader* gets them
+[12:20] <shadeslayer> yofel clearly works for openSUSE and wants to destroy kubuntu
+[12:20] <shadeslayer> :>
+[12:20] <yofel> which is kinda useless for us
+[12:20] <yofel> well, it would save me from having to learn politics to develop a distro
+[12:20] <smartboyhw> yofel, LOL
+[12:20] <smartboyhw> shadeslayer, LOL
+[12:20] <yofel> anyway, topic change
+[12:20] <shadeslayer> :P
+[12:21] <shadeslayer> I can't find my yubikey
+[12:21]  * smartboyhw wonders should he play with something in http://techbase.kde.org/Projects/Edu/ProjectSuggestions
+[12:21] <shadeslayer> so no backtraces for me
+[12:25]  * yofel wonders if he should hack on kinfocenter
+[12:25] <yofel> or does someone know a gui way to access the stuff from 'upower --dump' ?
+[12:32] <smartboyhw> Hmm, I will probably play with Komputer:P
+[12:56] <d_ed_> hey, I joined to thank Howard Chan for packaging the latest KDE-Telepathy
+[12:56] <d_ed_> cheers dude (if you're here)
+[12:58] <shadeslayer> smartboyhw: ^^
+[13:01] <ScottK> shadeslayer: If copyright is listed without year, I'd go ahead and put it in debian/copyright as is.
+=== greyback is now known as greyback|lunch
+[13:06] <shadeslayer> thought so
+[13:24] <smartboyhw> shadeslayer, :)
+[13:24] <smartboyhw> d_ed_, :)
+[13:24] <smartboyhw> shadeslayer, I've put it in anyway, no worries:0
+=== greyback|lunch is now known as greyback
+[13:30] <smartboyhw> yofel, you reviewed plasma-mediacenter yet?
+[13:30] <smartboyhw> New one at https://launchpad.net/~smartboyhw/+archive/packaging-staging-1/+files/plasma-mediacenter_1.0.90-0ubuntu1.dsc
+[13:38] <smartboyhw> Rebooting, see ya
+[13:41] <smartboyhw> Back into nice KDE.
+[13:45] <yofel> smartboyhw: got pulled to a meeting at work, so nope
+[13:46] <yofel> won't do it for another 4h either
+[14:05] <yofel> vHanda: in nepomuk-core you have a file without copyright: autotests/test/resourcetests.h:    Copyright (C) <year>  <name of author>
+[14:05] <yofel> looking at the cpp I think your name was supposed to be there
+[14:11] <smartboyhw> yofel, alright
+[14:52] <debfx> apt-get is not happy about the libkscreen0 libkscreen1 conflict
+[14:53] <smartboyhw> debfx, uh oh, my fault then:P
+[14:53] <smartboyhw> debfx, how?
+[14:53] <debfx> it hold back the kscreen upgrade because it would have to remove libkscreen0
+[14:53] <smartboyhw> Paste it plz
+[14:54] <smartboyhw> debfx, ah OK, should have added Breaks, Conflicts, that sort of thing dumb
+[14:54] <smartboyhw> Wait me a minute plz
+[14:54] <debfx> well the problem is that libkscreen0 and libkscreen1 share some files
+[14:54] <smartboyhw> debfx, I know howto fix
+[14:55] <smartboyhw> debfx, but you will have to sponsor the fix:P
+[14:55] <debfx> how?
+[14:55] <smartboyhw> debfx, hmm, libkscreen1 already breaks/replaces libkscreen0
+[14:55] <smartboyhw> Weird weird, maybe a conflicts
+[14:56] <ScottK> If you apt-get install kscreen it will work.
+[14:56] <debfx> yes, but that's not how upgrades are supposed to work
+[14:57] <smartboyhw> debfx, I think it should be a conflict more than a break then, sigh
+[14:57] <debfx> smartboyhw: I don't think that will change anything
+[14:57] <ScottK> debfx: If you figure it out, I'll push it right through SRU.
+[14:57] <smartboyhw> debfx, I think it would.
+[14:57] <smartboyhw> This is a stronger restriction than Breaks, which prevents the broken package from being configured while the breaking package is in the "Unpacked" state but allows both packages to be unpacked at the same time. 
+[14:58] <smartboyhw>  Conflicts should be used
+[14:58] <smartboyhw>     when two packages provide the same file and will continue to do so,
+[14:58] <smartboyhw> ........
+[14:58] <smartboyhw> So, probably conflict will work
+[14:58] <debfx> the problem is that apt doesn't consider removing libkscreen0 a valid option to upgrade kscreen
+[14:59] <smartboyhw> debfx, ah so in the kscreen session OK
+[15:04] <smartboyhw> debfx, I will probably make kscreen 1.0 conflict libkscreen (<< 1.0)
+[15:04] <smartboyhw> That makes more sense doesn't it?>
+[15:05] <smartboyhw> ScottK, ^
+[15:05] <debfx> there is no libkscreen package
+[15:05] <smartboyhw> debfx, what?
+[15:05] <smartboyhw> debfx, I mean, conflict libkscreen0 sorry:P
+[15:05]  * ScottK is doing $work, so just let me know when you have it figured out and I'll push it through
+[15:06] <debfx> I don't see why that's necessary or how it would improve the situation
+[15:06] <smartboyhw> debfx, well why not?
+[15:06] <smartboyhw> It is not allowing removing libkscreen0 as an option
+[15:06] <smartboyhw> So, that helps.
+[15:07] <ScottK> smartboyhw: Did you test it or are you guessing?
+[15:08] <yofel> smartboyhw: the issue isn't that you *cannot* upgrade kscreen, it's that in some cases it won't happen automatically
+[15:08] <yofel> in an ideal world, a user should never have to run 'dist-upgrade' to install things from -updates
+[15:08] <smartboyhw> ScottK, guessing.....
+[15:09] <smartboyhw> yofel, so what's the solution
+[15:09] <yofel> but as the libkscreen packaging isn't really proper, it doesn't work like that
+[15:09] <yofel> for the SRU? I don't know if there is an easy one
+[15:09] <debfx> yofel: actually dist-upgrade also doesn't work
+[15:09] <debfx> at least for me
+[15:09] <yofel> debfx: I know, happened to me too, but I really don't understand the resolver here :/
+[15:10] <yofel> I would've expected this to work, but in some cases it doesn't
+[15:10] <debfx> yep
+[15:10] <ScottK> That's why I suggest testing, not guessing.
+[15:10] <yofel> same actually applies for the kdevelop backport I tried for precise, that's stuck in the same situation (kdevplatform5-libs -> kdevplatform7-libs)
+[15:11] <debfx> afiestas: are the libkscreen backends tight to the same libkscreen version?
+[15:12] <debfx> for example do the 1.0 backends work with libkscreen 0.0.81?
+[15:13] <yofel> hm, good idea, that could work
+[15:18] <debfx> if not the plugins should have a namespaced path, e.g. /usr/lib/kde4/plugins/kscreen1/
+[15:22] <afiestas> debfx: please, don't split the backend from the lib
+[15:24] <debfx> afiestas: would it be possible to put the soname somewhere in the path of the backends?
+[15:25] <debfx> that way libkscreen0, libkscreen1 etc could be made co-installable
+[15:25] <smartboyhw> Let me see if I can ring 97870010 (what a phone no. and actually that's JontheEchidna's OpenPGP key;P)
+=== greyback__ is now known as greyback|food
+=== greyback|food is now known as greyback
+=== zorael is now known as zorael^nubcake
+[20:20] <ahoneybun>  Hello all
+=== claydoh_ is now known as claydoh
+=== jono is now known as Guest48557

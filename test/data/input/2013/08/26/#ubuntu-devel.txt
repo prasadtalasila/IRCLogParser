@@ -1,0 +1,332 @@
+[00:03] <TheMuso> /c/c
+[01:34] <RAOF> Is there some particular reason that armhf annoyingly languishes on ports.ubuntu.com, making it really annoying to have as a dpkg foreign architecture?
+[01:35] <stgraber> I believe not enough space on the archive mirrors (not those from IS, those in universities, ISPs, ...) was the usual response to that question.
+[01:36] <stgraber> basically adding armhf there would make us loose a potentially significant number of our current mirrors
+[01:37] <RAOF> Ah, of course.
+[01:37] <RAOF> I don't suppose they support any "don't mirror this, kthxbye" metadata? That would be too convenient.
+[01:38] <StevenK> RAOF: Which is difficult, due to pool/
+[01:39] <stgraber> RAOF: they'd need to run something like debmirror to achieve that, which they usually don't (most mirrors are simply straight rsync from archive.u.c)
+=== freeflying is now known as freeflying_away
+=== freeflying_away is now known as freeflying
+=== [ESphynx] is now known as ESphynx
+=== freeflying is now known as freeflying_away
+=== freeflying_away is now known as freeflying
+=== shang_ is now known as shang
+[03:47] <infinity> RAOF: It's a traffic/space tradeoff.  If and when armhf represents a significant portion of our traffic, we'd consider bloating mirrors and moving it.
+[03:48] <infinity> RAOF: Agreed on the awkward apt foreign arch setup, though, we could perhaps do something to make that less irritating.
+[03:49] <infinity> RAOF: (ie: if x86 mirror is *.ubuntu.com, use ports for !x86 automagically)
+[03:52] <RAOF> Or support [arch=!armhf] in sources.list
+[03:53] <RAOF> Hm. Or have an option requiring an explicit opt-in for non-native archs.
+[04:43] <pitti> Good morning
+[04:44] <pitti> slangasek: I tried upgrading without the transitional package (I didn't have that at first); the upgrade worked in some cases (my test in a chroot), but in others (me on work station and seb128) apt just held back stuff
+[04:45] <slangasek> pitti: well, but the transitional package appears to be incorrect, it doesn't implement the interface... so any third-party packages will be broken
+[04:47] <pitti> hm, if we can do something about /usr/lib/x86_64-linux-gnu/libgphoto2/print-camera-list it should actually be possible to make them co-installable
+[04:47] <pitti> but libgphoto2-portX aren't co-installable
+[04:48] <pitti> or wait, unless the /usr/lib/x86_64-linux-gnu/libgphoto2_port/0.10.0 is different in the older version
+[05:12] <pitti> slangasek: fix uploaded
+[05:13] <StevenK> pitti: Have you heard anything about calibre SEGVing on startup on current saucy?
+[05:13] <pitti> StevenK: not yet, but it seems I can reproduce
+[05:13] <pitti> I guess there's a new sip ABI once again
+[05:14] <pitti> StevenK: it'll need a rebuild, but I'll package 1.0 while I'm at it
+[05:14] <StevenK> pitti: Sounds excellent, thanks.
+=== dayangkun is now known as dayangkun_715
+[07:05] <dholbach> good morning
+[07:06] <mlankhorst> g'day
+[07:07] <dholbach> hi mlankhorst
+[07:07] <mlankhorst> heya
+=== smb` is now known as smb
+[07:23] <dholbach> salut lool - ça va?
+[07:23] <dholbach> lool, did you file the bug on click regarding permissions?
+=== iahmad is now known as iahmad|lunch
+[08:42] <hyperair> any archive admins around? messagingmenu-sharp is waiting for an ack. :)
+[08:42] <hyperair> (for several months now)
+[08:42] <seb128> hyperair, hey, didn't infinity said he would do it on friday?
+[08:43] <hyperair> yeah, but i forgot to ping him
+[08:43] <hyperair> i think i pinged yesterday or the day before, but didn't get a response
+[08:43] <seb128> that was w.e
+[08:59] <seb128> jibel, hey, welcome back, did you have good holidays?
+[09:00] <jibel> Salut seb128 , holidays were great, thanks
+[09:00] <seb128> jibel, nice!
+[09:01] <seb128> jibel, so, since you are back ... not sure anyone pinged you about that, but autopkgtest/britney seems unhappy for a week (and nobody was able to debug it with you and Colin not there)
+[09:01] <seb128> jibel, tests stay in RUNNING state
+[09:01] <seb128> eg http://people.canonical.com/~ubuntu-archive/proposed-migration/update_excuses.html has cups -> chromium-browser RUNNING
+[09:01] <seb128> or dh-python -> dh-python RUNNING
+[09:02] <seb128> jibel, could you help there? ;-)
+[09:03] <jibel> seb128, yes, pitti told me, I'm looking at this this morning
+[09:04] <seb128> jibel, thanks
+[09:17] <seb128> xnox, hey, did you see that your ardour uploads failed to build?
+[09:19] <Noskcaj> doko, Do you mind if i merge the latest debian revisions of python2.7 and 3.2?
+[09:19] <Noskcaj> oops, 3.3
+[09:42] <Noskcaj> doko, or more accurately, sync them, as i can't find a reason to keep the delta
+[09:57] <siretart> infinity: how do you think about doing the libav9 transition for saucy? I've noticed micahg and jbicha chatting about that yesterday in #ubuntu-motu
+[10:03] <ari-tczew> Noskcaj: don't you use requestsync script for syncs?
+[10:06] <smartboyhw> ari-tczew, I think Noskcaj's requestsync keep crashing
+[10:06] <smartboyhw> That's what I heard from him
+[10:06] <ari-tczew> smartboyhw: ok
+[10:08] <lool> dholbach: salut ! sorry, missed your ping; I doubt there is a permission issue with click, at least I couldn't reproduce it; I had other minor permission issues (due to adb shell's umask) which I reported, but the main being issue is packagekit crashing on installation
+[10:09] <dholbach> ok
+[10:09] <lool> dholbach: I started gdb-ing this a bit on friday, but was lacking -dbgsym for packagekit; resuming today I've seen there's packagekit-dbg which might be enough
+[10:09] <lool> the packagekit log dies with some warnings on percent count decreasing
+[10:09] <lool> but nothing interesting there
+[10:14] <infinity> siretart: I'd love to slide it in before feature freeze.  It'll be tight timing to get us to finish the transition, but I'd rather have it done and out of the way before we open 14.04 than agonize over whether or not we do it in an LTS cycle.
+[10:14] <infinity> siretart: I'm heading to bed right now (It's 4am), but if you want to start without me, you have my blessing, or we can discuss it when I wake up. :P
+[10:16] <jibel> seb128, incorrect RUNNING state is fixed, I'm now trying to understand the cause.
+[10:17] <seb128> jibel, thanks!
+[10:17] <pitti> jibel: was it due to per-arch tests arriving at differnt times?
+[10:18] <jibel> pitti, I do not know yet, I'll tell you when I'm sure.
+[10:31] <pitti> StevenK: ah, calibre 1.0.0 finally got imported, synced
+[10:34] <StevenK> pitti: Nice, thanks!
+=== Sweetsha1k is now known as Sweetshark
+[11:25] <dholbach> mitya57, 1180067 uploaded
+[11:25] <dholbach> mitya57, the test build took a while ;-)
+[11:39] <mitya57> dholbach: BIG thanks!
+[11:40] <dholbach> mitya57, no worries
+[11:47] <pitti> hm, what's the easiest way to find out why signond-dev isn't installable on powerpc?
+[11:47] <pitti> (https://launchpadlibrarian.net/148449058/buildlog_ubuntu-saucy-powerpc.shotwell_0.14.1-3ubuntu3_FAILEDTOBUILD.txt.gz)
+[11:48] <pitti> it's not on http://people.canonical.com/~ubuntu-archive/testing/saucy-proposed_probs.html
+[11:48] <pitti> but perhaps related to these qt depwaits
+[11:49] <pitti> hm, how did https://launchpad.net/ubuntu/+source/qtdeclarative-opensource-src/+changelog get into saucy in the first place? it didn't build on powerpc (depwait), thus it shouldn't have migrated?
+[11:51] <pitti> ah, https://launchpad.net/ubuntu/+source/qtjsbackend-opensource-src/5.0.2-3 isn't supported on ppc -- so how did that stack propagate, was it forced?
+[11:55] <seb128> pitti, yes, it was, and signon was deleted on ppc
+[11:56] <seb128> pitti, that stack can't exist on ppc, qtdeclarative uses v8 that's not available on ppc
+[11:56] <seb128> pitti, we had to do some forcing since some of those sources existed before (qt4 was available on ppc)
+[11:57] <pitti> seb128: but libsignon-glib-dev still exists on ppc and is now uninstallable
+[11:57] <seb128> pitti, drop ppc?
+[11:57] <pitti> seb128: it sounds wrong to drop shotwell on ppc, it doesn't use any of this?
+[11:58] <pitti> not that I care about ppc in any way, but changing all transitive reverse deps of that to drop ppc sounds very intrusive
+[11:58] <seb128> pitti, reality is that modern desktop don't run on ppc
+[11:59] <seb128> pitti, well, we patch shotwell to use ubuntu-online-accounts, which create that depends
+[11:59] <pitti> seb128: i. e. libsignon-glib binaries shoudl be dropped from ppc, and shotwell not built against it on ppc?
+[11:59] <pitti> ah
+[11:59] <seb128> pitti, we should probably stop doing that
+[12:00] <pitti> seb128: i. e. we somehow need to apply debian/patches/06_uoa.patch on !powerpc only?
+[12:01] <seb128> pitti, right
+[12:01] <pitti> pain
+[12:01] <seb128> pitti, but that's the tip of the mountain I think
+[12:01] <pitti> I guess I'd rather drop ppc from shotwell's arch:
+[12:02] <seb128> pitti, you are going to have similar issues in lot of desktopish components
+[12:02] <seb128> pitti, yeah, that might be easier
+[12:02] <seb128> pitti, and to reply to your britney comment, britney prevent increasing the number of issues, it doesn't enforce it to be 0
+[12:03] <seb128> pitti, e.g if a package never existed in an arch it's fine for it to migrate without that arch
+[12:03] <pitti> ah, so if I remove shotwell ppc from saucy and reupload with arch: i386 amd64 armhf, it ought to work?
+[12:03] <seb128> pitti, which is the case of qt5 and its rdepends
+[12:03] <pitti> ah, I don't even need to touch the arch: field then
+[12:03] <pitti> if that should ever get fixed, it'll just build again on ppc
+[12:03] <seb128> pitti, right, just deleting the binary should be enough (unless something depends on shotwell)
+[12:04] <seb128> pitti, correct, that's the best way (and why we keep other packages depwaiting on ppc)
+[12:04] <pitti> quite some meta packages do
+[12:04] <seb128> they depends or recommends?
+[12:04] <pitti> ah, recommends
+[12:04] <seb128> well, let's try deleting the binary on ppc and see what britney says
+[12:05] <pitti> done
+[12:05] <pitti> seb128: thanks for the explanation
+[12:05] <seb128> pitti, yw!
+[12:20] <ari-tczew> do we need to keep patches to fix DSO linking (in my case, patch from natty) in saucy?
+[12:21] <geser> if it's still needed then yes
+[12:27] <pitti> ari-tczew: just try p/sbuilding it without; you'll see if it still fails
+[12:27] <ari-tczew> pitti: without that one builds fine, just asking to make sure
+[12:28] <ari-tczew> but it's odd described in d/changelog: Resolve unresolved symbols in shared library.
+[12:29] <pitti> ari-tczew: these kinds of patches usually fixed build failures like "link failure: unresolved symbol blabla"
+[12:29] <pitti> ari-tczew: so it looks like you can drop it
+[12:29] <ari-tczew> thanks pitti!
+[12:34] <tvoss__> pitti, ping
+[12:35] <pitti> tvoss__: I just spoke 5 mins ago :)
+[12:35] <pitti> tvoss__: hey, wie gehts?
+[12:49] <ari-tczew> tjaalton: you have dropped a part of changes in merge libxvmc, but there is no info about that in d/changelog. could you explain me why these changes have been dropped?
+[12:50] <ari-tczew> (http://bazaar.launchpad.net/~ubuntu-branches/ubuntu/saucy/libxvmc/saucy/revision/16)
+[12:56] <tjaalton> ari-tczew: what changes?
+=== psivaa is now known as psivaa-afk
+[13:00] <ari-tczew> tjaalton: http://bazaar.launchpad.net/~ubuntu-branches/ubuntu/saucy/libxvmc/saucy/revision/16 that's the merge done by doko
+[13:00] <ari-tczew> in your merge there are no changes in files d/rules and d/libxvmc1.install anymore
+[13:01] <ari-tczew> that's merge done by you http://bazaar.launchpad.net/~ubuntu-branches/ubuntu/saucy/libxvmc/saucy/revision/18
+=== tkamppeter__ is now known as tkamppeter
+[13:07] <ari-tczew> tjaalton: i'm going to merge latest libxvmc from Debian and I can re-add the dropped changes, but I'm asking whether there is a reason to drop them or it was a false
+[13:10] <pitti> seb128: ah, shotwell propagated now, good
+[13:10] <seb128> pitti, excellent ;-)
+[13:10] <pitti> it seems britney doesn't wait for a successful autopkgtest, though
+[13:11] <seb128> pitti, is that how jibel fixed the "waiting for ever"? ;-)
+[13:11] <pitti> no, I think it's always been that (buggy) way
+[13:11] <pitti> if you introduce a new autopkgtest, then that won't be considered for propagation, only from the second time on
+[13:12] <pitti> like, if it would only consider tests which already exist in saucy
+[13:12] <seb128> oh, right
+[13:12] <pitti> which is how all these broken autopgktests make it into saucy in the first place
+[13:31] <tjaalton> ari-tczew: it was a year ago, no idea
+[13:31] <tjaalton> ari-tczew: do whatever works, but we'd like to host the diff in git.debian.org
+[13:48] <sil2100> slangasek: hi! Are you around?
+[13:50] <sil2100> slangasek: I think we'll have to schedule a meeting for UDS that would discuss the issue of FFe for Ubuntu Touch packages
+[13:50] <sil2100> slangasek: Didier asked me to make sure it's discussed on UDS anywhere
+[13:51] <sil2100> slangasek: we can of course attach it to some other meeting, but I guess we need to figure out to which
+=== barry` is now known as barry_
+=== barry_ is now known as barry
+[14:29] <xnox> seb128: yes, i know. I fixed 1 out of 2 problems with it, to make FTBFS more obvious.
+[14:37] <ari-tczew> tjaalton: you mean forward that change to Debian?
+=== freeflying is now known as freeflying_away
+[15:01] <slangasek> sil2100: I don't understand why we would need a UDS session to talk about an FFe for Ubuntu Touch packages; the FFe bug is already opened?
+=== _salem is now known as salem_
+[15:13] <sil2100> slangasek: because we want people to be aware that not only touch packages will need FFe's - since there are many many components that are shared between desktop and touch
+[15:13] <sil2100> slangasek: those might need FFe's as well
+[15:14] <sil2100> slangasek: for instance libunity is used for both, and most probably there will be changes needed for touch in it
+[15:14] <sil2100> So libunity, as one example, will also need FFe's - and I am to make sure that it will be clear to everyone
+[15:17] <spindritf> I need some packages that are not available in the official repo, I though I would use a PPA for that -- is this http://developer.ubuntu.com/packaging/html/ up-to-date documentation I should peruse for that?
+[15:25] <smartboyhw> spindritf, yes
+[15:31] <spindritf> thanks, smartboyhw
+[15:32] <roadmr> xnox: hello, sorry to trouble you, could you please have a look at bug 1216853? pxe installs over nfs are broken in 12.04.3 :(
+[15:32] <ubottu> bug 1216853 in casper (Ubuntu) "During PXE booting failed to mount nfs directory" [Undecided,New] https://launchpad.net/bugs/1216853
+[15:32] <janimo> ogra_, do you think it would make sense to take $ARCH into account in livecd-rootfs's auto/config and pass it to lb config?
+[15:33] <janimo> ogra_, I am again trying to build i386 touch image equivalents on an amd64 host
+[15:33] <ogra_> dont we take ARCH into account ?
+[15:33] <ogra_> i thought BuildLiveCD does
+[15:33] <ogra_> and calls live-build appropriately
+[15:34] <ogra_> janimo, you have to do it from a wrapper i guess
+[15:34] <janimo> ogra_, it is looked at in auto/build but apparently not in auto/config
+[15:34] <ogra_> janimo, i was actually pondering rootstock-ng :) which would be such a wrapper around the live-build calls
+[15:34] <janimo> ogra_, as an alternative to livecd-rootfs?
+[15:35] <ogra_> no
+[15:35] <janimo> aren't there too many scripts already?
+[15:35] <ogra_> as an alternative to BuildLiveCD
+[15:35] <ogra_> which is the actual master script
+[15:35] <janimo> and still no one-liner to exactly reproduce all our images
+[15:35] <ogra_> thats why
+[15:35] <ogra_> rootstock-ng --seed=ubuntu ...
+[15:36] <ogra_> something like that would be what i aim for
+[15:59] <janimo> ogra_, the android package in multiverse is the contents of the LXC container packaged as a deb?
+[15:59] <ogra_> i think thats just the binary blobs
+[16:01] <ogra_> xnox could help you with more details ... but UK is on a pleasure trip today :)
+[16:03] <mterry> xnox, will upstart 1.10 be pushed to saucy this week?
+[16:04] <slangasek> mterry: should be, but today's a bank holiday in the UK
+[16:05] <mterry> slangasek, gotcha
+=== rickspencer3_ is now known as rickspencer3
+=== jasoncwarner__ is now known as jasoncwarner
+[16:12] <slangasek> ogra_: https://blueprints.launchpad.net/ubuntu/+spec/foundations-s-phone-usb-shell looks like it may be a duplicate of https://blueprints.launchpad.net/ubuntu/+spec/appdev-1308-app-developer-mode; do you think we need two sessions about this?
+[16:13] <ogra_> slangasek, we surely dont, i was asked by plenty of people to register this spec though
+[16:14] <ogra_> so i think we definitely need one
+[16:19] <slangasek> ogra_: ok, marked as superseded
+[16:19] <xnox> mterry: it should be. jodh will be merging it and it should hit saucy this week, before thursday.
+=== Guest92436 is now known as nitrodex
+[16:20] <ogra_> slangasek, which one ?
+[16:20] <xnox> janimo: ogra_: the android package ships system.img both as .img and .zip, so yes that's LXC container contents, in a deb.
+[16:20] <ogra_> slangasek, mhall119 doesnt relly go into technical detail
+[16:21] <ogra_> xnox, ah, i thought that was in main
+[16:21] <janimo> xnox, thnanks
+[16:21] <slangasek> ogra_: marked yours as superseded by the other, if more technical details need to be added feel free to take over the blueprint? :)
+[16:22] <ogra_> nah, i'm fine
+[16:22] <slangasek> ogra_: but if we're agreed that we don't need two separate sessions, let's use the one session to the fullest
+[16:22] <xnox> ogra_: it's in multiverse with M.I.R. for restricted in progress.
+[16:22] <ogra_> that at least means i dont have to run the session now :P
+[16:22] <ogra_> xnox, ah, ok ... now go away from your keyboard ! :)
+[16:23] <xnox> ogra_: =)
+[16:23] <xnox> ogra_: i don't want to cook bbq, so i'll just wait here until it's all done =))))
+[16:23] <ogra_> haha
+[16:23] <ogra_> enjoy
+[16:41] <slangasek> sil2100: so I still don't understand how it's useful/relevant to have a UDS session about this; the FFe process is that you file bug reports, say what you need, and discuss with the release team in the bug log
+[16:43] <slangasek> sil2100: if you already know what FFes you need, just file the bugs and subscribe ubuntu-release
+[16:43] <sil2100> slangasek: ok then, if you say it's not needed then let's not - just passing down what Didier asked me to do, we'll still have to identify the components that might change in the process
+[16:44] <roadmr> stgraber: hello, sorry to trouble you, could you please have a look at bug 1216853? pxe installs over nfs are broken in 12.04.3 :(
+[16:44] <ubottu> bug 1216853 in casper (Ubuntu) "During PXE booting failed to mount nfs directory" [Undecided,New] https://launchpad.net/bugs/1216853
+[17:14] <sarnold> pitti: is the retracer alive and well? e.g 1216923 and 1216924 are both over three hours old without a re-trace yet
+[17:25] <seb128> sarnold, no, retracers were down, I'm restarting them
+[17:26] <sarnold> seb128: thank you :)
+[17:31] <bdmurray> tjaalton: do you have any plans to fix bug 1159983?
+[17:31] <ubottu> bug 1159983 in sssd (Ubuntu Precise) "[regression-update] Can't change local users password" [Undecided,Triaged] https://launchpad.net/bugs/1159983
+[17:33] <tjaalton> bdmurray: yes, i'll revert the change
+[17:36] <bdmurray> tjaalton: okay, thanks
+[18:04] <sarnold> pitti: seb 128 has handled the retracer problems, thanks :)
+[20:01] <pepper_chico> I have a bounty here guys, a bounty! http://askubuntu.com/q/335489
+[20:06] <soren> kees, stgraber, pitti, cjwatson: TB meeting, anyone?
+[20:12] <cjwatson> soren: bank holiday, on vacation, sorry
+[20:13] <soren> Guess not.
+[20:16] <soren> cjwatson: np. Enjoy!
+[20:20] <roadmr> xnox: thanks for poking the pxe/nfs bug!!
+=== cjwatson_ is now known as cjwatson
+=== sraue_ is now known as sraue
+[20:25] <stgraber> soren: hmm, isn't the TB meeting next week anyway?
+[20:33] <robert_ancell> mterry, hey
+[20:33] <mterry> robert_ancell, hello
+[20:33] <robert_ancell> mterry, you forgot to put the .conf in tests/Makefile.am in that MP, otherwise ready to land!
+[20:34] <robert_ancell> nice work btw!
+[20:34] <mterry> robbiew, oh shoot, will fix
+[20:35] <mterry> robert_ancell, done
+[20:36] <mterry> robert_ancell, thanks.  I can prepare the other bits (actually using depthId and naming sessions) once support for nested mir happens, I suppose
+[20:39] <robert_ancell> mterry, approved - I'll release it into archive in a few days unless you need it earlier
+[20:40] <mterry> robert_ancell, no
+[20:40] <hallyn_> should isc-dhcp-client's Depends not be switched from iproute to iproute2?
+[20:41] <soren> stgraber: Totally. My bad.
+[20:41] <hallyn_> bc as it is, in saucy, if i apt-get install isc-dhcp-client:i386, it fails due to irpoute:i386 not being installed, but that no longer exists - only iproute2 is multiarch
+[20:41] <pepper_chico> whoever answered the bounty tks =)
+[20:45] <stgraber> hallyn_: yeah, we need to move everything to iproute2. I'll have ifupdown down pretty soon (I believe it's part of the merge I'm doing at the moment), I'll take a look at the rest too.
+[20:45] <hallyn_> stgraber: ok, thanks.
+[20:46] <stgraber> hallyn_: the list of rdepends on iproute is pretty long and I don't think there's a good reason to carry the delta of moving them all to iproute2, but for the usual ones (isc-dhcp, ifupdown, vlan, ifenslave-2.6,... sure)
+[20:49] <hallyn_> stgraber: or maybe iproute could just be made per-arch or something (so i can install iproute:i386).  or apt be taught not to care in that case
+[20:49]  * hallyn_ is out of his depths
+[20:52] <stgraber> hallyn_: we could mark it foreign, but doing so wouldn't help with lxc as we'd then get the armhf version of iproute2, which we don't want
+[20:56] <hallyn_> stgraber: right if isc-dhcp-client actually needs iproute2:arch then it just needs to depend on that.  anyway, since you say you're on it i've closed the bugs.lp.net page and wno't file a bug for it :)
+[20:56] <hallyn_> thx
+[20:56] <infinity> Your versioning of your initramfs-tools upload is going to confuse the crap out of me.  Now you've pretty much forced me to merge, so I don't forget. :P
+[20:57] <hallyn_> success?
+[20:57] <robert_ancell> mterry, did you just accidentally set https://code.launchpad.net/~mterry/lightdm/greeter-api/+merge/173794 to merged?
+[20:58] <robert_ancell> it doesn't seem to have merged, but the status changed
+[20:58] <mterry> robert_ancell, it got merged because I based the branch you had off of it, but reverted some of the changes that weren't ready
+[20:59] <robert_ancell> ah, confusing :)
+[20:59] <mterry> yaeh
+[21:03] <slangasek> stgraber: why would you get the armhf version of iproute2?
+[21:05] <stgraber> slangasek: the use case is an armhf container in which we install isc-dhcp-client:<host architecture> which depends on iproute which is a transitional arch:all package depending on iproute2
+[21:06] <stgraber> slangasek: if we make iproute multi-arch:foreign, the existing iproute2:armhf will satisfy the dependency (as it should) and so the container will be stuck with the armhf version
+[21:06] <slangasek> hmm
+[21:07] <stgraber> hmm, actually, none of that matters since iproute2 itself is multi-arch:foreign
+[21:07] <slangasek> I was going to say
+[21:08] <stgraber> LXC explciitly installs iproute2:amd64 and isc-dhcp-client:amd64, so having iproute foreign would work
+[21:08] <stgraber> I guess I should do that AND move our core packages to using iproute2, there's no good reason to have those depend on a transitional package
+[21:09] <stgraber> and maybe spend some time next cycle to see if we can kick the transitional package out entirely (one can hope, the rdepends list is pretty long)
+[21:18] <infinity> stgraber: We can't kick the transitional package out until 14.10, but we can certainly make things stop depending on it.
+[21:20] <stgraber> infinity: right, have it there for upgrades in 14.04 and have it gone for good in 14.10 would be reasonable
+=== salem_ is now known as _salem
+[22:40] <stgraber> hallyn_: uploaded the new ifupdown and updated all the packages I had on my system which were directly depending on iproute. That should be enough to clear the transitional package from most default installs.
+[22:41] <hallyn_> stgraber: ok, i'll retry building an armhf saucy container tomorrow then (or have all the pkgs already finished building? :)
+=== jbicha is now known as Guest27918
+[22:41] <stgraber> hallyn_: will likely be an hour or so because they're published in the release pocket (build + autopkgtest + ...)
+[22:42] <hallyn_> ok, thanks
+[22:43] <hallyn_> now if only my ipxe build would get going  - cmon, lil doggie...  go on...
+[23:02] <darkxst> xnox, I need to reset some gsettings on the live session that are set by ubiquity-dm, where is the best place to do this? _on_try_ubuntu_clicked?
+[23:02] <darkxst> bug 1204312
+[23:02] <ubottu> bug 1204312 in ubiquity (Ubuntu) "ubuntu GNOME live session background not set correctly" [Medium,New] https://launchpad.net/bugs/1204312
+[23:03] <xnox> darkxst: actually ubiquity-dm should be showing the correct background.
+[23:04] <xnox> darkxst: look in ubiquity-dm for list of background, or I should finally stop ubiquity from manually forcing a background url, and instead simply use gsettings (if available on a given flavour)
+[23:04] <darkxst> xnox, there are two issues, one our background is not listed
+[23:04] <xnox> ... and ubiquity force sets picture-uri which points to non-existing file.
+[23:04] <darkxst> the other is that we actually use an animated background so that is an xml file that only gnome-shell can display
+[23:05] <darkxst> so we would set to a static image in ubiquity, but still need to reset the key
+[23:06] <xnox> darkxst: gnome-shell or gnome-settings-daemon? as far as I know gnome-settings-daemon is the thing that displays the background picture both in ubiquity, unity and gnome.
+[23:06] <xnox> darkxst: or is really gnome-settings-daemon not used anymore to display background under gnome-shell?
+[23:06] <darkxst> xnox, backgrounds are in mutter
+[23:07] <darkxst> unity still uses  g-s-d background plugin however
+[23:08] <xnox> darkxst: comment out picutre-options & picture-uri in gesettings_keys list. And try both unity & your session. Everything should just work.
+[23:09] <xnox> darkxst: cause at the moment ubiquity is not settings any colors, so what you see is fallback already.
+[23:09] <xnox> arr.. "and try both ubiquity & your gnome-shell session" is what I meant.
+=== jbicha_ is now known as jbicha
+[23:20] <darkxst> oh I guess the animated backgrounds do work there after all
+[23:21] <darkxst> there is also the 'num-workspaces' setting which is not ideal
+[23:26] <xnox> darkxst: I guess we could reset the keys to default on exit.
+=== freeflying_away is now known as freeflying
+[23:40] <darkxst> xnox, that seems reasonable
+[23:42] <darkxst> xnox, btw didnt have any luck getting gnome-shell to run under raring cd. It complains about not being able to find ck session there.
+[23:42] <darkxst> It does run on saucy though if I borrow the vt logind session
+[23:45] <xnox> darkxst: how do you "borrow the vt logind session"?
+[23:46] <xnox> darkxst: cause that's really all that is needed to be added to saucy cd to work.
+[23:46] <darkxst> xnox, I just hardcoded XDG_SESSION_ID
+[23:47] <xnox> darkxst: *cough* is that really all that's needed?! =) excellent.
+[23:47] <xnox> Laney: see ^ darkxst - the easy way to integrate logind.... =)
+[23:47] <xnox> darkxst: does it make network-manager indicator work as well?
+[23:48] <darkxst> xnox, I didn't test that, but will check
+[23:50] <darkxst> xnox, yes it does
+[23:51] <xnox> darkxst: so what do you hardcode? XDG_SESSION_ID=c2 ?
+[23:52] <xnox> or XDG_SESSION_ID=c0 ?
+[23:52] <darkxst> XDG_SESSION_ID=c1
+[23:53] <darkxst> it seems sessions c1 - c6 always exist
+[23:53] <xnox> darkxst: of-course they do.
+[23:54] <darkxst> although actually network applet always works fine here
+[23:54] <darkxst> I suppose its wifi that had problems?
+[23:54] <xnox> darkxst: tty1-6 autologin into the default account.
+[23:54] <xnox> darkxst: wifi page within ubiquity & the wifi indicator had troubles.
+[23:54]  * xnox actually likes that.
+[23:54] <darkxst> ok I can't actually test that
+[23:55] <xnox> darkxst: but c1 session wouldn't be a tty/graphical session. I wonder if that matters at all.

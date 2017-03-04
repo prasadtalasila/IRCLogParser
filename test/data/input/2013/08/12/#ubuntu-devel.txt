@@ -1,0 +1,262 @@
+[00:05] <fossterer> Hi ! I removed a patch applied earlier and receiving error as a result. Can smeone look into it?
+[00:09] <RAOF> lifeless: So that apt-btrfs-snapshot can work.
+[00:10] <lifeless> RAOF: I don't see the connection
+[00:10] <RAOF> lifeless: apt-btrfs-snapshot will take snapshots of your / on each apt transaction; you obviously don't want to roll back your /home as well if you decide to rollback
+[00:10] <lifeless> RAOF: there are lots of other things - /var comes to mind, which would be equally disasterous to rollback willynilly.
+[00:10] <lifeless> RAOF: mail spool, virtual machine files, LXC containers...
+[00:11] <RAOF> lifeless: But only bits of /var - it's a good bet that nothing under /home wants to be rolled back, whereas various bits of /var will.
+[00:12] <lifeless> RAOF: except for any daemon with a /home home, but sure thats less likely.
+[00:12] <RAOF> This could be rephrased as ‘package downgrades are hard, m'kay?’
+[00:12] <RAOF> What daemon(s) have a /home home?
+[00:12] <lifeless> sure, but the thing that got me was the *default* install makes a subvolume.
+[00:13] <lifeless> apt-btrfs-snapshot isn't installed by default
+[00:13] <lifeless> in fact, it's in universe.
+[00:14] <lifeless> RAOF: daemons with a /home home - I don't know, was a hypothetical, which is why I said 'less likely'
+[00:14] <RAOF> AFAIK it's harmless to make /home a subvolume, so you might as well make it one?
+[00:14] <lifeless> it's not harmless ;)
+[00:15] <lifeless> operations like rebalancing and so on that are per subvolume need to be repeated per subvolume; backups and copies etc with --one-filesystem likewise.
+[00:15] <lifeless> Folk *need to know* that this is being done. The partitioner shows what the partition table will be like - so that informs the person installing Ubuntu.
+[00:15] <lifeless> But there was zero notification of the subvolume behaviour, I found out when I had cause to review my fstab, and then found out my backup scripts hadn't been working properly for a year
+[00:16] <RAOF> Eeep.
+[00:16] <lifeless> Thats what I said.
+[00:16] <lifeless> Only my version wasn't printable.
+[00:17] <lifeless> I had a lot of good backups of everything but boot (expected) and home (unexpected)
+[00:17] <RAOF> Unicode has a *lot* of characters :)
+[00:17] <lifeless> :)
+[00:17] <ajmitch> 'small pile of poo' probably describes it
+[00:18] <RAOF> I expect that this is a bug in the partitioner, or at least will require changes there. I don't believe the partitioner understands subvolumes, so it'll need to be taught about them before it can display them.
+[00:19] <lifeless> So for clarity: I have no objection to the installer suggesting I might like a subvolume. I have a big objection to it just happening.
+[00:20] <lifeless> Of course, I may be horribly misremembering, in which case mea culpa.
+[00:20] <lifeless> if I get a little time I'll hand install a VM and see
+[00:31] <RAOF> lifeless: Oh, no. It definitely just happens.
+[01:21] <arand> lifeless: (randomly read the irclog) I'm not sure if you've read it already, but I've tried to put down the info about the ubuntu btrfs setup over at https://help.ubuntu.com/community/btrfs#Ubuntu-specific_subvolume_layout_in_11.04_and_later
+[01:23] <lifeless> arand: I saw that, thanks.
+[01:23] <lifeless> arand: it doesn't explain why it's like that, just that it is.
+[01:27] <arand> Indeed, though the home - / separation tends to be the most common one (except maybe boot), so I guess it makes a bit of sense.
+[01:29] <arand> lifeless: I think it was cjwatson who instated it in the installer, so I guess he's the one to ask ;)
+=== cody-somerville_ is now known as cody-somerville
+=== Logan_ is now known as log
+[06:42] <dholbach> good morning
+=== smb` is now known as smb
+[07:18] <sil2100> Hi!
+[07:18] <sil2100> Does anyone know if there will be some patch pilot available today ;) ?
+[07:24] <Noskcaj> sil2100, there's meant to be three different ones today, dholbach might know actual times
+[07:24] <Noskcaj> Do you want me to check it?
+[07:24] <dholbach> https://www.google.com/calendar/embed?src=6k1e5rq45m1bdqq0n1ge3oqaok@group.calendar.google.com&gsessionid=OK
+[07:25] <dholbach> (linked from https://wiki.ubuntu.com/UbuntuDevelopment/CodeReviews)
+[07:25] <Laney> a crack team
+[07:39] <mlankhorst> g'day
+[07:45] <mlankhorst> @pilot in
+=== udevbot changed the topic of #ubuntu-devel to: Ubuntu 13.04 released | Archive: open | Devel of Ubuntu (not support or app devel) | build failures -> http://qa.ubuntuwire.com/ftbfs/ | #ubuntu for support and discussion of lucid -> raring | #ubuntu-app-devel for app development on Ubuntu http://wiki.ubuntu.com/UbuntuDevelopment | See #ubuntu-bugs for http://bit.ly/lv8soi | Patch Pilots: mlankhorst
+[07:46] <dholbach> sil2100, ^ :)
+[07:47] <mlankhorst> keep in mind I probably can't upload anything, so you have to find your own sponsor :p
+[07:49] <sil2100> \o/
+[07:49] <sil2100> dholbach: thanks ;)
+[07:49] <sil2100> mlankhorst: I'll poke you about sponsoring something in a moment if you don't mind ;)
+[07:51]  * mlankhorst can only upload to xorg
+[08:57] <mwhudson> who do i have to bribe to get this kernel patch: http://git.kernel.org/cgit/linux/kernel/git/torvalds/linux.git/commit/?id=c5f927a6f62196226915f12194c9d0df4e2210d7
+[08:57] <mwhudson> backported to raring?
+[09:23] <dholbach> mwhudson, https://wiki.ubuntu.com/KernelTeam/KernelUpdates is what I could find quickly - maybe it's worth to ask in #ubuntu-kernel too
+[09:25] <mwhudson> dholbach: i guess it's getting to the point where "wait for saucy" becomes the easiest option :)
+[10:12] <didrocks> cjwatson: I know you are at debconf, but answer when you can: I saw that britney didn't block the Mir deps (unity-system-compositor) having a strict version dependency on Mir (latest Mir went in without the compatible u-s-c)
+[10:13] <didrocks> cjwatson: as upstream are breaking ABI daily, do you think there is a way for that case to be blocked? If not, if I try using a virtual package based on the upstream version, will that work?
+=== wedgwood is now known as Guest52531
+[10:20] <seb128> cjwatson, rewording what didrocks said, does britney handle a "provides: <something>" being dropped as "something" being dropped, e.g does it enforce rdepends of something to be fixed before allowing migration?
+[10:21] <geser> didrocks: both u-s-c and mir in saucy have the same timestamp in their version right now. so it's ok right now?
+[10:22] <didrocks> geser: it's ok right now, but it's released every 4 hours
+[10:22] <didrocks> I've block automated uploads during the week-end because of this
+[10:23] <geser> didrocks: should u-s-c have also an upper bound version check on libmirserver1 if it doesn't work with newer ones? (currently it's only >=)
+[10:24] <didrocks> hum, weird, it was = before
+[10:24]  * didrocks looks at who changed that
+[10:25] <didrocks> geser: oh I know, it's because of -V wasn't changed with ABI transition
+[10:25] <didrocks> ok, let's see with the fixed version that will now be available
+[10:25] <didrocks> and see if it will block mir without u-s-c
+=== gusch is now known as gusch|lunch
+[11:05] <sil2100> mlankhorst: hi!
+[11:05] <sil2100> mlankhorst: are you free for some sponsoring by any chance?
+[11:05] <sil2100> mlankhorst: there is this: https://bugs.launchpad.net/ubuntu/+source/lucene++/+bug/1211184
+[11:05] <ubottu> Launchpad bug 1211184 in lucene++ (Ubuntu) "lucene++ 3.0.4-0ubuntu2 needs releasing" [Undecided,New]
+[11:07] <mlankhorst> sil2100: as I said I can't sponsor uploads outside of xorg :-)
+[11:10] <seb128> sil2100, I can sponsor it
+[11:10] <seb128> @pilot in
+=== udevbot changed the topic of #ubuntu-devel to: Ubuntu 13.04 released | Archive: open | Devel of Ubuntu (not support or app devel) | build failures -> http://qa.ubuntuwire.com/ftbfs/ | #ubuntu for support and discussion of lucid -> raring | #ubuntu-app-devel for app development on Ubuntu http://wiki.ubuntu.com/UbuntuDevelopment | See #ubuntu-bugs for http://bit.ly/lv8soi | Patch Pilots: seb128, mlankhorst
+[11:11] <asac> hi... what was the magic to get a buglist like: https://bugs.launchpad.net/ubuntu-touch-preview/+bugs in plain/text ?
+[11:12] <asac> dholbach: am i right that you remember this? :)
+=== steveire_ is now known as steveire
+[11:12] <asac> bdmurray: ^^ thx
+[11:13] <sil2100> seb128: !
+[11:13] <sil2100> seb128: thanks :)
+[11:13] <seb128> asac, not sure you can...
+[11:13] <asac> seb128: i am 100% sure i did that in the past :)
+[11:13] <seb128> asac, you can add /+text to some pages, like bug reports
+[11:13] <asac> ah
+[11:13] <sil2100> mlankhorst: no problem, seems I have missed that message due to my disconnecting
+[11:13] <seb128> asac, but that doesn't work for the list view
+[11:14] <asac> yeah
+[11:14] <asac> lets wait for bdmurray or dholbach to waked up
+[11:14] <seb128> asac, you can do https://bugs.launchpad.net/ubuntu-touch-preview/+bugs -text
+[11:15] <seb128> ups
+[11:15] <seb128> asac, you can do https://bugs.launchpad.net/ubuntu-touch-preview/+bugs-text
+[11:15] <seb128> asac, but that gives you only the numberS...
+[11:15] <seb128> not very useful
+[11:16] <asac> interesting :)
+[11:16] <asac> i think i saw a more meaningful list
+[11:16] <asac> when we worked on this bug harvesting tool back in heno days :)
+[11:16] <asac> but lets see
+[11:18] <cjwatson> didrocks: if there's still a problem, I'd need to see the control files of the things that you think should have been blocked, bearing in mind I don't know the specific packages in question
+[11:19] <cjwatson> didrocks: from the sound of the discussion I read, using a virtual package that expresses the ABI would be a good idea; that's probably better than adding a << bound
+[11:19] <didrocks> cjwatson: yeah, now we have a fixed version of Mir/u-s-c in the release pocket. I'm trying to rebuild a new Mir and push to proposed to see if it was just due to the bad transition
+[11:19] <cjwatson> seb128: yes
+[11:19] <didrocks> cjwatson: right now, the deps are just:
+[11:19] <didrocks> unity-system-compositor Depends: mir (= <version>)
+[11:19] <cjwatson> Exact-version dependencies should be banned :-P
+[11:20] <cjwatson> They're almost never what people *actually* want, just a bad approximation
+[11:20] <didrocks> cjwatson: upstream not bumping soname should be banned as well
+[11:20] <didrocks> they are breaking ABI multiple times a day
+[11:20] <cjwatson> Yes, but that isn't an excuse for exact-version dependencies
+[11:20] <lifeless> didrocks: mir is ?
+[11:20] <didrocks> lifeless: right
+[11:20] <didrocks> cjwatson: and they don't want to maintain the ABI version by hand
+[11:20] <cjwatson> If I were in this situation I would look into automatically computing an ABI hash
+[11:20] <didrocks> so I have to do with the constraints that are imposed on me
+[11:21] <cjwatson> Many packages in the archive do this, although I admit I don't offhand know of a C++ example
+=== MacSlow is now known as MacSlow|lunch
+[11:21] <didrocks> cjwatson: that would be a nice thing I can investigate the day I don't have a ping every 2 minutes and 4 new compononents to push every day
+[11:22] <cjwatson> But if you used one of the tools to produce a reduced textual representation of the ABI, took a few characters from its hash, and stuck that in Provides and shlibdeps, that would do the job
+[11:22] <cjwatson> didrocks: Sorry, I can't help you then
+[11:22] <cjwatson> I have as much work as you do
+[11:22] <didrocks> I know :)
+[11:22] <cjwatson> Please don't blame me
+[11:22] <didrocks> cjwatson: I don't at all, but just understand why it's a strict dep for now :/
+[11:22] <cjwatson> If you don't have time to do any changes, you can't improve anything
+[11:23] <didrocks> I do changes to accomodate upstreams and try to get things flowing
+[11:23] <didrocks> cjwatson: so, back to my question, should the exact version dependency block britney?
+[11:23] <cjwatson> Yes
+[11:24] <didrocks> ok, thanks, I didn't catch they didn't bump the soname change it in debian/rules the other day, so this rebuild should proove it works
+[11:24] <didrocks> thanks cjwatson
+[11:25] <cjwatson> https://wiki.ubuntu.com/ProposedMigration for more on the migration semantics
+[11:26] <didrocks> cjwatson: ah, a good reading, will have a look, thanks again
+=== gusch|lunch is now known as gusch
+[11:55] <stokachu> rbasak: building and testing the mysql upgrade now should hopefully be ready in the next hour
+=== tvoss is now known as tvoss|quick_lunc
+[12:11] <dholbach> asac, I was out for lunch
+[12:11] <dholbach> asac, https://bugs.launchpad.net/ubuntu-touch-preview/+bugs-text
+[12:13] <asac> dholbach: right. so no way to get the same stuff with titles etc.?'
+[12:13] <asac> i thought that existed as well at some poin
+[12:13] <dholbach> asac, no, AFAIK for that you have to use the API
+[12:15] <asac> kk thx dholbach
+=== _salem is now known as salem_
+=== MacSlow|lunch is now known as MacSlow
+[12:33] <didrocks> cjwatson: http://people.canonical.com/~ubuntu-archive/proposed-migration/update_excuses.html hum, Mir seems to be a valid candidate, but u-s-c Depends on libmirserver1 (= 0.0.9+13.10.20130812.1-0ubuntu1)
+[12:33] <didrocks> mir (0.0.9+13.10.20130812.1-0ubuntu1 to 0.0.9+13.10.20130812.2-0ubuntu1)
+[12:41] <Laney> didrocks: fails in update_output for that reason
+[12:41] <didrocks> Laney: ah, and that's not reflected in _excuse?
+[12:41] <Laney> no, that's just a first stage of checks
+[12:42] <Laney> https://wiki.ubuntu.com/ProposedMigration
+[12:42] <didrocks> Laney: well, I read:
+[12:42] <didrocks> The update excuses: list of all candidate package versions and the basic status of their propagation into the release pocket; this is somewhat shorter and nicer than
+[12:42] <didrocks> The update output: the complete, rather crude output of the proposed-migration scripts as they recurse through the candidates.
+[12:42] <didrocks> It doesn't say the first one is only a first stage :)
+[12:42] <didrocks> but anyway, it's excellent, so blocked as it was supposed to, great! :)
+[12:42] <didrocks> thanks Laney
+[12:49] <cjwatson> didrocks: this is working as it's supposed to, as Laney said.  I've clarified the wiki page
+[12:50] <didrocks> cjwatson: excellent! thanks a lot. /me ticks one less issue to deal with for now
+=== barry` is now known as barry_
+=== barry_ is now known as barry
+=== rickspencer3_ is now known as rickspencer3
+=== salem_ is now known as _salem
+=== _salem is now known as salem_
+=== Guest52531 is now known as wedgwood
+=== ema_ is now known as ema
+=== apachelogger is now known as yovel_
+=== yovel_ is now known as apachelogger
+[14:38] <smartboyhw> kirkland, sure (on the email)
+[14:38] <kirkland> smartboyhw: great, thanks
+[14:45] <sergiusens> cjwatson: good day again! Question for you, is the cron for http://people.canonical.com/~ubuntu-archive/click_packages/ using ~sergiusens/click_ready/click_copy.py or a local copy?
+[14:46] <cjwatson> the former
+=== steveire_ is now known as steveire
+[14:54] <sergiusens> great, that works for me
+[15:03] <roaksoax> xnox: howdy!! you are one of the maintainers of python-flake8 in debian right?
+[15:04] <roaksoax> xnox: or am I crazy :)?
+[15:04] <roaksoax> i think i am
+[15:04] <roaksoax> nevermind :)
+[15:41] <stokachu> rbasak: i attempted to build mysql but it continually fails on a few unittests
+[15:42] <stokachu> and each build takes like 3 hours
+=== andy__ is now known as andyrock
+[16:14] <infinity> @pilot in
+=== udevbot changed the topic of #ubuntu-devel to: Ubuntu 13.04 released | Archive: open | Devel of Ubuntu (not support or app devel) | build failures -> http://qa.ubuntuwire.com/ftbfs/ | #ubuntu for support and discussion of lucid -> raring | #ubuntu-app-devel for app development on Ubuntu http://wiki.ubuntu.com/UbuntuDevelopment | See #ubuntu-bugs for http://bit.ly/lv8soi | Patch Pilots: mlankhorst, infinity, seb128
+[16:15] <infinity> mlankhorst: Still piloting, or forgot to bounce out?
+[16:15] <mlankhorst> @pilot out
+=== udevbot changed the topic of #ubuntu-devel to: Ubuntu 13.04 released | Archive: open | Devel of Ubuntu (not support or app devel) | build failures -> http://qa.ubuntuwire.com/ftbfs/ | #ubuntu for support and discussion of lucid -> raring | #ubuntu-app-devel for app development on Ubuntu http://wiki.ubuntu.com/UbuntuDevelopment | See #ubuntu-bugs for http://bit.ly/lv8soi | Patch Pilots: seb128, infinity
+[16:15] <mlankhorst> well was about to eod :P
+[16:29] <mdeslaur> mterry, mpt: this is cool: http://www.iphonehacks.com/2013/08/codescrambler-scrambles-numbers-on-passcode-screen.html?utm_source=feedburner&utm_medium=feed&utm_campaign=Feed%3A+iphonehacks+%28iPhone+Hacks%29
+[16:29] <mdeslaur> (as a non-default alternative)
+[16:29] <mterry> cute
+[16:30] <mpt> cool
+[16:42] <dobey> anyone know anything about possible insanity of mixing qt4 and qt5 libraries together in the same binary?
+[16:43] <dobey> is it doable, or do you end up with same problems of gtk 2/3 mixing?
+[16:46] <dobey> n/m
+[17:04] <pete-woods> robru: good afternoon! when you get the chance, would you be able to enable the coverage and test hooks for the libqtdbustest and libqtdbusmock projects in the same way you have done for indicator-network-prompt?
+[17:04] <pete-woods> dobey: don't do it -> sedfault city
+[17:04] <pete-woods> *segfault
+[17:04] <pete-woods> they share the same namespaces
+[17:08] <dobey> right
+[17:16] <ScottK> dobey: http://perezmeyer.blogspot.com/2013/08/qt-in-debian-using-qt4-andor-qt5-in.html
+[17:37]  * pinky is away: Away
+=== Nisstyre-laptop is now known as Nisstyre
+=== zyga_ is now known as zyga
+[18:50] <xnox> roaksoax: nonetheless, what do you need/want with python-flake8 =) ?
+[18:50] <xnox> roaksoax: it's team maintained, so i have commit access...
+[18:51] <dobey> mardy: are you still around?
+[19:00] <dobey> guess not
+[19:18] <roaksoax> xnox: it is just that i want to sync it but the package in debian is broken as it depends on non-existant packages. but it seems that the svn repo has an updated packaging that has not yet been released
+[19:19] <xnox> roaksoax: ah, yeah. it's in flux at the moment.
+[19:20] <roaksoax> xnox: yeah! thought you were maintaining it but i guess i misread :)
+[19:46] <Noskcaj> kirkland, I was the only person who did anything at the testdrive hackfest. Do i still need to fix the changelog?
+[19:46] <Noskcaj> And your release script still didn't +1 the setup.py
+[19:47] <kirkland> Noskcaj: okay, I'll fix the release script
+[19:47] <kirkland> Noskcaj: you can put all of the changes under your own name/section, [ Jackson Doak ]
+[19:47] <kirkland> Noskcaj: but, yes, I do need you to write a list of bulleted changes
+[19:48] <kirkland> Noskcaj: look at debian/changelog and you'll see how I do those
+[19:48] <kirkland> Noskcaj: this is something you'll need to learn, if you want to help maintain TestDrive ;-)
+[19:48] <kirkland> Noskcaj: did Smartboyhw contribute to the hackfest?
+[19:49] <kirkland> Noskcaj: he emailed me asking me to add him to the testdrive team since he organized the hackfest;  I was curious what his contributions were to the day...
+[19:50] <Noskcaj> kirkland, nothing. danchapman was the only person who showed up, but his PC crashed the moment he realised testdrive was made with quickly.
+[19:50] <Noskcaj> btw, quickly is broken in 13.10
+[20:11] <stokachu> cjwatson: i was gonna merge keepalived is that cool with you?
+[20:15] <olli_> bregma, bdmurray is wondering what's a good ML to get autogenerated regression notifications for bamf in saucy
+[20:16] <bdmurray> olli_: actually raring
+[20:16] <olli_> bdmurray, alright, but not ubuntu-touch ;)
+[20:17] <bregma> I don;t think there is a mailing list for that
+[20:18] <olli_> bregma, it's currently going to ps-jenkins
+[20:18] <bdmurray> I'm using the email address of the uploader of the package which is ps-jenkins
+[20:18] <olli_> which I don't think is monitored for that reason
+[20:18] <bregma> so is everything else
+[20:18] <olli_> fginther, ^ do you have any input?
+[20:19] <sergiusens> olli_: everyone in QA has access to PS jenkins, it's a mailing list
+[20:19] <sergiusens> it's very high traffic though
+[20:19] <fginther> olli_, one moment
+[20:19] <olli_> sergiusens, it's not about access, but about looking out for such mails
+[20:20] <bdmurray> the subject of them is regularly formatted fwiw
+[20:20] <bregma> perhaps we need finer-grained status mails from the automated testers
+[20:20] <sergiusens> olli_: well I'm subscribed to that list and filter out what interests me
+[20:20] <bregma> I just check the results page online from time to time
+[20:21] <fginther> bdmurray, is this for the daily-release tests?
+[20:22] <bdmurray> fginther: no this is using the ubuntu error tracker to see if there are regressions detected in Stable Release Updates - http://www.murraytwins.com/blog/?p=127
+[20:24] <Noskcaj> kirkland, i've fixed the changelog. change you merge and possibly release?
+[20:28] <fginther> bdmurray, olli_, sergiusens' filtering is probably the best option. Monitoring packages already in the wild isn't something I normally do
+[20:29] <olli_> fginther, bdmurray wfm
+=== petersaints_ is now known as petersaints
+[20:30] <bdmurray> olli_: so the emails shall continue to go to the ps-jenkins list? is the current one awaiting moderation?
+[20:31] <olli_> bdmurray, that's how I understood fginther, I am not a moderator on that list (afaik)
+[20:32] <fginther> bdmurray, is something stuck?
+[20:34] <bdmurray> fginther: I don't know as I don't have access to the archive
+[20:41] <fginther> bdmurray, hmm, have you requested access to the ps-jenkins list? I'm not sure the moderator is still around, may need to engage IS
+=== Nisstyre-laptop is now known as Nisstyre
+=== andreas__ is now known as ahasenack
+=== tvoss is now known as tvoss|eod
+=== Ursinha-afk is now known as Ursinha
+=== mbiebl_ is now known as mbiebl
+[22:29] <seb128> @pilot out
+=== udevbot changed the topic of #ubuntu-devel to: Ubuntu 13.04 released | Archive: open | Devel of Ubuntu (not support or app devel) | build failures -> http://qa.ubuntuwire.com/ftbfs/ | #ubuntu for support and discussion of lucid -> raring | #ubuntu-app-devel for app development on Ubuntu http://wiki.ubuntu.com/UbuntuDevelopment | See #ubuntu-bugs for http://bit.ly/lv8soi | Patch Pilots: infinity
+=== salem_ is now known as _salem

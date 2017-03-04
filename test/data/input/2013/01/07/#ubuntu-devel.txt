@@ -1,0 +1,502 @@
+=== Tonio_aw is now known as Tonio__
+=== megha is now known as gia
+=== Tonio__ is now known as Tonio_aw
+[04:59] <pitti> Good morning
+[05:00] <pitti> OdyX, tkamppeter__: indeed, a config file doesn't belong into a library
+[07:44] <OdyX> pitti: that's fixed in master, I just pushed, but the job control files issue, well, meh.
+[07:52] <Adri2000> hi
+[07:53] <Adri2000> bug #1048634 has been waiting for ~ubuntu-sru action since 12/19. did I miss something...?
+[07:53] <ubottu> bug 1048634 in ejabberd (Ubuntu Precise) "Login issue with Pidgin using SRV records" [Medium,In progress] https://launchpad.net/bugs/1048634
+[08:27] <hadess> pitti, hey
+[08:27] <hadess> pitti, you're not on #gnome-hackers :)
+[08:27] <hadess> pitti, reckon that the power test suite is ready to merge?
+[08:35] <pitti> re
+[08:35] <pitti> hadess: hey! argh, indeed; my autojoin is just for #python and #introspection
+[08:35] <hadess> pitti, #control-center is good as well
+[08:35] <pitti> hadess: yes, I think it's good now; all tests succeed
+[08:36] <hadess> pitti, i'll try to install the necessary deps on fedora now
+[08:36] <pitti> hadess: I asked Matej about updating the Fedora package of dbusmock
+[08:36] <pitti> hadess: let's see how far they get on current rawhide
+[08:38] <hadess> pitti, doesn't look like the packages are in fedora to start with
+=== Tonio_aw is now known as Tonio__
+[08:39] <pitti> hadess: oh, I only saw http://pkgs.fedoraproject.org/cgit/python-dbusmock.git/, and Matej saying that he submitted 0.3
+=== Tonio__ is now known as Tonio_
+[08:42] <hadess> pitti, hasn't hit the mirrors yet, let me test all this
+[08:42] <pitti> hadess: for now you can also just download and extract the tarball, and run the test with setting PYTHONPATH to the extracted tarball
+[08:42] <pitti> (no need to install anything, etc.)
+[08:44] <hadess> pitti, it's fine, it's built, and available
+[08:45] <hadess> pitti, make check is the way to run the test suite, right?
+[08:45] <pitti> hadess: right
+[08:45] <pitti> hadess: you can also run a single test with e. g. "plugins/power/test.py PowerPluginTest.test_action_multiple_batteries"
+[08:45] <pitti> but "make check" will run them all
+[08:45] <hadess> pitti, should we get an error message instead of import failure when a python module isn't present?
+[08:46] <hadess> builddir = os.environ.get('BUILDDIR', os.path.dirname(__file__)) <- shouldn't that be srcdir instead?
+[08:46] <pitti> hadess: oh, what's missing? I thought I alrady covered dbusmock and GI
+[08:46] <hadess> pitti, for me, dbus
+[08:46] <pitti> hadess: ah, I can add that
+[08:47] <pitti> hadess: no, that's indeed meant to get the builddir; it's for calling the xtest helper
+[08:47] <pitti> hadess: the fallback is when you call the script manually instead of through the Makefiles (which do export BUILDDIR and TOP_BUILDDIR)
+[08:47] <hadess> pitti, i think it might be that plugins/power/test.py is getting run first
+[08:47] <hadess> pitti, ha, ok
+[08:48] <pitti> hadess: oh, I see; I had assumed that "import dbusmock" will run first, but indeed it doesn't; I'll add the check and error message
+[08:48] <hadess> ta
+[08:49] <pitti> or rather, move the gsdtestcase import up, then it'll also cover the Gio import
+[08:55] <hadess> pitti, ideas about that? http://fpaste.org/yTxF/
+[08:56] <pitti> hadess: oh yes, it's not supposed to be python 2.7, but python 3
+[08:56] <pitti> odd, how does it end up being called through 2.7?
+[08:56] <pitti> #!/usr/bin/env python3
+[08:57] <hadess> dbusmock was built against python2...
+[08:57] <hadess> let's try again
+[08:57] <pitti> hadess: oh wait, is that jhbuild?
+[08:57] <hadess> yeah, though i'm using the system python
+[08:57] <hadess> not mad enough to do it by hand
+[08:57] <pitti> hadess: could be https://bugzilla.gnome.org/show_bug.cgi?id=688353
+[08:58] <ubottu> Gnome bug 688353 in general "PYTHONPATH wrong when using python 3" [Normal,New]
+[08:58] <pitti> hadess: can you try again with PYTHON=python3 jhbuild run make check ?
+=== henrix_ is now known as henrix
+[08:59] <hadess> pitti, python-dbus and dbusmock are built against python2
+[08:59] <pitti> hadess: you don't have a python dbus package for python3?
+[08:59] <hadess> pygobject3 as well...
+[08:59] <pitti> hadess: dbusmock works with both
+[08:59] <hadess> nope
+[09:00] <pitti> hadess: so, we could change the test suite to also work with py2, I just wanted to avoid introducing more py2 stuff
+[09:00] <pitti> hadess: but anyway, this fails in a plain "import dbus", so something is wrong there
+[09:01] <pitti> hadess: jhbuild run python -c 'import dbus'
+[09:01] <pitti> hadess: does that fail with the same error?
+[09:01] <hadess> pitti, there's no py3 dbus module on my system
+[09:02] <hadess> works with python2, not python3
+[09:02] <hadess> would it be a big job to make it work with python2 as well?
+[09:02] <pitti> hadess: no, not a big job, but we need to put one or the other into the hashbang
+[09:03] <hadess> "python 3 requires using gdbus through introspection."
+[09:03] <hadess> apparently there won't be a dbus python for python 3
+[09:03] <pitti> hadess: so, I'm still confused how it ends up importing the py2.7 bits when you call it through py3
+[09:04] <pitti> hadess: there is
+[09:04] <hadess> you ported it? :)
+[09:04] <pitti> barry did
+[09:04] <hadess> it was my PYTHONPATH override which caused problems
+[09:04] <pitti> in 1.0 already, or at least 1.1
+[09:05] <hadess> in any case, no dbus or pygobject for python3 = won't work for now
+[09:05] <pitti> hadess: give me some minutes, there are a few py3-isms right now which need fixing to also work with 2.7
+[09:05] <pitti> hadess: pygobject is in jhbuild, and built for py3 by default now (and there's a pygobject-python2 jhbuild project for py2)
+[09:14] <pitti> hadess: I attached updated patches to the bug which now work with both 2 and 3
+[09:14] <pitti> hadess: just update the hashbang
+[09:15] <hadess> pitti, thanks
+[09:25] <hadess> pitti, much better :)
+[09:25] <hadess> pitti, i have that though: http://fpaste.org/LQ0F/
+[09:26] <pitti> hadess: yep, that's the bit that's fixed in dbusmock 0.3.1
+[09:26] <pitti> hadess: i. e. download, unpack, set PYTHONPATH to it
+[09:26] <hadess> ha, ok
+[09:26] <pitti> (sorry about that)
+[09:26] <jibel> pitti, could you review the branch attached to bug 1096788? it fixes a regression introduced by 2.2.3ubuntu2
+[09:26] <ubottu> bug 1096788 in autopkgtest (Ubuntu) "Capitalize field names read from control file" [High,Fix committed] https://launchpad.net/bugs/1096788
+[09:26] <pitti> jibel: bien sûr
+[09:27] <jibel> pitti, thanks
+[09:28] <hadess> pitti, where does it create the tmp files?
+[09:28] <hadess> pitti, i've updated it in fedora now
+[09:29] <pitti> hadess: standard mkdtemp(), i. e. /tmp or $TMPDIR
+[09:29] <pitti> hadess: cheers
+[09:30] <hadess> pitti, can you use a description template for the mkdtemp call?
+[09:30] <pitti> sure
+[09:30] <hadess> thanks
+[09:31] <pitti> hadess: http://paste.ubuntu.com/1506203/, I'll update the patch when we are done with discussing
+[09:31] <hadess> -shiftkey_CFLAGS = $(XTEST_CFLAGS)
+[09:31] <hadess> +shiftkey_CFLAGS = -I$(top_builddir) $(XTEST_CFLAGS)
+[09:31] <hadess> otherwise it couldn't find config.h
+[09:31] <pitti> oh, I didn't see that
+[09:31] <hadess> pitti, tests pass
+[09:32] <pitti> applied locally
+[09:32] <hadess> only other change i have here is for s/python3/python/
+[09:32] <pitti> hadess: ok, I guess "2 or 3" is your call
+[09:32] <hadess> do we have a better way to configure that, rather than require local changes
+[09:32] <hadess> well, i won't be able to do a clean make distcheck if there's "python3" being called
+[09:33] <pitti> hadess: Makefile could call ${PYTHON:-python3} ./test.py
+[09:33] <pitti> or default to python2
+[09:33] <pitti> right, it shoudl be something that works for you, of course
+[09:33] <pitti> hadess: I have dbus-python and pygobject from jhbuild, and these seem to work
+[09:34] <hadess> pitti, let me test with those then
+[09:34] <pitti> oh wait, do I have dbus-python? /me checks
+=== smb` is now known as smb
+[09:34] <pitti> hadess: ah no, I'm using dbus-python system packages
+[09:35] <hadess> looks like it builds python2 bindings by default
+[09:35] <pitti> hadess: but either way, as long as the code also works with py3, it's trivial to switch to py3 later
+[09:35] <pitti> so defaulting to py2 WFM
+[09:38] <hadess> pitti, let's go for python2, and we can work on getting a py3 setup working before 3.8
+[09:38] <pitti> hadess: http://paste.ubuntu.com/1506215/
+[09:39] <pitti> hadess: this defaults to py2, but if I run it with PYTHON=python3 it will use py3; WDYT?
+[09:42] <hadess> pitti, looks good, i'll commit all that in a sec
+[09:42] <pitti> hadess: ok, I'll update the patch attachments with that then
+[09:43] <hadess> pitti, done locally already
+[09:43] <pitti> ah, ok; was going to rebase, etc.
+[09:51] <pitti> jibel: can you please also send the updated patch to the Debian bug?
+[09:54] <jibel> pitti, sure
+=== Tonio_ is now known as Tonio_aw
+=== _salem is now known as salem_
+=== Tonio_aw is now known as Tonio_
+=== amitk is now known as amitk-afk
+=== fisted is now known as fisted_
+=== fisted_ is now known as fisted
+=== Tonio_ is now known as Tonio_aw
+=== Tonio_aw is now known as Tonio_
+[12:05] <tseliot> cjwatson: by passing debuild the "-v" parameter, did you mean to say that I should pass it together with the latest version of fglrx-updates?
+=== Zdra is now known as xclaesse
+[12:15] <cjwatson> tseliot: I forget the package names.  In general when you are uploading to <stable>-proposed and there's already a version in -proposed not yet promoted to -updates, you need to build the .changes file with -v<most recent version in release or updates pocket>
+[12:15] <cjwatson> so that all the changes not yet in updates appear in the .changes file
+[12:27] <tseliot> cjwatson: ok, I've learnt a new thing. Thanks
+[12:30] <cjwatson> tseliot: it's kind of awkward that uploaders need to do this by hand; maybe we'll fix it some day ...
+=== amitk-afk is now known as aitk
+=== aitk is now known as amitk
+[12:35] <maxb> ooi, what is actually affected by the changelog fragment in the changes? The email to the <codename>-changes list and descriptive fields in the LP UI I suppose?
+[12:38] <cjwatson> maxb: I think the e-mail changes are actually auto-calculated properly nowadays, but I'm told that it confuses sru-report (pending-sru.html)
+[12:38] <cjwatson> i.e. omitting -v can cause us to lose track of bugs not yet fixed in -updates
+[12:38] <cjwatson> I've not looked into it myself
+[12:40] <bdrung> coolbhavi: are there enough people interested in becoming an ARB member?
+[13:12] <coolbhavi> bdrung, received 2 applications till date
+[13:13] <coolbhavi> so sent a remainder
+[13:17] <bdrung> coolbhavi: i am too busy with other stuff already.
+[13:23] <coolbhavi> no issues bdrung
+=== MacSlow is now known as MacSlow|lunch
+=== cpg is now known as cpg|away
+=== chiluk_away is now known as chiluk
+=== Quintasan_ is now known as Quintasan
+[14:11] <cjwatson> tseliot: the jockey .changes file still doesn't include the changes from ubuntu7.6 :-(
+=== Tonio_ is now known as Tonio_aw
+[14:12] <cjwatson> tseliot: (bug 1080588 comment #33)
+[14:12] <ubottu> bug 1080588 in jockey (Ubuntu Precise) "jockey suggests not installable packages on renamed stack" [High,In progress] https://launchpad.net/bugs/1080588
+[14:13] <tseliot> cjwatson: can you reject it again, please? I'll reupload it
+[14:13] <tseliot> cjwatson: ah, thanks
+[14:13] <cjwatson> done
+[14:13] <cjwatson> tseliot: Looks like you need to use -v0.9.7-0ubuntu7.4
+[14:13] <cjwatson> I suggest checking the .changes file manually before upload
+=== MacSlow|lunch is now known as MacSlow
+[14:15] <tseliot> cjwatson: it looks good to me
+=== Tonio_aw is now known as Tonio_
+=== plars_ is now known as plars
+=== slank_away is now known as slank
+[14:56] <achiang> pitti: hi, i keep getting unity-2d crashers and it seems apport-retrace can't get a good trace out of it, cf: https://bugs.launchpad.net/bugs/1096285 - is there something on my end that needs to be updated or is it on the retracer side?
+[14:56] <ubottu> Ubuntu bug 1096285 in unity-2d (Ubuntu) "unity-2d-shell crashed with SIGSEGV" [Undecided,Invalid]
+[14:57] <pitti> achiang: it seems missing ddebs
+[14:58] <pitti> achiang: what you could try is to install all the libqt*-dbg stuff yourself and see whether you can get a better trace out of it?
+[14:58] <bdcomp> Hello world!
+[14:59] <pitti> achiang: the retracer is supposed to try and install those as well, but that doesn't seem to work for some reason (need deeper investigation to find out why)
+[14:59] <pitti> achiang: but there's no core dump on that bug any more
+[15:01] <bdcomp> I am trying to backport LibreOffice and have some questions about dput.
+[15:01] <achiang> pitti: ok, i'll try and manually install the libqt*-dbg packages locally. i pinged you precisely because i thought the backend wasn't working properly and might want someone to dig into it
+[15:01] <bdcomp> dpkg-buildpackage -sa dput -f ppa:bdcomp/backports libreoffice_3.6.4-0ubuntu1~precise2_source.changes it still uploaded not all source files: Uploading to ppa (via ftp to ppa.launchpad.net):   Uploading libreoffice_3.6.4-0ubuntu1~precise2.dsc: done.    Uploading libreoffice_3.6.4-0ubuntu1~precise2.debian.tar.gz: done.        Uploading libreoffice_3.6.4-0ubuntu1~precise2_source.changes: done.  Successfully uploaded packages.
+[15:02] <pitti> achiang: what it says is basically true -- http://ddebs.ubuntu.com/pool/main/q/qt4-x11/ doesn't have version 4.3
+[15:02] <pitti> argh ddebs argh
+[15:03] <bdcomp> The dput command should upload all the tar.xz files, but it doesn't. Please advise.
+[15:05] <achiang> pitti: how do those ddebs get built?
+[15:05] <pitti> achiang: the building is not the problem; it's the ridiculous and unreliable hack that we need to use to get them from the buildds to ddebs.u.c.
+[15:06] <OdyX> .oO(Wish there was a polished ddeb policy on the Debian side)
+[15:06] <pitti> achiang: which often fail because of macquarie going out of space (as it is right now), or buildds' apaches timing out, etc.
+[15:06] <pitti> achiang: the long-term solution is to store them in the LP librarian, FYI
+[15:07] <mterry> zul, I'll try and look at stevedore and testrepository later today or tomorrow.  Have to do some SRU work firt
+[15:07] <zul> mterry: okies
+[15:08] <achiang> pitti: got it. so the problem is understood and there's a plan in place. :)
+[15:09] <pitti> achiang: apport tries -dbg as well, but there is no libqtcore4-dbg
+[15:09] <pitti> so we'd need to add some more heuristics, such as installing all -dbg from the source package of the binary it's currently looking at
+[15:10] <pitti> so if you need an actual bt, it's probably easier to install them manually
+[15:10] <achiang> pitti: yeah, the actual BT is what i care about, because unity-2d keeps crashing on me. :-/
+=== tkamppeter__ is now known as tkamppeter
+[15:21] <ogra_> ogra@nexus7:~$ grep CONFIG_BLK_DEV_IO_TRACE /boot/config-3.1.10-8-nexus7
+[15:21] <ogra_> # CONFIG_BLK_DEV_IO_TRACE is not set
+[15:21] <ogra_> GRMBL
+[15:21] <ogra_> doesnt help to dig into ureadahead code if our kernel doesnt support it at all :P
+[15:27] <Sweetshark> bdcomp: dput uploads the files enumerated in the *.changes/*.dsc file. Have a look at them there.
+[15:27] <Sweetshark> bdcomp: -sa should include all files in the upload.
+[15:36] <bdcomp> Sweetshark: well, the *.dsc list all files but *.changes only 2 files.
+[15:38] <tumbleweed> bdcomp: correct. dput uploads things listed in .changes
+[15:39] <tumbleweed> bdcomp: the idea being, if a .orig.tar file that our source package (.dsc) contains was already uploaded, we don't need to upload it again
+[15:39] <bdcomp> tumbleweed: after the last dput command I received this error email: Rejected: Unable to find libreoffice_3.6.4.orig-binfilter.tar.xz in upload or distribution. Unable to find libreoffice_3.6.4.orig-dictionaries.tar.xz in upload or distribution. Unable to find libreoffice_3.6.4.orig-helpcontent2.tar.xz in upload or distribution. Unable to find libreoffice_3.6.4.orig-src.tar.xz in upload or distribution. Unable to find libreoffice
+[15:39] <tumbleweed> bdcomp: build the source package with -sa to include all orig tarballs
+[15:40] <Sweetshark> bdcomp: and maybe remove the *.dsc/*.changes files before, just the be sure ...
+[15:41] <tumbleweed> that seems pretty unecessary
+[15:43] <bdcomp> tumbleweed: just to be sure, the "dpkg-buildpackage -sa" command is instead "dpkg-buildpackage -S"?
+[15:43] <tumbleweed> no
+[15:43] <tumbleweed> dpkg-buildpackage -S -sa
+[15:43] <cjwatson> Sweetshark: Removing .dsc and .changes is entirely unnecessary
+[15:43] <tumbleweed> without -S, you'll build a binary package (.deb)
+[15:45] <Sweetshark> cjwatson: see? for cases like that ^^ it helps ;)
+[15:46] <bdcomp> from the start, my steps should be "dpkg-source -x *.dsc", "cd libreoffice-*", "dpkg-buildpackage -S -sa" and "dput ppa:... *.changes"?
+=== amitk is now known as amitk-afk
+[15:46] <tumbleweed> bdcomp: sounds about right
+[15:46] <Sweetshark> bdcomp: looks good
+[15:46] <cjwatson> Sweetshark: Not really, because the .changes would be clearly wrong in that case
+[15:47] <tumbleweed> although, there's no point in extracting a package, and then just building it again
+[15:47] <tumbleweed> presumably you make some changes in between...
+[15:47] <bdcomp> Great! Gonna try now - the results probably tommorow morning :)
+[15:47] <tumbleweed> bdcomp: if you're just backporting, have you seen the backportpackage command?
+[15:48] <bdcomp> tumbleweed: no. I am following this tutorial: https://wiki.ubuntu.com/LibreOfficePackaging#Backporting
+[15:49] <bdcomp> And Sweetshark advices :)
+=== slank is now known as slank_away
+[15:50] <Sweetshark> tumbleweed: i guess backportpackage is helping only in exceptional cases with libreoffice (when you depend on a third of main, chances are you need some tweaking anyway).
+[15:51] <tumbleweed> yeah, it just automates no-change backporting
+=== slank_away is now known as slank
+[16:04] <hallyn> SpamapS: are you still on SRU team?  re bug 1027987, the underlying cause seems to be (perhaps temporarily) solved in another pkg.  Can we either accept the pkg (as it seems verified to not make things worse) or reject it (so we can push a new libvirt precise-proposed SRU) ?
+[16:04] <ubottu> bug 1027987 in libvirt (Ubuntu Precise) "Starting libvirtd takes too long because of "udevadm settle" timeout" [Medium,Fix committed] https://launchpad.net/bugs/1027987
+[16:04] <hallyn> bug 1092826 would like a turn
+[16:04] <ubottu> bug 1092826 in libvirt (Ubuntu Precise) "libvirt client doesn't handle EINTR signal properly" [Undecided,New] https://launchpad.net/bugs/1092826
+=== doko_ is now known as doko
+[16:17] <SpamapS> hallyn: I am, and will try to look at that later today
+[16:18] <doko> seb128, are you familiar with the dbus package? looks like the tests are disabled by default. so it should be fine to drop the build dependencies for the tests as well?
+[16:18] <doko> jodh, ping
+[16:18] <jodh> doko: libnih? xnox is on it! :)
+[16:20] <doko> jodh, yes, this was my question =)
+[16:21] <xnox> doko: I have a question for you. New shadow adds depends on ustr, cunit & libsemanage - shall I make a DEB_STAGE=1 build of shadow ~ which drops libselinux, libsemanage, ustr, cunit out of min-chroot ?
+[16:21] <hallyn> SpamapS: great, thanks
+[16:23] <ogra_> cjwatson, /etc/init/console-font.conf talks about a udev rule in the comment at the top, where would that rule be ? i cant find it
+[16:23] <doko> xnox, hmm, how about building these packages instead? didn't I touch libselinux recently?
+[16:23] <xnox> doko: ok. I can do that. I think cunit need a tiny fix & libsemanage needs to ignore gem2deb the same way libselinux does.
+[16:23]  * ogra_ tries to fix a plymouth vs console-font race on the nexus7
+[16:24] <seb128> doko, hey, not so much, but I think we should get the test to run if we can, meanwhile I don't see an issue dropping the build-depends if it's creating issues
+[16:24] <ogra_> cjwatson, nevermind, found it
+[16:24] <cjwatson> ogra_: /lib/udev/rules.d/85-keyboard-configuration.rules
+[16:24] <ogra_> yeah
+[16:26] <doko> seb128, ok, as a first step, I'll drop the b-d's to let ir cross build
+=== amitk-afk is now known as amitk
+[16:33] <doko> xnox, libselinux already had support for DEB_STAGE
+[16:33] <xnox> doko: yeah. I want to copy it's support into libsemanage package.
+[16:34] <xnox> cause on the surface it looks similar.
+[16:34] <cjwatson> is libsemanage actually part of a loop?
+[16:35] <xnox> cjwatson: thanks to justed MIRed shadow, yes.
+[16:35] <xnox> r-deps that is.
+[16:39] <arges> anybody have experience with nvidia+xinerama with 6 monitors?
+[17:00] <smb> arges, Ok, so it seems python-dev used to pull in libssl-dev but not anymore. Just FYI. And no to previous question
+[17:10] <Guest74799> Hello!
+[17:10] <Guest74799> Is this the developer channel?
+[17:11] <sil2100> Guest74799: hi, yes
+[17:11] <Guest74799> sil2100: Are you a developer of Ubuntu?
+[17:11] <Guest74799> sil2100: Hi!
+[17:12] <Guest74799> sil2100: Because I have technical problems with ubuntu.
+[17:13] <mhall119> didrocks: ping
+[17:13] <didrocks> hey mhall119
+[17:13] <Guest74799> didrocks: Hi!
+[17:14] <didrocks> hey Guest74799. FYI, this is not a support channel, but a developer one see the topic :)
+[17:14] <sil2100> Guest74799: yes, I'm an Ubuntu developer, but from the integration team ;) But best if you send your question to #ubuntu , someone should answer for sure
+[17:15] <Guest74799> Meet here about the developers of Ubuntu.
+[17:15] <Guest74799> sil2100: Exactly! Something I need.
+[17:17] <Guest74799> sil2100: Sorry for my english! I mean: Exactly! So a developer I need.
+[17:17] <xnox> doko: I need libdbus-1-dev to be Multiarch:same =) there no clashing paths. I guess i'll just upload on top of your upload ;-)
+[17:18] <doko> xnox, sure
+[17:18] <doko> xnox, btw ustr is a pain ... any way not to use it in libsemanage?
+[17:20] <xnox> oh I wanted to look at that. As "upstream" is not helpful at all either.
+[17:20] <xnox> I am not sure. I am guessing that newer versions of compiler libraries should provide similarish functionality.
+[17:21] <cjwatson> Guest74799: it's generally better to just ask your question, rather than looking for somebody to ask
+[17:21] <cjwatson> (this is not me volunteering to answer your question; since I don't know what it is, I have no idea whether I'll be able to answer it)
+[17:36] <xnox> Can I use :native dependencies?
+[17:36] <xnox> build-deps that is.
+[17:37] <infinity>         # For the moment, we treat multiarch-annotated build-dependencies as
+[17:37] <infinity>         # the same as any others because we're not implementing a
+[17:37] <infinity>         # cross-buildd.
+[17:37] <infinity>         $deps =~ s/:any//g;
+[17:37] <infinity>         $deps =~ s/:native//g;
+[17:38] <infinity> xnox: ^-- The official buildds just strip it off, which is a sane thing to do, so they should work in the archive.  But, on the other hand, any time you add a :* to a build-dep, you probably need to think really hard about why and if you need it.
+[17:39] <xnox> infinity: me needs to build a tool for the build-arch, to execute on the build-host when crossbuilding to host-arch
+[17:40] <xnox> hence I need two libs both for $build-arch (x86) and $target-arch (armhf)
+[17:40] <xnox> alternatively I can do a circular dependency back on inself, which would be ugly.
+[17:40] <xnox> and totally not work in the archive.
+[17:41] <infinity> xnox: Oh, ew.  Yeah, I had that in a package and "fixed" it via marginal fluke of my native build-dep already being on the system. :P
+[17:41] <xnox> that is another posibility, let me check if it's available.
+[17:41] <infinity> xnox: In theory, though, "Build-Depends: libfoo, libfoo:native" should just compress down to "libfoo" on a non-cross build, so should work fine in the archive.
+[17:42] <xnox> infinity: yeah, but that won't be nice if the src package in question is "libfoo"
+[17:42] <infinity> xnox: That might not be true on Debian's buildd's, though.  Not awake enough to dig through the new sbuild's handling of that.
+[17:43] <infinity> xnox: Hrm?  It shouldn't be build-depending on itself at all, it should just be using the libs it built during the build.
+[17:43] <infinity> xnox: That advice doesn't change for a cross, it just means it might need to built itself twice.
+[17:43] <xnox> infinity: nih-dbus-tool is executed to generate some code to build further.
+[17:43] <infinity> s/built/build/
+=== deryck is now known as deryck[lunch]
+[17:44] <xnox> yeah. hence the question about :native dependencies =)
+[17:44] <cjwatson> xnox: :native breaks the current version of sbuild in raring; you need a patch I got committed upstream on Thursday.
+[17:44] <cjwatson> So I'd hold off on them for a little while yet.
+[17:45] <cjwatson> xnox: And it broke Debian's buildds last I heard (as does :any), making it hard to forward.
+[17:46] <xnox> ok. cjwatson, can nih-dbus-tool (M-A: foreign) package be available in chroot which does cross builds?
+[17:46] <cjwatson> Definitely the wrong answer.
+[17:46] <cjwatson> :native is long-term the right approach; it'll just take a little while to sort out.  We don't need evil workarounds in the meantime.
+[17:46] <infinity> xnox: If it's MA:foreign, a regular build-dep will prefer the BUILD_ARCH version, not the HOST_ARCH one.
+[17:47] <infinity> (Unless sbuild's or apt is getting this wrong right now and not following spec)
+[17:47] <xnox> yeah. but that introduces a circular build-dependency on itself for non-cross case.
+[17:47] <cjwatson> No, it absolutely doesn't
+[17:47] <xnox> src package libnih builds nih-dbus-tool binary package and uses it during it's build.
+[17:48] <cjwatson> :native build-dependencies on the things you need to build the native nih-dbus-tool in libnih, and do two build passes if cross-building
+[17:48] <infinity> xnox: Right, and circular build-deps are wrong, going back to my "you might just need to build it twice".  Why is that not doable?
+[17:48] <cjwatson> In the cross pass, use /path/to/nih-dbus-tool/you/just/built
+[17:48] <cjwatson> No circularity
+[17:48] <cjwatson> I made it work in Chromium OS ages ago (albeit pre-multiarch)
+[17:49] <xnox> yeah. So my original solution to use :native build-deps needed to build /path/to/nih-dbus-tool/you/just/built is the right one. Apart from we don't have :native support in sbuild just yet.
+[17:49] <cjwatson> It's the right answer, we just need to hold off a bit before implementing it.
+[17:49] <infinity> Well, we could pull your sbuild patches back from git.
+[17:49] <xnox> so I'll create a branch with :native build-dep. but I will not be uploading it, just will stick in a branch for wookey/doko =)
+[17:49] <infinity> Which reminds me, I need to commit mine too.
+[17:50] <cjwatson> infinity: Probably won't be that long 'til the next release
+[17:50] <xnox> ok, thank you all =)
+[17:50] <infinity> cjwatson: No, probably not.  I really want my patch to get into wheezy (if we can manage), so there's not some weird chroot-finding behaviour change between wheezy and jessie, so I'll be pushing to release our bits.
+[17:51] <cjwatson> infinity: Incidentally do you know how to figure out what code the Debian buildds run?
+[17:51] <infinity> They run a different branch entirely... Hosted on... I don't remember where.
+[17:51] <infinity> Ask Roger. ;)
+[17:52] <infinity> (It is, at least, a branch now, not an unmaintained fork, so life's a bit better than it used tobe)
+[17:52] <cjwatson> Fair enough.  There are a bunch of buildd-* branches in sbuild.git, but I have no idea which of them are used
+=== Tonio_ is now known as Tonio_aw
+=== henrix is now known as henrix_
+=== henrix_ is now known as henrix
+=== deryck[lunch] is now known as deryck
+=== henrix is now known as henrix_
+=== henrix_ is now known as henrix
+=== henrix is now known as henrix_
+[19:32] <dobey> can i bug a sponsor to poke at bug #1047606 please? i've attached new files for the package, and it would be nice to get it into raring now. thanks
+[19:32] <ubottu> bug 1047606 in Ubuntu Raring "[needs-packaging] ubuntuone-client-data" [Wishlist,New] https://launchpad.net/bugs/1047606
+=== Ursinha_ is now known as Ursinha
+=== rsalveti_ is now known as rsalveti
+[19:40] <fbond> Hi. Where is the right place to ask about broken package branches in LP? Branch in question is lp:ubuntu/precise/ifupdown.
+[19:41] <cjwatson> bugs.launchpad.net/udd
+[19:45] <fbond> cjwatson: Thanks.
+[20:11] <stokachu> o/
+[20:12] <stokachu> bdrung: i gotta go pick my daughter up from school but ill be back in about an hour to continue if you like
+=== Tonio_aw is now known as Tonio_
+[20:20] <bdrung> Sweetshark: which upload broke in raring? what's the big difference between quantal and raring for libreoffice?
+=== sroecker_ is now known as sroecker
+[20:26] <bdrung> stokachu: do you want to know which packages to merge/sync or how to do it?
+[20:26] <Sweetshark> bdrung: in this case there was some additional quoting needed for scripting in the rules file. doko did that when bootstrapping raring but never commited the change to the packaging repo. I checked the quotes to be there in the 4.0 branch and they were. Then someone indesrimiately and uncoordinated forwardported 3.6.4 from quantal to raring without the fix causing major pain. (Because breaking a package that takes a day to build is always maj
+[20:27] <Sweetshark> bdrung: but the specific stuff that broke is irrelevant. when you depend on a third of main, there always will be something that breaks.
+[20:27] <bdrung> Sweetshark: okay. the SRU policy requires that the fix is in the devel release.
+[20:27] <bdrung> so an upload to raring was required.
+[20:29] <Sweetshark> bdrung: not for libreoffice, never was, ask seb128. I dont know if that is formalized anywhere. And it is nonsense anyway: Do I need to upload 3.5.7 to raring too for an precise SRU? ;)
+[20:30] <micahg> Sweetshark: always has been the policy (dev release is usually a release ahead though)
+[20:30] <Sweetshark> bdrung: 3.6.4 is tested in the LibreOffice ppa for that reason.
+[20:30] <Sweetshark> micahg: always has been an exception for libreoffice.
+[20:31] <micahg> Sweetshark: not that I'm aware of
+[20:31] <bdrung> Sweetshark: 3.5.7 is lower than 3.6.2, which is in raring
+[20:31] <micahg> the assumption is that the fixes from 3.5.7 are in 3.6.2 in this case
+[20:32] <bdrung> Sweetshark: if 3.5.7 fixes bug that are in 3.6.2 too, you will have to update the package in raring too (by uploading 3.6.x with the fix or 4.0.x)
+[20:32] <bdrung> s/bug/bugs/
+[20:32] <Sweetshark> micahg: which is broadly true, but practically naive for a package as complex as libreoffice. essentially each major is a different product.
+[20:33] <micahg> Sweetshark: you've said yourself there are issues that affect multiple series
+[20:33] <bdrung> Sweetshark: 3.6.4 needs to be uploaded to raring (or a 4.0 version) if you want to upload 3.6.4 to quantal-proposed
+[20:33] <micahg> Sweetshark: with 10M+ lines of code, you can't tell me it's a total rewrite every 6 months
+[20:35] <Sweetshark> micahg: enough of a rewrite that the assumption that applying the same patch at different series is riskfree is nonsense.
+[20:35] <bdrung> Sweetshark: libreoffice in precise has a security issue. have to contacted the security team to get libreoffice 3.5.7 into precise-security instead of precise-proposed?
+[20:36] <micahg> bdrung: the security team decided it wasn't worth an upload to -security
+[20:37] <bdrung> okay
+[20:37] <Sweetshark> bdrung: https://launchpad.net/ubuntu/+source/libreoffice/1:3.5.4-0ubuntu1.1 you mean the issue in this changelog entry?
+[20:37] <psusi> could I get a release manager to add a quantal task to bug #1093918
+[20:37] <ubottu> bug 1093918 in multipath-tools (Ubuntu) "grub-probe auto-detection fails on raid" [Undecided,New] https://launchpad.net/bugs/1093918
+[20:38] <Sweetshark> bdrung: I kinda think it is fixed in libreoffice, yeah. the security says so. so which issue are you talking about?
+[20:38] <bdrung> Sweetshark: sorry. i oversaw that upload.
+[20:38] <Sweetshark> uhuh
+[20:39] <bdrung> i just saw the CVE link in bug #1037111
+[20:39] <ubottu> bug 1037111 in libreoffice (Ubuntu Precise) "[SRU] LibreOffice 3.5.7 for precise" [High,In progress] https://launchpad.net/bugs/1037111
+[20:40] <Sweetshark> yeah, security went to bypass that with a patch-only upload for that issue.
+[20:41]  * bdrung nods.
+=== salem_ is now known as _salem
+[20:42] <Sweetshark> 3.5.7 is EOL upstream. still 3.5.7 upstream has regressions against 3.5.4. I just searched for post-EOL vendor patches to backport upon 3.5. Unfortunately thats some 15 patches alone.
+[20:43] <bdrung> wow
+[20:43] <kdub> hello all, using pbuilder, I can't tell it to use my gpg key during a pbuild... how to work around?
+[20:43] <bdrung> libreoffice is not a simple package
+[20:44] <hallyn> infinity: for qemu for raring, I've broken the debian->ubuntu delta up into smaller git commits at github.com/hallyn/qemu #de.oct.ubuntu2 (https://github.com/hallyn/qemu/tree/de.oct.ubuntu2)
+[20:44] <bdrung> kdub: i sign the stuff afterwards with debsign
+[20:45] <kdub> bdrung, one of my dependencies is not trusted with whatever keyring the chroot is using, and the setup fails
+[20:45] <Sweetshark> ... and thats just sticking to the most urgent crashers (dataloss) and regressions -- leaving out other annoyances. That this isnt noticed in general can be attributed to its hugeness (somewhere between gnome and the kernel). If I had a team like the kernel or the GNOME guys, we could talk about different stuff. As is? no.
+[20:45] <bdrung> kdub: tried an update?
+[20:45] <Sweetshark> anyway.
+[20:45]  * Sweetshark gone
+[20:46] <kdub> yep, everything's all updated. my host system has this key in its trusted.db, but the chroot does not pick up that keyring during pbuild
+[20:47] <bdrung> kdub: login into the pbuilder instance and check the trusted.db there
+[20:50] <kdub> bdrung, the chroot trusted.gpg and the host's trusted.gpg is different. how can you tell the chroot to use the host system's keyring?
+[20:50] <bdrung> kdub: you can edit the file in pbuilder (but make sure that you save the result)
+[20:51] <hallyn> infinity: i'll email mtokarev about the chances of some of those going into the debian pkg
+[20:54] <n00bie> can someone give me a hint where the color of the software-updater progress bars would be defined? I tried modifying the Ambiance gtk3 theme but that seems to have no effect on those progress bars.
+[20:54] <Sweetshark> from the off -- bdrung: just to give you another example what I mean with "depends on the third of main": LibreOffice was broken once by a stable update of kdelibs really close to ff: It introduced a new SETTINGS_MOUSE choice in an enum in a kde header and SETTINGS_MOUSE was a define in LibreOffice code. Thats the stuff you are dealing with: trivial, highly annoying, still breaking your 1 day build.
+[20:54] <n00bie> same problem with the ubuntu-software-center progressbars
+[20:56] <bdrung> Sweetshark: i experience the same with the daily build of vlc in a smaller scale than libreoffice
+[20:56] <bdrung> Sweetshark: do you think that libreoffice 4.0 beta2 is ready for wider testing of raring users?
+[20:57] <bdrung> uploading beta versions of applications to the development release is often a good idea
+[21:01] <soren> mdz, kees, stgraber: TB meeting?
+[21:01] <infinity> bdrung: Assuming the final release is slated for on or around feature freeze, I agree with you.
+[21:02] <bdrung> infinity: libreoffice 4.0 is planned to be the version in 13.04
+[21:03] <infinity> bdrung: In that case, yeah, fully agree that we should be getting betas in.
+[21:06]  * hallyn out for a bit, bbl
+[21:10] <doko> $ cat autoconf_64b.c
+[21:10] <doko> #include <stdlib.h>
+[21:10] <doko> #include <stdio.h>
+[21:10] <doko> int main(void)
+[21:10] <doko> { /* output a "1" is it's a 64 bit platform. Major hack. */
+[21:10] <doko>         size_t val = -1;
+[21:10] <doko>         puts((val == 0xFFFFFFFF) ? "0" : "1");
+[21:10] <doko>         return 0;
+[21:10] <doko> }
+[21:11] <cjwatson> AC_CHECK_SIZEOF([size_t])
+[21:11] <cjwatson> ...
+[21:12] <infinity> doko: Do I want to know what that's from?
+[21:12] <doko> yep, this is ustr's hown grown configure system
+[21:12] <infinity> Oh, ick.
+[21:12] <doko> the package that you did promote ..
+[21:12] <infinity> I blame Jamie.
+[21:13] <doko> jdstrand, ^^^ ;-P
+[21:13] <Sweetshark> bdrung: the product is, the package is not. well, it might be, but it isnt sufficiently tested -- so by definition, it is not.
+[21:13] <infinity> Maybe "is it multiarched" needs to make it on our MIR checklist.
+[21:14] <infinity> Which then extends to "is it multiarchable?"
+[21:16] <cjwatson> Does it multiblend?
+[21:18] <Sweetshark> bdrung: as for testing: http://blog.documentfoundation.org/2012/12/08/the-libreoffice-community-organises-a-6-day-test-marathon-to-help-preparing-the-new-4-0-version-of-libreoffice/ and http://skyfromme.wordpress.com/2012/12/12/libreoffice-test-marathon-bibisect-4-0-and-ubuntu-packages/ give you a much broader test base as it runs on the release that is out.
+[21:26] <kdub> newbie question here, but when packaging how does one specify build system flags? eg, if my cmake project needs --disable-feature, where can I put that when making a debian package?
+=== chrisccoulson_ is now known as chrisccoulson
+[21:41] <bdrung> kdub: in debian/rules. if you are using dh, you specify a override_dh_auto_configure and run "dh_auto_configure -- --disable-feature1 --enable-bar"
+[21:42] <bdrung> there
+[21:44] <kdub> hmm, i will try... thanks bdrung!
+[21:45] <paultag> Anyone seen Mr. jbicha?
+[21:45] <paultag> Ach, wait, nickserv knows, disregard. Thanks.
+[22:25] <hallyn> ok here's a question.  libcgroup in precise had initscripts.  in q they were pulled.  in r I want to replace them with dummies to make someone upgrading from p gets the old scripts removed.
+[22:25] <hallyn> but does that mean someone upgrading from q is going to have a prompt about the replacement?
+[22:25] <hallyn> i gues si'll just test it
+[22:35] <infinity> hallyn: The only prompt in that scenario would be from P to R+, if the user edited the init script.  But why replace them instead of removing them?
+[22:35] <infinity> hallyn: dpkg-maintscript-helper(1) -- rm_conffile
+[22:36] <infinity> hallyn: If they should be gonem they should be gone, not replaced with stubs.
+[22:36] <infinity> s/gonem/gone,/
+[22:37] <hallyn> infinity: oh, right.
+[22:38] <hallyn> which reminds me, i *was* using that in qemu-system, where did those calls go?
+[22:40] <hallyn> infinity: thanks
+=== cpg|away is now known as cpg
+[22:43] <hallyn> oh i guess i seemed ot not need to do any dpkg-maintscript-helper so long as i kept the script by the same name, but moved it to another pkg
+[22:47] <infinity> hallyn: Assuming the contents don't change either, yeah.
+[22:47] <infinity> hallyn: Otherwise, things get a bit funny.
+[22:48] <infinity> If I recall.
+[22:56] <hallyn> infinity: hm, the contents do change, but my tests didn't show any funkiness.
+[22:56] <infinity> Maybe dpkg got smarter about conffile Replaces than it used to be.
+[22:56] <hallyn> hopefully it's that, and not bad testing
+[22:56] <infinity> Since it would have to compare the hash from the old package with the current on-disk, then do the Replaces.
+[22:57] <infinity> It certainly could have gotten smarter.  I just know it used to suck at it.
+[22:57] <infinity> Oh, maybe the situation it sucks in is if it's modified.
+[22:57] <infinity> Cause that logic gets even weirder.
+[22:58] <infinity> But if the contents changed, and yours was modified, you want a prompt anyway, and I hope that's what you'd get.
+[22:58] <infinity> Anyhow, you can test a few scenarios if you're paranoid.  I really don't remember the current state of all of that.
+[22:59] <infinity> Generally, moving conffiles between packages is just a bad idea.  But sometimes you don't have much choice.
+[22:59] <hallyn> hm, maybe i need to test the case where it's been modified.
+[23:03] <stokachu> bdrung: if i could be pointed in the direction of where there is some documentation on merging/syncing packages from debian to ubuntu and yes a list of packages that may need that
+[23:04] <stokachu> i assume there is not much to it as long as there are no ubuntu specific alterations
+[23:06] <bdrung> stokachu: for sync we have requestsync/syncpackage
+[23:06] <infinity> stokachu: If there are no Ubuntu modifications, autosync takes care of it.
+[23:07] <bdrung> stokachu: merging the UDD way: http://developer.ubuntu.com/packaging/html/udd-merging.html
+[23:07] <infinity> (With two exceptions: after the Debian Import Freeze (and you shouldn't just become a human autosync after freeze, it's there for a reason), and if we sync from experimental, we don't auto those)
+[23:07] <bdrung> stokachu: http://developer.ubuntu.com/packaging/html/traditional-packaging.html
+=== Tonio_ is now known as Tonio_aw
+[23:08] <bdrung> stokachu: for open merges: https://merges.ubuntu.com/
+[23:08] <infinity> stokachu: Merging the old skool way is vaguely self-explanatory if you read the REPORT for a MoM merge, random example: https://merges.ubuntu.com/e/efilinux/
+[23:09] <bdrung> stokachu: bonus points for getting the ubuntu changes upstream and then be able to sync (if no remaining change is left)
+[23:19] <stokachu> ok cool thanks guys ill look over these links
+=== Tonio_aw is now known as Tonio_
+[23:26] <stokachu> so do i just go through the packages and read the report file to see if any conflicts were found?
+[23:26] <stokachu> like for bash i saw where it failed to do the merge completely
+[23:27] <stokachu>  oh i see a generated report for the archives
+[23:29] <stokachu> cool i think i understand what to do, ill ask here if i get stuck
+[23:30] <bdrung> great. good night!
+[23:31] <infinity> stokachu: You may also want to see if you're stealing merges from other people.
+[23:31] <infinity> stokachu: grep-merges 'Adam Stokes' is a good starting point, since you have one outstanding merge of your own. :P
+[23:32] <infinity> stokachu: "grep-merges bash" will show you that bash is Colin's, and he may or may not care about keeping TIL on that.
+=== Tonio_ is now known as Tonio_aw
+[23:36] <bdmurray> pitti: Should we enable apport sending crashes to Launchpad in Raring?
+[23:40] <infinity> bdmurray: You mean LP bug reports, as opposed to whoopsie?  (the former seems to be be working...)
+[23:40] <infinity> bdmurray: I'm personally kinda happy with just whoopsie going forward, even for devel releases.  That may be an area of contention, though.
+[23:41] <infinity> Err, s/former/latter/
+[23:52] <bdmurray> infinity: I mean LP bug reports in addition to errors going to the crash database
+[23:52] <infinity> bdmurray: Yeah.  I'm wondering if we really need that, but I'm not a defect analyst, I'll bow to your experience here.
+[23:54] <infinity> bdmurray: My take, though, is that we should be watching errors like hawks for spikes, and we need a nice "tell us what broke" bit in the whoopsie/apport submission hidden under the "more info" bit that lets "power users" add free-form comments, and lets everyone else ignore the option.
+[23:54] <infinity> (I discussed this with Evan when I was in London last)
+[23:55] <infinity> There's nothing even remotely friendly or pleasant about the whole auto-filing of bugs.

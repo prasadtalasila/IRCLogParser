@@ -1,0 +1,61 @@
+[05:22] <manchicken> Riddell: My last code quiz submitted, I'm moving back over to the kubuntu-debug-installer.
+[10:45] <Mamarok> hm, somebody should have a look at bug 975327, as the UPnP support should be available now IIUC
+[10:45] <ubottu> bug 975327 in hupnp (Ubuntu) "libhupnp 1.0.0, cagibi >=0.2, kio-upnp-ms, all needed in repositories" [Medium,Confirmed] https://launchpad.net/bugs/975327
+[11:01] <BluesKaj> Hiyas all
+[12:44] <Quintasan> Mamarok: Unless we get libhupnp in main UPnP support is no go
+[12:44] <Quintasan> It's still in universe for some reason
+[12:44] <Quintasan> ScottK or Riddell could take a look if they have time
+[12:54] <Riddell> Quintasan: what at?
+[12:54] <Riddell> isn't upnp support in kdelibs considered unstable?
+[12:55] <Riddell> there might well be a libhupnp MIR already done (and probably failed)
+[14:18] <Quintasan> Riddell: https://bugs.launchpad.net/ubuntu/+source/hupnp/+bug/682404
+[14:19] <ubottu> Launchpad bug 682404 in hupnp (Ubuntu Natty) "MIR hupnp" [Undecided,Expired]
+[14:19] <Quintasan> It was Fix Commited but nothing really happend
+[14:19] <Quintasan> Mamarok: ^^^ what Riddell asked is kind of relevant.
+[14:20] <Quintasan> Riddell: It's kind of simple. We will not have UPnP support in KDE at all if we do not compile kdelibs with UPnP support.
+[14:21] <Quintasan> There is/was one strange thing though.
+[14:21] <Quintasan> When I simply pulled libhupnp-dev when building kdelibs it was not enough
+[14:22] <Quintasan> I had to explicitly add -DWITH_UPNP (or something like that) to rules to get it compile with UPnP support.
+[14:24] <Quintasan> Why do I have to explicitly tell CMake I want the feature to be turned on when the headers are detected when I didn't have to do so for other optional features?
+[14:27] <Quintasan> IMO this needs to be discussed in detail at #kde-devel
+[14:28] <Riddell> Quintasan: I strongly suspend that's needed because upnp isn't very stable or recommended by upstream
+[14:29] <Riddell> ah this says it was disabled due to usability issues https://bugs.launchpad.net/ubuntu/+source/hupnp/+bug/682404/comments/8
+[14:29] <ubottu> Launchpad bug 682404 in hupnp (Ubuntu Natty) "MIR hupnp" [Undecided,Expired]
+[14:30] <Riddell> which is indeed the case with that weird share plasma widgets feature, it's been removed properly now upstream I think
+[14:30] <Riddell> but that suggests that hupnp might not be an issue for something else to use
+[14:30] <Riddell> commit logs might reveal more
+[14:44] <manchicken> Okay, this is silliness... why can't I build libqapt now, when I could before? Now CMake is complaining about missing Qt4.
+[14:47] <Quintasan> manchicken: install qt4-default?
+[14:47] <Riddell> install libqt4-dev ?
+[14:47] <manchicken> Riddell: The later is installed... I could have sworn I installed the former.
+[14:48] <manchicken> But I didn't.
+[14:48] <manchicken> Not on the VM.
+[14:48] <Riddell> removing build cache sometimes helps
+[14:53] <yofel> Quintasan, Riddell: what I remember about hupnp in 4.6 is that it was constantly making the device manager pop up and display network devices every few minutes which couldn't be turned off
+[14:53] <yofel> as for HUPNP_ENABLED FALSE, afiestas should know more as he seems to have committed that
+[14:57] <Riddell> Quintasan: want to put a copy of kdelibs and amarok in a ppa with it enabled so we can test?
+[15:13] <manchicken> D'oh! VM out of space.
+[16:14] <markey> is Amarok 2.8 available for Kubuntu 12.10?
+[16:30] <Riddell> good question
+[16:30] <Riddell> markey: yep it compiled https://launchpad.net/~kubuntu-ppa/+archive/backports/+packages?field.name_filter=amarok&field.status_filter=published&field.series_filter=quantal
+[16:31] <Riddell> I didn't do it at first but seems like some people still use it for some reason so I threw it in there, not yet tested
+[16:31] <markey> Riddell: thank you
+[16:34] <Riddell> markey: do you have a tester?
+[16:35] <Riddell> kubuntu.org/news/amarok-2.8 updated with 12.10
+[16:51] <soee> good evening :)
+[16:57] <Quintasan> hi
+=== bedahr_ is now known as bedahr
+[21:53] <afiestas> yofel: don't use hupnp
+[21:53] <afiestas> that's why it is false by default, it shouldn't be used
+[21:53] <yofel> afiestas: Quintasan was looking at it
+[21:54] <yofel> afiestas: was there a large issue with it? or is it unmaintained, or..?
+[21:55] <afiestas> never worked
+[21:56] <yofel> I think it did work to *some* extent when we tried it, though I don't remember much about it
+[22:02] <afiestas> it never worked
+[22:15] <ScottK> And it's kind of a bad idea even if it worked.
+[22:16] <afiestas> ScottK: why is a bad idea having upnp/dlna support ?
+[22:16] <ScottK> Allowing random things to plug and play over the network seems risky.
+[22:17] <afiestas> your pc already has plenty of those, one more wouldn't hurt that much
+[22:18] <ScottK> If you're already bleeding from one arterial wound, another should be fine?
+[22:19] <ScottK> It would be ~OK for things on a private network only, but who never takes their laptop to a coffee shop?
+[23:24] <manchicken> Yay, growing the partition for my VirtualBox testbed.

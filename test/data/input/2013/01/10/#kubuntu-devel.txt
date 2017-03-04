@@ -1,0 +1,456 @@
+[01:09] <allee> debian/copyright: is there a tool scans the source and write the DEP-5 format as a start ?
+=== clay_doh is now known as claydoh
+=== claydoh is now known as Guest12500
+=== Guest12500 is now known as claydoh
+[07:51] <soee> good morning
+=== Tonio_aw is now known as Tonio_
+=== Tonio_ is now known as Tonio_aw
+=== Tonio_aw is now known as Tonio_
+[09:16] <shadeslayer> afiestas: we have the latest release 1.1.5, unless something changed in the last 24 hours
+[09:20] <shadeslayer> otoh I could setup a daily recipe, but the packaging is spooky
+=== Tonio_ is now known as Tonio_aw
+[09:36] <shadeslayer> fun
+[09:36] <shadeslayer> calligra is slightly broken
+[09:36] <shadeslayer> good thing I didn't send this email to KDE Devel
+[09:37]  * shadeslayer goes off to fix
+[10:28] <yofel_> shadeslayer: in my next upgrade test kdm worked fine, but this time the wallpaper didn't get changed to Elarun... otherwise everything works fine
+[10:29] <yofel_> shadeslayer: one thing: if you want print-manager installed you'll have to add an updated version of kubuntu-meta
+=== yofel_ is now known as yofel
+[10:30] <shadeslayer> re Elarun that should be fixed I think
+[10:31] <yofel> I thought so too, but it did happen just now.
+[10:32] <shadeslayer> don't remember where the fix was supposed to be
+[10:33] <shadeslayer> ah yes
+[10:33] <shadeslayer> yofel: /usr/share/kde4/apps/desktoptheme/default/metadata.desktop
+[10:33] <shadeslayer> should say : [Wallpaper]
+[10:33] <shadeslayer> defaultWallpaperTheme=Elarun
+[10:33] <shadeslayer> defaultFileSuffix=.png
+[10:33] <shadeslayer> defaultWidth=2560
+[10:33] <shadeslayer> defaultHeight=1600
+[10:34] <shadeslayer> note the dimensions
+[10:35] <Riddell> kdm uses /etc/kde4/kdm/kdmrc
+[10:35] <Riddell> the wallpaper needs to be upgraded manually I think
+[10:35] <shadeslayer> *facepalm* you're right
+[10:35] <Riddell> or by a script
+[10:35] <shadeslayer> the one I pasted before was for the screenlocker
+[10:35] <yofel> hm, I thought we were defaulting the wallpaper to our kde-default.png symlink?
+[10:36] <yofel> (which makes the wallpaper appear twice in the settings btw.)
+[10:38] <shadeslayer> ^
+[10:39] <shadeslayer> I worked around this in Netrunner by putting it in /usr/share/netrunner ... we could put the symlink in /usr/share/kubuntu-settings-desktop
+[10:41] <yofel> sounds good to me, now it's just an image called "2560x1600" which is ugly
+[10:42] <yofel> I wonder what uses that image though
+[10:42] <shadeslayer> ubiquity
+[10:42] <yofel> ah
+[10:42] <shadeslayer> review plz : http://paste.kde.org/642500/
+[10:44] <yofel> wth is up with hidden folders in /usr o.O? usr/share/templates/.source/
+[10:44] <shadeslayer> heh, don't ask me
+[10:44] <yofel> ack otherwise
+[10:45] <shadeslayer> but there were 2 bugs, one that template files get pulled in even tho the app is not installed
+[10:45] <shadeslayer> and if you try to hide the app using NoDisplay=true it won't work
+[10:45] <shadeslayer> fix for the second one is here : http://www.davidfaure.fr/2013/knewfilemenu.cpp.diff
+[10:45] <yofel> hm
+[10:49] <shadeslayer> yofel: do kubuntu-dev have upload rights for calligra?
+[10:50] <yofel> yes
+[10:50] <shadeslayer> ah cool
+[10:51]  * yofel wonders how he managed to break upower... AC is in, upower says it's offline
+[10:52] <Quintasan_> Sigh 
+=== Quintasan_ is now known as Quintasan
+[10:53] <Quintasan> Hopefully I passed
+[10:53] <yofel> that bad?
+[10:53] <yofel> ^^
+[10:53] <Quintasan> Not as bad as I expected it to be
+[10:53] <Quintasan> but not entirely good
+[10:54] <Quintasan> multivariable deriviatives are not what I expected
+[10:54] <Quintasan> and I am not sure if I got them right
+[10:54] <Quintasan> plus integrals and ofc I didnt even touch those
+[10:55] <Quintasan> I have a second attempt but I would like to think the first attempt was enough
+[10:55] <Quintasan> Will see next week, tomorrow is logic.
+[10:56] <yofel> second attempt is good... but believe me, you usually don't have time to study for that...
+[10:56] <Quintasan> yes
+[10:56] <Quintasan> especially I have like. 4 tests next week?
+[10:56]  * Quintasan takes a break and goes back to studying
+[10:56]  * yofel passes Quintasan a cup of coffee
+[10:58] <Quintasan> welp
+[10:58] <Quintasan> I think I have lecture to attend in like an hour
+[10:58] <Quintasan> gotta pack some stuff and head to that
+[11:01] <shadeslayer> hahaha
+[11:02] <shadeslayer> Quintasan: now you understand why I had tests all the time for the last 4 years :P
+[11:03] <yofel> he's getting there :P
+[11:15] <Riddell> meh, anyone got any great ideas why qt isn't compiling on arm and powerpc
+[11:15] <Riddell> arm complains about no QtGui which is weird
+[11:15] <Riddell> powerpc complains about QtWebKit which is not unusual but no reason why it would be platform specific
+[11:33] <kubotu> ::qt-bugs:: [1098136] package libqtcore4 4:4.8.1-0ubuntu4.3 failed to install/upgrade: conffile './etc/xdg/Troll... @ https://bugs.launchpad.net/bugs/1098136 (by Amit Kumar)
+[11:34] <shadeslayer> and now calligra has failed because /usr/bin/ld: cannot find -lnepomukcore
+[11:36] <Riddell> well it compiled when I uploaded it :)
+[11:36] <Riddell> needs to build-dep on nepomuk-core-dev?
+[11:36] <vHanda> calligra uses Nepomuk?
+[11:36] <Riddell> yes it doesn't have that
+[11:37] <Riddell> vHanda: seems so
+[11:37] <Riddell> ./CMakeLists.txt:    macro_log_feature(NEPOMUK_FOUND "Nepomuk" "Handles metadata of resources" FALSE  "Required to handle metadata of resources")
+[11:37] <shadeslayer> Riddell: that's what I'm thinking as well :P
+[11:37] <Riddell> ./libs/widgets/CMakeLists.txt:    target_link_libraries(kowidgets kotext pigmentcms ${NEPOMUK_LIBRARIES} ${SOPRANO_LIBRARIES})
+[11:38] <vHanda> hmm, they seem to have basic tag support
+[11:38] <vHanda> but that is kdelibs/nepomuk not nepomukcore
+[11:38] <vHanda> ( as of Sept 12 2012 )
+[11:39] <shadeslayer> vHanda: I have a suspicion it's because of http://paste.kde.org/642524/
+[11:40] <vHanda> that's kdepim
+[11:40] <shadeslayer> should kdepimlibs-dev depend on nepomuk-core-dev ?
+[11:40] <shadeslayer> yes
+[11:40] <vHanda> if they use nepomuk-core (which I think they do) then yes
+[11:41] <shadeslayer> okay
+[11:41] <yofel> vHanda: as I'm a bit confused after the last discussion about it, is the presence of nepomuk-widgets implied if nepomuk-core is there?
+[11:42] <vHanda> nepomuk-widgets cannot be compiled with nepomuk-core
+[11:42] <vHanda> it also won't work (runtime) without nepomuk-core
+[11:42] <vHanda> so it has a compile time and runtime dependency to nepomuk-core
+[11:43] <vHanda> *cannot be compiled WITHOUT nepomuk-core
+[11:43] <vHanda> sorry
+[11:43] <vHanda> I should proof read what I write
+[11:43] <shadeslayer> alright
+[11:43] <shadeslayer> Riddell: I'll go ahead and add a nepomuk-core-dev dep to kdepimlibs-dev
+[11:44] <Riddell> shadeslayer: go ahead but that might not do much if you're looking at calligra :)
+[11:44] <yofel> vHanda: ah, I was remembering the dolphin build failure because the cmake check for nepomuk-widgets was missing
+[11:44] <shadeslayer> Riddell: yeah, let's see, I'm compiling by adding nepomuk-core-dev to calligra 
+[11:44] <vHanda> yofel: right. I fixed that
+[11:44] <vHanda> but not in time for RC2
+[11:45] <yofel> thanks
+[11:45] <vHanda> yofel: http://commits.kde.org/kde-baseapps/da5b7dcde4b5bbef28600e31ebb540d7f182050b
+[11:46] <yofel> shadeslayer: it'll build fine with nepomuk-core-dev, already tried it when I attempted to backport it to precise
+[11:46] <shadeslayer> ah
+[11:46] <yofel> vHanda: ah, perfect. Thanks
+=== Tonio_aw is now known as Tonio_
+[11:49] <shadeslayer> Riddell: if I add nepomuk-core-dev to kdepimlibs5-dev it'll get pulled in automagically when building calligra
+[11:49] <shadeslayer> as well as other stuff
+[11:52] <Riddell> really?  why does calligra use kdepimlibs?
+[11:54] <shadeslayer>    * KDE PIM iCalendar - KDE Personal Information Management iCalendar Libraries
+[11:59] <oy> what is the best way to provide KolorServer to kubuntu for KWin-4.10 colour correction?
+[12:03]  * shadeslayer looks
+[12:04] <Riddell> oy: I'm not sure what you're asking there
+[12:04] <Riddell> oy: you're the upstream for KolorServer?
+[12:04] <oy> yes, nearly
+[12:04] <shadeslayer> https://projects.kde.org/projects/extragear/graphics/kolor-manager/repository
+[12:04] <Riddell> nearly? :)
+[12:05] <shadeslayer> that would need packaging I guess :)
+[12:05] <oy> KWin-4.10 needs KolorServer to enable ICC colour correction
+[12:05] <Riddell> oy: is there a release of KolorServer?
+[12:05] <shadeslayer> Riddell: I've uploaded pimlibs with dep on nepomuk-core-dev :)
+[12:06] <oy> Riddell, and shadeslayer yes we have packages
+[12:06] <oy> https://www.oyranos.org/kolormanager/   on the bottom
+[12:07] <shadeslayer> Should I trust the SSL cert? :P
+[12:08] <shadeslayer> oy: I don't see a proper release
+[12:08] <oy> KolorServer is part of KolorManager and both use ICC Examin + Oyranos + libXcm all inofficially packaged for debian
+[12:09] <oy> shadeslayer, https://projects.kde.org/news/192 ?
+[12:09] <Riddell> oy: presumably it needs packages of Oyranos first?
+[12:09] <shadeslayer> yeah, I was about to open that link on projects.kde.org
+[12:10] <shadeslayer> Riddell: yep : FIND_PACKAGE(Oyranos REQUIRED)
+[12:10] <oy> Riddell, the dependencies are all packaged in the same way
+[12:11] <oy> you can find the package list under xUbuntu: https://build.opensuse.org/project/monitor?project=multimedia%3Acolor_management
+[12:13] <shadeslayer> I don't think we can use that packagign
+[12:13] <shadeslayer> *packaging
+[12:14] <oy> oh, why? I made it to help for Debian and Ubuntu
+[12:15] <oy> shadeslayer, what can be done to improve?
+[12:15] <shadeslayer> because it has a different format to what is actual packaging? IIRC OBS has this flat heiarchy packaging which is not valid debian packaging
+[12:15] <shadeslayer> *actual debian packaging
+[12:15] <apachelogger> (can be made actual debian packaging depending on how OBSy the packaging is...)
+[12:16] <oy> I used a debian packaging tutorial
+[12:16] <Riddell> shadeslayer: it seems like a good start
+[12:16] <Riddell> oy: how much does this conflict with colord?
+[12:17] <shadeslayer> OBS confuses me as hell
+[12:17] <oy> I had them both running side by side, did not uninstall colord, works
+[12:17] <shadeslayer> I don't even know where the packaging is so I can have a look
+[12:18] <oy> shadeslayer, https://build.opensuse.org/package/show?package=kolor-manager&project=multimedia%3Acolor_management
+[12:18] <oy> shadeslayer, you can click the package name in the monitor list
+[12:18] <oy> agreed, it is different to launchpad
+[12:21] <shadeslayer> looks sane from an overview, except that the copyright needs fixing ( 80 char width _
+[12:21] <shadeslayer> *)
+[12:21] <oy> will do, thanks
+[12:22] <shadeslayer> I didn't know that OBS accepted this format
+[12:22] <shadeslayer> I was only aware of the flat hiearchy one
+[12:22] <oy> shadeslayer, I saw as well other formats, but because of the debian tutorial I choose that one
+[12:22] <apachelogger> it is flat too :P
+[12:23] <shadeslayer> oy: oh and maybe you can use dh $@ --with kde
+[12:23] <oy> ok
+[12:23] <shadeslayer> and remove the sample cruft in there as well
+[12:24] <oy> shadeslayer, sample cruft? in which file?
+[12:25] <shadeslayer> debian/rules
+[12:25] <shadeslayer> "# Sample debian/rules that uses debhelper."
+[12:25] <shadeslayer> not needed :)
+[12:25] <oy> ah, see it, good
+[12:27] <Riddell> oy: out of these packages in that OBS archive you're saying we want oyranos and kolor-manager in kubuntu?
+[12:28] <oy> Riddell, yes, these + libXcm (dep) + ICC Examin (optionally used by KolorManager)
+[12:29] <oy> "icc-profiles-free" is already in wheezy and I guess "xcalib" is available too, both are dependencies too
+[12:30] <Riddell> oy: as someone who knows nothing about colour correction can you tell me why a window manager needs it?  isn't it better done for the whole monitor?
+[12:31] <oy> Riddell, the WM manages all monitors, so it is ICC colour correction for the whole monitor
+[12:32] <oy> Riddell, in the past we (X11) had only 1D LUT correction, which means no opt out, colorimetric based correction only for ICC supporting apps
+[12:33] <oy> in the old LUT way, Dolphin does no colorimetric correction why DigiKam/Krita etc. do
+[12:34] <oy> Riddell, with KWin ICC colour correction all apps are corrected together, including video on the GPU
+[12:35] <oy> in the old LUT way, Dolphin does no colorimetric correction *while* DigiKam/Krita etc. do
+[12:35] <Tm_T> oy: is the colour correction per-display?
+[12:35] <oy> Tm_T, per output
+[12:35] <oy> alias per monitor
+[12:36] <Tm_T> oh good
+[12:36] <Tm_T> so I have some hope to get reasonable results with external monitor and laptop
+[12:37] <Riddell> oy: how is this different from colord-kde applying a profile to a monitor?
+[12:37] <oy> Tm_T: yes that is one use case
+[12:38] <oy> Riddell, colord-kde does only calibration, which is a 1D LUT
+[12:39] <oy> Riddell, it does no correction for different primaries or saturation, calibration helps only in improving gray ramps, but that is covered by ICC profiles in KWin as well
+[12:40] <oy> the 1D Lut this is very long available (perhaps 10 years). xcalib can do that for instance
+[12:42] <oy> a calibration does not so much for small gamut laptops + attached sRGB/wide Gamut external monitors
+[12:43] <Tm_T> ^
+[12:44] <Riddell> oy: no 1.0 on http://sourceforge.net/projects/oyranos/files/Oyranos/ ?
+[12:45] <oy> Riddell, not yet, we are still in beta and expect some minor changes
+[12:45] <oy> btw. colord is guessedly beta too or alpha
+[12:46] <Riddell> oy: but the OBS archive does have 1.0.0?
+[12:46] <oy> Riddell, yes, of KolorManager, but not of its dependencies
+[12:47] <Riddell> oh I see
+[12:47] <oy> KolorManager exposes a limited set of features, we think we can garantee to remain stable
+[12:47] <Riddell> oy: where's the place to download KolorManager sources?
+[12:47] <oy> the Oyranos geature set is much broader
+[12:48] <oy> Riddell, we hoped that git snapshots are fine? http://quickgit.kde.org/index.php?p=kolor-manager.git&a=tags
+[12:49] <oy> for most of other packages there is: http://sourceforge.net/projects/oyranos/files/
+[12:51] <Riddell> oy: that not quite kosher, KolorManager is ment to be 1.0 and stable but there's no tars?
+[12:51] <Darkwing> Morning guys
+[12:51] <oy> hmm, need to find a place for that
+[12:52] <Riddell> oy: you can use ftp.kde.org or the same sourceforge project as oyranos no?
+[12:52] <oy> ftp.kde.org would be sound
+[12:53] <Riddell> oy: ask in #kde-sysadmin how you do that, I think you need to upload it somewhere then file a request on bugs.kde.org for sysadmin to move it to release
+[12:53] <oy> ah, good to know
+[12:55] <Riddell> oy: where is the GUI in kwin for this?
+[12:55]  * oy works on the fixes and pushes a new tar ball
+[12:56] <apachelogger> yes, upload to incoming, then file a sysamind request to move it to ftpmaster containing target path and the sha1 of the tarball
+[12:58] <oy> Riddell, http://userbase.kde.org/Color_Management/en
+[12:59] <oy> the enabling of colour correction happens inside KWin effect dialog, it is for the first release experimental
+[13:05] <Riddell> oy: groovy thanks for answering my questions, I'll look into getting it packaged and in the archive
+[13:07] <oy> Riddell, thanks, meanwhile I will work on a kolor-manager-1.0.1 release and proper upload
+[13:14] <BluesKaj> Hi all
+=== Tonio_ is now known as Tonio_aw
+=== Tonio_aw is now known as Tonio_
+[14:53] <Quintasan> shadeslayer: It's not like tests all the time
+[14:54] <Quintasan> It's like tests because it's the end of semster :P
+[15:01] <shadeslayer> sure
+[15:02] <Quintasan> mfw I can do nothing for whole 10 months after 15 February
+[15:03] <Riddell> what happens then?
+[15:03] <apachelogger> Quintasan has tests for the next 10 months
+[15:04] <apachelogger> it's the shadeslayer test schedule problem all over again
+[15:04] <Quintasan> Riddell: Some tests and end of the year
+[15:04] <Quintasan> Riddell: after that more free time
+[15:04] <Riddell> that's some long tests
+[15:04] <Quintasan> aaaand start of new semester
+[15:05] <shadeslayer> haha
+[15:05] <Quintasan> apachelogger: That won't be the case hopefully
+[15:05] <Quintasan> If I pass all the tests next week I will have only ONE exam in February
+[15:06] <Quintasan> there is four of them so it is doable
+[15:06] <apachelogger> so what's after feburary? :P
+[15:06] <apachelogger> one test a week
+[15:06] <apachelogger> or perhaps two? :P
+[15:07] <shadeslayer> apachelogger: one word, Calculus
+[15:08] <Quintasan> apachelogger: nothing lol
+[15:08] <Quintasan> apachelogger: I get only lectures that I have to attend to
+[15:08] <Quintasan> Besides, why am I explaining this stuff to you
+[15:09]  * Quintasan thinks he would be better off learning stuff for tomorrow
+[15:09] <apachelogger> word
+[15:09] <apachelogger> shadeslayer: calculus is fun
+[15:09] <apachelogger> it's another foremost topic when having coffee @ uni
+[15:09] <Quintasan> If you know what the hell is going on then it is :P
+[15:10] <apachelogger> the secret with calculus is that no one knows what is going on and that you just have to make the right guesses
+[15:10] <shadeslayer> ^ :D
+[15:10]  * shadeslayer bows to apachelogger
+=== Tonio_ is now known as Tonio_aw
+[16:27] <yofel> shadeslayer: 4.9.97 precise is done from my side. Anything you have left?
+[16:30] <Riddell> Darkwing, apachelogger, JontheEchidna, jussi, ScottK: can I get some Kubuntu stickers for FOSDEM with kubuntu funds?
+[16:30] <JontheEchidna> +1
+[16:31] <shadeslayer> nope
+[16:32] <shadeslayer> yofel: marble all working
+[16:32] <shadeslayer> ?
+[16:33] <apachelogger> +1
+[16:34] <yofel> shadeslayer: the current package set that's in staging works fine for what I tested
+[16:46] <shadeslayer> ah cool
+[16:46] <shadeslayer> please go ahead and copy stuff :)
+[16:47] <yofel> ok, copying then
+[16:52] <yofel> done
+[16:57] <Riddell> how's this? http://starsky.19inch.net/~jr/tmp/output2.pdf
+[16:58] <jessie> Other than being sideways, it looks good.
+[16:59] <yofel> the KDE logo looks out of place
+[16:59] <yofel> compared to the kubuntu logo positioning above I mean
+[16:59] <yofel> otherwise nice
+[17:10] <Quintasan> mfw dolphin crashes when one tries to mass tag files
+[17:10] <Quintasan> god KDE should do something about mass edition of things
+[17:10] <Quintasan> Amarok UI freezes and users have no idea what's going on
+[17:10] <Quintasan> Dolphin crashes
+[17:10] <Quintasan> ...
+[17:13] <Quintasan> vHanda: https://bugs.kde.org/show_bug.cgi?id=313026
+[17:13] <ubottu> KDE bug 313026 in general "Dolphin crashes when trying to mass add Nepomuk tags" [Crash,Unconfirmed]
+[17:13] <Quintasan> You are probably interested
+[17:14]  * Quintasan can consistetly reproduce this
+[17:15] <Quintasan> lol
+[17:15] <Quintasan> If I Alt+Enter, go to Information and press Add tags there
+[17:15] <Quintasan> it works
+[17:15] <Quintasan> ...
+[17:19] <Quintasan> <sandsmark> bah, can we revert the qml screen locker before release? :3
+[17:19] <Quintasan> <sandsmark> it still has some ugly regressions
+[17:19] <Quintasan> NOW
+[17:19] <Quintasan> this looks promising...
+[17:24] <txwikinger> Wonder if someone could help me
+[17:24] <txwikinger> On my panel.. my task manager is really small because the tray is using up too much space
+[17:24] <txwikinger> Any idea how that can be fixed?
+[17:33] <jessie> Quintasan: I cannot confirm the crash.
+[17:33] <sbivol_> txwikinger: remove all the panels, then right-click the desktop and choose Add Panel -> Defaul panel
+[17:34] <txwikinger> ok.. found the issue.. there are lots of useless entries in the tray settings... where did they come from?
+[17:34] <jessie> Actually, I lied, Quintasan. With 4 images it didn't crash, with 200 it did.
+[17:34] <txwikinger> sbivol_: Yeah.. that unfortuantely loses all my customizations
+[17:36] <txwikinger> wonder what all those statusnotifieritems supposed to be!
+[17:36] <Quintasan> jessie: With small number of elements is not a problem
+[17:37] <Quintasan> I have 5 photos of my friend doing a kickflip,taggin them skateboarding was not a problem
+[17:37] <Quintasan> but taggin 600 pictures from our skateboarding trip crashed the whole thing
+[17:37] <Quintasan> :P
+[17:37] <txwikinger> :q
+[17:37] <txwikinger> :;;
+[17:41] <shadeslayer> Quintasan: KDE does not scale
+[17:41] <shadeslayer> we need to make it webscale
+[17:42] <txwikinger> how do you scale a desktop shadeslayer?
+[17:42] <shadeslayer> by using mongodb instead of mysql
+[17:42] <shadeslayer> don't you know? mongodb is webscale
+[17:42] <Quintasan> NoSQL?
+[17:42] <Quintasan> Sounds good
+[17:42] <Quintasan> vHanda: ^^
+[17:43] <shadeslayer> No, Mongodb
+[17:43] <Quintasan> shadeslayer: look at MongoDB page derp
+[17:46] <txwikinger> Riddell.. do you know what all the statusnotifieritems in the system tray entries supposed to do?
+[17:46] <Riddell> txwikinger: yeah, why do you have ones which are unclear?
+[17:47] <txwikinger> yes.. in my laptop there are quite a bunch that start with numbers and do not mean anything
+[17:47] <txwikinger> on the netbook there are none
+[17:47] <txwikinger> of these
+[17:48] <txwikinger> those funny entries make the trasy uneccessarry wide
+[17:48] <txwikinger> I had to change them all to hidden to be able to see my task manager properly
+[17:50] <txwikinger> Deleting them in the System Tray Settings UI does not seem to work
+[17:52] <txwikinger> I believe they first appeared after a crash of plasma.. well the panel disppeared and came back a bit later
+[17:53] <Riddell> my systray has a circular one with a number in it which is for downloads and notificatios
+[17:53] <Riddell> otherwise I don't know why one would have a number
+[17:54] <txwikinger> :1.112/org/kde/statusnotifieritem/1
+[17:54] <txwikinger> that is one example of it
+[18:07] <txwikinger> Well. I found something in the KDE forum.. seems to be a kdelibs bug
+[18:17] <shadeslayer> yofel: did you do an announce on kubuntu.org?
+[18:25] <Riddell> shadeslayer: should be added to the existing 4.9.97 one
+[18:25] <Riddell> hi skaet!
+[18:25] <shadeslayer> Riddell: okay
+[18:25] <shadeslayer> I'll do it before sleeping
+[18:26] <skaet> hiya Riddell!
+[18:26] <skaet> :)
+[18:27]  * shadeslayer waves to skaet
+[18:27] <Riddell> skaet: happy new year
+[18:28]  * skaet waves back to shadeslayer
+[18:28] <skaet> happy new year,  Riddell
+[18:29]  * skaet glad to be back online again 
+[18:35] <yofel> shadeslayer: thanks, I didn't as I left the office right after that
+[18:35]  * yofel wonders if kmail would be faster if akonadi used NoSQL
+[19:23] <rbelem> é o weechat
+[19:25] <shadeslayer> oh look an rbelem
+[19:26] <rbelem> :-D
+[19:26] <rbelem> wrong channel
+[19:26] <shadeslayer> hahaha
+[19:26] <shadeslayer> so kubuntu-devel is now a 'wrong' channel for you eh 
+[19:26] <shadeslayer> hiding from us
+[19:35] <shadeslayer> hmm
+[19:36] <shadeslayer> seem to get this slight issue with the new SNA stuff http://wstaw.org/m/2013/01/10/plasma-desktopS17003.png
+[19:36] <shadeslayer> wasn't getting this earlier
+[19:36] <shadeslayer> ( see the 2 arrows )
+=== Tonio_aw is now known as Tonio_
+=== Tonio_ is now known as Tonio_aw
+=== Tonio_aw is now known as Tonio_
+[20:11] <rbelem> :-D
+[20:17] <JontheEchidna> shadeslayer: mfw UXA was supposed to fix all of the bugs of EXA
+[20:17] <shadeslayer> rofl
+[20:18] <JontheEchidna> shadeslayer: I have intel, but not a sandybridge cpu
+[20:19] <shadeslayer> JontheEchidna: yeah I'm slightly confused as well, do people with non-sandybridge arch's get the same perf improvements?
+[20:19] <shadeslayer> maybe ask in #ubuntu-x ?
+[20:19] <JontheEchidna> I'll test it in a bit
+[20:19] <shadeslayer> cool
+[20:20] <JontheEchidna> gives me a nice excuse to play minecraft :P
+[20:20] <shadeslayer> lol
+[20:20]  * shadeslayer is still upgrading
+[20:21] <shadeslayer> updated steam \o/
+=== Tonio_ is now known as Tonio_aw
+[20:22]  * sreich strolls in with his ivy bridge and gtx 670 ;p
+[20:22] <sreich> oh yeah, i'm bad
+[20:22] <shadeslayer> xD
+[20:23] <shadeslayer> sreich: go test new stuff 
+[20:23] <shadeslayer> go go go
+[20:23] <shadeslayer> you get to play TF2
+[20:24] <sreich> lol
+[20:24] <sreich> of course
+[20:24] <shadeslayer> oh wow
+[20:24] <shadeslayer> shift + tab works
+[20:24] <shadeslayer> didn't work earlier
+[20:25] <shadeslayer> as does big picture
+[20:25] <shadeslayer> whoop
+[20:34] <snele> guys, does anybody knows irc nickname of the guy how redisigned plasma theme for 4.10? mart? notmart? marco? something else? :)
+[20:34] <snele> *who
+[20:34] <shadeslayer> hmm
+[20:35] <shadeslayer> there's notmart
+[20:35] <shadeslayer> but I don't think he did the redesign
+[20:35] <shadeslayer> it was Nuno iirc
+[20:35] <snele> I think it is notmart: http://www.notmart.org/index.php/Graphics/Time_to_refresh_some_air
+[20:36] <shadeslayer> well both of them
+[20:37] <shadeslayer> so you want to talk to pinheiro and notmart
+[20:37] <shadeslayer> #oxygen probably
+[20:39] <snele> shadeslayer: thanks! they are both in #oxygen :)
+[20:40] <JontheEchidna> Well X still works
+[20:40] <snele> they introduces regression with new theme in icon-only task manager so I have to ping them :)
+[20:41] <shadeslayer> heh
+[20:41] <shadeslayer> yofel: "Update: Packages for Precise users are now avaliable via the same Beta PPA mentioned above."
+[20:41] <shadeslayer> good enough?
+[20:41] <shadeslayer> or should I add the word awesome in there
+[20:44]  * shadeslayer removes the word 'same'
+[20:53] <shadeslayer> poor buildd's
+[20:53] <shadeslayer> I get this when building qtcreator : http://paste.kde.org/643058/
+[20:56] <JontheEchidna> hmm, I'm seeing some font artifacting in Chrome with this SNA stuff
+[20:57] <JontheEchidna> on its tabbar
+[20:57] <shadeslayer> dunno, no such thing here
+[20:58] <JontheEchidna> http://i.imgur.com/3No4L.png
+[21:05] <shadeslayer> JontheEchidna: http://simplest-image-hosting.net/png-0-f22392
+[21:09] <shadeslayer> anywho
+[21:09]  * shadeslayer goes back to pgst
+[21:48] <Mamarok> dear Kubuntu devs, it would be really great if we could get debugging symbols for taglib
+[21:54] <Riddell> Mamarok: use dbgsym packages?  they get made for everything
+[21:55] <Mamarok> hm, what is that? never heard of
+[21:55] <Riddell> https://wiki.ubuntu.com/DebuggingProgramCrash
+[21:55] <Riddell> see "If there is no -dbg package:"
+[21:56] <Mamarok> *sigh* and you really expect me to ask the average user to do that?
+[21:57] <Mamarok> looks complicated even to me
+[21:57] <Mamarok> apparently just rebuilding taglib from source with debug enabled seems much easier than that
+[21:59] <Mamarok> and then it has to be removed again?
+[21:59] <Mamarok> not user friendly at all, and the bug reports we get for taglib are from plain users
+[21:59] <Mamarok> too complicated
+[22:00] <mikhas> option b) contribute to a project with no users → no complaints
+[22:00] <mikhas> SCNR
+[22:00] <Mamarok> mikhas: well, lukily Amarok has a lot of users, much better that way :)
+[22:01] <mikhas> but you just complained about having users, in a way ;-)
+[22:01] <yofel> adding that automatically was a feature request for our debug installer, but last time we talked JT said it's not exactly trivial
+[22:01] <yofel> I'll agree that this system is designed for apport's auto-retracer, not for human beings
+[22:02] <mikhas> so, find someone to fix taglib packaging to create a *--dbg package?
+[22:03] <Riddell> I think that's what Mamarok just asked for
+[22:03] <mikhas> yes
+[22:04] <Riddell> but is -dbgsym really so hard? it's just running a couple of copy and paste commands
+[22:04] <Mamarok> Riddell: maybe not for us, but I talk about plain users
+[22:04] <mikhas> I just dont think that being cynical when asking for others to do something for you helps.
+[22:05] <Mamarok> mikhas: and you are talking to whom?
+[22:05] <yofel> hm...
+[22:06] <yofel> Riddell: how about adding a shell scrip for that to kubuntu-debug-installer and have it run it when it's not enabled? (finding that out would be the hard part I guess)
+[22:06] <yofel> stupid t buton
+[22:07] <Riddell> I don't understand why it isn't enabled by default
+[22:08] <yofel> "people should use apport"
+[22:09] <shadeslayer> huh
+[22:10] <shadeslayer> I don't suppose we can somehow ship with that repo added
+[22:11] <yofel> hm, wait
+[22:11] <yofel> can add-apt-repository prevent adding the same repo twice?
+[22:12] <shadeslayer> I think so
+[22:13] <shadeslayer> ah nope
+[22:13] <yofel> JontheEchidna: is there some qapt method to check whether a specific repository is enabled on a system?
+[22:14] <yofel> apt should know the list of active repositories from the cache...
+=== Tonio_ is now known as Tonio_aw
+[22:18] <yofel> shadeslayer: huh, since when is steam for linux public o.O?
+[22:18] <shadeslayer> a long long time
+[22:19] <yofel> I meant public as in visible on the default install page
+[22:19] <shadeslayer> default install page?
+[22:19] <yofel> http://store.steampowered.com/about/
+[22:20] <shadeslayer> neato
+[22:21] <shadeslayer> they're pushing towards a Linux console
+[22:21] <shadeslayer> probably that's why

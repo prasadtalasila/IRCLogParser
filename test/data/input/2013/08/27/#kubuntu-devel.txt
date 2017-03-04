@@ -1,0 +1,273 @@
+[06:27] <soee> good morning
+[07:59] <lordievader> Good morning.
+=== ghostcube_ is now known as ghostcube
+[09:13] <Riddell> ouch, my dentist had a break down half way through drilling out my tooth :(
+[09:14] <Riddell> shadeslayer: they did one a couple of years ago too, I've got the files if you want them
+[09:16] <smartboyhw> Riddell, LOL
+[09:27] <shadeslayer> Riddell: I see, well, I still have to watch the rest of that one
+[09:27] <shadeslayer> I watched 30 mins of it, then I started to have a headache
+[09:37] <smartboyhw> shadeslayer, oh:(
+=== 20WACYJOB is now known as toscalix
+[09:58] <smartboyhw> Riddell, you are a Debian developer right?
+[10:03] <Riddell> smartboyhw: not I
+[10:04] <smartboyhw> Riddell, :O
+[10:04] <shadeslayer> ScottK: has rights I believe
+[10:04]  * smartboyhw wants somebody to sponsor his first package into Debian....
+[10:05] <Riddell> smartboyhw: what's the lucky package?
+[10:05] <smartboyhw> Riddell, zbackup
+[10:06] <smartboyhw> It's a new one, so it's a good opportunity to train it out my packaging skills
+[10:06] <smartboyhw> (Albeit it's quite an easy one)
+[10:08] <shadeslayer> okay I think login is faster if cache is populated from the install
+[10:10] <yofel> for kde it will be, cache generation takes quite a while
+[10:12] <Riddell> shadeslayer: what's your current method?
+[10:13] <shadeslayer> Riddell: http://paste.kde.org/p171e1662/
+[10:13] <shadeslayer> Riddell: though I can remove the dir creation stuff by running kbuildsycoca4 twice , once before I copy the cache, and once I copy it
+[10:14]  * smartboyhw forgotten the command to check copyright again, yofel
+[10:14] <smartboyhw> IDIOT
+[10:14] <shadeslayer> which is what I'm trying right now
+[10:14] <shadeslayer> smartboyhw: licensecheck
+[10:14] <yofel> ^
+[10:15] <shadeslayer> heh, also missing a ] in the subprocess.call
+[10:19] <Riddell> smartboyhw: also run suspicious-source
+[10:20] <smartboyhw> Riddell, yeah?
+[10:20] <shadeslayer> Riddell: sebas agreed that copying the cache should work
+[10:24] <Riddell> smartboyhw: so you don't let in any non-preferred modifiable form files
+[10:40] <shadeslayer> yofel: does python have a method to copy all files matching a regex?
+[10:40] <shadeslayer> then I can just copy over *.kcache
+[10:41] <Riddell> I don't think so, you can use a shell call or just match the files in python easy enough
+[10:42] <Riddell> subprocess.call("cp * foo/", shell=True)
+[10:42] <Riddell> I think
+[10:42] <shadeslayer> ah yes, shell call is probably easier
+[10:43] <yofel> python has a glob module I think that you could use, but shell would be easier
+=== ghostcube_ is now known as ghostcube
+[12:07] <Riddell> hi manchicken 
+[12:07] <manchicken> Hiya
+[12:10] <BluesKaj> 'Morning all
+[12:17] <shadeslayer> xnox: ping
+[12:17] <shadeslayer> xnox: is there a way I can extract the name of the live session user?
+[12:18] <yofel> $USER, no?
+[12:19] <shadeslayer> ubiquity will be running as root
+[12:19] <shadeslayer> so won't $USER be root?
+[12:19] <shadeslayer> problem is : cache_path = subprocess.getoutput('kde4-config --path cache') : gives me the cache of the root user
+[12:19] <shadeslayer> which does not have the cache files
+[12:20] <shadeslayer> but the live user does
+[12:20] <xnox> shadeslayer: class DM has self.username, there is also get_casper('USERNAME', default_username)
+[12:20] <xnox> shadeslayer: SUDO_USER should be defined in the environment as well.
+[12:21] <xnox> (SUDO_USER used in a couple of places in the installer itself)
+[12:21] <xnox> shadeslayer: else fallback to root, as e.g. it is valid to run ubiquity as root with no "normal" accounts.
+[12:22] <shadeslayer> xnox: I don't wnat to fallback to root because it doesn't have the KDE cache files populated :)
+[12:22] <xnox> shadeslayer: or simply use the drop privileges decorator, to executed something as a mere mortal.
+[12:22] <shadeslayer> aha
+[12:22] <shadeslayer> that sounds better
+[12:22] <xnox> shadeslayer: preexec_fn=misc.drop_all_privileges
+[12:22] <shadeslayer> xnox: can drop_privileges be used in scripts/plugininstall.py ?
+[12:23] <xnox> no idea =)(
+[12:23] <xnox> no idea =)
+[12:23] <xnox> shadeslayer: try and see what breaks =)
+[12:23] <shadeslayer> lol
+[12:23] <shadeslayer> xnox: once dropped, can I elevate again?
+[12:23] <shadeslayer> ( doesn't seem like it )
+[12:27] <shadeslayer> xnox: v
+[12:27] <shadeslayer> erm
+[12:27] <shadeslayer> xnox: http://paste.kde.org/p699b323c/
+[12:27] <shadeslayer> xnox: only problematic line is line 10
+[12:28] <shadeslayer> need to figure out how to run that as the live user
+[12:28] <xnox> shadeslayer: drop_privileges is for running stuff as $user in the live session, not in target.
+[12:30] <shadeslayer> aha, there's a regain priviliges
+[12:30] <shadeslayer> xnox: right, I understand
+[13:02] <shadeslayer> xnox: btw, do you have an idea if populating the xapian cache on the target system has been investigated?
+[13:05] <xnox> shadeslayer: which xapian cache? i thought on ubuntu cds it does happen at the end when software-centre is configured.
+[13:05] <xnox>  - the apt-xapian cache that is.
+[13:05] <shadeslayer> yes, that's the one I'm talking about
+[13:05] <shadeslayer> xnox: is that generic or specific to the ubuntu CD>
+[13:05] <shadeslayer> or even the package
+[13:05] <xnox> no idea, I just know that it happens =)
+[13:06] <shadeslayer> heh =)
+[13:09] <xnox> shadeslayer: so apt-xapian-index is purged from target with a comment that it will be reindexed later.
+[13:09] <shadeslayer> yes I saw that
+[13:09] <shadeslayer> something along the lines of "Once the target systems apt is fully configured we will re index"
+[13:15] <xnox> shadeslayer: are you just pondering or you did live-session install, then mounted /target and saw there is no apt-xapian inde?
+[13:15] <shadeslayer> xnox: installing to check if my guess is correct
+[13:15] <shadeslayer> xnox: atleast from the logs I don't think it's doing anything related to the apt xapian index
+[13:22] <smartboyhw> Anyone here have any ideas as to which team in Debian should I join?
+[13:26] <shadeslayer> the KDE one?
+[13:26] <smartboyhw> shadeslayer, except the KDE one?
+[13:27] <shadeslayer> not the GNOME one?
+[13:27] <smartboyhw> shadeslayer, I know nothing about GNOME:P
+[13:27] <shadeslayer> I bet apachelogger can enlighten you about it
+[13:28] <smartboyhw> shadeslayer, oh
+[13:28] <apachelogger> http://wstaw.org/m/2013/08/27/plasma-desktopyY2304.png phonon5 playing video
+[13:28] <smartboyhw> apachelogger, shadeslayer say you can enlighten me on above topic^
+[13:29] <apachelogger> GNOME is awesome.
+[13:29] <smartboyhw> apachelogger, ......
+[13:29] <apachelogger> all the Enlightenment you need
+[13:29] <smartboyhw> apachelogger, .................
+[13:29] <BluesKaj> apachelogger, bah :)
+[13:29] <apachelogger> or perhaps you should have a look at your Windows 
+[13:29] <shadeslayer> I heard they tried to remove middle click paste
+[13:30] <apachelogger> to see an Apple falling from a tree, landing on a Bee
+[13:30] <smartboyhw> apachelogger, you are obviously answering the wrong question...
+[13:30] <shadeslayer> and then it was reverted
+[13:30] <apachelogger> smartboyhw: yeah, because there was no question
+[13:30] <smartboyhw> apachelogger, um the question is <smartboyhw> Anyone here have any ideas as to which team in Debian should I join?
+[13:30] <apachelogger> or there was one, and that one I cannot answer as I am not in any debian team
+[13:30] <smartboyhw> apachelogger, oh
+[13:30] <shadeslayer> https://git.gnome.org/browse/gnome-settings-daemon/commit/plugins/xsettings/gsd-xsettings-manager.c?id=696e04d41a485f84870a98c85b819979928b69e9
+[13:30] <smartboyhw> shadeslayer, can you get somebody who can ACTUALLY answer?:
+[13:30] <smartboyhw> :P
+[13:30] <apachelogger> so shadeslayer #fail 
+[13:31] <BluesKaj> how about the debiam kde team , if there is one :)
+[13:31] <shadeslayer> what
+[13:31] <shadeslayer> BluesKaj: ofcourse there is one :P
+[13:32] <apachelogger> I heared they all switched to fedora
+[13:32] <BluesKaj> yeah , no kidding '
+[13:32] <smartboyhw> OK, so you want me all to switch to Debian and do packaging work there instead of here?:P
+[13:32] <BluesKaj> I see alot of fewrora users in #kde
+[13:32] <BluesKaj> oops fedora
+[13:33]  * BluesKaj needs more coffee
+[13:33] <BluesKaj> so fedora must have problems on kde
+[13:34] <smartboyhw> BluesKaj, :O
+[13:35] <apachelogger> or they have users
+[13:35] <apachelogger> trolololo
+[13:36] <shadeslayer> ^^
+[13:36] <smartboyhw> apachelogger, shadeslayer so, the Debian Qt/KDE team?
+[13:37] <shadeslayer> ¯\_(ツ)_/¯
+[13:37] <smartboyhw> shadeslayer, OK, what the hell is that?
+[13:38] <shadeslayer> I don't know 
+[13:38] <smartboyhw> shadeslayer, huh
+[13:38] <smartboyhw> THen why are you typing that?
+[13:38] <smartboyhw> It's a Japanese word + arms
+[13:39] <shadeslayer> yes, I know, I just used it as a substitute for IDK since it better conveys what I wanted to say
+[13:39] <smartboyhw> shadeslayer, ..............................................................................................................................................................................................................................................................................
+[13:44] <apachelogger> it's an emoticon that's what it is
+[13:45] <BluesKaj> look s like , "I have no idea"  :)
+[13:46] <smartboyhw> It looks like to me as \o/
+[13:49] <jussi> it looks like *shrug*
+[13:57] <shadeslayer> halp http://paste.kde.org/~shadeslayer/p3fda168e/
+[13:57] <shadeslayer> causes crash : http://paste.ubuntu.com/6032727/
+[13:57] <shadeslayer> line 958 ^^
+[13:58]  * Riddell tunes into http://summit.ubuntu.com/uds-1308/meeting/21887/intro-and-keynote/
+[13:58]  * smartboyhw too
+[13:58] <Riddell> Aug 27 13:50:17 kubuntu ubiquity:   File "/usr/share/ubiquity/plugininstall.py", line 1674
+[13:58] <Riddell> Aug 27 13:50:17 kubuntu ubiquity:     universal_newlines=True).communicate()[0].strip('\n')
+[13:58] <shadeslayer> yes
+[13:58] <Riddell> shadeslayer: invalid syntax
+[13:58] <shadeslayer> why?
+[13:59] <Riddell> shadeslayer: missing comma
+[13:59] <Riddell> preexec_fn=misc.drop_privileges
+[13:59] <Riddell> there ^^
+[13:59] <shadeslayer> %$^%*&
+[14:00] <smartboyhw> shadeslayer, CALM DOWN
+[14:00] <shadeslayer> my brain hurts
+[14:00] <shadeslayer> python is driving me crazy
+[14:01]  * smartboyhw drives shadeslayer even more crazy
+[14:03] <shadeslayer> /o\
+[14:04]  * smartboyhw thinks shadeslayer should be sent to "Tsing Shan" (a.k.a. hospital for crazy people)
+[14:13] <shadeslayer> -.-
+[14:13] <shadeslayer> the cp command still doesn't work :/
+[14:41] <shadeslayer> hmm
+[14:41] <shadeslayer> xnox: I don't think drop_priviliges is working
+[14:42] <xnox> shadeslayer: define not work =) on kubuntu cd, it will correctly drop priviliges to the live-cd kubuntu user.
+[14:43] <shadeslayer> xnox: http://paste.kde.org/~shadeslayer/p5bae65c4/
+[14:43] <shadeslayer> that's the code
+[14:44] <shadeslayer> in syslog I see "Building KDE cache from"
+[14:44] <shadeslayer> no path
+[14:44] <xnox> check /var/log/installer/dm anything there?
+[14:45] <shadeslayer> not really no
+[14:46] <shadeslayer> http://paste.ubuntu.com/6032895
+[14:47] <shadeslayer> xnox: ^^
+[14:49] <xnox> shadeslayer: at least on ubuntu, ubiquity bootted with debug-ubiquity parameter allows ctrl-alt-t to bring up the terminal with the same environment as the installer, for you to test what (if anything) is wrong with that call.
+[14:50] <shadeslayer> hmm
+[14:50] <shadeslayer> nope
+[14:50] <shadeslayer> nothing
+[14:50] <shadeslayer> xnox: you mean ubiquity --debug right?
+[14:51] <BluesKaj> ctrl+alt+t hasn't worked here for ages
+[14:51]  * xnox has no idea about kde frontend. but it does work in ubuntu.
+[14:51] <xnox> shadeslayer: no, debug-ubiquity as kernel boot arg, cause you want it in ubiquity-dm, not in the live session.
+[14:54] <hggdh> just a Q, are you folks aware that apport-kde is seg-faulting?
+[14:54] <shadeslayer> aha
+[14:55] <shadeslayer> xnox: but my code is only meant to be run in the live session
+[14:57] <xnox> shadeslayer: what do you mean by live session? installer should do everything regardless if it was run from live session or from ubiquity-dm session.
+[14:58] <xnox> shadeslayer: probably environment variables are missing, as we use pkexec and it clears environment, and when you drop priviliges back the environment will not be the same.
+[14:58] <shadeslayer> xnox: no no, this code should only be run when on the live session
+[14:58] <xnox> shadeslayer: why does it need to be run anyway then?
+[14:58]  * xnox doesn't understand, if you are generating caches, you should chroot into /target and regenerate caches there.
+[14:58] <xnox> shadeslayer: do note that your live session != the target installed environment....
+[14:59] <shadeslayer> xnox: yes I know, what I'm doing is copying caches from the live-session to the target
+[14:59] <xnox> don't do that.
+[15:00] <xnox> chroot into target and regenerate them.
+[15:00] <xnox> shadeslayer: what does it gain you?
+[15:00] <shadeslayer> hmm, kind of difficult since there's no command to generate the cache on the target via command line that I know of
+[15:00] <shadeslayer> xnox: login time
+[15:00] <shadeslayer> or atleast it seems to me that login is faster if I copy the cache
+[15:00] <shadeslayer> *first login
+[15:00] <xnox> shadeslayer: well the caches are generated somehow, if it's not exposed yet, make it exposed.
+[15:01] <shadeslayer> xnox: they're most likely generated programatically
+[15:01] <shadeslayer> xnox: for eg the plasma theme cache
+[15:01] <shadeslayer> or the icon cache
+[15:01] <shadeslayer> combined, the compromise about 90 MB's
+[15:01] <xnox> benchmark it. I don't like something that only works via one method vs the other.
+[15:02] <shadeslayer> hm, I see
+[15:02] <xnox> talk to kde upstream, maybe they can expose cache generation.
+[15:02] <shadeslayer> *nod*
+[15:04] <xnox> shadeslayer: for example icon caches should be all up to date globally, as we preserve time stamps during livefs build.
+[15:05] <shadeslayer> not really, if I understand this correctly, KDE caches icons in /var/tmp/kdecache-USER/
+[15:05] <shadeslayer> since you don't know the value of USER, the file is not there on the target system
+[15:18] <smartboyhw> DOH, Google doesn't allow me to join the vUDS hangouts since I'm < 18:(
+[15:19] <shadeslayer> lol?
+[15:20] <smartboyhw> shadeslayer, true
+[15:20] <smartboyhw> It is actually Google's policy
+[15:23] <BluesKaj> have patience smartboyhw . you'll be 18 someday :)
+[15:23] <smartboyhw> BluesKaj, what? That's 3 YEARS, for holy's sake
+[15:24] <smartboyhw> And that's 36 vUDS...
+[15:24] <shadeslayer> I sure hope not
+[15:24]  * shadeslayer is still rooting for in person UDS to come back
+[15:25] <BluesKaj> like the saying goes , patience is a virtue
+[15:25]  * smartboyhw wrote http://smartboyhwubuntu.wordpress.com/2013/08/27/google-please-let-me-join-vuds/ in fury
+[15:26] <yofel> write vUDS-use-something-other-than-google instead
+[15:26] <yofel> then Scott could join too
+[15:27] <shadeslayer> ^^
+[15:27] <smartboyhw> yofel, wait, why Scott can't?
+[15:27] <shadeslayer> It's proprietary
+[15:27] <shadeslayer> same reason I try and actively avoid it
+[15:27] <yofel> smartboyhw: he doesn't agree with google's TOS afaik
+[15:27] <smartboyhw> yofel, oh:)
+[15:27] <shadeslayer> and that as well ^^
+[15:28] <smartboyhw> shadeslayer, yofel updated
+[15:28] <smartboyhw> At least pleading Ubuntu to change
+[15:28] <shadeslayer> I am unsure why they did not go with mumble
+[15:28] <shadeslayer> I don't think video is *that* important
+[15:30] <yofel> well, video *is* nice
+[15:30] <yofel> it does give it a bit more personal feeling
+[15:30] <smartboyhw> But, this TOS is :(
+[15:30]  * smartboyhw has to re-consider whether he will be trying to join Google in the future
+[15:38] <smartboyhw> shadeslayer, yofel their answer: "NO SOLUTION TO THIS"
+[15:38] <smartboyhw> And they seem to stick to Video more
+[15:38]  * yofel expected that
+[15:41] <smartboyhw> yofel, next thing you know from popey and IdleOne: Why not lie?:P
+[15:42] <smartboyhw> Next thing you know from slangasek and rbasak: Go and write one yourself -.-
+[15:58] <shadeslayer> xnox: fwiw the xapian-apt index is not created on kubuntu
+[15:58] <shadeslayer> there is no /target/var/lib/apt-xapian-index
+[15:58] <xnox> but daily cron will create it.
+[15:59] <shadeslayer> xnox: do you think we should prepopulate it from the installer ?
+[16:00] <xnox> shadeslayer: not sure.
+[16:00] <shadeslayer> so, where is this db used?
+[16:00] <shadeslayer> muon?
+[16:00] <shadeslayer> JontheEchidna: ^ ?
+[16:00] <shadeslayer> apol: ^^
+[16:01] <smartboyhw> libqapt?
+[16:01] <shadeslayer> well, it's probably implemented in libqapt, but the question is whether muon uses it
+[16:01] <apol> it does
+[16:01] <yofel> I think the issue was our language selector
+[16:01] <apol> for searching
+[16:01] <yofel> that doesn't work without the index
+[16:02] <shadeslayer> ah hmm, the trello card gives no reasons why each one of those caches should be populated
+[16:02] <shadeslayer> just says that they should be
+[18:05] <soee> hiho
+[18:35] <skellat> Hey Riddell, can you spare a moment?
+[18:38] <skellat> When you have the chance Riddell, please ping infinity & slangasek over -release with the amount of alphas and betas Kubuntu want to participate in during the T cycle.  It would help them with a bit of their discussion from a short session about schedule planning.
+[18:38]  * skellat wanders off
+=== claydoh_ is now known as claydoh
+[19:52] <Riddell> skellat: all of them I think
+[20:41] <skellat> Riddell: Just please make sure to ping infinity & slangasek directly in -release with that.  knome did so for us and I think I need to track down gilir perhaps yet too.
+=== dantti_laptop|2 is now known as dantti_laptop

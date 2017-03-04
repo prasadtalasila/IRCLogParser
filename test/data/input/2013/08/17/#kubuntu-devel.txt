@@ -1,0 +1,160 @@
+[07:40] <smartboyhw> Currently playing with Qt5 and KF5 building here
+[10:19] <shadeslayer> ScottK: no
+[10:19] <shadeslayer> ScottK: I was hoping we could get one after this SRU
+[10:28] <Kalidarn> has anyone noticed a weird regression where when you rightclick on a file and alter the "Application preference order" that the changes aren't saved?
+[10:28] <Kalidarn> (using latest KDE from the kubuntu PPA) ie 4.11
+[10:28] <Kalidarn> i noticed this bug occured straight after the update
+[10:29] <Kalidarn> also it reset all my preferences, for example I preferred to use QVim over Qt Creator for editing .cpp files, but now Qt Creator is first in the Application Preference Order
+[10:29] <shadeslayer> yes
+[10:29] <shadeslayer> just a sec
+[10:29] <Kalidarn> is there a solution?
+[10:29] <shadeslayer> kde bug 321706
+[10:29] <ubottu> KDE bug 321706 in kcm_filetypes "Some file type association can't be changed anymore" [Major,Confirmed] http://bugs.kde.org/show_bug.cgi?id=321706
+[10:30] <Kalidarn> ah
+[10:30] <Kalidarn> thanks
+[10:30]  * shadeslayer is not going to drop random bugzilla patches into kubuntu packages fwiw
+[10:31] <Kalidarn> heh.
+[10:31] <Kalidarn> i assume you would if they fix it in trunk though
+[10:32] <shadeslayer> assuming it's committed to the 4.11 branch, uyes
+[10:32] <Kalidarn> ugh waiting until 4.12 for a fix would be annoying lol
+[10:33] <Kalidarn> least kubuntu 14.04 isn't due any time soon
+[10:33] <shadeslayer> vHanda: nepomukstorage(2351)/nepomuk (storage service) Nepomuk2::Repository::open: opening repository ' "main" ' at ' "/home/shadeslayer/.kde/share/apps/nepomuk/repository/main/" '
+[10:33] <shadeslayer> I'm available for debugging btw
+[10:33] <Kalidarn> rather 13.10
+[10:33] <shadeslayer> so let me know if you need more info
+[10:51] <vHanda> shadeslayer: seems to be working fine.
+[10:51] <vHanda> shadeslayer: wait. is nepomukfilewatch and nepomukfileindexer running?
+[10:51] <shadeslayer> uh yeah, pasted the wrong line
+[10:51] <shadeslayer> it said it couldn't open the repository
+[10:51] <vHanda> cause that line just saying opening repo, not that it succeeded in opening
+[10:52] <shadeslayer> right, it didn't succeed, so I rm'd the repo
+[10:52] <shadeslayer> and it works now
+[10:53] <shadeslayer> vHanda: didn't we establish this issue a long time back? ( repository not opening etc )
+[10:57] <vHanda> shadeslayer: right, so removing the repo fixes it
+[10:57] <shadeslayer> yes
+[10:57] <vHanda> so with a fresh repo, it is working fine?
+[10:58] <shadeslayer> though that's just a workaround, not a fix
+[10:58] <shadeslayer> yes
+[10:58] <vHanda> cool. Perfect, then it's the issue with the transaction file. I'll provide a fix for that in soprano
+[10:58] <vHanda> let me ping Mamrok and inform her
+[10:58] <vHanda> thanks
+[10:58] <shadeslayer> okay
+[10:58]  * yofel is still waiting for a fix for that too btw. ^^
+[10:58] <shadeslayer> rm -rf your repo :P
+[10:58] <vHanda> I was a little afraid cause mck and agatue both have had to manually add systems for the odbc driver
+[10:59] <smartboyhw> Hey shadeslayer yofel 
+[10:59] <yofel> shadeslayer: no need to do that
+[10:59] <vHanda> *system links
+[10:59] <yofel> you only need to rm soprano-virtuoso.trx or how it's called
+[10:59] <shadeslayer> ah
+[10:59] <vHanda> yup
+[10:59] <vHanda> transaction file = .trx
+[11:01] <yofel> still not sure what that was about. There was an issue in neon where the paths were wrong, and using virtuoso from debian experimental would also break
+[11:01] <yofel> but nothing official could cause that kind of issue
+[11:05] <shadeslayer> gtg
+[11:52] <apachelogger> ehh, sick in summer is awesome
+[11:52] <apachelogger> assuming no one did the l10n review I'll hop at it on monday, in case anyone wants to join
+[11:53] <apachelogger> Riddell, shadeslayer, yofel: ^ 
+[11:53] <yofel> no (l10n review?)
+[11:53] <apachelogger> actually, Quintasan: input methods probably also could do with a sanity review for saucy
+[11:53] <yofel> also, get well soon
+[11:54] <apachelogger> yofel: take the live image and use/install in some language to identify broken/missing localization
+[11:54] <yofel> aah
+[11:59] <Peace->  plasma-widget-smooth-tasks : Depends: libtaskmanager4abi3 (>= 4:4.8.3) but it is not going to be installed
+[11:59] <Peace-> after ppa with 4.11
+[12:10] <mtu> Hi ppl. Yesterday, the 4.11 upgrade from the quantal backports PPA totally fried my KDE. won't start, from Kdm or startx. X11 is fine, only error I can find is kdm complaining about dbus session-bus not running, but the system daemon is up
+[12:11] <mtu> Before I had 4.10 from the same ppa running fine. Any ideas?
+[12:12] <Peace-> mtu: can you start a terminal login ?
+[12:12] <Peace-> mtu: and try to see what startkde says ?
+[12:13] <yofel> Peace-: smooth-tasks rebuild uploaded
+[12:14] <yofel> mtu: is kubuntu-desktop still installed?
+[12:17] <mtu> startkde complains about no X display (although kdm is running)
+[12:17] <mtu> yofel: don't have the machine running, but I'm sure yes. Can check in a few minutes.
+[12:17] <Peace-> mtu: it says this ? startkde $DISPLAY is not set or cannot connect to the X server
+[12:18] <mtu> Yes
+[12:18] <Peace-> mtu: if yes ===> try this http://nowardev.wordpress.com/2013/06/30/startkde-display-is-not-set-or-cannot-connect-to-the-x-server/
+[12:18] <Peace-> mtu: try what it says after this sudo nano /etc/X11/xinit/xinitrc
+[12:19] <mtu> I'll check, get back to you in a few minutes
+[12:29] <ScottK> shadeslayer: I think we should get the kscreen/libkscreen SRUs verified and out first.
+[12:30] <smartboyhw> !testers | Please verify the SRU for libkscreen & kscreen in raring-proposed
+[12:30] <ubottu> Please verify the SRU for libkscreen & kscreen in raring-proposed: Help is needed in #kubuntu-devel. Please ping Riddell, yofel, soee, Tm_T, shadeslayer, BluesKaj, James147, smartboyhw, Quintasan, lordievader, shrini, tester56 for information.
+[12:32] <Peace-> :) Failed to fetch bzip2:/var/lib/apt/lists/partial/ppa.launchpad.net_kubuntu-ppa_backports_ubuntu_dists_raring_main_binary-i386_Packages  Hash Sum mismatch
+[12:33] <smartboyhw> Peace-: Re-run apt-get update
+[12:34] <Peace-> smartboyhw: 
+[12:35] <Peace-> The following packages have been kept back:
+[12:35] <Peace->   kscreen
+[12:35] <Peace-> 0 upgraded, 0 newly installed, 0 to remove and 1 not upgraded.
+[12:35] <Peace-> ok the problem of mismathc is gone
+[12:36] <smartboyhw> Peace-: BTW just run sudo apt-get install kscreen if you want to upgrade it.
+[12:37] <Peace-> smartboyhw: done it seems it works properly too
+[12:37] <smartboyhw> Peace-: :)
+[12:41] <mtu> kubuntu-desktop was indeed not installed, however the heck that happened
+[12:41] <mtu> now pulling some more updates (slow connection), then will see if KDE start again
+[12:41] <yofel> mtu: cany ou plase share your /var/log/apt/history.log, that'll tell what apt did
+[12:44] <mtu> yofel: i'd be embarrassed to, because yesterday i panicked around with ppa-purge. but if you promise not to laugh, i can ;)
+[12:44] <mtu> i can also tell you the approximate date/time when the critical stuff happened
+[12:46] <mtu> but first, it either works now, or i have to find out how to pastebin from the console :D
+[12:51]  * mtu is back in business
+[12:51] <mtu> thanks a bunch, i was pretty much panicking there
+[12:51] <Peace-> mtu: so it was plasma desktoop to reinstall or the file to be edited?
+[12:52] <mtu> kubuntu-desktop, and a bunch of dependencies, was suddenly not installed anymore
+[12:52] <mtu> apt history here: http://paste.kde.org/p3bdf32a0/37674383/ (pass: mtu)
+[12:53] <mtu> critical stuff was yesterday, ca. 22:30 local time
+[12:53] <Peace-> ok read up
+[13:29] <tsdgeos> guys, what's up with kopete and kalzium that are not still at 4.11.0 in saucy?
+[13:30] <smartboyhw_> tsdgeos: :O
+[13:31] <yofel> kopete is FTBFS on powerpc
+[13:31] <yofel> kalzium is FTBFS on !armhf
+[13:31] <smartboyhw_> yofel, oh:(
+[13:32] <yofel> make[4]: *** No rule to make target `/usr/lib/i386-linux-gnu/libpython2.7.so', needed by `lib/libcompoundviewer.so.4.11.0'.  Stop.
+[13:32] <yofel> WHAT?
+[13:32] <smartboyhw_> :O
+[13:34]  * yofel adds libpython2.7-dev to libavogadro-dev depends
+[13:36] <yofel> should fix kalzium
+[13:36] <smartboyhw_> What happened to kopete powerpc FTBFS?
+[13:37] <yofel> huh
+[13:37] <yofel> ../../../../../protocols/jabber/googletalk/libjingle/talk/base/systeminfo.cc:105:2: error: #error "Unknown architecture."
+[13:37]  * smartboyhw_ emits blood.
+[13:38] <mtu> Peace-: yofel: thanks again, ppl =) i'll be off. seeyas!
+[13:39] <yofel> ScottK: your powerpc fix doesn't quite seem to work ^
+[13:39] <ScottK> Apparently not.
+[13:39] <smartboyhw_> :(
+[13:43] <yofel> ScottK: do you think dpkg-architecture -qDEB_HOST_GNU_CPU would work? as that says x86_64 here, while DEB_HOST_GNU_TYPE is x86_64-linux-gnu
+[13:43]  * yofel has no idea what DEB_HOST_GNU_TYPE would be on powerpc
+[13:44]  * yofel gives it a try
+[14:00] <ScottK> yofel: Thanks for looking into it.
+[18:58] <shadeslayer> fun 2.3.2 is FTBFS in ARM
+[18:58] <shadeslayer> *qtwebkit 2.3.2
+[20:06] <Quintasan> aw shit
+[20:07] <Quintasan> shadeslayer, yofel: Do we compile kdelibs with upnp as of 4.11?
+[20:07] <Quintasan> or was the lib in universe?
+[20:07]  * Quintasan can't recall
+[20:07] <yofel> it was a craplib, and it's in universe
+[20:07] <Quintasan> Can we remove the upnp plugin from install files then?
+[20:07] <Quintasan> It's useless if we don't do it.
+[20:07] <yofel> why is that even there?
+[20:08] <Quintasan> Don't ask me
+[20:08] <yofel> I mean, why is it even built?
+[20:08] <Quintasan> If there is a flag it should be disabled, if not then don't install it.
+[20:08]  * Quintasan grabs source
+[20:09] <yofel> please work from bzr...
+[20:10] <Quintasan> Ah yes, certainly
+[20:54] <Quintasan> yofel: Pushed to bzr
+[20:54] <Quintasan> there is no cmake switch so I removed it from install files
+[21:06] <Noskcaj> why is kdenetwork newer in raring than saucy?
+[21:08] <yofel> Noskcaj: huh? 5:78ubuntu4 is larger than 4:4.10.5+dfsg1-0ubuntu0.1
+[21:09] <yofel> or what do you mean?
+[21:10] <Noskcaj> 4:4.10.5+dfsg1-0ubuntu0.1 over 4:4.10.4-0ubuntu1
+[21:11] <yofel> looks like kdenetwork needs removal from the archive then
+[21:11] <yofel> it was split up into several source packages
+[21:12] <Noskcaj> kdeadmin has the same issue
+[21:13] <yofel> it'll be kdeadmin, kdenetwork, kdesdk and kdetoys IIRC
+[21:21] <Noskcaj> kdetoys is fine. can i try and merge the latest kdetoys?
+[21:43] <yofel> Noskcaj: debian has 4.10.5 from what I see, we have amor, kteatime and ktux 4.11.0
+[21:44] <Noskcaj> yofel, ok. Then what should be done about the notification in merges.ubuntu.com ?
+[21:44] <yofel> uhm, nothing, we need source removal requests for those really, they're obsolete
+[21:45] <yofel> once the sources are gone MOM should remove the merges too I hope
+[22:36] <Quintasan> Riddell: http://www.kubuntu.org/donate -> contribute to Kubuntu points to https://www-admin.kubuntu.org/community/contribute I'm pretty much sure it's not what we want
+[23:45] <mparillo> https://bugs.launchpad.net/kubuntu-website/+bug/1213479
+[23:45] <ubottu> Launchpad bug 1213479 in Kubuntu Website "Donate Link goes to Admin Site" [Undecided,New]
+[23:47] <mparillo> Quintasan: Now Points to: http://www.kubuntu.org/community/contribute (funny that HTTPs did not work for me so I switched it to HTTP).

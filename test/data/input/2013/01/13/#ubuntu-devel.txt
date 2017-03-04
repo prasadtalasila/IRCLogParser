@@ -1,0 +1,168 @@
+[00:04] <penguin42> hmm libssl-dev:i386 won't install alongside libssl-dev
+=== cpg|away is now known as cpg
+=== glebihan_ is now known as glebihan
+[01:04] <cjwatson> penguin42: I've been working on that - see Debian bug #689093
+[01:04] <ubottu> Debian bug 689093 in libssl-dev "libssl-dev is not Multi-Arch compatible" [Normal,Open] http://bugs.debian.org/689093
+[01:09] <penguin42> cjwatson: Ah nice
+=== yofel_ is now known as yofel
+=== cpg is now known as cpg|away
+=== cpg|away is now known as cpg
+[03:00] <micahg> infinity: what's blocking the build-dep on backports fix for backports now?
+[03:03] <infinity> micahg: Me landing a fix.  Is there something in that situation again?
+[03:04] <micahg> infinity: oh, Bug #1099003 if a backport is desired
+[03:04] <ubottu> bug 1099003 in vlc (Ubuntu) "VLC 2.0.5 won't work with Opus. Please include libopus0 from n-muench PPA" [Undecided,Won't fix] https://launchpad.net/bugs/1099003
+[03:07] <infinity> micahg: Given vlc's sercurity history, would we really want it in backports anyway?
+[03:07] <infinity> (Backporting things that may need frequent updates seems suboptimal)
+[03:08] <micahg> infinity: well, since vlc in precise and quantal is the same version, it seems like something easy to approve with just the binaries tested (I'd try to get someone to commit to at least that)
+[03:09] <micahg> (well, after I review the packaging diff for any weirdness)
+[03:09] <infinity> micahg: Sure, the initial backport is simple (and not really much of a backport at all, per se), I just meant that it's likely it would need frequent updates.
+[03:10] <micahg> infinity: well, if it's actually needed and someone commits to the testing, I don't mind pushing the buttons to make it happen to prevent someone from needing a PPA
+[03:10] <infinity> Fair enough.  I'm not using the above as an argument for me to not fix the build-dep situation.
+[03:11] <infinity> Unrelated things. :P
+[03:11] <infinity> It just seems, in general, that backporting stuff with shoddy security histories ends up creating more work (cause, if you're being responsible about the whole affair, you have to keep re-backporting)
+[03:12] <micahg> it's true, we discussed a slightly streamlined process for those at a previous UDS at the discretion of the backports team (where we're confident that not doing full testing won't break the world)
+[03:12] <infinity> And, eventually, there will be a point where the backport's a bit of a pain to maintain, as Q, R, and S go out of maintenance, but we're still trying to backport to P.
+[03:13] <infinity> Right now, it's obviously easy, just backport from quantal-security, done.
+[03:13] <infinity> (And probably with 0 source changes, too)
+[03:14] <micahg> infinity: right, as time goes on, this will get harder, if it comes to it, we can always just switch to a feature enablement backport if it gets too hard
+[03:14] <infinity> Anyhow.  I'm hip-deep in glibc 2.17 right now, but remind me politely during the week about this, I have some other lp-buildd bugs I need to look at this week too.
+[03:14] <infinity> And I tend to like to do them in batches.
+[03:14] <micahg> infinity: sure, thanks
+[03:15] <infinity> To save the pain of rolling out lp-buildd to a bazillion builders over and over.
+=== fenris is now known as Guest4248
+=== rsalveti_ is now known as rsalveti
+=== Ursinha-afk is now known as Ursinha
+=== cpg is now known as cpg|away
+[12:12] <infinity> tjaalton: Thanks for backporting my dkms fix to precise.  Next time, remember to fill our the SRU template for the bug too. :P
+[12:13] <infinity> tjaalton: (I did it for you this time, cause I really wanted the fix after realising it was bloating /pool/ on our precise.2 CDs)
+=== doko_ is now known as doko
+[13:09] <tjaalton> infinity: ah, indeed
+=== yofel_ is now known as yofel
+[17:51] <tumbleweed> doko: grumble, your python3 porting of devscripts broke ubuntu-dev-tools
+[17:52] <tumbleweed> (I suppose we should be using stdlib's logging module)
+[17:59] <bdrung> tumbleweed: patches are welcome (if stdlib can produce the same output on the terminal)
+[18:00] <bdrung> tumbleweed: or do you have other solutions?
+[18:00] <bdrung> tumbleweed: adding python2 support back to devscripts would pull python 2 (which is probably unwanted)
+[18:01] <bdrung> creating a separate library is too much for such a simple module
+[18:01] <tumbleweed> we can get fairly similar output from logging, fairly easily
+[18:03] <bdrung> define "fairly"
+[18:04] <tumbleweed> I'll have a look, this evening
+[18:04] <bdrung> back when i tried to use a logging module, i wasn't satisfied with the output format (and failed to configure it to my preference)
+[18:09] <doko> tumbleweed, bdrung: yes, seen. I'll add a python2.7 module, but without depending on python2
+[18:10] <doko> but feel free to convert ubuntu-dev-tools, where python-launchpadlib isn't needed
+[18:10] <bdrung> doko: does someone port python-launchpadlib to python 3?
+[18:21] <bdrung> doko: can you forward the python 3 changes for file to the debian bug report, please?
+[18:46] <rsajdok> Any suggestion on this question? https://code.launchpad.net/~ris/loco-team-portal/fix-552762/+merge/142553/comments/308685
+[18:53] <micahg> rsajdok: that has nothing to do with Ubuntu Development, you probably want #ubuntu-loco or the equivalent channel
+[18:59] <rsajdok> micahg: this is problem in bzr merging
+[19:00] <micahg> rsajdok: that's a support question then , see #ubuntu
+[19:00] <micahg> or #bzr
+=== chris|| is now known as chris|
+=== hrww is now known as hrw
+=== masACC is now known as maswan
+=== yofel_ is now known as yofel
+=== zequence_ is now known as zequence
+=== chiluk is now known as chiluk_away
+[21:04] <cjwatson> bdrung: there've been multiple attempts to porting the launchpadlib stack (it's more than just python-launchpadlib) - so far, at best people have only got part-way before giving up.  I think barry was the last to try, and he ran into differing ideas about bytes/text in different parts of the stack
+[21:05] <bdrung> thanks
+=== cpg|away is now known as cpg
+[21:52] <MrWGW-> you know I think I'd be more interested in doing a Cinammon-based Ubuntu derivative, versus a MATE based system
+[21:52] <MrWGW-> I'v
+[21:52] <MrWGW-> I've been using Cinammon on Linux Mint, and IMO this system is a revelation; its clean, simple and elegant
+[21:52] <MrWGW-> it feels to me like what Unity ought to have been in terms of representing a cleanup of GNOME 2
+[21:52] <MrWGW-> however from my last conversation in here I gathered that while there would be acceptance of a MATE desktop environment for Ubuntu, a Cinammon environment might be somewhat more controversial
+[21:53] <MrWGW-> but I'd love to see, and for that matter, implement, such a Cinammon system
+[21:53] <MrWGW-> basically, Cinammon, but with the beautiful Ubuntu font and artwork, and also in a form small enough to fit on a single CD, like the classic Ubuntu releases of yore
+[21:53] <MrWGW-> and perhaps with other concessions to modern Ubuntu design, like icons on the left side of the window decorator
+[21:55] <MrWGW-> and there are packaging quality problems in Mint also which this could sidestep
+[21:55] <MrWGW-> also as an added plus if a Cinammon based Ubuntu took off, it might give Clement more time to focus on refining Cinammon since he'd no longer have the need to maintain a full distro
+[22:00] <bdrung> MrWGW-: I think it's the other way around. having cinnamon in the archive is uncontroversial (which is the case for raring), but having MATE is (because it bring many deprecated libraries back).
+[22:02] <MrWGW-> note that the MATE devs including Clem are working on fixing that
+[22:02] <MrWGW-> I suspect that MATE and Cinammon will eventually merge
+[22:02] <MrWGW-> but yes indeed, GNOME 2 was a nightmare from an architectural standpoint
+[22:02] <MrWGW-> and one reason why I feel inclined to do a Cinammon variant of Ubuntu more so than a MATE one
+[22:03] <MrWGW-> is I really do not relish the thought of having to respond to unpleasant bug reports involving Bonobo and other GNOME 2 legacy crap
+[22:04] <MrWGW-> what I suspect, and hope, will happen, over the next few years: Mate and Cinammon will merge, so Cinammon will just be a UI style for MATE, with the classic two panel look also being an availble style, and so on
+[22:04] <MrWGW-> and then meanwhile, if we're really lucky, this combined Cinammon/Mate venture will displace GNOME 3
+[22:04] <MrWGW-> and hopefully also at the very least some strong cooperation between Cinammon/Mate and Unity development could occur
+[22:04] <MrWGW-> imagine if all three of these simply became user-selectable UI preferences
+[22:05] <MrWGW-> note that I don't blame Ubuntu for going with Unity, although I neither care for or use it myself
+[22:05] <MrWGW-> it was very popular on netbooks, and Ubuntu's hand was forced by GNOME 3 anyway
+[22:06] <MrWGW-> although I think in the cold light of day, at some point, the core Ubuntu project is going to have to come to terms with the fact that Unity has been wildly unpopular with a large segment of previously loyal Ubuntu users for various reasons
+[22:06] <MrWGW-> I personally am of the opinion that what works well on a tablet or a netbook does not neccessarily work well on a laptop or a desktop workstation
+[22:06] <MrWGW-> consider Windows 8: on a tablet, I find it provides an amazing experience, from a pure UI standpoint, its even better than iOS, and its beats Android hands down
+[22:07] <MrWGW-> but its utterly unusable on a conventional keyboard/mouse system; I haven't upgraded a single one of my Windows 7 boxes
+[22:07] <MrWGW-> now when I look at Cinammon, I see a UI that implements fully the classical desktop paradigm that dates back to Windows 95
+[22:07] <MrWGW-> it has a start menu in the bottom left, a clock in the bottom right, a taskbar,
+[22:08] <MrWGW-> and yet its clean, modern in appearance and rather beautiful
+[22:08] <MrWGW-> I think such a UI is what most users want
+[22:08] <MrWGW-> and some people are using KDE, but KDE is as we all know its own can of worms
+[22:08] <MrWGW-> its kind of slow, its kind of weird
+[22:08] <MrWGW-> then there's LXDE, which is quite nice, quite modern but not as visually stunning as a more featureful system like Cinammon, or Unity for that matter
+[22:09] <MrWGW-> now I haven't had a chance to play with Unity on a tablet or a TV, but I suspect on those interfaces, it will really shine
+[22:09] <MrWGW-> and I really hope that an Ubuntu phone sees the light of day, this year
+[22:09] <MrWGW-> if one goes on the market I'll buy it, in a heartbeat
+[22:09] <Riddell> MrWGW-: can I suggest you stop your rant and don't call our software weird
+[22:09] <MrWGW-> Riddell: Ubuntu isn't weird
+[22:10] <MrWGW-> I was only referring to KDE
+[22:10] <MrWGW-> what I'd like to do, if the interest exists, is do a Cinammon package for Ubuntu
+[22:10] <Riddell> MrWGW-: hi.  I make Kubuntu.  Please stop calling my software weird.  Or go to slashdot if you want to do that sort of disrespectful attitude
+[22:10] <MrWGW-> and maybe that can become a full desktop environment in the manner of Kubuntu or Lubuntu or Xubuntu
+[22:11] <MrWGW-> Riddell: my apologies, no offense was intended
+[22:11] <MrWGW-> I should add, I personally use and enjoy several obscure OSes which I would be the first to admit are weird, for example, Haiku and Plan9, for recreational purposes
+[22:12] <MrWGW-> I was merely commenting on the benefits of cinammon and why it might be nice to have an official cinnamon flavor of Ubuntu
+[22:13] <micahg> MrWGW-: https://wiki.ubuntu.com/RecognizedFlavors
+[22:13] <MrWGW-> micahg: indeed
+[22:13] <MrWGW-> I'm proposing to volunteer to maintain a cinnamon package for Ubuntu
+[22:13] <MrWGW-> and if that becomes viable, then do a flavor based on it
+[22:14] <MrWGW-> which could hopefully then become recognized if the quality was sufficient
+[22:14] <micahg> MrWGW-: it's maintained in Debian ATM (that would be the best place to maintain the package), you can still do a flavor if you like though
+[22:14] <MrWGW-> oh well heck, that's even better
+[22:15] <MrWGW-> whereas MATE isn't in Debian, which creates more headaches
+[22:16] <MrWGW-> so my development skills are as follows: I have strong general UNIX skills, reasonable Debian skills (most of my Linux boxes are either Ubuntu LTS or RHEL systems), some C skills, although I'm not a great C programmer, strong skills with Python and Ruby
+[22:16] <MrWGW-> I haven't personally authored a .deb package so I don't know what's involved in that, but I'm sure I could pick that up quickly enough
+[22:17] <MrWGW-> and I'm also very willing to field and respond to complaints from users and fix problems of that sort
+[22:17] <MrWGW-> based on the above, do you think I would have what it would take to roll an Ubuntu flavor with Cinammon as the desktop environment?
+[22:19] <infinity> Dear apt-cacher-ng.  Why have you decided that it's suddenly a problem for you that ports.ubuntu.com doesn't have x86?  No love, Me.
+[22:20] <micahg> MrWGW-: sure, it's also not expected for one person to possess all the skills necessary to make a flavor work (in fact, if it's one person doing everything, you're probably doing something wrong)
+[22:21] <stgraber> infinity: hmm, I thought you had a real mirror or a real proxy server, not some kind of incomplete implementation of the two ;)
+[22:21] <infinity> stgraber: I had a real mirror until the disk backing it died.  Haven't gotten around to replacing it.
+[22:22] <infinity> (Besides, apt-cacher on the laptop is still nice for travel)
+[22:24] <micahg> MrWGW-: you might want to chat with the lubuntu folk (latest new official flavor) or ubuntu-gnome folk (flavor in progress)
+[22:25] <micahg> s/new//
+[22:26] <MrWGW-> micahg: I'll talk to both groups
+[22:26] <MrWGW-> although I'd be afraid of hostility from the ubuntu-gnome people :/
+=== cpg is now known as cpg|away
+[22:26] <micahg> MrW.GW-: there shouldn't be any..
+[22:26] <MrWGW-> but yes I would need a few people onboard
+[22:27] <MrWGW-> a friend of mine is also a sysadmin, and he's historically been a Fedora user, but he is disgruntled and has talked about doing a distro with me
+[22:27] <MrWGW-> we talked about forking Fedora to remove systemd and have MATE be the default desktop
+[22:27] <MrWGW-> but I'm thinking I should propose to him doing a Cinammon based Ubuntu instead
+[22:27] <MrWGW-> since Ubuntu has upstart, which we both love, and there'd be less work involved
+[22:27] <MrWGW-> since the core Ubuntu system is good, its much easier to put our preferred UI on it
+[22:28] <MrWGW-> than it is to take an OS like Fedora, which actually as of 18 will include MATE, but which has internals we disagree with
+[22:28] <MrWGW-> of course going the other way would be more glamrous, but its a lot more work
+[22:28] <MrWGW-> and the quality of Ubuntu Server is really quite darn good
+[22:29] <MrWGW-> as a long time Fedora/RHEL/CentOS guy (most of my RPM servers are running Scientific Linux), I have to say I now honestly prefer Ubuntu Server for most applications
+[22:30] <MrWGW-> for these reasons, by the way, in case any of you care: Ubuntu Server now has similiar cli admin tools to the Red Hat stuff, i.e. the service command, Ubuntu Server allows you more choices in terms of filesystems, for example, you can install to a JFS root or an XFS root or whatever, you're not forced into an ext3 or 4 root
+[22:30] <MrWGW-> and Ubuntu Server's more frequent release cycle vs. RedHat  and longer support vs. Fedora is a win
+[22:30] <MrWGW-> the stability of each successive Ubuntu release tends to be greater than that of Fedora, so its just a nice platform
+[22:31] <MrWGW-> also I've made good use in my lab of the built in UEC features
+[22:31] <MrWGW-> in the lab I used to run a VMware system but I replaced it recently with UEC running on 10.04 LTS and its quite a bit nicer
+[22:31] <MrWGW-> and I'm planning on upgrading that soon
+[22:32] <MrWGW-> so basically, all that really has to happen here to create a killer desktop IMO would be an Ubuntu flavor using Cinammon, sized to fit on a single CD ROM image, providing an experience very similiar to that of the Ubuntu of yore
+[22:32] <MrWGW-> ideally with the same artwork and theming as the equivalent Ubuntu Unity release
+[22:32] <MrWGW-> basically my goal would be for it to look like the Unity release, except with the traditional taskbar at the bottom instead of the dock et cetra
+[22:33] <MrWGW-> and I would propose branding this Ubuntu Classic Edition or Ubuntu Retro Edition, depending on your preferences
+[22:33] <MrWGW-> if I were to do this, I'd aim to release for 13.10 (since its obviously too late for 13.04) and then if the quality were deemed acceptable, hopefully be in a position to be classifeid as an officially sanctioned flavor for 14.04
+[22:39] <infinity> MrWGW-: You're not likely to get approval to call it "Ubuntu (anything)"
+[22:40] <MrWGW-> so what about calling it cinbuntu?
+[22:40] <MrWGW-> cinnabuntu
+[22:40] <MrWGW-> hah
+[22:40] <MrWGW-> like a cinnamon bun
+[22:40] <MrWGW-> but there is Ubuntu Studio btw
+[22:41] <infinity> Yes, there is.  Still saying you'd be fighting an uphill trademark battle.
+[22:41] <infinity> Besides, cinnamon buns are tasty.
+[22:41] <MrWGW-> indeed
+[22:42] <MrWGW-> cinnabuntu works for me
+[22:58] <astraljava> I'm not versed in legalese, but does it count that Studio is an official flavor?

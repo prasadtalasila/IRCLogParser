@@ -1,0 +1,416 @@
+[00:32] <saschagehlich> hey, my first attempt on running a manually compiled kernel failed hard. any hints on what could've gone wrong? http://ubuntuforums.org/showthread.php?t=2166046
+=== _salem is now known as salem_
+=== jono is now known as Guest576
+=== salem_ is now known as _salem
+[05:55] <didrocks> doko_: I'm going to revert partially your dep on qtchooser:any
+[05:55] <didrocks> the syntax isn't working at all, things are getting blocked in proposed for now
+[05:55] <didrocks> http://launchpadlibrarian.net/147002014/qtbase-opensource-src_5.0.2%2Bdfsg1-7ubuntu3_5.0.2%2Bdfsg1-7ubuntu4.diff.gz
+[05:55]  * didrocks never saw this dep: package:any
+[05:55] <didrocks> see http://people.canonical.com/~ubuntu-archive/proposed-migration/update_excuses.html
+[05:55] <didrocks> qt5-default/i386 unsatisfiable Depends: qtchooser:any
+[05:56] <didrocks> doko_: as everything in daily release is blocked and FTBFS because of that, reverting for now
+=== smb` is now known as smb
+[06:57] <dholbach> good morning
+=== doko_ is now known as doko
+[07:35] <doko> didrocks, ok
+[07:48] <Whoopie> sladen: Hi, did you find the time to look into the dell special keys issue? Or do we need some other support?
+[07:53] <kirkland> Noskcaj: done
+[08:21] <Noskcaj> kirkland, awesome
+=== iahmad_ is now known as iahmad
+[08:30] <Ghoul_> needless to say, the other day when I said I'd build that kernel and brb, it didn't work.
+[08:30] <Ghoul_> im punting to having the grub dsdt ovveride put back, because its such a PITA to have to rebuild the kernel to do a simple thing like that
+[08:30] <Ghoul_> (especially because ubuntu doesn't support custom_method which is the ideal /easiest/ way of fixing dsdt issues)
+[08:37] <ev> xnox: found the source of my problems from yesterday: http://c-faq.com/stdio/undofreopen.html
+[08:45] <xnox> ev: brilliant. but it worries me that in addition to dup() & dup2() there is also dup3() now.... avoiding freopen in the first place sounds better.
+[08:46] <ev> xnox: I ended up with http://bazaar.launchpad.net/~ev/whoopsie/be-more-verbose/revision/573
+[08:47] <xnox> ev: looks good.
+[08:48] <lifeless> xnox: really need a dupN right ? :)
+[08:48] <xnox> ev: passes as well, i take it? =)
+[08:48] <ev> of course :)
+[08:48] <xnox> excellent
+[09:06] <jcastro_> ev: congrats on the phased updates! \o/
+[09:07] <Noskcaj> kirkland, your testdrive release script broken again. setup.py thinks it's 3.22
+[09:07] <ev> jcastro_: pretty much all the credit goes to bdmurray and cjwatson. I was of minimal help :)
+[09:07] <ev> jcastro: so excited for it though
+[09:07] <ev> we've got some tuning to do, it seems, but this will be massive
+[09:07] <Noskcaj> kirkland, I've fixed that and put it  on pypi
+[09:10] <ev> hm, adb does not like reset (1)
+[09:13] <cjwatson> tumbleweed: If you didn't see, pypy/armhf finally managed to build \o/
+[09:21] <ev> cjwatson: WIN!
+[09:21] <ev> cjwatson: is this thanks to the new buildds?
+[09:22] <cjwatson> ev: yep
+[09:22] <ev> wonderful
+[09:23] <ev> any idea if someone is tasked with looking at what we can move off cpython onto it as a stop-gap for presumed performance issues on Touch?
+[09:23] <cjwatson> nope
+[09:24] <cjwatson> nor whether anyone knows about the policy-level consequences
+[09:24] <ev> policy-level consequences?
+[09:24] <cjwatson> whether we need a load of pypy-* binary packages, whether there's a different byte-compilation scheme / file locations, etc.
+[09:25] <ev> oh yes, we had briefly discussed this when you were in the office, if memory serves
+[09:25] <pete-woods> good morning didrocks! The launchpad projects I mentioned the other day now have autolanding - when you have the chance, it'd be great to have them pushed to distro :)
+[09:25] <cjwatson> yes.  I don't know whether these things are true but they're possible and the questions need to be asked
+[09:39] <didrocks> pete-woods: the 3 of them? robru is working on them AFAIK :)
+[09:40] <didrocks> pete-woods: can you sync up with him? (I see there are some packaging changes pending, I don't have time to review them though)
+[09:40] <robru> pete-woods, yes, it looks like the CI is now working and I'm just about to start setting up the autolanding.
+[09:41] <robru> pete-woods, if you could help me resolve this test failure: http://paste.ubuntu.com/5961984/ it would help us move forward
+[09:49] <pete-woods> didrocks: okay, thanks for the info :)
+[09:49] <pete-woods> robru: I've fixed that failure for the moment
+[09:50] <robru> pete-woods, is your fix in trunk yet?
+[09:50] <pete-woods> robru: should be
+[09:50] <robru> pete-woods, great
+[09:50] <robru> I'm enabling daily release as we speak
+[09:50] <pete-woods> :D
+[09:51] <tumbleweed> cjwatson: \o/
+[09:51] <tumbleweed> now if I could just beat the debian kfreebsd maintainers over the head, and get it to migrate to testing, I could do another upload... :P
+[09:52] <pete-woods> robru: are you able to enable the hooks for google test reporting and gcov coverage?
+[09:52] <pete-woods> as they should be working on all 3 of those projects I believe
+[09:55] <robru> pete-woods, I'm not sure what that means...
+[09:55] <robru> pete-woods, there is a way to get junit test results displayed in jenkings but my understanding is that that requires autopilot.
+[09:55] <robru> or at least I've only ever seen it used in conjunction with autopilot.
+[09:56] <pete-woods> robru: there is a hook that causes google test to output junit xml, and another that enables code coverage reports
+[09:57] <pete-woods> robru: they've been enabled for many of the other projects in Jenkins
+[09:57] <robru> pete-woods, can you name one specifically that does this? I'll take a look at it and try to set it up the same way.
+[09:58] <pete-woods> robru: I know the libusermetrics does, as that's another one that was set up for me
+[09:58] <robru> k
+[09:58] <robru> pete-woods, ahhhh, I see. ok, shouldn't be hard.
+[10:03] <robru> pete-woods, ok, it should all be set up now. I'll run the stack shortly and then we'll see if it explodes or if everything is working ;-)
+[10:04] <pete-woods> robru: awesome, thanks!
+[10:04] <spanner3003> hi I'm having  a problem compiling, I'm trying to port cm10.1 to my padfone 2(A68) and i get this error http://pastebin.com/LNmKyFF1
+[10:05] <robru> spanner3003, maybe try #ubuntu-touch? I don't know anything about that stuff.
+[10:05] <spanner3003> ok thanks
+[10:12] <robru> didrocks, fginther: do you guys see anything wrong with this? https://code.launchpad.net/~robru/cupstream2distro-config/add-indicators/+merge/179139
+[10:12] <didrocks> robru: the 3 were preNEWed?
+[10:12] <robru> uhhhh
+[10:12] <robru> I thought you did that?
+[10:12] <didrocks> robru: when?
+[10:13] <didrocks> you were the one cleaning up the packaging, right?
+[10:13] <robru> didrocks, when you assigned me this on tuesday, didn't you say you prenewed a bunch of stuff?
+[10:13] <didrocks> robru: I prenewed a bunch of stuff, not those. I assign you those on tuesday so that you clean the packaging
+[10:13] <didrocks> and then ask me for preNEWing
+[10:13] <robru> didrocks, oh, ok, well it's ready for prenewing.
+[10:14] <didrocks> robru: ok, so need to take trunk and check those?
+[10:14] <robru> didrocks, yeah, pete landed all my packaging work into trunk
+[10:15] <didrocks> robru:  This package contains the indicator-network-prompt support for Unity.
+[10:15] <didrocks> that doesn't really inform what it's doing :)
+[10:15] <robru> ;-)
+[10:15] <didrocks> can you be more precise in a MP?
+[10:15] <didrocks> (not blocking of course)
+[10:15] <robru> didrocks, well, I don't really know what this package even does. Maybe pete-woods should expand on that description.
+[10:16] <didrocks> pete-woods: please? ^
+[10:16] <didrocks> robru: would have been better to ask upstream before adding it :p
+[10:16] <didrocks> #override_dh_auto_configure:
+[10:16] <didrocks> #   dh_auto_configure -- -DENABLE_MEMCHECK_OPTION=YES
+[10:16] <didrocks> this can be removed rather than commented without any explanation? ^
+[10:16] <pete-woods> didrocks: I want to turn that back on - I'll add a TODO comment
+[10:16] <robru> didrocks, yeah, it was uncommented when I merged. pete commented it after the fact
+[10:17] <didrocks> robru: no COPYING file :(
+[10:17] <didrocks> pete-woods: adding a comment please in debian/rules?
+[10:17] <didrocks> robru: copyright is canonical in the files
+[10:17] <didrocks> debian/copyright says david calle
+[10:17] <robru> didrocks, whoops, that might be a copy&paste error
+[10:18] <didrocks> robru: before I'm doing the others, can you check for those first? ^
+[10:18] <pete-woods> robru: yes
+[10:18] <didrocks> and ping me back
+[10:18] <robru> didrocks, ok, sorry
+[10:18] <didrocks> robru: no worry, I wonder if the mocks shouldn't be in the QA stack rather
+[10:18] <didrocks> robru: wdyt?
+[10:18] <didrocks> libqtdbustest and libqtdbusmock
+[10:18] <robru> didrocks, I dunno. are they only used by indicators?
+[10:19] <didrocks> robru: I think they are going to be used by more in the end
+[10:19] <didrocks> pete-woods: thoughts? ^
+[10:19] <robru> they were already in indicator stack from before, I don't see any compelling reason to move them unless they are used by other things.
+[10:19] <pete-woods> didrocks: I hope they're used be more in the end - they are general purpose libraries for testing Qt based apps that are using DBus
+[10:20] <didrocks> robru: seems it is a compelling reason to move them :)
+[10:20] <didrocks> robru: ah, also, AP tests? at least, please add the indicator to the list of installed packages when testing
+[10:20] <robru> ok
+[10:21] <robru> pete-woods, can you write two sentences describing what indicator-network-prompt does?
+[10:22] <pete-woods> robru: of course - where do you want them?
+[10:23] <robru> pete-woods, just in IRC here and then I'll submit an MP with them how I want them.
+[10:23] <pete-woods> robru: okay
+[10:30] <robru> pete-woods, ... ?
+[10:30] <pete-woods> robru: The indicator-network-prompt project provides the service implementation for prompted connections to wireless networks.
+[10:30] <pete-woods> Essentially, when an attempt to access the internet fails, and available wireless networks have been detected, this service will prompt the user to connect to one of them.
+[10:30] <pete-woods> See <https://wiki.ubuntu.com/Networking#Connecting_to_wi-fi.2C_prompted> for more details.
+[10:30] <robru> thanks
+[10:31] <robru> didrocks, is it ok to have that URL in the package description? ^^
+=== gusch is now known as gusch|lunch
+[10:33] <didrocks> robru: no need for the url I guess
+[10:33] <didrocks> the description is enough
+[10:33] <robru> didrocks, ok, thx
+[10:35] <robru> pete-woods, what's the deal with licensing in libqtdbus*? There's a mixture of GPL and LGPL? Any way we can unify that?
+[10:36] <pete-woods> robru: if there is, it's a mistake
+[10:36] <robru> so should it all be LGPL?
+[10:36] <pete-woods> it should all be LGPL - I thought I'd fixed it all
+[10:36] <robru> there's a few you missed it seems. I'll fix them right now.
+[10:37] <pete-woods> robru: thanks!
+[10:45] <robru> pete-woods, ok, should be fixed, now we'll see if jenkins agrees ;-)
+[10:47] <pete-woods> :)
+[10:54] <robru> didrocks, ok, things are looking good! prenew now? ;-)
+[10:54] <didrocks> robru: did you fix/rereview the other packages?
+[10:54] <robru> didrocks, which others? I did the three indicator ones of pete's
+[10:54] <didrocks> ok, that's the "others"
+[10:54] <didrocks> robru: so moving them to the QA stack as well?
+[10:55] <robru> didrocks, I haven't done the cu2d side. just packaged them for prenewing. will do cu2d next.
+[10:55] <didrocks> ok
+[10:58] <didrocks> robru: hum, still no comment in debian/rules for indicator-network-prompt telling that override_dh_auto_configure comment is temporary
+[10:58] <robru> didrocks, sorry, i thought pete was doing that
+[10:58] <robru> I'll add it.
+[11:02] <robru> didrocks, ok now, and also I MP'd cu2d: https://code.launchpad.net/~robru/cupstream2distro-config/qtdbus-in-qa/+merge/179159
+[11:03] <didrocks> robru: ./usr/include/libqtdbusmock-1/libqtdbusmock/DBusMock.h
+[11:04] <didrocks> all .h are in a libqtdbusmock subdir
+[11:04] <robru> hmmm
+[11:04] <didrocks> shouldn't it be rather: ./usr/include/libqtdbusmock/DBusMock.h
+[11:04] <robru> I guess?
+[11:04] <robru> pete-woods, ^^
+[11:05] <didrocks> robru: on the MP: looks good to me, but please, as discussed, install the indicator-network package (and its dep) for at least having them install while running indicator AP tests
+[11:05] <didrocks> indicator-network-prompt*
+[11:06] <pete-woods> robru: that's intentional - this way when the API changes you can have the old version, too, e.g. /usr/include/Unity-6.0/
+[11:06] <robru> didrocks, oh yeah
+[11:06] <robru> didrocks, ok, so it's supposed to be that way ;-)
+[11:06] <didrocks> pete-woods: how can you? no source will be able to build it
+[11:07] <pete-woods> didrocks: well to be honest, I was really just copying how many other packages seem to ship their devel packages
+[11:07] <didrocks> robru: http://paste.ubuntu.com/5962253/
+[11:08] <robru> fuck
+[11:08] <robru> didrocks, I have to go for lunch, I guess I will fix this all when I get back.
+[11:08] <didrocks> ok, thanks
+=== MacSlow is now known as MacSlow|lunch
+[11:27] <mdeslaur> didrocks: any progress on LP: #1200173?
+[11:27] <ubottu> Launchpad bug 1200173 in libecap (Ubuntu) "[MIR] libecap" [Undecided,New] https://launchpad.net/bugs/1200173
+[11:27] <didrocks> mdeslaur: opened, was initially planned to look at it today, but ETOOMANYSTUFF
+[11:27] <didrocks> the Qt issue screwed my day in addition to all the backlog I have :/
+[11:27] <didrocks> mdeslaur: if any MIR team member want to take it, please propose :)
+[11:28] <didrocks> jdstrand, doko…
+[11:28] <didrocks> (seems that only mterry and I are processing MIRs nowadays)
+[11:28] <didrocks> same for NEWing, people pings me because stuff are blocked in the queue for months
+[11:28] <mdeslaur> didrocks: you'll have to hire an assistant :)
+[11:29] <didrocks> mdeslaur: or having other team members taking some parts? ;)
+[11:29] <doko> didrocks, I'm doing my share for MIR, and I'm not a regular archive admin
+[11:30] <didrocks> doko: can you look at this libecap? ^
+[11:30] <doko> doing
+[11:30] <didrocks> I'm still on the Qt issue
+[11:30] <didrocks> thanks!
+[11:30] <mdeslaur> doko, didrocks: thanks
+[11:30] <didrocks> at least, armhf builders speedup is really appreciated
+[11:31] <doko> didrocks, yes, sorry about that
+[11:32] <didrocks> doko: no worry, it's just unfortunate that this chained on the hybris issue that tackle us back
+[11:33] <doko> mdeslaur, but will need a security review anyway?
+[11:35] <mdeslaur> doko: I don't really know what it is, I'm just trying to get squid3 unblocked...if you think it does, then subscribe the security team
+[11:35] <doko>  eCAP is a software interface that allows a network application,
+[11:35] <doko>  such as an HTTP proxy or an ICAP server, to outsource content
+[11:35] <doko>  analysis and adaptation to a loadable module.
+[11:36] <mdeslaur> hrm
+[11:36] <mdeslaur> isn't it just a bunch of stubs though?
+=== gusch|lunch is now known as gusch
+[11:38] <mdeslaur> doko: there doesn't seem to be any actual auditable code in there...I don't think it needs a security review
+[11:38] <doko> Currently, eCAP support is being added to Squid proxy cache and Spicer ICAP server.
+[11:38] <doko> ok
+[12:01]  * xnox doh!
+[12:01] <xnox> @pilot in
+=== udevbot changed the topic of #ubuntu-devel to: Ubuntu 13.04 released | Archive: open | Devel of Ubuntu (not support or app devel) | build failures -> http://qa.ubuntuwire.com/ftbfs/ | #ubuntu for support and discussion of lucid -> raring | #ubuntu-app-devel for app development on Ubuntu http://wiki.ubuntu.com/UbuntuDevelopment | See #ubuntu-bugs for http://bit.ly/lv8soi | Patch Pilots: xnox
+[12:08] <xnox> Sweetsha1k: libreoffice precise SRU - bug 1194740, is it time or still waiting on feedback?
+[12:08] <ubottu> bug 1194740 in libreoffice (Ubuntu Precise) "[precise] Saving xls files originally created in Excel 2003 causes considerable increase of file size" [Medium,In progress] https://launchpad.net/bugs/1194740
+[12:14] <rbasak> xnox: FYI, I'm doing the nginx packaging fix that's in the queue at the moment.
+[12:14] <xnox> rbasak: ack =)
+[12:27] <rbasak> xnox: could you please unsubscribe ~ubuntu-sponsors from bug 1160177 and also from bug 1160177? I can't do it.
+[12:27] <ubottu> bug 1160177 in guake (Ubuntu Raring) "guake starts with abnormal indentation" [Undecided,Fix committed] https://launchpad.net/bugs/1160177
+[12:27] <rbasak> uh, bug 1206878
+[12:27] <ubottu> bug 1206878 in nginx (Ubuntu Precise) "[SRU] Configuration should be purged only in nginx-common" [Critical,Triaged] https://launchpad.net/bugs/1206878
+[12:27] <rbasak> Those two :)
+=== MacSlow|lunch is now known as MacSlow
+[12:29] <xnox> rbasak: apply / ask dholbach to add you to the https://launchpad.net/~ubuntu-sponsors team. It's open to people with upload rights.
+[12:30] <xnox> rbasak: done.
+[12:30] <rbasak> Thanks!
+[12:30] <rbasak> dholbach isn't here right now but I'll ask - thanks.
+[12:30] <xnox> rbasak: there is a lot of uploaded stuff in the report =) i'm struggling to find things to upload so far ;-)
+[12:31]  * xnox looks into gnome-keyring multiarch patch deja-vu
+[12:33] <rbasak> xnox: what do we do for patches which need to be turned into quilt patches and MPs/debdiffs? Eg. bug 1198882 where the submitter needs help preparing the fix in packaging even though he's found a patch. I subscribed ~ubuntu-reviewers when I triaged that bug, but I'm not sure that team is active.
+[12:33] <ubottu> bug 1198882 in php5 (Ubuntu) "__toString() which stores $this reference triggers segfault" [Medium,Triaged] https://launchpad.net/bugs/1198882
+[12:35] <rbasak> AIUI, doing this kind of work is the definition of "patch piloting", but it tends to not hit the sponsorship queue (as I guess it's not ready for sponsoring)
+[12:36] <xnox> rbasak: at your discretion. at the end of the day we do take pure patches, and should be uploading them as well.
+[12:37] <rbasak> xnox: right, so that is on my "keep an eye/when I can get round to it" list. But what about the general case when I triage them? I'm just bothered that we're losing contributors by not guiding them.
+=== _salem is now known as salem_
+[13:18] <smartboyhw> dholbach, I think rbasak wants you when you left.
+[13:18] <dholbach> rbasak, can I help with anything?
+[13:18] <dholbach> smartboyhw, thanks
+[13:19] <xnox> dholbach: rbasak wants to join https://launchpad.net/~ubuntu-sponsors
+[13:19] <dholbach> rbasak, done
+[13:19] <dholbach> thanks xnox
+[13:31] <rbasak> dholbach: thanks!
+[13:38] <sergiusens> cjwatson: hey, not sure you are thinking about this, but is there a strategy for ubuntu-bug and click?
+[13:38] <cjwatson> nope
+[13:38] <cjwatson> I'm hoping somebody else will come up with one
+[13:39] <cjwatson> well, except that I have a work item to support separated debug symbols, which is related
+[13:41] <sergiusens> ok, I'll bring it up next week and think about it until then
+[13:42] <ogra_> it kind of works via cmdline
+[13:42] <ogra_> i filed a bug with it today
+[13:48] <steveire> Is collect2 part of binutils?
+[13:51] <steveire> Seems it's part of gcc
+[13:54] <dobey> kenvandine, mardy: is there an architecture overview of signon/uoa stuff?
+[13:54] <sergiusens> ogra_: for a click package?
+[13:55] <ogra_> sergiusens, eh, no :)
+[13:55] <sergiusens> ogra_: that's what we would need to think about solving/addressing :-)
+[13:56] <ogra_> yeah, sorry, my brain kind of cut click out of the sentence :)
+=== greyback_ is now known as greyback|latelun
+[14:09] <sergiusens> ogra_: or with click you thought mouse click, which lead you to think of you so you mentioned cli.
+[14:09] <ogra_> heh
+[14:09] <ogra_> right :)
+=== DrKranz is now known as DktrKranz
+[14:25] <sergiusens> ogra_: just noticed my typo s/you/UI/ :-)
+[14:25] <sergiusens> in the last one
+[14:25] <ogra_> heh
+[14:26] <ev> mpt: would you agree that if an apport package hook crashed, we should still send the report?
+[14:27] <mpt> ev, absolutely
+[14:27] <ev> cool, cc'ing you on a mail to pitti about this then
+[14:29] <mpt> ev, we've encountered other cases where a report isn't useful for debugging purposes but we (do/should) send it for statistical purposes
+[14:29]  * ev nods
+[14:29] <ev> Launchpad bugs is just a very different model
+[14:29] <ev> and supporting both in the code is a bit tricky
+=== tkamppeter__ is now known as tkamppeter
+[14:33] <stgraber> ev: hey, do you know why the average Ubuntu system tries to resolve daisy.ubuntu.com every 30s and often much more frequently than that?
+[14:33] <ev> stgraber: I suspect that's a bug in gnetworkmonitor
+[14:34] <stgraber> ev: I just noticed that on a network of around 100 devices here with mixed Ubuntu/android/... almost 25% of the DNS queries are for daisy.ubuntu.com which seems rather insane
+[14:34] <ev> we had something like that ages ago that I thought we fixed
+[14:34] <ev> stgraber: http://bazaar.launchpad.net/~daisy-pluckers/whoopsie/trunk/view/head:/src/connectivity.c#L266 if you want to instrument it a bit to find out exactly what's going on
+[14:38] <stgraber> ev: ah, I think I now what's happening, though that's going to be an interesting problem in the future :)
+[14:38] <ev> oh?
+[14:39] <stgraber> ev: basically network-changed is emited every time I get a new router advertissement for my IPv6 connectivty, which I get a lot of as I have a ton of devices on the network each triggering some of those every few seconds
+[14:41] <ev> ah right
+[14:41] <stgraber> ev: so on an IPv6-enabled network that'll cause an Ubuntu machine to resolve (and possibly contact) daisy.ubuntu.com at least every 30s
+[14:41] <stgraber> more often depending on other machines joining/leaving the network with a minimum interval of 3s (at least with radvd)
+[14:42] <ev> maybe we should just do away with the connectivity check and always try to send the reports
+[14:42] <ev> I just wonder if that will play well with captive portals (though that's not to say the current approach does)
+[14:43] <stgraber> assuming no captive portals will return the data you expect on a successive push, you should be fine, no?
+[14:48] <tseliot> slangasek: are you around?
+[14:54] <ev> stgraber: unfortunately, we just expect a 200 back
+[14:55] <ev> I should probably change that :)
+[14:55] <stgraber> ev: ah, that'd be a problem then
+[14:55] <ev> added to the todo list
+=== greyback|latelun is now known as greyback
+[15:41] <jodh> cjwatson, infinity: are you guys aware of any recent updates that might sever an ssh connection? (with todays server image). I noticed a libc update flash by then my ssh connection died.
+[15:41] <jodh> cjwatson, infinity: may be unrelated though. alas the vm is now gone so trying to recreate...
+[15:42] <cjwatson> not I
+[15:42] <slangasek> there was an eglibc update earlier in the month
+[15:42] <cjwatson> I would bet on something lower-level without much to do with ssh
+[15:42] <slangasek> so if the upgrade code there has gone wrong, it could be breaking ssh connections
+[15:42] <cjwatson> you would have to be really trying to get an update to break existing ssh connections ...
+[15:43]  * slangasek nods
+[15:43] <cjwatson> eglibc uses invoke-rc.d to restart services
+[15:45] <cjwatson> I'm not actually sure how that isn't broken as it stands (won't it fail to restart upstart-based services?) but for ssh in saucy the worst it will do is fail
+[15:45] <cjwatson> (without restarting sshd)
+[15:47] <spanner3003> hi I'm having  a problem compiling, I'm trying to port cm10.1 to my padfone 2(A68) and i get this error http://pastebin.com/LNmKyFF1
+[15:48] <jodh> cjwatson, infinity: panic over - it appeared to be apt-get that was causing the problem but was in fact debootstrap failing due to 'Invalid Release signature' later on.
+[15:50] <cjwatson> that reminds me, I could productively go and verify the lucid debootstrap sru ...
+[15:50] <slangasek> cjwatson: invoke-rc.d knows about upstart
+[15:50] <slangasek> invoke-rc.d is the standard interface in policy, so it's been made upstart-smart
+[15:51] <cjwatson> oh of course
+[15:51] <cjwatson> I knew that
+[15:52] <cjwatson> so it'll just do 'restart ssh', and I'm pretty confident that hasn't broken
+[15:53] <jodh> cjwatson: yup - confirmed that restarting ssh (even stop+start) is fine.
+[16:03] <slangasek> ok
+[16:03] <slangasek> so probably not a real bug in eglibc or ssh
+[16:03] <slangasek> good to have confirmed :)
+[16:15] <slangasek> meh, what has changed that my schroots now have SHLVL=1 in the environment?
+[16:15] <slangasek> (causing my terminal to be needlessly cleared on every exit)
+=== greyback is now known as greyback|dinner
+[18:24] <dobey> kenvandine, mardy: are there any apps that actually use UOA accounts, other than friends?
+[18:25] <seb128> dobey, unity dash, shotwell, empathy
+[18:25] <seb128> dobey, e-d-s
+[18:26] <dobey> seb128: i'm guessing dash itself doesn't, but some of the scopes/lenses might (like the social lens via friends)
+[18:26] <seb128> right
+[18:26] <seb128> the gdrive scope as well
+[18:26] <seb128> iirc
+[18:26] <dobey> right
+[18:26] <dobey> but e-d-s?
+[18:26] <seb128> yes, for calendar
+[18:26] <seb128> google calendars
+[18:27] <dobey> huh. i have google calendars in my evolution, but no accounts for them in UOA. i guess they were never automatically "migrated" into UOA, and they don't get added to UOA if you add them from within evolution?
+[18:28] <seb128> right, it's the other way around
+[18:28] <seb128> if you add a uoa google account, eds will pick it
+[18:28] <dobey> shotwell is the same way?
+[18:30] <seb128> no
+[18:30] <seb128> shotwell doesn't add accounts, it brings you to the uoa panel to add those
+[18:31] <dobey> ok
+[18:33] <jbicha> google calendar integration is a bit broken with UOA, you'll want to install evolution-data-server-goa until the packaging is straightened out
+[18:34] <seb128> jbicha, how broken?
+[18:35] <jbicha> seb128: see bug 1187707 which links to the 2 other bugs with more info
+[18:35] <ubottu> bug 1187707 in evolution-data-server (Ubuntu) "When a Google account is configured, indicator-datetime doesn't display anything" [Undecided,Confirmed] https://launchpad.net/bugs/1187707
+[18:36] <seb128> jbicha, does it work if goa is turned off at build time?
+[18:36] <dobey> well it works fine if you use evolution and add stuff from within evolution, i guess
+[18:37] <dobey> at least, my clock shows events, and so does evolution
+[18:37] <dobey> gnome-shell does do a bit better job of showing them, than indicator-datetime did though
+[18:41] <jbicha> seb128: I've not looked at it closely yet but I think it's just the packaging that needs fixed
+[18:43] <seb128> jbicha, ok, we might end up having to do a double build with conflicting packages
+[18:45] <jbicha> seb128: can you remind me what you did to fix the dependency problem on mobile?
+[18:46] <seb128> jbicha, nothing, it's still high on my todolist, I was pondering just disable goa on arm
+[18:46] <seb128> but the double build could be a better idea there
+[18:47] <dobey> so i guess every app that uses a service has to reimplementing URL signing and parsing of REST responses and such
+=== greyback|dinner is now known as greyback
+[20:05] <dobey> why is online-accounts so complex? :(
+[20:32] <Ampelbein> Is there a preferred way to report out-of-date branches in ubuntu? https://code.launchpad.net/~ubuntu-branches/ubuntu/saucy/tboot/saucy has 1.7.1-0ubuntu2 as latest upload, https://launchpad.net/ubuntu/saucy/+source/tboot says 1.7.3-0ubuntu1 as latest.
+[20:32] <dobey> Ampelbein: standard way is report bugs against https://launchpad.net/udd , iirc
+[20:32] <dobey> Ampelbein: but i don't know that they will get looked at ever, if you do :-/
+[20:33] <xnox> Ampelbein: https://bugs.launchpad.net/udd/+bug/653320
+[20:33] <xnox>   A version which the importer believes is has previously imported is not or no longer tagged in the branch. Something has been changed or gone wrong, and further imports have been ceased pending manual review.
+[20:33] <ubottu> Launchpad bug 653320 in Ubuntu Distributed Development "Import fails with "marked but not imported"" [High,Triaged]
+[20:33] <dobey> and probability that the branch will break again in the future is pretty high
+[20:33] <xnox> Ampelbein: http://package-import.ubuntu.com/status/tboot.html#2012-07-05 09:48:07.707637
+[20:34] <xnox> @pilot out
+=== udevbot changed the topic of #ubuntu-devel to: Ubuntu 13.04 released | Archive: open | Devel of Ubuntu (not support or app devel) | build failures -> http://qa.ubuntuwire.com/ftbfs/ | #ubuntu for support and discussion of lucid -> raring | #ubuntu-app-devel for app development on Ubuntu http://wiki.ubuntu.com/UbuntuDevelopment | See #ubuntu-bugs for http://bit.ly/lv8soi | Patch Pilots:
+[20:34] <dobey> xnox: sometimes, i have to wonder if you ever sleep :)
+[20:35] <xnox> dobey: i just woke up again =) i had a nap, but having a dinner till 1am with colleagues from the office did throw my clock a bit off today. Went to sleep straight after work =)
+[20:36] <Ampelbein> xnox, dobey: Thanks. I guess it's no use to report then, I assume the package-import.ubuntu.com failure page will get looked at from time to time. Back to using apt-get source.
+[20:36] <xnox> Ampelbein: yeah, I can requeue it at the moment. But it results in launchpad denying udd the right to push the branches back for stable releases =/ and then it's a 401 denied error.
+[20:37]  * xnox need to find lp wizard to figure it out
+[20:37] <dobey> because stable branches are set to read-only
+[20:37] <dobey> well, stable release branch is anyway
+[20:38] <dobey> -updates obviously not. so yeah, you'll probably have to get an ops to help you fix a release pocket branch if it's busted
+=== ivanka_ is now known as ivanka_train
+[21:08] <kirkland> is there an archive admin around?
+[21:08] <seb128> kirkland, sort of, why?
+[21:09] <kirkland> seb128: sorry, nevermind, bdmurray is helping me out
+[21:09] <seb128> ok
+[21:52] <xnox> cjwatson: is it ok for me to steal trivial automake1.13? there is new point release in debian.
+[21:53] <xnox> cjwatson: actually it can be synced now.
+=== jbicha is now known as Guest66961
+[22:02] <xnox> hmm http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=714452
+[22:02] <ubottu> Debian bug 714452 in automake1.13 "automake1.13: FTBFS: There seems to be no Makefile in this directory." [Serious,Open]
+=== salem_ is now known as _salem
+[22:35] <cjwatson> xnox: Yeah, there are no Ubuntu changes left, I was just worried that the increased test coverage at the same time would result in build failures ... but feel free to take it and deal with the results
+[22:40] <xnox> cjwatson: well trying to fix FTBFS in debian at the moment... it's still running the testsuite. Surprisingly for automake defaulting to parallel testsuite, it doesn't use it itself =)
+[22:40] <xnox> harness that is.
+[23:14] <slangasek> ScottK: hey, so I'm not quite sure of a sane way to query which packages had autopkgtests that would have run against python-qt4; you don't happen to remember which packages were the bottleneck?
+[23:19] <cjwatson> It's pretty likely that it was due to bugs rather than actual test slowness.
+[23:20] <cjwatson> We've had some problems with results not being collected properly.
+[23:21] <slangasek> cjwatson: the python-qt4 sync happened this week; I thought the test collection problems were resolved last week?
+[23:22] <slangasek> maybe my jetlagged brain is getting confused though
+[23:22] <cjwatson> Not sure.  Hopefully the logs have enough information to work it out ...
+[23:22] <cjwatson> My brain is beerlogged so I'm of limited use
+[23:24] <slangasek> the libusbx stuff was a week ago
+[23:24] <slangasek> dunno if there were lingering issues
+[23:35] <ScottK> slangasek: I don't recall which packages.  Sorry.  I was mostly resisting the temptation of abusing my -release powers to override everything and wait to see how long it would take.
+[23:35] <ScottK> Are there logs of what tests ran when?
+[23:35] <slangasek> well, there are logs in jenkins for each test
+[23:35] <slangasek> possibly the front page is sortable by run date
+[23:36] <ScottK> So I could look at the list of logs and see what's a python-qt4 rdepend?
+[23:36] <slangasek> sure - https://jenkins.qa.ubuntu.com/view/Saucy/view/AutoPkgTest/, scroll down to "Jenkins jobs list", sort by "last success"
+[23:37] <slangasek> but none of the tests that ran 2-4 days ago took longer than 20 min, with the exception of eglibc
+=== Ursinha is now known as Ursinha-afk
+[23:45] <ScottK> Yeah, I don't see anything that looks likely, but it was moved to release the day after it landed in proposed.
+[23:45] <ScottK> https://launchpad.net/ubuntu/saucy/+source/python-qt4/4.10.2-2
+[23:45] <ScottK> So I'm no hallucinating.
+[23:45] <ScottK> Maybe it was just backlog.
+[23:45] <xnox> slangasek: ScottK: there are logs from britney, which should list which tests it was waiting on and when.
+[23:46] <cjwatson> If you're lucky
+[23:46] <xnox> =)
+[23:46] <ScottK> Where?
+[23:47] <cjwatson> No, they don't tell you which rdeps it was waiting for
+[23:47] <xnox> ScottK: i thought http://people.canonical.com/~ubuntu-archive/proposed-migration/log but it doesn't show excuses.
+[23:47] <ScottK> It would be nice if it did ...
+[23:47] <cjwatson> Tempting to cat it in
+[23:47] <cjwatson> I need to pack but you have write access to the relevant branch :)
+[23:48] <xnox> it's html thought =/ or can we have txt excuses as well
+[23:48] <cjwatson> html would be fine here
+[23:48] <cjwatson> I mean whatever
+[23:48] <cjwatson> Could probably just cat it out somewhere in lp:~ubuntu-release/britney/britney1-ubuntu
+[23:49] <cjwatson> You could w3m -dump it if you really want
+[23:51] <xnox> right. Well. kernel & automake is still building locally & I'll go back to sleep =)
+=== Ursinha-afk is now known as Ursinha

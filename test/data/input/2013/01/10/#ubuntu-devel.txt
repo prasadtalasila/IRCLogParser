@@ -1,0 +1,393 @@
+[00:02] <xnox> bdrung: waf upstream was never hostile to packaging waf in distros. they did accept debian-specific patches into upstream which debian maintainer claimed to mean "hostile". And while ftp-masters didn't accept waf into debian, i disagree with their resolution.
+[00:04] <xnox> configure, which is generated using out-of-the-archive autoconf & possibly hand crafted aclocal with missing m4 files is a far bigger FTBFS / DFSG / build reproducibility problem them. Then a handful of python files compressed with bzip2 and uuencoded.
+[00:05] <xnox> So I would not block packages on having waf in them.
+[00:09] <xnox> http://lintian.ubuntuwire.org/quantal/tags/source-contains-waf-binary.html
+[00:10]  * xnox goes to ping ubuntuwire about setting up raring lab
+[00:13] <geofft> xnox: btw, you got my email about apt-mirror, right? Did you ever play with setting that up?
+[00:15] <xnox> geofft: yes, I did. I did play around with it a little. Changing a few things around. But nothing published, nor running publically yet.
+[00:15] <xnox> trying to find time for this project =))))
+[00:16] <xnox> geofft: thank you though, a lot!
+[00:17] <geofft> xnox: Sure (and thank broder, really). Just wanted to make sure I didn't fail to get you something you needed.
+[00:24] <Bluefoxicy> hang on, there's been no power drop here
+[00:24] <Bluefoxicy> why did my computer reboot
+[00:29] <xnox> did you kick it to hard & it wiggled a power cable?
+[00:30] <Bluefoxicy> don't know, someone says I timed out.
+[00:31] <slangasek> cjwatson: hmm :/ why is -fno-stack-protector still needed?  I didn't find much explanation in the changelog for it, and it wasn't needed for gnu-efi's /own/ build
+[00:31] <Bluefoxicy> my bios isn't set to turn power back on if I experience power loss, but I came back to a log-in screen on a fresh reboot.
+[00:31] <Bluefoxicy> since I timed out, I assume unclean means of system run termination rather than update-manager deciding I should reboot without my input.
+=== slank is now known as slank_away
+[00:46] <xnox> slangasek: it came up in the context of causing efilinux FTBFS, if gnu-efi is build without -fno-stack-protector. And cjwatson added comments in the gnu-efi explaining this now.
+[00:46] <xnox> gnu-efi doesn't need it, but rdeps do =)
+[01:40] <bdrung> xnox: a binary blob is not the preferred form of modification (in which the source code should be)
+[04:58] <micahg> xnox: why shouldn't waf blobs be problematic in Ubuntu? aside from semantik, all of the packages are from Debian and should be fixed there, I think most are already, but since we don't have a raring lintian lab yet, we can't be sure
+[05:05]  * micahg goes and repacks symantik
+[05:07] <hyperair> symantik?
+[05:08] <hyperair> hmm, mindmapping tool. interesting.
+[05:22] <pitti> xnox: err, how so? I'm getting mails to it all the time
+[05:22] <pitti> Good morning
+[05:24] <pitti> xnox: ah, it's not pitti@debian.org, but mpitt@d.o.
+[05:29] <pitti> xnox: https://launchpad.net/~pitti has the correct address, too
+=== Amaranthus is now known as Amaranth
+[06:15] <gdane> hello
+[06:16] <gdane> i am interest in some pxa270 ubuntu project
+[06:16] <gdane> is someone work on it?
+[06:17] <gdane> where i can find any info about?
+[06:23] <sarnold> gdane: I haven't seen anything about that board specifically, but hopefully you'll find something useful here: https://wiki.ubuntu.com/ARM
+[06:24] <gdane> Yes i use, thanks
+[06:24] <gdane> ive read this
+[06:24] <gdane> i mean may be someone worked with it before me
+[06:25] <gdane> and did working kernel and rootfs
+[06:26] <gdane> i have several debian dootfses and kernels for my pxa270 intel xscale
+[06:26] <gdane> so i am wonder if someone did ubuntu project with it
+=== smb` is now known as smb
+=== Tonio_aw is now known as Tonio_
+=== Tonio_ is now known as Tonio_aw
+[09:11] <pitti> doko, infinity: :any build deps don't work in Debian yet; do you happen to know when/whether that's planned?
+=== Tonio_aw is now known as Tonio_
+=== Tonio_ is now known as Tonio_aw
+=== henrix_ is now known as henrix
+[09:46] <xnox> bdrung: in that case snapshot upstream VCS, as packed waf binary only has some of the plugins & is processed to remove whitespace & uses tabs instead of space and has comments stripped.
+[09:47] <xnox> micahg: the point I am trying to say that waf is not a blob but bz2 compressed source code, where as configure is obfuscated pre-generated code, which many packages do not regenerate.
+[09:48] <xnox> configure is "plain-text" and is a bigger blob, imho.
+[09:48] <xnox> pitti: ha =) my error.
+=== yofel_ is now known as yofel
+[10:51] <cjwatson> slangasek: right, as xnox said - the problem is that gnu-efi builds a library which is linked into freestanding code in other packages, so ssp blows up at that later stage
+[10:52] <infinity> pitti: Not sure, though in most cases, they really shouldn't be needed anyway.
+[10:52] <cjwatson> pitti,doko,infinity: I was working just yesterday on sorting out Debian buildds to support :any, as it happens
+[10:52] <cjwatson> I'm not quite there yet, since I haven't figured out enough of the relevant bits of wanna-build
+=== Quintasan_ is now known as Quintasan
+[10:52] <cjwatson> I have sbuild working AFAICT
+[10:53] <bdrung> xnox: we can regenerate the autotools files and we can manually modify them. i can't modify bz2 compressed stuff without extracting it. a problem arise if i want to patch that bz2 compressed code!
+[10:54] <infinity> cjwatson: Until such a time as people think they actually want to allow multiarch buildds (which I'm still wary of as an "official" solution to anything), wouldn't it just be easier to strip :* and let 'er rip?
+[10:54] <cjwatson> That's more or less what I plan to do in wanna-build, yes
+[10:54] <cjwatson> For sbuild, well, I've already done the work - it was easier to backport the relevant dpkg patches to forked code
+[10:55] <xnox> bdrung: autoreconf does not work on many packages. I have been bitten by that many times. /me dislikes how one build system is favoured over the other when exactly the same argument can be applied.
+[10:55] <infinity> cjwatson: Oh, for sbuild, it may as well DTRT, sure.
+[10:55] <infinity> xnox: Do we have ways to regen the waffy stuff with in-archive source?
+[10:56] <infinity> xnox: What form it takes is vaguely irrelevant if we're shipping stuff we can't even pretend to be able to regenerate (and thus modify).
+[10:56] <bdrung> xnox: autoreconf is not favoured over waf in point of getting it packaged. we just require to ship the  waf script in extracted form (so we could create patches against it)
+[10:56] <xnox> infinity: there is no need to regen anything. but you can set WAFLIB= variable and point it to a dir where you can override any bit, as it will be prepented pythonpath.
+[10:57] <infinity> xnox: Err, "no need to" is a meaningless statement when we're talking about software freedom.
+[10:57] <diwic> pitti, hi, do you know why there is a "jockey" (and "meta-kde-telepathy") in https://code.launchpad.net/~ubuntu-audio-dev/+archive/alsa-daily/+packages ?
+[10:57] <infinity> xnox: You have no need to modify your kernel either, we'll stop shipping the source.
+[10:57] <bdrung> why isn't there one build system that suites all needs?
+[10:57]  * cjwatson contemplates a Debian release goal of having every autotoolsy package use dh-autoreconf
+[10:58] <pitti> diwic: presumably a wrong manual build
+[10:58] <xnox> infinity: waf script is bzip2 compressed python files, if you want to unpack & modify. It's a binary that produces it's own source code. If that's not DFSG-free, I'm not sure what is.
+[10:58] <diwic> pitti, ok, I'll remove it then
+[10:58] <pitti> diwic: for some reason, the "request build" page on +recipe pages always default to the alphabetically first PPA I can upload to, instead of the one I configured for autobuilds
+[10:58] <infinity> Hrm, if this glibc 2.17 builds and passes the testsuite first try after I rebased about 100 patches, I'm going to be very shocked.
+[10:58] <pitti> diwic: in most cases I change it, but I guess a manual build slipped through, sorry
+[10:58] <diwic> pitti, so we should rename "alsa" to "qalsa" or so :-)
+[10:59] <cjwatson> That said I wonder if it's bootstrappily sane for base-passwd to use dh-autoreconf.
+[10:59] <infinity> xnox: Is there a reason it needs to be compressed, other than someone thinks that's cool?
+[10:59] <diwic> pitti, although that would just put another ppa in the same spot
+[10:59] <cjwatson> Maybe I can rationalise heavier build-deps for base packages now that we can cross-build packages sanely
+[10:59] <bdrung> xnox: it not a DFSG problem, it's a "preferred form of modification" problem
+[10:59] <infinity> cjwatson: I think packages lower down the stack get a pass.  There are still a couple that don't use debhelper at all, and I'm fine with that.
+[10:59] <bdrung> s/it/it's/
+[11:00] <cjwatson> Yeah, base-passwd doesn't use debhelper at the moment (in fact that was sort of a condition of me taking it over :-) ).  But I wonder if worrying about that for port bootstraps still makes sense given that all this stuff is Architecture: all.
+[11:00] <cjwatson> Or at least Multi-Arch: foreign.
+[11:01] <xnox> infinity: it's not necessory nor mandatory, is there a reason to decompress & repackage orig tarball, other that someone thinks they may need to modify it sometime in the future?
+[11:01] <xnox> infinity: i can see how one thinks waf is similar to tarball-inside-tarball, but it's not.
+[11:01] <OdyX> xnox: for Debian it's clear: http://wiki.debian.org/UnpackWaf FTP-masters ruled, sooo
+[11:01] <infinity> cjwatson: Well, it still takes us one step further away from being able to do a scorched-earth make world.  Not that Debian has been able to do that for over a decade, but I still think it might be shiny if it was sort of possible.  Some day.
+[11:02] <cjwatson> Seeing as dpkg uses debhelper it seems a bit pointless to worry about it
+[11:02] <infinity> xnox: Well, there you go.  If Debian ftpmasters ruled, I'm happy to just follow suit.
+[11:02] <xnox> OdyX: I respect ftp-masters decision for Debian. That does not mean I agree with it.
+[11:02] <infinity> cjwatson: That could be fixed. :P
+[11:02] <OdyX> xnox: the core of the issue is that you have to execute an untrusted blob to get the source.
+[11:02] <pitti> cjwatson, infinity: :any> I committed doko's glib change to Debian's svn, but reverted the :any bit as current dpkg doesn't seem to like them
+[11:02] <infinity> cjwatson: But yeah, I'm not sure it's worth worrying about either.
+[11:02] <OdyX> you don't know what this blob could do.
+[11:02] <cjwatson> pitti: Current dpkg is fine.  It's sbuild/etc. that breaks.
+[11:03] <pitti> hm, /me upgrades his sid chroot then, it's already two days old
+[11:03] <cjwatson> pitti: Build-depending on python:any, *specifically*, won't be possible in Debian until python is multiarched there
+[11:03] <infinity> pitti: Our dpkg and Debian's don't have any divergence in this area (and haven't for months).
+[11:03] <pitti> aah, so I guess that's the reason why dpkg failed
+[11:03] <cjwatson> pitti: Build-depending on X:any is only permitted if X is Multi-Arch: allowed.
+[11:03] <pitti> not because of :any, but because "python:any" is indeed not installed
+[11:04] <pitti> thanks
+[11:04] <infinity> pitti: python should be multiarched in experimental, if you want to upload there.
+[11:04] <cjwatson> That's defined in MultiarchSpec, and there's a clearer table in MultiarchCross.
+[11:04] <infinity> (At least, I think doko landed all of that)
+[11:04] <xnox> OdyX: not really, the header of was script is plain text and uses python stdlib bz2 to decompress a stream, which is a folder with python files. I can write a C implementation that does it, if you wish and then further inspect the code.
+[11:04] <cjwatson> You could upload but wanna-build will kick it out.
+[11:04] <xnox> s/was/waf/
+[11:04] <cjwatson> So I still wouldn't recommend it.
+[11:04] <infinity> cjwatson: Oh, right. :P
+[11:04] <pitti> infinity: indeed I do (experimental), thanks
+[11:05] <infinity> xnox: I'm not sure what the point in arguing the point is.
+[11:05] <pitti> cjwatson: *nod*, thanks; so I keep it reverted for now
+[11:05] <cjwatson> pitti: You can test it locally against experimental with a reasonably current version of sbuild, but not yet upload it.
+[11:05] <xnox> infinity: ack. i'll shut up.
+[11:05] <pitti> Laney: ^ FYI
+[11:05] <infinity> xnox: Our general goal is to always upstream as much of our stuff to Debian as we can, so doing things that Debian ftpmaster specifically doesn't allow is silly.
+[11:05] <pitti> Laney: so it seems we won't have to carry that delta for very long at least
+[11:06] <Laney> right; we will just need to remember to bump the BD version to get the experimental python
+[11:06] <Laney> depending on when the buildd side gets deployed, of course
+[11:07]  * cjwatson sends off the first half of the buildd side now
+[11:13] <cjwatson> infinity: Hmm.  Having just tried to dh-autoreconf binfmt-support, it feels pretty weird on native packages.  Maybe I should turn that into non-native ...
+[11:14] <infinity> cjwatson: It doesn't even make sense on native packages...
+[11:14] <cjwatson> Well, it sort of does; you still want to keep current on the generated code
+[11:14] <cjwatson> As it stands I reautotool before every upload, but it's a bit manual
+[11:14] <infinity> Sure, but that should be in your clean target then, or some other pre-upload task.
+[11:15] <cjwatson> I dunno.  I do like the consistency of having all my packages work kind of the same way as far as the autotools are concerned.
+[11:15] <cjwatson> And all my non-native packages are now dh-autoreconfed, including the one that was 2.13 only until I beat on it
+[11:15] <infinity> Just build-dep on dh-autoreconf and call it in clean with a hard failure if it's not there?
+[11:16] <infinity> So it forces it to be called on source package generation? :P
+[11:16] <cjwatson> There are some good reasons to call it at build time; it means that you get upstream autotools improvements even if you haven't uploaded for a while
+[11:16] <cjwatson> Particularly relevant for config.guess/sub, but it's occasionally useful elsewhere
+[11:16] <infinity> Yeah, true.
+=== _salem is now known as salem_
+[11:29] <bdrung> cjwatson: for native package, you could just remove all the auto-generated files.
+[11:33] <cjwatson> bdrung: I could.  The reason I decided I was uncomfortable with that for binfmt-support is that it means that anyone using that on other distributions will have to sort out the autotools stuff manually; and the fact that that is a concern for me is a good indication that it shouldn't actually be native in the first place.
+[11:35] <infinity> cjwatson: Oh, see, yeah, that argument makes perfect sense.
+[11:35] <infinity> (I do wonder if apt and dpkg should go non-native for similar reasons)
+[11:41] <bdrung> cjwatson: yes (too many packages are native despite the fact that i could be used elsewhere)
+=== Tonio_aw is now known as Tonio_
+=== sraue_ is now known as sraue
+[11:59] <infinity> ricotz: I have a few packaging changes to make to glibc 2.17 as well before I upload, but you should expect it in experimental tomorrow (or later today, I guess, but after I've slept), and raring in a few days, after the test rebuilt dust settles.
+[12:05] <ricotz> infinity, alright, i am hoping to see it soon :)
+[12:22] <ogra_> jodh`, hmm, just thinking about that serial stuff, what if someone has a serial tty that isnt used for console= at all ?
+[12:24] <ogra_> i.e. i dont need kernel and boot messages but want a login via serial
+=== MacSlow is now known as MacSlow|lunch
+=== cpg is now known as cpg|away
+[13:30] <doko> Laney, pitti, only python2.7 is multiarched, not 2.6
+[13:30] <pitti> doko: that's fine, python is 2.7 in sid/exp anyway
+[13:34] <ebischoff>  Hello people and happy New Year. Is it normal that libselinux1 libsemanage and libsemanage-common got installed on Raring? I thought Ubuntu was using AppArmor. I don't have these packages on Quantal.
+[13:35] <cjwatson> ebischoff: Yes, because shadow is compiled with support for them in any case (from Debian).
+[13:35] <cjwatson> The libraries in themselves don't hurt.
+[13:37] <ebischoff> Sure they don't hurt. They are just losing space on the system and not needed. Couldn't "shadow" be compiled without that dependancy?
+[13:37] <cjwatson> It could, but it doesn't seem worth the divergence.
+[13:38] <pitti> there's two handfuls of other packages which also depend on libselinux1 anyway
+[13:38] <ebischoff> OK. I disagree, but OK. Thanks for the answer and thanks also for all the great work.
+[13:39] <cjwatson> (And it would mean that people wouldn't be able to take Ubuntu and drop in a kernel that uses the SE Linux security module instead.)
+[13:39] <ebischoff> Good point. Although one could wonder why a kernel would depends on libraries :-).
+[13:40] <cjwatson> It doesn't.
+[13:40] <cjwatson> Indeed, as pitti says, libselinux1 was already in minimal Ubuntu chroots in Quantal.
+[13:40] <jdstrand> actually, selinux is available via kernel boot parameter
+[13:40] <cjwatson> You've made a mistake somewhere if you believe that it wasn't there before.
+[13:40] <cjwatson> libsemanage1 and libsemanage-common are new.
+[13:40] <ebischoff> ah, correct, I compared only libsemanage ones
+[13:41] <ebischoff> # dpkg -l | grep libsel
+[13:41] <ebischoff> ii  libselinux1:amd64                     2.1.9-5ubuntu1                           amd64        SELinux runtime shared libraries
+[13:41] <pitti> Size: 6202 (-common) -> hardly worth the effort again, I guess
+[13:41] <ebischoff> I learned something, thanks.
+[13:41] <tjaalton> ~150kB all three combined
+[13:41] <cjwatson> Given upstream changes in shadow, IIRC, disabling libsemanage in shadow was going to effectively require ripping out selinux support entirely when it was previously present
+[13:41] <cjwatson> And I wasn't wild about possible regressions for people in doing that
+=== Ursinha is now known as Ursinha-afk
+[13:41] <cjwatson> jdstrand: thanks
+[13:42] <jdstrand> fwiw, that is my resollection
+[13:42] <jdstrand> recollection
+[13:42] <tjaalton> it should be, yes
+[13:42] <jdstrand> that had one way of doing selinux in shadow, then ripped it out and did it with libsemanage
+[13:42] <ebischoff> OK, thanks for the detailed answer everyone. And thanks again for the great work.
+[13:43] <jdstrand> it wouldn't be trivial to revert to the old way
+[13:44]  * cjwatson completes the stuff he meant to do yesterday evening and ran out of time for, and now wonders what he was actually going to do today ... sigh
+[13:45] <ebischoff> best && goodbye
+[13:45] <tjaalton> cjwatson: the change to precise livecd-rootfs to pull xorg backport? :)
+[13:49] <cjwatson> tjaalton: mm, yeah, I seem to have been putting that off ...
+[13:50] <tjaalton> cjwatson: should I push this to bzr? http://pastebin.com/b3gzhpnf
+[13:50] <jdstrand> cjwatson: that is an interesting problem you have :)
+[13:50] <tjaalton> don't mind if you do it the way you prefr
+[13:50] <tjaalton> +e
+[13:50] <cjwatson> tjaalton: that doesn't look right
+[13:51] <cjwatson> it'll end up with both stacks
+[13:51] <cjwatson> I don't see a reason to put this in the "live" phase
+[13:51] <cjwatson> "install" should work better, but needs testing
+[13:52] <tjaalton> cjwatson: no, the package will replace the old stack
+[13:52] <tjaalton> can't have both installed
+[13:52] <cjwatson> tjaalton: But it will go horribly wrong if you do it in the live phase, trust me
+[13:52] <tjaalton> ok :)
+[13:52] <cjwatson> Ubiquity will get very confused
+[13:53] <cjwatson> This is intended to be part of the installed system; it does not belong in the live phase, which is for things that will generally be removed after copying the livefs to the target
+[13:53] <tjaalton> but this is for hw enablement..
+[13:53] <cjwatson> Why does that mean you'd want it to be removed after copying to the target system? :)
+[13:54] <cjwatson> The live phase just makes no sense heree
+[13:54] <cjwatson> *here
+[13:54] <tjaalton> ok ok
+[13:54] <tjaalton> maybe I got it backwards
+[13:56] <cjwatson> live contains stuff like the installer, language packs most of which are going to be removed, casper which we don't want on the target system, etc.
+[13:56] <mdeslaur> seb128: mind if I merge gnupg2?
+=== MacSlow|lunch is now known as MacSlow
+[13:58] <seb128> mdeslaur, hey, did I touch that last? please go for it, I hate the TIL concept (more often that not you touch something for a random reason and gets sticky) ;-)
+[13:58] <mdeslaur> seb128: yep, you did :) thanks.
+[13:58] <cjwatson> tjaalton: you might have been misled by the signed kernel being in live - it's there because there are many systems for which we don't want it installed.  Things that we conditionally install are often easiest to have in live.  But it's there because it's the signed kernel, not because it's an enablement kernel
+[13:59] <seb128> mdeslaur, thank *you* ;-)
+[13:59] <mdeslaur> seb128: yeah, now I've caught the TIL disease :)
+[13:59] <tjaalton> cjwatson: yeah, it's the mention of the backport kernel.. so wrong package to touch?
+[14:00] <cjwatson> tjaalton: Wrong package to use as a model for this
+[14:01] <cjwatson> tjaalton: I'm testing a build with http://paste.ubuntu.com/1516802/ now - will probably take an hour or two
+[14:02] <tjaalton> cjwatson: ah, now I get it :)
+[14:02] <tjaalton> sheesh
+[14:02] <tjaalton> things you forget in a week
+[14:11] <Laney> d
+[14:21] <cjwatson> tjaalton: Hmm, nope, this installs xserver-xorg-lts-quantal and then installs xserver-xorg and removes the former ... I thought xorg had been fixed not to do that
+[14:21] <cjwatson> Oh, blah, it's probably got something to do with the task
+[14:21] <cjwatson> This will be painful
+[14:21] <tjaalton> :/
+[14:22] <tjaalton> but renames are great! :)
+[14:22] <cjwatson> hate you all
+[14:22] <tjaalton> hehe
+[14:22] <Myrtti> ♥
+[14:25] <mlankhorst> :/
+[14:25] <cjwatson> I think I will have to expand the task by hand and hope that that doesn't cause anything else to blow up
+[14:25] <mlankhorst> wasn't me who decided on the rename route!
+[14:26] <mlankhorst> anyhow installing xserver-xorg will remove -lts-quantal, which is correct :-) xserver-xorg-lts-precise is just a convenience alias since otherwise input-all and video-all don't get pulled in
+[14:26] <cjwatson> Sure, but it's not what you actually want for this image
+=== Tonio_ is now known as Tonio_aw
+[14:27] <cjwatson> I'm not arguing about the correctness of the package metadata heree
+[14:27] <cjwatson> Although I still hate you all
+=== Tonio_aw is now known as Tonio_
+[14:31] <mlankhorst> well that's your job, I know you don't mean it :-)
+=== chiluk is now known as chiluk_away
+=== slank_away is now known as slank
+=== rickspencer3_ is now known as rickspencer3
+[15:26] <caribou> what is the process to get a package (kdump-tools) in main when its source package (makedumpfile) is already in main ?
+[15:26] <caribou> the MIR wiki page says that a MIR is not required for those
+[15:28] <seb128> caribou, get something in main to (build-)depends on or recommends it
+[15:28] <pitti> caribou: by and large, upload something to main which depends on it
+[15:28] <cjwatson> or get a core-dev to seed it somewhere if it should be a top-level item
+[15:29] <caribou> seb128: pitti cjwatson thanks for the tips
+[15:33] <micahg> caribou: you also want to make sure that it wasn't left out of main for a reason, the original MIR usually mentions these things if that's the case
+[15:33] <caribou> micahg: I think it's not in main because it's not systematically being used
+[15:33] <caribou> micahg: but thanks for the detail
+=== Ursinha-afk is now known as Ursinha
+=== mbarnett` is now known as mbarnett
+=== chiluk_away is now known as chiluk
+=== Tonio_ is now known as Tonio_aw
+[16:21] <ogra_> pitti, ev, is anything in whoopsie or apport using gksudo ? bug 1098235 is the third one i see around this issue and i thought everything uses pkexec
+[16:21] <ubottu> bug 1098235 in ubuntu-nexus7 "Keybord non responsive for "Report problem"" [Undecided,New] https://launchpad.net/bugs/1098235
+=== slank is now known as slank_away
+=== slank_away is now known as slank
+[16:45] <pitti> ogra_: I ported apport from gksudo to polkit (pkexec) in quantal
+[16:50] <ogra_> pitti, right, i also see the changelog, pkexec doesnt have any issues with onboard (and definitely doesnt blacken the screen), so i'm a bit confused
+[16:51] <pitti> ogra_: I don't see a package hook with gksu either (at least not on my amd64 system)
+[16:52] <ogra_> we dont have anything like bug buddy anymore, right ? it must be apport they are seeing there
+[16:52] <ogra_> i guess i'll just sit down tomorrow and try to reproduce it
+[16:55] <pitti> no, no bug buddy; KDE has its own crash handler, and Firefox does
+[16:55] <pitti> but neither grab the keyboard
+[16:55] <pitti> and even for apport, you rarely will see hooks needing root privs
+[16:57] <ogra_> no, the keyboard (well, focus) grabbing is clearly gksu
+[16:57] <ogra_> it is known to be broken with onscreen kbd
+[16:57] <ogra_> but something seems to trigger it nontheless when "report this problem" is selected
+[16:59] <pitti> ogra_: the three things which are still knowingly using it are xdiagnose, update-notifier, and ubuntu-nexus7-installer
+[16:59] <ogra_> yeah, i wonder if any hook calls xdiagnose or some such
+[17:00] <ogra_> ubuntu-nexus7-installer isnt in the archive
+[17:00] <pitti> *mumble* gksu must die *mumble*
+[17:00] <ogra_> ++
+[17:00] <ogra_> quickly ...
+[17:00] <ogra_> well, not die but be shot into the universe
+[17:01] <ogra_> i was actually hoping we could do that this release
+[17:01] <bdmurray> pitti, ev: bug 1098250
+[17:01] <ubottu> bug 1098250 in Apport "unable to send suspend resume crash from raring" [Undecided,New] https://launchpad.net/bugs/1098250
+[17:01] <ogra_> anyeway, thaks pitti, i'll go on researching that part
+[17:02] <pitti> and with that, bonne nuit tout le monde!
+[17:02] <ev> nice spot
+[17:02] <bdmurray> ogra_: is there anything in /var/crash?
+[17:03] <bdmurray> ev: I sometimes wish whoopsie had a log file...
+[17:03] <pitti> hm, what should we use as a dupe signature?
+[17:03] <ogra_> bdmurray, no idea, i'll ask the reporter ...
+[17:03] <pitti> machine vendor/product or so? but even that isn't guaranteed to be the same problem
+[17:04] <ev> hmm
+[17:05] <ev> maybe the kernel guys would have a better idea?
+[17:05] <ev> my naive thought would be concatenation of the various SMBIOS and PCI IDs that are relevant here
+[17:06] <ev> that it would be more useful if it underrepresented the number of systems affected equally than if it lumped every Dell together
+[17:06] <pitti> I subscribed apw to the bug with a question
+[17:07] <rbasak> barry: re bug 1097783, thanks. That was quick!
+[17:07] <ubottu> bug 1097783 in genshi (Ubuntu) "re module apis return longs now" [High,Triaged] https://launchpad.net/bugs/1097783
+[17:07] <ev> bdmurray: doesn't it log to /var/log/upstart/whoopsie.log?
+[17:07] <ev> pitti: cheers
+=== slank is now known as slank_away
+[17:09] <apw> pitti, bug # ?
+[17:12] <bdmurray> ev: not with communication details
+[17:12] <bdmurray> apw: bug 1098250
+[17:12] <ubottu> bug 1098250 in Apport "unable to send suspend resume crash from raring" [High,Incomplete] https://launchpad.net/bugs/1098250
+=== slank_away is now known as slank
+[17:13] <ev> bdmurray: oh, consider that a bug :)
+[17:14] <ev> it's probably sending to stdout instead of stderr, or whichever upstart cares about
+[17:16] <apw> ev, what symptoms does the error here actually detect?
+[17:18] <smb> apw, Good question. One might guess dmesg....
+[17:18] <bdmurray> apw: its /usr/share/apport/apportcheckresume
+=== mspencer is now known as iBelieve
+[17:20] <apw> ok so this is one of those where we suspended and then had to reboot
+[17:20] <apw> so there is no stack ... tricky
+[17:22] <apw> ev, so we are looking for something to identify the machine, so perhaps the list of devices and machinetype
+[17:22] <Laney> ogra_: Pretty sure that bug refers to update-notifier.
+[17:22] <Laney>       invoke_with_gksu(CRASHREPORT_REPORT_APP,
+[17:22] <Laney>                               _("<span weight=\"bold\" size=\"larger\">Please enter your password to access problem reports of system programs</span>"),
+[17:23] <ev> apw: will that not be too wide a match?
+[17:23] <ev> that is, can you do anything with "Dell XPS whatever machines failed to suspend 343028 times in Quantal"
+[17:24] <apw> ev, right thats why i am saying 'dell XXX with these 10 devices'
+[17:24] <ev> ah right
+[17:24] <apw> as most likely it has to be related to wahts in the machine
+=== chiluk is now known as chiluk_away
+=== chiluk_away is now known as chiluk
+=== slank is now known as slank_away
+[18:14] <cjwatson> tjaalton: well, this at least builds now, and includes the enablement stack and not the precise one; I still want to do a bit more comparison with a stock image though, as switching to metapackages is a fairly considerable change
+[18:19] <dkessel> hello guys. when would you think would be a good time to submit an apport crash report for signon-ui ? i have tried two times now, but apport always refuses/fails to retrace the stacktraces and closes the bugs automatically...
+[18:19] <dkessel> i don't want to submit a bug the third time only to see apport retracing fail a third time...
+[18:21] <tjaalton> cjwatson: nice :)
+=== deryck is now known as deryck[lunch]
+=== slank_away is now known as slank
+=== nrosvall_ is now known as nrosvall
+=== henrix is now known as henrix_
+[19:16] <bdmurray> mterry: there are 2 uploads of duplicity in the quantal -proposed queue, yours is the newer of the two.  the other upload fixes bug 1013446
+[19:16] <ubottu> bug 1013446 in duplicity (Ubuntu Quantal) "Uncached grp and pwd calls make duplicity slow with large group and passwd maps" [Medium,In progress] https://launchpad.net/bugs/1013446
+[19:17] <mterry> bdmurray, oh, that was SRU'd?  I didn't notice.
+[19:18] <mterry> bdmurray, you know what, hold up on mine, and let that one through.  I want to triple-confirm the fix I put in for corruption
+[19:18] <bdmurray> mterry: well it hasn't been approved for quantal yet and there seems to be an issue with the precise upload so it could use reuploading
+[19:19] <mterry> bdmurray, which one could use re-uploading?
+[19:19] <bdmurray> the fix for bug 1013446 to precise
+[19:19] <ubottu> bug 1013446 in duplicity (Ubuntu Quantal) "Uncached grp and pwd calls make duplicity slow with large group and passwd maps" [Medium,In progress] https://launchpad.net/bugs/1013446
+=== henrix_ is now known as henrix
+[19:23] <smoser> slangasek, https://bugs.launchpad.net/ubuntu/+source/nfs-utils/+bug/643289 is 'triaged' for precise. my test just now seems to agree with that (it seems not fixed in precise).
+[19:23] <ubottu> Ubuntu bug 643289 in nfs-utils (Ubuntu Precise) "idmapd does not starts to work after system reboot" [High,Triaged]
+[19:23] <smoser> were you planning on fixing that in precise?
+[19:30] <bdmurray> mterry: so I'll reject your upload of duplicity to quantal and review / approve the one fixing bug 1013446 and if you upload the new precise debdiff to the queue I'd be happy to look at it too
+[19:30] <ubottu> bug 1013446 in duplicity (Ubuntu Quantal) "Uncached grp and pwd calls make duplicity slow with large group and passwd maps" [Medium,In progress] https://launchpad.net/bugs/1013446
+[19:32] <mterry> bdmurray, OK
+=== deryck[lunch] is now known as deryck
+[19:40] <slangasek> cjwatson, xnox: ok, thanks for the clarification.  FWIW the gnu-efi in raring is still broken in some manner I haven't yet identified, as it makes shim unusable (but not unbuildable).
+=== slank is now known as slank_away
+=== Tonio_aw is now known as Tonio_
+=== Tonio_ is now known as Tonio_aw
+=== Tonio_aw is now known as Tonio_
+[20:04] <cjwatson> slangasek: was that something I broke?
+[20:04] <slangasek> cjwatson: no, it's my doing
+[20:04] <slangasek> I was vaguely hoping that the -fno-stack-protector issue would fix shim (even though I had already tested reintroducing -fno-stack-protector)
+[20:05] <slangasek> I'll get it sorted this week
+[20:12] <psusi> smoser: had a chance to try out kpartx -u yet?
+[20:12] <smoser> psusi, no. sorry.
+[20:12] <smoser> i've not played or thought any more about that.
+[20:20] <truexfan81> is this the right place to make a suggestion for a program to be included in ubuntu?
+[20:21] <truexfan81> in this case the program is inxi, this would greatly help the guys in the forums and #ubuntu to get the info they need to help people
+=== Tonio_ is now known as Tonio_aw
+[20:25] <cjwatson> slangasek: might be worth trying -ffreestanding if that isn't there already ...
+=== salem_ is now known as _salem
+=== slank_away is now known as slank
+=== henrix is now known as henrix_
+=== chiluk is now known as chiluk_away
+=== chiluk_away is now known as chiluk
+[21:34] <Laney> whyever does screen -ls return 1 in all cases?
+=== slank is now known as slank_away
+=== chiluk is now known as chiluk_away
+=== chiluk_away is now known as chiluk
+=== slank_away is now known as slank
+=== chiluk is now known as chiluk_away
+[22:14] <cody-somerville> Ubuntu package dependency graph is pretty: http://tinyurl.com/a23nzp2
+=== Tonio_ is now known as Tonio_aw
+[22:16] <cielak> cody-somerville: any details on that picture? how was it generated, is there a hi-res version available anywhere, can I generate one myself?
+[22:18] <sarnold> cielak: http://tech-foo.blogspot.com
+=== _salem is now known as salem_
+[22:19] <cielak> sarnold: thanks!
+[22:21] <cody-somerville> sarnold: thanks!
+[22:24] <RAOF> cody-somerville: That's pretty awesome!
+[22:44] <slangasek> smoser: yes, planning to fix bug #643289 in precise, but the mountall part of it needed to settle first
+[22:44] <ubottu> bug 643289 in nfs-utils (Ubuntu Precise) "idmapd does not starts to work after system reboot" [High,Triaged] https://launchpad.net/bugs/643289
+[22:59] <micahg> cjwatson: maybe one of the causes of the TIL breakdown is the lack of mention of it on the UDD packaging guide
+=== slank is now known as slank_away
+=== salem_ is now known as _salem
+=== cpg|away is now known as cpg

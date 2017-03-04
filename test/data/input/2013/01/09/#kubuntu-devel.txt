@@ -1,0 +1,475 @@
+[06:43] <soee> good morning
+[06:50] <soee> what am i missing here http://pastebin.com/ENadJsmM ?
+[06:54] <tsimpson> !find cmake/modules/FindKDE4Internal.cmake | soee
+[06:54] <ubottu> soee: File cmake/modules/FindKDE4Internal.cmake found in kdelibs5-dev
+[06:55] <soee> tsimpson, just installed it but have next problems :) thank you anyway
+[06:58] <soee> what would be the best way to get packagekit-qt2 >= 0.8.5 
+[07:02] <tsimpson> probably to grab the source and compile it, or maybe look for a trusted PPA
+[07:13] <ScottK> That or reconsider why you want it.
+[07:37] <soee> ScottK, i wanted to try new apper :)
+[07:38] <ScottK> I just don't see any packagekit solution being the right answer for Debian based systems.
+[07:38] <ScottK> Of everyone's free to do it their own way.
+[08:33] <shadeslayer> yofel_: thx :)
+[08:44] <shadeslayer> yofel_: libindi uploaded
+[08:46] <shadeslayer> ugh
+=== Tonio_ is now known as Tonio_aw
+[09:19] <shadeslayer> Riddell: libwlocate issues :
+[09:19] <shadeslayer> * No debug package?
+[09:19] <shadeslayer> * debian/rules has text from dh_make
+[09:19] <shadeslayer> * No packaging copyright in debian/copyright
+[09:29] <shadeslayer> yofel_: should we fix symbols for kdepim and what not?
+[09:30] <yofel_> not really, the changes will be lost in the next backport anyway
+=== yofel_ is now known as yofel
+[09:32] <yofel> I made the script remove the symbol files next time anyway (It's either that or making sure all lib packages use dh_makeshlibs -- -c0)
+[09:38] <shadeslayer> hm
+[10:10] <Riddell> shadeslayer: can you see if you can make a .symbols file for libwlocate?  I wasn't able to
+[10:12] <Riddell> I also don't get why marble-plugins doesn't seem to pick up shlib depends from the plugins
+[10:13] <Riddell> maybe because they're hidden away in /usr/lib/kde4/plugins/marble/15/
+[10:16] <shadeslayer> Riddell: nope
+[10:17] <shadeslayer> no symbols :/tmp/revu/libwlocate-0.0git20130108(branch:master*) » dpkg-gensymbols -edebian/libwlocate0/usr/lib/libwlocate.so -plibwlocate0
+[10:17] <shadeslayer> even using pkgkde-gensymbols : /tmp/revu/libwlocate-0.0git20130108(branch:master*) » pkgkde-gensymbols -plibwlocate0 -edebian/libwlocate0/usr/lib/libwlocate.so
+[10:22] <Riddell> shadeslayer: good to know I wasn't missing anything
+[10:42] <Laney> Riddell: I uploaded telepathy-farstream-0.4 to NEW if you have some time to review it ... ;-)
+=== Tonio_aw is now known as Tonio_
+[10:50] <Riddell> groovy
+[10:50] <Riddell> Laney: python-tpfarstream not clashing?
+[10:53] <Riddell> Laney: do the files in libtelepathy-farstream-0.4-doc and libtelepathy-farstream-0.4-dev not clash with telepathy-farstream ?
+[10:54] <Laney> Riddell: I don't see a python package there
+[10:54] <Laney> and the paths are all versioned in -dev and -doc
+[10:55] <Riddell> so /usr/include/telepathy-1.0/telepathy-farstream/channel.h becomes something else in 0.6?
+[10:56] <Riddell> what about e.g. /usr/lib/x86_64-linux-gnu/pkgconfig/telepathy-farstream.pc ?
+[10:56] <Riddell> python-tpfarstream.install exists but it's not in debian/control so that's fine
+[10:56] <Laney> it becomes /usr/include/telepathy-1.0-compat/… in libtelepathy-farstream-0.4-dev
+[10:56] <Riddell> ah hah
+[10:57] <Riddell> Laney: dpkg-source: error: Version number suggests Ubuntu changes, but Maintainer: does not have Ubuntu address
+[10:58] <Laney> true :(
+[11:00] <Riddell> Laney: otherwise seems all good
+[11:00] <Riddell> Laney: shall I reject it and let you upload with that Maintainer?
+[11:01] <Laney> sure, if you think it's reject-worthy
+[11:02] <Riddell> Laney: rejected, wouldn't want to go against an important policy like that
+[11:03] <Riddell> although I've had debian people commenting that we make "trivial changes like the Maintainer field" when we could be using unchanged packages
+[11:03] <Laney> ha
+[11:03] <Laney> reuploaded, should be in queue in a sec
+[11:07] <Riddell> accepted!
+[11:07] <Laney> :>
+[11:08] <shadeslayer> yofel: everything looks green, should I copy to staging PPA?
+[11:36] <yofel> shadeslayer: why not beta? I don't think it's being used for anything else for precise right now
+[11:36] <yofel> do test it in a VM once before copying it anywhere though
+=== yofel changed the topic of #kubuntu-devel to: Kubuntu - Friendly Computing | Raring Alpha 1 Released | Packaging TODO: http://notes.kde.org/kubuntu-ninjas | oxygen-fonts in experimental PPA (from oneiric to raring)
+[11:37] <shadeslayer> testing, that's why
+[11:37] <shadeslayer> and I don't have enough bandwidth to test
+[11:38] <yofel> ah, then go ahead with staging
+[11:40] <Riddell> shadeslayer: ec2 machines available if you need them
+[11:42] <shadeslayer> hmm ... let's go with a ec2 machine :)
+[11:42] <Riddell> bah what's wrong with my libqaccessibilityclient package?
+[11:42] <Riddell> https://launchpad.net/~kubuntu-ppa/+archive/experimental/+packages
+[11:42] <Riddell> it either doesn't compile on amd64 or it doesn't on i386
+[11:42] <shadeslayer> lol
+[11:42] <Riddell> I can't get the symbols file to be happy on both
+[11:43] <yofel> Riddell: missing build-dep on pkg-kde-tools?
+[11:44] <Riddell> mmm
+[11:44] <yofel> if you used pkgkde-symbolshelper then it's that
+[11:44] <Riddell> good catch yofel 
+[11:45] <yofel> already had that with libmygpo-qt
+[11:48] <shadeslayer> Riddell: if you do setup ec2 please make sure you add the security groups and open the ports
+[11:49] <Riddell> shadeslayer: ubuntu@ec2-50-16-75-71.compute-1.amazonaws.com
+[11:49] <Riddell> ah but ports
+[11:49] <Riddell> what ports would sir like?
+[11:49] <shadeslayer> :P
+[11:49] <shadeslayer> anything works
+[11:50] <shadeslayer> all ports are open here
+[11:53] <BluesKaj> Hiyas all
+[11:56] <Laney> Riddell: can haz accepted binaries?
+[11:57] <Laney> and do you have repos that I should commit the other stuff to when I upload it?
+[11:58] <Laney> aha ~kubuntu-packagers/kubuntu-packaging
+[11:59] <shadeslayer> I don't think we maintain ktp packaging there ;)
+[12:02] <shadeslayer> yofel: any ideas what the upgrade path should look like? 4.8 -> 4.9 -> 4.10?
+[12:02] <shadeslayer> or directly to 4.10
+[12:02] <Laney> can I assume that Vcs-Bzr would be there if there is a branch? ;-)
+[12:02] <shadeslayer> yep
+[12:02] <yofel> I'm doing a 4.8 -> 4.10 test in pbuilder
+[12:02] <shadeslayer> heh okay
+[12:02] <yofel> considering that we'll be supporting 4.8 -> 4.12 upgrades later, this should work
+[12:03] <shadeslayer> right
+[12:03] <yofel> oh
+[12:03] <shadeslayer> ?
+[12:03] <yofel> can you fix bug 1096396 or check if someone else already did?
+[12:03] <ubottu> bug 1096396 in Kubuntu PPA "Errors when upgrading from KDE 4.10 RC 1 to RC 2" [Undecided,New] https://launchpad.net/bugs/1096396
+[12:04] <shadeslayer> hmm looking
+[12:05] <yofel> wallpaper move stuff
+[12:05] <shadeslayer> wasn't Finally_Summer_in_Germany removed?
+[12:06] <yofel> moved to artwork it seems
+[12:07] <shadeslayer> yofel: you fixed it I think http://bazaar.launchpad.net/~kubuntu-packagers/kubuntu-packaging/kdeartwork/revision/168
+[12:08] <yofel> I think that needs bumping to 97 as the error was there again
+[12:08] <shadeslayer> ah okay
+[12:08] <shadeslayer> Riddell: ports opened?
+[12:10] <shadeslayer> yofel: fixing
+[12:10] <yofel> thanks
+[12:22] <shadeslayer> yofel: kdeartwork for raring uploaded
+[12:22] <shadeslayer> now to do quantal and precise :P
+[12:23] <yofel> note: 4.10 causes digikam to be removed in precise
+[12:23] <Riddell> shadeslayer: no, what do you need?
+[12:24] <shadeslayer> Riddell: erm don't you have to open ports for VNC?
+[12:24] <shadeslayer> or am I missing something?
+[12:24] <Riddell> yes probably
+[12:24] <Riddell> 5900-5950tcp0.0.0.0/0
+[12:24] <Riddell> should be there
+[12:25] <Riddell> shadeslayer: then run vncserver
+[12:26]  * Riddell looks at updating qt
+[12:28]  * yofel tries to backport digikam
+[12:32] <shadeslayer> okay sec
+[12:34]  * Riddell notes that recompressing a qt tar with xz takes ages
+[12:36] <shadeslayer> seems to work
+[12:36] <shadeslayer> dolphin launches, konsole launches
+[12:36] <shadeslayer> kded4 seems to be deda for some reason
+[12:36] <yofel> any volunteers for l10n?
+[12:36]  * yofel doesn't look at himself
+[12:37] <shadeslayer> haha
+[12:37] <shadeslayer> did someone upload that magic for Quantal?
+[12:37] <shadeslayer> last I checked it wasn't updated
+[12:37] <yofel> l10n?
+[12:37] <shadeslayer> yep
+[12:37] <yofel> uh... checking
+[12:38] <yofel> no
+[12:38] <yofel> fixing
+[12:40] <yofel> I guess I'll do precise too now that I'm at it...
+[12:42] <shadeslayer> hehe
+[12:46] <yofel> shadeslayer: what's 4.9.97 quantal doing in staging o.O?
+[12:46] <shadeslayer> I copied it there
+[12:46] <shadeslayer> for testing
+[12:47] <shadeslayer> soee had quantal and was willing to test
+[12:47] <yofel> ah
+[12:47] <shadeslayer> and I was about to go out
+[12:47] <soee> and soee did test it
+[12:47] <yofel> thanks soee :)
+[12:47] <soee> than Riddell moved it to backports
+[12:49] <shadeslayer> yofel: I can install digikam on the ec2 machine without issues
+[12:49] <yofel> really? here I got a conflict with libmarblewiget
+[12:50] <shadeslayer> yofel: http://paste.kde.org/641702/
+[12:50] <yofel> ah, libmarblewidget13
+[12:51] <shadeslayer> *nod*
+[12:51] <yofel> seems we have digikam in backports which needs libmarblewidget14 which isn't installable with libmarblewidget15
+[12:51] <shadeslayer> ah
+[12:51] <yofel> 13 shouldn't be either
+[12:51] <shadeslayer> heh
+[12:51] <yofel> anyway, it's building here so far
+[12:52] <shadeslayer> okie
+[12:52] <shadeslayer> hah
+[12:52] <shadeslayer> yofel: http://paste.kde.org/641708/
+[12:53] <yofel> yeah, it doesn't conflict with 13, not sure why
+[12:53] <shadeslayer> :)
+[13:13] <shadeslayer> Riddell: can you shut down the ec2?
+[13:13] <shadeslayer> I'm done with it :)
+[13:17] <shadeslayer> yofel: kdeartwork for precise and quantal done as well btw
+[13:21] <Riddell> ec2 terminated
+[13:44] <Riddell> ooh the person who phoned me mysteriously the other night wanting to talk about kubuntu in spanish is Jesús
+[13:44] <Riddell> I always knew we were blessed
+[13:59] <shadeslayer> :D
+[14:00] <shadeslayer> time to upgrade ff-kde
+[14:00] <Riddell> she's going to call back too, I'll ask for a miracle or two on my head trauma
+[14:01] <shadeslayer> haha :D
+[14:53] <tsdgeos> Riddell: jesus is a man's name
+[15:32] <Darkwing> Morning guys
+[15:38] <MCR1> tsdgeos: Hi :) Any plans on hacking Compiz ?
+[15:39] <tsdgeos> MCR1: too busy elsewhere really
+[15:39] <MCR1> :-/
+[15:43] <tsdgeos> not that i did any good either, my smartest hack caused a regression and had to be reverted :D
+[15:48] <ronnoc> Riddell: Been testing Calligra a lot lately - all seems to be going really well. I have a few .docx and .xlxs files I'm going to play with tonight to test the claimed affinity for Calligra to handle MS docs. Will report later tonight. 
+[15:51] <Darkwing> ronnoc: the only restriction (Unless they have changed it on Calligra side) is failure to save in the MS formats.
+[15:53] <ronnoc> Darkwing: Right. Last I read, the team has no plans to incorporate saving in .doc formats, as a principle thing. But it is said to handle importing MS formats better than LO. 
+[15:53] <Riddell> tsdgeos: I know, it surprised me, she's called Jesús Alejandro
+[15:54] <Riddell> ronnoc: it's not a point of principle, if someone implemented decent MS Office format saving they'd be happy for it
+[15:54] <Darkwing> ronnoc: Aye, I understand that but, to allow principle things to get in teh way with functionality... My Uni and most work places don't understand "principle" behind no saving in MS formats. Until that changes I am stuck with LO
+[15:54] <Riddell> it's about three month's work they estimate
+[15:55] <ronnoc> Riddell: I know I read that somewhere in a dev blog :p
+[15:55] <ronnoc> But I thinik we're both right here: The core team does not care to impliment it, but that does not mean someone else couldn't go ahead and do it.
+[15:56] <Riddell> ronnoc: I know KO would happily do it if someone would find a dev or two for three months
+[15:57] <apachelogger> isn't MS going to switch to ODF anyway?
+[15:58] <apachelogger> as of late I was under the impression that MS realized how much more crap than ODF their own format is
+[15:59] <Darkwing> apachelogger: That would be awesome but, until then my uni still wants docx
+[15:59] <apachelogger> oh, you do the studies?
+[15:59] <apachelogger> also booh at docx, completel indecent
+[15:59] <apachelogger> tex > docx
+[15:59] <Riddell> apachelogger: I can't see that happening
+[15:59] <Darkwing> apachelogger: Yeah, I started a couple months ago. :D
+[15:59] <apachelogger> Riddell: stranger things have happened :)
+[15:59] <Riddell> fabo: ping, what's the status of Qt 5 packages?  In progress or help needed?
+[16:00] <apachelogger> Darkwing: cool, what are you studying?
+[16:00] <apachelogger> JontheEchidna: FYI I broke my muon updater
+[16:00] <apachelogger> been updating and a new kdm config was around, so I told it to replace the old plunder
+[16:01] <apachelogger> now it's stuck waiting for configuration file
+[16:01] <apachelogger> for 8 hours
+[16:01] <JontheEchidna> apachelogger: Muon 1.x or 2.x?
+[16:01] <apachelogger> dunno
+[16:01] <apachelogger> the help menu is deactivated :P
+[16:01] <JontheEchidna> :s
+[16:01] <apachelogger> also lol on that :P
+[16:02] <Darkwing> Organizational Leadership and when I'm finished with my undergrad and grad going to get my PhD in Global Leadership. 
+[16:02] <JontheEchidna> apachelogger: I did notice that the "enable toolbar" KAction is still enabled even though everything is supposed to be disabled :P
+[16:02] <apachelogger> http://wstaw.org/m/2013/01/09/plasma-desktopaW1931.png
+[16:02] <apachelogger> quite silly
+[16:02] <apachelogger> I Could not even report a bug about it being stuck :P
+[16:03] <apachelogger> Muon Update Manager: 1.9.65
+[16:03] <JontheEchidna> bleh
+[16:03] <apachelogger> supposedly that is le old?
+[16:03] <JontheEchidna> not terribly
+[16:03] <sheytan_> JontheEchidna: hey. Are you working on muon-discover?
+[16:03] <JontheEchidna> sheytan_: apol is doing most of that
+[16:03] <Darkwing> I'm back on the LTS because ATI/AMD sucks at updating video drivers that will work on 12.10+
+[16:03] <sheytan_> JontheEchidna: i can do a mockup of the UI if you/ he wish
+[16:04] <sheytan_> we could rock it finally!
+[16:04] <JontheEchidna> :)
+[16:04] <sheytan_> JontheEchidna: is it worth to even start? Are you looking forward to it?
+[16:04] <JontheEchidna> apachelogger: the thing about that is that it is kindae hard to test out in the wild, so it probably never worked. I should probably make a mock package that has a conffile and hook it up with a local repository
+[16:05] <JontheEchidna> sheytan_: actually apol, agateau and I were supposed to have a meeting about this this morning, but apol never showed
+[16:05] <JontheEchidna> sheytan_: when we reschedule we'll involve you though
+[16:05] <sheytan_> JontheEchidna: please mail me: madsheytan at gmail com ;)
+[16:06] <JontheEchidna> ok
+[16:06] <sheytan_> it's the most missing piece of software now in Kubuntu
+[16:06] <sheytan_> it's QML, right?
+[16:06] <JontheEchidna> yup
+[16:06] <sheytan_> k, i'll make some goodness for it
+[16:07] <yofel> Darkwing: if you're on the LTS then you're the perfect person to test our 4.10 backport for precise (not warranty right now though :P)
+[16:07] <yofel> *no
+[16:08] <Darkwing> yofel: Any backports I'll test. :D
+[16:08] <Darkwing> I need to find the best VM for testing...
+[16:10] <yofel> it's usually kvm or virtualbox 
+[16:10] <yofel> hm, I thought shadeslayer had copied 4.9.97 to staging, doesn't seem so
+[16:15] <JontheEchidna> apachelogger: ah, out of curiosity, did you opt not to replace the conf file at the prompt?
+[16:15] <shadeslayer> I haven't
+[16:15] <apachelogger> nah, I wanted it replaced
+[16:15] <shadeslayer> because we were still testing iirc?
+[16:15] <JontheEchidna> oh nvm, doesn't matter which you chose after all
+[16:15] <yofel> I thought you wanted to test in stating?
+[16:15] <yofel> anyway, copying nwo
+[16:15] <yofel> *now
+[16:15] <shadeslayer> eh no
+[16:15] <shadeslayer> Riddell fired an EC2 machine and tested in that
+[16:16] <Laney> sigh, what's up with https://launchpadlibrarian.net/128015440/buildlog_ubuntu-raring-armhf.telepathy-qt_0.9.3-0ubuntu3_FAILEDTOBUILD.txt.gz :(
+[16:16] <yofel> ah, well, I need someplace to build l10n in anyway
+[16:16] <shadeslayer> :)
+[16:16] <shadeslayer> Laney: symbols fun?
+[16:17] <Laney> if you think that symbols are fun ...
+[16:17]  * Laney shoves the bits into shadeslayer's lap and runs away screaming/giggling
+[16:17] <shadeslayer> heh
+=== mck182 is now known as mck182|afk
+[16:48] <Riddell> hmm, lots of complaints about no qtwebkit when running shlibs in qt compile
+[16:48] <Riddell> dpkg-shlibdeps: error: no dependency information found for /home/jr/src/qt/qt-everywhere-opensource-src-4.8.4/lib/libQtWebKit.so.4 (used by debian/qt4-demos/usr/lib/qt4/examples/webkit/previewer/previewer)
+[16:48] <Riddell> I can work around it by adding that binary of things to be excluded but I wonder why this wasn't an issue before
+[16:49] <mikhas> I was more annoyed that there is no disable switch for qtwebkit, when compiling qt5 from git
+=== mck182|afk is now known as mck182
+=== mck182 is now known as mck182|afk
+[16:58] <yofel> shadeslayer: hm, my 12.04 VM upgrade to 4.9.97 resulted in kdm not starting after reboot - it did run when started by hand though...
+[16:58] <shadeslayer> 0.o
+[16:58] <yofel> x log only showed a segfaultand it's not reproducable.. great
+[16:58] <JontheEchidna> apachelogger: one-liner fix: http://quickgit.kde.org/?p=libqapt.git&a=commitdiff&h=c0c5d224be888c643896fbe335f24557791e79d7&d=unified
+[16:59] <apachelogger> \o/
+[16:59] <JontheEchidna> bbiab
+[16:59] <shadeslayer> yofel: I didn't test that particular scenario since you can't really reboot an ec2 machine :P
+[17:00] <yofel> hm
+[17:00] <shadeslayer> yofel: http://www.hardkernel.com/renewal_2011/products/prdt_info.php?g_code=G135341370451&tab_idx=1
+[17:00] <yofel> I'll retest once I'm home
+[17:00] <shadeslayer> ok
+[17:00] <shadeslayer> did you copy the precise stuff into staging?
+[17:01] <yofel> yep, l10n is up too, will build in ~4h
+[17:01] <shadeslayer> awesome
+[17:01] <yofel> planning to get yourself a board? I was thinking about it when I saw them in the news but got distracted
+[17:02] <shadeslayer> Well ... I'm looking for the perfect ARM device :P
+[17:02] <shadeslayer> this comes close
+[17:03] <yofel> it's kinda perfect if you need your own buildd at least
+[17:04] <shadeslayer> right
+[17:04]  * yofel makes his way home - bbl
+[17:05] <shadeslayer> cya
+[17:08] <shadeslayer> unfortunately it has a Mali 400 and the opengles drivers are missing for ubuntu
+[17:09] <Riddell> shadeslayer: what happened to that tablet you were looking into? archos?
+[17:09] <shadeslayer> sure that's there as well
+[17:10] <shadeslayer> then there's the Surface Pro that I was looking into as well
+[17:10] <shadeslayer> which is all x86
+[17:10] <Riddell> my opinion on devices is we should buy them for anyone who committs to getting kubuntu to work on them
+[17:11] <shadeslayer> exactly
+[17:11] <shadeslayer> we need someone to say, Hey, we'd like to ship PA with Kubuntu on this hardware
+[17:11] <shadeslayer> we can send you x tablets if devs are interested on working on it
+[17:11] <shadeslayer> except no want's to do that :P
+[17:13] <shadeslayer> Riddell: there's also the small problem of doing upgrades because we don't have a armhf PPA ;)
+[17:13] <shadeslayer> but I saw that Elementary OS had armhf PPA's
+[17:13] <shadeslayer> so I wonder how they got those
+[17:13] <Riddell> ask nicely I guess
+[17:13] <Riddell> isn't kubuntu-ninjas arm?
+[17:14] <shadeslayer> I don't think so
+[17:14] <shadeslayer> I don't see armhf builds
+[17:14] <shadeslayer> maybe you can ask in #launchpad ? :P
+[17:14] <shadeslayer> I asked and got no reply a week back
+[17:14] <Riddell> well we don't need it until we have at least one device
+[17:14] <shadeslayer> mhmm
+=== Tonio_ is now known as Tonio_aw
+[17:55] <fabo> Riddell: we plan to upload qtbase this week
+[17:55] <fabo> Riddell: a qt4 upload is needed to get rid of alternatives and switch to qtchooser
+[17:56] <fabo> qtchooser will allow to select the qt version
+[17:56] <Riddell> fabo: oh cool, upload to debian?
+[17:57] <fabo> Riddell: yes, experimental targeted
+[17:57] <fabo> Riddell: edgers PPA will be updated too
+[17:58] <Riddell> I'm a bit worried about how we havn't done any merging with debian for a year, I wonder if things will need changed on the ubuntu side
+[17:58] <fabo> Riddell: it should have been handled at the same time
+[17:59] <fabo> Riddell: though, we need $someone to merge the changes needed for qtchooser to Qt4
+[17:59] <fabo> I can do it, worth an explicit WI
+[17:59] <shadeslayer> Riddell: yeah, I was a bit surprised when we didn't merge with Debian this cycle
+[18:02] <Riddell> shadeslayer: not enough motivation to when debian are on older versions of KDE and Qt packages, but it probably means there's fixes we haven't picked up
+[18:02] <shadeslayer> hmm
+[18:03] <shadeslayer> I've been merging digikam, so that's one thing less to worry about :P
+[18:03] <shadeslayer> but yeah, most of KDE is umerged
+[18:03] <Riddell> also the split packages mean it would take 10 times as long to do :(
+[18:06] <shadeslayer> we could merge the core stuff
+[18:06] <shadeslayer> kde4libs and what not
+[18:07] <shadeslayer> skip the new things for now
+[18:09] <Quintasan> \o
+[18:10] <Riddell> we could, but it's hard to get motivated about it, such a high effort to outcome ratio
+[18:10]  * Riddell fluffles Quintasan 
+[18:10] <Quintasan> fluffles?
+[18:11] <Riddell> you know you want them
+[18:12] <Quintasan> but what
+[18:12]  * Quintasan has no idea what's going on
+=== mck182|afk is now known as mck182
+[18:15] <Quintasan> Riddell: If there is any work for me in the next week I herby nominate shadeslayer as my substitute
+[18:15] <Quintasan> 124231523875 tests next week
+[18:15] <Riddell> Quintasan: you don't want to merge KDE SC do you?
+[18:16] <Quintasan> Riddell: I don't expect any work will be left next week so no.
+[18:16]  * Quintasan has tests
+[18:16] <Quintasan> Can't fail them or I'll have to retake course
+[18:16] <shadeslayer> argh no
+[18:16]  * Quintasan is totally not interested in that
+[18:16] <Riddell> hmm, if you fail them that means another year of dossing around helping kubuntu? :)
+[18:16] <shadeslayer> ^ :P
+[18:16] <Quintasan> shadeslayer: s/argh\ no/With\ pleasure\!/
+[18:17] <shadeslayer> xD
+[18:17] <Quintasan> Riddell: It means my parents nagging me either to go to work or retake them -> even less time
+[18:18] <Riddell> hmm, meddling parents are no good, go and study for tests Quintasan!
+[18:18] <Quintasan> Well, they don't meddle until I fail this crap
+[18:18] <Quintasan> Otherwise they just send me moneyz and tell me to visit them sometimes
+[18:18] <Riddell> what are the tests?
+[18:18] <Quintasan> Hmm, tomorrow is Physics
+[18:18] <Quintasan> next is Logic
+[18:19] <Quintasan> then I have introduction to programming, algebra, calculus aaaaand
+[18:19] <Quintasan> something
+[18:19] <Quintasan> don't remember now
+[18:23] <Riddell> probably best to remember it soon :)
+[18:56] <shadeslayer> afiestas: found out the issue regarding kio-mtp not working on my phone
+[18:56] <shadeslayer> libmtp is too old and doesn't support my phone
+[18:56] <shadeslayer> compiling from git, which does have support
+[19:00] <Quintasan> yeah fun
+[19:01] <shadeslayer> and yep
+[19:01] <shadeslayer> works
+[19:01] <shadeslayer> like a charm
+[19:02] <shadeslayer> I can finally copy files to my phone \o/
+[19:02] <Quintasan> shadeslayer: Physics - you have a body with mass M and a constant force F0 applied to it. Write and solve the movement trajectory equation
+[19:02] <Quintasan> Hmm
+[19:02] <shadeslayer> errr
+[19:03] <Quintasan> Suddenly wild integral appears
+[19:03] <shadeslayer> the only formula that I even remember is F = ma
+[19:03] <shadeslayer> xD
+[19:03] <Quintasan> shadeslayer: Yeah, that's the thing and you have to do some magic with it
+[19:03] <Quintasan> The solution I have from the lesson is integrals
+[19:03] <shadeslayer> oh oh
+[19:04] <Quintasan> ofc even Calculus 101 didn't even get to integrals
+[19:04] <Quintasan> MAGIC
+[19:04] <shadeslayer> write a as dv/dt
+[19:04] <shadeslayer> and then integrate the entire thing with time to get Velocity?
+[19:04] <Quintasan> >implying I know how to integrate this thing
+[19:05] <shadeslayer> since F and m are constants it should be trivial
+[19:05] <shadeslayer> heh
+[19:05] <shadeslayer> wolframalpha ? :P
+[19:05] <Quintasan> isn't integral of constant value - value * x + C?
+[19:05] <Quintasan> since derviative of a*x = a :P
+[19:05] <shadeslayer> yes
+[19:05] <shadeslayer> :)
+[19:06] <shadeslayer> though you won't get C here since C cancels out on both sides
+[19:06] <shadeslayer> I think
+[19:06] <shadeslayer> so maybe : Ft = mv
+[19:06] <Quintasan> division of two integrals equals integral of division or there is some magic formula to apply there?
+[19:06] <shadeslayer> but don't listen to me
+[19:07] <shadeslayer> Quintasan: m is constant
+[19:07] <Quintasan> the F is constant TOO
+[19:07] <Quintasan> so what the hell do I integrate
+[19:07] <shadeslayer> bah
+[19:07] <shadeslayer> sec
+[19:07] <Quintasan> They didn't even get to this crap in calculus
+[19:08] <Quintasan> and here I am with three lists of exercises and almost in every 2nd question we used integrals
+[19:08] <Quintasan> ofc nobody has any freaking idea how this works
+[19:09] <shadeslayer> heh, I shouldn't give you this URL
+[19:10] <shadeslayer> it'll confuse you as hell
+[19:10] <Quintasan> give it
+[19:10] <shadeslayer> https://encrypted.google.com/url?sa=t&rct=j&q=integrate%20f%20%3D%20mdv%2Fdt&source=web&cd=1&ved=0CDQQFjAA&url=http%3A%2F%2Fwww.phys.ttu.edu%2F~cmyles%2FPhys4304%2FLectures%2FLecture08.ppt&ei=GsDtUPr9DMntrAfVsYGwBw&usg=AFQjCNH7a6Sv0eDDuUqLZB9GD4ck3x8n3w&sig2=Ac2lf0O9M3bb5PZWnhRUXA&bvm=bv.1357316858,d.bmk&cad=rja
+[19:10] <Quintasan> It can't be worse than not understanding this at all
+[19:11] <skfin> dat url
+[19:11] <shadeslayer> :D
+[19:12] <shadeslayer> www.phys.ttu.edu/~cmyles/Phys4304/Lectures/Lecture08.ppt
+[19:12] <shadeslayer> Quintasan: I know exactly one person in KDE who can rescue you from Physics hell
+[19:13] <Quintasan> ?
+[19:13] <shadeslayer> kstar
+[19:13] <Quintasan> I believe this is the problem of approach
+[19:13] <shadeslayer> he's doing his Masters in some Physics course
+[19:14] <Quintasan> They try to teach us Physics using higher maths when they did not explain the higher maths in question beforehand
+[19:14] <shadeslayer> hehe
+[19:14] <Quintasan> How do we check if the gravitation field is a reactory one?
+[19:14] <Quintasan> USE INTEGRAL
+[19:14] <shadeslayer> wat
+[19:15] <shadeslayer> Quintasan: it'll all make sense
+[19:15] <shadeslayer> 3 years down the line
+[19:15] <Quintasan> the problem it I have a test from that shit tomorrow
+[19:15] <shadeslayer> only then you'll have to learn for another year and then it's of no use
+[19:15] <Quintasan> I've been trying to understand 3 lists since the beginning of the week
+[19:15] <Quintasan> I gave up on that and I'm moving on
+[19:15] <Quintasan> BUT
+[19:15] <Quintasan> guess what
+[19:16] <Quintasan> MORE INTEGRALS
+[19:16] <shadeslayer> 3 lists?
+[19:16] <Quintasan> I have 5 lists of exercises
+[19:16] <shadeslayer> Quintasan: uh yeah, I'd highly recommend learning Integrals for once
+[19:16] <shadeslayer> because without them you can't figure out Physics
+[19:16] <shadeslayer> hmm
+[19:16] <Quintasan> shadeslayer: I'd like to but the Calculus 101 is still at derviatives
+[19:16] <shadeslayer> heh
+[19:17] <Quintasan> de l'Hôpital rule to be precise
+[19:17] <shadeslayer> I distinctly remember going onto #electronics the night before my exam
+[19:17] <shadeslayer> to learn about Transistors and MOSFETS
+[19:17] <shadeslayer> ah :D
+[19:17] <shadeslayer> Quintasan: integrals are the exact opposite of Derivatives
+[19:17] <Quintasan> I know that
+[19:18] <shadeslayer> then just think backwards xD
+[19:18] <Quintasan> but how the hell do you apply them in exercises is totally another thing
+[19:18] <shadeslayer> hehe
+[19:18] <Quintasan> especially I don't even know the formulas to do integrals
+[19:18] <Quintasan> apart from ax + C :P
+[19:19] <shadeslayer> yofel: fabo tells me http://releases.linaro.org/12.12/ubuntu/origen/ will just work on the ODROIDU2 :D
+[19:19] <yofel> \o/
+[19:20] <shadeslayer> https://docs.google.com/spreadsheet/ccc?key=0AroPySpr4FnEdEowNWhZRi1zbDNNVUw1amhXTUdPcVE#gid=0
+[19:20] <shadeslayer> some stuff is still missing
+[19:21] <shadeslayer> wow
+[19:21] <shadeslayer> they seem to have automated alot of things
+[19:21] <shadeslayer> https://bugs.launchpad.net/linaro-ubuntu/+bug/1038079
+[19:21] <ubottu> Ubuntu bug 1088334 in Linaro PMWG QA "duplicate for #1038079 System hangs when run test "cpuhotplug_02" on Samsung Origen with Linux Linaro Quantal image." [Undecided,New]
+[19:21] <shadeslayer> unless that's not a bot
+[19:25] <shadeslayer> yofel: the question is, what does one do after getting that board xD
+=== ronnoc_ is now known as ronnoc
+[20:30] <afiestas> shadeslayer: libmtp should be packaged asap imho
+[20:30] <afiestas> I mean, asap as tehre is a release
+[21:04] <soee> if i can connect with ssh to remote server the scp should also ?
+[21:06] <yofel> scp can work if ssh doesn't - that would just mean that you can't get a shell
+[21:07] <yofel> people.ubuntu.com is set up like that
+[21:07] <yofel> soee: er, I'm tired: if ssh works scp should work fine
+[21:08] <soee> :/
+[21:09] <soee> is it possible that my provider wont allow me to use scp but ssh yes ? im a bit confused
+[21:09] <yofel> does sftp work?
+[21:09] <soee> didnt try
+[23:00] <allee> Riddell, ScottK: FYI I've push (lib)kscreen to kubuntu-packagers.  Pkg is still alpha quality.
+[23:01] <Riddell> allee: we have a PPA for that sort of thing, kubuntu-ppa/experimental
+[23:01] <allee> ups
+[23:01] <allee> ah ppa the one would need qjson from r in q too
+[23:02] <Riddell> allee: packaging in a branch in ~kubuntu-packagers is good too
+[23:02] <Riddell> qjson from r is in kubuntu-ppa updates PPA
+[23:02] <allee> I've no time the 2 or 3 days.  But I'll see if I can fill the ppa.
+[23:02] <Riddell> feel free to throw it in  kubuntu-ppa/experimental too if needed
+[23:02] <allee> okay
+[23:02] <Riddell> good to have you back in action allee :)
+[23:03] <allee> night,  need to catch the last subway ...
+[23:03] <allee> Riddell: yeah.  But so many things have changed.    Cool stuff! :-)
+[23:03] <allee> bbl

@@ -1,0 +1,205 @@
+=== hloeung is now known as Guest59444
+=== Guest59444 is now known as hloeung
+=== _salem is now known as salem_
+=== salem_ is now known as _salem
+[06:20] <noaXess> hello
+[06:20] <noaXess> am i at the correct place to ask about package upgade/install problems? it's about mysql-server, maysql-server-5.5 http://paste.ubuntu.com/5965187/
+[06:28] <noaXess> more information after purging mysql-server-5.5 and remove /etc/mysql and /var/lib/mysql and reinstall mysql-server: http://paste.ubuntu.com/5965242/
+[06:32] <sarnold> noaXess: can you run dmesg | grep user.frm   ? I'm curious if the AppArmor policy needs to be extended (errno 13 is "Permission denied")
+[06:49] <noaXess> sarnold: sure.. wait
+[06:49] <noaXess> sarnold: no output
+[06:49] <dholbach> good morning
+[06:49] <noaXess> dholbach: morning
+[06:49] <dholbach> hi noaXess
+[06:50] <noaXess> is it a package problem?
+[06:50] <sarnold> noaXess: well, that's probably for the best for everyone else :) but it does mean I'm not sure what step to take next. maybe try to find that user.frm file and check permissions on it?
+[06:54] <noaXess> sarnold: have you installed mysql-server?
+[06:54] <noaXess> here are perms to root:root sudo ls -l /var/lib/mysql/mysql which i think it should be on mysql:mysql
+[06:54] <noaXess> does the package upgrade/install make wrong perms?
+[07:06] <noaXess> strange: http://paste.ubuntu.com/5965336/
+[07:11] <dholbach> davmor2, happy birthday! :)
+=== smb` is now known as smb
+[07:35] <geser> noaXess: see bug 1210380, this seems to be an update regression in -proposed
+[07:35] <ubottu> bug 1210380 in mysql-5.5 (Ubuntu) "package mysql-server-5.5 5.5.32-0ubuntu0.12.04.2 failed to install/upgrade: subprocess installed post-installation script returned error exit status 1" [Undecided,Confirmed] https://launchpad.net/bugs/1210380
+[07:37] <noaXess> geser: that means? workaround or wait? can't wait.. i'm developing each day on mysql..
+[07:39] <geser> the workaround for now seems to be to downgrade to 5.5.32-0ubuntu0.13.04.1 from -updates/-security
+[07:40] <noaXess> geser: so install an older version..
+[07:40] <noaXess> ok.. hm.. purge first all, recover data
+[07:42] <noaXess> geser: how do i downgrade to that package versino? do i need first purge all mysql-* packages?
+[07:46] <sladen> geser: apt-get install abcdef=1.2.3.4ubuntu1  http://askubuntu.com/questions/138284/how-to-downgrade-a-package-via-apt-get
+[07:51] <geser> sladen: I guess that was meant for noaXess
+[07:52] <noaXess> sladen: yeah.. but that shows dep errors.. so i think i need this: sudo apt-get -s install mysql-server=5.5.32-0ubuntu0.13.04.1 mysql-server-5.5=5.5.32-0ubuntu0.13.04.1 mysql-server-core-5.5=5.5.32-0ubuntu0.13.04.1 mysql-common=5.5.32-0ubuntu0.13.04.1 mysql-client=5.5.32-0ubuntu0.13.04.1 mysql-client-5.5=5.5.32-0ubuntu0.13.04.1 mysql-client-core-5.5=5.5.32-0ubuntu0.13.04.1 libdbd-mysql-perl libmysqlclient18=5.5.32-0ubuntu0.13.04.1
+[07:55] <geser> yes you need to downgrade all mysql 5.5 packages together
+[07:59] <noaXess> can't get it running.. same error then before.. also if i use verinos 5.5.29-0ubuntu1
+[07:59] <noaXess> always on setting up mysql-server-5.5: http://paste.ubuntu.com/5965500/
+[08:02] <noaXess> :'(
+[08:03] <noaXess> what happens if i purge all mysql-* packages? will it break system?
+[08:03] <noaXess> cause purge mysql-common will purge also http://paste.ubuntu.com/5965518/
+[09:08] <seb128> cjwatson, hey, do you still plan to add the icon info the click manifest soon? (I'm waiting on that to make system settings use the manifest instead of the fake datas)
+[09:18] <cjwatson> seb128: It's on my list for this month - will try to get it done over DebConf
+[09:18] <seb128> cjwatson, thanks
+[09:20] <noaXess> geser, sarnold: got my mysql-server running, read bug comments... https://bugs.launchpad.net/ubuntu/+source/mysql-5.5/+bug/1210380 YESSSSS
+[09:20] <ubottu> Launchpad bug 1210380 in mysql-5.5 (Ubuntu) "package mysql-server-5.5 5.5.32-0ubuntu0.12.04.2 failed to install/upgrade: subprocess installed post-installation script returned error exit status 1" [Undecided,Confirmed]
+[09:20] <noaXess> 5h later
+=== jibel_ is now known as jibel
+=== MacSlow is now known as MacSlow|lunch
+=== greyback is now known as greyback|lunch
+[11:14] <rbasak> stokachu, doko_: mysql-5.5 5.5.32-0ubuntu2 is stuck in saucy-proposed. Is this related to verification-failed in bug 1121874?
+[11:14] <ubottu> bug 1121874 in mysql-5.5 (Ubuntu) "MySQL launch fails silently if < 4MB of disk space is available" [Medium,Triaged] https://launchpad.net/bugs/1121874
+[11:15] <rbasak> Could you see if you can sort it out, please?
+[11:18] <xnox> rbasak: mysql-5.5 autopkgtest fail http://people.canonical.com/~ubuntu-archive/proposed-migration/update_excuses.html but it looks like it never passed, thus each time it was probably "adt ignored" manually by release team.
+[11:18] <rbasak> Ah I see. I did get confused by that.
+[11:18] <xnox> rbasak: thus it's waiting for an override.
+[11:19] <rbasak> We'll need to fix 5.5.32-0ubuntu2 anyway, as I presume it's broken the same way as the others.
+=== greyback|lunch is now known as greyback
+=== MacSlow|lunch is now known as MacSlow
+=== _salem is now known as salem_
+=== dosaboy_ is now known as dosaboy
+[12:20] <rbasak> jamespage: what do you think about changing pull-lp-source to pull from -proposed instead?
+[12:21] <rbasak> AIUI, the point is to get the latest version, so perhaps it should.
+[12:21] <rbasak> (it'd have to fall back though I guess)
+[12:21] <jamespage> rbasak, might be a good idea actually - would stop some of the confusion I have seen
+[12:45] <xnox> cjwatson: so some of the new build-deps for automake's testsuite are in universe. I've dropped those build-deps, and instead added autopkgtest to run the fuller testsuite.
+[12:46] <xnox> rbasak: pull-lp-source already pulls from -proposed. there are timing issues, but you can do $ pull-lp-source package saucy-proposed
+[12:46] <xnox> rbasak: or specify version explicitely, if you notice it pull out of date.
+[12:47] <xnox> rbasak: similarly one can use: $dist-updates $dist-proposed $dist-security
+[13:49] <cyphermox> infinity: hey
+[14:19] <jdstrand> tedg: hey-- so I approved the click MIR yesterday. it is my understanding you were blocked on that. it is still in universe-- is there something you need me to do to unblock you?
+[14:19] <jdstrand> tedg: I should also point out that click-apparmor doesn't have a MIR yet, but I plan to create on today. are you blocked on that too?
+[14:20] <tedg> jdstrand, Yeah, I noticed I was talking with fginther on how to move that forward.  My understanding is that I need to dep on it to get it pulled in.
+[14:20] <tedg> jdstrand, No, I just need the click-dev dependency to be allowed.
+[14:20] <tedg> jdstrand, Obviously that'll make things not work, but they'll build, etc.
+[14:20] <stgraber> tedg: yeah, you need to dep on it or have it seeded then it'll show up in component-mismatches and an archive admin will override it to main
+[14:20] <tedg> jdstrand, Thanks for getting to that!
+[14:20] <jdstrand> tedg: ok. I could seed it, but that seems like a a weird seed for desktop since
+[14:21] <tedg> stgraber, Yeah, the issue is how to convince Jenkins it is okay.  It errors on deps that aren't in main.
+[14:21] <jdstrand> tedg: but if it would help you, let me know
+[14:21] <tedg> (which is reasonable, but need to figure out this case)
+[14:21] <ogra_> jdstrand, put it in supported
+[14:21] <jdstrand> ogra_: yeah, that would work
+[14:21] <jdstrand> tedg: shall I just do that ^
+[14:21] <ogra_> though i'm not sure that actually pulls it in, hmm
+[14:21] <jdstrand> I think it does
+[14:21] <tedg> I don't know what that is.  But if you think it would work, I'm happy with it :-)
+[14:22] <ogra_> trying wont hurt i guess
+[14:22] <ogra_> sadly ubuntu-touch seeds still live in universe
+[14:22] <jdstrand> tedg: I'll do the override
+[14:22] <ogra_> else you could just seed it there
+[14:22] <jdstrand> it should be seeded on the touch images
+[14:22] <ogra_> right
+[14:23] <ogra_> but they build from universe atm
+[14:23] <jdstrand> oh I see what you mean
+[14:23] <ogra_> until all PPAs are gone from the build
+[14:56] <jdstrand> tedg: ok, added click and click-dev to the supported seed and adjusted the overrides. let me know if you need any more help
+[14:59] <tedg> jdstrand, Cool, thanks!
+[14:59]  * jdstrand will keep an eye on component mismatches
+[15:16] <infinity> cyphermox: 'sup?
+[15:17] <cyphermox> infinity: ah, I wanted to ask about colord blocking systemd. I noticed you unblocked the test failure for chromium-browser, and the colord failure seems unrelated to systemd, just the same usual reason it fails
+[15:17] <cyphermox> ^ re: transition from proposed to release
+[15:24] <infinity> cyphermox: Had nothing to do with systemd, I foced skipping tests on colord/1.0.1-1ubuntu2
+[15:24] <infinity> cyphermox: The hope was that the next version would fix the broken tests, not that I'd have to keep hinting forever. :P
+[15:25] <cyphermox> right. the next version of colord.
+[15:26] <infinity> cyphermox: Yes, but clearly that didn't happen.  Can someone fix the test? :P
+[15:26] <infinity> RAOF: I'm looking at you.
+[15:26] <cyphermox> infinity: I don't know, perhaps someone could. ;)
+[15:28] <infinity> cyphermox: Anyhow, yes, it looks like the same failure as last version, so I'll bump the hint for now. :/
+[15:28]  * cyphermox grabs the colord branch
+=== nate-finch is now known as natefinch
+[15:49] <dholbach> mitya57, do you have an idea what can be done about https://bugs.launchpad.net/ubuntu-packaging-guide/+bug/1205797?
+[15:49] <ubottu> Launchpad bug 1205797 in Ubuntu Packaging Guide "Cannot open file `/usr/share/doc-base/ubuntu-packaging-guide-html-single' for reading: No such file or directory." [High,New]
+[16:08] <mitya57> dholbach: looks like a regression from my last commit — will take a look
+[16:08] <dholbach> super, thanks!
+[16:09]  * mitya57 wonders why he didn't receive a notification about that bug
+[16:38] <alkisg> slangasek: hi, we're interested in using samba 4 for LTSP 6, edubuntu 14.04 etc, but currently it's postinst scripts are broken etc, would you have some ETA for when it'll be properly working in Ubuntu?
+=== natefinch is now known as natefinch-lunch
+[16:43] <rbasak> stokachu: what's the news on mysql?
+[16:45] <stokachu> rbasak: heres what i can do -- re-do the debdiffs with the fix and re-test the installation. but i wont be able to get to until until tonight (EST)
+[16:45] <rbasak> stokachu: OK no problem. I can look at it again on Monday.
+[16:46] <stokachu> rbasak: perfect! ill have it ready for you by then
+[16:46] <rbasak> Thank you!
+[16:46] <stokachu> rbasak: will you be able to do the upload too?
+[16:46] <rbasak> Sure
+[16:46] <stokachu> rbasak: ok cool ill ping you on monday then :)
+[17:14] <slangasek> alkisg: I'm not working on samba4 in Ubuntu (or hardly much in Debian), no
+=== natefinch-lunch is now known as natefinch
+[17:17] <bdmurray> seb128: I'm looking into an issue with libgksu and sudo-mode being set to false on a default install of raring.  It looks to me like the alternative is set correctly but running gconftool-2 -g /apps/gksu/sudo-mode I see false
+[17:17] <bdmurray> seb128: how might I find out more about how the gconf key was set?
+[17:20] <alkisg> slangasek: sorry, ogra_ pointed you to me, thanks :)
+[17:20] <ogra_> slangasek, oh, did you give up on it ?
+[17:21] <slangasek> ogra_: "give up"?
+[17:21] <ogra_> werent you the samba debian maintainer ?
+[17:21] <slangasek> I'm still a comaintainer
+[17:21] <ogra_> ah
+[17:21] <slangasek> but I haven't been involved in the samba4 packages, and I don't know anything about their status in Ubuntu
+[17:22] <seb128> bdmurray, no real way to see what set the value, same as trying to figure what created a file...
+[17:23] <bdmurray> seb128: do you have any ideas how I might dig into it further?
+[17:26]  * mitya57 giggles at a branch named "tyops" in the sponsoring queue
+[17:27] <seb128> bdmurray, no, sorry, I've not looked at gksu in years, I though we stopped using it a year ago
+[17:27] <bdmurray> gdebi seems to still use it
+[17:44] <jbicha> alkisg: Debian experimental now has the "samba" package providing samba4 http://packages.qa.debian.org/samba
+[17:45] <alkisg> 4.0.6, thank you jbicha - and also thanks for the gnome flashback work ;)
+[17:46] <jbicha> so I'm guessing samba as samba4 is doable for 14.04
+[17:52] <xnox> mitya57: i call that informative branch naming
+[17:52] <xnox> =))))
+[17:57] <xnox> mitya57: was the qt / icons fix properly re-fixed in saucy?
+[17:57] <xnox> mitya57: and is now safe for SRU once again?
+[17:57] <mitya57> xnox: I thought you fixed it in saucy :)
+[17:58] <xnox> mitya57: correct!
+[17:58] <xnox> mitya57: and it's the same one for sru or different?
+[17:58]  * xnox looks like a fool now!
+[17:59] <mitya57> it's functionally identical (± some comments & whitespace)
+[17:59] <xnox> ack.
+[17:59] <xnox> mitya57: will into it later.
+[18:00] <mitya57> great, thanks!
+[20:31] <doko_>  * New upstream release
+[20:31] <doko_>      - Ghostscript 9.08rc1.
+[20:31] <doko_>      - We are using the system's liblcms2 and libopenjpeg now.
+[20:31] <doko_> tkamppeter, seb128: openjpeg not in main. can you convince me that it needs to be there?
+[20:32] <doko_> please by email
+=== doko_ is now known as doko
+[21:02] <tkamppeter> doko, see your e-mail.
+=== salem_ is now known as _salem
+=== v_ is now known as v
+[22:34] <crankharder> sorry if offtopic.. looking for an upstart config that can manage a process that is expected to have its PPID change.  not fork, not daemonize... it'll actually spawn a replacement process.
+[22:38] <infinity> crankharder: That would be different from forking how?
+[22:38] <xnox> crankharder: can you strace that process? using establishing pid count recipe from upstart cookbook
+[22:39] <sarnold> crankharder: so, say, over a few weeks, it'll cycle pids through the entire pid space?
+[22:39] <crankharder> infinity: it forks itself and then kills the original... but that's expected, and i dont want upstart to start a new process
+[22:39] <infinity> crankharder: That's the definition of daemonizing.
+[22:39] <crankharder> except this happens repeatedly when it receives USR2
+[22:39] <infinity> Oh.
+[22:39] <infinity> Ew. :)
+[22:39] <crankharder> :)
+[22:40] <infinity> I'm not convinced any sane process tracking system is prepared to deal with that scenario.
+[22:41] <infinity> How did one do it in the sysvinit world?  Does it keep updating a pidfile with its current mystery PID?
+[22:41] <crankharder> it maintains its own PID file
+[22:41] <infinity> Hah.  Jinx.
+[22:41] <crankharder> haven't seen a config for upstart to specify a pid file though
+[22:41] <sarnold> it almost seems like a task designed solely to run from systemd.
+[22:42] <infinity> sarnold: Or sysvinit, to be fair.
+[22:42] <crankharder> ya'll lost me there ;)
+[22:42] <sarnold> infinity: the pid file does help sysvinit a lot, yes..
+[22:43] <infinity> crankharder: Anyhow, I'd say the answer right now is "upstart can't do that", and you want a legacy sysvinit script in /etc/init.d instead of an upstart job.
+[22:43] <crankharder> yea, i have one of those, but sysvinit won't restart it if it dies completely
+[22:43] <crankharder> upstart in theory could do that
+[22:44] <infinity> Sure.  If upstart could even remotely sort out how to track it.
+[22:44] <crankharder> I was thinking of a wrapper bash script that would just loop and check the pid file and die if the pid in the pid didn't exist
+[22:44] <infinity> We've discussed allowing "expect fork" to take an argument to specify number of forks, but "expect fork infinite" would never seem like a good idea.
+[22:44] <crankharder> hah
+[22:45] <crankharder> so, nginx works this way - kinda a big one, so hopefully someone else is thinking about this
+[22:45] <crankharder> i'm not trying to solve for that though
+[22:45] <infinity> nginx doesn't have a control process like... Everyone else who uses this sort of worker model?
+[22:45] <infinity> (apache, spamassassin, etc)
+[22:46] <crankharder> i dunno, you tell me
+[22:46] <crankharder> https://gist.github.com/crankharder/93a68a060329d8446ede
+[22:46]  * TheLordOfTime heard nginx mentioned
+[22:46] <crankharder> ...and that's supposed to be a transparent restart
+[22:46] <infinity> Looks like a master process there to me.
+[22:46] <crankharder> yea, but the pid changed?
+[22:46] <infinity> Yes, because it was restarted...
+[22:47] <TheLordOfTime> what infinity said, when nginx restarts the master process PID changed
+[22:47] <crankharder> okay, fair, nvm
+[22:55] <infinity> crankharder: You could file a wishlist bug for this sort of bizarre tracking.  Something like "expect pidfile /var/run/daemon.pid" could put an inotify watch on the pidfile and force it to update its ptrace when the pidfile changes.
+[22:56] <infinity> crankharder: Seems like it would be a bit fragile to get right, but theoretically doable.
+[22:57] <infinity> (Or rewrite the daemon in question to have a control process :P)
+[22:58] <crankharder> think i'm gonna try to hacktogether some bashfu control process and have upstart monitor that... and see where that gets me

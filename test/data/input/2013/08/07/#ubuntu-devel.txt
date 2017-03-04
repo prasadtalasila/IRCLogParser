@@ -1,0 +1,310 @@
+[00:41] <YokoZar> slangasek: Will do.  I've been considering migrating it (and not having "wine1.4" but rather just "wine", as I think Wine unstable releases are never again going to go into Ubuntu archive)
+=== iulian is now known as Guest74995
+=== salem_ is now known as _salem
+[02:11] <skellat> I've done what I can with this and need to hand it off to a patch pilot for further care: https://bugs.launchpad.net/ubuntu/+source/xubuntu-docs/+bug/1207493
+[02:11] <ubottu> Launchpad bug 1207493 in xubuntu-docs (Ubuntu) "[SRU] Documentation does not match shipped system version (11.10 shipped with 12.04)" [High,Confirmed]
+=== jono is now known as Guest5052
+=== tvoss_ is now known as tvoss|flaky_wire
+=== jamesh_ is now known as jamesh
+=== tvoss|flaky_wire is now known as tvoss|test
+[07:09] <goddard> anyone else have a qt app that uses the system tray?
+[07:55] <dholbach> good morning
+=== tvoss|test is now known as tvoss|flaky
+=== seb128_ is now known as seb128
+=== smb` is now known as smb
+[08:20] <doko> Laney, what is the trick with the signature check in db?
+[08:21] <seb128> doko, he's on holidays this week
+[08:21] <doko> meh
+=== MacSlow is now known as MacSlow|lunch
+=== Guest74995 is now known as iulian
+[11:40] <doko> xnox, cjwatson:
+[11:40] <doko> $ sudo apt-get install libboost-dev:armhf
+[11:40] <doko> Reading package lists... Done
+[11:40] <doko> Building dependency tree
+[11:40] <doko> Reading state information... Done
+[11:40] <doko> Some packages could not be installed. This may mean that you have
+[11:40] <doko> requested an impossible situation or if you are using the unstable
+[11:40] <doko> distribution that some required packages have not yet been created
+[11:40] <doko> or been moved out of Incoming.
+[11:40] <doko> The following information may help to resolve the situation:
+[11:40] <doko> The following packages have unmet dependencies:
+[11:40] <doko>  libboost-dev:armhf : Depends: libboost1.53-dev:armhf but it is not going to be installed
+[11:40] <doko> E: Unable to correct problems, you have held broken packages.
+[11:40] <doko> however installing libboost1.53-dev:armhf directly works
+[11:41] <cjwatson> try libboost-dev:armhf and libboost1.53-dev:armhf simultaneously
+[11:41] <cjwatson> and/or -o Debug::pkgProblemResolver=true
+=== MacSlow|lunch is now known as MacSlow
+=== iahmad is now known as iahmad|afk
+=== iahmad|afk is now known as iahmad
+=== _salem is now known as salem_
+=== greyback is now known as greyback|lunch
+[13:26] <yofel> is there an error tracker handbook somewhere? I was looking at the error reports for a package and I'm clueless what that graph is trying to tell me
+=== greyback|lunch is now known as greyback
+[13:32] <dobey> yofel: the graph is to help visualize timeframe, to help identify if a new upload greatly increased number of crash reports happening. (iow, introduced a regression or new crash)
+[13:42] <yofel> dobey: hm, that's what I thought, but it doesn't say what the timeframe is, nor do I understand what the numers at the left are, nor why a graph can start somewhere in the middle. (ok, full graph timeframe is probably the one I select below it)
+[13:43] <yofel> about the numbers at the left: is 0.0 good or bad?
+[13:44] <dobey> yofel: lower is better. numbers on left are some factor of reports/hr or something
+[13:44] <dobey> yofel: 0.0 would mean no reports
+[13:44] <yofel> ok, thanks
+[13:45] <dobey> (i don't know if it's reports/hr or second or what, but it's something regarding number of reports over some time period)
+[13:45] <dobey> and yeah, i wonder where the X axis labels went
+[13:45] <dobey> it used to have day of month numbers iirc
+[14:00] <ev> jodh: thanks for the spot on using syslog. So is the general sentiment that we should move away from per-daemon log files, or to use rsyslog's matching facility to split them out if need be?
+[14:23] <purezen> Hey guys ! I recently purchased an EVDO data card, Teracom T-U500.. It's working perfectly fine under Windows but doesn't work in Linux.. The modem does not get detected at all.. Seemingly, it can't perform a successful 'usb_modeswitch' operation.. Please help..!
+[14:29] <dobey> purezen: #ubuntu is the help channel.
+[14:30] <purezen> dobey: Ok..:-)
+=== mpt_ is now known as mpt
+=== natefinch is now known as natefinch-afk
+[15:06] <xnox> doko: i guess libbost1.53-dev should not depend on libstdc++6-4.4-dev
+[15:07] <xnox>  | libstdc++-dev
+[15:07] <xnox> but rather something modern...
+[15:13] <pete-woods> robru: hi!
+[15:13] <robru> pete-woods, hey!
+[15:13] <robru> hello from GUADEC actually!
+[15:14] <pete-woods> robru: :D
+[15:14] <pete-woods> robru: do you have any idea why all those jobs you've been looking at fail with missing dependency "build-essential:native" ?
+[15:14] <pete-woods> am I doing something stupid with my debian/control file?
+[15:14] <robru> errrr... build-essential? didn't see that error
+[15:15] <robru> I thought they were failing because they depended on each other.
+[15:15] <pete-woods> robru: http://s-jenkins:8080/job/libqtdbustest-saucy-amd64-ci/5/console
+[15:15] <pete-woods> that's at the bottom of the dependency chain
+[15:16] <pete-woods> robru: there's also a weird bit earlier in the log, saying it wants to remove g++, build-essential and a bunch of other packages
+[15:16] <robru> pete-woods, can you pastebin? I can't get on the VPN due to crappy wifi here.
+[15:17] <pete-woods> robru: https://pastebin.canonical.com/95595/
+[15:17] <robru> thx
+[15:18] <dobey> jibel, cjwatson: do either of you know if autopkgtest (adt-run) has issues with not applying newly added patches for some reason?
+[15:18] <pete-woods> robru: hmm, there's a gpg error too
+[15:18] <robru> pete-woods, actually, I also forgot to bring my yubikey :-( anyway you can publicly pastebin it? or I guess email it to me if you insist on it's privacy
+[15:18] <cjwatson> dobey: I wouldn't expect that to be something autopkgtest deals with directly at all
+[15:18] <pete-woods> robru: http://pastebin.ubuntu.com/5959241/
+[15:19] <pete-woods> I always forget the canonical one is private
+[15:19] <cjwatson> It just unpacks the source package with dpkg-source -x
+[15:20] <robru> pete-woods, thx ;-)
+[15:22] <dobey> cjwatson: ok. i'm using the tools in lp:auto-package-testing to run the tests under qemu, from a bzr tree where i've added a new patch to debian/patches/ and am adding autopkgtest config in debian/tests/. the tests/control has build-needed, and the build is failing before it even runs the tests, due to the patch not being applied
+[15:23] <dobey> cjwatson: i guess in this case, patches which aren't pre-applied in the dpkg source are not getting applied?
+[15:24] <dpm> cjwatson, or dholbach, could you approve the e-mail I just sent to ubuntu-devel regarding the app competition announcement? Thanks!
+[15:24] <cjwatson> if you're running from a working tree, it would probably have to go to special lengths to apply them.  I don't see any reason you wouldn't just push your way up to the top of the patch stack first though
+[15:24] <robru> pete-woods, at first glance that actually looks like a bug in libc6-dev package (it depends on something that doesn't exist). it's possible that perhaps there's been a new upload of libc6, however the build system only got the newer version of libc6 but didn't get libc6-dev. not sure how to fix that though
+[15:24] <cjwatson> dpm: I don't think dholbach is an ubuntu-devel moderator?
+[15:25] <robru> pete-woods, it could even be a race condition, maybe just try it again without any changes?
+[15:25] <cjwatson> dpm: There's nothing from you in the queue, anyhow
+[15:25] <pete-woods> robru: I've tried it several times, it's (un)fortunately consistent
+[15:25] <dpm> cjwatson, oh, I thought he was, in that case, consider the question directed to you only. Oh, perhaps I'm whitelisted?
+[15:25] <cjwatson> dpm: Dunno, but nothing for me to do :)
+[15:25] <cjwatson> dpm: https://lists.ubuntu.com/archives/ubuntu-devel/2013-August/037561.html
+[15:26] <pete-woods> I'm surprised more builds aren't failing - maybe there's something about the specific selection of packages I've gone for
+[15:26] <robru> pete-woods, what package is doing this?
+[15:26] <pete-woods> robru: libqtdbustest
+[15:26] <dpm> yep, it's there. thanks cjwatson nevertheless :)
+[15:26] <cjwatson> pete-woods: That looks like some weird inconsistent set of sources in sources.list
+[15:27] <cjwatson> pete-woods: saucy consistently has -91ubuntu1
+[15:27] <robru> cjwatson, yeah, that's what I was thinking, somehow it has one version of libc6 and a different version of -dev.
+[15:27] <cjwatson> pete-woods: And its libc6-dev has Depends: libc6 (= 2.17-91ubuntu1)
+[15:27] <robru> pete-woods, I don't see anything in debian/control that could cause that. it looks pretty normal.
+[15:27] <cjwatson> pete-woods: Perhaps upgrading the chroot would help
+[15:28] <cjwatson> pete-woods: It probably has libc6-dev preinstalled and maybe it's failing to resolve the upgrade correctly for some reason
+[15:28] <dobey> cjwatson: because i don't normally apply the patches in places, because i'm not using vcs-bzr:. i'm just using the imported branch to merge in new upstream release, and make necessary changes, then bzr bd -S, do test builds, and dput the source.changes; so in that whole cycle of updating a package, new patches don't get applied in-tree
+[15:28] <robru> http://paste.ubuntu.com/5959280/ versions look fine on my system
+[15:28] <cjwatson> dobey: try bzr bd -S and then run tests based on the source package instead?
+[15:28] <cjwatson> the .dsc
+[15:29] <cjwatson> pete-woods: I suspect there's actually some other flaw, and that once the chroot is upgraded you'll get a more sensible error
+[15:29] <robru> fginther, didrocks: can you take a look at pete-woods' issue? I'm stumped ^^^
+[15:30]  * didrocks is in urgency mode right now on Mir + hangout
+[15:30] <dobey> cjwatson: well, just did a quilt push to test with. didn't think of that before. thanks. hitting another issue now though, so trying to figure out what it is :)
+[15:32] <fginther> robru, pete-woods, I can take a look, but it would be in a couple hours
+[15:33] <pete-woods> fginther: that's not a problem, it's out of my depth - I think cjwatson is onto something with the chroot upgrade
+[15:33] <fginther> pete-woods, ack. I can start with that when I get to it
+[15:33] <robru> fginther, great, thanks.
+[15:37] <ogra_> cjwatson, does click have any concept for installying something like an audio codec ? (ie. something system wide)
+[15:38] <cjwatson> ogra_: Only if there is a system-level hook that can consume it
+[15:39] <cjwatson> ogra_: But consider the enormous difficulty of AppArmor-confining a codec separately from the program using it
+[15:39] <ogra_> so its at least technically possible
+[15:40] <ogra_> hmm, yeah
+[15:40] <cjwatson> I would not consider that to be a wise thing to deliver in a click package
+[15:40] <ogra_> thats bad, since we most likely cant ship mp3 support in the free images
+[15:40] <cjwatson> Feel free to discuss the confinement issues with the security team ...
+[15:40] <cjwatson> Also isn't mp3 going out of patent really soon?
+[15:40] <ogra_> oh ? already ?
+[15:41] <xnox> cjwatson: i thought it got extended via extension / followon patents.
+[15:41]  * xnox needs to check
+[15:41] <cjwatson> WP thinks "patents required to implement MP3 expired in most countries by December 2012, 21 years after the publication of ISO CD 11172" but that in the US it might run up as late as 2017
+[15:41] <cjwatson> (I try not to actually read patents though)
+[15:42] <smartboyhw> kirkland, roaksoax ping
+[15:45] <fginther> pete-woods, robru. I'm updating the builders. will have an idea if this helps soon
+[15:45] <robru> fginther, great, thanks.
+[15:50] <slangasek> jodh: so do you think we should further discuss the VM wiring?
+[15:51] <slangasek> jodh: again, if you've already got the current harness working I don't think you need to replace it right now... but I do expect we'll want to replace it at the first sign of reliability trouble
+[15:51] <jodh> slangasek: I think I've got enough now. However, will focus on overcoming this kernel panic first.
+[15:51] <slangasek> right-o
+[15:52] <jodh> slangasek: sure. I actually started out by running the tests as jobs but then got swayed by the "autopkgtest way" :)
+[15:52] <slangasek> hmm
+[15:53] <slangasek> from my perspective, one VM spin-up per "test" is the logical breakdown
+[15:53] <slangasek> jodh: oh, do you have reboot tests in there?
+[15:53] <slangasek> can't very well keep an ssh connection open across reboots, either
+[15:53] <jodh> slangasek: not formally, but we do have to reboot prior to the test run.
+[15:54] <slangasek> you aren't able to manipulate the VM's disk contents to pre-stage it?
+[15:55] <jodh> slangasek: I started out doing the pre-test config using nbd but it gets nasty and overly-complex so now do it via ssh. Also, it doesn't help to use nbd after the tests to pull the results off since if the vm crashes, mounting the dirty disks results in carnage
+[15:56] <slangasek> ok
+=== jasoncwarner__ is now known as jasoncwarner
+[16:10] <doko> xnox, just remove the libstdc++-dev dependency? that's always guaranteed by build-essential
+=== greyback__ is now known as greyback|food
+=== jhenke_ is now known as jhenke
+[16:25] <hallyn> so, bugs saying 'FTBFS on sparc' - are those deemed invalid?  we have no sparc builders at all still right?
+[16:28] <slangasek> hallyn: is hardy still supported? I've lost track
+[16:29] <slangasek> hallyn: oh right, it is not
+[16:29] <slangasek> so yeah, no more supported sparc releases
+[16:29] <slangasek> oh, correction, sparc still shows up in lucid
+[16:29] <hallyn> ok.  checking the debian package just to make sure there's no trivial fix...
+[16:29] <slangasek> though I'm not sure it was usable
+[16:29] <hallyn> hm
+[16:30] <hallyn> so are we building all of lucid using qemu-sparc?
+[16:31] <hallyn> wonder if a debianimport of acpica-unix would be worthwhile.
+[16:31] <hallyn> looks like al stone has been doing a lot there
+[16:32] <slangasek> hallyn: if there are no more sparc builders, then I guess we're not building it at all ;)
+[16:32] <slangasek> https://launchpad.net/builders shows one sparc buildd, though
+[16:33] <hallyn> slangasek: i'm not sure how to check, but the whole problemw ith building a sparc bios was that (i thought) we had no builder at all
+[16:33] <hallyn> hm
+[16:34] <slangasek> the problem was that you needed to build it as an arch: all package
+[16:34] <hallyn> well no, we coudl at least buidl an arch:sparc package and have users manually download it
+[16:35] <hallyn> as opposed to having them download the debian pkg :)
+[16:35] <hallyn> so yeah, he's using the lucid version.  valid i recon'.
+[16:35] <hallyn> thx
+[16:40] <fginther> pete-woods, https://jenkins.qa.ubuntu.com/job/libqtdbusmock-saucy-amd64-ci/4/console
+[16:40] <fginther> pete-woods, libc issue is gone, but there is a new dependency issue
+=== greyback|food is now known as greyback
+[16:40] <xnox> doko: oh, it is? excellent.
+[16:42] <doko> xnox, hmm, Provides: libstdc++-dev
+[16:42] <doko> in libstdc++-4.8-dev
+[16:43] <xnox> doko: for me locally i rebuild the package locally to depend on libstdc++-4.8-dev instead of 4.4 and it installed fine. So I was going to upload that.
+[16:45] <pete-woods> fginther: I don't expect that one to build yet, as it depends on libqtdbustest
+[16:45] <fginther> pete-woods, ack, let me see if I can resolve that
+[16:46] <fginther> pete-woods, sorry, looks like I had things in the wrong order
+[16:52] <pete-woods> fginther: looks like you fixed it - that failure is something I should be fixing
+[16:52] <fginther> pete-woods, cool (at least for me :-) )
+[17:12] <mdeslaur> stokachu: are you planning a libgcrypt11 merge soon?
+[17:12] <mdeslaur> stokachu: else, I'll upload the security fix we did to raring
+=== natefinch-afk is now known as natefinch
+[17:16] <cjwatson> jdstrand: Anything I can do to help the click MIR?  Not to rush the review, but Ted's Upstart work will have trouble landing until that's done
+[17:16] <jdstrand> cjwatson: no, will do it in a bit. tedg pinged me already
+[17:16] <cjwatson> Cool
+[17:17] <infinity> hallyn: We still build lucid/sparc, yes. :P
+[17:18] <hallyn> infinity: there's one sparc in the buidl farm - we don't ahve a sparc porter though right?
+[17:19] <infinity> hallyn: We do.  faure.
+[17:19] <infinity> hallyn: And there's only one buildd because the other is being used for some kernel experimentation, it's not dead.
+[17:41] <dobey> is it just me, or does autopkgtest *always* do "debian/rules build" even when build-needed is not specified in debian/tests/control?
+[17:44] <dobey> or is that only when building from a working tree?
+[17:54] <hallyn> infinity: thanks, faure noted
+[17:59] <infinity> hallyn: porter-$arch.canonical.com is easier to remember.
+[18:00] <hallyn> thx
+[18:03] <slangasek> unless that arch is powerpc
+[18:05] <infinity> Alright, so we have 23 highbank nodes building armhf now.
+[18:05] <infinity> doko: Time for a rebuild test?
+[18:14] <doko> infinity, no will wait for the next gcc-4.8
+[18:14] <doko> next week
+[18:14] <infinity> doko: Sure.  Just figured it would be a good burn test for the highbank nodes.  But no huge rush.
+[18:15] <doko> are the other nodes available as development boxes?
+[18:16] <infinity> doko: There are no other nodes.
+[18:16] <infinity> doko: (rbasak has a plan to make a pool of nodes available on a take-it-and-abuse-it dev basis, you should poke him about that)
+[18:18] <ogra_> infinity, we do what ?!?
+[18:18] <ogra_> infinity, that message needs to be in CAPS !
+[18:19] <cjwatson> infinity: oarsome
+[18:19] <cjwatson> infinity: maybe we should give back pypy?
+[18:20] <slangasek> infinity: w00t
+[18:20] <cjwatson> slangasek: porter-ppc> that's what .ssh/config is for
+[18:20] <infinity> cjwatson: Oh, yeah.  Please do.  Curious to see if it works.
+[18:20] <cjwatson> infinity: done
+[18:20] <slangasek> cjwatson: to locally work around glaring inconsistencies? ;)
+[18:20] <infinity> cjwatson: I assume he meant "because davis is down", not "because IS can't spell 'powerpc'".
+[18:21] <infinity> Oh, or maybe he meant the spelling thing. :P
+[18:21] <slangasek> yep
+[18:21] <cjwatson> Oh, could be.  I've had
+[18:21] <cjwatson> Host porter-powerpc
+[18:21] <cjwatson>         HostName porter-ppc.canonical.com
+[18:21] <cjwatson> in .ssh/config for ages
+[18:21] <cjwatson> because Debian architecture names ftw
+[18:22] <cjwatson> infinity: is number 24 in that list going to be the livefs builder?
+[18:22] <infinity> cjwatson: 00, but yes.
+[18:22] <cjwatson> You and your zero-based numbering
+[18:23] <infinity> cjwatson: Matches the internal fabric node numbering.  *shrug*
+[18:23] <cjwatson> How much RAM per node?
+[18:23] <infinity> 4G
+[18:23] <cjwatson> That should help
+[18:23] <infinity> Yeah.  Should do.
+[18:24] <infinity> 4 cores instead of 2, slightly faster per-core.
+[18:24] <infinity> And the SATA throughput is about 4x that of the USB on the Pandas.
+[18:24] <cjwatson> A mass give-back might be worthwhile.
+[18:24] <infinity> So, all in all, not an awful upgrade.
+[18:24] <infinity> When they work.
+[18:24] <infinity> Yeah, I'll do that now.
+[18:25] <infinity> Let's see if any nodes explode, and how creatively.
+[18:27] <cjwatson> infinity: Looks like the mass give-back script retries both release and -proposed.  I suppose that kind of makes sense.  Ish
+[18:27] <cjwatson> Compare https://launchpad.net/ubuntu/+source/qtwebkit-source/2.3.1-0ubuntu3 and https://launchpad.net/ubuntu/+source/qtwebkit-source/2.3.2-0ubuntu1
+[18:28] <infinity> cjwatson: Hrm.  I said -s saucy-proposed, but I imagine that ends up being "where the build was created", rather than "where the source now lives".
+[18:28] <cjwatson> Yeah, could be
+[18:28] <infinity> cjwatson: There's some oddities like that with build records.
+[18:28] <infinity> Also, these machines are remarkably good at kernels.
+[18:28] <cjwatson> How fast?
+[18:29] <infinity> I retried a failed linux-ti-omap4 SRU.  3:55 to fail on the last Panda that tried it, 1:05 to fail on the highbank node.
+[18:29] <rsalveti> \o/
+[18:29] <cjwatson> Last linux/armhf build was 17:36.  Wonder what we'll get from highbank
+[18:29] <infinity> A smaller number.
+[18:29] <infinity> I hope. :)
+[18:30] <stgraber> yay, finally decent buildds!
+[18:30] <infinity> stgraber: Something about chickens and counting them comes to mind.  "faster" is a good adjectuve.  "decent" is yet to be seen.
+[18:30] <infinity> If we don't bump half of them offline in the first week, I'll be happy.
+[18:30] <stgraber> infinity: well, 4GB DDR3 ECC
+[18:31] <infinity> Anyhow, Rob has promised me that he'll fix every single kernel bug we run into, and I'm holding him to that.
+[18:32] <infinity> So, as long as the firmware/fabric doesn't melt, we're in good shape.
+[18:33] <stgraber> infinity: cardboard is cheap so improving the existing air flow is easy to do if needed ;)
+[18:33] <infinity> stgraber: *snicker*
+[18:35] <rsalveti> we can test with qtwebkit hehe
+[18:35] <infinity> Anyhow.  That was the last thing I had to do in London.  Flying through the air all magic-like tomorrow, I'll see everyone in a day or two.
+[18:35] <cjwatson> Safe travels and well done
+[18:35]  * infinity packs up his laptop to go find a pub that wants all of his money,
+[18:35] <cjwatson> infinity: Before you go, is the livefs builder installable by ops now?
+[18:36] <infinity> cjwatson: Yeahp, we did the base system install, and puppeted it as a dak/livefs buildd (same puppet profile as cadejo), so it just needs chroots.
+[18:36] <cjwatson> infinity: OK, if you want I can try to move that along tomorrow
+[18:37] <infinity> cjwatson: Sure thing.  kishi00.buildd is the host.
+[18:37] <cjwatson> Righto
+[18:37]  * cjwatson -> dinner
+[18:58] <mhall119> can someone help me?  I'm trying to dput a package to a PPA, and I get the following:
+[18:58] <mhall119> Rejected:
+[18:58] <mhall119> qtdeclarative5-poppler-qml-plugin_0.1.1-0ubuntu1.dsc: Unknown section '-'
+[18:58] <mhall119> qtdeclarative5-poppler-qml-plugin_0.1.1-0ubuntu1.tar.gz: Unknown section '-'
+[18:58] <mhall119> Further error processing not possible because of a critical previous error.
+[18:58] <mhall119> the debian/control file is http://paste.ubuntu.com/5959919/
+[18:59] <mhall119> Section: libs is valid as far as I can tell, not sure why Launchpad thinks section is '-'
+[19:00] <mhall119> http://paste.ubuntu.com/5959927/ is the .dsc I get from debuild -S
+[19:04] <slangasek> mhall119: is the Section: field missing from the source stanza of debian/control?
+[19:04] <slangasek> mhall119: the .dsc doesn't list a section at all; having it missing from debian/control is the only thing I can think of that might cause that
+[19:09] <mhall119> slangasek: ah, the Section: field is in the binary package section, not the source package section, is that my problem?
+[19:09] <slangasek> mhall119: yes; needs to be in the source stanza
+[19:09] <mhall119> too, or only?
+[19:10] <slangasek> it's mandatory for the source stanza; it's optional for the binary stanza, with a fallback to the value from the source stanza
+[19:12] <mhall119> thanks slangasek
+[19:12] <mhall119> that did the trick
+=== funkyHat_ is now known as funkyHat
+[19:37] <dobey> kenvandine: is the QML UOA UI apt-get installable? or where is it on lp if not?
+[19:38] <kenvandine> dobey, ubuntu-system-settings-online-accounts
+[19:49] <dobey> kenvandine: thanks. is that embedded within unity8 directly on the phone, or it's always inside the system-settings app?
+[19:50] <kenvandine> dobey, always in system-settings
+[19:50] <dobey> ok
+[19:55] <stokachu> mdeslaur: i didnt have any plans too
+[19:56] <stokachu> re: libgcrypt
+[19:58] <mdeslaur> stokachu: ok, thanks
+[19:59] <bschaefer> hey, question about xserver-xorg-video-ati in saucy main. Any one know what it seems to be using a git snap shot vs whats in saucy proposed?
+[19:59] <bschaefer> vs say intel: http://paste.ubuntu.com/5960140/
+[20:03] <dobey> bschaefer: what's in -proposed?
+[20:04] <dobey> also, there's no reason why ati and intel would be the same in that respect. they aren't from the same source tree
+[20:04] <bschaefer> dobey, http://paste.ubuntu.com/5960152/
+[20:05] <bschaefer> dobey, right but both are in git, and use a launchpad branch as well
+[20:05] <bschaefer> and its seems in proposed the package looks right, along with nouveau
+[20:05] <dobey> bschaefer: yes, but the snapshot version is the upstream git, not the packaging branch.
+[20:05] <dobey> bschaefer: there's nothing "wrong" aobut that
+[20:06] <dobey> and the -proposed version will eventually go into release
+[20:06] <bschaefer> dobey, alright cool :), just wanted to check as it just seemed a bit different
+[20:06] <bschaefer> thanks!
+[21:29] <Noskcaj> kirkland, roaksoax: Can one of you review/merge my branch for testdrive. It's the last changes that have to happen before the hackfest
+=== salem_ is now known as _salem
+=== jono is now known as Guest48557
+=== rsalveti_ is now known as rsalveti

@@ -1,0 +1,490 @@
+=== jamesh_ is now known as jamesh
+[04:25] <pitti> Good morning
+[05:07] <twb> example-content/raring seems to only have two .oggs in it, but it's not obvious to me from debian/changelog why all the other content is gone.
+[05:08] <twb> "Cleaned out old content, preparing for new" makes it sound like new content gets generated on each release, but before then there's a period where there's nothing in there.  Is that right?
+[05:12] <twb> I'll just use example-content=41 for now, since that has the ODF stuff I wanted.
+[05:20] <ScottK> pitti: Is there a way to opt-out of the ADT success emails?
+[05:21] <pitti> ScottK: not right now; sorry for the spam, one of the autopkgtest nodes got broken and caused gazillions of failures, so we disabled it and I'm now re-running the failures
+[05:21] <pitti> ScottK: we can add a blacklist for the notifications for sure
+[05:21] <ScottK> Failures are potentially interesting.  Successes, not so much.
+[05:21] <pitti> ScottK: but I wouldn't add a feature to opt out only from the success emails, that doesn't seem useful to me
+[05:22] <pitti> ScottK: well, these are notifications about state *changes*, not states
+[05:22] <pitti> ScottK: i. e. success→ fail or fail → success
+[05:22] <ScottK> LP doesn't mail for build successes, just FTBFS.
+[05:22] <pitti> if you get told about "your test just got broken", you should also get told about "it's fixed again", no?
+[05:23] <ScottK> No.
+[05:23] <ScottK> If it's working, there's nothing to be done, so no need for a mail.
+[05:23] <infinity> ScottK: I think this was a compromise so that you don't get mailed on every single failure.
+[05:23] <infinity> ScottK: Because some packages (I happen to maintain one) get their autopkgtests run many, many times per day.
+[05:24] <infinity> ScottK: So, hearing that it failed 30 times isn't helpful.  But not hearing that means you don't know that it stopped failing, unless you're told of the state change.
+[05:24] <pitti> ScottK: so you'd always have to actually go to the web ui to see if it's still failing?
+[05:25] <ScottK> I pretty much would anyway.
+[05:25] <infinity> ScottK: If tests were only run once per version (like a build), then I'd agree it should work the same as FTBFS mails, but that's not how autopkgtest works.
+[05:25] <ScottK> I guess I find them annoying because I'm getting mails completely unrelated to the package in question.
+[05:26] <ScottK> So I just got one about python-qt4, which hasn't been touched in some time.
+[05:26] <infinity> Sure, but that's the point.
+[05:26] <ScottK> No idea what caused it, why I should care.
+[05:26] <pitti> all the python tests were triggered recently
+[05:26] <ScottK> Yes, because I sync'ed python3-defaults.
+[05:26] <pitti> I guess someone uploaded python2.7, or 3.3, or -defaults
+[05:27] <infinity> ScottK: autopkgtests aren't run when the package is uploaded, they're run when deps change.
+[05:27] <ScottK> Yes.
+[05:27] <pitti> ScottK: ah, so that would be the notification why it won't land in saucy
+[05:27] <infinity> ScottK: That's entirely the point of the process.
+[05:27] <pitti> infinity: they are also run when the package is uploaded
+[05:27] <infinity> pitti: Sure, but for many packages, that's much, much less often. :P
+[05:28] <ScottK> In this case, some tests failed because two packages had to land nearly simultaneously.
+[05:28] <ScottK> So all the test failures were meaningless.
+[05:28] <infinity> Surely, that points to bad dependencies.
+[05:28] <infinity> If one can install a bad combination of packages...
+[05:29] <ScottK> One could only because one was stuck in New.
+[05:29] <ScottK> Won't happen again.
+[05:29] <pitti> the tests currently seem to trigger sometimes for uninstallable packages
+[05:29] <pitti> I think JB looked into this recently, not sure whether that's fixed already (still in post-holiday catch-up mode)
+[05:29] <infinity> ScottK: Erm, how would NEW matter?  If one can install a bad combination, that's true regardless of what queues something is in.
+[05:30] <infinity> Partial upgrades, etc.  If you can install a bad set of packages, your deps are wrong.
+[05:30] <pitti> i. e. if the test failed with installing the needed packages
+[05:30] <ScottK> Because I synced the newer python3-defaults slighlty before I should have.
+[05:33] <ScottK> OK, then I guess I'm asking for an opt-out mechanism because I have yet to find one of those mails useful.
+[05:36] <pitti> ScottK: ok, I filed bug 1213793 about it
+[05:36] <ubottu> bug 1213793 in Auto Package Testing "add opt-out blacklist for email notifications" [Wishlist,Triaged] https://launchpad.net/bugs/1213793
+[05:36] <pitti> ScottK: so you just check from time to time whether your uploads/syncs actually made it into the distro?
+[05:36] <ScottK> Thanks.
+[05:36] <ScottK> Yes.
+[05:37] <ScottK> There's plenty of other reasons things don't make it, so if you want to know, you have to check.
+[05:37] <pitti> infinity: regarding that, why did python3-defaults make it into saucy in the first place, was it forced in?
+[05:37] <ScottK> Yes.
+[05:37] <pitti> as its autopkgtest is broken
+[05:38] <ScottK> I forced it past the tests, since I knew they were irrelevant failures.
+[05:39] <pitti> ah, apparenlty its autopkgtest was dropped completely
+[05:39] <pitti> I'll remove the job from jenkins
+[05:39] <ScottK> Yes.  It should reappear in dh-python shortly.
+[05:40] <pitti> that looks like fallout from the sync
+[05:40] <ScottK> Yes.
+[05:40] <pitti> ScottK: ah, so that was deliberate? thanks for confirming
+[05:40] <pitti> ScottK: removed from jenkins, I'll file an RT to remove it from the public mirror, too
+[05:41] <ScottK> Thanks.
+[05:42] <ScottK> dh_python3 has been removed from python3-defaults and is now in dh-python (which can provide dh_python2 or dh_python3).  Trying to manage getting all the Ubuntu changes for python3-defaults (from an unsplit package) and the split was a bit complicated.
+[07:01] <dholbach> good morning
+[07:02] <mlankhorst> g'day mate
+=== smb` is now known as smb
+[07:35] <seb128> hum
+[07:35] <seb128> http://people.canonical.com/~ubuntu-archive/proposed-migration/update_excuses.html has gtk waiting on notify-osd tests that is RUNNING but finished on the jenkins side for 3 days
+[07:35] <seb128> who can unblock that?
+[07:36] <seb128> cjwatson, pitti: ^?
+=== tkamppeter_ is now known as tkamppeter
+[07:40] <pitti> seb128: I'm not sure TBH; cjwatson and jibel worked on that interface
+[07:40] <seb128> pitti, jibel is on vac right?
+[07:40] <seb128> not sure if cjwatson is back from debconf
+[07:40] <pitti> he was last week, I thought he'd come back today
+[07:41] <seb128> pitti, they are both on holidays
+[07:41] <seb128> for the week
+[07:41] <seb128> do we have a plan B? ;-)
+[07:41] <seb128> infinity, can you help maybe?
+[07:42] <pitti> seb128: I'll have a look at the state files on people
+[07:42] <seb128> pitti, thanks
+[07:42] <seb128> pitti, I think last time it happened, jibel "retried" the tests
+[07:42] <pitti> seb128: ah, let me try that first, n-osd should be quick
+[07:42] <seb128> that situation seems to happen because tests get triggered before the new version of the package hits the mirror
+[07:43] <seb128> pitti, thanks ;-)
+[07:43] <pitti> seb128: building
+[07:43] <seb128> let's see how that goes
+[07:44] <pitti> seb128: right, ISTR that jibel wrote something about fixing that right before I left
+=== gavin__ is now known as gavinguo
+[07:52] <pitti> seb128: test run is done, let's see after the next publisher run
+[07:53] <seb128> pitti, great
+[07:58] <seb128> pitti, "Valid candidate "
+[07:58] <seb128> pitti, danke ;-)
+[07:59] <seb128> pitti, how did you retry? just by clicking on the button in the jenkins UI? I could have done that myself, right?
+=== freeflying is now known as freeflying_away
+[08:25] <pitti> seb128: yes, just by that; if you have VPN access to the lab, you can do it yourself
+[08:27] <seb128> pitti, cool, I've vpn, I'm going to try myself next time ;-)
+[08:28] <xnox> pitti: seb128: hm, i have vpn into jenkins & login but no such buttons =(
+[08:29] <seb128> xnox, I've them here
+[08:30] <seb128> xnox, http://10.98.0.1:8080/view/Saucy/view/AutoPkgTest/job/saucy-adt-colord/62/matrix-reloaded/?
+[08:30] <seb128> xnox, do you see the "rebuild matrix"?
+[08:30] <xnox> seb128: i do. interesting.
+[08:31] <xnox> seb128: I've been using... 10.189.74.2
+[08:32] <seb128> xnox, I've the button on that ip as well...
+[08:32] <sil2100> slangasek: hi!
+[08:33] <pitti> xnox: likewise, both IPs work for me; not sure why there are two
+[08:33] <xnox> seb128: right. And i seemed to have forgotten my password and failing to login.
+[08:33] <pitti> xnox: FYI, automake1.13 autopkgtest is currently running (with my allow-stderr fix)
+[08:33] <sil2100> slangasek: I have been told that you have volunteered to help out with NEWing our packages ;)
+[08:33] <sil2100> slangasek: there is a mediascanner package in the NEW queue
+[08:33] <xnox> pitti: \o/ ah so that's what was wrong with it =)
+[08:34] <sil2100> slangasek: the unity scopes developers (and touch apps guys) would need it for development, could you NEW it for us?
+[08:35] <xnox> sil2100: it's 1:30am for slangasek and jet-lagged from trans-atlantic flight =) not sure when he'll be online again. But stgraber might be about (not sure either).
+[08:35] <sil2100> xnox: oh, ok, thanks ;)
+[08:36] <xnox> sil2100: de-new requests are best on #ubuntu-release channel =) that's what that channel is for (sru, de-new, and all things releasy)
+[08:36] <sil2100> xnox: so many channels, so many different things to tackle!
+[08:37] <sil2100> xnox: I usually target specific people because of that ;)
+[08:37] <xnox> hehe =)
+[08:58] <pitti> xnox: ah, I noticed too late that your debian/tests/fullbuild actually calls debian/rules build
+[08:58] <pitti> xnox: it's actually easier to just have the test be "true" and add a "build-needed" restriction, then you can follow the build in the console log, etc.
+[08:58] <pitti> xnox: (not a biggie, just FYI for next time)
+[09:00] <xnox> pitti: i see. ok, will note for the future.
+[09:01] <xnox> pitti: jenkins logs are easier to read this way =) but it didn't help with the complete test failing though =(
+[09:01] <pitti> xnox: how do you mean?
+[09:01] <pitti> xnox: it's still running, it hasn't failed yet
+[09:01] <pitti> it only failed because of some stderr?
+[09:02] <pitti> (apart from some xfails)
+[09:02] <xnox> pitti: as in, mine original run.
+[09:03] <xnox> i guess build-needed discards stderr during build (aka non-fatal) and true will not produce stderr and thus "allow stderr" option would not be needed.
+[09:03] <xnox> but i guess wait and see.
+[09:03] <pitti> xnox: correct
+[09:04] <pitti> xnox: that's how we set up the mutual eglibc/kernel/binutils autopkgtests (they just rebuidl themselves against the updated toolchain package)
+=== freeflying_away is now known as freeflying
+[09:56] <pitti> xnox: yay, automake1.13 succeeded
+[10:08]  * dholbach hugs ev
+[10:08] <ev> :)
+[10:15] <ev> pitti: whenever you have a moment: https://code.launchpad.net/~ev/apport/drop-apport-noui/+merge/180824
+[10:26] <ScottK> pitti: I just uploaded dh-python with the dh_python3 Autopkgtest in it (the one that used to be in python3-defaults).
+[10:34] <mpt> ev, if the errors.ubuntu.com graph isn't taken down in the meantime, will it just slowly resume its previous shape as the new database gets more and more of the data from the old one?
+[10:36] <pitti> ScottK: nice, thank you
+[10:36] <pitti> ev: looking
+[10:39] <pitti> ev: simple enough, thanks
+[10:40] <pitti> ev: I guess we should make a new upstream release after that, for packaging?
+=== tvoss_ is now known as tvoss|lunch
+=== psivaa_ is now known as psivaa
+=== greyback_ is now known as greyback|unstabl
+=== gusch_ is now known as gusch
+=== MacSlow is now known as MacSlow|lunch
+[11:25] <slangasek> sil2100, xnox: 1:30am + jetlagged cancels out ;p
+[11:25] <xnox> =)))))))
+[11:28] <mlankhorst> hahaha
+[11:30] <sil2100> ;)
+[11:33] <sil2100> slangasek: you think you could help out a bit even in this situation? ;p
+[11:33] <slangasek> sil2100: sure, having a look
+[11:37] <sil2100> slangasek: thank you!
+[11:38] <stgraber> slangasek: good "morning" :)
+[11:38] <slangasek> stgraber: ohai
+[11:48] <geser> cd sd1308
+[11:48] <geser> argh
+[11:53] <slangasek> sil2100: "--fail-missing" - why are you passing this as an argument to dh?
+[11:55] <sil2100> slangasek: that's a recent trend in our packaging, it's to make debian/rules smaller - didrocks recommends using this recently, I saw some discussion about it already but not sure about the outcome
+[11:55] <didrocks> it's more about standardization
+[11:55] <slangasek> sil2100: it is not documented anywhere that this option is supported by dh
+[11:56] <didrocks> slangasek: it is supported, some debian packages are using them as well IIRC
+[11:56] <slangasek> didrocks: are you sure it's supported, and not silently ignored?
+[11:56] <didrocks> slangasek: will reneed to do a new test, but I'm almost sure we tested it
+[11:56]  * didrocks back on system update for now, noting to do a test (if sil2100 can't retest it)
+[11:57] <sil2100> You mean, if it works?
+[11:58] <didrocks> yep
+[11:58] <slangasek> didrocks: ok, checking the dh source I see that any unknown options are just passed through; so yeah, this looks fine
+[11:58] <sil2100> Oh yes it works ;)
+[11:58] <didrocks> slangasek: yeah, we "spam" all commands with it IIRC
+[11:58] <slangasek> and this is even documented in the manpage
+[11:58]  * slangasek nods
+[11:58] <sil2100> At least with the debhelper we use
+[12:02] <slangasek> sil2100: debian/*.dirs are almost certainly superfluous and should be dropped
+[12:03] <sil2100> slangasek: ACK, those seemed leftovers from the old packaging, could have cleaned that up indeed
+[12:03] <sil2100> slangasek: should I do it now and request an re-upload or do it in the next version?
+[12:03] <slangasek> sil2100: next version is fine
+[12:03] <slangasek> the only thing it hurts is that people see them and cargo cult :)
+[12:05] <sil2100> hehe
+[12:05] <sil2100> Thanks
+=== psivaa is now known as psivaa-lunch
+=== MacSlow|lunch is now known as MacSlow
+[12:11] <slangasek> sil2100: embedded jquery> heh
+[12:12] <slangasek> I: libmediascanner-1.0-1: spelling-error-in-binary usr/lib/x86_64-linux-gnu/libmediascanner-1.0.so.0.3.93 similiar similar
+[12:12] <slangasek> go lintian
+[12:12] <slangasek> sil2100: do you know if this is a false positive?: I: libmediascanner-1.0-1: hardening-no-fortify-functions usr/lib/x86_64-linux-gnu/libmediascanner-1.0.so.0.3.93
+[12:13] <slangasek> sil2100: and aren't all new Canonical-upstream libraries supposed to have .symbols for the packaging?
+[12:13] <sil2100> slangasek: dholbach pointed this out, I tried with the upstream developers to get it 'gone' but we couldn't, since according to all guidelines it should be on
+[12:13]  * slangasek checks the build log
+[12:13] <sil2100> slangasek: since we're using dh 9 with cmake, which should automatically do its 'magic'
+[12:14] <sil2100> slangasek: but I think we should first have anything to fortify first
+[12:14] <slangasek> sil2100: right - the failure can mean there was nothing to fortify, or it can mean that the upstream build system subverted debhelper's magic.  I'm looking at build logs now to make sure the options were being passed correctly
+[12:16] <slangasek> sil2100: build logs look ok
+[12:16] <slangasek> sil2100: that leaves only the symbols file question, I think?  Which is not a blocker from my side
+[12:22] <ev> mpt: possibly. I suspect there's a bug in there, given its current shape. Work is underway to replace it: https://acunu.zendesk.com/requests/884 (I think you may be able to see that by logging in with your canonical openid account)
+[12:23] <sil2100> slangasek: I must say that in this case the reason for the missing symbols file iis...!
+[12:23] <ev> pitti: yes :)
+[12:23] <sil2100> slangasek: ...my incompetence
+[12:23] <ev> I can sort that now
+[12:23] <sil2100> slangasek: so sorry about that, adding it now so that future versions have it in
+[12:28] <pitti> ev: hang on, I still have an open MP from bdmurray, doing that now
+[12:28] <ev> oops. I'll uncommit then
+[12:29] <ev> okay, all yours :)
+[12:34] <sil2100> slangasek: the thing with symbols files in our canonical projects is like this that we don't always require them in C++ projects, although they are highly recommended
+[12:47] <ScottK> pitti: Would you please trigger a manual run of the autopkgtest in dh-python?  It seems it didn't run after the upload and I want to make sure I got it right.
+[12:48] <ScottK> sil2100: symbols files for C++ aren't too bad if you use the pkg-kde symbolshelper.
+[12:49] <pitti> ScottK: the job hasn't been (auto-)created yet; it might just take a while, not sure why
+[12:49] <pitti> ScottK: i. e. I can't trigger it manually yet
+=== _salem is now known as salem_
+[12:59] <smoser> xnox, i dont think your 'upstart-file-bridge' suggestion above would work for us.
+[12:59] <smoser> i dont think.
+[13:00] <smoser> but maybe i dont understand the nature of the "inotify doesn't work on overlayfs" fully.
+[13:01] <xnox> smoser: why not? if the overlayfs is empty, and I do "touch /etc/foo.conf", the inotify on the "/etc" will give nothing, but inotify on the "/" will get "created dir "etc" event".
+[13:01] <smoser> so you're suggesting that inotify event would work for /
+[13:01] <xnox> smoser: after which, re-creating inotify watch on the "/etc" will use the new inode, and one will start receiving events from that point on.
+[13:01] <smoser> is that true?
+[13:02] <xnox> smoser: yes, it will. If your overlayfs mount the "/"
+[13:02] <smoser> because if so, i think it'd be enough to create a file in /etc/ in the overlay called '.overlay.marker'
+[13:03] <xnox> smoser: ok. if you do that before upstart is launched (e.g. in initramfs) than upstart will have correct inodes watched with inotify from the very moment it is started.
+[13:03] <smoser> well, there is no initramfs. this was lxc related.
+[13:03] <xnox> smoser: =) ok, before upstart is executed =)
+[13:03] <smoser> but your suggestion in the initramfs is good too, and that could be done in 'overlayroot'
+[13:04] <xnox> and/or casper (which is how I was testing it using desktop-cd)
+[13:04] <smoser> xnox, i think if this works its the siplist solution.   i never really read anything about why it didn't work.
+[13:04] <smoser> just that it didn't
+[13:04] <smoser> :)
+[13:05] <smoser> would we also get delete events propogated ?
+[13:07] <xnox> smoser: basically inotify watches work on dirs. When one places inotify watch, it's places on the base-dir (read-only). When one creates/touches the file, in the overlay a directory is created e.g. "/path/to/overlay/etc/". From this point on, user visible inode is replaced, but the inotify watch is not moved to the new inode. If one now places the watch it will watch the "/path/to/overlay/etc" properly.
+[13:07] <xnox> if overlay is somehow purged again, one looses the watches again.
+[13:07] <xnox> and when it's re-created in the overlay, one needs to replace the watches again.
+[13:08] <xnox> but as long as overlay is mounted, one cannot actually remove "/path/to/overlay/". Thus having a job monitoring "/path/to/overlay/" is a hacky, yet reliable way to notice inode changes and reload configuration.
+[13:08] <ScottK> pitti: OK.  Thanks.
+[13:09] <smoser> hm.. so jus creating that /etc/init/.overlay seems like it would work well.
+[13:09] <xnox> the job itself will watch "/" it's just the overlay blackmagic which substitues it for the correct inode. This means one should start the watch after the overlay was mounted.
+[13:09] <smoser> does initctl reload-configuration reset the inotify ?
+[13:09] <xnox> smoser: yes.
+[13:10] <smoser> ok, xnox so this sounds really nice... but i'm not sure who is fixing it and where.
+[13:11] <xnox> so for example this hacky job will not catch: boot, upstart runs, user mounts overlayfs on top of "/". But will catch any of: boot, overlayfs is mounted, upstart runs.
+[13:11] <smoser> am I fixing in 'lxc-create' (from lxc) and 'overlayfs' (cloud-initramfs-tools) or are you fixing in upstart.
+[13:11] <smoser> "fixing"
+[13:11] <xnox> smoser: i originally thought that upstart itself should place the inotify watch on "/", but I got push back from slangasek/jodh about it.
+[13:12] <xnox> smoser: i think shipping such job in ubuntu-upstart package should be sufficient.
+[13:12] <smoser> right.
+[13:12] <smoser> but as a bridge, its not *that* bad.
+[13:12] <smoser> and one inotify process.
+[13:12] <smoser> but i guess its pure waste if not doing overlay
+[13:13] <xnox> smoser: not process, watch. It really has no penalty on normal systems, as it will never get triggered. The bonus though, is that our live-cd will properly start picking up upstart jobs during "try ubuntu session"
+=== psivaa-lunch is now known as psivaa
+[13:13] <xnox> (just one job, waiting for it's conditions to be met whilst "wasting" one open file discriptor)
+[13:15] <smoser> right. its non-zero though. there is *some* cost, no matter how tiny in kernel memory or something.
+[13:15] <smoser> but outside of a purist view of the world, it seems to me to be reasonable.
+[13:17] <smoser> xnox, do we have a bug for this ?
+[13:18] <smoser> specifically. other than general bug 882147
+[13:18] <ubottu> bug 882147 in coreutils (Ubuntu) "overlayfs does not implement inotify interfaces correctly" [Undecided,In progress] https://launchpad.net/bugs/882147
+[13:21] <xnox> smoser: no other bugs as far as I can tell, let me open one with details.
+=== leboz is now known as zobel
+[13:22] <smoser> xnox, thanks for your help, if nothing else, this vastly simplifies my needs for lxc clone
+[13:30] <xnox> smoser: bug 1213925
+[13:30] <ubottu> bug 1213925 in upstart (Ubuntu) "upstart should notice "/etc" inode change" [Medium,Confirmed] https://launchpad.net/bugs/1213925
+[13:30] <xnox> i'll update that bug with proposed branch.
+[13:32] <smoser> xnox, hallyn, http://paste.ubuntu.com/6002868/
+[13:32] <pitti> ev: ok, I'm done with my changes, doing upstream release now
+[13:32] <smoser> thats the lxc fix to create the dir (and remove my dpkg-diversion of /sbin/start)
+[13:32] <ev> cheers!
+[13:33] <ev> pitti: could you change the upstart job to call whoopsie-upload-all while you're there?
+[13:33] <smoser> xnox, thanks again. i think i'll just propose this change to lxc anyway.
+[13:33] <pitti> ev: that's not upstream, that's only in the saucy branch
+[13:33] <smoser> as it would be necessary for 12.04
+[13:33] <smoser> unless your suggested change was sru'd
+[13:33] <ev> oh right, oops!
+[13:34] <xnox> smoser: there is no upstart-file-bridge in 12.04, and that would not be sru'd
+[13:34] <ev> I can do the saucy branch changes when you're done then
+[13:34] <xnox> smoser: so you might want the lxc change still.
+[13:35] <smoser> right.
+[13:39] <pitti> ev: upstream release done, merged into saucy branch; want to do the upstart/packaging changes now?
+[13:40] <ev> yup!
+[13:41] <ev> pitti: am I okay to upload this?
+[13:42] <hallyn_> smoser: you're just creating that dir to make sure /etc/ exists in the overlay right?  if so looks good
+[13:45] <smoser> hallyn_, correct, and removing the other stuff.
+[13:45] <smoser> much simpler.
+[13:45] <smoser> here.
+[13:45] <smoser> http://paste.ubuntu.com/6002906/
+[13:46] <smoser> hallyn_, that has different flag name then before. '--create-etc-init'
+[13:46] <smoser> seems better as an explicit flag
+[13:46] <smoser> so if you're going to just take somethign, take that. but i can send to ml if you'd like
+[13:48] <hallyn_> yeah, please do
+=== tvoss|lunch is now known as tvoss_
+=== dendroba` is now known as dendrobates
+=== ikonia_ is now known as ikonia
+[14:21] <pitti> ev: hm, doesn't that require dropping apport-noui from the .install?
+[14:21] <ev> argh. I had that in my original changes and completely forgot it the second time around
+[14:21] <ev> fixing
+[14:21] <ev> (and running sbuild to catch any further niggles)
+[14:22] <pitti> ev: btw, whoopsie-upload-all doesn't take any parameters; if we want to call it with individual reports, we need to fix that
+[14:22] <ev> oh, interesting
+[14:22] <pitti> (it was written with a slightly different use case in mind)
+[14:22] <ev> I can't see the harm in calling without arguments in the upstart job
+[14:22] <ev> can you?
+[14:22] <pitti> ev: no, should be fine; it could potentially happen that two instances run at the same time
+[14:23]  * ev nods
+[14:24] <ev> pitti: does this look okay? http://paste.ubuntu.com/6003017/
+[14:25] <pitti> ev: we don't technically need the UID test, you can always call it as root to upload everything
+[14:25] <pitti> ev: is there a way to lock a job so that only one instance runs at a time?
+[14:25] <ev> pitti: yeah, best to keep it simple
+[14:26] <pitti> ev: also, shouldn't that job have "task", as it's not constantly running?
+[14:27] <pitti> perhaps instance already does something like that, not sure
+[14:28]  * ev consults the cookbook
+[14:31] <Dark_light> kernel 3.10 broke the rtl8192se and other realtek drivers https://bugzilla.kernel.org/show_bug.cgi?id=60713
+[14:31] <ubottu> bugzilla.kernel.org bug 60713 in network-wireless "Driver rtl8192ce unable to connect with 3.10.x kernels" [Normal,New]
+=== freeflying is now known as freeflying_away
+[14:41] <dobey> mardy: ping
+[14:44] <mardy> dobey: pong
+[14:45] <ev> pitti: so it definitely doesn't call more than one instance at a time, but I can't seem to get it to follow up with a second instance if I've done touch /var/crash/bar.crash while it's processing /var/crash/bar.crash
+[14:45] <ev> investigating
+[14:45] <pitti> ev: that might be the "task" bit?
+[14:46] <ev> tried that as well
+[14:46] <pitti> ev: as the job is already running?
+[14:46] <pitti> ev: but actually, we don't want a second instance, so that seems fine :)
+[14:46] <pitti> ah no, that's what "instance" is supposed to do
+[14:46] <ev> pitti: well I mean if whoopsie-upload-all is running and during that time apport comes along and creates a new /var/crash/something.crash
+[14:46] <dobey> mardy: hi. i'm having a bit of trouble adding an account with uoa/signon. i have the .provider/.service/.service-type files installed, and can create an account. once i create the account, calling account->supportsService("ubuntuone") returns true, but when i try to do manager->accountList("ubuntuone") after i save the account to the system, it returns an empty list. any idea why that would be?
+[14:47] <ev> (this is what I'm testing with http://paste.ubuntu.com/6003119/)
+[14:47] <ev> If I run touch /tmp/foo.crash; sleep 3; touch /tmp/bar.crash I only get "Match is /tmp/foo.crash")
+[14:47] <ev> "Match is /tmp/bar.crash" never arrives
+[14:47] <mardy> dobey: maybe the account is not enabled?
+[14:48] <mardy> dobey: or the ubuntuone service isn't?
+[14:48] <pitti> ev: hm, I think that needs jodh
+[14:48] <dobey> mardy: the account is enabled. what does enabling the service mean?
+[14:49] <pitti> ev: so ideally we would serialize the two instances, but of course we need to run the job on each one
+[14:49] <ev> jodh: o/ hiya
+[14:49] <ev> yeah
+[14:49] <dobey> mardy: how do i "enable" the service with accounts-qt5?
+[14:54] <jodh> ev: sleep 3 isn't long enough - your job doesn't use 'instance' so it is still running after 3 seconds and upstart will stop the same job re-running until the existing instance has stopped.
+[14:54] <mardy> dobey: account->selectService("ubuntuone"); account->setEnabled(true);
+[14:54] <ev> jodh: but how do we get it to queue up runs of the same job
+[14:54] <mardy> dobey: you can run the "account-console" commandline tool to check
+[14:55] <mardy> dobey: account-console show <account-number>
+[14:55] <ev> that is, if I run touch /var/crash/foo.crash and it runs whoopsie-upload-all for five minutes and during that five minutes /var/crash/bar.crash comes along - how do we get it to process bar.crash?
+[14:55] <dobey> selectService() seems to require a Service object, not a string
+[14:55] <dobey> mardy: what should i see if it's enabled? showing other accounts does not make it clear at all
+[14:55] <jodh> ev: use the 'instance' stanza. Take a look at /usr/share/upstart/sessions/update-notifier-crash.conf for an example.
+[14:56] <jodh> ev: ... and http://upstart.ubuntu.com/cookbook/#instance for lots of details on that facility.
+[14:56] <mardy> dobey: you can paste the output to me in query
+[14:56] <ev> jodh: sure, but update-notifier-crash will run apport in parallel, no? We want one instance of it at a time
+[14:57] <ev> whoopsie-upload-all, that is
+[14:57] <dobey> oh ok, i got it working. it adds "enabled; true" under the "Settings for ubuntuone" it seems
+[14:57] <mardy> dobey: yep
+[15:01] <jodh> ev: what is your job trying to do?#
+[15:02] <ev> jodh: so we have a process, whoopsie-upload-all that processes .crash files in /var/crash. When there's a new .crash file in /var/crash, we want it to run, but we don't want more than one instances of whoopsie-upload-all. However, we do want all .crash files to be processed. So if whoopsie-upload-all is already running and a new .crash file comes along, it will need to be run again.
+[15:03] <ev> (this is for uploading crash reports on Touch. /usr/share/apport/apport creates the initial report, whoopsie-upload-all creates the .upload file for each .crash, and whoopsie processes the .upload files)
+[15:03] <jodh> ev: well, you still need to use 'instance' as presumably whoopsie-upload-all is going to take >0 time to do its job and if you don't use 'instance', you'll lose other crash file creation events.
+[15:04] <jodh> maybe you could have an instance job that somehow adds the name of new crash files into the uploader queue?
+[15:16] <ev> pitti, jodh: hm, could we have whoopsie-upload-all spin waiting for a flock, if upstart cannot handle this use case for us?
+[15:17] <pitti> ev: we can put flock && upload-all && rm <lockfile> into the job?
+[15:17] <ev> yeah, that sounds like it should work
+[15:20] <pitti> ev: ah, man flock has a nice example how to use it
+[15:20] <ev> ooh, the flock -n 9 one?
+[15:21] <pitti> yes
+=== mthaddon is now known as mthaddon`
+[15:21] <pitti> ev: you could actually use /var/crash/.lock, to use a shared lock with apport itself
+[15:21] <pitti> ev: to avoid reading a half-written file
+[15:21] <pitti> altough apport's fileutils logic should already weed them out
+[15:24] <ev> so something like http://paste.ubuntu.com/6003229/
+[15:24] <pitti> ev: actually no, ignore that; we certainly do want new reports to be created while whoopsie-upload-all is still running
+[15:24] <ev> oh right!
+[15:24] <ev> heh
+[15:24] <pitti> ev: otherwise we'd block the kernel core dump handler unnecessarily
+[15:24] <ev> yeah
+[15:25] <ev> http://paste.ubuntu.com/6003231/ ?
+[15:25] <pitti> ev: how does the $MATCH magic work? i. e. what does upstart assign to it?
+[15:25] <ev> it assigns the matching .crash file
+[15:25] <ev> so whatever the first one is that triggered the event
+[15:26] <pitti> ev: can you please use a dot prefix to hide it? that ought to avoid confusing get_new_reports()
+[15:26] <pitti> ev: ah, thanks
+=== dholbach_ is now known as dholbach
+[15:26] <ev> pitti: to be clear, I made it live in /var/lock, but sure
+[15:26] <pitti> ev: oh right, missed that; that's fine of course
+[15:26] <pitti> ev: (/run/lock)
+[15:27] <ev> erm yes :D
+[15:27] <pitti> ev: I still think that needs a "task" somewhere as it's not continuously running
+[15:27]  * ev nods
+[15:27] <ev> I'll test with that
+=== kees_ is now known as kees
+[15:38] <pitti> ev: need to leave for Taekwondo, will be back in 4 hours for the techboard meeting
+[15:38] <ev> cool, thanks for your help today
+=== and`_ is now known as and`
+[16:11] <JackYu> dholbach, hi, would you please help me review the packaging request at bug #1213998?
+[16:11] <ubottu> bug 1213998 in UbuntuKylin "[needs-packaging] youker-assistant" [High,New] https://launchpad.net/bugs/1213998
+[16:12] <dholbach> JackYu, I'm in a call right now and will have to run afterwards - can you ask in #ubuntu-desktop maybe?
+[16:14] <JackYu> dholbach, sure, I will try at desktop first, thanks:)
+[16:15] <dholbach> great :)
+=== gusch_ is now known as gusch
+=== racarr_ is now known as racarr
+[16:33] <JackYu> dholbach, hi, it seems that there is no response in #ubuntu -desktop, would you please help to review when you are free these days? thanks so much.
+[16:35] <dholbach> JackYu, maybe you can try mailing ubuntu-desktop@lists.u.c too?
+[16:35] <dholbach> I've got to run now
+[16:37] <JackYu> dholbach, ok, I will send an email.
+[16:37] <dholbach> all the best!
+[16:37] <dholbach> see you!
+=== bfiller is now known as bfiller_afk
+[16:44] <ev> pitti: if you want to review before I upload: http://paste.ubuntu.com/6003480/
+=== mthaddon` is now known as mthaddon
+=== tgm4883_ is now known as tgm4883
+=== pbn_ is now known as pbn
+[17:18] <smoser> xnox, hey.
+[17:19] <smoser> so i modified 'overlayroot' initramfs package
+[17:20] <smoser> http://paste.ubuntu.com/6003595/
+[17:21] <smoser> i can verify that /etc/init/.overlayfs-upstart-helper exists in the overlay
+[17:21] <smoser> but then when i tried to 'apt-get install tgt' i saw
+[17:21] <smoser> initctl: Unknown job: tgt
+=== ampelbein_ is now known as Ampelbein
+[17:22] <smoser> any thoughts?
+[17:23] <xnox> hm.
+[17:23] <smoser> $ ls -altr /media/root-rw/overlay/etc/init
+[17:23] <smoser> total 16
+[17:23] <smoser> -rw-r--r-- 1 root root  148 Aug  6 16:28 tgt.conf
+[17:23] <smoser> -rw-r--r-- 1 root root   50 Aug 19 17:16 .overlayfs-upstart-helper
+[17:23] <smoser> drwxr-xr-x 2 root root 4096 Aug 19 17:17 .
+[17:23] <smoser> drwxr-xr-x 5 root root 4096 Aug 19 17:17 ..
+[17:23] <xnox> smoser: and doing "$ initctl reload-configuration; status tgt" shows upstart pick it up?
+[17:24] <smoser> $ sudo status tgt
+[17:24] <smoser> status: Unknown job: tgt
+[17:24] <smoser> $ sudo initctl reload-configuration tgt
+[17:24] <smoser> $ sudo status tgt
+[17:24] <smoser> tgt stop/waiting
+[17:24] <smoser> so, yes, that worked.
+[17:29] <xnox> smoser: hm. (a) crank up upstart logging, to see what happened. E.g. was the marker created before upstart was started.... (b) try touching "foo.conf" instead of .overlayfs-upstart-helper.
+[17:30] <xnox> and i need to go back and try this again.
+[17:30] <smoser> well, what is weird is that i'm pretty sure this worked for lxc
+[17:30] <smoser> same basic path. making sure the overlay had the file.
+[17:36] <DogStarChamp> Hey, does anyone know if xdotools will be included with Ubuntu 13.10? I know that Mir is going to be default and I'm afraid that it's going to make xdotools useless.
+[17:38] <ogra_> DogStarChamp, xorg is still there and wont go away, so will xdotools
+[17:39] <xnox> DogStarChamp: and xdotools will be even fully functional under XMir.
+[17:39] <DogStarChamp> Thank you!
+[17:40] <DogStarChamp> I was wondering about  the compatibility with XMir but that's a little more reassuring.
+[17:40] <ogra_> well, you can pretty surely rely on the fact that xorg will still be around for years even if Mir is the default
+=== slangase` is now known as slangasek
+[17:52] <smoser> xnox, well, i just verified that this works on lxc (clone). so i'm not sure what is going wrong... hummm. one difference might have been precise kernel on one and saucy on another.
+=== bfiller_afk is now known as bfiller
+=== masACC is now known as maswan
+[19:22] <osarrouy> hi everyone
+[19:40] <mlankhorst> soo..
+[19:40] <mlankhorst> https://launchpadlibrarian.net/147928769/buildlog_ubuntu-saucy-powerpc.llvm-toolchain-3.3_1%3A3.3-5ubuntu1_FAILEDTOBUILD.txt.gz
+[19:40] <mlankhorst> why does llvm try to use 8 byte atomics on powerpc?
+=== Ursinha is now known as Ursinha-afk
+=== salem_ is now known as _salem
+[19:47] <pitti> ev: LGTM, thanks!
+=== Ursinha-afk is now known as Ursinha
+[20:00] <pitti> ev: I uploaded the package, FYI
+[20:02] <infinity> mlankhorst: That probably just needs an -latomic
+[20:02] <infinity> mlankhorst: I'll look at it a bit later, if you want.
+[20:02] <mlankhorst> infinity: thanks, please do :-)
+[20:03] <mlankhorst> the offender seems to be an atomic<addr_t> afaict
+[20:03] <infinity> mlankhorst: I vaguely sort of "maintain" llvm in Ubuntu anyway, I'll give it a poke in a bit.
+[20:03] <infinity> mlankhorst: It'll give me a chance to steal TIL back from you. :P
+[20:04] <mlankhorst> TIL?
+[20:04] <mlankhorst> ah :P
+[20:04] <infinity> Touched-It-Last.
+[20:04] <mlankhorst> yeah i was slow today
+[20:05] <infinity> Sadly, reddit has stolen that TLA, and now people read TIL as "Today I Learned".
+[20:10] <infinity> mlankhorst: I'm still not sure if I consider it a compiler bug that gcc doesn't automagically add -latomic when it might be needed, but it shouldn't be too hard to tear apart the llvm build system and make it behave.  I'll test locally before I go whack-a-moling, though.
+[20:10] <infinity> Because lolcmake, it could take a few tries.
+[20:12] <mlankhorst> --Wl,--as-needed -latomic --Wl,--no-as-needed ? :>
+=== Ursinha is now known as Ursinha-afk
+=== Evpok_ is now known as Evpok
+=== Ursinha-afk is now known as Ursinha
+=== Ursinha is now known as Ursinha-afk
+[22:45] <ScottK> xnox: I suspect boost is the guilty party trying to get vdr-plugin-live to rebuild to get cxxtools, tntnet, and tntdb out of -proposed.
+=== Ursinha-afk is now known as Ursinha
+[22:47] <xnox> ScottK: not libcxxtools8 -> libcxxtools9 transition?
+[22:48] <ScottK> Yes.  that one
+[22:48] <ScottK> vdr-plugin-live seems to be the only thing holding it back and it won't build.
+[22:48] <xnox> ScottK: let me try.
+[22:57] <ScottK> xnox: Thanks.
+[22:57] <xnox> ScottK: http://projects.vdr-developer.org/issues/1351 http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=713568
+[22:57] <ubottu> Debian bug 713568 in src:vdr-plugin-live "vdr-plugin-live: FTBFS: recordings.ecpp:203:47: error: no matching function for call to 'tnt::QueryParams::QueryParams(tnt::QueryParams&, bool)'" [Serious,Open]
+[22:58] <ScottK> There's a new upstream version that's not packaged.
+[22:58] <ScottK> I already tried it, that didn't help.
+=== _salem is now known as salem_
+[23:02] <xnox> ScottK: seems like it's building. I'll NMU into debian, and then it can be synced into ubuntu.
+[23:09] <ScottK> OK.
+=== Ursinha is now known as Ursinha-afk
+=== Ursinha-afk is now known as Ursinha
+=== freeflying_away is now known as freeflying

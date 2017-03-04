@@ -1,0 +1,350 @@
+=== Ursinha-afk is now known as Ursinha
+=== salem_ is now known as _salem
+[04:47] <pitti> Good morning
+[04:47] <pitti> dobey: as cjwatson says, "build-needed" does a complete normal package build without any DEB_BUILD_OPTIONS
+[04:56] <Snow-Man> pitti: just fyi, I'm all over #718460 already. :)
+[05:00] <pitti> Snow-Man: oh, nice! thanks
+[05:02] <Snow-Man> yea, np.
+[05:02] <Snow-Man> a fix should be in our next point release.
+[05:11] <pitti> mbiebl, slangasek: oh, http://packages.qa.debian.org/libu/libusbx/news/20130731T190350Z.html -- I'm syncing that now
+[05:13] <mbiebl> pitti: I already have that version :-/
+[05:14] <mbiebl> pitti: I'm not sure if it's the upower deadlock though
+[05:14] <mbiebl> since upower -d now works just fine
+[05:14] <pitti> mbiebl: ah, so at least libusbx was fixed for good?
+[05:15] <mbiebl> well, not sure
+[05:15] <mbiebl> dbus-send --print-reply             --system             --dest=org.freedesktop.UPower             /org/freedesktop/UPower             org.freedesktop.UPower.Suspend
+[05:15] <mbiebl> Error org.freedesktop.UPower.GeneralError: Sleep has already been requested and is pending
+[05:16] <pitti> upower does that if the previous resume failed, do you have anything in pm-suspend.log?
+[05:16] <mbiebl> might be a different issue
+[05:16] <mbiebl> I get that after the first suspend
+[05:16] <mbiebl> the missing Resuming signal also means
+[05:16] <mbiebl> that NM doesn't properly wake up
+[05:33] <Snow-Man> pitti: patch committed & pushed
+[05:34] <pitti> Snow-Man: cheers
+=== HandheldPenguin` is now known as handheldpenguin
+=== Noskcaj10 is now known as Noskcaj
+=== smb` is now known as smb
+=== Ursinha is now known as Ursinha-afk
+=== Ursinha-afk is now known as Ursinha
+[07:18] <dholbach> good morning
+[08:04] <slangasek> pitti: sync> thanks; will test as soon as it's out of -proposed
+=== iahmad is now known as iahmad|afk
+[08:19] <seb128> hum
+[08:19] <seb128> what's the right place to ask for morphis to be banned the time for the join/part flood to stop?
+[08:19] <seb128> there is an IRC op channel? (I don't remember the details)
+[08:20] <Laney> #ubuntu-irc iirc
+[08:25] <seb128> Laney, thanks, asked there
+[08:27] <slangasek> cjwatson: http://people.canonical.com/~ubuntu-archive/proposed-migration/update_excuses.html says autopkgtest for upower 0.9.21-1 is running; following the link to jenkins says it finished hours ago after 2 minutes; where is this stuck?
+[08:30] <pitti> (same for gvfs test)
+[08:31] <pitti> I had several of those yesterday evening, they cleared up over night
+[08:31] <pitti> but somewhere there's a huge propagation delay, much more than just the publisher delay
+[08:31] <pitti> jibel: ^
+[08:50] <pitti> seb128: oh, libgphoto and its rdepends tail are just being propagated
+[08:50] <pitti> mah, how did we *ever* deal with transitions without our staging magic
+[08:50] <seb128> pitti, did the jenkins status finally update?
+[08:51] <pitti> seb128: mostly, yes; it still considers the upower test running, but the gphoto related ones are done
+[08:51] <seb128> pitti, are you sure it's going through?
+[08:52] <pitti> seb128: I got an "accepted" for wine1.4, and excuses says "valid candidate"
+[08:52] <seb128> pitti, http://people.canonical.com/~ubuntu-archive/proposed-migration/update_output.txt lists "    * i386: ia32-libs-multiarch"
+[08:52] <pitti> not sure why it would promote wine first without the libraries
+[08:52] <pitti> oh-uh
+[08:52] <pitti> bug!
+[08:52] <seb128> pitti, weird, output has it as FAILED, maybe the next refresh
+[08:52] <pitti> that means wine1.4 in saucy is now broken
+[08:54] <pitti> seb128: ia32-libs? isn't that a thing from the distant past??
+[08:54] <pitti> oh dear, why do we still have that package
+[08:54] <seb128> pitti, it's still in the archive...
+[08:54] <slangasek> pitti: it's a transitional metapackage now
+[08:55] <pitti> we had that in precise already
+[08:55] <xnox> -multiarch does cross-arch build-dependencies, and i don't think britney does not consider cross-arch/multi-arch dependencies...
+[08:55] <pitti> so I guess we can kill it, as we don't support upgrades with skipping LTSes?
+[08:55] <slangasek> pitti: so if you want to kill it, ok with me :)
+[08:55] <pitti> so it's "fix" (trivial) or kill, does anyone see a reason to keep it?
+[08:56]  * seb128 hands pitti a sword
+[08:56] <pitti> no rdepends on i386 and amd64
+[08:56] <seb128> killit!
+[08:56] <pitti> $ remove-package -m 'obsolete transitional package' ia32-libs
+[08:56]  * pitti sheds a tear
+[08:56] <pitti> I'm honored
+[08:57] <seb128> ;-)
+[08:57] <pitti> I'm still baffled why britney propagated wine1.4; it clearly depends on libgphoto2-6, so is uninstallable in saucy without also promoting libgphoto2
+[08:58] <pitti> or maybe, /me checks
+[08:59] <pitti> indeed, seems with the rebuild it lots its binary dep, although configure confirmed gphoto support
+[09:00] <pitti> no, I mis-looked; it does depend on libgphoto2-6 (>= 2.4.10.1)
+[09:00] <seb128> pitti, that's weird ... britney bug?
+=== iahmad|afk is now known as iahmad
+[09:17] <Riddell> steveire: were you not going to add plasma to upstart-xsessions?
+[09:17] <Riddell> wait not steveire
+[09:17] <Riddell> didrocks: were you not going to add plasma to upstart-xsessions?
+[09:17] <didrocks> Riddell: hum? what? wrong ping again? ;)
+[09:18] <didrocks> I don't remember of that discussion at all, so I'm either senile either there are some confusion
+[09:18] <Riddell> hmm, someone else
+[09:18] <Riddell> must check logs
+[09:18] <Laney> probably stgraber
+[09:19] <Laney> you should just file an MP :-)
+[09:19] <Riddell> stgraber: were you not going to add plasma to upstart-xsessions?
+[09:32] <seb128> pitti, great, britney is happy, libgphoto moving to saucy release this time
+[09:32] <seb128> libusbx less happy though, it's still written as "autopkgtest for upower 0.9.21-1: RUNNING "
+[09:33] <seb128> when the test finished to run for hours
+[09:36] <debfx> Riddell: https://launchpad.net/ubuntu/+source/kde-workspace/4:4.10.3-0ubuntu4 ?
+[09:36] <Riddell> debfx: also needs added to /etc/upstart-xsessions
+=== tkamppeter_ is now known as tkamppeter
+[09:37] <debfx> ah, right
+[09:41] <seb128> cjwatson, jibel: any of you around? can you help with update_excuses having libusbx stucked on "autopkgtest for upower 0.9.21-1: RUNNING" when the test finished running for some hours?
+[09:41] <jibel> seb128, looking
+[09:41] <seb128> jibel, thanks
+[09:45] <stgraber> Riddell: yes, I was. I was waiting for all the flavours to finish testing their desktop session under upstart, I think everyone did but Lubuntu, so I'll ping Julien about it and then switch it on for everyone
+[09:46] <Riddell> stgraber: remind me again of the advantage?
+[09:47] <xnox> Riddell: you can open terminal, type $ stop, to logout desktop session =) should work with new neon/framework5 =)
+[09:48] <Riddell> that'll be handy, frameworks 5 makes it hard to leave
+[09:49] <stgraber> Riddell: main advantage is that any other upstart job written for the ubuntu desktop will magically work for you too, it also makes some advanced desktop scripting easier for some users (you can have offlineimap start when network-manager is connected and you have a usb stick plugged in, ...)
+[09:50] <stgraber> Riddell: upstart also enforces a clean parent/child relationship, so processes that double-fork for some reason will keep the upstart user session as their parent and not be moved to pid1
+[09:50] <stgraber> Riddell: so logout tends to be quite a bit cleaner (as everything under upstart gets killed leaving no processes behind)
+[09:50] <slangasek> right, so pulseaudio won't evade capture ;)
+[09:55] <unixpro1970> the problem with upstart is when a process forks more 3 or more times,  it has a problem tracking the correct process.
+[09:55] <unixpro1970> 3 or more
+[10:01] <cjwatson> slangasek,seb128: Yeah, this is all in adt-britney and is really something jibel needs to look at - we can force it if need be but would be better if it were fixed properly
+[10:01] <slangasek> ack
+[10:03] <xnox> unixpro1970: in user-session, we use prctl and set PR_SET_CHILD_SUBREAPER, thus we guard _all_ user session processes to be parented to user session upstart at most.
+[10:03] <xnox> unixpro1970: nothing should need to fork more than three times, and that's easy to avoid and test, when create upstart jobs....
+[10:04] <cjwatson> cjwatson@lillypilly:/home/ubuntu-archive/proposed-migration/autopkgtest/data/adt/saucy-proposed/amd64$ cat archive/2013/08/01/saucy_i386_upower_20130801-053229.result; echo
+[10:04] <cjwatson> saucy i386 upower 0.9.21-1 PASS libusbx 2:1.0.16-3 pm-utils 1.4.1-11 systemd 1:204-0ubuntu7 libplist 1.8-2 gobject-introspection 1.37.4-0ubuntu3 dbus 1.6.12-0ubuntu2 glib2.0 2.37.3-1ubuntu2 eglibc 2.17-91ubuntu1 policykit-1 0.105-3ubuntu2 upower 0.9.21-1 libimobiledevice 1.1.4-1ubuntu6 dbus-glib 0.100.2-1
+[10:04] <cjwatson> cjwatson@lillypilly:/home/ubuntu-archive/proposed-migration/autopkgtest/data/adt/saucy-proposed/amd64$ ls -l saucy-proposed_amd64_upower
+[10:04] <cjwatson> -rw-rw-r-- 1 ubuntu-archive ubuntu_archive 810 Aug  1 05:27 saucy-proposed_amd64_upower
+[10:04] <cjwatson> cjwatson@lillypilly:/home/ubuntu-archive/proposed-migration/autopkgtest/data/adt/saucy-proposed/amd64$ cat saucy-proposed_amd64_upower; echo
+[10:05] <cjwatson> {"status": {"i386": "RUNNING", "amd64": "RUNNING", "all": "RUNNING"}, "package": "upower", "depends": {"libglib2.0-0": "2.37.3-1ubuntu2", "pm-utils": "1.4.1-11", "libdbus-glib-1-dev": "0.100.2-1", "gir1.2-upowerglib-1.0": "0.9.21-1", "libc6": "2.17-91ubuntu1", "libdbus-1-3": "1.6.12-0ubuntu2", "libdbus-glib-1-2": "0.100.2-1", "libimobiledevice3": "1.1.4-1ubuntu6", "udev": "204-0ubuntu7", "libpolkit-gobject-1-0": ...
+[10:05] <cjwatson> ... "0.105-3ubuntu2", "multiarch-support": "2.17-91ubuntu1", "libplist1": "1.8-2", "gir1.2-glib-2.0": "1.37.4-0ubuntu3", "libupower-glib1": "0.9.21-1", "systemd-services": "204-0ubuntu7", "libusb-1.0-0": "2:1.0.16-3", "libgudev-1.0-0": "1:204-0ubuntu7", "dbus": "1.6.12-0ubuntu2", "libglib2.0-dev": "2.37.3-1ubuntu2"}, "version": "0.9.21-1", "release": "saucy", "causes": {"libusbx": "2:1.0.16-3"}}
+[10:05] <cjwatson> So it's gathered the reason but then somehow failed to aggregate it, AFAICS
+[10:05] <cjwatson> s/reason/result/
+[10:10] <unixpro1970> @xnox - is this prctl functionality available on v3.0 or v3.2 kernels with upstart?
+[10:10] <udevbot> Error: "xnox" is not a valid command.
+[10:10] <unixpro1970> xnox - is this prctl functionality available on v3.0 or v3.2 kernels with upstart?
+[10:11] <seb128> cjwatson, not sure how to read that, is the RUNNING in those file correct or buggy?
+[10:11] <seb128> jibel, did you see any problem? still looking at it?
+[10:13] <slangasek> unixpro1970: no; why do you care about that?  upstart user sessions weren't introduced until Ubuntu 13.04.
+[10:13] <xnox> unixpro1970: no, since 3.4. thus precise with quantal hwe stack, or quantal and up.
+[10:15] <cjwatson> seb128: buggy
+[10:16] <unixpro1970> Good to know, thanks
+[10:16] <jibel> seb128, aggregation failed because version of the package tested was a version behind what has been requested.
+[10:18] <jibel> seb128, in that case the version of libusbx to test was libusbx 2:1.0.16-3 but the version available during the test was libusbx 2:1.0.16-2
+[10:19] <jibel> I'll add a waiting period until all the requirements are met before starting the tests
+[10:19] <cjwatson> Hm, I thought you had direct ftpmaster access now
+[10:19] <cjwatson> Is that not quite done yet?
+[10:20] <jibel> cjwatson, it is not done yet
+[10:20] <cjwatson> Aha
+[10:21] <seb128> jibel, ok, can you retry it with the current version?
+[10:24] <ogra_> hmm, no hallyn
+[10:25]  * ogra_ wonders if we have other lxc experts beyond hallyn and stgraber 
+[10:26] <jibel> seb128, done, there should be no invalid "running" tests left on excuses
+[10:26] <ogra_> i'm trying to get run-parts to work in an lxc hook script ... but kind of dont get it to work
+[10:26] <seb128> jibel, thanks
+[10:32] <dholbach> barry, happy birthday! :)
+=== MacSlow is now known as MacSlow|lunch
+=== MacSlow|lunch is now known as MacSlow
+=== dholbach_ is now known as dholbach
+=== iahmad_ is now known as iahmad
+[12:13] <rbasak> What's our policy for considering sponsoring a sync request after debian import freeze? Would we expect requestors to have a specific reason, or is it fine to do it if it seems reasonable?
+[12:13] <rbasak> Eg. bug 1206932. New minor upstream release, Debian has synced and made some other changes. Seem reasonable?
+[12:13] <ubottu> bug 1206932 in tomcat7 (Ubuntu) "Sync tomcat7 7.0.42-1 (main) from Debian unstable (main)" [Undecided,New] https://launchpad.net/bugs/1206932
+[12:14] <rbasak> Normally I'd have a specific reason for a sync, or be familiar enough with a package that I know the implications, so I'm wondering what people do from the other side of the table.
+[12:16] <xnox> rbasak: my threshold is low: no pointless uploads. This one is new upstream release (e.g. not just cosmetic packaging changes) & fixes a bug 1092548. So i'd try to sync it / sponsor sync, if it builds on saucy etc.
+[12:16] <ubottu> bug 1092548 in tomcat7 (Ubuntu) "dependency to tomcat-native is too weak (no version for libtcnative-1 specified)" [High,Confirmed] https://launchpad.net/bugs/1092548
+[12:16] <rbasak> xnox: OK, I'll build test and sponsor if it works then. Thanks!
+[12:17] <xnox> rbasak: also I'd do syncs that get packages in sync (e.g. ubuntu has -2ubuntu1 upload, debian does -3 with our -2ubuntu1 changes, I'd sync it, to not forget / allow further [auto-]syncs in the future)
+[12:17] <rbasak> ack
+[12:19] <rbasak> Oh, it seems that I can't upload tomcat7. Not sure why - it's only seeded in ubuntu-server.
+[12:21] <rbasak> cjwatson: ^^ would you like me to continue poking you about packages which are obviously server but ubuntu-server-dev can't upload, or should I be doing something else about these?
+=== _salem is now known as salem_
+[12:35] <cjwatson> rbasak: I expect it's low down the dependency stack.  And yes, contacting me is fine.  It's in the ubuntu-server package set now.
+[12:38] <rbasak> cjwatson: thank you!
+=== doko_ is now known as doko
+[13:10] <ogra_> ev, when you seeded apport and whoopsie, did you take into account the we disable recommends on touch images ?
+[13:11] <ev> ah, I had not
+[13:11] <ogra_> i just installed it manually and saw there was a recommends in the list ... not sure if we need it though
+[13:12] <ev> ogra_: it shouldn't need apport-symptoms or policykit
+[13:12] <ev> well, we have the latter regardless
+[13:12] <ogra_> k
+[13:12] <ogra_> yeah, a lot other stuff needs PK
+[13:12] <ev> thanks for the heads up though
+[13:13] <ev> that's the kind of thing that will crop up in other places, I'm sure
+[13:13] <ogra_> yeah, its awful
+[13:13] <ogra_> but i doubt we'lll get it sorted before 13.10 ... i'll add a blueprint for 14.04 though
+=== oSoMoN_ is now known as oSoMoN
+[13:56] <dobey> kenvandine, mardy: so will UOA on the phone be the samea s UOA on regular Ubuntu, for 13.10?
+[13:56] <kenvandine> dobey, yes
+=== kentb-out is now known as kentb
+[13:57] <dobey> kenvandine: is it already?
+[13:57] <mardy> deryck: the configuration UI will be different, but under the UI skin it's the same thing
+[13:58] <kenvandine> dobey, yup
+[13:58] <kenvandine> just different UI
+[13:58] <mardy> deryck: sorry, that was meant for dobey :-) ^
+=== salem_ is now known as _salem
+=== _salem is now known as salem_
+[14:27] <stokachu> no patch pilots today?
+[14:28] <stokachu> jodh: would you mind taking another look at bug 1121874?
+[14:28] <ubottu> bug 1121874 in mysql-5.5 (Ubuntu Raring) "MySQL launch fails silently if < 4MB of disk space is available" [Medium,Triaged] https://launchpad.net/bugs/1121874
+[14:35] <jodh> stokachu: ok, commented.
+[14:37] <stokachu> jodh: how does that work with the apparmor load?
+[14:38]  * stokachu needs to research apparmor more
+[14:39] <jodh> stokachu: ? init(5) documents the apparmor stanzas mdeslaur added.
+[14:39] <stokachu> ok ill take a look at that
+[14:41] <stokachu> jodh: so this hooks into audit for error reporting?
+[14:44] <xnox> stokachu: jodh: apparmor load works in saucy and up, but not in precise -> raring.
+[14:45] <stokachu> xnox: ok
+[14:47] <stokachu> im trying to find some documentation about apparmor load, do you guys have any reference links handy?
+[14:48] <jdstrand> stokachu: there isn't much to it. use something like: "apparmor load /etc/apparmor.d/usr.sbin.cupsd" (man 5 init)
+[14:49] <jdstrand> stokachu: use that in the upstart job instead of the apparmor-profile-load that we've traditionally used
+[14:50] <stokachu> ok ill look into that now
+=== bdmurray_ is now known as bdmurray
+[15:38] <doko> seb128, jbicha: hmm, libgtk3-common depends on d-conf, and d-conf b-d's on libgtk-3-dev ...
+[15:40] <jbicha> doko: you can build dconf without the editor and that should avoid the need for the GTK dependency https://git.gnome.org/browse/dconf/tree/configure.ac#n55
+[15:46] <doko> jbicha, thanks. why are all the gtk build not parallel?
+[15:49] <doko> jbicha, why is the doc build always enabled?
+[15:51] <jbicha> doko: honestly I don't really do much with gtk's packaging; it's quite a bit more complicated that the average gnome package
+[15:51] <Laney> come and ask in #debian-gnome
+[15:57] <doko> Laney, https://bugs.launchpad.net/ubuntu/+source/gtk+3.0/+bug/1207029
+[15:57] <ubottu> Ubuntu bug 1207029 in gtk+3.0 (Ubuntu) "more efficient builds and support for staged builds" [Undecided,New]
+[15:57] <doko> feel free to forward
+=== Sweetsha1k is now known as Sweetshark
+=== cr3_ is now known as cr3
+=== cr3 is now known as Guest98936
+=== Guest98936 is now known as cr3
+[16:27] <doko> hrm, are parallel builds with cdbs just broken?
+[16:28] <xnox> doko: they work, via magic cdbs variables.
+[16:28] <doko> xnox, tell me more ...
+[16:29] <xnox> doko: http://youtu.be/aXlnMveRt-Y?t=22s
+[16:29] <xnox> 1sec =)
+[16:31] <xnox> doko: DEB_BUILD_PARALLEL, if set, allow activating parallel builds in certain classes (makefile, automake, perlmodule, qmake, cmake, and scons classes use build commands supporting parallel builds). CDBS then uses DEB_PARALLEL_JOBS to know how many builds to launch (which defaults to parallel= parameter in DEB_BUILD_OPTIONS, but can be overridden).
+[16:31] <xnox> doko: "DEB_BUILD_PARALLEL = yes" should do it....
+[16:32]  * cjwatson is reminded of Joey's "surface" way of thinking about cdbs vs. dh
+[16:32] <doko> xnox, thanks. and bad gtk / gstreamer maintainers ...
+[16:33] <xnox> cjwatson: hm? what was that =)
+[16:33] <cjwatson> Pages 43-45 of http://joeyh.name/talks/debhelper/debhelper-slides.pdf
+[16:33] <doko> xnox, just got your reply before your URL did end =)
+[16:37] <doko> and the gtk builds speed up ...
+[16:39] <xnox> cjwatson: i think cdbs visible surface is under-estimated because it doesn't include optional team cdbs addons.....
+[16:39] <xnox> cjwatson: otherwise, very cool presentation =)
+[16:41] <cjwatson> xnox: Probably would be unfair given that he was promoting dh; I think it's reasonable to consider even just the bare surface
+[16:41] <cjwatson> (Of course there are plenty of dh addons too)
+[16:54] <utlemming> any guys from launchapd around? I can't seem to do a code checkout: http://paste.ubuntu.com/5937001/
+=== natefinch is now known as natefinch-lunch
+[16:56] <xnox> utlemming: i think smoser need to push some revisions if he can.... or something got rebased thus that branch is borked now.
+[16:58] <smoser> xnox, me having to push some revisions doesn't make any sense.
+[16:58] <smoser> if i pushed them they'd be there.
+[16:58] <smoser> if i diddn't how would it know about them to complain?
+[16:59] <smoser> i admit to being baffled, and assume that is something i did, and even admit to having more than one knock down fight with the importer
+[16:59] <smoser> and admit that it beats me
+[16:59] <smoser> but i dont know how to fix
+[17:00] <xnox> smoser: bzr got upset with stacked branches, it seems like lp:ubuntu/precise/cloud-init references smoser@ubuntu.com-20130118151237-7jeas9368k0vdy84 in it's history, previously it was part of the stacked-on branch, but now that commit is gone from the base branch and launchpad doesn't have it anymore.
+[17:00] <xnox> or something like that.
+[17:00] <smoser> xnox, so any ideas on how such a thing woudl be fixed.
+[17:01] <smoser> how would i know if that is in my histor?
+[17:01] <xnox> utlemming: I guess you want to use: bzr branch lp:~smoser/ubuntu/precise/cloud-init/sru
+[17:01] <utlemming> xnox: thanks...
+[17:02] <cjwatson> utlemming: Honestly: just fetch the source package.
+[17:02] <cjwatson> Unless you actually really want to fight with this.
+[17:02] <smoser> well i'd personall liek for it to not suck.
+[17:02] <xnox> smoser: if you have a shared bzr repo and/or precise branches locally. you should check if you have that revision locally. e.g. $ bzr log -rrevid:smoser@ubuntu.com-20130118151237-7jeas9368k0vdy84 and then try to push it.....
+[17:02] <utlemming> cjwatson: lol....sure
+[17:02] <smoser> i do.
+[17:02] <smoser> where would i "share" ?
+[17:02] <cjwatson> (Yes, it's a bug, but since Launchpad had its maintenance team forcibly hacked down to minimal size, it's kind of hard to support all this stuff)
+[17:03] <xnox> smoser: there were hidden commands to upload stuff to repositories.
+[17:03]  * xnox tries to recall
+[17:04] <smoser> xnox, so i just did:
+[17:04] <smoser> bzr branch -r smoser@ubuntu.com-20130118151237-7jeas9368k0vdy84 precise.sru xfoo
+[17:04] <smoser> cd xfoo
+[17:04] <smoser> so i can presumably bzr push that somewhere ?
+[17:04] <xnox> smoser: can you try $ bzr push lp:ubuntu/precise/cloud-init it should take some time to figure out that it needs it & should pick it up. Unless it wont...
+[17:05]  * xnox looks for the other command to upload ghosts.
+[17:05] <xnox> utlemming: actually does branching work if you disable launchpad plugin that checks version history?!
+[17:06] <xnox> utlemming: bzr branch --no-plugins https://code.launchpad.net/~ubuntu-branches/ubuntu/precise/cloud-init/precise             <- works
+[17:07] <xnox> smoser: never-mind, it's the launchpad bzr plugin that walks too far to get the revision history and check if things are up to date. The branch in question is actually fine.
+[17:07] <cjwatson> Ha.  Fancy UI gets us into trouble again
+[17:08] <smoser> fixed!
+[17:08] <utlemming> xnox: yup, I'm getting what I expect now
+[17:08] <smoser> for lp:ubuntu/precise/cloud-init
+[17:09] <utlemming> xnox: with disabling the plugins
+[17:09] <xnox> smoser: ship it! =)
+[17:09] <smoser> agreed
+=== natefinch-lunch is now known as natefinch
+[17:11] <smoser> hm..
+[17:11] <smoser> xnox,
+[17:11] <xnox> Hmm... can't find robru anywhere
+[17:11] <smoser> now in trying to push a -proposed
+[17:11] <smoser> $ bzr push lp:ubuntu/precise-proposed/cloud-init
+[17:11] <smoser> bzr: ERROR: Server sent an unexpected error: ('error', 'xmlrpclib.Fault', '<Fault -1: "Unexpected Zope exception: TypeError: (\'Could not adapt\', <SuiteSourcePackage ubuntu/precise-proposed/cloud-init>, <InterfaceClass lp.code.interfaces.branchtarget.IBranchTarget>)">')
+[17:12] <xnox> smoser: that's correct. -proposed doesn't exist yet.
+[17:12] <smoser> so how do i create it?
+[17:12] <xnox> smoser: by uploading a package.
+[17:12] <cjwatson> SRU workflow for UDD was never nice.  You need to push to a personal namespace.
+[17:12] <smoser> well, there have been 5 preivous uploads there.
+[17:12] <xnox> smoser: oh.
+[17:12] <cjwatson> lp:~smoser/ubuntu/precise-proposed/cloud-init/blah
+[17:12] <smoser> cjwatson, really? how does it work then ?
+[17:13] <smoser> i've seen other things that i bzr branch'd
+[17:13] <smoser> i think
+[17:13] <cjwatson> Maybe it works if the importer hasn't been broken.
+[17:13] <xnox> smoser: importer fails, because of tag missmatches
+[17:13] <xnox> smoser: so cloud-init branches are stale: http://package-import.ubuntu.com/status/cloud-init.html#2012-07-04 20:18:13.838295
+[17:14] <xnox> utlemming: lp:ubuntu/*/cloud-init are out of date. use $ pull-lp-source cloud-init precise
+=== sabdfl_ is now known as sabdfl
+[17:15] <smoser> so how would we fix that mismatch ?
+[17:15] <smoser> can't i just push override the thing?
+[17:20] <xnox> smoser: that's what causes the missmatch. udd stores old tag revids in sql database, when they don't match what's in lp:ubuntu/package udd throws a hizzy fit
+[17:20] <xnox> smoser: lp:udd =)
+[17:20] <smoser> xnox, http://paste.ubuntu.com/5937102/
+[17:20] <smoser> that is what it doesn't like.
+[17:23] <xnox> smoser: pull-lp-source cloud-init 0.6.2-0ubuntu1 doesn't have that file either. Plus it's evil to do that with 3.0 (quilt) format, as the branch no longer follows udd convention of patches applied.
+[17:23] <smoser> xnox, right.
+[17:23] <smoser> its when i was fighting the importer
+[17:23] <smoser> i gave up at some point.
+[17:23] <smoser> i relaly think its silly to revision control .pc
+[17:24] <smoser> but i gave up fighting a robot over that.
+[17:24] <xnox> it's kind of like slangasek using git-bzr to push packages into lp:ubuntu/* with empty directories, which git ignored yet package had and bzr noticed /o\
+[17:24]  * xnox all your .pc are belong to us
+[17:26] <xnox> smoser: i can purge all branches, and make udd reimport them, but all human commits/pushes will be forgotten.
+[17:26] <xnox> smoser: but branches will become up-to-date based on package history.
+[17:28] <smoser> xnox, i'm actually fine with that. if it works.
+[17:29] <smoser> as long as it wont cause issue with lp:cloud-init
+[17:29] <smoser> concern is if they have staked branch history or something.
+[17:32] <xnox> smoser: nah, udd only can access lp:ubuntu/* branches and they do not share history with lp:$projects at all.
+[17:32] <smoser> xnox, then do it.
+[17:33] <smoser> i'd happily , *very happily* let the import robot win
+[18:20] <dobey> kenvandine: is there a trivial (simple) example of simply requesting credentials for a service, from UOA?
+[18:26] <kenvandine> http://developer.ubuntu.com/resources/technologies/online-accounts/for-application-developers/
+[18:26] <kenvandine> dobey, ^^
+[18:26] <kenvandine> dobey, there is also a QML example in accounts-qml-module
+[18:29] <dobey> python is what i wanted. but that isn't exactly trivial :)
+[18:32] <smoser> xnox, can you / did you kick that importer ?
+[19:50] <Noskcaj> kirkland, i think the best option for testdrive translations is to re-make the .pot and start from scratch
+[19:51] <kirkland> Noskcaj: okay -- then I agree!
+[19:51]  * kirkland is clueless on translations
+[19:52] <Noskcaj> kirkland, We currently have three ones, all with outdated .pot files. the bzr branch, the launchpad translations and the .orig release
+[19:52] <kirkland> Noskcaj: okay;  wouldn't it be best to use LP translations?
+[19:52] <Noskcaj> kirkland, yes, and we still would
+[20:10] <kirkland> Noskcaj: cool
+[20:17] <Noskcaj> kirkland, it seems i'm worse at making .pot files than you.
+[20:24] <kirkland> Noskcaj: do you need anything else from me, at this point, to proceed?
+[20:25] <Noskcaj> I'll continue trying to get this working. I'll need to be part of lp:~testdrive to finish it though
+[20:25] <kirkland> okay
+[20:26] <kirkland> Noskcaj: remind me of your lp id?
+[20:27] <Noskcaj> ~noskcaj
+[20:27] <kirkland> Noskcaj: okay, added
+[20:27] <Noskcaj> thanks
+[20:27] <kirkland> Noskcaj: please continue to run any code merges through roaksoax and I
+[20:27] <Noskcaj> of course
+[20:27] <kirkland> Noskcaj: thanks
+[20:29] <dobey> does autopkgtest get run on armhf for anything?
+[20:47] <gQuigs> I was wondering if all the desktop related lucid bugs on here: http://people.canonical.com/~ubuntu-archive/pending-sru.html could just be closed
+[20:47] <gQuigs>  for example: xserver-xorg-video-openchrome, gnome-power-manager and moon (moonlight)
+=== Guest85887 is now known as LoganCloud
+[20:50] <xnox> dobey: no. only i386/amd64. armhf tests are setup and operated separately by pes, e.g. autopilot tests.
+[20:52] <xnox> smoser: cloud-init is still running.
+[20:52] <xnox> smoser: http://package-import.ubuntu.com/status/
+[20:53] <dobey> oh ok
+[20:54] <smoser> xnox, thank you.
+[20:57] <Noskcaj> kirkland, worrying thing i just found in testdrive; we've been translating most lines twice, the testdrive-gtk file is redundant
+[22:11] <Noskcaj10> kirkland, roaksoax: any idea what's causing http://paste.ubuntu.com/5937932/
+=== kentb is now known as kentb-out
+=== salem_ is now known as _salem

@@ -1,0 +1,362 @@
+[00:53] <phoenix_firebrd> good morning everyone
+[00:59] <BarkingFish> good morning :)
+[01:00] <BarkingFish> Well, it almost is.  Sometime ago, I had a bug with ndiswrapper not building on dkms - Bug #1023645 - it was fixed in quantal, and it's back in raring :(
+[01:00] <ubottu> bug 1023645 in ndiswrapper (Ubuntu Quantal) "ndiswrapper-dkms 1.57-1ubuntu1: ndiswrapper kernel module failed to build [error: ‘struct kernel_stat’ has no member named ‘cpustat’]" [High,Confirmed] https://launchpad.net/bugs/1023645
+[01:00] <BarkingFish> according to the record there, apparently a fix has been released for raring - and it's not worked.  I've had to boot into raring on an old kernel, 3.5.0.22 in order to get ndiswrapper up.
+[01:09] <phoenix_firebrd> BarkingFish: did you update the bug report?
+[01:09] <BarkingFish> yeah, just left a note on there for Julian, the one who set Fix released
+[01:10] <BarkingFish> also mistakenly called him Julius :P
+[01:10] <BarkingFish> https://bugs.launchpad.net/ubuntu/+source/ndiswrapper/+bug/1023645/comments/31
+[01:10] <ubottu> Ubuntu bug 1023645 in ndiswrapper (Ubuntu Quantal) "ndiswrapper-dkms 1.57-1ubuntu1: ndiswrapper kernel module failed to build [error: ‘struct kernel_stat’ has no member named ‘cpustat’]" [High,Confirmed]
+[01:10] <phoenix_firebrd> BarkingFish: whats the kernel version in which bug is present
+[01:10] <BarkingFish> i wish ubottu wouldn't keep doing that :)
+[01:11] <BarkingFish> 3.8.0.1
+[01:11] <BarkingFish> *3.8.0-1
+[01:11] <BarkingFish> brb
+[01:11] <phoenix_firebrd> BarkingFish: it seems someoneelse has posted a commont the same sort
+[01:11] <phoenix_firebrd> later
+[01:14] <BarkingFish> ok phoenix_firebrd, cheers.  
+[01:15] <BarkingFish> It might be good if I post some logs of what i'm getting told when I try to build it manually or with dkms.  It got fixed in quantal, i don't understand what could have gone wrong in the space of 6 months and no upgrades :/
+[01:19] <phoenix_firebrd> BarkingFish: past the log 
+[01:19] <phoenix_firebrd> *paste
+[01:19] <BarkingFish> ok, one moment
+[01:25] <phoenix_firebrd> back in 5 mins
+[01:27] <BarkingFish> ok
+[01:27] <BarkingFish> i need to reboot too.  I think i may be doing something wrong :)
+[01:41] <shadeslayer> Riddell: O_O
+[01:43] <phoenix_firebrd> shadeslayer: morning
+[01:43] <shadeslayer> hi phoenix_firebrd
+[01:43] <shadeslayer> morning to you too
+[01:43] <shadeslayer> and finally someone I can say morning to at a sane time
+[01:43] <phoenix_firebrd> did you succeed with the libkolab tests?
+[01:43] <phoenix_firebrd> :)
+[01:44] <shadeslayer> somewhat
+[01:44] <shadeslayer> as yofel mentioned, the tests open kompare
+[01:44] <shadeslayer> and tried to make kompare quit using a couple of methods
+[01:45] <phoenix_firebrd> shadeslayer: so the developers thought we should be building the source without the pbuilder?
+[01:45] <shadeslayer> dbus, kquitapp ( which is basically just another wrapper over dbus for KDE apps ), using kill `pidof kompare` .... nothing worked
+[01:46] <shadeslayer> I even tried extracting the dbus address from /proc/pid_of_komare/environ
+[01:46] <shadeslayer> phoenix_firebrd: usually tests don't wait for an app to be closed
+[01:47] <shadeslayer> it's not unusal to have tests that require X running
+[01:47] <shadeslayer> but it's unusual to open an app and keep waiting for it to be closed
+[01:47] <phoenix_firebrd> shadeslayer: why is this written pbuilder unfriendly 
+[01:48] <shadeslayer> phoenix_firebrd: because pbuilder is just a packaging tool used by packagers
+[01:48] <shadeslayer> it holds no significance when writing code :)
+[01:48] <phoenix_firebrd> shadeslayer: i know but the devs know that we will be testing with pbuilder right?
+[01:49] <shadeslayer> nope
+[01:49] <BarkingFish> hi again.
+[01:49] <shadeslayer> pbuilder is just a packaging tool
+[01:49] <shadeslayer> hey BarkingFish
+[01:49] <phoenix_firebrd> shadeslayer: so this is why Riddell is not using pbuilder
+[01:49] <shadeslayer> phoenix_firebrd: to each his own :)
+[01:49] <BarkingFish> hi shadeslayer :)
+[01:49] <phoenix_firebrd> BarkingFish: got the log?
+[01:49] <shadeslayer> you can use sbuild or whatever
+[01:50] <shadeslayer> pbuilder is just the de facto standard in Ubuntu land for build packages
+[01:50] <phoenix_firebrd> shadeslayer: the testing would be easy if i use a vm with a full install right?
+[01:50] <shadeslayer> not really
+[01:50] <BarkingFish> the error, phoenix_firebrd  - i forgot and did it in a tty, so couldn't copy / paste
+[01:51] <phoenix_firebrd> BarkingFish: ok
+[01:51] <shadeslayer> you could just add your ppa, install the kolab stuff, try it out and remove the PPA
+[01:51] <shadeslayer> that's what I usually do
+[01:51] <BarkingFish> the upshot is, i can't install manually, because apparently it can't find KBUILD - it needs me to supply the path to KBUILD when i try to manually make ndiswrapper.
+[01:51] <BarkingFish> and i forgot entirely how the hell to get dkms to do anything :)
+[01:51] <phoenix_firebrd> shadeslayer: but the package is only done for raring and i have 12.10
+[01:52] <shadeslayer> ah
+[01:52] <shadeslayer> then setup a VM
+[01:52] <shadeslayer> though you could just use a pbuilder for that too
+[01:52] <shadeslayer> unless it's a graphical app, in which case it's better to do it in a VM
+[01:54] <shadeslayer> see pbuilders --login option
+[01:54] <phoenix_firebrd> shadeslayer: is there a way to take a snapshot of the base image of pbuilder?
+[01:54] <shadeslayer> huh?
+[01:54] <shadeslayer> snapshot?
+[01:54] <phoenix_firebrd> shadeslayer: i saw that already
+[01:55] <phoenix_firebrd> shadeslayer: ya if i use save after login, it will update the base image , but if i want to have the dfault base, i have to create it again right?
+[01:56] <shadeslayer> then don't use --save-after-login?
+[01:56] <shadeslayer> just do a --login
+[01:56] <shadeslayer> and the changes won't be saved
+[01:56] <phoenix_firebrd> shadeslayer: if i want some packages to be installed before the pbuilder starts building
+[01:57] <phoenix_firebrd> ?
+[01:57] <shadeslayer> can you give me a usecase?
+[01:57] <shadeslayer> as to why you would want to do that? I can advise better that way
+[01:57] <phoenix_firebrd> shadeslayer: example i want dbus and dbus-x11 to be installed
+[01:58] <shadeslayer> why?
+[01:58] <phoenix_firebrd> shadeslayer:  in case an app needs as a requirement 
+[01:58] <shadeslayer> then you add it to Build-Depends
+[01:59] <phoenix_firebrd> shadeslayer: no not as a dep , but for some other purpose
+[01:59] <shadeslayer> define 'other purpose'
+[01:59] <shadeslayer> for eg. I added xvfb and other stuff to Build-Depends for libkolab tests
+[02:00] <shadeslayer> even though it's not required to compile libkolab, it's required to run the tests
+[02:00] <phoenix_firebrd> shadeslayer: tell me how can i install something before pbuilder starts 
+[02:00] <shadeslayer> I still don't see why you'd want to do that :P
+[02:01] <phoenix_firebrd> shadeslayer: tell me
+[02:01] <shadeslayer> because let's say you do it, that change will be local, and when you upload it to Launchpad, the build will fail
+[02:01] <shadeslayer> because it doesn't have that dep installed
+[02:01] <shadeslayer> phoenix_firebrd: well .. you could write a hook, or install it by hand and use --save-after-login
+[02:02] <phoenix_firebrd> i min
+[02:08] <phoenix_firebrd> shadeslayer: sorry i was on the phone
+[02:08] <shadeslayer> np
+[02:08] <shadeslayer> I'm about to leave though, in another 10 minutes or so
+[02:09] <phoenix_firebrd> shadeslayer: what you say is right and i know that too, but i want to know how to do that
+[02:09] <shadeslayer> ok, like I said, 2 ways
+[02:09] <shadeslayer> one way keeps the chroot clean
+[02:09] <shadeslayer> the other is quicker
+[02:09] <BarkingFish> i'm going to be going soon, but if anyone can help me with the dkms thing, your assistance would be appreciated. 
+[02:10] <shadeslayer> BarkingFish: tried #ubuntu-x ?
+[02:10] <phoenix_firebrd> shadeslayer: we can't login to the env when pbuilder running?
+[02:10] <shadeslayer> phoenix_firebrd: sure you can
+[02:10] <BarkingFish> I want to run raring with what it came with - not pollute it by having to use an old kernel, so i need to either get dkms to build ndiswrapper, or be able to build it manually.
+[02:10] <BarkingFish> shadeslayer, no, i didn't even know it existed
+[02:10] <BarkingFish> :)
+[02:11] <shadeslayer> heh
+[02:11] <shadeslayer> phoenix_firebrd: sec
+[02:11] <shadeslayer> phoenix_firebrd: https://wiki.kubuntu.org/Kubuntu/Ninjas/BuildEnvironment
+[02:11] <phoenix_firebrd> shadeslayer: so there is not way of running or installing an app expect to add to deps
+[02:11] <BarkingFish> that's for xorg apparently
+[02:11] <shadeslayer> read the section on Pbuilder Hooks
+[02:11] <BarkingFish> this isn't anything to do with xorg from what I can see :)
+[02:11] <shadeslayer> BarkingFish: but isn't DKMS related to X ?
+[02:11] <shadeslayer> oh
+[02:12] <shadeslayer> dunno then, sorry
+[02:12] <shadeslayer> there's also #ubuntu-kernel
+[02:12] <shadeslayer> so *maybe* that helps?
+[02:12] <BarkingFish> aha
+[02:12] <BarkingFish> you bet it does
+[02:12] <shadeslayer> awesome
+[02:13] <shadeslayer> phoenix_firebrd: I don't follow your question
+[02:13] <shadeslayer> when you install an app, it should pull in everything it requires
+[02:13] <shadeslayer> there's a Depends field explicitly for that
+[02:14] <phoenix_firebrd> shadeslayer: tell me how can i install dbus and dbus-x11 before pbuilder starts testing apart from adding it to deps and and with out using the save after login option
+[02:15] <shadeslayer> write a hook
+[02:15] <phoenix_firebrd> shadeslayer: thats nice
+[02:15] <shadeslayer> see the wiki page I just sent you a couple of lines back
+[02:15] <shadeslayer> and note the hook names
+[02:16] <phoenix_firebrd> shadeslayer: i am reading that
+[02:16] <shadeslayer> the hook names signify at what point in the build they're run
+[02:17] <phoenix_firebrd> shadeslayer: so you wrote a hook to kill kompare?
+[02:17] <shadeslayer> no
+[02:17] <shadeslayer> writing a hook is not feasible for that because that hook is not there in the build
+[02:17] <shadeslayer> so I tried killing it via debian/rules
+[02:17] <shadeslayer> note that hooks are only local
+[02:18] <shadeslayer> the buildd has no hooks / extra packages installed
+[02:18] <phoenix_firebrd> shadeslayer: ya, i am asking it purely for local purposes only 
+[02:18] <shadeslayer> it will only read debian/control and install the packages it reads from the Build-Dep line
+[02:18] <phoenix_firebrd> shadeslayer: for testing my things 
+[02:18] <shadeslayer> okay
+[02:18] <shadeslayer> anyway, gtg
+[02:18] <shadeslayer> cya
+[02:19] <phoenix_firebrd> shadeslayer: bye
+[07:25] <jussi> Morning ladies and gents
+[07:56] <highvoltage> hello jussi
+[07:57] <jussi> gday highvoltage!
+[07:59] <jussi> highvoltage: hows things? been a while since we talked...
+[08:00] <highvoltage> jussi: oh well
+[08:01] <highvoltage> jussi: been tough but I have a feeling everything is going to be ok
+[08:01] <highvoltage> jussi: and you?
+[08:01] <jussi> highvoltage: yeah, doing ok, kid growing, work going ok.
+[08:41] <yofel_> phoenix_firebrd: hi, as shadeslayer said, installing packages by hooks is usually not recommended as it's purely local, but look at the B20icecc hook as an example
+[08:41] <yofel_> as those packages only make sense locally they're installed by hook
+=== yofel_ is now known as yofel
+[08:41] <phoenix_firebrd> yofel_: ya i know, but its like the "goto"
+[08:42] <phoenix_firebrd> yofel: for local personal testing purposes
+[08:42] <phoenix_firebrd> yofel: i have some doubts on using amazon ec2
+[08:42] <yofel> sure, it's just that you should usually keep your setup as clean as possible to use different pbuilder images
+[08:42] <yofel> I have a couple of quantal images with different setup for example
+[08:43] <yofel> (different sets of PPA's added etc.)
+[08:43] <phoenix_firebrd> yofel: ok
+[08:43] <phoenix_firebrd> yofel: how much does it cost the community if i use the cloud for an hour?
+[08:44] <yofel> you'll have to ask Riddell what kind of ec2 instance he's using and then look up the prices
+[08:44] <yofel> it's usually not that much though, and a higher productivity is usually woth it
+[08:45] <yofel> *worth
+[08:45] <phoenix_firebrd> yofel:  i am using it past 3 hrs and i am worried about the cost
+[08:45] <phoenix_firebrd> yofel: building fast-md5 now
+[08:46] <phoenix_firebrd> yofel: working with the ec2 is bliss except the char echo speed is slow because of my show internet  connection
+[08:47] <phoenix_firebrd> yofel: probably with a 400 ms delay
+[08:50] <yofel> phoenix_firebrd: well, the pricing is here: http://aws.amazon.com/ec2/pricing/ but I don't know where the instance is nor what kind
+[08:51] <yofel> meh, they still only accept credit cards :(
+[08:55] <phoenix_firebrd> yofel: this one is a partial log http://paste.kde.org/656090/
+[08:55] <phoenix_firebrd> yofel: fast-md5 build fails
+[08:56] <phoenix_firebrd> yofel: from the log the resulting output is a jar
+[09:00] <yofel> the new build.xml has no jar target, so the error is right
+[09:00] <yofel> I know 0 about ant so can't really help here
+[09:01] <phoenix_firebrd> yofel: ok i will drop this build process and exit the ec2 session
+[09:02] <yofel> make sure to power it down if you know that you don't need it anymore
+[09:02] <phoenix_firebrd> yofel: dont it affect someone else?
+[09:02] <yofel> I don't think those sessions are shared, you'll have to ask Riddell though
+[09:03] <phoenix_firebrd> yofel: yesterday he asked me if he can shutdown , i am confused
+[09:04] <yofel> uhm, they charge by runtime, so he was wondering whether you were still using it before he shuts it down
+[09:04] <phoenix_firebrd> yofel: so can i shutdown  now?
+[09:04] <yofel> let's wait for him if you're not sure
+[09:05] <phoenix_firebrd> yofel: in that case i will just exit the session
+[09:06] <phoenix_firebrd> yofel: did you review the packages in my ppa?
+[09:06] <yofel> I did for kolab
+[09:06] <phoenix_firebrd> yofel: I am planning to remove the ssh and gpg keys, will that affect the packages in the ppa?
+[09:07] <yofel> I'm not familiar with the others so it'll have to wait till the evening if you want *me* to review them
+[09:07] <yofel> I can't upload them anyway
+[09:07] <yofel> phoenix_firebrd: nope, only new uploads/commits
+[09:08] <phoenix_firebrd> yofel: so removing the present ssh and gpg keys from launchapd and from my local doesnot affect the packages in the ppa  correct?
+[09:11] <yofel> whatever is already on launchpad isn't affected. The keys are only used to identify you to launchpad from outside of the WebUI
+[09:12] <yofel> the ppa has it's own signature key for the binary packages
+[09:12] <yofel> *its
+[09:12] <phoenix_firebrd> yofel: ok
+[09:13] <phoenix_firebrd> yofel: can you recommend some packages that needs priority from here http://qa.ubuntuwire.com/uehs/no_updated.html
+[09:18] <yofel> hm, I don't recognise pretty much all packages on that list, so there isn't really anything from us left
+[09:18] <yofel> at least nothing with a working watch file
+[09:18] <yofel> (someone remind me to fix the one in kile)
+[09:19] <phoenix_firebrd> yofel: i will remind you.
+[09:20] <yofel> let's see if mom has something
+[09:20] <yofel> https://merges.ubuntu.com/
+[09:20] <yofel> (universe.html)
+[09:21] <yofel> Riddell: is koffice-l10n still used by something?
+[09:22] <yofel> shadeslayer: go merge quassel ;)
+[09:23] <phoenix_firebrd> yofel: is that the merge request dashboard ?
+[09:23] <yofel> phoenix_firebrd: it's the auto-generated list of packages that could be merged with newer versions from debian
+[09:24] <phoenix_firebrd> yofel: so i should pick from here
+[09:24] <yofel> well, I'm not a merge expert, or at least not an expert at teaching it, and quassel seems to be the only thing from our packageset in there
+[09:24] <yofel> let's see if it's worth i
+[09:24] <yofel> *it
+[09:25] <phoenix_firebrd> yofel: ok , shall i try?
+[09:30] <yofel> phoenix_firebrd: doesn't look like it's really worth it on first glance, but feel free to
+[09:30] <yofel> I couldn't find the classic merge guide, the udd one is here and usually works too: http://developer.ubuntu.com/packaging/html/udd-merging.html
+[09:31] <yofel> just use debianlp:sid/quassel as debian branch
+[09:32] <phoenix_firebrd> yofel: ok
+[09:32] <phoenix_firebrd> yofel: i can do this later?
+[09:32] <yofel> there's not a lot to merge here, so it should be not too hard
+[09:32] <yofel> sure
+[09:33] <yofel> if you won't do it it'll probably be forgotten for a while
+[09:33] <phoenix_firebrd> yofel: why?
+[09:33] <yofel> phoenix_firebrd: one thing though. If you do start on it, mention that in the (invisible) comment field on https://merges.ubuntu.com/universe.html
+[09:34] <yofel> phoenix_firebrd: the debian package doesn't really add anything except some maintenance changes compared to our package
+[09:34] <yofel> so usually nothing I would spend my time on. But good as an example
+[09:34] <yofel> (good as an example that actually yields something useful)
+[09:35] <phoenix_firebrd> yofel: i will try this with the help of you or someelse
+[09:35] <phoenix_firebrd> yofel: i am new to this
+[09:37] <yofel> sure. Once you did the merge you've seen most of our packaging activities I think. Except for packaging something from scratch
+[09:37] <yofel> not sure if we have something in the queue for that
+[09:38] <phoenix_firebrd> yofel: i have done packaging from scratch , like the the nepomuk metadata extractor
+[09:38] <yofel> ah good
+[09:40] <phoenix_firebrd> yofel: which reminds me about the python optimization, did you do it? 
+[09:40] <yofel> no, better look for someone else as that looks time consuming from what I've seen and I don't have that much spare time currently
+[09:41] <yofel> (or at least am not motivated enough to spend a few days on that)
+[09:42] <phoenix_firebrd> yofel: ok, the python thing takes 1h 10 min for compiling the ontologies , thats not good right?
+[09:43] <yofel> I tried it, I know, took half an hour even on my i7
+[09:44] <phoenix_firebrd> brb
+[09:51] <phoenix_firebrd> going to building simple-http
+[09:51] <phoenix_firebrd> yofel: what happended to libkolabxml?
+[09:58] <phoenix_firebrd> ah its merged
+[10:00] <allee> afiestas: debian pkgers asked: what's the mininal version of  kdelibs, kdeworkspace that required for (lib)kscreen?  
+[10:01] <yofel> allee: CMakeLists.txt should tell you that
+[10:02] <yofel> but doesn't yay
+[10:02] <yofel> allee: I don't think we've tried to build it with anything older than 4.9
+[10:03] <yofel> allee: kdeworkspace doesn't seem to be needed though
+[10:19] <yofel> afiestas: about kscreen: <pinotree> why does it require qjson 0.8?
+[10:29] <afiestas> allee: no idea tbh
+[10:29] <afiestas> but anything 4.9 and greater works
+[10:30] <afiestas> should work in 4.8 as well I guess
+[10:30] <afiestas> but only 49 and above is supported
+[10:30] <afiestas> yofel: because it does? :33
+[10:30] <afiestas> qjson 0.7.1 is not able to properly serialize floats
+[10:30] <yofel> ah ok
+[10:30] <afiestas> tbh, getting tired of having to asnwer these questions :s
+[10:31] <afiestas> I mean, it is like the 5th time I do, maybe I should document it somewhere
+[10:31] <yofel> heh
+[10:31] <allee> afiestas: can't be wrong :-)
+[10:39] <vassie> Riddell: Hello, new package uploaded ;)
+[10:44] <vassie> Riddell: In the build queue, will keep an eye on it
+[11:22] <Riddell> good stuff vassie 
+[11:23] <Riddell> phoenix_firebrd: a basic ec2 machine costs 8.5UScents an hour
+[11:26] <phoenix_firebrd> Riddell: is that hi or low?
+[11:27] <Riddell> it's cheap for an hour, it's expensive to leave it on for a year
+[11:28] <phoenix_firebrd> Riddell: should i shutdown after finishing my work or just exit the session?
+[11:28] <Riddell> phoenix_firebrd: yes you should terminate it with "poweroff"
+[11:29] <Riddell> or by telling me
+[11:29] <phoenix_firebrd> Riddell: will it affect anyone else
+[11:36] <Riddell> phoenix_firebrd: shutting down a machine?  depends if anyone else is using the machine
+[11:36] <Riddell> they're not usuall shared, the whole point is it's a quick way to get an isolated environment
+[11:37] <phoenix_firebrd> Riddell: ok
+[11:38] <phoenix_firebrd> Riddell: in that case whenever i need, i will ask and after finishing my work i will leave a message for you or if no one else is using i will shutdown
+[11:38] <Riddell> yep
+[11:39] <phoenix_firebrd> Riddell: the user ubuntu is public?
+[11:39] <Riddell> no, when I start a machine it has an ssh key only I have for access and I can add other people's ssh keys
+[11:40] <phoenix_firebrd> Riddell: so you added mine from launchpad?
+[11:41] <phoenix_firebrd> Riddell: I think i am asking the wrong question
+[11:42] <Riddell> phoenix_firebrd: yes I did
+[11:42] <Riddell> vassie: best to bump the ppa version no, 0.9.2-0ubuntu2~ppa1  -> 0.9.2-0ubuntu2~ppa2
+[11:42] <phoenix_firebrd> Riddell: I need my ssh key files in there, what should i do
+[11:43] <Riddell> phoenix_firebrd: I'll add it when starting up a machine for you
+[11:43] <phoenix_firebrd> Riddell: thank you
+[11:50] <vassie> Riddell: ah, thought i had to bump the ubuntu number
+[11:50] <Riddell> vassie: either works but best to bump the ~ppa one in a ppa
+[11:50] <vassie> Riddell: shall i cancel the current build and resubmit?
+[11:50] <Riddell> vassie: no no leave it
+[11:51] <vassie> Riddell: k
+[11:52] <vassie> Riddell: hope this one works, what comes after? runtime deps and backports?
+[11:55] <phoenix_firebrd> Riddell: I am not using the ec2 now
+[12:03] <phoenix_firebrd> bbl
+[12:18] <Riddell> anyone have a UEFI secure boot computer thing?
+[12:18] <Riddell> or know what to buy for one?
+[12:21] <yofel> Riddell: I think anything that's certified for Window 8 should work for that
+[12:49] <Riddell> hmm this says not easy to identify http://superuser.com/questions/396905/how-to-identify-uefi-capable-laptops
+[13:07] <xnox> Riddell: you can download OVMF and set it up in KVM
+[13:08] <xnox> Riddell: these instructions are the best https://wiki.ubuntu.com/SecurityTeam/SecureBoot
+[13:08] <xnox> note that it doesn't save state, so one can provision SB keys and "reboot" with SB mode, but not shutdown kvm & start again.
+[13:21] <Riddell> hmm, lots to read
+[13:24] <Riddell> basse?  basse who made konqi?
+[13:24] <basse> hi. just wanted so say congratulations for kubuntu developers. just finished upgrading from natty to oneiric to precice to quantal
+[13:25] <Riddell> that's quite an upgrade!
+[13:25] <basse> and it all just worked :)  ok. well, lost wireless for a bit, but that was just wrong drivers and easy fix.  and on the process, got 40gigs more space on my harddrive, which is kind of strange. but i like it :)
+[13:25] <basse> Riddell: yes, thats the same basse
+[13:26] <Riddell> welcome back :)
+[13:26] <basse> heh thanks. i've been here all the time tho..  :)  maybe a bit more on the blender side of things.
+[13:28] <Riddell> you can blend us a kubuntu raring ringtail to say thanks :)
+[13:30] <basse> what is that?
+[13:31] <Riddell> the codename for 13.04, a ringtail lemur
+[13:31] <Riddell> which is raring to go
+[13:32] <basse> cute
+[13:33] <BluesKaj> Hey all
+[13:34] <basse> Riddell: so it's like the kde logo and something around that.. looking at the previous logos
+[13:35] <basse> well.. not kde.. but the gear thing 
+[13:36] <Riddell> basse: what is?
+[13:36] <basse> logo..
+[13:37] <Riddell> basse: the kubuntu logo not "gear thing" :)
+[13:37] <basse> :)
+[13:37] <Riddell> anyone fancy testing usb-creator-kde for python 3?
+[13:38] <Riddell> yofel: I thought I deleted koffice-l10n
+[13:38] <Riddell> hmm apparently not
+[13:40] <basse> you wouldn't know anything about the grahic tablet settings in new kubuntu?
+[13:41] <Riddell> yofel: package removed
+[13:41] <Riddell> basse: only that we added the wacom system settings module
+[13:41] <Riddell> but it hasn't got much testing
+[13:41] <basse> i'm running my carefully crafted dual-monitor-swapping script .. and i a bit afraid of trying this nice new tool that basicly looks like that would do the same thing..
+[13:41] <basse> except hotkey..
+[13:42] <basse> wondering if it saves over some settings..  or uses xinput.. 
+[15:44] <cyphermox> shadeslayer: poke
+[15:45] <cyphermox> shadeslayer: looks like I'll be officially postponing working on VPN plugin install automatisation
+[15:45] <cyphermox> (which means unofficially I'll get to it eventually, just not in paid work)
+[15:45] <cyphermox> feel free to hack at it and ask questions though, if you want to patch that early
+=== jessie is now known as jessie|work
+[16:01] <yofel> JontheEchidna: is there some way to run an a command after an apt-get dist-upgrade (or any apt command) finishes? Or are there only dpkg triggers?
+[16:01] <yofel> I was wondering if we could have some popup after a kde upgrade that people should please restart their session.
+[16:01] <yofel> Not sure if the current notification helper behaviour is best for that
+=== fenris is now known as Guest10857
+[18:05] <JontheEchidna> yofel: it's pretty much limited to dpkg triggers
+[18:05] <JontheEchidna> as far as I know
+[18:12] <yofel> hm, ok, thanks :/
+[18:23] <yofel> killing ksmserver is a bad idea
+[18:36] <JontheEchidna> heh
+=== ximion is now known as ximion-afk
+=== ximion-afk is now known as ximion
+=== ximion is now known as ximion-afk
+=== ximion-afk is now known as ximion
+=== cyphermox_ is now known as cyphermox
+[20:19] <shadeslayer> yofel: ack
+[20:19] <shadeslayer> cyphermox: re VPN stuff, I'll look at it next month
+[20:20] <cyphermox> ack!
+=== ximion is now known as ximion-afk
+=== ximion-afk is now known as ximion
+=== ximion is now known as ximion-afk
+=== ximion-afk is now known as ximion
+=== ximion is now known as ximion-afk
+=== ximion-afk is now known as ximion
+=== ximion is now known as ximion-afk
+=== ximion-afk is now known as ximion

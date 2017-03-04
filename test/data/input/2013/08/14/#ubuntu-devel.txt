@@ -1,0 +1,343 @@
+=== Ursinha is now known as Ursinha-afk
+[01:06] <hallyn_> lifeless: i was going to push netcf to saucy so you could test the memory leak, but i seem to nto have upload perms again (was sure it had been added to server set last time...)  but you should be able to build your own from  http://people.canonical.com/~serge/netcf-saucy.debdiff
+[01:06] <lifeless> heh, I'm on raring anyhow; will have a poke
+[01:07] <hallyn_> lifeless: should be almost identical (but will pushd ebdiff for that in just a moment - of course that will need sru to get into the archive :)
+[01:14] <infinity> hallyn_: I can sponsor that for you.
+[01:15] <infinity> hallyn_: Or I can sponsor it to Debian and you can sync.
+=== Ursinha-afk is now known as Ursinha
+[01:22] <hallyn_> infinity: thanks.  originally i was going to wait for ahs3 to sponsor to sid and sync from there, but then i was thinking it would be worth testing in saucy immediately.  so i can go either way.
+[01:23] <infinity> hallyn_: Your call.
+[01:24] <hallyn_> infinity: ok, pls do push to saucy
+[01:24] <hallyn_> meanwhile i should figure out why gnulib (under netcf/) wont' build on jessie
+[01:26] <infinity> hallyn_: Uploaded.  And where is this gnulib jessie build failure?
+[01:26] <infinity> hallyn_: You mean specifically jessie, but not sid?
+[01:27] <infinity> ... in which I discover that I still don't have jessie chroots, only squeeze, wheezy, sid, and experimental.  Oops.
+[01:33] <hallyn_> infinity: yeah, only jessie.  one sec, the failure is:
+[01:33] <hallyn_> http://paste.ubuntu.com/5983302/
+[01:35] <infinity> Erm, that really *only* fails on jessie?
+[01:35] <infinity> Now I need to create a chroot just to satisfy my curiosity. :P
+[01:36] <hallyn_> yeah wheezy and sid were both happy.
+=== JZTech101 is now known as JZ|Zzz
+[01:36] <hallyn_> so it's complaining that gets is undefined when it's being marked insecure?  weird.
+[02:04] <hallyn_> apparently cjwatson worked around a similar bug in grub2, commenting in changelog "Avoid assuming that gets is declared"
+[02:04] <hallyn_> (still waiting for devscripts to install so i can look more closely)
+[02:06]  * hallyn_ sees if he can just steal gnulib_gets.patch
+[02:13] <hallyn_> yup
+[02:29] <infinity> hallyn_: So, uhm, it builds on jessie for me.
+[02:30] <infinity> hallyn_: http://lucifer.0c3.net/~adconrad/netcf_0.2.3-3ubuntu1_amd64.build
+[02:31] <lifeless> hallyn_: builds fine on raring
+[02:31] <hallyn_> infinity: well that's whack.  i needed: http://people.canonical.com/~serge/netcf-jessie.debdiff
+[02:32] <infinity> hallyn_: That patch certainly won't hurt, but curious that it Works For Me. :P
+[02:32] <lifeless> hallyn_: running that build now, will see if it leaks overnight
+[02:32] <hallyn_> infinity: wait, that's the wrong version
+[02:33] <hallyn_> infinity: jessie has 1:0.2.0-5, you compiled netcf_0.2.3-3ubuntu1.dsc ?
+[02:33] <hallyn_> lifeless: great - thanks
+[02:33] <infinity> hallyn_: Oh, fair enough.  But who cares, then?  When 2.3-3 migrates, you're good.
+[02:33] <hallyn_> here's hoping
+[02:33] <infinity> hallyn_: I assume 2.3-3 has a newer gnulib that deals with glibc >= 2.16 correctly.
+[02:34] <hallyn_> infinity: heh, i admit i'm not clear on the package migration path ever since jessie was introduced
+[02:34] <infinity> hallyn_: jessie = testing.  How is that unclear? :)
+[02:34] <infinity> hallyn_: squeeze = oldstable, wheezy = stable, jessie = testing, packages migrate from sid to testing.
+[02:34] <hallyn_> what is it waiting on for the sid version to get to jesie?
+[02:35] <infinity> hallyn_: Looks like migrating it causes libvirt to become uninstallable.
+[02:35] <infinity> hallyn_: Perhaps just waiting for the two to migrate together, I didn't look.
+[02:35] <hallyn_> ok
+[02:36] <hallyn_> so is it more unorthodox to push fixes into jessie then rather than wait for them to get through sid?
+[02:36] <infinity> hallyn_: One generally doesn't upload to testing, except in a freeze.
+[02:37] <infinity> hallyn_: That would be equivalent to an Ubuntu developer uploading to saucy (which we just don't allow, we redirect everything to saucy-proposed, which is our own "unstable")
+[02:37] <infinity> hallyn_: That said, 74 days without migration is impressive, you might want to look at why it breaks libvirt. :P
+[02:38] <hallyn_> gotcha.  so a waste of time is what that was :)
+[02:38] <hallyn_> yeah
+[02:38] <hallyn_> noted for later thsi week
+[02:40] <hallyn_> all right on that note i'm heading to bed - \o
+[02:48] <lifeless> hallyn_: looks good to me
+[02:49] <hallyn_> lifeless: meaning memleak is gone?
+[02:49] <lifeless> yes
+[02:49] <hallyn_> \o/  thanks :)
+[02:49] <lifeless> no growth at all
+[02:49] <hallyn_> maybe i'll just start the sru right now then
+[03:55] <lifeless> hallyn_: actually, it may still be leaking
+[03:55] <lifeless> hallyn_: several hours got a 1M increase.
+[03:55] <lifeless> hallyn_: but massively better...
+=== solid_li1 is now known as solid_liquid
+=== solid_liquid is now known as CodeGuru
+=== CodeGuru is now known as solidliq
+=== JZ|Zzz is now known as JZTech101
+=== ivanka__ is now known as ivanka
+[07:10] <dholbach> good morning
+[07:53] <dholbach> didrocks, good work1
+[07:53] <dholbach> !
+[07:53] <didrocks> dholbach: thanks dude ;)
+[07:58] <Cimi> knocte, pong
+[07:59] <knocte> Cimi: hello, I have a couple of bugs where I would love to get your feedback, do you mind looking when you have a chance? the bug numbers are..
+[07:59] <Cimi> bugs of what?
+[08:00] <knocte> Cimi: ubuntu-themes
+[08:00] <knocte> https://bugs.launchpad.net/light-themes/+bug/945430 and https://bugs.launchpad.net/bugs/1211831
+[08:00] <ubottu> Launchpad bug 945430 in ubuntu-themes (Ubuntu) "Lists lack zebra-striping" [Low,Triaged]
+[08:00] <ubottu> Launchpad bug 1211831 in ubuntu-themes (Ubuntu) "properties of state pseudo-classes are not applied successfully " [Undecided,New]
+[08:00] <Cimi> knocte, I'm no longer working on them atm...
+[08:01] <Cimi> that's why nothing changed in the last cycles..,
+[08:01] <knocte> Cimi: by "them" you mean the ubuntu themes? who should I ping then?
+[08:01] <Cimi> no idea, probably me :-)
+[08:02] <Cimi> I should really recruit someone from community to help approving branches
+[08:03] <knocte> Cimi: I see, well you can give me a nickname and I'll try to convince her/him :)
+[08:05] <Cimi> OK :-)
+=== dholbach_ is now known as dholbach
+=== slomo__ is now known as slomo
+=== seb128_ is now known as seb128
+=== tkamppeter_ is now known as tkamppeter
+[09:57] <didrocks> ev: hey, small question on whoopsie. How did you handle the fact that you propose the settings per user and the daemon is a system one? Do you have specific dbus call and it's the daemon writing the settings?
+=== gusch is now known as gusch|lunch
+[09:58] <ev> didrocks: there's a whoopsie-preferences dbus daemon
+[09:58] <didrocks> ah, so a separate dbus daemon
+[09:58] <ev> ja
+[09:58] <didrocks> then you just write to config files?
+[09:58] <ev> mostly
+[09:58] <ev> it will also start/stop whoopsie
+[09:58] <didrocks> interesting
+[09:58] <didrocks> ok, thanks ev
+[09:59] <ev> sure thing
+[10:05] <rbasak> stgraber, hallyn_: around? I can't install mysql-server-5.5 in an lxc container, because it tries to load an apparmor profile. I understand the reason (thanks to http://s3hh.wordpress.com/2012/05/03/lxc-in-precise-and-beyond/) but I wonder if we can make the apparmor profile load in the container a noop in this case?
+[10:12] <rbasak> stokachu: any news on bug 1121874 please? mysql-5.5 is stuck in saucy-proposed - I think because of a dep8 failure because of the same regression.
+[10:12] <ubottu> bug 1121874 in mysql-5.5 (Ubuntu) "MySQL launch fails silently if < 4MB of disk space is available" [Medium,Triaged] https://launchpad.net/bugs/1121874
+[10:13] <rbasak> It's be nice to get saucy unbroken too, which we can do either by fixing this properly, or by reverting your last upload.
+=== MacSlow is now known as MacSlow|lunch
+=== gusch|lunch is now known as gusch
+[11:50] <seb128> does anyone knowing how image build/tasks work exactly could help us to figure out what's the issue with cups-filters/ghostscript-cups
+[11:50] <hallyn_> rbasak: A few points,
+[11:50] <seb128> the first one is replacing the second and all rdepends got updated to depends on cups-filter (>= 1.0.36) | ghostscript-cups
+[11:50] <seb128> but that seems to make CD builds unhappy for some reasons
+[11:50] <hallyn_> rbasak: 1. stacked apparmor profiles should be coming soon, which will allow the apparmor profile load to work
+[11:50] <seb128> tkamppeter, ogra_: ^
+[11:51] <hallyn_> rbasak: 2. the solutionright now is supposed to be to run the container unconfined (lxc.aa_profile = unconfined), I guess
+[11:51] <hallyn_> rbasak: 3. it seems reasonable to me to have mysql postinst allow apparmor profile load to fail if it is in a container, but we'd have to ask security team how they felt about it...
+[11:52] <hallyn_> jjohansen: mdeslaur: ^
+[11:53] <jamespage> slangasek, hey - I started looking at merging samba from Debian but noticed the unreleased splits of the init scripts that you had done had been dropped in unstable - was that intentional?
+[11:53] <mdeslaur> jdstrand: ^
+[11:54] <hallyn_> lifeless: well, drat, but i'll run it under valgrind again in a few days and see what i can find
+[11:55] <tkamppeter> cjwatson, hi
+[11:55] <mdeslaur> jdstrand: don't we already have code to deal with packages loading in a container?
+=== MacSlow|lunch is now known as MacSlow
+[12:06] <siretart> infinity: I've uploaded libav9 to unstable yesterday, iow, the transition has started now in debian
+[12:10] <rbasak> hallyn_: thanks. I was thinking about something like having the apparmor package arrange for _all_ apparmor loads to fail if they are in containers.
+[12:10] <rbasak> I mean silently noop, not fail.
+[12:11] <rbasak> (or perhaps just a warning to stderr)
+[12:11] <rbasak> Given that we know that lxc security is currently still somewhat limited, I don't think that this would cause a surprise compromise in any real use case.
+[12:18] <hallyn_> rbasak: but also,
+[12:19] <hallyn_> rbasak: given that the host is already protected from mysql by the container profile, the mysql profile isn't as crucial.
+[12:19] <hallyn_> still, stacked profiles ftw :)
+[12:27] <rbasak> Right
+[12:28] <rbasak> Unless the user's expectation is that the inside of the container is protected by the mysql profile too.
+[12:30] <hallyn_> rbasak: that expectation would be wrong as per the server guide :)  They can also expect user namespace protection, that woudl be wrong too.  ("sadly" on both :( )
+[12:30] <hallyn_> lifeless: ok so 'lxc-create -B dir' on a btrfs DOES avoid the subvolume creation for me
+[12:31] <hallyn_> I'm loath to change default behavior, but at the same time we're nto at 1.0 yet, and I'm not sure where we would document this...
+[12:52] <pete-woods> fginther: hi again! I have another project for enabling CI on (https://launchpad.net/indicator-secret-agent) - it should have working support for test and coverage reporting already
+[12:52] <fginther> pete-woods, ack, I can get started on it in a few minutes
+[12:52] <pete-woods> fginther: awesome! :)
+[13:02] <ev> so scan-build is pretty cool
+[13:07] <lifeless> hallyn_: ok, so I'll follow your lead here.
+[13:08] <lifeless> hallyn_: the main feedback I can give you is that while its nice (if you want it) that it happens by default, its very surprising, given that the btrfs docs say subvolumes are == filesystems
+[13:08] <lifeless> hallyn_: you don't expect lxc-create to make a new filesystem by default, after all.
+[13:10] <hallyn_> lifeless: yeah maybe it shoudl be teh default with -B btrfs but not when -B is not set
+[13:10] <hallyn_> meaning, auto-detection of btrfs should perhaps be dropped
+[13:10] <hallyn_> but i'd have to get input from smoser on that at this ponit.  pretty sure last time he said he was ok with that,
+[13:10] <hallyn_> but i'm not sure if by now he's come to depend on it
+[13:10]  * hallyn_ has to go for a drive, bbl
+=== _salem is now known as salem_
+[13:32] <jdstrand> mdeslaur, hallyn_ , rbasak: /lib/init/apparmor-profile-load already has code to not load in a container
+[13:32] <jdstrand> rbasak: are you using /lib/init/apparmor-profile-load or are you using the new apparmor upstart stanza?
+[13:33] <jdstrand> s/apparmor upstart stanza/upstart apparmor stanza/
+[13:45] <tkamppeter> cjwatson, can you have a look at bug 1212239? It seems to be a problem of how the images get generated.
+[13:45] <ubottu> bug 1212239 in cups-filters (Ubuntu) "cups-filters is reported to have unmet dependencies with the latest saucy server installations" [Undecided,New] https://launchpad.net/bugs/1212239
+[13:52] <smoser> lifeless, other than your understanding of some bit of documentation in a man page for btrfs, do you have some reason as to why creating subvolumes is bad ?
+[13:54] <smoser> hallyn_, i think maybe we want something like '-B ANY', '-B NONE', '-B IF_POSSIBLE', '-B btrfs,lvm,none'
+[14:00] <rbasak> jdstrand: that's odd. The upstart script uses /lib/init/apparmor-profile-load, so I'm not sure why that isn't working. Thanks - I'll look in detail again later.
+[14:01] <jdstrand> rbasak: note that apparmor-profile-load does this:
+[14:01] <jdstrand> [ -x /bin/running-in-container ] && /bin/running-in-container >/dev/null 2>&1 && exit 0
+[14:01] <jdstrand> rbasak: so maybe running-in-container doesn't exist or isn't working right?
+[14:02] <rbasak> jdstrand: I'll check. Also, would dh-apparmor in debian/rules affect anything?
+[14:06] <jdstrand> rbasak: it will put in postinst something to load the profile into the kernel
+=== blitzkrieg3 is now known as jmleddy
+[14:19] <jmleddy> cjwatson: hi, we have some more information about the 4k/4k disk issue bug 1065281
+[14:19] <ubottu> bug 1065281 in OEM Priority Project quantal "Installer crashed when trying to partition 4k/4k sector hard disks" [High,In progress] https://launchpad.net/bugs/1065281
+[14:19] <jmleddy> we're finally able to get the machine into a state where it can boot
+=== and`_ is now known as and`
+[14:28] <rbasak> Wow. That's an impressive bug!
+[14:32] <hallyn_> smoser: -B btrfs,lvm,dir I'm ok with.  The others sound too magical.  (and '-B dir' is -B NONE IIUC)
+[14:32] <smoser> literal 'dir' ?
+[14:32] <hallyn_> yes
+[14:32] <hallyn_> dir for directory
+[14:33] <smoser> hallyn_, that would be fine then.
+[14:33] <smoser> the only thing  i dont like is that i dont want ot have to know a list of what is availalbe.
+[14:33] <smoser> thus 'ANY'
+[14:34] <hallyn_> smoser: if there were more possibilities that would make sense...  the thing about lvm and zfs is that there are more parameters
+[14:34] <smoser> ah. well then the comma delimited falls apart anyway
+[14:34] <hallyn_> we could simply assume that if a vg called lxc or zfs group called lxc exists,
+[14:34] <hallyn_> then it's "available".
+[14:34] <smoser> i would do that.
+[14:34] <hallyn_> anyway I'm goign to opena  bug where we can collect this info and make a decision
+[14:35] <hallyn_> smoser: thanks
+[14:35] <rbasak> jdstrand: turns out that there were two errors, and the postinst dh-apparmor warning fooled me into thinking that it was an apparmor problem.
+[14:36] <smoser> i sweare there was a feature in openstack now for termination protection
+[14:36] <rbasak> jdstrand: dh-apparmor does "apparmor_parser -r -T -W "$APP_PROFILE" || true" which fails with "apparmor_parser: Unable to replace "/usr/sbin/mysqld".  Permission denied; attempted to load a profile while confined?\nWarning failed to create cache: usr.sbin.mysqld" but of course doesn't cause the postinst to fail.
+[14:36] <rbasak> jdstrand: thanks for your help.
+[14:37] <jdstrand> rbasak: ah, good, glad I could help :)
+[14:41] <hallyn_> smoser: btw, not sure if lifeless has responded (doesn't look like it) - creating subvolumes can be bad because rsync -va --one-filesystem will not back up the subvolumes
+[14:43] <hallyn_> smoser: lifeless: bug 1212290 is to track this.
+[14:43] <ubottu> bug 1212290 in lxc (Ubuntu) "update backing store defaults at lxc-create" [Low,Triaged] https://launchpad.net/bugs/1212290
+[14:47] <smoser> hallyn_,
+[14:47] <smoser> it seems daily ppa doesnt have
+[14:47] <smoser> source-precise-amd64
+[14:47] <smoser> /usr/share/lxc/templates/lxc-ubuntu-cloud: line 388: /usr/share/lxc/hooks/ubuntu-cloud-p
+[14:47] <smoser> rep: No such file or directory
+[14:47] <smoser> lxc-create: container creation template for source-precise-amd64 failed
+[14:48] <hallyn_> oh, feh.
+[14:48] <hallyn_> stgraber: can you add that to lxc.install?
+[14:48] <hallyn_> (I figured it did the whole hooks directory)
+[14:49] <smoser> hallyn_, so did i.
+[14:49] <smoser> and i never bothered 'make install'
+[14:49] <smoser> :-(
+[14:49] <smoser> sorry
+[14:49] <hallyn_> hm, it does
+[14:50] <smoser> http://paste.ubuntu.com/5985238/
+[14:50] <hallyn_> smoser: your patch didn't add it to hooks/Makefile.am
+[14:50] <smoser> right
+[14:50] <hallyn_> lemme do that and runa  new build
+[14:50] <smoser> you said "i figured it did the whole hooks directory"
+[14:50] <smoser> i figured it did that by default too. but it has a manual list.
+[14:50] <smoser> our "it" was just different in this reguard.
+[14:50] <hallyn_> :)
+[14:51] <smoser> sorry to hvae been a pain hallyn_
+[14:52] <smoser> hallyn_, i could make that have sane behavior if you are interested.
+[14:52] <hallyn_> smoser: np :)  pushed to git, building pkg now... hopefully won't take too long
+[14:52] <smoser> ie, for hooks to install everything not named 'Makefile.*'
+[14:52] <hallyn_> smoser: the makefile?  sure
+[14:52] <smoser> or maybe everything executable
+[14:53] <hallyn_> that'd probably be best
+[14:55] <smoser> hallyn_, it seems non-obvious to me how i'd do it without a grep essentially
+[14:55] <smoser> wildcard in gnu make does not allow for exclude
+[14:56] <hallyn_> can you do some $(filter) crap?
+[14:57] <hallyn_> (just thinking however debian/rules often detects arch)
+[14:58] <hallyn_> smoser: eh, it's probably not worth it.  it's not something that will cause regressions
+[15:02] <smoser> hallyn_, fwiw, this works
+[15:02] <smoser> http://paste.ubuntu.com/5985282/
+[15:03] <smoser> but would include other stuff in that dir
+[15:04] <hallyn_> smoser: looks good to me.  more stuff shouldn't be added that isn't meant to be shipped, but if it is we can just make a $exclude variable including makefile*
+[15:06] <smoser> hallyn_, i'dm be more concerned about stuff in a local checkout
+[15:06] <smoser> getting installed accidently
+[15:06] <smoser> ie, foo.bk1
+[15:07] <hallyn_> heh, you're not supposed to do that, you're supposed to buidl a package :)
+[15:07] <hallyn_> ok, let's leave it as is
+[15:40] <pete-woods> didrocks: good afternoon! I have another project I'd like to do releases of (https://launchpad.net/indicator-secret-agent) - it already has jenkins autolanding activated
+[15:40] <didrocks> cyphermox: I think that one will be for you ^
+[15:41] <didrocks> (please add to the spreadsheet)
+[15:41] <didrocks> pete-woods: any integration tests?
+[15:41] <pete-woods> didrocks: it's not integrated with the shell yet (I'm waiting on the new system dialogue stuff) - but it does have 97% unit test coverage
+[15:42] <didrocks> great ;)
+[15:43] <pete-woods> didrocks: as soon as there is actually some integration happening, I'd be more than happy to write integration tests, however it is I'm supposed to do that (autopilot?)
+[15:44] <cyphermox> yeah
+[15:44] <cyphermox> alright
+=== Ursinha-afk is now known as Ursinha
+=== gusch is now known as gusch|away
+=== JZTech101 is now known as JZ|Zzz
+=== gusch|away is now known as gusch
+=== jasoncwarner__ is now known as jasoncwarner
+[18:23] <infinity> smoser: Your cloud-init SRU has a patch in there (future_utils.patch) with no reference or explanation in the changelog.
+[18:24] <infinity> smoser: Rejecting on that basis, please either reference it so I know what it is, or drop it because it's cruft. :P
+[18:24] <smoser> boo.
+[18:24] <smoser> its just stuff from cloudinit/utils.py in newer versions of cloud-init.
+[18:25] <infinity> smoser: Added to make the azure backport easier, perhaps?
+[18:25] <smoser> yes.
+[18:25] <infinity> smoser: I don't like guessing. :P
+[18:26] <infinity> smoser: But okay, I can let that slide.
+[18:26] <infinity> smoser: It's at least more readable than the azure patch...
+[18:26] <smoser> i'm ok to re-upload if you'll look quickly
+[18:27] <smoser> i kind of a gree that the patch there should have a dep-3 header
+[18:27] <infinity> smoser: I'm looking at it all this afternoon/evening, after some of my walinuxagent concerns are addressed too.
+[18:27] <smoser> so you want to just NAK that and i'll re-upload ?
+[18:27] <infinity> smoser: Rejected.
+[18:28] <ogra_> infinity, did you notice the image build failures today ?
+[18:29] <infinity> ogra_: I'm off sick (can't you tell from my inactivity on IRC), so no. :P
+[18:29] <ogra_> seems we have an issue with the old "tasks resolve deps differently to metapackages" ....
+[18:29] <ogra_> haha, ok, i wont bother you
+[18:29] <ogra_> its a cjwatson thing anyway i think
+[18:30] <infinity> Erm, wait, which image(s) is this that you're talking about?
+[18:30] <infinity> ogra_: Oh, the cups thing?
+[18:31] <ogra_> infinity, yeah
+[18:31] <ogra_> bug 1212239
+[18:31] <ubottu> bug 1212239 in cups-filters (Ubuntu) "cups-filters is reported to have unmet dependencies with the latest saucy server installations" [Undecided,New] https://launchpad.net/bugs/1212239
+[18:31] <smoser> infinity, so i just upload again with same version, right?
+[18:31] <infinity> smoser: Yep.
+[18:31] <ogra_> seems the deps are fine, but the task resolves them backwards
+[18:31] <ogra_> (the "or" dep specifically)
+[18:31] <ogra_> i dont think we ever found a proper solution for that
+=== JZ|Zzz is now known as JZTech101
+[18:37] <smoser> is 'dch -D some-thing --release' broken for anyone else?
+[18:39] <infinity> ogra_: It's because it recommends and conflicts.
+[18:39] <ogra_> oh
+=== Nisstyre-laptop is now known as Nisstyre
+[18:40] <infinity> ogra_: At least, that's my best guess.  And it's a bug either way.
+[18:41] <ogra_> yeah
+[18:41]  * infinity fixes.
+=== JZTech101 is now known as JZ|Zzz
+[18:44] <esing> hi
+[18:44] <esing> How do I install gummiboot on ubuntu
+[18:45] <infinity> ogra_: Uploaded.  Will test in a chroot to make sure this fixes it once it's built.
+[18:46]  * ogra_ hugs infinity 
+[18:46] <ogra_> (dont infect me though)
+[18:55] <smoser> infinity, i uploaded. http://paste.ubuntu.com/5986081/ is diff from last upload.
+[18:56] <infinity> smoser: Shiny, thanks.  Once I get utlemming's fixed walinuxthingee, I'll do them together.
+[19:14] <infinity> ogra_: Right, this should definitely fix it.  The problem was that cups-filters Recommending ghostscript-cups landed the ghostscript-cups package in the ubuntu-desktop task.  So, when you went to install the task, it exploded.
+[19:14] <infinity> ogra_: Can't test for sure until it's all migrated to the release pocket and gs-cups falls out of the task, but logically it makes sense.
+[19:15] <ogra_> yeah, it definitely does ...
+=== JZ|Zzz is now known as JZTech101
+[19:16] <infinity> Bah, and same fix needs to be applied to cups itself.
+=== dosaboy_1 is now known as dosaboy
+[19:39] <infinity> Aaaand, the cups testsuite fails now.  Awesome.
+[19:39] <infinity> tkamppeter: HALP.  CUPS sucks.
+[19:40] <ogra_> hahaha
+[19:41] <infinity> FAIL: 35 error messages, expected 33.
+[19:41] <infinity> So informative.
+[19:45] <tkamppeter> infinity, it worked for me last time, what did you change?
+[19:45] <infinity> tkamppeter: Nothing in the code.
+[19:45] <infinity> tkamppeter: https://launchpad.net/ubuntu/+source/cups/1.6.3-1ubuntu1
+[19:45] <tkamppeter> infinity, and why are you rebuilding CUPS?
+[19:45] <infinity> See above.
+[19:48] <infinity> tkamppeter: As it turns out, though, my motivation for uploading doesn't change whether or not the testsuite works. :P
+[19:49] <infinity> tkamppeter: Anyhow, image builds will continue to be broken until a cups that doesn't Recommend ghostscript-cups actually manages to build.  I leave the testsuite breakage to you, since I suspect you know it much better than I do.
+[19:53] <infinity> E [14/Aug/2013:13:50:34.039455 -0600] Filter "gstoraster" not found.
+[19:53] <infinity> E [14/Aug/2013:13:50:34.039476 -0600] Filter "gstoraster" not found.
+[19:54] <infinity> I'm assuming those are the lines to blame..
+[19:58] <tkamppeter> infinity, I see, CUPS needs to build-depend on cups-filters now where Ghostscript-cups has gone away ...
+[19:58] <infinity> tkamppeter: It does.
+[19:58] <infinity> tkamppeter: I have it installed here, make check still fails with that.
+[20:00] <infinity> tkamppeter: http://paste.ubuntu.com/5986315/
+[20:00] <infinity> tkamppeter: So, something more weird is going on...
+[20:08] <tkamppeter> infinity, the test suite of CUPS is really broken, it should not depend on cups-filters nor on ghostscript (which is needed by gstoraster which the test suite tries to call).
+[20:12] <infinity> tkamppeter: Sure, but both cups-filters and ghostscript *are* build-deps, and are installed.
+[20:12] <infinity> tkamppeter: And it's the server startup that's whining about gstoraster being missing.
+[20:13] <infinity> Well, "missing".  It's obviously there. :/
+[20:43] <tkamppeter> infinity, CUPS does a really bad thing, it links the filters contained in cups-filters one by one into the test filter directory, meaning that CUPS' test suite needs to be changed with every change of cups-filters making the "make check" of CUPS only work with a few versions of cups-filters.
+[20:48] <infinity> tkamppeter: Ah, I *just* got there myself and was about to upload a fix. :)
+[20:48] <tkamppeter> infinity, debian/patches/tests-use-cupsfilters.patch needs to get fixed, adding a link for gstoraster.
+[20:48] <infinity> tkamppeter: Already one it.
+[20:48] <infinity> s/one/on/
+[20:53] <infinity> tkamppeter: Test building, thanks for the extra set of eyes on that one.
+[21:00] <tkamppeter> infinity, did the package build for you now?
+[21:00] <infinity> tkamppeter: Oh, erk.  There's also the IPP compliance tests failing.  Fun.
+[21:02] <infinity> tkamppeter: http://lucifer.0c3.net/~adconrad/cups-str-1.6-2013-08-14-adconrad.html
+[21:19] <brendand> unity isn't showing even if i run it from a terminal
+[21:19] <brendand> what could be missing?
+=== JZTech101 is now known as JZTech101_
+=== JZTech101_ is now known as JZTech101
+=== Nisstyre-laptop is now known as Nisstyre
+[21:26] <infinity> tkamppeter: Yeah, those ipp failures have me a little bit stumped.  Possibly a race between creating fake jobs and looking for them?
+[21:48] <brendand> sorry to ask again, i had to reboot so may have missed a response. i've upgraded to saucy and unity won't seem to start. unity_support_test returns 0 though
+[22:06] <slangasek> jamespage: "dropped in unstable"> how do you mean, "dropped"?  It hasn't been landed yet at all - but that's something I'm working through this week at DebConf as part of the upstarting of the package
+[22:08] <slangasek> jamespage: "dropped in unstable"> how do you mean, "dropped"?  It hasn't been landed yet at all - but that's something I'm working through this week at DebConf as part of the upstarting of the package
+=== james_ is now known as Guest53848
+[22:21] <tkamppeter> infinity, I have done test builds of CUPS 1.6.3 and 1.7rc1 on my Saucy machine now and I get exactly the same IPP failures. Seems to be that something changed in Saucy which breaks the CUPS tests.
+[22:30] <infinity> tkamppeter: Alright, I'm uploading an ugly hack for now to ignore the IPP failures, so this can build and images can be buildable again, but obviously this needs looking into.
+=== salem_ is now known as _salem
+[22:43] <tkamppeter> infinity, thank you very much, and sorry for the inconvenience. The test suite of CUPS is really a problem.
+[23:28] <blitzkrieg3> ay

@@ -1,0 +1,382 @@
+=== hloeung is now known as Guest25647
+=== Guest84363 is now known as wgrant
+=== Guest25647 is now known as hloeung
+=== jelmer_ is now known as jelmer
+=== Maple__ is now known as dis|0
+=== dis|0 is now known as nou_
+=== nou_ is now known as Maple__
+=== Maple__ is now known as s4
+=== s4 is now known as Maple__
+=== Nisstyre-laptop is now known as Nisstyre
+[04:08] <Taggg> hi, can anyone tell me how long a bug fix bzr branch typically takes to get merged into the current development series?
+=== a16g_ is now known as ypwong
+[05:35] <ScottK> It would be nice if someone could look at what's up with python-qt4 and autopkgtests.  It's been running them for about a day now.
+[06:29] <lifeless> ScottK: it's aiming for completeness :P
+[06:30] <ScottK> I'm not in a particular rush for it, as long as it's progressing.
+=== doko_ is now known as doko
+[07:32] <dholbach> good morning
+[07:36] <didrocks> thanks cjwatson for promoting some parts (not sure what triggered you looking into it as Mir was in universe)
+[07:36] <JackYu> dholbach, morning:)
+[07:37] <cjwatson> didrocks: dep-wait from mesa.  Am I good to finish the promotion now that you're around?
+[07:38] <didrocks> cjwatson: I've finished it, just need a publisher run I think
+[07:38] <cjwatson> ok, cool
+[07:38] <didrocks> cjwatson: you can unblock xorg-server and mesa that Laney should have pinned
+[07:38] <dholbach> hi JackYu
+[07:38] <didrocks> (it was to avoid promotion during the week-end and nobody around to look)
+[07:40] <cjwatson> didrocks: it was just xorg-server.  Done
+[07:40] <didrocks> thanks
+[07:41] <cjwatson> there'll be a publisher run starting in two minutes
+[07:41] <didrocks> excellent ;)
+[07:41] <didrocks> cjwatson: FYI, one those are migrated, we'll make unity-system-compositor (depending on this xorg-server + driver patches) entering the archive but staying in universe
+[07:41] <didrocks> basically, it's installing this package that toggles Mir on/off
+[07:41] <cjwatson> ok
+[07:42] <didrocks> so, hopefully, nobody will notice the difference right now, with that additional build-dep without u-s-c
+[07:42] <dholbach> does anyone know why there's "syncpackage: Error: Debian version 1.11-2 has not been picked up by LP yet. Please try again later."?
+[07:43] <dholbach> according to mitya57: "I don't know what to do about that, given that the package was uploaded > two weeks ago."
+[07:43] <cjwatson> I already answered that on #launchpad a while back
+[07:43] <cjwatson> And filed a bug on the broken Debian package that failed import
+[07:44] <cjwatson> http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=718605
+[07:44] <ubottu> Debian bug 718605 in xalan "xalan: fails to unpack with old dpkg-source" [Normal,Open]
+[07:45] <dholbach> ah ok cool - thanks
+=== smb` is now known as smb
+[08:08] <seb128> doko, hey, can you commit your gtk+ changes to the packaging vcs?
+[08:09] <doko> otp
+[08:13] <seb128> jibel, hey
+[08:13] <seb128> jibel, http://people.canonical.com/~ubuntu-archive/proposed-migration/update_excuses.html is blocking poppler because libreoffice tests failed, hitting a disk space issue ... can you do something about it?
+[08:14] <jdoles> cjwatson: I don't know, but it only worked when I did LC_ALL=C pwdx
+[08:16] <cjwatson> As opposed to what other locale?
+[08:16] <cjwatson> And did you get strace output?
+[08:17] <cjwatson> Mind you its strtol calling sequence looks broken
+[08:19] <jdoles> cjwatson: this is broken for example: LC_ALL=en_US.UTF-8 pwdx 23879
+[08:19] <jdoles> Even if the locale would not exist, it should still fall back to C.
+[08:19] <cjwatson> jdoles: please could I see strace output?
+[08:20] <cjwatson> And does the locale not exist in this case?
+[08:20] <cjwatson> aha, never mind, reproduced it
+[08:23] <jdoles> cjwatson: http://paste.kde.org/p7354a5b2/
+[08:23] <jdoles> cjwatson: this is my strace.
+[08:23] <jibel> cjwatson, does something need to be done for poppler blocked on libreoffice or it will be considered anyway because libreoffice is hinted?
+[08:23] <cjwatson> jibel: the autopkgtest needs to be unstuck
+[08:24] <cjwatson> or forced
+[08:24] <cjwatson> jibel: ah, I have a force at an old version.  I'll update it
+[08:24] <cjwatson> seb128: ^-
+[08:24] <seb128> cjwatson, jibel: thanks
+[08:25] <jdoles> cjwatson: I think a tool like pwdx probably also shouldn't be implemented in C in the first place.
+[08:25] <cjwatson> jdoles: Nonsense
+[08:25] <cjwatson> It's in procps, it's perfectly reasonable to be in C
+[08:25] <cjwatson> jdoles: It's a one-line fix, I think.  I'll test shortly and file a Debian bug with the patch
+[08:26] <jdoles> cjwatson: sure, everything can be written in C, but nobody is going to run pwdx in an inner loop and shell would be fast enough.
+[08:26] <cjwatson> It's a system utility, it's not that complex in C
+[08:26] <cjwatson> Shell has its own gotchas
+[08:26] <cjwatson> This is a pointless discussion since I'm not going to reimplement it anyway
+[08:26] <cjwatson> Seeing as I'm not procps upstream
+[08:27] <jdoles> cjwatson: I thought the idea of having your own OS was that you could replace everything you didn't agree on :)
+[08:27] <cjwatson> Eh, that doesn't mean doing work for the sake of it
+[08:27] <cjwatson> This is also a collaborative OS
+[08:28] <jdoles> The way I see it is that a bug was introduced because of premature optimization.
+[08:28] <cjwatson> I'm not going to continue this
+[08:28] <cjwatson> I'm going to fix the bug instead
+[08:29] <jdoles> cjwatson: ok, let'
+[08:29] <jdoles> s just end the discussion there.
+[08:33] <didrocks> cjwatson: just noted a funny thing, RAOF has xorg-server depending on mir on powerpc where Mir doesn't build on powerpc
+[08:34] <didrocks> so I guess it will get block on proposed, I think xorg-server should treat powerpc as mir-less
+[08:39] <cjwatson> didrocks: Agreed
+[08:39] <cjwatson> Presumably that's easy enough
+[08:40] <didrocks> cjwatson: the drivers are patched to use some xorg - xmir API, they need to #ifdef to return false on powerpc I guess
+[08:41] <RAOF> BAh.
+[08:41] <cjwatson> I suppose so
+[08:41] <RAOF> Well, they (should) build and work against a non-XMir server, so it's a simple matter of arch-restriction.
+[08:41] <didrocks> RAOF: as the drivers have some xorg-xmir api call, does the #ifdef thing make sense to unblock them? (and so, removing the mir build-dep on powerpc)?
+=== a16g_ is now known as ypwong
+[08:42] <didrocks> ah nice, you already have that detection when building
+[08:42] <didrocks> (xorg)
+[08:42] <RAOF> Yup.
+[08:42] <RAOF> Less well tested, but *should* work.
+[08:42] <didrocks> RAOF: want to try that upload? ;)
+[08:43] <RAOF> The life of ppc
+[08:43] <didrocks> heh, indeed :)
+[08:43] <RAOF> What's the arch string for ppc? ppc?
+[08:43] <RAOF> Ah, powerpc.
+[08:43] <cjwatson> Debian architecture or GCC?
+=== dholbach_ is now known as dholbach
+[08:44] <RAOF> Debian arch; I see it's powerpc.
+[08:44] <cjwatson> Indeed
+[08:48] <cjwatson> jdoles: http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=718766
+[08:48] <ubottu> Debian bug 718766 in procps "pwdx: fails with "invalid process id" when run in a nonexistent locale" [Normal,Open]
+[08:54] <chrisccoulson> hmmm, any idea what might have caused https://launchpad.net/~ubuntu-mozilla-security/+archive/ppa/+build/4848763 ? (and should i just retry it?)
+[08:56] <lifeless> cjwatson: in case you missed scrollback - I've finally files bug 1208268 about my grub issue on 3TB GPT disks... any pointers on moving forward will be much appreciated
+[08:56] <ubottu> bug 1208268 in grub2 (Ubuntu) "grub not recognising my GPT+mdadm+lvm layout" [Undecided,New] https://launchpad.net/bugs/1208268
+[08:56] <ogra_> chrisccoulson, i'd ask in #launchpad ... probably there is a way to prevent you from having to rebuild
+[08:57] <maxb> I do not think there is
+[08:59] <RAOF> didrocks: Enjoy your PPC upload.
+[08:59] <ogra_> RAOF, oh, should XMir work on armhf ?
+[08:59] <didrocks> RAOF: I'll surely enjoy it deeply! Thanks :)
+[08:59] <cjwatson> lifeless: Ah, not sure I'm going to have time to have a look for some time unfortunately - got a lot to do before debconf next week
+[08:59]  * ogra_ ponders to trash his chromebook for a try :)
+[09:00] <didrocks> ogra_: you will need to install unity-system-compositor once available to trash it properly though :)
+[09:00] <ogra_> hehe
+[09:00] <RAOF> ogra_: Yes, as long as your armhf system has an nvidia, radeon, or intel GPU :)
+[09:00] <cjwatson> lifeless: I guess grub-probe -vv is always useful
+[09:00] <ogra_> well, i'm not sure Mir itself will work yet
+[09:01] <lifeless> cjwatson: thats ok, I have a workaround (USB key ;))
+[09:01] <lifeless> cjwatson: attaching that now
+[09:01] <ogra_> RAOF, mali ... same board as the nexus 10 (manta)
+[09:01] <cjwatson> (with whatever grub-probe call is actually failing)
+[09:02] <lifeless> cjwatson: it installs fine, the error is when you reboot
+[09:02] <RAOF> ogra_: No dice, at least until we do a generic egl-based XMir driver.
+[09:03] <ogra_> yeah, i feared that
+[09:04] <cjwatson> lifeless: oh dear, that's unusual
+[09:05] <cjwatson> lifeless: Might be worth trying installing with --debug-image=all and seeing what the last screenful of output is
+[09:05] <cjwatson> (Though I appreciate this may be a pain to iterate on)
+[09:06] <lifeless> cjwatson: last screenful of output from the install, or from booting ?
+[09:06] <cjwatson> lifeless: install
+[09:06] <cjwatson> err
+[09:06] <cjwatson> sorry, misunderstood
+[09:06] <cjwatson> lifeless: booting :)
+[09:07] <lifeless> cjwatson: when I previously mentioned this to you you suggested getting some disk sectors might let you reproduce? I will capture a photo of the boot shortly...
+[09:07] <didrocks> RAOF: seems you have to do a .install file dance
+[09:07] <didrocks> https://launchpadlibrarian.net/146820236/buildlog_ubuntu-saucy-powerpc.xorg-server_2%3A1.14.2-0ubuntu5_FAILEDTOBUILD.txt.gz
+[09:07] <lifeless> right now... for dev in /dev/sdb /dev/sdc /dev/sdd /dev/sde; do ....
+[09:08] <RAOF> didrocks: Whoops. Oh, no, I just need to be less stupid
+[09:14] <cjwatson> seb128: so the remaining poppler blocker is that docvert-libreoffice depends on python-uno, which has been removed in the latest libreoffice in favour of python3-uno
+[09:15] <seb128> cjwatson, I was *just* looking at that as well/building the python-uno rdepends list
+[09:15] <cjwatson> seb128: the actual Python code in question is (confusingly) in docvert rather than docvert-libreoffice, but it does otherwise seem like a real problem
+[09:15] <cjwatson> core/lib/pyodconverter/pyodconverter.py
+[09:16] <cjwatson> Do you know if there was a particular reason to aggressively remove python-uno in advance of Debian?
+[09:18] <seb128> cjwatson, I don't, trying to have a look
+[09:19] <cjwatson> I would have expected Sweetshark to use grep-dctrl or similar to search for reverse-dependencies before dropping the binary ...
+[09:20] <seb128> cjwatson, not explanations with the commit: http://anonscm.debian.org/gitweb/?p=pkg-openoffice/libreoffice.git;a=commitdiff;h=a2d74f4a43949da2710a29e63fd3a9d87f679ecf
+[09:21] <cjwatson> Indeed
+[09:21] <seb128> cjwatson, and Sweetshark is off on holidays this week :/
+[09:21] <cjwatson> (What on earth was that Conflicts doing there ...)
+[09:21] <cjwatson> Oh, I suppose it actually ships stuff in /usr/lib/libreoffice/ as well
+[09:22] <cjwatson> seb128: So, I could demote docvert to -proposed for now, if you could make sure to get Sweetshark to sort this out when he gets back
+[09:22] <seb128> cjwatson, that would be great, thanks
+[09:23] <lifeless> cjwatson: output in a photo linked on https://bugs.launchpad.net/ubuntu/+source/grub2/+bug/1208268
+[09:23] <ubottu> Launchpad bug 1208268 in grub2 (Ubuntu) "grub not recognising my GPT+mdadm+lvm layout" [Undecided,New]
+[09:23] <lifeless> cjwatson: let me know if you can't access it and I'll shuffle it into LP itself
+[09:25] <cjwatson> lifeless: thanks, yes I can.  FWIW GRUB thinks your drive doesn't have LBA extensions
+[09:25] <cjwatson> Apparently
+[09:25] <lifeless> cjwatson: interesting... it is a 3TB drive on a fairly old machine, but linux handles the entire drive just peachy
+[09:26] <lifeless> cjwatson: and the bios boot partitions are at the front, deliberately.
+[09:26] <cjwatson> Not saying it's necessarily right, but that's why it's failing
+[09:26] <cjwatson> I suspect there's RAID metadata or something at the back
+[09:26] <lifeless> sure; just erring on the side of verbal diarrhea
+[09:27] <cjwatson> All hail --debug-image=all for making this clear in a single screenshot though :)
+[09:27] <lifeless> :>
+[09:28] <mlankhorst> ever since sweetshark has left on vacation I've been hearing a lot less about libreoffice!
+[09:28] <cjwatson> Linux will be using a proper driver rather than going through the BIOS
+[09:29] <lifeless> cjwatson: yeah - 2007 motherboard :)
+[09:29] <cjwatson> Really shouldn't be lacking LBA
+[09:30] <lifeless> definitely has some LBA support; previous drives were 1TB's, which IIRC were also in the LBA only world.
+[09:30] <cjwatson> Though of course it's the BIOS version that matters, not the motherboard, but even so
+[09:31] <cjwatson> Either GRUB thinks that INT 13h extensions aren't present at all, or it tried one of them and got the impression they were broken
+[09:32] <cjwatson> seb128: Demoted - https://launchpad.net/ubuntu/+source/docvert/+publishinghistory
+[09:35] <cjwatson> lifeless: Oh, I had a factor of two error, I had the limit in my head as 4TB not 2TB
+[09:35] <lifeless> cjwatson: googling is suggesting that LBA has a 2.1GB limit of some sort.
+[09:35] <cjwatson> lifeless: Traditional BIOS can't reliably read from over 2TB
+[09:35] <doko> RAOF, xorg-server, please do the same for arm64 (as for powerpc)
+[09:37] <lifeless> cjwatson: so, understood. But grub shouldn't need to to bring this up.
+[09:37] <cjwatson> lifeless: In theory the call is 64-bit-capable (https://en.wikipedia.org/wiki/INT_13H#INT_13h_AH.3D42h:_Extended_Read_Sectors_From_Drive), but in practice my understanding is that you're hosed without UEFI
+[09:37] <lifeless> cjwatson: it's not showing the mdadm filter being invoked at all, for instance.
+[09:37] <cjwatson> lifeless: So is - look at the mentions of diskfilter in that screenshot
+[09:37] <cjwatson> grub's raid module is a layer on top of diskfilter
+[09:37] <lifeless> ok.
+[09:38] <cjwatson> There's one remaining way I can think of in which this might be GRUB's fault
+[09:38] <cjwatson> What RAID version are you using on this array?
+[09:39] <cjwatson> metadata version, I mean
+[09:40] <lifeless>         Version : 1.2
+[09:40] <cjwatson> So that stores the metadata 4K from the start of the device
+[09:41] <lifeless> thats my understanding :)
+[09:41] <cjwatson> It's possible that GRUB tries to read from the end of the partition when checking for the presence of some other metadata version, and then incorrectly thinks LBA is completely broken and falls back to CHS
+[09:42] <lifeless> that sounds plausible to me
+[09:42] <lifeless> this is a problem that will self solve itself eventually
+[09:43] <cjwatson> If that is the case, then http://paste.ubuntu.com/5950617/ should help
+[09:44] <cjwatson> (Could doubtless be tighter as the addressable CHS range is smaller than that)
+[09:45] <lifeless> I'll try rolling a custom package with that , but not tonight
+[09:45] <cjwatson> Also that code has wrong error handling, so isn't applicable as-is
+[09:45] <lifeless> oh, I shouldn't try the patch?
+[09:47] <lifeless> of course, content in /boot/ could be too high up the disk, but thats a different discussion; I can make a vg and shuffle it to the front once we get far enough up the stack
+[09:48] <cjwatson> lifeless: Perhaps http://paste.ubuntu.com/5950640/ instead
+[09:50] <lifeless> linked in the bug.
+[09:50] <lifeless> Thanks for making the time to eyeball this.
+[09:52] <cjwatson> ta
+[09:57] <smartboyhw> How long does a uploaded package wait in the queue before it gets approved into -proposed?
+[09:57] <cjwatson> smartboyhw: Which queue?
+[09:57] <smartboyhw> cjwatson, raring
+[09:57] <cjwatson> Which queue in raring?
+[09:57] <smartboyhw> cjwatson, SRU ofc
+[09:57] <cjwatson> (new, unapproved, ...)
+[09:58] <smartboyhw> unapproved
+[09:58] <cjwatson> can't give you a particular time period, depends on SRU team members having time to review
+[09:58] <ogra_> shouldnt promotion to -proposed be immediately ?
+[09:59] <cjwatson> ogra_: no, not for unapproved
+[09:59] <smartboyhw> ogra_, obviously, it needs a SRU team member to approve it in...
+[09:59] <ogra_> ah
+[09:59] <cjwatson> this is ibus-cangjie I presume
+[09:59] <smartboyhw> cjwatson, yeah...
+[09:59] <smartboyhw> Stuck for 25 days
+[09:59] <cjwatson> I'll have a look now
+[09:59] <smartboyhw> cjwatson, many thanks!
+=== psivaa_ is now known as psivaa
+[10:01] <cjwatson> smartboyhw: seems fine, apologies for the delay.  accepted
+[10:01] <smartboyhw> cjwatson, great! Thanks
+[10:24] <seb128> doko,  lp:~ubuntu-desktop/gtk/ubuntugtk3 for the gtk packaging vcs btw
+[10:25] <ev> seb128: do you happen to know if there's plans for a first use screen on Touch?
+[10:25] <ev> or who would know the answer to that? :)
+[10:26] <seb128> ev: there is, Cimi is working on it
+[10:26] <ev> seb128: how convenient. He often sits next to me.
+[10:26] <ev> cheers
+[10:26] <seb128> yw
+[10:26] <Cimi> ev, see you friday :P
+[10:26] <ev> is there a blueprint/google doc that you're aware of?
+[10:26] <ev> Cimi: :D
+[10:27] <Cimi> ev, shared
+[10:27] <ev> thanks!
+[10:31] <wizard_A> how to get the callback function that is called when someone right clicks on a file..
+[10:31] <didrocks> RAOF: I think I'll do another xorg-server upload, there is an extra build-dep on powerpc from the -dev package
+[10:48] <seb128> cjwatson, seems like docvert still makes libreoffice unhappy?
+[10:48] <seb128> cjwatson, or does it need another publisher cycle?
+[10:48] <cjwatson> Oh, damn, I forgot to block it
+[10:50] <wizard_A> which portion of the code does get executed when someone right clicks on a file in ubuntu??
+[10:50] <cjwatson> seb128: should work next run
+[10:51] <seb128> cjwatson, thanks
+=== MacSlow is now known as MacSlow|lunch
+[10:57] <seb128> cjwatson, great, it migrated this time ;-)
+[10:57]  * seb128 just got a bunch of archive emails about the poppler stack hitting saucy
+[10:58] <wizard_A> i want to work on feature of ubuntu, please help me get started
+[10:59] <cjwatson> wizard_A: there's no single answer to that question; it depends on the context where you're right-clicking
+[11:00] <wizard_A> yes
+[11:00] <cjwatson> like, is it on the desktop, or the open dialog in some application (which?), or ...
+[11:00] <wizard_A> a file icon within the directory browser
+[11:01] <cjwatson> the directory browser, as in nautilus?
+[11:01] <wizard_A> what is nautilus??
+[11:02] <wizard_A> yes
+[11:02] <cjwatson> nautilus is the file manager from GNOME
+[11:03] <wizard_A> yes thats where i was meaning.......
+[11:03] <wizard_A> sorry i am just begining to develop so i stumble upon many things... sorry for that
+[11:06] <seb128> wizard_A, what are you trying to achieve? add a menu item to that right click menu?
+[11:06] <wizard_A> yes
+[11:06] <cjwatson> Right, so this is why you need to know which application you're right-clicking in.  The widget toolkit (usually GTK+ or Qt - GTK+ in the case of nautilus) implements a lot of generic behaviour, but nautilus does its own context menus
+[11:07] <cjwatson> It connects to the "button-press-event" signal on its view and detects right button presses
+[11:07] <cjwatson> (well, button 3)
+[11:09] <cjwatson> I believe that the contents of the context menu are defined in src/nautilus-directory-view-ui.xml
+[11:09] <seb128> you can add items through libnautilus-extension
+[11:09] <seb128> look at ubuntuone-client-gnome or file-roller for examples
+[11:09] <cjwatson> Yeah, that would normally be better
+[11:09] <seb128> e.g file-roller add "extract here..." items when you right click on an archive
+[11:10] <seb128> wizard_A, e.g https://git.gnome.org/browse/file-roller/tree/nautilus/nautilus-fileroller.c
+[11:10] <cjwatson> seb128: oops, I may have been wrong in asking you to patch shared-mime-info - looks like I should have shipped my own .xml file in click (according to upstream)
+[11:11] <cjwatson> so I'll do that and revert the shared-mime-info change
+[11:11] <seb128> cjwatson, ok, works for me. What's the rational? that the number of handlers for that type is mostly going to be low?
+[11:11] <wizard_A> what i am trying to achieve is: when someone already has vlc installed onto system then any .mp3, .avi, .mkv etc files right click option should contain a menu as "Add to vlc media playlist".
+[11:12] <cjwatson> seb128: that it's basically specific to a single package
+[11:12] <seb128> cjwatson, I never understood where they draw the line, seems to depends of the maintainer of the day, they include e.g the deb and rpm types
+[11:12] <cjwatson> https://bugs.freedesktop.org/show_bug.cgi?id=66689
+[11:12] <ubottu> Freedesktop bug 66689 in freedesktop.org.xml "Add application/x-click type" [Enhancement,New]
+[11:13] <seb128> ok, that makes sense
+[11:13] <cjwatson> meh, I'm happy to go with the flow for now rather than fight upstream about it
+[11:13] <cjwatson> save energy for more useful fights :)
+[11:14] <cjwatson> There's python-nautilus too
+[11:14] <seb128> indeed
+[11:19] <wizard_A> cjw: does the patch mean that its already done??
+[11:24] <cjwatson> wizard_A: what patch?
+[11:24] <wizard_A> patch for bug66689
+[11:24] <cjwatson> wizard_A: that was one suggested patch which I'm now going to do in a different way
+[11:24] <cjwatson> wizard_A: but it was unrelated to the conversation with you
+[11:25] <wizard_A> oh i see
+[11:26] <wizard_A> so how do i get started with my idea, i really want to learn contributing to ubuntu..
+[11:31] <seb128> wizard_A, look at https://git.gnome.org/browse/file-roller/tree/nautilus/nautilus-fileroller.c they don't something similar to archive types
+[11:31] <seb128> cjwatson, btw, did you see my ping about click packages/install size on friday evening?
+[11:33] <cjwatson> seb128: I did but you'd logged off by the time I could respond
+[11:34] <cjwatson> seb128: I don't think I agree that owned data should be the responsibility of click itself to figure out, because (longer-term) click wants to be independent of things like Ubuntu Touch and details of where an app stores its user data seem to be rather specific to the environment
+[11:35] <cjwatson> seb128: So I agree we should only implement this once, but my instinct is to say that it should be one layer up from click
+[11:35] <seb128> ok
+[11:36] <seb128> so you would add a new service/library to do that? or do you see a place in our current stack where it would make sense to add the feature?
+[11:36] <seb128> lool, ^ fyi
+[11:38] <cjwatson> seb128: I'm not sure what the right location is.  Putting it in the Click PackageKit plugin would have the same convergence problem
+[11:43] <seb128> cjwatson, ok ... do you think that's something worth discussing on a mailing list (which one)?
+=== sgnb` is now known as sgnb
+[11:55] <cjwatson> seb128: ubuntu-appstore-devel I suppose
+[11:56] <seb128> cjwatson, ok, I will do that, thanks
+=== MacSlow|lunch is now known as MacSlow
+=== _salem is now known as salem_
+=== bregma_ is now known as bregma
+[14:01] <cr3> how can I do something like a mount of an image when building a package? the build process seems to be done in a fakeroot, so I can't just use mount nor can I use sudo
+[14:06] <brendand> cr3, baguette
+[14:08] <ogra_> cr3, fakechroot ... but not sure that will allow mounts ... have a look at the ubuntu-touch-generic-initrd package i'm using fakechroot in there to gain (virtual) root access
+=== dous_ is now known as dous
+[14:17] <stokachu> doko: could i bother you to take a look at a couple of bugs?
+[14:18] <doko> stokachu, I'll try
+[14:18] <stokachu> doko: bug 1121874 and bug 1207123
+[14:18] <ubottu> bug 1121874 in mysql-5.5 (Ubuntu Raring) "MySQL launch fails silently if < 4MB of disk space is available" [Medium,Triaged] https://launchpad.net/bugs/1121874
+[14:18] <ubottu> bug 1207123 in gnutls26 (Ubuntu Precise) "Key usage violation in certificate has been detected" [Undecided,New] https://launchpad.net/bugs/1207123
+[14:18] <stokachu> was hoping to get these uploaded to start the sru process
+[14:19] <doko> didrocks, seb128, RAOF: please would disable MIR related things for arm64 too? The ones you do disable for powerpc
+[14:19] <didrocks> doko: I saw your upload, will do in the following upload when we have something to push
+[14:19] <didrocks> (we'll be needed anyway for -ati and -nouveau)
+[14:19] <doko> ok, thanks
+[14:20] <jono> who is taking care of audio?
+[14:20] <jono> Skype audio no longer worksin Saucy
+[14:20] <seb128> doko, thanks for commiting the gtk changes to the vcs ;-)
+[14:20] <seb128> jono, diwic and TheMuso
+[14:20] <jono> thanks se
+[14:20] <jono> seb128,
+[14:20] <jono> diwic, TheMuso are you aware of this issue?
+[14:21] <seb128> jono, btw, is there still a vUDS planned for this month (or next one)?
+[14:21] <jono> seb128, yep, end of month
+[14:21] <seb128> jono, I still didn't see an announce for it (hint: list user here)
+[14:22] <jono> email about schedulinggoing out this week
+[14:22] <seb128> jono, would be nice to announce it...
+[14:22] <jono> seb128, will go out this week
+[14:22] <seb128> thanks
+[14:22] <jono> np
+[14:28] <broder> cjwatson: sorry for not getting this up sooner - the shell i was setting things up in died - but first lintian run for saucy is up (http://lintian.ubuntuwire.org/saucy/), and the cronjobs should have it caught up the rest of the way soon
+[14:28] <cjwatson> Lovely, thanks
+=== jbicha is now known as Guest92478
+[14:30] <jono> diwic, TheMuso see https://bugs.launchpad.net/ubuntu/+source/pulseaudio/+bug/1208485 for the Skype audio bug report
+[14:30] <ubottu> Launchpad bug 1208485 in pulseaudio (Ubuntu) "Skype audio in Saucy broken" [Undecided,New]
+[14:32] <diwic> jono, are you using skype from the partner repository ?
+[14:32] <diwic> jono, there is a workaround since ~ a week back or so
+[14:33] <diwic> jono, at least for one bug, not exactly sure if this is the same.
+[14:33] <diwic> jono, also have you confirmed with others if this is a generic problem or hardware specific?
+[14:37] <jono> diwic, I am using Skype from skype.com
+[14:37] <jono> I haven't confirmed with others
+[14:37] <jono> diwic, what is the workaround?
+[14:38] <diwic> jono, start skype from the terminal like this: "PULSE_LATENCY_MSEC=50 skype"
+[14:40] <diwic> jono, start skype from the terminal like this: "PULSE_LATENCY_MSEC=50 skype"
+[14:40] <jono> diwic, didnt work
+[14:40] <jono> removing this version of skype and installing the partner one
+[14:56] <diwic> jono, so I tested here. Skype works fine here, the second time. echo123 hang up on me the first time, but I doubt that was PulseAudio related.
+[15:45] <cr3> ogra_: sorry for the lag, I ended up build-depending on p7zip-full to extract what I need from an ISO with the 7z command.
+[15:46] <ogra_> ah, cool solution
+[15:46] <jodh> jibel, pitti, slangasek: FYI, having issues using nested kvm on openstack: 200% cpu usage with occasional dashes of kernel panics (bug 1208455).
+[15:46] <ubottu> bug 1208455 in linux (Ubuntu) "general protection fault running apt-get inside nested kvm VM on OpenStack" [Undecided,Incomplete] https://launchpad.net/bugs/1208455
+[15:46] <slangasek> hmm
+=== mako_ is now known as mako
+=== sraue_ is now known as sraue
+[17:50] <doko> seb128, which one was the package we had issues with one gcc-linaro merge?
+[17:50] <seb128> doko, gtk+3.0
+[17:50] <seb128> doko, https://bugs.launchpad.net/ubuntu/+source/gcc-4.8/+bug/1194123
+[17:50] <ubottu> Launchpad bug 1194123 in Linaro GCC "[gcc-linaro wrong-code regression] gcc 4.8.1-2ubuntu1 to 4.8.1-3ubuntu1 breaks gtk on armhf" [Undecided,Confirmed]
+[17:52] <doko> seb128, could you recheck this with the gcc-4.8 from the ubuntu-toolchain-r/test ppa?
+=== AbsintheSyringe2 is now known as AbsintheSyringe
+[19:02] <dkessel> hello, i have sent a mail to the ubuntu-devel-discuss ML three days ago. I only got an automatic response that my mail is pending approval by a moderator. what can i do?
+[19:02] <dkessel> should i just ask/present the problem here or should i wait?
+[19:04] <rbasak> dkessel: I don't think ubuntu-devel-discuss is moderated for subscribers. Are you sure it's ubuntu-devel-discuss (and not ubuntu-devel) that you sent the message to, and that you sent the email from your subscription address?
+[19:05] <dkessel> rbasak, hm. the response did not state that i have to subscribe...
+[19:05] <dkessel> i have not subscribed
+[19:06] <rbasak> dkessel: it's pretty common to require subscription to avoid moderation. Most mailing lists do it to avoid spam.
+[19:06] <rbasak> dkessel: easiest way to get it through is to subscribe, then send from your subscription address. You can even disable delivery once subscribed if you don't want to actually "subscribe".
+[19:07] <dkessel> rbasak. ok, thank you.
+[19:07] <rbasak> dkessel: I suggest that you subscribe, cancel the original message (a link to do that is in the "awaiting moderation" email, and then re-send. That way you don't need to wait on a moderator (I'm not sure who that is).
+[19:07] <rbasak> None of this applies to the ubuntu-devel list, which is moderated for non-Ubuntu-developers.
+[19:08] <rbasak> )
+[19:08] <dkessel> rbasak, i am afraid i have already deleted the automated response...
+[19:10] <dkessel> ok, mail is out
+=== olli__ is now known as olli
+[21:32] <darkxst> is there some way I can generate apt source lines from LP-PPA-* tags (LP-PPA-gnome3-team-gnome3)
+[21:32] <darkxst> Software properties api wants ppa:x/y style input
+[21:42] <darkxst> cjwatson, ^
+=== Pengoo is now known as Sabey
+=== salem_ is now known as _salem
+=== Guest93127 is now known as nitrodex

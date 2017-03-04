@@ -1,0 +1,426 @@
+[00:02] <xnox> ScottK: good night. NMU-uploaded, but it's not in launchpad yet to be available for sync.
+=== jbicha is now known as Guest92929
+=== hloeung is now known as Guest71555
+=== Guest71555 is now known as hloeung
+=== Guest92929 is now known as jbicha_
+=== Ursinha is now known as Ursinha-afk
+=== Ursinha-afk is now known as Ursinha
+=== Ursinha is now known as Ursinha-afk
+[01:41] <ScottK> xnox: Thanks.
+[02:24] <goddard> anyone working on this? https://bugs.launchpad.net/sni-qt/+bug/1209106
+[02:24] <ubottu> Launchpad bug 1209106 in sni-qt "system tray icon is next to launcher" [Undecided,New]
+=== salem_ is now known as _salem
+=== gavin__ is now known as gavinguo
+[04:23] <ScottK> xnox: It's there now.  I took care of syncing it.
+[05:23] <pitti> Good morning
+[05:50] <stgraber> morning pitti
+=== milli` is now known as milli
+[06:49] <u-k-i-t> #1000182 Can we look at getting this fixed in 12.04 please.
+[06:50] <infinity> pitti: What's the story on the linux autopkgtest that's been 'running' all day?
+[06:51] <infinity> pitti: Also, "autopkgtest for linux 3.11.0.3.4: RUNNING" looks like some curious binary/source confusion (that's a linux-meta version, ie: where the "linux" binary package comes from)
+[06:51] <infinity> cjwatson: ^
+[06:53] <dholbach> good morning
+[06:56] <pitti> infinity: looking; we have some jenkins problems on magners which plars just worked around
+[06:57] <pitti> infinity: linux autopkgtest succeeded about an hour ago
+[06:58] <pitti> infinity: where do you see this?
+[06:58] <pitti> infinity: http://people.canonical.com/~ubuntu-archive/proposed-migration/update_excuses.html says that it was held back by the failed eglibc test
+[06:58] <pitti> infinity: which is a genuine failure (i. e. failed test cases, not problems with the machinery)
+[06:59] <pitti> infinity: so I guess the "running all day" was due to jenkins publication failing, and it caught up now
+[06:59] <pitti> infinity: oh, I guess you mean for linux-signed
+[07:00] <pitti> infinity: I'm afraid the only two people  who know the britney/adt interface (jibel and cjwatson) are on vac?
+[07:12] <infinity> pitti: Yeah, I mean linux-signed, which claims to be testing linux/3.11.0.3.4 which, of course, doesn't exist.
+[07:12] <pitti> infinity: right; that should just look at the successful linux run, so I guess britney got confused about src vs. binary indeed
+[07:15] <infinity> pitti: Kay.  Maybe I'll just hint that through later after I upload a matching d-i.  So, in the morning.
+[07:16] <pitti> infinity: I can also try and hack the state files
+[07:16] <infinity> pitti: Not sure I want to unwind the mess that makes that all go.  At least, not today.
+[07:16] <infinity> pitti: Hacking the status files doesn't seem any saner than a skip hint. :P
+[07:16] <infinity> pitti: And more potentially error-prone.  And harder to debug after the fact, if someone's curious.
+[07:16] <pitti> ok
+[07:17] <infinity> It won't migrate without d-i anyway, so I'll make it go in the morning.
+=== smb` is now known as smb
+[07:54] <ev> thanks pitti!
+[07:54] <pitti> ev: good morning
+[07:56] <ev> morning :)
+[07:59] <mlankhorst> infinity: did you fix llvm? :P
+[08:00] <infinity> mlankhorst: I ended up stuck dealing with real estate people and lawyers.  So, not the best fun ever.
+[08:00] <infinity> mlankhorst: I'll poke llvm tomorrow.
+[08:00] <mlankhorst> thanks, it blocks mesa 9.2 :-)
+[08:01] <infinity> mlankhorst: Kay.  Remind me tomorrow as you're EODing, and I'll hammer at it.
+[08:01] <infinity> mlankhorst: Well, s/tomorrow/today/ for you, I guess.
+[08:01] <mlankhorst> sure, np
+[08:06] <smartboyhw> xnox, ardour failed in -proposed..
+[08:10] <guest09013651> hello
+[08:10] <infinity> libs/pbd/mountpoint.cc:96:23: fatal error: sys/ucred.h: No such file or directory
+[08:10] <infinity>  #include <sys/ucred.h>
+[08:11] <infinity> xnox: ^-- You've somehow made ardour decide it's compiling on FreeBSD?  Congrats. :P
+[08:11] <guest09013651> a question regarding those milestones over there:
+[08:11] <guest09013651> https://launchpad.net/ubuntu/saucy
+[08:12] <guest09013651> when i first saw those milestones (13.05, 13.06, 13.07, 13.08, 13.08, 13.09 and so on...), i thought there would be monthly releases from now on, coming with a ISO every month
+[08:13] <infinity> guest09013651: They're just planning targets.
+[08:15] <guest09013651> infinity: thanks for your reply. so nothing will change regarding the release cycle? release will be every six month, with a LTS release every two years in april? no rolling release?
+[08:15] <infinity> guest09013651: Right.
+[08:16] <guest09013651> infinity: hmm :(. just wondering: are you a ubuntu dev?
+[08:17] <smartboyhw> Ha, you never heard of how great infinity is:P
+[08:17] <guest09013651> infinity: no rolling release wouldn't be so bad if the following "bug" would be fixed: https://bugs.launchpad.net/ubuntu/+source/software-center/+bug/578045 . does anyone here know if that "bug" will be fixe4d anytime soon?
+[08:17] <ubottu> Launchpad bug 578045 in software-center (Ubuntu) "Upgrading packaged Ubuntu application unreasonably involves upgrading entire OS" [High,In progress]
+[08:17] <guest09013651> -4
+[08:17] <infinity> guest09013651: Out of curiosity, what benefit would you be hoping to derive from a "rolling release"?
+[08:18] <guest09013651> infinity: see above. i would rather prefer seeing the following bug get fixed: https://bugs.launchpad.net/ubuntu/+source/software-center/+bug/578045
+[08:18] <guest09013651> it's one of the mosy annoying bugs IMHO, if not _the_ most annoying
+[08:19] <infinity> guest09013651: I'm not sure that's even a bug, and it certainly isn't solved by rolling releases.  A rolling release just means you get to "upgrade your entire OS" even more often.  Exactly the opposite of the bug's goal.
+=== iahmad is now known as iahmad|lunch
+[08:21] <guest09013651> infinity: yeah, but with new ubuntu releases there come upgraded applications
+[08:22] <guest09013651> if you don't upgrade os, no upgraded applications :(
+[08:22] <infinity> I've heard that rumour, yes.
+[08:22] <guest09013651> at least if you don't use PPAs
+[08:22] <guest09013651> why rumour?
+[08:22] <infinity> guest09013651: Basically, what you're asking for is to backport the world from every release to every release.  I imagine you can see how that might be untenable.
+[08:22] <infinity> If what you want is all the new shiny, you can run the development release.
+[08:22] <smartboyhw> guest09013651, that's why we need "stable releases"...
+[08:23] <guest09013651> actually i care more about updated applications than i care about updated os
+[08:23] <infinity> If that you want is a few backported packages on a stable release, that's doable.  But not everyone wants the same backported packages, so, some effort needs to go into the ones you want, sometimes.
+[08:23] <guest09013651> stable os with updated applications would be fine :)
+[08:23] <infinity> guest09013651: One man's "OS" is another man's "application".  Where do you draw the line between "core stuff I think can be stale" and "fun stuff I want to be shiny"?
+[08:24] <lifeless> infinity: the kernel.
+[08:24] <infinity> (For instance, I bet I care a lot more about compilers than you do)
+[08:24] <smartboyhw> lifeless, I will care for more:P
+[08:24] <infinity> lifeless: Sarcasm has no place in a conversation with me.
+[08:25] <smartboyhw> Oh, that's sarcasm, I didn't realize that...
+[08:25] <lifeless> infinity: who was being sarcastic?
+[08:25] <infinity> lifeless: Oh, wait.  No.  I probably have that backwards.
+[08:25] <pitti> (which sounds a lot less funny on IRC if you don't actually know infinity in person..)
+[08:25] <lifeless> infinity: it's about to go meta...
+[08:25] <infinity> pitti: :)
+[08:26] <guest09013651> well, in ms windows for example, you can have latest applications pretty much regardless of the os version, just by downloading a simple to use installer, and the apps even do auuto-update if the app does have such a feature. and it's like that for the very old windows xp just as it is for the new windows 7 or windows 8
+[08:27] <guest09013651> it would be nice if it would be like that for ubuntu as well
+[08:28] <guest09013651> IMHO
+[08:28] <pitti> the fun thing is that the thing that always annoys me most on a Windows box is how excruciatingly difficult it is to install all stuff :)
+[08:28] <infinity> guest09013651: Yes, because Microsoft provides stable APIs all the way down.  This isn't, fundamentally, how the FLOSS world works.  It's not as simple as "just do what Windows does" and we're done.
+[08:29] <infinity> guest09013651: Anyhow, what you seem to want is, I can't stress enough, exactly the opposite of "rolling releases", so please don't conflate the terms.
+[08:29] <infinity> guest09013651: What you seem to want is our LTS to be a pared-down core with a stable set of libraries, and then to have us compile all the new shiny on top of that stable base.
+[08:29] <infinity> guest09013651: Which, for some new shiny, is accomplished via the backports pocket.
+[08:30] <smartboyhw> That would be very difficult..
+[08:30] <smartboyhw> All I mean
+[08:30] <infinity> guest09013651: But we can't, it turns out, read minds and determine which things people want backported.
+[08:30] <smartboyhw> !backports
+[08:30] <ubottu> If new updated Ubuntu packages are built for an application, then they may go into Ubuntu Backports. See https://help.ubuntu.com/community/UbuntuBackports - See also !packaging
+[08:30] <smartboyhw> guest09013651, ^
+[08:32] <guest09013651> no offense intented, but IMHO that is very user UNfriendly...
+[08:32] <xnox> infinity: i fixed one bug in ardour, not all. and uploaded (to save time for the next person fixing the first linking bug). Why it's thinking it's compiling on FreeBSD i'm not entirely sure. Not-finding-multiarch-fallout?
+[08:32] <guest09013651> i could very well imagine most users would prefer it the windows way
+[08:33] <smartboyhw> It is user-friendly if the users want stability
+[08:33] <infinity> guest09013651: Everyone often imagines that all users want it the same way they do.
+[08:33] <infinity> guest09013651: I can assure you that my own personal bias leans the other direction.
+[08:34] <pitti> or those of most non-technical people I know
+[08:34] <infinity> xnox: No idea, all I did was glance at the build log, it's just an entertaining message, given that header is decidedly BSD-specific.
+[08:35] <guest09013651> infinity: maybe do a survey / poll on this topic ;)?
+[08:35] <xnox> infinity: =) ok.
+[08:36] <infinity> guest09013651: A survey and/or poll probably isn't enough to make us complete upend our development and release process.  I'm not sure you grasp what it is you're asking for, in the scope of a project that ships with 21 thousand packages.
+[08:36] <smartboyhw> It would be MONSTROUS.:P
+[08:37] <infinity> guest09013651: Windows is a tiny core with a ton of third party developers.  That's incentive for them to work the way they do, and it's a mess for updating, verifying sources, etc.
+[08:39]  * infinity decides it's bedtime in Canadia.
+[08:39] <smartboyhw> infinity, Canada you mean?
+[08:39] <smartboyhw> :O
+[08:40] <guest09013651> a question regardin this:
+[08:40] <guest09013651> https://help.ubuntu.com/community/UbuntuBackports
+[08:40] <guest09013651> "Security Support for Backports - Unlike the packages released with Ubuntu, Backports do not come with any security support guarantee."
+[08:40] <infinity> smartboyhw: Canadia, where the rivers flow with maple syrup, it snows all year 'round, and the women all say "aboot".
+[08:41] <guest09013651> does that mean that every app that comes officialy with an LTS will definitely (guaranteed) be updated if the version that initially shipped with the LTS has security flaws?
+[08:41] <xnox> guest09013651: read wiki pages about security updates & stable release updates.
+[08:42] <xnox> guest09013651: don't just derive from what backports page says =)
+[08:42] <infinity> guest09013651: https://wiki.ubuntu.com/SecurityTeam/FAQ
+[08:47] <guest09013651> infinity: thanks, still reading, but found a "bug" ;p: there is a headline on that page which says "Update Manager doesn't prompt for security updates" but it looks like that headline should rather say "Update Manager doesn't prompt for a password"?
+[08:47] <guest09013651> ;)
+[08:50] <guest09013651> a question: at the very top of that page it says "Security updates are in part prioritized based on severity of impact, exploitability and number of affected users.". Does that meant, that, if, for example, not enough users are affected, no security update will be made :S?
+[08:52] <xnox> guest09013651: it means what it says "given multiple security flaws the most severe one is patched first" Plus one can help creating the security updates, join #ubuntu-hardened and help out creating security updates.
+[08:53] <guest09013651> xnox: thx for reply. i am not a coder though ;).
+[08:54] <smartboyhw> xnox, how can I help then?
+[08:54] <xnox> guest09013651: none of us were when we started ;-)
+[08:57] <smartboyhw> xnox, ^
+[09:03] <pete-woods> dednick: hi - I've been sent to investigate the indicators messages fault
+[09:06] <xnox> infinity: ardour conditionalise on HAVE_GETMNTENT, which it correctly finds on my machine, not sure why same check fails on buildd.
+[09:08] <infinity> xnox: Missing a build-dep?
+[09:10] <xnox> infinity: libc6-dev?! don't think so, defined in /usr/include/mntent.h
+[09:11]  * smartboyhw thinks xnox didn't reply to him:(
+[09:12] <xnox> smartboyhw: did you read wiki? e.g. https://wiki.ubuntu.com/SecurityTeam/GettingInvolved
+[09:12] <smartboyhw> xnox, yhes
+[09:12] <smartboyhw> *yes
+[09:12] <smartboyhw> So, what do you recommend me to do?
+[09:13] <xnox> smartboyhw: i wouldn't recommend anything =) i'm yet to do a security update.
+[09:13] <xnox> myself that is.
+[09:13] <smartboyhw> .........................
+[09:15] <Laney> talk in #ubuntu-hardened
+=== iahmad|lunch is now known as iahmad
+[09:24] <guest09013651> a question regarding the firefox vs chromium discussion as mentioned over there:
+[09:24] <guest09013651> http://www.phoronix.com/scan.php?page=news_item&px=MTQzNDQ
+[09:25] <guest09013651> IF chromium should become default in 14.04 (i hope not), will firefox still be updated immediately like it is now?
+[09:27] <smartboyhw> guest09013651, ye
+[09:27] <smartboyhw> *yes
+[09:28] <guest09013651> k
+[09:30] <guest09013651> does anyone here know why those:
+[09:30] <guest09013651> http://www.webupd8.org/2011/10/is-this-new-ubuntu-1204-precise.html
+[09:31] <guest09013651> never were released?
+[09:31] <guest09013651> the look much better than the current icons IMHO
+[09:31] <guest09013651> *they
+=== smartboyhw_ is now known as smartboyhw
+[09:47] <guest09013651> those icons mentioned above and something like this: https://plus.google.com/114762164224008090488/posts/ex4tNv2KWSW , https://plus.google.com/103374404688704893776/posts/FoBprJKgnF2 , https://plus.google.com/103374404688704893776/posts/6HTj8mp9eY6 would make Ubuntu look quite a bit nicer :)
+=== Sweeksha1k is now known as Sweetshark
+[10:49] <xnox> seb128: so bug 1206314 is not migrating from -proposed to -release. It looks like "unity-webapps-angrybirds, unity-webapps-cuttherope, unity-webapps-lordofultima, unity-webapps-tiberiumalliances" need removal cause the new webapps-applications is not compatible with those.
+[10:49] <ubottu> bug 1206314 in webapps-applications (Ubuntu) "install-default-webapps-in-launcher.py crashed with signal 5 in g_settings_get_mapped()" [High,Fix committed] https://launchpad.net/bugs/1206314
+[10:50] <xnox> seb128: do you know when robru is around? and/or if removing those packages is the correct intend?
+[10:50] <xnox> (bug in question is triggered on each new installation / user account)
+[10:54] <seb128> xnox, no, I don't, maybe kenvandine or didrocks know
+[10:56] <zyga> is it possible that https://bugs.launchpad.net/ubuntu/+source/pam/+bug/871083 affects python because python has some internal copy of the same code?
+[10:56] <ubottu> Launchpad bug 871083 in libtasn1-3 (Ubuntu Precise) "gzip -9n sometimes generates a different output file on different architectures" [Medium,Triaged]
+[10:56] <zyga> gzip -9 being not deterministic
+[10:56] <zyga> this is on python3.2 from precise
+[10:57] <zyga> I just got hit by something that appears to be this bug while writing unit tests for my library
+[11:02] <zyga> I think this is the case
+=== MacSlow is now known as MacSlow|lunch
+[11:07] <didrocks> seb128: xnox: he's travelling today, so will be around tomorrow evening (starting at ~6PM UTC)
+[11:07] <seb128> didrocks, ok
+=== tvoss is now known as tvoss|lunch
+=== doko_ is now known as doko
+=== MacSlow|lunch is now known as MacSlow
+=== tvoss|lunch is now known as tvoss
+=== gusch_ is now known as gusch|akf
+[12:57] <jdstrand> cjwatson: hi! if I run 'click build' in a directory, I get a package of the form-- $pkgname_$version_$arch.click. I just came across a package that is $pkgname-$version.click
+[12:57] <jdstrand> cjwatson: (that second one was when performing a review)
+[12:58] <jdstrand> cjwatson: realizing click probably doesn't care, I'd like to know what to expect from click build and the tools for the appstore
+[12:59] <jdstrand> cjwatson: is $pkgname_$version_$arch.click expected?
+[13:00] <seb128> jdstrand, hey, I think cjwatson is on holidays this week (just mentioning it in case that's useful info)
+[13:01] <jdstrand> heh, it is useful to know someone won't respond
+[13:01] <jdstrand> seb128: thanks :)
+[13:01] <seb128> yw ;-)
+[13:01] <jdstrand> cjwatson: nm, enjoy your holiday. I'll take it to a mailing list
+=== Ursinha-afk is now known as Ursinha
+=== _salem is now known as salem_
+[13:07] <jamespage> Laney, that golang cross compile issue should be fixed today - about to merge from debian for the fix
+[13:07] <jdstrand> cjwatson: oh, doubly nm-- it was a script of mine that did 'mv *_all.click *_$arch.click'
+=== Evpok_ is now known as Evpok
+[13:13] <hyperair> https://github.com/rogerwang/node-webkit/issues/136 <-- yay symlink libudev.so.1 onto libudev.so.0
+[13:13]  * hyperair holds his head in frustration
+[13:14] <hyperair> and even better, there's a bloody script here https://github.com/rogerwang/node-webkit/wiki/The-solution-of-lacking-libudev.so.0 that makes the global symlink
+[13:14] <hyperair> oh god whyyyy
+[13:39] <dobey> mardy: ping again :)
+=== robbiew1 is now known as robbiew
+[13:40] <mardy> dobey: pong :-)
+[13:41] <dobey> mardy: hi! another problem. i've got the account created successfully and secret stored, but am having trouble getting the secret back out. when i do queryInfo() on the Identity object, and then do info.secret() on the result, it returns an empty string. even immediately after i added the secret, within the same process
+[13:41] <dobey> mardy: so i'm wondering how i can successfully get the secret back out
+[13:44] <pitti> sforshee: hey Seth, how are you?
+[13:44] <pitti> sforshee: can you please forward the two patches in http://launchpadlibrarian.net/147642052/upower_0.9.21-1build1_0.9.21-1ubuntu1.diff.gz to upstream?
+[13:45] <mardy> dobey: yep, that's expected, in order to get the secret you need to go through the authentication
+[13:46] <dobey> more authentication?
+[13:46] <mardy> dobey: if you use the "password" method and "password" mechanism, you'll get the password in the SessionData
+[13:46] <dobey> yes i am using that method/mechanism
+[13:47] <mardy> dobey: however, won't you write a proper signon plugin?
+[13:47] <mardy> dobey: it would be nice if we could disable the "password" method for the U1 account
+[13:49] <dobey> mardy: yes. i'm just trying to get something working as quickly as possible. the signon plug-in is having some issues. and i don't think we'll be able to get it working fully as they are expected to work, by end of this week (which is basically when this needs to be done)
+[13:51] <mardy> dobey: OK. Another option is that you write down how the authentication works, and ask pmcgowan if I can take a couple of days to write the plugin for you
+[13:51] <dobey> what do you mean "how the authentication works" ?
+[13:52] <Laney> jamespage: SUH-WEEEEEEEEEEEEEEEET!
+[13:52] <mardy> dobey: like, what steps need to be done in order to get the token
+[13:52] <dobey> what do i need to do just to get the 'password' back out?
+[13:53] <sforshee> pitti: I did send them upstream, but they never made it past moderation on the list
+[13:53] <mardy> dobey: QML or C++?
+[13:53] <dobey> C++
+=== Ursinha is now known as Ursinha-afk
+[13:53] <mardy> dobey: from the Identity, create an AuthSession object, using "password" as method
+[13:53] <sforshee> pitti: I included the maintainer on the messages too, but haven't heard anything back from him either
+[13:54] <mardy> dobey: then call authSession->process(SessionData(), "password")
+[13:54] <pitti> sforshee: ah, because I'm on the upstream list and didn't see anything
+[13:54] <mardy> dobey: and listen for the response(SessionData) signal
+[13:54] <pitti> sforshee: that's devkit-devel@?
+[13:54] <sforshee> pitti: yes
+[13:54] <mardy> dobey: whenit's emitted, you should find the password in it
+[13:55] <dobey> mardy: every app that wants to get the password, has to do that?
+[13:55] <pitti> sforshee: https://bugs.freedesktop.org tracks the upower bugs, FTR
+[13:55] <mardy> dobey: yes
+[13:55] <dobey> ok
+[13:55] <pitti> sforshee: yeah, david zeuthen left red hat, so I guess the list isn't being moderated often these days :/
+=== gusch|akf is now known as gusch
+[13:56] <stokachu> slangasek: would it be possible to get me added to the ubuntu group that can approve nominations in launchpad?
+[13:57] <sforshee> pitti: do you suggest I open a bug then? Richard Hughes should have the patches, even if they haven't appeared on the list.
+[13:58] <pitti> sforshee: that, or asking him on IRC (but he's out today, not feeling well according to G+)
+[13:58] <sforshee> pitti: ack, I'll follow up
+=== Ursinha-afk is now known as Ursinha
+=== jono is now known as Guest90491
+=== greyback is now known as greyback|needsfo
+=== greyback|needsfo is now known as greyback|food
+[14:15] <dobey> mardy: seems to be working now. thanks!
+[14:16] <dobey> hyperair: because people ship "node apps" with pre-compiled node binary included, and it's i guess built on an old system that requires the .so.0, so instad of learning how to package things proerly, they just make symlinks.
+[14:21] <hyperair> dobey: yeah and upstream's just telling people to do that instead of offering a better solution
+[14:21] <hyperair> ugh
+[14:22] <mardy> dobey: nice!
+[14:24] <dobey> mardy: would like to do proper signon plug-in and all, but doing that right will require quite some big refactoring of our current code, while this will let us get it working and usable at least, even if it isn't quite how uoa is designed to work
+=== Sweetshark is now known as Sweetshark1
+=== Sweetshark1 is now known as Sweetshark
+=== ema_ is now known as ema
+=== greyback|food is now known as greyback
+=== freeflying is now known as freeflying_away
+[15:22] <brendand> my rules file is trying to run qmake && make && make install, but at the moment make install seems to fail due to permissions when trying to mkdir's. is there any way to get around that? this is in a pbuilder chroot btw (important detail i guess)
+[15:26] <rbasak> brendand: is make install happening in one of the binary targets? The build target must be able to run without root.
+[15:27] <xnox> brendand: it should use DESTDIR to install e.g. into debian/tmp/ and not onto /
+[15:28] <brendand> rbasak, i put the call to make install in override_dh_install
+[15:28] <brendand> xnox, DESTDIR where?
+[15:28] <brendand> xnox, in the pro files?
+[15:30] <rbasak> OK, then what xnox said. You want make install to build into the build area, not your build system itself. DESTDIR is supported by some build systems to add a prefix to the build location. make install DESTDIR=... or DESTDIR make install etc.
+[15:30] <bdmurray> slangasek: who would be a good person to have a look at bug 1214352?
+[15:30] <ubottu> bug 1214352 in LibreOffice Productivity Suite "GUINT32/64_SWAP_LE_BE macros do not enclose val argument in parentheses" [Critical,Confirmed] https://launchpad.net/bugs/1214352
+[15:30] <rbasak> install into the build area that is
+[15:30] <xnox> brendand: one builds a package, the upstream build-system should install not into "/" but into same hierachy as "/" but locally, e.g. into debian/tmp or debian/package. Typically this build-system feature is called install into DESTDIR, due to make/automake terminology.
+[15:31] <xnox> brendand: you can skip dh_auto_install all-together (e.g. leave an empty override_dh_auto_install:) and install the files you want/need simply using dh_install and a debian/package.install file.
+[15:31] <xnox> brendand: maybe look at other packages that use the same build-system as qmake, we should have plenty in the archive.
+[15:35] <Siebjee> Does some one know the new IRC channel of Canonical, or has a phone numer of the sales department ?
+[15:36] <ChogyDan> Siebjee's usual contacts aren't working.  I thought someone here might have a lead or something
+=== enrico__ is now known as enrico
+[15:46] <sil2100> kenvandine: quickie -> https://code.launchpad.net/~sil2100/ubuntu-ui-extras/packaging_review/+merge/181075
+[15:48] <slangasek> stokachu: so the logical team to add you to for this is https://launchpad.net/~ubuntu-release-nominators, which is currently owned by Kate; I'll email her about possibly getting that transferred, and then adding you to the team
+[15:48] <sil2100> Mirv: (in case you're around already) ^
+[15:54] <slangasek> infinity: do you think you could have a look at bug #1214352 (see above from bdmurray)?  seems like a straightforward upstream patch to fix a macro in glib; I guess once fixed they'll want a libreoffice rebuild
+[15:54] <ubottu> bug 1214352 in LibreOffice Productivity Suite "GUINT32/64_SWAP_LE_BE macros do not enclose val argument in parentheses" [Critical,Confirmed] https://launchpad.net/bugs/1214352
+=== tvoss is now known as tvoss|afk
+[15:55] <Mirv> sil2100: approved, only looked through the changes not the whole packaging
+[15:56] <sil2100> Mirv: thanks ;) Life saver ;)
+[15:58] <Laney> moving that --fail-missing is a strange standard to have
+[16:09]  * ogra_ makes a note to never work for the desktop team ... these "life saver" statements from sil2100 sound like a lot of death threads are going on there :)
+[16:10] <sil2100> It's risky business, it's no easy job!
+[16:11] <ogra_> :)
+[16:21] <didrocks> ogra_: if only you knew!
+[16:28] <slangasek> jamespage: samba upstart> you probably want samba 2:3.6.17-2, which fully merges the upstart stuff into unstable and is a pending upload now-ish.  But a merge shouldn't revert anything, as it hadn't yet landed in unstable before now so a merge shouldn't affect it
+[16:28] <jamespage> slangasek, ack
+[16:29] <seb128> Laney, thanks for the review/approval ;-)
+[16:30] <Laney> np
+[16:36] <slangasek> jodh, smb: so a correct setup for this would be: 64bit host kernel; 64- or 32-bit outer VM, according to what the current test case targets; and an inner VM that matches the outer VM
+[16:37] <smb> slangasek, I would just use qemu, which is alternates for the same arch
+[16:37] <slangasek> jodh: before we start diving into questions of qemu misbehavior, we should ensure we have this baseline correct
+[16:37] <slangasek> jodh: can you reconfirm the bug with smb's suggestion?
+[16:37] <slangasek> ('qemu' instead of 'kvm')
+[16:38] <jodh> slangasek: at smb's suggestion, I am currently using 'qemu -enable-kvm -cpu core2duo ...'
+[16:39] <smb> The core2duo to find out whether that enables VMX inside the next level of nested
+[16:40] <smb> Since the crashes/hangs where happening when setting up the 2nd level guest from the first level, I never went deeper
+[16:40] <slangasek> jodh: please also check whether this problem is reproducible on a 32-bit/32-bit configuration.  If that works, we can sidestep the bug for now and get i386-only testing going, which will already help
+[16:41] <slangasek> of course we ultimately want testing for both i386 and amd64, but if i386 is the low-hanging fruit, let's get that automated and tackle amd64 second
+[16:47] <jodh> slangasek: ack - I'll crank the handle on that particular combo with smb's latest options...
+[16:48] <slangasek> jodh: if you're doing 32+32, you shouldn't need or care about -cpu core2duo at all
+[16:49] <slangasek> smb: do you have a suggested qemu commandline for a 32bit-only guest?
+[16:50] <smoser> ok, i'm late to the party here, but is it not sufficient to say
+[16:50] <smb> slangasek, As I said, I would just use "qemu" + whatever command line was there, just not qemu-system-<arch> for the moment
+[16:50] <smoser> qemu-system-i386 ?
+[16:50] <smoser> smb, ? thats broken ?
+[16:50] <smb> smoser, no maybe qemu-system-x86_64 on a 32bit guest
+[16:50] <smb> to start another 32bit guest
+[16:51] <slangasek> smb: so if you run 'qemu' at each level, you'll get: 64bit host CPU/kernel/userspace; 64bit outer guest CPU w/ 32bit outer guest kernel/userspace; 32-bit inner guest CPU/kernel/userspace
+[16:52] <slangasek> smb: is that what you want us to try?
+[16:52] <smoser> i'm lost. if qemu-system-x86_64 ever gives you anything other than a 64 bit system, something is wrong.
+[16:53] <smoser> similarly with qemu-system-i386
+[16:53] <smoser> thats a bug
+[16:53] <smoser> it should fail
+[16:53] <mlankhorst> infinity: EOD For me, so bump for llvm-toolchain-3.3, mesa 9.2 is in debian-experimental now so the clock is ticking ;P
+[16:53] <smb> slangasek, Might be a point. And the reason why with that there is no VMX inside the guest...
+[16:54] <slangasek> smb: so, do we need to always run 64-bit for the outer guest?
+[16:54] <slangasek> is it sufficient to always run 64-bit CPU, even if we do 32-bit kernel+userspace?
+[16:55] <smb> slangasek, That could be the outcome. So the first level inner guest has a 64bit cpu with VMX but 32bit userspace and then can run an inner guest with 32bit with kvm enabled
+[16:55] <slangasek> smoser: the question isn't whether qemu-system-x86_64 always gives you a 64-bit guest CPU, the question is whether it gives you something that *works* given the above :)
+[16:56] <smoser> right, but i though tyou were inadvertantly getting the x86_64 -> i386 -> x86_64 transition.
+[16:57] <slangasek> jodh: is the above clear to you?  if your host is 64-bit userspace, it should be sufficient to always run 'qemu' for the outer VM (giving you a 64-bit CPU), and for the inner VM either qemu-system-i386 or qemu-system-x86_64 *depending* on which architecture you're testing
+[16:57] <smb> What I have not yet tried to is to look what would happend when I use a different release in the 1rst and/or second level guest. I could not be sure this combination had issues for longer that we think
+[16:57] <smb> *than
+[16:59] <jodh> slangasek: that is clear, but to be clear, in an autopkgtest env, there are *four* systems: the host, the provided guest (kvm instance 1), the autopkgtest env (kvm instance 2), and my test instance (kvm instance 3). I don't know anything about the host (canonistack).
+[16:59] <smb> smoser, I think it gets confusing as we end up with various mixes of 32/64 bit cpus and users-space
+[17:00] <jodh> slangasek: do we know for example what the host h/w is when requesting an i386 guest?
+[17:00] <slangasek> jodh: sorry, I don't understand what instance 1 vs. instance 2 are supposed to be
+[17:00] <slangasek> we are not currently nesting VMs for autopkgtest, and upstart tests should only require adding a single level
+[17:00] <smb> jodh, I think we can assume its 64bit as it probably would otherwise not give you VMX inside your guest
+[17:00] <slangasek> jodh: we can reasonably assume it's 64-bit hardware :)
+[17:00]  * slangasek nods
+[17:01] <jodh> slangasek: nested=Y is set inside the canonistack guest which is where autopkgtest creates its kvm instance.
+[17:02] <slangasek> jodh: AIUI nested=Y only tells you that nesting has been enabled, it does not imply that you are already nested
+[17:02] <jodh> smb/slangasek: I will hack the scripts again and try with 'qemu -enable-kvm' in all layers.
+[17:02] <smb> We probably cannot say anything about host userspace but usually I'd expect 64bit
+[17:02] <smoser> wll, it is quite possible (and even correct) that if you asked for a 32 bit instance from canonistack that it would give you something only capable of 32 bit.
+[17:03] <smoser> if you run the ubuntu cloud images, they should be registered correctly to get the correct arch
+[17:03] <slangasek> jodh: and I'm quite certain that there is *not* any nesting going on except for the nesting you're doing - which means the autopkgtest VM you're running your tests in is itself running directly on the host, not on another guest
+[17:04] <slangasek> smoser: yes - which means that for our purposes, we probably want all our upstart autopkgtests run *only* on an amd64 guest, to ensure we have VMX available
+[17:04] <smb> smoser, It seems to give an emulated core2duo, whatever that is/was
+[17:04] <smb> WEll not emulated but feature masked
+[17:06] <smb> smoser, Ok that seems to say LM -> so 64bit cpu
+[17:36] <infinity> slangasek: When did I become the glib maintainer too? :)
+[17:37] <slangasek> infinity: it's only one letter off
+[17:37] <slangasek> besides, it's a C macro, and I know you love those
+[17:37] <xnox> =)
+[17:37] <infinity> slangasek: Seems like a straightforward enough SRU, a sane testcase that isn't "build Libreoffice and run it" might be nice.
+[17:37]  * infinity reads more closely.
+[17:39] <infinity> Oh, hrm.  The claim that it requires a rebuild of all rdeps, though.  lolwut?
+[17:40] <infinity> Oh, I see what they're driving at.  Needs a recompile to fix the bug.  Obviously.
+[17:40] <infinity> I briefly thought the comment meant "this breaks ABI, and everything that depends on glib needs rebuilding".
+[17:56] <stokachu> slangasek: re nominators: sounds good man thanks!
+=== goddard is now known as Guest88483
+=== racarr is now known as racarr|lunch
+[19:03] <arges> Hi, on merges.ubuntu.com, whats the difference between outstanding and updated merges?
+[19:12] <arges> slangasek: hi. i'm looking at an issue with ifupdown. I have no idea how to patch this because it seems that the sources don't show up until I use debuild. any suggestions?
+[19:13] <mapreri> arges: update are packages that have a previus version already merged in the current ubuntu development release but a new version is available in debian. Outstandig are packages nobody have already took care for this development cycle.
+[19:15] <arges> mapreri: so updated packages will automatically get the new debian version? or is this work the maintainer still needs to do
+[19:17] <xnox> arges: everything still needs a merge, it's just "updated packages" have already been merged during the current cycle, thus should be (hypothetically) easier to merge, not as urgent to merge, nothing interesting to merge.
+[19:17] <mapreri> arges: someone should take care of it, there is no automation for package listed on those pages.
+[19:17] <arges> mapreri: ack
+[19:17] <arges> xnox: ok
+[19:26] <slangasek> arges: the source of ifupdown is an experiment in "literate programming"; so the source isn't in C, it's in nowebm which spits out C along the way :/
+[19:26] <arges> slangasek: ahh... so if i want to get something like this backported: http://anonscm.debian.org/hg/collab-maint/ifupdown/rev/a93db3ecb8f0; i need to patch a nowebm source?
+[19:27] <slangasek> arges: yes.  Is newer ifupdown no longer using nowebm as the source?
+[19:28] <infinity> I love the confidence in (Possibly closes: #704003)
+[19:28] <arges> so yea i tested it and it seems to close it for 0.7.44 + that one patch
+[19:28] <arges> but i don't know how to properly patch 0.7* versions that are in ubuntu, since the HG patch seems to be against c source
+[19:29] <arges> slangasek: let me triple check
+[19:30] <arges> slangasek: if i do 'pull-debian-source ifupdown sid' i can see the 'main.c' file in the sources
+[19:30] <arges> so it patches there, but in the precise version (for example) 0.7.5ubuntu4, it doesn't generate the main.c file until i do 'debuild'
+[19:34] <slangasek> arges: interesting; apparently upstream switched away from noweb in January \o/
+[19:34] <slangasek> arges: so yeah, you need to apply that patch manually to the nowebm source
+[19:35] <arges> slangasek: ok i'll dig on this a bit. i wasn't able to easily find where those sources were but i'll trace through the debian/rules file to figure it out. thanks
+[19:36] <slangasek> arges: it's all in ifupdown.nw, fwiw.
+[19:37] <arges> slangasek: ah
+=== racarr|lunch is now known as racarr
+[19:47] <arges> slangasek: the other question is, fixing ifupdown in saucy, should i wait until you do the merge from debian? (either way it needs a patch)
+[20:01] <slangasek> arges: I had no plans to merge it for saucy, I think you're better to just cherry-pick
+[20:03] <arges> slangasek: ok
+[20:39] <slangasek> jamespage: fyi, samba 3.6.18-1 now uploaded to unstable
+=== freeflying_away is now known as freeflying
+[21:58]  * mlankhorst pokes infinity a bit more
+=== kentb is now known as kentb-out
+[22:12] <infinity> mlankhorst: Ow.
+[22:12]  * infinity fires up a POWER5 and grabs the llvm source.
+[22:13] <Noskcaj> kirkland, roaksoax: Do either of you have time to merge my testdrive branch?
+[22:14] <kirkland> Noskcaj: yep;  I'll try to get to it tonight ;-)
+[22:14] <Noskcaj> kirkland, thanks
+=== freeflying is now known as freeflying_away
+=== freeflying_away is now known as freeflying
+[22:20] <Uninstall_> hello
+[22:20] <Uninstall_> I need some feedback on a problem reported by someone else about eglibc on ubuntu 13.04
+[22:21] <infinity> Uninstall_: And that problem would be?
+[22:22] <Uninstall_> infinity: this one: https://lists.ubuntu.com/archives/ubuntu-devel/2013-August/037562.html
+[22:22] <Uninstall_> I get the same error here
+[22:23] <infinity> Uninstall_: Following his same steps, I'm sure you would.
+[22:23] <infinity> Uninstall_: 'dpkg-buildpackage -b' is more likely to lead to success.
+[22:23] <Uninstall_> infinity: I'm getting the same problem applying all the ubuntu patches on a different distro
+[22:23] <Uninstall_> and doing that manually
+[22:26] <Uninstall_> I think that ubuntu patches + eglibc should work fine together
+[22:26] <Uninstall_> so I suppose that I'm missing some configure option or stuff like that
+[22:27] <infinity> Uninstall_: Quite possibly.  Our configuration is rather complex, it's not just a ./configure
+[22:28] <Uninstall_> infinity: do you contribute to that stuff?
+[22:28] <infinity> Uninstall_: I do.  I don't really have the time to walk someone through it right now, though. :/
+[22:29] <Uninstall_> infinity: ok
+[22:30] <Uninstall_> infinity: anyway if you can see how configure is called properly it would be nice
+[22:31] <slangasek> Uninstall_: it's properly called via debian/rules (which is what 'dpkg-buildpackage -b' wraps); nothing else is guaranteed in the package
+[22:31] <infinity> Uninstall_: See debian/rules.d/build.mk and debian/sysdeps for the variables that populate those make targets.
+[22:31] <infinity> Uninstall_: (And what slangasek said)
+[22:32] <Uninstall_> thank you
+=== salem_ is now known as _salem
+[22:34] <Uninstall_> do you have any other hypotesis about what it can be?
+[22:38] <sarnold> Uninstall_: if you want to pretend you're the build process, you can mimic the steps shown in the build logs: https://launchpadlibrarian.net/146345871/buildlog_ubuntu-saucy-amd64.eglibc_2.17-91ubuntu1_UPLOADING.txt.gz
+[22:39] <Uninstall_> sarnold: it seems a good advice
+[22:39] <Uninstall_> i will take a look
+[22:40] <sarnold> Uninstall_: well, I don't know about _good_ advice, but it's advice. :) hehe.
+[22:45] <Uninstall_> sarnold: can you link me raring build log?
+[22:46] <sarnold> Uninstall_: https://launchpad.net/ubuntu/+source/eglibc/2.17-0ubuntu5/+build/4501722/+files/buildlog_ubuntu-raring-amd64.eglibc_2.17-0ubuntu5_UPLOADING.txt.gz
+[22:47] <sarnold> Uninstall_: (the others are available under the little triangle next to the packages at https://launchpad.net/ubuntu/+source/eglibc  )
+[22:49] <Uninstall_> thank you

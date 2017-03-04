@@ -1,0 +1,188 @@
+=== JZTech101 is now known as JZ|Zzz
+[04:34] <ikepanhc> @pilot in
+=== udevbot changed the topic of #ubuntu-devel to: Ubuntu 13.04 released | Archive: open | Devel of Ubuntu (not support or app devel) | build failures -> http://qa.ubuntuwire.com/ftbfs/ | #ubuntu for support and discussion of lucid -> raring | #ubuntu-app-devel for app development on Ubuntu http://wiki.ubuntu.com/UbuntuDevelopment | See #ubuntu-bugs for http://bit.ly/lv8soi | Patch Pilots: ikepanhc
+=== olli_ is now known as olli
+[06:50] <dholbach> good morning
+=== smb` is now known as smb
+=== dholbach_ is now known as dholbach
+[08:58] <Laney> jamespage: Can I ask you about golang in saucy? ;-)
+[08:58] <jamespage> Laney, yep
+[08:59] <Laney> jamespage: OK, one second...
+[08:59] <Laney> jamespage: Right then, compile and run this please: http://paste.ubuntu.com/5992017/
+[09:00] <Laney> it's broken on saucy but if I rebuild the Debian package without the Ubuntu changes then it works
+[09:00] <jamespage> Laney, oh - you'll love this one
+[09:00] <jamespage> Laney, http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=719611
+[09:00] <ubottu> Debian bug 719611 in golang "golang: os/user not usable without cgo" [Normal,Open]
+[09:01] <Laney> yes I found something like this while googling
+[09:01] <jamespage> and https://bugs.launchpad.net/ubuntu/+source/golang/+bug/1211749
+[09:01] <ubottu> Launchpad bug 1211749 in golang (Ubuntu Saucy) "Packge os/users incorrectly built on amd64 arch" [Critical,Triaged]
+[09:01] <jamespage> Laney, when you build it locally I suspect you are building on amd64 right?
+[09:02] <Laney> so it's some buildd problem
+[09:02] <Laney> yes
+[09:02] <jamespage> Laney, this is due to the cross-compilation stuff that got introduced in saucy
+[09:02] <Laney> oh they're arch:all packages
+[09:02] <Laney> aaaaaaaaaaa
+[09:02] <jamespage> in launchpad the i386 build produces the amd64 cross compile package
+[09:02] <jamespage> but its broken because if can't cross compile the CGO bits
+[09:03] <jamespage> if you tried that on i386 it would work
+[09:03] <Laney> so I guess the debian maintainer built on amd64 hence it works there
+[09:04] <jamespage> Laney, maybe
+[09:04] <jamespage> Laney, its really awkward to fix without breaking the cross-compile feature as well
+[09:05] <jamespage> as you really want os/user built on the native arch build
+[09:05] <jamespage> but you might also want to use that for cross compile....
+[09:05] <jamespage> bah
+[09:05] <rbasak> stokachu: http://pastebin.ubuntu.com/5992058/ - is this what you're seeing, or do you see more test failures? I think it might be an artefact of the schroot, so I'll try again inside LXC instead.
+[09:06] <rbasak> ^^ was with http://pastebin.ubuntu.com/5992058/
+[09:06] <rbasak> err, 5.5.31-0ubuntu1. Wrong paste buffer.
+[09:07] <Laney> jamespage: yeah :/
+[09:26] <Noskcaj> jodh, Can you merge libnih? It's got no conflicts, just needs merging
+=== gusch is now known as gusch|lunch
+=== tkamppeter_ is now known as tkamppeter
+[09:52] <Laney> http://162.213.35.4:28080/search?weighted=1&q="Hello,+world"
+[09:53] <Laney> it's alive! (sort of)
+[10:05] <sil2100> ikepanhc: hi! Would you be able to sponsor a new package into universe for us? ;) https://bugs.launchpad.net/ubuntu/+bug/1212993
+[10:05] <ubottu> Launchpad bug 1212993 in Ubuntu "[needs-packaging] Mediascanner" [Undecided,New]
+[10:05] <sil2100> ikepanhc: it's something that will be used by a new unity scope and music app
+[10:06] <ikepanhc> sil2100: hmm, I am not MOTU. let me talk to someone and see if he can do that
+[10:07] <sil2100> ikepanhc: thanks ;)
+[10:08] <ikepanhc> no problem
+[10:08] <sil2100> ikepanhc: I already poked around for some people in #ubuntu-motu, but the usual people that do this for us are away today
+[10:08] <sil2100> ikepanhc: while we want to get things in as soon as possible since FF is near
+[10:10] <ikepanhc> yes, aug-29th
+[10:13] <brendand> why is it so hard to find decent documentation for debian rules files?
+[10:14] <rbasak> brendand: what are you after? Debian policy defines the targets, and then the documentation for the contents usually depends on the build system and/or helper you're using (eg. debhelper).
+[10:16] <brendand> rbasak, well it's a qt based project - so i guess it's supported by debhelper?
+[10:17] <rbasak> brendand: you're trying to write a new one?
+[10:17] <brendand> rbasak, what do you mean?
+[10:17] <rbasak> brendand: I don't understand what you're looking for.
+[10:18] <brendand> rbasak, i'm trying to write a rules file which builds my project
+[10:19] <ikepanhc> sil2100: freeflying told me if you have a package ready he can ack for you. please contact him at #ubuntu-motu
+[10:20] <brendand> rbasak, i guess i should read debhelper documentation
+[10:20] <rbasak> brendand: ah, OK. I'm not sure about qt specifically, but in general debhelper does the right thing automatically, so you might start off with a minimal debhelper-based rules file and see if that works. There might be some qt-specific runes you need, but they should be minimal. I'd look at an existing package to see.
+[10:21] <brendand> rbasak, i think the main issue is that my .pro file is not at the root of the source so i may need to override something
+[10:21] <rbasak> brendand: https://wiki.debian.org/IntroDebianPackaging#Step_3:_Add_the_Debian_packaging_files and scroll down a bit to see what a minimal debhelper rules file looks like.
+[10:22] <ikepanhc> @pilot out
+=== udevbot changed the topic of #ubuntu-devel to: Ubuntu 13.04 released | Archive: open | Devel of Ubuntu (not support or app devel) | build failures -> http://qa.ubuntuwire.com/ftbfs/ | #ubuntu for support and discussion of lucid -> raring | #ubuntu-app-devel for app development on Ubuntu http://wiki.ubuntu.com/UbuntuDevelopment | See #ubuntu-bugs for http://bit.ly/lv8soi | Patch Pilots:
+[10:30] <sil2100> ikepanhc: thanks! Will do :)
+[10:31] <ikepanhc> :D
+=== MacSlow is now known as MacSlow|lunch
+[10:55] <caribou> 5
+[11:46] <sil2100> tseliot: ah ha! Hi Alberto!
+[11:46] <sil2100> tseliot: can I 'use' you for some small task ;)?
+[11:47] <sil2100> tseliot: since you see, we need a core-dev to ACK packaging changes before we can daily-release it into Ubuntu, and we have one here
+[11:47] <sil2100> tseliot: it's a small packaging change but still, someone needs to say if the packaging changes aren't harmful or anything
+[11:47] <sil2100> tseliot: https://jenkins.qa.ubuntu.com/view/cu2d/view/Head/view/WebApps/job/cu2d-webapp-head-3.0publish/lastSuccessfulBuild/artifact/packaging_changes_unity-webapps-qml_0.1+13.10.20130816.1-0ubuntu1.diff <- there's not much here besides 2 lines
+[11:48] <sil2100> tseliot: (diff only shows packaging changes)
+[11:49] <ogra_> sil2100, no mention of the dependency change in the changelog ...
+[11:49] <ogra_> apart from that it looks fine
+[11:50] <sil2100> ogra_: yeah, sometimes those get missed, as the changelog is being updated automatically - is that a blocker, or can we publish anyway?
+[11:52] <ogra_> sil2100, well, can you make sure this happens in the future ... if someone greps the changelog for such stuff when debugging he should be able to find anything
+[11:52] <ogra_> beyond that, happy upload
+[11:53] <sil2100> ogra_: we'll let upstreams know that they should include info about such things in the commit messages so that it happens less frequently :)
+[11:53] <mdeslaur> @pilot in
+=== udevbot changed the topic of #ubuntu-devel to: Ubuntu 13.04 released | Archive: open | Devel of Ubuntu (not support or app devel) | build failures -> http://qa.ubuntuwire.com/ftbfs/ | #ubuntu for support and discussion of lucid -> raring | #ubuntu-app-devel for app development on Ubuntu http://wiki.ubuntu.com/UbuntuDevelopment | See #ubuntu-bugs for http://bit.ly/lv8soi | Patch Pilots: mdeslaur
+[11:54] <ogra_> sil2100, great
+[11:58] <tseliot> sil2100: +1 from me too
+[12:01] <sil2100> tseliot, ogra_: thanks guys
+=== MacSlow|lunch is now known as MacSlow
+[12:02] <ogra_> np
+=== steveire_ is now known as steveire
+=== dholbach_ is now known as dholbach
+=== _salem is now known as salem_
+=== JZ|Zzz is now known as JZTech101
+=== ema_ is now known as ema
+[13:33] <caribou> mdeslaur: I need your patchpilot attention on a couple of SRU (one that you've already looked at)
+[13:33] <mdeslaur> caribou: sure, which ones?
+[13:33] <caribou> mdeslaur: LP: #1005901 is the one you commented on
+[13:33] <ubottu> Launchpad bug 1005901 in duplicity (Ubuntu Precise) "cannot change temp dir" [Undecided,In progress] https://launchpad.net/bugs/1005901
+[13:34] <mdeslaur> caribou: I just uploaded that one literally 30 seconds ago :)
+[13:34] <caribou> mdeslaur: :D
+[13:34] <caribou> mdeslaur: the other one is LP: #816153
+[13:34] <ubottu> Launchpad bug 816153 in dante (Ubuntu Precise) "dante-server using the wrong libc.so" [Medium,In progress] https://launchpad.net/bugs/816153
+[13:34] <caribou> infinity and cjwatson have both helped me with this one a while ago
+[13:35] <mdeslaur> caribou: ok, let me take a look
+[13:36] <caribou> mdeslaur: for this last one, the proper way would have been to change configure.ac, but the debian packaging is badly broken
+[13:36] <caribou> mdeslaur: so I followed cjwatson's advice
+[13:40] <sil2100> Can any core-dev give us a green light for a daily-release packaging change?
+[13:40] <sil2100> https://jenkins.qa.ubuntu.com/view/cu2d/view/Head/view/Unity/job/cu2d-unity-head-3.0publish/lastSuccessfulBuild/artifact/packaging_changes_libunity_7.0.11+13.10.20130816.2-0ubuntu1.diff <-
+[13:40] <sil2100> We need to release this ASAP
+[13:41] <sil2100> Thanks in advance!
+[13:41] <sil2100> mdeslaur: maybe you could help? :)
+[13:43] <sil2100> Scratch that, ogra_ performed the ACK
+[13:44] <mdeslaur> sil2100: cool
+[13:48] <mdeslaur> caribou: do you have a few minutes to fix a few small details in your dante debdiffs?
+[13:49] <caribou> mdeslaur: sure
+[13:50] <roaksoax> xnox: howdy!! so I've been trying to re-enable clvm (for corosync only) against the newer dlm (which is still in universe), however, it FTBFS. The funny thing is that If I configure it locally, it does not fail: http://paste.ubuntu.com/5992776/ http://pastebin.ubuntu.com/5992774/
+=== dholbach_ is now known as dholbach
+[14:00] <mdeslaur> caribou: ok, commented in bug
+[14:00] <caribou> mdeslaur: ok looking
+[14:03] <caribou> mdeslaur: about point  #4, I had noticed the case on my system as well, but concluded that it would not be an issue in a build environment
+[14:03] <mdeslaur> caribou: ok, can you please add a not to that effect in the patch header?
+[14:03] <mdeslaur> note
+[14:04] <caribou> mdeslaur: ok, will do. I'll fix the other minor issues
+[14:09] <mdeslaur> caribou: cool, let me know when you're done, and I'll upload them
+[14:20] <arges> is there a 'best-practice' way to use something like a control.in file to generate a control file?  I've seen many packages just use sed, but am wondering if there is a better way. thanks
+[14:29] <jtaylor> having a control.in is not considered best practice, why do you need it?
+[14:29] <jtaylor> cdbs provides some tools to use it I think
+[14:43] <caribou> mdeslaur: just uploaded new debdiffs to the dante bug
+[14:43] <mdeslaur> caribou: thanks
+[14:44] <caribou> mdeslaur: as discussed, I didn't change the logic for point #4 but added a note to the patch header
+[14:44] <mdeslaur> caribou: ok
+[15:00] <stokachu> rbasak: thats exactly what i saw
+[15:00] <stokachu> rbasak: re mysql build
+[15:02] <tseliot> slangasek: are you around?
+[15:03] <mdeslaur> caribou: uploaded dante to saucy and proposed. thanks!
+[15:04] <caribou> mdeslaur: saucy & precise ? np
+[15:04] <caribou> mdeslaur: thank you
+[15:04] <mdeslaur> whoops, yes, precise
+[15:29] <smoser> slangasek, ping.
+[15:29] <smoser> jodh, maybe.
+[15:29] <smoser> lxc has clone via overlayfs now (example at https://gist.github.com/smoser/6199772).
+[15:30] <smoser> thats *really* nice. except for the whole inotify/reload-configuration thing.
+[15:30] <smoser> for upstart in > saucy, its sufficient to write a job and then run 'initctl reload-configuration'. that sucks, but oh well.
+[15:31] <smoser> but in precise, with overlayfs below the container, 'apt-get install some-service' results in 'some-service' not running by default as you'd expect (because it puts the job in /etc/init, runs 'start job', but upstart says "what job?")
+[15:32] <smoser> i'm looking for a generic way to solve the 'apt-get install' path.
+[15:41] <jodh> smoser: I'd rather not put hacks into Upstart to work around kernel bugs. However, maybe an option is to tweak invoke-rc.d to detect if /etc/init is on overlayfs and force a reload.
+[15:42] <smoser> jodh, right. thats the kind of thing i was thinking.
+[15:42] <smoser> diverting 'start' and doing it there might also be an option.
+[15:42] <hallyn_> jodh: is un-implemented inotify in an fs really a "kernel bug" though?
+[15:42] <smoser> kernel , upstart, FIGHT!
+[15:43] <hallyn_> i'd deposit a quarter to see that
+[15:43] <jodh> hallyn_: I thought the problem was that it (partially?) claims to support inotify but actually lies?
+[15:43] <hallyn_> jodh: oh, if so then that's a bug :)  how does it claim that though?  inotify syscalls succeeding?
+[15:43] <smoser> jodh, does upstart do anything if it was told the truth and there was no support ?
+[15:43] <smoser> hallyn_, its possible that the intofiy *does* work.
+[15:43] <smoser> and goes through to someone monitoring the underlay
+[15:44] <smoser> i dont know.
+[15:44] <sil2100> kenvandine: ping!
+[15:44] <hallyn_> smoser: me neither :)
+[15:44] <hallyn_> and in either case i wouldn't want hacks saying "if this is overlayfs" in upstart - rather just "if /etc doesn't support inotify"
+[15:47] <kenvandine> sil2100, pong
+[15:48] <sil2100> kenvandine: do you know if maybe you could upload my new package to the archive ;) ?
+[15:48] <sil2100> kenvandine: since dholbach seems to be AFK
+[15:48] <sil2100> kenvandine: https://bugs.launchpad.net/ubuntu/+bug/1212993
+[15:48] <ubottu> Launchpad bug 1212993 in Ubuntu "[needs-packaging] Mediascanner" [Undecided,New]
+[15:48] <kenvandine> sure
+[15:49] <mdeslaur> @pilot out
+=== udevbot changed the topic of #ubuntu-devel to: Ubuntu 13.04 released | Archive: open | Devel of Ubuntu (not support or app devel) | build failures -> http://qa.ubuntuwire.com/ftbfs/ | #ubuntu for support and discussion of lucid -> raring | #ubuntu-app-devel for app development on Ubuntu http://wiki.ubuntu.com/UbuntuDevelopment | See #ubuntu-bugs for http://bit.ly/lv8soi | Patch Pilots:
+[15:55] <sil2100> kenvandine: thank you! :D
+[15:55] <sil2100> kenvandine: I was trying to release it for like 7 hours now :D
+[15:56] <sil2100> dholbach found some small issues we fixed, there's also some hardening question there, but upstream will deal with that in next versions if there indeed is a problem
+[15:56] <kenvandine> sil2100, uploaded
+[15:57] <sil2100> kenvandine: WOHA
+[15:57] <sil2100> :D
+[15:57] <sil2100> kenvandine: I think I owe you another beer!
+[15:57] <kenvandine> :)
+[15:57]  * kenvandine likes beer!
+=== Ursinha-afk is now known as Ursinha
+=== Nisstyre-laptop is now known as Nisstyre
+[18:37] <rickspencer3> e
+=== JZ|Zzz is now known as JZTech101
+[20:12] <asomething> anyone around that might be able to help me figure out why a package isn't migrating?
+[20:12] <asomething> update_excuses says the autopkgtest for bzr is marked failing, but the most recent run on jenkins is successful
+[20:38] <asomething> ^^ maybe cjwatson ?
+[20:39] <infinity> asomething: The root of the problem needs looking at, but I've nudged bzr to migrate.
+[20:40] <asomething> infinity, thanks. I just wasn't sure if I was missing something. update_output.txt didn't mention bzr at all
+[20:41] <infinity> asomething: Right, it won't be in output if it fails in the excuses stage.
+=== bschaefer_ is now known as bschaefer
+=== salem_ is now known as _salem

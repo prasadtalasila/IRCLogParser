@@ -1,0 +1,262 @@
+[00:03] <sarnold> smoser: we -eventually- expect to have some environment variable scrubbing thing in apparmor, that might get you a lot of the way there
+[00:03] <sarnold> smoser: but sooner might be to patch upstart to do that :)
+[00:09] <smoser> upstart is fine.
+[00:09] <smoser> "fine" in some sense.
+[00:09] <smoser> it cannot be polluted in this way
+[00:09] <smoser> because upstart jobs dont' inherit the caller's environment.
+[00:09] <smoser> sysvinit do
+[00:11] <maxb> I guess /usr/sbin/invoke-rc.d could be the place to do this?
+[00:11] <sarnold> oh, right, you even said as much. sigh :)
+[00:15] <smoser> sarnold, well, its both a feature and a bug for upstart honestly.
+[00:15] <smoser> there is a use case where you would *want* to affect LD_PRELOAD, and to my knowledge you cannot (easily)
+[00:32] <TheMuso> xnox: Heh just got bitten by https://bugs.launchpad.net/ubuntu/+source/ubuntu-dev-tools/+bug/1179782 as well.
+[00:32] <ubottu> Launchpad bug 1179782 in ubuntu-dev-tools (Ubuntu) "syncpackage crashed with UnicodeDecodeError in decode(): 'utf8' codec can't decode byte 0xc3 in position 241: invalid continuation byte" [Medium,Confirmed]
+=== Ursinha is now known as Ursinha-afk
+=== Ursinha-afk is now known as Ursinha
+=== _salem is now known as salem_
+=== freeflying is now known as freeflying_away
+=== mayday_jay is now known as Guest31964
+[03:41] <TheMuso> @pilot out
+=== udevbot changed the topic of #ubuntu-devel to: Ubuntu 13.04 released | Archive: open | Devel of Ubuntu (not support or app devel) | build failures -> http://qa.ubuntuwire.com/ftbfs/ | #ubuntu for support and discussion of lucid -> raring | #ubuntu-app-devel for app development on Ubuntu http://wiki.ubuntu.com/UbuntuDevelopment | See #ubuntu-bugs for http://bit.ly/lv8soi | Patch Pilots:
+=== salem_ is now known as _salem
+=== Ursinha is now known as Ursinha-afk
+=== Ursinha-afk is now known as Ursinha
+[04:45] <pitti> Good morning
+[04:45] <pitti> infinity: hack status files> mostly as a trial how they work, but changing them doesn't work anyway
+[06:04] <smartboyhw> Laney, is there a reason for ktp-call-ui to have the telepathy-farstream-0.4.patch?
+[06:05] <smartboyhw> Ah, found it
+[06:06] <smartboyhw> Is that still valid?
+[06:20] <TheMuso> /c/c
+=== smb` is now known as smb
+[06:59] <pitti> infinity: would you mind nudging a few packages into sauy which britney wrongly considers as RUNNING? they all passed: python-apt, umockdev, python-defaults, bzr-upload, friends, gnome-settings-daemon, libpng, libxml2, qtwebkit-source, ubuntu-release-upgrader
+[07:00] <dholbach> good morning
+[07:00] <pitti> or Laney or ScottK ^
+[07:00] <pitti> hey dholbach
+[07:00] <dholbach> hi pitti
+=== stub` is now known as stub
+=== gavin__ is now known as gavinguo
+[07:34] <JackYu> dholbach, hi
+[07:35] <dholbach> hi JackYu
+[07:35] <dholbach> JackYu, did you have luck with your package?
+[07:37] <JackYu> dholbach, do you have more comments to it?
+[07:37] <dholbach> oh, I asked folks in #ubuntu-desktop yesterday - did you try there as well?
+[07:37] <JackYu> dholbach, it seems no more comments from them:)
+[07:38] <JackYu> dholbach, I asked some guys as well:)
+=== freeflying_away is now known as freeflying
+=== AbsintheSyringe2 is now known as AbsintheSyringe
+[08:09] <Laney> pitti: can do
+=== iahmad_ is now known as iahmad|lunch
+=== tkamppeter_ is now known as tkamppeter
+[08:29] <Whoopie> debfx: Hi, I just looked at the virtualbox package and recognized that the VNC module is not installed even though it's compiled. Any reason for this?
+[08:30] <Laney> pitti: did all of the ones stuck in RUNNING
+[08:31] <pitti> Laney: thanks!
+[08:33] <debfx> Whoopie: no, it's an oversight. someone needs to test if it really works though.
+[08:34] <Whoopie> debfx: if you put it in a new package, I'll test. ;-)
+[08:34] <debfx> Whoopie: a new package? is it that dependency heavy?
+[08:37] <Whoopie> debfx: otherwise, I have to compile myself.
+[08:40] <Whoopie> debfx: I build it now. let's see.
+=== gusch is now known as gusch|brb
+[08:58] <xnox> smoser: I find dpkg --force-unsafe-io sufficient, when I want to speed up apt, but not actually preload eatmydata.
+[09:00] <Noskcaj> cjwatson, Can you merge hw-detect before we hit feature freeze? There aren't any major changes, so it should be fairly easy
+[09:05] <xnox> Noskcaj: you are after translation updates?
+[09:06] <Noskcaj> xnox, I wouldn't use them, but that and your improvements would be worth doing
+[09:08] <xnox> Noskcaj: right. ok. cjwatson is away atm. but we should merge up all d-i packages to gain translations et. al.
+[09:08] <Noskcaj> ok, thanks for the info
+[09:25] <jamespage> jodh, I'm right in thinking I can't write custom actions for upstart configurations right?
+[09:26] <jamespage> I have 'openvswitch-switch start' and 'openvswitch-switch stop' etc..
+[09:26] <jamespage> but I'm guessing openvswitch-switch force-reload-kmod is a non starter
+[09:28] <jodh> jamespage: yes, you are correct (https://wiki.ubuntu.com/Upstart/Ideas). But you could of course just create a specific job for that.
+[09:28] <jamespage> jodh, yeah - I was thinking about doing that
+[09:28] <jamespage> openvswitch-switch-force-reload
+[09:29] <jamespage> openvswitch-force-reload-kmod
+[09:29] <jodh> jamespage: why is a kernel module reload required? can't that happen in the pre-start for the job?
+[09:29] <jamespage> jodh, it interrupts the dataflows in the kernel so you don't always want todo it when restarting the daemons
+[09:29] <jamespage> i.e. it breaks the networking...
+[09:29] <jodh> jamespage: fun :)
+[09:35] <jamespage> jodh, yeah - but hey!
+[09:35] <jamespage> makes life interesting
+[09:36] <Laney> pitti: is openvswitch's autopkgtest genuinely stuck?
+[09:37] <pitti> Laney: yes; it used to work against older kernels, but it hangs with kernel 3.11
+[09:37] <pitti> the server team knows about it
+[09:37] <Laney> ah ok
+=== gusch|brb is now known as gusch
+=== freeflying is now known as freeflying_away
+[10:05] <jodh> could someone bump some builds for me? https://code.launchpad.net/~canonical-foundations/+recipe/upstart-daily-nonvirt and https://code.launchpad.net/~upstart-devel/+recipe/upstart-daily? (The estimates seem to be somewhat askew :)
+=== freeflying_away is now known as freeflying
+[10:21] <xnox> jodh: don't think it will help much, amd64 is busy building firefox, thunderbird, yade which all take a while. And bumping your priority will not kick those builds off.
+[10:22] <xnox> jodh: looking at https://launchpad.net/builders the queue is very small (PPA build status on the right)
+=== gusch is now known as gusch|lunch
+[10:49] <xnox> jodh: looks like nonvirt build hang all of builders, possible cause is stray child process left over.
+[10:49] <xnox> jodh: infinity was reporting that before.
+[10:53] <jodh> xnox: ok, I'll see if I can recreate locally.
+[10:53] <xnox> jodh: i'm grepping my irc logs.... it was one of the tests that did a fork.
+[10:56] <xnox> jodh: found it, test_job and forked test_job are left after the build is finished.
+[10:56] <xnox> jodh: https://pastebin.canonical.com/92355/
+[11:00] <pete-woods> didrocks: hi! I have another project I'd like to to start landing in distro (https://launchpad.net/unity-voice) - it's not in jenkins yet (waiting for fginther's tz), but thought there may be some benefit letting you know, seen as feature freeze is next week!
+[11:02] <jodh> xnox: I'm now also seeing test_initctl's left around. I think it's your reload test - it's only killing the paused child in the error code path.
+[11:02] <jodh> xnox: could you take a look?
+[11:02] <xnox> jodh: correct.
+[11:03] <xnox> jodh: i'll take test_initctl.
+[11:03] <jodh> ack. I'll dig into the other one...
+[11:07] <xnox> jodh: there is something different on the current build... https://pastebin.canonical.com/96297/
+[11:08] <jodh> xnox: ? you mean the addition of the test_dbus-daemon? I'm also seeing that locally.
+[11:09] <xnox> ok, cool.
+[11:10] <xnox> yeah, that.
+=== steveire_ is now known as steveire
+[11:25] <xnox> jodh: sent merge proposal to clean up initctl/reload_signal tests.
+=== MacSlow is now known as MacSlow|lunch
+[11:39] <didrocks> pete-woods: hey! is it a service/a library? who will consume it?
+[11:40] <didrocks> pete-woods: also, are there integration tests? Seeing a lot of new projects, not a lot of integration tests :)
+[11:48] <pete-woods> didrocks: it's a service, and it's basically the voice code from HUD, ripped out
+[11:50] <pete-woods> and to be fair, the stuff I've made is either test libraries (libqt*test) or hasn't been integrated with the shell yet :)
+[11:50] <ScottK> pitti: If you can give me the hint to copy/paste, I'll be glad to do it, but I'm a bit tied up with $STUFF to work out the details.
+[11:50] <pete-woods> the consumer will be HUD
+[11:51] <pitti> ScottK: no worries, Laney already did it; thank!
+[11:51] <pitti> s
+=== gusch|lunch is now known as gusch
+[11:51] <ScottK> OK.  Great.
+[11:51] <didrocks> pete-woods: ok, part of the HUD delivery then?
+[11:52] <didrocks> pete-woods: managed by the same team anyway I guess
+[11:52] <pete-woods> didrocks: well it's managed by me, really, basically HUD is leaky, and the voice code is memory heavy, so we can't let HUD leak instances of it
+[11:53] <didrocks> pete-woods: ok, sounds good :)
+[11:53] <didrocks> pete-woods: I assigned it to robru FYI
+[11:53] <pete-woods> didrocks: I ported it to C++ and have 95% test coverage with it
+[11:53] <pete-woods> the difficulty with integration tests is
+[11:53] <pete-woods> it takes microphone input
+[11:53] <pete-woods> didrocks: the unit tests add the pulse "pipe" device for a fake microphone
+[11:54] <pete-woods> can autopilot do a similar sort of thing?
+[11:54] <didrocks> pete-woods: so, it's some kind of integration tests, right?
+[11:54] <didrocks> if you are using pulse to input some infos
+[11:54] <pete-woods> didrocks: I would call the tests I've written integration tests
+[11:54] <pete-woods> they treat the service as a whole binary
+[11:54] <pete-woods> rather that testing components
+[11:54] <didrocks> pete-woods: from what I know, autopilot is just a glorified unittest class with stuff to pilot touch and mouse move
+[11:55] <didrocks> pete-woods: so, you can call your "fake input microphone"
+[11:55] <didrocks> and read the result from the HUD
+[11:55] <didrocks> (just to ensure that the HUD understand your input/output)
+[11:55] <pete-woods> that makes sense
+[11:55] <pete-woods> where do autopilot test go, by the way?
+[11:56] <didrocks> most of the time, we keep them in the same source
+[11:56] <didrocks> look at unity8 for instance, a C++/QML example with the autopilot tests
+[11:56] <pete-woods> so these tests should probably go in the HUD source?
+[11:56] <didrocks> pete-woods: either HUD or this one, what you think will make more sense IHMO
+[11:57] <pete-woods> okay, will look at that
+[11:57] <didrocks> pete-woods: it's just about ensuring the 2 can communicate together I guess
+[11:57] <didrocks> thanks!
+[11:57] <pete-woods> I can't promise anything here, didrocks, I've tried getting these tests running on the build farm before
+[11:57] <didrocks> pete-woods: I'll be on holidays starting tonight for 2 weeks, please check with robru then (I've assigned to him in the spreadsheet)
+[11:57] <pete-woods> didrocks: pulse modules don't seem to want to load on the build server
+[11:58] <pete-woods> you'll note a rather embarassing (ENABLE_TESTS=OFF) in the rules
+[11:58] <didrocks> pete-woods: yeah, for autopilot, that will be a real session
+[11:58] <pete-woods> cool
+[11:58] <pete-woods> that sounds excellent
+[11:58] <didrocks> so you shouldn't get the same issue than in the builder chroot
+[11:58] <pete-woods> didrocks: thanks for all the infos! :)
+[11:59] <didrocks> yw ;)
+=== MacSlow|lunch is now known as MacSlow
+[12:34] <Whoopie> debfx: Here is the debdiff for virtualbox to add the VNC plugin module: http://paste.ubuntu.com/6017538/
+[12:34] <Whoopie> debfx: to enable VNC, I followed this guide: http://www.neant.ro/2013/04/enable-vnc-on-virtualbox-ose-4-2/
+[12:35] <Whoopie> debfx: the VBOX_VERSION_STRING_RAW change was needed as the version must be 4.2.16 and not 4.2.16_Ubuntu, otherwise the module fails to be loaded (seen with "VBoxManage list extpacks").
+[12:36] <sforshee> pitti: thanks for taking care of my upower patches! Are you planning to update the saucy package with your changes?
+[12:37] <pitti> sforshee: at some point, yes; once hughsie is back online, I want to get him review my third patch, then upload a new snapshot to Debian, and sync it over
+[12:37] <pitti> sforshee: but I guess it's not that urgent as the saucy package now has all those
+[12:39] <sforshee> pitti: not urgent. I want to test the patches you comitted, but if you were going to upload them soon I figured I'd just wait.
+=== _salem is now known as salem_
+[12:46] <smoser> xnox, there is about an order of magnitude difference between eatmydata and force unsafe io
+[12:46] <smoser> on slow disk.
+[12:47] <xnox> smoser: true. better than nothing, though.
+[12:48] <diwic> is there a way to specify something *optional* in an debian/package.install file? I have a file that's only being built under one arch,
+[12:48] <diwic> and for that arch it should be included, and just left out on the others.
+[12:48] <ogra_> wasnt there an option to specify an arch specific install file ?
+[12:48] <diwic> now the other arches FTBFS because they can't find the file which is not built
+[12:49] <diwic> ogra_, I don't know, do you know how?
+[12:49] <ogra_> not really ... the dh_install manpage doesnt say much
+[12:50] <ogra_> i think it was something like .install.$arch but not sure i remember right
+[12:52] <Ampelbein> diwic: Yes, it's described in man 7 debhelper, http://paste.ubuntu.com/6017598/
+[12:54] <diwic> Ampelbein, ah, thanks. ogra's right then
+[13:04] <Laney> @pilot in
+=== udevbot changed the topic of #ubuntu-devel to: Ubuntu 13.04 released | Archive: open | Devel of Ubuntu (not support or app devel) | build failures -> http://qa.ubuntuwire.com/ftbfs/ | #ubuntu for support and discussion of lucid -> raring | #ubuntu-app-devel for app development on Ubuntu http://wiki.ubuntu.com/UbuntuDevelopment | See #ubuntu-bugs for http://bit.ly/lv8soi | Patch Pilots: Laney
+=== zyga_ is now known as zyga
+[13:22] <Wizard> Yo.
+[13:23] <hyperair> infinity: ping. messagingmenu-sharp? :)
+[13:28] <zequence> Anyone who could assist in uploading a couple of Ubuntu Studio packages? They've been reviewed and are ready to go.
+[13:29] <Wizard> Is there any Ubuntu related channel about developing software for Ubuntu?
+[13:30] <Wizard> Where people will be familiar with Launchpad and so?
+[13:30] <smartboyhw> Wizard: here
+[13:31] <zequence> Wizard: There's also #ubuntu-app-devel, if you're thinking about developing apps for Ubuntu
+[13:31] <Wizard> So, I'm going to write small DLNA streamer (desktop) and I intend to use Qt.
+[13:31] <Wizard> zequence: Yes, that's what I'm thinking.
+[13:31] <Wizard> Actually, app developemnt is ongoing.
+[13:33] <Wizard> thanks, zequence.
+[13:56] <xnox> zequence: what do you need uploading? =)
+=== nate-finch is now known as natefinch
+[13:57] <zequence> xnox: OvenWerks could better answer that :)
+[13:57] <zequence> OvenWerks: ^
+[14:02] <zequence> xnox: Alright, so the two branches are lp:~ubuntustudio-dev/ubuntustudio/ubuntustudio-menu, and lp:~ubuntustudio-dev/ubuntustudio/ubuntustudio-installer (which is a first time upload)
+[14:03] <zequence> From what I understand, they've both been thoroughly reviewed, so they should check out
+[14:04] <xnox> zequence: it would be nice for Len to add his email to launchpad account, to get proper committer links to launchpad profile.
+[14:04] <OvenWerks> xnox: I thought it was there
+[14:05] <smartboyhw> OvenWerks: I think you never ran bzr launchpad-login
+[14:05] <xnox> OvenWerks: https://code.launchpad.net/~ubuntustudio-dev/ubuntustudio/ubuntustudio-installer has "Len Ovens len@ovenwerks.net" is that email added as one of the emails in your profile?
+[14:05] <OvenWerks> It is the only one.
+[14:06] <OvenWerks> It has a lock beside it though.
+[14:06] <OvenWerks> does that mean it doesn't work?
+[14:07] <xnox> OvenWerks: then I don't know =) maybe try #launchpad.  Cause e.g. look how each person is "linkifyied" down here: https://code.launchpad.net/~xnox/ubuntu-seeds/fix-kernels-precise-kubuntu and allows one to click on a person.
+[14:08] <OvenWerks> Ya, I have wondered what happended, it used to work
+[14:08] <xnox> OvenWerks: zequence: is that -installer package going to stay in perl / zenity / apt-get? I would have thought packagekit UI should be available to install packages, and/or select them.
+[14:08] <xnox> OvenWerks: zequence: also as a side note, zenity usually runs at 100% CPU for no reason, spinning/waiting for user input.
+[14:09] <OvenWerks> xnox: I am looking for something that is already in all the DEs/flavours
+[14:09] <xnox> OvenWerks: zequence: if you are happy with that, then why not =)
+[14:09] <OvenWerks> We need to have it in before FF it will continue in active development after though...
+[14:09] <xnox> OvenWerks: packagekit API/UI _should_ be available. On ubuntu it would spin up software-center UI, on kubuntu their package store, etc....
+[14:10] <xnox> OvenWerks: ok. that's fine.
+[14:10] <xnox> OvenWerks: zequence: do you have matching seed update as well to go along with those two?
+[14:10] <OvenWerks> That is next :)
+[14:11] <OvenWerks> I didn't want to break -setting if these two didn't make it.
+[14:11] <xnox> ok.
+[14:11] <OvenWerks> right now settings replaces -menu
+=== 1JTAAQKPS is now known as tvoss
+=== freeflying is now known as freeflying_away
+=== warp10 is now known as warp11
+=== warp11 is now known as warp10
+[15:05] <xnox> zequence: OvenWerks: uploaded, -installer is naturally in the NEW queue.
+[15:06] <OvenWerks> xnox: Thankyou very much
+[15:06] <OvenWerks> That is my first ever sw package from start to finish
+=== natefinch is now known as natefinch-brb-af
+=== natefinch-brb-af is now known as natefinch
+=== Ursinha is now known as Ursinha-afk
+=== Ursinha-afk is now known as Ursinha
+[15:36] <hallyn_> what do-release-upgrade needs is one more place where it stops to ask me if i want to proceed
+=== dholbach__ is now known as dholbach
+[15:40]  * ogra_ hands hallyn_ "echo -n "Proceed ? (y/n)" && read foo && [ $foo = y ] && sudo do-release-upgrade"
+[15:50] <xnox> Who do I talk to about ps-jenkins bot / jenkins integration?
+[15:52] <slangasek> smoser, utlemming: we seem to be stalled on the 12.04.3 point release because we have a MAAS juju test case that we can't find anyone to complete; would either of you be able to help us out?  http://iso.qa.ubuntu.com/qatracker/milestones/301/builds/51859/testcases/1289/results
+[16:14] <hallyn_> ogra_: thanks - maybe ifi  weren't a sarcastic bastard you'd have handed me an expect script :)
+[16:14] <ogra_> :)
+=== Ursinha is now known as Ursinha-afk
+[16:23] <gQuigs> can I get this rescheduled for Thursday: http://summit.ubuntu.com/uds-1308/meeting/21877/client-s-32v64-bit/
+[16:24] <gQuigs> or late on Tuesday
+=== Ursinha-afk is now known as Ursinha
+=== fginther is now known as fginther|lunch
+=== fginther|lunch is now known as fginther
+[16:54] <Laney> @pilot out
+=== udevbot changed the topic of #ubuntu-devel to: Ubuntu 13.04 released | Archive: open | Devel of Ubuntu (not support or app devel) | build failures -> http://qa.ubuntuwire.com/ftbfs/ | #ubuntu for support and discussion of lucid -> raring | #ubuntu-app-devel for app development on Ubuntu http://wiki.ubuntu.com/UbuntuDevelopment | See #ubuntu-bugs for http://bit.ly/lv8soi | Patch Pilots:
+[16:57] <slangasek> YokoZar: so... no wine rebuilds yet for the gphoto ABI change? :)
+[17:13] <slangasek> pitti: this libgphoto2-2 transitional package concerns me.  how can this possibly be valid, when neither the transitional package nor the package it depends on provides libgphoto2.so.2?
+[17:27] <Luna_12043> hello
+[17:27] <Luna_12043> when will Ubuntu 12.04.3 be released?
+[17:27] <Luna_12043> according to https://launchpad.net/ubuntu/+milestone/ubuntu-12.04.3 it should have been released yesterday?
+[17:29] <stgraber> Luna_12043: a bit later today
+[17:29] <xnox> Luna_12043: when announcement is out on ubuntu-announce that's when it's released. It has been delayed, but the release team is working on getting it out.
+[17:31] <Luna_12043> xnox & stgraber : thank you very much for your replies
+[17:35] <Luna_12043> another question:
+[17:35] <Luna_12043> over there:
+[17:35] <Luna_12043> https://lists.ubuntu.com/archives/ubuntu-devel/2013-August/037572.html
+[17:35] <Luna_12043> someone mentioned: "And, not comprehensive, but some known limitations / features being worked on....  - no proprietary driver support (dependent on 3rd parties)"
+[17:36] <Luna_12043> can anyone here describe how that work is going?
+=== kentb-out is now known as kentb
+[17:37] <Luna_12043> or with other words: what do the 3rd parties (i.e. NVIDIA, AMD etc.) say?
+[17:59] <Luna_12043> bye
+[20:27] <bdmurray> @pilot in
+=== udevbot changed the topic of #ubuntu-devel to: Ubuntu 13.04 released | Archive: open | Devel of Ubuntu (not support or app devel) | build failures -> http://qa.ubuntuwire.com/ftbfs/ | #ubuntu for support and discussion of lucid -> raring | #ubuntu-app-devel for app development on Ubuntu http://wiki.ubuntu.com/UbuntuDevelopment | See #ubuntu-bugs for http://bit.ly/lv8soi | Patch Pilots: bdmurray
+=== salem_ is now known as _salem

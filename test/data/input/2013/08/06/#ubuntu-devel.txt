@@ -1,0 +1,201 @@
+[01:42] <mwhudson> hm
+[01:43] <mwhudson> it seems that building eglibc does not respect DEB_CFLAGS_APPEND
+[01:43] <mwhudson> am i on crack?
+[01:44] <infinity> It very much doesn't use dpkg-buildflags, no.  It can't.
+[01:44] <infinity> What were you hoping to do?
+[01:44] <mwhudson> infinity: i guessed it might be special
+[01:45] <mwhudson> infinity: build with -fno-omit-frame-pointer
+[01:45] <infinity> On which arch?
+[01:45] <mwhudson> infinity: armhf
+[01:46] <infinity> mwhudson: debian/sysdeps/armhf.mk
+[01:46] <infinity> mwhudson: libc_CC = $(CC) -fno-omit-frame-pointer
+[01:46] <infinity> mwhudson: Something like that should do.
+[01:47] <mwhudson> infinity: add that line?
+[01:48] <infinity> mwhudson: Yeah.
+[01:48] <infinity> mwhudson: I thought that was the default on all but ix86 anyway?
+[01:48] <mwhudson> trying
+[01:48] <mwhudson> nope
+[01:49] <infinity> Then the manpage lies. :P
+[01:49] <mwhudson> heh
+[01:49] <infinity> Or, misleads.
+[01:49] <infinity> Though, I'm curious what you're trying to solve.
+[01:49] <mwhudson> infinity: i want perf record -g to do something useful
+[01:50] <mwhudson> if frame pointers were mandatory on arm then stack unwinding would be a LOT less full of crack :)
+[01:50] <infinity> Ahh.
+[01:50] <mwhudson> (they are mandatory on arm64 i hear)
+[01:51] <mwhudson> infinity: seems to be working, thanks:
+[01:51] <mwhudson> $ grep no-omit-frame-pointer -c eglibc_2.17-0ubuntu5_armhf.build
+[01:51] <mwhudson> 143
+[01:52] <mwhudson> now, i have a benchmark running that's going to take a few hours, this build is going to take a few hours
+[01:52] <mwhudson> and it's 2pm
+[01:52] <mwhudson> too early to start drinking?
+[01:52] <infinity> I dunno, but it's 3am here, might be bedtime.
+[01:53] <mwhudson> it's possible
+=== lilstevie_ is now known as lilstevie
+[03:34] <Taggg> hello, is branch merging officially discussed anywhere other than launchpad? e.g. mailing lists?
+[03:40] <ScottK> Taggg: You may want https://lists.ubuntu.com/mailman/listinfo/ubuntu-distributed-devel
+[03:41] <Taggg> ScottK: that list looks pretty low volume
+[03:41] <ScottK> It is.
+[03:41] <Taggg> https://lists.ubuntu.com/archives/ubuntu-distributed-devel/2013-July/thread.html
+[03:41] <ScottK> UDD is essentially unmaintained.
+[03:42] <Taggg> ScottK: is that another way of saying that if i fix a bug and propose a merge, it will likely not be merged?
+[03:45] <ScottK> No, as long as the branch isn't out of date, it'll probably be sponsored.  What it means is that it's unlikely that if a branch isn't imported because of a bug, it'll get fixed anytime soon.
+[03:47] <Taggg> ScottK: cool, any way for me to gauge how long a fix would take to be merged?
+[03:47] <ScottK> Not really.
+[03:47] <ScottK> Alternately, you can make a debdiff of the fix, attach it to the relevant bug in LP and subscribe ubuntu-sponsors to the bug.
+[03:48] <Taggg> ScottK: what's the advantage of a debdiff over a fixed branch?
+[03:49] <Taggg> ScottK: the fix is a fast-forward from the dev branch
+[04:05] <ScottK> Not everyone deals with merge proposals.
+[04:06] <ScottK> There may be people who don't deal with debdiffs when sponsoring, but I don't know of it.
+[04:43] <Taggg> ScottK: alright thanks
+=== doko_ is now known as doko
+[07:10] <dholbach> good morning
+[07:55] <dpm> good morning seb128, didrocks. Could one of you help me with this? -> https://lists.ubuntu.com/archives/ubuntu-archive/2013-July/046578.html
+[07:57] <didrocks> dpm: opening a tab, will get to it before EOD if seb128 doesn't beat me :)
+[07:57] <dpm> thanks didrocks!
+[07:57] <didrocks> yw ;)
+[07:58] <seb128> didrocks, thanks, I probably won't, I still have some desktopish review to do in the queue ... I was hopping infinity or others would pick up a bit of NEW review but that doesn't seem to happen
+[07:59] <didrocks> seb128: yeah, we are NEWing a lot between you and me this cycle :)
+[08:10] <cjwatson> darkxst: LP-PPA-* sounds ambiguous; either the owner or the PPA name might contain "-".  I'd suggest finding some different source of input ...
+[08:23] <darkxst> cjwatson, I know, but there is no other source (this is from the Dependencies.txt on crash reports)
+[08:24] <darkxst> right now I am just trying all the options until I find a valid combo
+[08:27] <ev> @pilot in
+=== udevbot changed the topic of #ubuntu-devel to: Ubuntu 13.04 released | Archive: open | Devel of Ubuntu (not support or app devel) | build failures -> http://qa.ubuntuwire.com/ftbfs/ | #ubuntu for support and discussion of lucid -> raring | #ubuntu-app-devel for app development on Ubuntu http://wiki.ubuntu.com/UbuntuDevelopment | See #ubuntu-bugs for http://bit.ly/lv8soi | Patch Pilots: ev
+=== mpt_ is now known as mpt
+[08:55] <ev> apw: did we ever come up with a signature for suspend/resume failures? Would what apport is using for the title field here (https://bugs.launchpad.net/ubuntu/+source/linux/+bug/1117792) be sufficient, or do you think there's a better set of concatenated fields we can key against?
+[08:55] <ubottu> Launchpad bug 1117792 in linux (Ubuntu) "[Hewlett-Packard HP EliteBook 8460p] suspend/resume failure" [Medium,Incomplete]
+[08:56] <ev> apw: we should be seeing other types of kernel OOPSes (ones with OopsText set) with RT 63730, but looking at https://bugs.launchpad.net/ubuntu/+bugs?field.tag=apport-kerneloops&orderby=-id there don't appear to be many of those.
+=== smb` is now known as smb
+[09:42] <ev> jodh: does this look vaguely sensible: http://paste.ubuntu.com/5954467/ ? I presume I cannot use the setuid stanza because I need to first obtain the uid from stat'ing the crash file.
+[09:43] <ev> jodh: trying to mimic what apport does in /usr/share/upstart/sessions/update-notifier-crash.conf, only running apport with elevated privileges if we're dealing with a report from a "system" user (uid < 500)
+[09:43] <pete-woods> didrocks: hi! I've forgotten who I'm supposed to talk to to get launchpad projects into CI - something tells me it's you, but then maybe my brain is broken?
+[09:43] <ev> though perhaps we could just always run it as the user, never running as root
+[09:44] <didrocks> pete-woods: for upstream merge, it's fginther
+[09:44] <didrocks> pete-woods: for getting to distro, it's me :)
+[09:44] <pete-woods> didrocks: I'd like to get into distro :)
+[09:44] <didrocks> pete-woods: is upstream merger already configured?
+[09:45] <pete-woods> didrocks: I could only say no, as I don't really know what that is
+[09:45] <pete-woods> guessing it pushes stuff into debian somehow
+[09:45] <pete-woods> basically I've set up 3 new launchpad projects, and checked they build with a recipe in my own private PPA
+[09:45] <didrocks> pete-woods: no, it's what is taking a MP and merging to trunk
+[09:46] <pete-woods> ahh
+[09:46] <pete-woods> didrocks: then no, I've literally just created projects and branches myself
+[09:46] <didrocks> pete-woods: ok, can you get that done first? then, we can talk about distro ;)
+[09:47] <pete-woods> didrocks: is that something I can set up myself? or do I ping someone else?
+[09:47] <didrocks> pete-woods: you need to ping fginther
+[09:47] <pete-woods> okay, cool, will do that then - thanks! :)
+[09:47] <didrocks> pete-woods: do you have the project links so that I can already prepare what's needed?
+[09:48] <pete-woods> didrocks: https://launchpad.net/libqtdbustest https://launchpad.net/libqtdbusmock https://launchpad.net/indicator-network-prompt
+[09:49] <pete-woods> didrocks: they depend on each other in that order, too
+[09:49] <didrocks> pete-woods: thanks!
+[09:50] <jodh> ev: looks ok. I'd be tempted to quote all occurences of $MATCH though. If the stat fails, the job will exit too, but I guess that's probably desirable behaviour anyway.
+[09:51] <ev> jodh: ah, good catch. Will do
+[10:54] <doko> didrocks, seb128, sil2100: ping
+[10:54] <didrocks> (context would be great)
+=== MacSlow is now known as MacSlow|lunch
+=== gusch is now known as gusch|lunch
+=== gusch|lunch is now known as gusch
+=== steveire_ is now known as steveire
+=== dholbach_ is now known as dholbach
+=== tvoss_ is now known as tvoss|lunch
+=== MacSlow|lunch is now known as MacSlow
+=== ritz_ is now known as ritz|zzz
+[12:36] <pete-woods> fginther: good morning! - when you get chance, would you be able to set some more projects up to do CI for me?
+=== dholbach_ is now known as dholbach
+=== _salem is now known as salem_
+[12:56] <fginther> pete-woods, morning! No problem. Can you ping me again in 30 minutes if I don't get back to you first?
+[12:56] <pete-woods> fginther: of course! :)
+[13:29] <tseliot> stgraber: are you around?
+[13:36] <stgraber> tseliot: yep
+[13:49] <fginther> pete-woods, I have some time now
+[13:50] <pete-woods> fginther: cool, basically it's 3 new launchpad projects
+[13:50] <pete-woods> fginther: https://launchpad.net/libqtdbustest https://launchpad.net/libqtdbusmock https://launchpad.net/indicator-network-prompt
+[13:51] <pete-woods> fginther: I've set up recipies that build to my own PPA to verify the first two should build already
+=== tvoss|lunch is now known as tvoss|hungry
+=== tvoss|hungry is now known as tvoss_
+[13:52] <fginther> pete-woods, are all three indictor related?
+[13:52] <pete-woods> fginther: only the last one, the first two are general purpose for anyone using at and dbus who wants to write tests
+[13:52] <pete-woods> *at -> qt
+[13:56] <fginther> pete-woods, thanks. I'll ping you when I have them setup
+[13:56] <pete-woods> fginther: awesome, thanks :)
+[13:57] <fginther> pete-woods, has indicator-network-prompt been reviewed by the integration team for daily-release?
+[13:57] <pete-woods> fginther: no reviews have been done yet, I just wanted to have my tests running on Jenkins for that really
+[13:58] <fginther> pete-woods, not a problem,
+[13:58] <pete-woods> fginther: at the moment it won't even produce a deb file most likely :p
+[13:58] <fginther> pete-woods, ack
+[14:03] <seb128> diwic, hey
+[14:09] <tedg> cjwatson, Is there any issue with the main inclusion of click, or is it just a TODO and paperwork?
+[14:09] <cjwatson> Just paperwork I think
+[14:14] <cjwatson> tedg: I don't think there'll be any particular issue; jdstrand et al might want to take the opportunity to do an updated code review, I suppose
+[14:14] <tedg> cjwatson, Okay, cool.  I was just being asked by the Unity team about it, making sure there wasn't any blockers.
+[14:15] <tedg> I need to update to click 0.3 as well.
+[14:15] <cjwatson> Are you OK with that extension I added?  I realise it's not quite everything you asked for, but I think it should do the job ...
+=== _salem is now known as salem_
+[14:16] <tedg> Yes, I think that it's fine.  I'm still a bit worried about having a section called "hooks" in the manifest, but it's a semantic argument at this point not a technical one.
+[14:16] <cjwatson> Yeah, I thought you might mention that.  I might rename that at some point, but backward-compatibly
+[14:19] <jdstrand> cjwatson: does click-apparmor need to be adjusted to use Hook-Name?
+[14:20] <jdstrand> cjwatson: or changed in some other way for 0.3.0
+[14:20] <cjwatson> jdstrand: Not if you're already calling it apparmor.hook; and AFAIK there's only really one consumer of apparmor so I don't see the point
+[14:20] <jdstrand> /usr/share/click/hooks/apparmor.hook
+[14:20] <jdstrand> ok
+=== cody-somerville_ is now known as cody-somerville
+[14:52] <diwic> seb128, oh sh* missed the meeting :-(
+[14:53] <diwic> seb128, terribly sorry
+[14:53] <diwic> seb128, it fell out of my head completely :-(
+[14:53] <seb128> diwic, no worry, we settled for doing things the simple way in a first iteration
+[14:53] <seb128> diwic, lool took notes and updated https://blueprints.launchpad.net/ubuntu/+spec/touch-silent-mode
+[14:54] <seb128> diwic, we are going to just teach the phone/messaging/notification services to respect a gsettings key at first
+[14:54] <seb128> diwic, then we can work on a better solution later as resources permit
+[14:54] <seb128> diwic, we can have another meeting about the better solution later if needed
+[14:55] <diwic> seb128, okay, that sounds reasonable
+[15:01] <lool> diwic: Ah, and I looked for you on another irc channel, I should have checked here too
+[15:01] <seb128> lool, I pinged him here at the start of the meeting, he just replied
+[15:01] <seb128> lool, e.g wouldn't have make a difference
+[15:01] <seb128> lool, so don't blame yourself about it ;-)
+[15:03] <diwic> all blame on me
+[15:05] <lool> can do!
+=== tkamppeter_ is now known as tkamppeter
+[15:50] <tseliot> slangasek: sorry to bother you again, are you back for the sprint and up for reviewing an SRU?
+=== jasoncwarner__ is now known as jasoncwarner
+[16:03] <slangasek> tseliot: I am back - which SRU, the fglrx one still?
+[16:04] <tseliot> slangasek: bug 1198942
+[16:04] <ubottu> bug 1198942 in nvidia-prime (Ubuntu) "Hybrid Graphics and general enablement for fglrx and nvidia in Precise for 12.04.3" [High,In progress] https://launchpad.net/bugs/1198942
+[16:04] <slangasek> tseliot: right
+[16:04] <tseliot> slangasek: thanks
+[16:23] <jamespage> doko, any plans around re-merging distribute/setuptools?
+=== greyback_ is now known as greyback|food
+[16:31] <ev> @pilot out
+=== udevbot changed the topic of #ubuntu-devel to: Ubuntu 13.04 released | Archive: open | Devel of Ubuntu (not support or app devel) | build failures -> http://qa.ubuntuwire.com/ftbfs/ | #ubuntu for support and discussion of lucid -> raring | #ubuntu-app-devel for app development on Ubuntu http://wiki.ubuntu.com/UbuntuDevelopment | See #ubuntu-bugs for http://bit.ly/lv8soi | Patch Pilots:
+[16:40] <doko> jamespage, go ahead if you want =)
+[16:41] <doko> maybe the delta can be dropped now. didn't check
+[16:41] <jamespage> doko, I guess thats a 'no plans' then
+[16:41] <jamespage> doko, distribute re-merged into setuptools AFAICT
+[16:42] <doko> jamespage, yes, that too. didn't find time for that. just updated debian to the last distribute version
+[16:42] <jamespage> doko, I'll take a look and see then
+[16:43] <doko> thanks
+=== greyback|food is now known as greyback
+=== andreas__ is now known as ahasenack
+[17:35] <mitya57> jamespage: you may want to coordinate that with barry — he posted some thoughts about that @ https://lists.debian.org/debian-python/2013/05/msg00104.html
+[17:35] <jamespage> mitya57, thanks for the pointer -will do
+=== ffio is now known as hack
+=== hack is now known as nerd
+=== nerd is now known as baba
+[18:10] <doko> mitya57, jamespage: well, I would like to see the current one first in testing / saucy, then update
+=== james_ is now known as Guest7355
+=== Ursinha is now known as Ursinha-afk
+=== chuck__ is now known as zul
+=== Ursinha-afk is now known as Ursinha
+=== Ursinha is now known as Ursinha-afk
+=== james_ is now known as Guest20713
+=== Ursinha-afk is now known as Ursinha
+[22:16] <slangasek> YokoZar: can you rebuild your ppa wine packages for the gphoto transition?
+[22:16] <slangasek> YokoZar: also, why is saucy still at wine1.4?
+[23:02] <Ghoul_> Hi. I built a custom 3.8.0 kernel because I need to use my own DSDT. I followed instructions for copying the config over from the stock kernel and then built the kernel using `make deb-pkg` and installed it. When I boot I get dropped into grub shell and theres no drive devices under /dev/. The command line params being passed to the custom kernel are the
+[23:02] <Ghoul_> same as the stock kernel. Stock kernel continues to boot fine.
+[23:02] <Ghoul_> Any ideas?
+[23:03] <sarnold> Ghoul_: did you make / update the initramfs / initrd?
+[23:03] <Ghoul_> I tried to, but I may not have done it correctly
+[23:04] <Ghoul_> I certainly did the initramfs but I don't remember doing initrd
+[23:05] <sarnold> two different names and technologies for what's essentially the same thing. if you did one, you're probably fine..
+[23:06] <Ghoul_> ok
+[23:07] <Ghoul_> I just ran it again, I'll quickly reboot and see if that fixes anything

@@ -1,0 +1,506 @@
+[00:00] <TheMuso> xnox: According to loginctl show-seat output, yes, GUI session types are indicated/tracked.
+[00:01] <TheMuso> And same with loginctl show-session.
+=== bschaefer_ is now known as bschaefer
+[00:45] <mwhudson> hm
+[00:45] <mwhudson> i was sure that there was some way you could play linker tricks so that e.g. the cortex-a15-optimal version of memcpy is used on a15 but not a9
+[00:45] <mwhudson> does anyone know some names i can google for to learn more?
+[00:46] <darkxst> xnox, indeed I can connect to wifi with hardcoded tty session
+[00:49] <slangasek> mwhudson: do you mean IFUNC?
+[00:50] <mwhudson> slangasek: quite probably, thanks
+=== _salem is now known as salem_
+[01:00] <mwhudson> slangasek: yes, turns out i do
+[01:00] <slangasek> ok :)
+[01:00] <darkxst> xnox, well atleast the indicator can connect, ubi-wireless page is still broken
+[01:02] <ESphynx> xnox: can we hit you soon with a release in preparation for Saucy? ;)
+[01:04] <mwhudson> slangasek: hey, do you know if saucy will have glibc 2.18?
+[01:05] <slangasek> mwhudson: ICMP redirect infinity
+[01:05] <mwhudson> hee hee
+[01:06]  * mwhudson gets confuzzled
+[01:06] <mwhudson> does eglibc even have releases?
+[01:06] <slangasek> I'm not sure if 2.18 is released yet, and if it is, whether there's enough lead time to get it in before feature freeze, and if there is, whether that's a sane thing to do wrt risk
+[01:06] <mwhudson> _glibc_ 2.18 is released
+[01:06] <slangasek> well, it has some kind of release
+[01:07] <mwhudson> https://sourceware.org/ml/libc-announce/2013/msg00000.html
+[01:07] <ubottu> sourceware.org bug 2013 in libc "memccpy() gives inconsistent results on mmapped files" [Normal,Resolved: fixed]
+[01:07] <mwhudson> like two weeks ago
+[01:08] <bradm> anyone done any work with building jenkins?
+[01:08] <mwhudson> i've typed "mvn build" in ~/src/jenkins once or twice...
+[01:09] <bradm> I'm trying to backport jenkins from raring to precise, and its getting all confused between org.jvnet.hudson and org.jenkins-ci
+[01:09] <bradm> it looks like some of its dependencies are still using the old hudson path
+[01:11] <bradm> we don't really want to use war files for this if possible
+[01:13] <bradm> I guess we really should be looking at juju in the longer run
+=== Dr_Who is now known as tgall_foo
+=== salem_ is now known as _salem
+[03:40] <pitti> soren: TB meeting? we already had one last week, didn't we?
+[03:40] <pitti> Good morning
+[03:43] <darkxst> xnox, are you still around?
+[03:58] <pitti> darkxst: will probably still take some 3 hours until he's back online (London time)
+[03:59] <darkxst> pitti, ok
+[04:00] <darkxst> ubiquity is really broken on current Ubuntu GNOME daily
+[04:00] <darkxst> bug 1217177
+[04:00] <ubottu> bug 1217177 in ubiquity (Ubuntu) "ubiquity freezes when run from ubuntu GNOME live session" [Undecided,New] https://launchpad.net/bugs/1217177
+=== freeflying is now known as freeflying_away
+=== freeflying_away is now known as freeflying
+=== smb` is now known as smb
+=== tkamppeter_ is now known as tkamppeter
+[08:07] <Laney> xnox: look at loginctl show-session c<whatever> for both types and compare
+[08:25] <darkxst> Laney, hi
+[08:25] <Laney> hello!
+[08:27] <darkxst> So I can use the tty logind  session and gnome-shell and its built in networkAgent work perfectly
+[08:27] <darkxst> when trying the same with metacity/nm-applet, It connects the first time, but if wifi is already connected it crashes with a permission error
+[08:27] <darkxst> ^ in ubuiqty-dm
+[08:28] <Laney> doesn't do that with ck?
+[08:29] <darkxst> well that seems more like a polkit thing, than systemd?
+[08:29] <Laney> I haven't seen the error :-)
+[08:31] <darkxst> Laney, bug 1178638
+[08:31] <ubottu> bug 1178638 in ubiquity (Ubuntu Saucy) "Exception in GTK frontend when attempting to connect to wifi: no logind support" [High,Triaged] https://launchpad.net/bugs/1178638
+[08:32] <darkxst> by setting XDG_SESSION_ID I do get a wifi to connect
+[08:33] <darkxst> but if its a persistent USB, ubiquity will crash with the same error if wifi is already connected
+[08:37] <Laney> darkxst: that is controlled by org.freedesktop.NetworkManager.network-control
+[08:38] <Laney> try checking it with pkcheck
+[08:52] <darkxst> Laney, pkcheck seg faults when I try it on nm-applet
+[08:53] <Laney> err?!
+[08:53] <Laney> I usually just use --process $$ in a terminal
+[08:53] <Laney> but that sounds bad
+[08:54] <darkxst> Laney this is in a terminal (on the live cd)
+[08:54] <darkxst> err terminal and or tty
+[08:55] <Laney> well, that's bad
+[08:55] <Laney> get it bugged
+[08:55] <Laney> "pkcheck --action-id org.freedesktop.NetworkManager.network-control --process $$" is what I'd run
+[08:55] <Laney> but it shouldn't segfault in any case
+[08:58] <darkxst> oh right that doesnt segfault, but it doesnt return anything either
+[08:59] <Laney> that probably means it's authorised
+[08:59] <Laney> look at the return code (echo $?)
+[09:01] <darkxst> 0
+[09:04] <Laney> yep, authorised
+[09:04] <darkxst> yet the network indicator has no control at all
+[09:04] <darkxst> (over the connected wifi network)
+[09:05] <darkxst> i.e. cannot even disconnect
+[09:05] <darkxst> nor can connect to a different network
+[09:06] <Laney> still with the permission error?
+[09:09] <darkxst> network indicator just grays out most of the options
+[09:09] <darkxst> it doesnt crash like ubiquity does
+[09:10] <Laney> does loginctl show-session c<your thing> show it as Active=yes?
+[09:10] <Laney> I guess look in the code and see how it decides to do that
+[09:16] <darkxst> nope, none of the logind sessions are active
+[09:18] <Laney> could be your problem then
+[09:18] <Laney> it's pretty common for polkit to require active sessions
+[09:24] <darkxst> ok, guess I will try and a create a sesson for ubiquity-dm
+[09:25] <Laney> darkxst: I suggested that xnox look at what lightdm does there
+[09:26] <Laney> will require translation c -> python but you can get the spirit from that
+[09:26] <Laney> (IIUC)
+[09:46] <darkxst> Laney, except normally its pam_systemd that creates the sessions (I believe)
+[09:47] <Laney> darkxst: yes you're opening a pam session
+[09:48] <asac> seb128: what came out of the /etc/.../networking discussion
+[09:49]  * asac also gets asked
+[09:49] <seb128> asac, I opened https://bugs.launchpad.net/ubuntu/+source/ifupdown/+bug/1217263 for stgraber
+[09:49] <ubottu> Launchpad bug 1217263 in ifupdown (Ubuntu) "conffile change prompt on upgrade" [Undecided,New]
+[09:49] <asac> seb128: i took the change now :)
+[09:49] <asac> -> I
+[09:49] <seb128> same here ;-)
+[09:49] <asac> ok so we are in same boat
+[09:49] <asac> good
+[09:49]  * asac feels better
+[09:53] <darkxst> Laney, so I can I fire off a pam session on a non-login X instance?
+[09:54] <Laney> darkxst: what's one of those?
+[09:54] <darkxst> well when ubiquity-dm spawns an X server
+[09:54] <darkxst> there is no login
+[09:57] <darkxst> oh, if I create a conf file for ubiquity-dm it should register a pam session
+[09:58] <Laney> there must be a user?
+[09:58]  * Laney hands you over to xnox now :-)
+[09:58] <xnox> Laney: yeah, i'm poking lightdm. And it's interesting, they create their own Session object which handles: normal, guess, autologin. + other stuff.
+[09:59] <Laney> I guess they do more than you need to in ubiquity-dm
+[10:01] <Ampelbein> xnox: Hey there! You did the multiarch changes to boost1.53? Could you have a look at bug 1217237 ?
+[10:01] <ubottu> bug 1217237 in boost1.53 (Ubuntu) "Can't link to python_boost library due to multiarch changes" [High,New] https://launchpad.net/bugs/1217237
+[10:05] <xnox> Ampelbein: seems reasonable. Note /usr/share/dpkg/architecture.mk already defines DEB_HOST_MULTIARCH, but I'm not sure why rtupdate is needed as it hasn't been called before.
+[10:05] <Ampelbein> xnox: It is called in libboost-python1.53-dev's postinst.
+[10:06] <Ampelbein> xnox: debian/rules installs it to usr/share/python/runtime.d/libboost-python$(PKGVERSION)-dev.rtupdate
+[10:07] <xnox> Ampelbein: ok. are there symlinks needed for python3 as well?
+[10:11] <Ampelbein> xnox: No, I don't think so.
+[10:11] <xnox> Ampelbein: ok. I'll add that to multiarch packages.
+[10:12] <Ampelbein> xnox: The script queries 'pyversions -d' to decide which is the default python version and where to link too.
+[10:15] <Ampelbein> xnox: There is another problem with the multiarch locations of boost: The autotools ax_boost_base.m4 macro is unable to find them , but I think that needs a change to those macros. Unfortunately my knowledge of autotools is limited.
+[10:16] <xnox> Ampelbein: I did patch one version of ax_boost_*.m4 already, but it's a pain that everyone copied them and tweaked them.
+[10:17] <xnox> Ampelbein: that new rtupdate will be different on each architecture, and thus not co-installable. Also if this is to change symlinks after default runtime change, I'm not sure that is needed anymore as there is only one 2.7 left.
+[10:20] <Ampelbein> xnox: Hmm, right. Maybe name it to libboost-python$(PKGVERSION)-$(DEB_HOST_MULTIARCH)-dev.rtupdate?
+[10:23] <Ampelbein> xnox: Or, if 2.7 is definitely the only python2 runtime version left and there will be absolutely no change, just create the symlink with a *.links file?
+[10:25] <xnox> Ampelbein: yeah, i am thinking to just ship a link to 2.7 by default.
+[10:25] <xnox> Ampelbein: I do not like how upstream boost doesn't distinguish 3.x & 2.x libraries at all though (in a standard manner).
+[10:26] <Ampelbein> Agreed.
+[10:29] <Ampelbein> xnox: Can you point me to a patched ax_boost*.m4? There are a few other build failures with not finding boost libraries.
+[10:32] <xnox> Ampelbein: well, i was overriding BOOST_SUFFIX=py2.7 in some of them. but with symlink back in place they should all just work again for python2 case.
+[10:33] <darkxst> xnox, the ubuntuone sso stuff breaks on ubuntu GNOME
+[10:33] <xnox> darkxst: can you paste logs?
+[10:33] <xnox> darkxst: and/or better file a bug report & fetch logs from the live cd after the error.
+[10:33] <Ampelbein> xnox: Oh, ok. The failures I had in mind was for not finding boost_program-options. #1215896 and 1215906
+[10:34] <xnox> bug 1215896
+[10:34] <ubottu> bug 1215896 in synfig (Ubuntu) "synfig FTBFS on amd64: configure:22100: error: Could not find a version of the library!" [High,New] https://launchpad.net/bugs/1215896
+[10:34] <darkxst> xnox, its seems to just hang
+[10:34] <xnox> bug 121906
+[10:34] <ubottu> bug 121906 in xorg (Ubuntu) "Gutsy Tribe 1 installer does not configure X to use ATI driver for ATI All-In-Wonder Radeon 8500 DV (R200 chipset)" [Medium,Fix released] https://launchpad.net/bugs/121906
+[10:35] <darkxst> xnox, we don't ship ubuntuone
+[10:35] <darkxst> although I didnt see anything in ubiquity that actually uses u1
+[10:35] <xnox> darkxst: so. that page doesn't depend on ubuntuone. it does rest api's to ubuntu and stores a token in gnome-keyring.
+[10:36] <darkxst> xnox, right, that is what It looked like form the code
+[10:36] <darkxst> but when I start ubiquity it just hangs
+[10:38] <darkxst> xnox also it only happens from the live session, seem to work from ubiquity-dm
+[10:39] <xnox> darkxst: can you please file a bug with logs, cause e.g. syslog should tell you where it hung.
+[10:40] <darkxst> xnox, there are no logs
+[10:48] <darkxst> xnox, apart from what is in bug 1217177 I can't find anything more to give you
+[10:48] <ubottu> bug 1217177 in ubiquity (Ubuntu) "ubiquity freezes when run from ubuntu GNOME live session" [Undecided,New] https://launchpad.net/bugs/1217177
+[10:48] <darkxst> it runs fine under gnome-shell in my local session
+[10:53] <darkxst> but just sits there completely hung, when run from the liveCD session
+[10:54] <darkxst> and I don't know how to debug hangs in python
+=== gusch_ is now known as gusch|brb
+[11:36] <rbasak> cjwatson: could you consider adding upload rights for mysql-5.5 to ~ubuntu-server-dev, please? I also noticed awstats, though I don't have anything I need to do with that package right now.
+[11:36] <rbasak> Or is cjwatson still away/on holiday?
+[11:37]  * rbasak isn't sure who to ask in his absence
+[11:37] <seb128> rbasak, he's back since today I think
+[11:37] <rbasak> Thanks
+[11:37] <seb128> he was around earlier at least
+[11:37] <rbasak> OOI, where do the exceptions actually go?
+[11:43] <debfx> rbasak: afaik https://code.launchpad.net/~cjwatson/+junk/packageset
+[11:43] <rbasak> Thanks!
+[11:53] <cjwatson> rbasak: awstats and mysql-5.5 done
+[11:53] <rbasak> Thank you!
+[11:55] <pitti> hey cjwatson, welcome back!
+[11:55] <pitti> cjwatson: I hope you had some nice holidays? it's been quite cold and rainy in my part of Europe last week
+[11:56] <cjwatson> We were above the clouds for a good part of the week
+[11:56] <cjwatson> (I exaggerate slightly but not by much)
+[11:58] <pitti> heh, always sunny there :)
+=== natefinch is now known as natefinch-afk
+=== Dr_Who is now known as tgall_foo
+=== gusch|brb is now known as gusch
+=== oSoMoN_ is now known as oSoMoN
+[12:44] <stgraber> asac, seb128: right, the right answer to the prompt is Y (take the change), however I have no clue why it's even prompting since I highly doubt you've both had local changes to that file...
+[12:44] <stgraber> I'll poke some more and possibly get slangasek to take a look too (we've both been adding migration code to that package to deal with migration of that conffile between two packages, looks like something's still missing)
+[12:45] <seb128> stgraber, hey, I provided the info I though would be useful on the bug report (Laney hinted on what those would be), let me know if you need more details
+[12:47] <stgraber> seb128: do you still have the pre-update /etc/init.d/networking around? if so, attaching that too would be good.
+[12:47] <xnox> Ampelbein: --with-boost-libdir=/usr/lib/$(DEB_HOST_MULTIARCH)
+[12:48] <seb128> stgraber, I add the diff to the bug, you can patch -R it to get the pre version
+[12:48] <seb128> stgraber, but sure, can do that
+[12:48] <xnox> Ampelbein: and "include /usr/share/dpkg/default.mk" (or /usr/share/dpkg/architecture.mk if you want less pre-defines) to get DEB_HOST_MULTIARCH.
+[12:49] <stgraber> seb128: sure, but if LP ate or changed a single char when I copy/paste that back to my system, the md5sum will be wrong which will make it a pain to debug
+[12:50] <seb128> stgraber, done
+[12:50] <stgraber> thanks
+[12:52] <Ampelbein> xnox: Ok, that is the solution I have used for my package, pdfcube. I was just wondering if there was a better way. Thanks for looking into it!
+[12:53] <xnox> Ampelbein: uploaded fixed toonloop.
+[12:53] <xnox> Ampelbein: it's better than hacking m4 and is already supported.
+[12:54] <Ampelbein> xnox: I see, thanks again. I will upload some fixes later then.
+[12:55] <xnox> Ampelbein: excellent =)
+[12:55] <xnox> Ampelbein: i'm waiting for doko to do archive rebuild, then we'll be able to stop all of them easily.
+[12:57] <Ampelbein> xnox: Yeah, those were just the few I have found while trying to figure out the buildfailure in my own package.
+[12:59] <asac> stgraber: its the old issue of getting asked about conffile changes that never happene
+[12:59] <menace> is anyone aware if pxeboot via ipv6 works?
+[12:59] <asac> d
+[12:59] <asac> i always get those at least once when upgrading from release to new release
+[13:03] <stgraber> asac: yeah, but we already have a ton of code in ifupdown to avoid that, so I'm really surprised this showed up again... I'll have to re-read all the maintainer scripts and figure out what corner case we missed (since it clearly didn't happen in a raring -> saucy system and a clean saucy system when I tested here)
+[13:06] <seb128> stgraber, that box is 3 years old, and got regularly upgraded through every cycle, mostly following unstable
+[13:06] <seb128> stgraber, if that helps
+[13:30] <asac> seb128: i doubt it helps. as i said, i have weird debconf dialogs during upgrades
+[13:30] <asac> every release
+[13:31] <seb128> asac, stop editing your conffiles :p
+[13:31] <asac> and always i am pretty sure i never touched the file
+[13:31] <seb128> asac, stop installing weird/broken packages then ;-)
+[13:31] <asac> so 4 years ago i flied these as "packaging bugs, that touch /etc in maintainer scripts"
+[13:31] <asac> but i somewhat dont believe in that story anymore
+[13:31] <seb128> asac, but yeah, those stuff are easy to get wrong and bugs are not uncommon
+[13:31] <asac> seb128: like ifupdown :)
+[13:32] <cjwatson> If it's debconf, it's not conffiles
+[13:32] <cjwatson> Since conffiles aren't processed via debconf
+[13:32] <seb128> cjwatson, we are speaking about conffile diffs I think
+[13:32] <asac> yeah i might mix things up. sorry
+[13:32] <cjwatson> I know
+[13:32] <seb128> https://bugs.launchpad.net/ubuntu/+source/ifupdown/+bug/1217263 in that specific case
+[13:32] <ubottu> Launchpad bug 1217263 in ifupdown (Ubuntu) "conffile change prompt on upgrade" [Undecided,New]
+[13:33] <seb128> cjwatson, welcome back btw, I hope you had good debconf and holidays ;-)
+[13:33] <cjwatson> I did, thanks
+[13:33] <asac> welcome back :)
+[13:33] <cjwatson> Good mountain air
+[13:33] <cjwatson> We got up as far as the snow line, albeit briefly
+=== Dr_Who is now known as tgall_foo
+[13:34] <seb128> nice
+[13:35]  * cjwatson is appreciating the lots of time he got to prepare for vUDS ... no, wait, the other one
+[13:35] <stgraber> seb128: it actually helps. I'll try a precise -> quantal -> raring -> saucy upgrade, see if that triggers it
+=== Sweetsha1k is now known as Sweetshark
+[13:35] <stgraber> seb128: if that doesn't, then it's most likely something that went wrong at some point in a dev release which will be close to impossible to track down
+[13:36] <seb128> stgraber, right :/
+[13:36] <stgraber> seb128: the diff you posted in the bug is exactly what changed between the last and current version, so there's clearly no local change but for some reason dpkg thought there was at some point and marked the conffile as modified
+[13:38] <seb128> stgraber, right, md5sum is the same between my .dpkg-old and the file from ifupdown-0.7.5ubuntu4
+[13:51] <smartboyhw> I heard that ubiquity is breaking installs everywhere:(
+[13:51] <slangasek> stgraber: 20-05-2013 12:08:20 > slangasek: the only case this doesn't test for is the possibility that in the *next* version of ifupdown the user installs, the md5sum of the conffile changes again
+[13:52] <jibel> pitti, I pushed the fix to adt-export-results to all the testing nodes
+[13:58] <pitti> jibel: merci
+[14:02] <chrisccoulson> hey, i'm leading a session in a few minutes. are there any pointers for how to set up the hangout etc? (dholbach / jono)
+[14:02] <chrisccoulson> i haven't done this with the new format yet
+[14:02] <dholbach> chrisccoulson, the track lead will start the session
+[14:02] <chrisccoulson> dholbach, thanks :)
+[14:02] <chrisccoulson> jdstrand ^^]
+[14:03] <jdstrand> ok, cool, so we are client, so that should be jasoncwarner
+[14:03] <dholbach> or seb128 I think
+[14:04] <chrisccoulson> oh, it's not actually in a few minutes. sorry, tz confusion ;)
+[14:04] <jasoncwarner> jdstrand sil2100 or seb128
+[14:04] <jdstrand> chrisccoulson: ^
+[14:04] <jasoncwarner> chrisccoulson ^^
+[14:04] <dholbach> chrisccoulson, you can then find the link to the hangout on the page of the session linked from http://summit.ubuntu.com/uds-1308/2013-08-27/
+[14:04] <chrisccoulson> thanks
+[14:05] <sil2100> chrisccoulson: I guess seb128 will be your lead
+[14:05] <sil2100> chrisccoulson: so he'll create the hangout for you
+[14:05] <sil2100> seb128: client2 ^
+[14:07] <frafu> Hi, Could anybody please tell me whether there is a place, where developers of software shipping with Ubuntu can get some free legal advice sponsored by Ubuntu/Canonical?
+[14:07] <chrisccoulson> sil2100, thanks
+[14:07]  * chrisccoulson pokes seb128
+[14:07] <chrisccoulson> is it fixed yet?
+[14:08] <seb128> lol
+[14:09] <seb128> sil2100, chrisccoulson, jasoncwarner: isn't that session in 50min?
+[14:09] <seb128> did I screw up my tz?
+[14:09] <sil2100> No, it's ok
+[14:09] <sil2100> It's in 50 min
+[14:09] <seb128> oh, pfiou, good
+[14:09] <chrisccoulson> seb128, no, i screwed up my tz ;)
+[14:09] <sil2100> Just poking ;)
+[14:09] <seb128> you scared me :p
+[14:12] <jasoncwarner> well chrisccoulson  and seb128 , I *did* screw up my tz and got up 2 hours early :/
+[14:12] <chrisccoulson> lol :)
+[14:12] <seb128> jasoncwarner, look at the good side, it gives you time for coffee ;-)
+[14:16] <TheMuso> I wish I was a coffee drinker, it could probably help me about now. :)
+[14:19] <seb128> qengho, hey, any news about the chromium build issue in saucy?
+[14:21] <qengho> seb128: I rolled the fix into the upcoming release.  I should receive webapps patches today, and then give it to builders.
+[14:22] <seb128> qengho, ok, thanks
+[14:28] <slangasek> apw jdstrand ogra_ infinity rsalveti sergiusens stgraber xnox: if I moved http://summit.ubuntu.com/uds-1308/meeting/21961/foundations-1308-touch-support-model/ up to start in a half hour, would that work for you?  I don't want to leave our one free slot on Foundations for the first hour on day 1, leaving us no slack if we need last-minute sessions scheduled
+[14:28] <jdstrand> slangasek: not for me. I need to be in the oxide session
+[14:28]  * ogra_ has to check 
+[14:28] <slangasek> (in fact, I thought Phonedations had another session Coming Soon)
+[14:28] <pitti> jibel: want me to update the other occurrences of VersionCompare in a-p-t?
+[14:28] <slangasek> jdstrand: ah, ok
+[14:29] <slangasek> I'll find something else to move
+[14:30] <rsalveti> slangasek: I got a conflict with the daily-release session
+[14:30] <slangasek> ara apw xnox ogasawara: could *this* session be moved up to the next hour (i.e., starting in 30m)?: http://summit.ubuntu.com/uds-1308/meeting/21883/foundations-irst-support/
+[14:31] <ara> slangasek, fine for me
+[14:31] <xnox> slangasek: yes, but is superm1 there?
+[14:31] <slangasek> xnox: he's not on the attendee list
+[14:31] <jibel> pitti, done in r224
+[14:31] <xnox> slangasek: and/or danjared
+[14:32] <pitti> jibel: ack, merci
+[14:32] <slangasek> ah, danjared: ^^ would you be happy to have the Intel Rapid Start session in 30m?
+[14:32] <slangasek> danjared: ^^
+[14:37] <ogasawara> slangasek: ok by me, but I don't think I'm required (but I am planning on listening in)
+[14:37] <slangasek> ogasawara: right... I was asking you as a proxy for the many kernel devs on your team who seem to not be on this channel :-)
+[14:39] <slangasek> anyway, I won't move it without danjared's ack
+[14:46] <danjared> slangasek: won't work for me :-\
+[14:46] <slangasek> danjared: ok, no worries
+=== freeflying is now known as freeflying_away
+[15:04] <slangasek> xnox: do you have access to kick http://package-import.ubuntu.com/status/ifupdown.html ?
+[15:05] <xnox> slangasek: yes, but it will have permissions errors pushing back.
+[15:05] <xnox> let me try though.
+[15:05] <slangasek> xnox: mm? why permissions errors?
+[15:06] <xnox> slangasek: see example http://package-import.ubuntu.com/status/cloud-init.html
+[15:06] <xnox> slangasek: who should I poke about that?
+[15:06] <ogra_> slangasek, what did you end up shuffling ? my personal calendar doesnt show changes
+[15:06] <slangasek> ogra_: in the end, nothing has moved
+[15:06] <ogra_> ok
+[15:07] <slangasek> xnox: so how do we fix that?
+[15:07] <cjwatson> <small>switch to dgit</small>
+[15:07] <slangasek> xnox: wait, you're asking *me* who to poke?
+[15:07] <slangasek> cjwatson: would like a more short term fix :)
+[15:07] <xnox> cjwatson++
+[15:08] <xnox> wgrant: any idea why this is happening to UDD importer or force requeue-all of any package which had tag mismatches? example post requeue http://package-import.ubuntu.com/status/cloud-init.html
+[15:09] <xnox> wgrant: looks approx. like this before requeuing http://package-import.ubuntu.com/status/ifupdown.html
+[15:09] <stgraber> xnox: do you know who that script is running as?
+[15:10] <xnox> stgraber: i can double check.
+[15:10] <stgraber> xnox: it should be running as ~package-import
+[15:11] <stgraber> xnox: we removed a bunch of ~ubuntu-branches members a month ago but none of those should be used by scripts (though that'd explain the 401(
+[15:15] <xnox> stgraber: it does ssh into bazaar.launchpad.net as user package-import.
+[15:16] <xnox> stgraber: i wonder if the lp-api token expired.
+[15:52] <hholtmann> What would be a good channel to ask question about specific "dev box environment question" on issue dealing with developing linux programs.. in this case how to develop packages, install and test on my workstations.. without installing my stuff to the "system"...
+[15:53] <hholtmann> in other words.. how can I install my packages and test on my dev box WITHOUT altering my "system"…. is what a 'chroot" environment is for?
+[15:53] <cjwatson> chroots or lxc containers are good for that, yes
+[15:54] <hholtmann> not the HOW's. but the strategies.
+[15:54] <cjwatson> also for building packages, something like https://wiki.ubuntu.com/SimpleSbuild is excellent
+[15:54] <hholtmann> cjwatson:  thanks
+[16:02] <seb128> jdstrand, kenvandine, lool, tedg, "push notifications (v0)" session's hangout url: https://plus.google.com/hangouts/_/50858536cc9dc46dce60681e9cd64ed7c3458455?authuser=0
+[16:02] <seb128> the hangout is open but not broadcasting yet
+[16:03] <seb128> going to start that in 3 minutes, you can already join if you want
+[16:04] <lool> thanks
+[16:04]  * tedg should have shaved
+[16:04] <kenvandine> seb128, thanks
+[16:05] <slangasek> fginther, cjohnston, doanac`: you're wanted in the phablet tools roadmap session, are you able to join? https://plus.google.com/hangouts/_/28b3927907ca51848ffbadc659fa11ee50731df0 / #ubuntu-uds-foundations-1
+[16:07] <lool> xnox: BTW have switched to different computer, laptop was maxing its CPU
+[16:07] <lool> hence the lags I guess
+[16:07] <xnox> =)
+[16:07] <Laney> gotta love hangouts
+[16:07] <seb128> lool, do you know who is hosting that one?
+[16:08] <seb128> kenvandine, ^
+[16:08] <kenvandine> seb128, not really... chipaca is on holiday
+[16:08] <lool> seb128: I'd think John Lenton or Lucio
+[16:08] <seb128> shrug
+[16:08] <lool> kenvandine: is lucio around?
+[16:08] <kenvandine> he registered it right before leaving
+[16:08] <kenvandine> not sure
+[16:08] <seb128> lool, John is on holidays from what kenvandine said
+[16:09] <lool> beuno: !
+[16:09] <kenvandine> seb128, i'm pinging people
+[16:10] <seb128> kenvandine, thanks
+[16:10] <beuno> lool, should be lucio
+[16:11] <lool> beuno: can't find him on IRC
+[16:11] <lool> beuno: could you call him?
+[16:12] <beuno> lool, I'm on a session
+[16:12] <lool> seb128: are we broadcasting already?
+[16:12] <seb128> lool, yes, but I can stop it if you want
+[16:12] <lool> seb128: not worth broadcasting this
+[16:12] <lool> calling lucio
+[16:12] <seb128> lool, stopped
+[16:13] <seb128> lool, of course I can't broadcast again after stopping...
+[16:14] <seb128> lool, ted, kenvandine: https://plus.google.com/hangouts/_/be9944c51c1acb76b3ae351abb663eff69f38489?authuser=0
+[16:14] <seb128> now hangout url (in case we manage to get a session going)
+[16:14] <lool> seb128: lucio joined
+[16:15] <seb128> lool, you need to join that new url if we want to broadcast, I can't re-broadcast the old one after stopping
+[16:15] <seb128> (stupid g+)
+=== v3d is now known as vdagli
+=== vdagli is now known as v3d
+[16:58] <slangasek> xnox: when are you changing your /nick to mirnomir?
+[16:59] <xnox> slangasek: I am actually running dual-screen on Mir at the moment =)))))
+[16:59] <xnox> slangasek: mirnetmir
+[17:00] <ESphynx> xnox: What's your take on Mir?
+[17:00] <xnox> ESphynx: works great for me! I finally have mirrored lightdm once again!
+[17:00] <Laney> mir⊆mir
+[17:00] <ESphynx> cool. Does it come with Saucy?
+[17:00] <ESphynx> Is it X11 compatible?
+[17:04] <xnox> ESphynx: it's in Saucy, but as an optional package, so one has to manually opt-into it. At the moment. Yes, it's X11 compatible.
+[17:05] <ESphynx> xnox: cool. Did you get my hint for an upcoming Ecere package I hope will make it in Saucy? ;) It fixes a bunch of things.
+[17:06] <xnox> ESphynx: no, I didn't get your hint =)
+[17:06] <xnox> ESphynx: feature freeze is on Thursday, what were you hoping to get in?
+[17:06] <ESphynx> oh. I'm hoping you'll be able to help us get it in, yes
+[17:07] <ESphynx> I know the feature freeze is on Thursday, which is why I've been trying to push this release, I was hoping to get it ready on Sunday :(
+[17:07] <xnox> ESphynx: do you have a .dsc or branch already, i haven't seen anything.
+[17:07] <ESphynx> I have nothing yet.
+[17:08] <ESphynx> apart from lots of commits, obviously :P
+[17:09] <ESphynx> I don't think the packaging will require any change apart from a changes entry
+[17:13] <ESphynx> I don't expect to have a .dsc until Thursday evening, there are still some fixes required :S  But I'd argue it's all bug fixes, and some quite needed ones, so hopefully we can still get in...
+[17:14] <ESphynx> gotta go for now, thanks xnox!
+[17:14] <ESphynx> (current commits are on https://code.launchpad.net/~jerstlouis/ecere/master )
+[17:23] <lool> cjwatson: hey, I need to make /var/lib/PackageKit rw in touch images, but can you confirm it's ok to make it temporary data? (seems it's just to prepare transactions, but the contents can be destroyed on reboot)
+[17:25] <cjwatson> lool: I don't really know much about that
+[17:27] <cjwatson> I'm not certain that the scan-desktop-files plugin runs before anything that might use desktop-files.db
+[17:28] <lool> cjwatson: ah does desktop-files.db need to be preserved across reboots?
+[17:28] <cjwatson> The transaction database can be temporary, but for the other, I would err on the side of caution and say it needs to persist
+[17:28] <cjwatson> Just from a quick skim-read of the code
+[17:28] <lool> yeah
+=== olli_ is now known as olli
+=== sam113101 is now known as sam113101_afk
+=== sam113101_afk is now known as sam113101
+=== natefinch-afk is now known as natefinch
+[18:49] <cjwatson> lool: heh, I just ran across the exact same problem with packagekit and system images that I guess you were just fixing ...
+[18:50] <lool> cjwatson: it's uploaded I think
+[18:51] <lool> cjwatson: lxc-android-config 0.82 (saucy-proposed)
+[18:51] <cjwatson> Cool
+[18:51] <lool> cjwatson: you can change /etc/system-image/writable-paths by hand and reboot to get the fix
+[18:51] <lool> (just add PackageKit liek Network-Manager
+[18:52] <cjwatson> I'll just reflash next time there's an update, no rush
+[18:52] <cjwatson> /etc/system-image/writable-paths is sensibly on the RO partition anyway
+[19:04] <sarnold> seb128: how's the health of the retracers? another one with 4+ hours: 1217406
+[19:07] <seb128> sarnold, they are being slow so you have time to review https://bugs.launchpad.net/ubuntu/+source/openjpeg/+bug/711061 ;-)
+[19:07] <ubottu> Launchpad bug 711061 in openjpeg (Ubuntu) "[MIR] libopenjpeg2" [High,Confirmed]
+[19:07] <sarnold> seb128 :D
+[19:10] <seb128> sarnold, the amd64 retracer was down, I restarted it
+[19:10] <sarnold> seb128: thanks
+[19:10] <seb128> yw!
+[19:31] <roaksoax> xnox: howdy!!
+[19:31] <roaksoax> xnox: were you able to look into DLM?
+[19:31] <roaksoax> err
+[19:31] <roaksoax> xnox: lvm2?
+[19:46] <dobey> anyone around that can accept something in the saucy NEW queue?
+[19:56] <dobey> i've had a package sitting in NEW for over a month now :(
+[20:00] <infinity> dobey: Which package?
+[20:01] <dobey> infinity: ubuntuone-credentials
+[20:01] <infinity> dobey: Is that destined for main with an MIR and such, or just universe?
+[20:02] <dobey> infinity: just universe in saucy
+[20:03] <dobey> infinity: it will be in the touch image though. not clear if there's a special MIR-like thing that needs to be done for that, but i was told at least that it doesn't have to be in main in the archive
+[20:04] <jdstrand> cjwatson: thoughts on click Recommending click-apparmor? for now I seeded it in supported, but though a recommend might make sense
+[20:04] <jdstrand> s/though/thought/
+[20:06] <infinity> dobey: The eventual plan/hope was for touch stuff to all make it to main, the fact that we're building out of universe right now isn't a feature but a necessary velocity thing while doing tech previews.
+[20:06] <infinity> dobey: If this is detined for default images, I'd like a security review, given the sort of package it is.
+[20:06] <infinity> jdstrand: ^-- Can you get someone to do an in-queue review of ubuntuone-credentials?
+[20:07] <infinity> jdstrand: And have them follow up to https://bugs.launchpad.net/ubuntu/+bug/1199017 so we can refer back to it when an MIR rolls around?
+[20:07] <ubottu> Launchpad bug 1199017 in ubuntuone-credentials "[needs-packaging] ubuntuone-credentials" [Undecided,New]
+[20:07] <cjwatson> jdstrand: makes sense, done for next upload
+[20:07] <jdstrand> cjwatson: thanks! :)
+[20:08] <jdstrand> cjwatson: oh, while I have you. can you comment on https://lists.launchpad.net/ubuntu-appstore-developers/msg00451.html (or parts of the thread that interest you)
+[20:08] <jdstrand> cjwatson: doesn't have to be now or anything. I'd like to use aa-exec-click instead of aa-exec to setup some env vars, and that thread suggested to me you might have some input
+[20:09] <cjwatson> jdstrand: right, uh, that's in my two-week mail backlog
+[20:09] <jdstrand> cjwatson: yeah, I figured. coming back from vacatio is always nice :)
+[20:09] <jdstrand> cjwatson: welcome back btw :)
+[20:09] <cjwatson> jdstrand: I exhausted my thinking power for today on the multiple-unpack-directory thing :)
+[20:09] <cjwatson> ta
+[20:09] <jdstrand> fun
+[20:10] <cjwatson> will need to implement all that soon, but not right now ...
+[20:11] <jdstrand> yeah, no huge rush, just thought I get an extra blip on your radar
+[20:11] <cjwatson> ack
+[20:11] <jdstrand> infinity: what kind of timeframe are you looking for?
+[20:12] <infinity> jdstrand: Well, I'll do the NEW review over the next couple of days, so dobey doesn't strangle me.  But given it's destined for images, I'd like to treat it almost like an MIR, even if it's not being seeded right away.
+[20:12] <infinity> jdstrand: So, uhm.  EOW, maybe?
+[20:12] <jdstrand> sarnold: is that something you could squeeze into that timeframe? ^
+[20:13] <dobey> unfortunately i only just now realized it wasn't in universe yet :(
+[20:13] <sarnold> jdstrand: yes, I can do that, though I'm unlikely to get all the MIRs done this week. :(
+[20:14] <sarnold> jdstrand: but it can be #2 after openjpeg and be done by eow.
+[20:14] <jdstrand> sarnold: sure, that's fine. it is also how it goes at this time in the cycle.
+[20:14] <infinity> sarnold: Early next week is also doable.  I'm happy to grant dobey an FFe based on the archive admins being slack. :P
+[20:14] <dobey> i'll have a new version to upload, tomorrow. it adds a couple more packages, and switches from storing stuff in gnome-keyring over to using online-accounts. but the code that talks to the network is i think unchanged from what's in there now
+[20:14] <jdstrand> sarnold: I appreciate it
+[20:14] <infinity> But I suspect he also wants to link stuff with the library.
+[20:15] <infinity> dobey: If you upload that before sarnold gets to look at it, all the better.
+[20:15] <infinity> dobey: (And I'd prefer to be doing the NEW review on that version too)
+=== slomo__ is now known as slomo
+[20:16] <dobey> infinity: i'm guessing pull-lp-source won't grab the existing version eh? and there's no bzr branch of it. and i don't think i can actually upload a new one since it hasn't been accepted yet?
+[20:16] <infinity> dobey: queue fetch <package>
+[20:17] <infinity> dobey: And you can upload as many as you want, I'll just reject all but the newest.
+[20:17] <dobey> infinity: i meant as a matter of permissions
+[20:18] <infinity> Oh, this was sponsored, I guess.  Yeah.  True.  But you can throw source to me and I'll sponsor blind, so I can review without prejudice. :P
+[20:18] <infinity> (Cause that's a sane workflow, right?
+[20:18] <infinity> )
+[20:18] <dobey> it's supposedly added to the ubuntuone package set, but i don't know what that means for things that haven't been accepted into the archive yet
+[20:18] <infinity> More likely, I'll review, then sponsor, but whatever.
+[20:18] <dobey> where does "queue" come from?
+[20:18] <infinity> dobey: Oh, if it's in the packageset, it might let you upload.  Always worth a shot.
+[20:19] <cjwatson> dobey: lp:ubuntu-archive-tools
+[20:19] <infinity> dobey: ubuntu-archive-tools.
+[20:19] <infinity> dobey: You can also just snag from the web UI: https://launchpad.net/ubuntu/saucy/+queue
+[20:20] <dobey> yeah. and -archive-tools is i guess unpackaged according to apt-get
+[20:20] <infinity> Intentionally so.
+[20:35] <Noskcaj> kirkland, FYI, i found a guy who is willing to port testdrive to GTK3
+[20:37] <roaksoax> Noskcaj: there's already a port to GTK3, it just needs fixing
+[20:37] <Noskcaj> roaksoax, i forgot about that, i'll link it to him when he's next online
+[20:37] <roaksoax> Noskcaj: cool! thanks!
+[20:38] <Noskcaj> Also, do you think testdrive is ready for debian? i can upload it if you want
+=== bfiller is now known as bfiller_afk
+[20:50] <roaksoax> Noskcaj: yes and no... it would first need native support for debian iso's
+[20:54] <Noskcaj> roaksoax, ok. I'll look into that
+[20:57] <roaksoax> Noskcaj: cool, thanks!
+=== seb128_ is now known as seb128
+=== bschaefer_ is now known as bschaefer
+=== freeflying_away is now known as freeflying
+=== nxvl_ is now known as nxvl
+[23:30] <wgrant> xnox: I think that's because it no longer has privileges to set the branch for obsolete series, maybe. But I'm not sure why it's trying to set the branch for an obsolete series...
+[23:30] <wgrant> Unless it just tries every time it tries to import that series, even if it's already set to the desired value.
+[23:33] <slangasek> wgrant: well, what if the import has been failing for > 6 months?
+[23:34] <wgrant> slangasek: Sure, but I don't think this one has.
+[23:34] <wgrant> It clearly needs to be able to set old series branches for that sort of case, but I don't think this is one of them.
+[23:39] <slangasek> wgrant: well, that particular one maybe is related to an SRU to maverick?  Just speculation on my part, however
+[23:40] <wgrant> It could be, yeah.
+[23:47] <jkitchen> is there a setting for dpkg by chance to prevent package installation from creating a user? I'd rather the installation fail (and not happen) if a user is required but doesn't already exist
+[23:48] <slangasek> jkitchen: no, that's not something we would consider a reasonable configuration setting
+[23:48] <jkitchen> really?
+[23:48] <jkitchen> hrm.
+[23:48] <jkitchen> reason I ask is because, for instance, mongodb, it will set up a user
+[23:49] <jkitchen> but depending on a few other factors, that might not be the same uid/gid as a different system
+[23:49] <slangasek> all kinds of packages set up users.  There's a reserved uid range exactly for this purpose.
+[23:49] <jkitchen> so I'm pre-creating a bunch of users, but it's like playing whack-a-mole
+[23:49] <slangasek> if you need to block this for some reason, you could divert and wrap adduser, which would cause it to bail out
+[23:50] <jkitchen> hrm
+[23:50] <slangasek> however, most of us have long since given up on the idea of having UIDs match across systems
+[23:50] <jkitchen> heh
+[23:50] <jkitchen> I don't need them so much to match across systems
+[23:50] <jkitchen> across reinstalls of the same system, however
+[23:50] <jkitchen> because my root filesystem and my data are different
+[23:50] <jkitchen> my data persists, root does not
+[23:51] <jkitchen> so doing that means I get it across systems for free

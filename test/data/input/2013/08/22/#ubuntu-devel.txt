@@ -1,0 +1,390 @@
+=== freeflying_away is now known as freeflying
+[02:59] <scientes> what exactly does dh-translations do?
+[03:00] <scientes> i'm trying to just build without it...
+=== Ursinha is now known as Ursinha-afk
+=== Ursinha-afk is now known as Ursinha
+[04:01] <pitti> Good morning
+[04:01] <pitti> Noskcaj: YW
+[04:39] <infinity> RAOF: Before you ask, I'm fixing libmirclient2 right now.
+[04:39] <RAOF> In what way fixing?
+[04:40] <RAOF> I thought all that needed to happen was a nice rebuild of the xserver and then everything would magically propagate out of -proposed?
+[04:40] <infinity> RAOF: You didn't notice your xorg-server FTBFS mails, I guess. :P
+[04:41] <RAOF> I did indeed just notice them
+[04:41] <RAOF> I'm missing my amd64 FTBFS email, though :)
+[04:41] <infinity> Should be all better now.  Retrying them.
+[04:41] <infinity> amd64 hadn't started yet. :P
+[04:42] <infinity> You can blame the ubuntu-sdk people who think that every upload to their PPA needs to build on 4 series'.
+=== stub` is now known as stub
+[04:44] <RAOF> saucy, raring, qantal, precise? Really all those?
+[04:44] <infinity> RAOF: Yeap.
+[04:50] <infinity> RAOF: Aaaand, now you get a real FTBFS instead.
+[04:51] <infinity> ../../../../hw/xfree86/xmir/xmir-window.c:262:21: error: 'mir_display_output_invalid' undeclared (first use in this function)
+[04:51] <infinity>   params.output_id = mir_display_output_invalid;
+[05:08] <RAOF> That'll teach me for trusting the... oh. That branch hasn't landed yet.
+[05:08] <RAOF> No, it must have. Because that's what bumped the ABI.
+[05:09] <RAOF> Ah. So when the documentation says "use mir_display_output_invalid" what it actually means is "BWA HA HA!"
+[05:09] <infinity> I get those two phrases confused often, myself.
+[05:10] <infinity> I think it's because they rhyme.
+[05:28] <RAOF> Wah? Now I'm confused.
+[05:28] <pitti> RAOF: that tends to happen when talking to infinity at this hour :)
+[05:29] <RAOF> Heh.
+[05:29] <RAOF> No, I'm confused by what's precisely in -proposed.
+[05:31] <RAOF> And also by by sbuilder setup, which I need to actually have -proposed enabled for...
+=== smb` is now known as smb
+[07:15] <Mirv> can some core-dev say 'ack' if packaging change ubuntu-keyboard http://pastebin.ubuntu.com/6013052/ looks ok to you, too? (daily publishing process)
+[07:40] <pitti> Mirv: LGTM
+[07:42] <Mirv> thanks, publishing services stack then
+[07:43] <Mirv> there'd be another one from kenvandine and robru renaming a package and adding C/R/P for the old package - mixed inside wrap-and-sort, though http://pastebin.ubuntu.com/6013101/
+[07:44] <Mirv> (this is btw practicing for the fact that didier will be away for the next two weeks)
+[07:47] <dholbach> good morning
+[07:53] <pitti> Mirv: no vacation for didrocks! :-)
+[07:53] <didrocks> yeah, that should be forbidden, who authorized that? :p
+[08:00] <Mirv> so, if another core-dev has time for a small glance, an 'ack' for http://pastebin.ubuntu.com/6013101/ (qml-friends packaging change) would be welcome
+[08:01] <pitti> yay for reordering everything and making the diff really hard to read..
+[08:04] <pitti> Mirv: dropping of qtdeclarative5-test-plugin build-dep is deliberate? the changelog doesn't mention it (or the reordering, or standrad-version bump, etc.)
+[08:05] <pitti> Mirv: nevermind, it was a duplicate
+[08:05] <Mirv> pitti: yeah, mixed in wrap-and-sort
+[08:06] <Mirv> what truly happened was http://bazaar.launchpad.net/~super-friends/qml-friends/trunk/revision/49 + R/C/P additions (+ wrap-and-sort)
+[08:07] <pitti> Mirv: the diff looks ok to me after ignoring the re-sorting, but note that you need a transitional package for clean upgrades
+[08:07] <pitti> sometimes it works without one, but it's way too easy to confuse apt by not having one, so I strongly suggest adding it
+[08:08] <pitti> Mirv: why does it need renaming in the first place?
+[08:08] <infinity> If something else is depending on the new package (always), then you don't need the transitional package.
+[08:08] <infinity> It's if your package is a leaf that you must have one.
+[08:08] <infinity> s/that/then/
+[08:08] <pitti> infinity: that's what I thought, too; but I've seen upgrades being stuck without one
+[08:09] <Mirv> pitti: there's a new policy of having versioned qml plugins like that, so that when API changes the package name will also change
+[08:09] <infinity> pitti: apt shouldn't get stuck if one upgrades, say, friends-app, and it depends on the new plugin, and it has a proper CPR triple against the old.
+[08:10] <infinity> pitti: It's when people use the wrong relationships that it goes sideways.
+[08:10] <infinity> pitti: Or accidentally depend and conflict with themselves (see the cups mess I unwound over the weekend).
+[08:11] <Mirv> seb128: related to above, do you know/remember how the new QML plugin naming policy came to be, I've been only told about it?
+[08:11] <infinity> Anyhow, given that this stuff is all new to saucy anyway, I'd let it pass without a transitional package, and if there are reports of breakage, one can be added.  But I hate having mid-cycle cruft if it's not necessary.
+[08:11] <pitti> ack
+[08:12] <seb128> Mirv, I don't know, it's just kenvandine who told me it was decided to use name<version> after they found how to make different abi co-installable
+[08:12] <infinity> (Now, if someone had installed it on its own as a leaf package, that will break miserably for them, but the odds of that on anything but some random developer's machine seem very, very low)
+[08:13] <Mirv> seb128: right, it was about that making different abi co-installable
+[08:13] <infinity> Given that none of this is seeded, it's pretty wildly undiscoverable, etc, I highly doubt anyone other than Ken might have installed it manually.
+[08:14] <infinity> Mirv: So, ack on that diff from me.  Watch for reports of upgrade breakage and be prepared to add a transitional package if it turns out you broke the world, but it should all be Just Fine.
+[08:15] <hyperair> any ~ubuntu-archive folk around?
+[08:16] <Mirv> alright then, thank you. publishing friends stack.
+[08:16] <hyperair> messagingmenu-sharp's been sitting on the saucy queue for two months or so now
+[08:16] <infinity> hyperair: For a couple more minutes before bed.
+[08:16] <hyperair> infinity: how long does it take to ack a NEW package?
+[08:17] <infinity> hyperair: More than those couple of minutes.  But you can bug me after I've slept and answer my questions while I review it?
+[08:29] <hyperair> infinity: sure.
+[08:29] <hyperair> infinity: when can i bug you?
+=== mpt_ is now known as mpt
+[08:30] <infinity> hyperair: In ~8h?
+[08:36] <Mirv> Wellark: hud still fails to build, can you check? https://launchpad.net/~ubuntu-unity/+archive/daily-build/+sourcepub/3438927/+listing-archive-extra
+[08:49] <darkxst> pitti, cjwatson, so I am trying to run gnome-shell under ubiquity-dm, however there doesnt seem to be a logind session for that? and gnome-shell isnt real happy about that ;(
+[08:50] <Laney> that's an xnox thing
+[08:50] <Laney> also known
+[08:51] <darkxst> Laney, is there a bug for that?
+[08:51] <Laney> not sure
+[08:52] <xnox> darkxst: running gnome-shell under ubiquity-dm sounds backwards.  bug #1214732 is sensible -> auto-login into gnome-shell with a profile to just start ubiquity as a normal app. But then you'd need to hack "try ubuntu-gnome" button to do something sensible, e.g. make gnome-shell load the rest of stuff / relogin into normal profile
+[08:52] <ubottu> bug 1214732 in ubiquity (Ubuntu) "Use gnome-shell as window manager in ubiquity-dm (Ubuntu GNOME)" [Wishlist,Incomplete] https://launchpad.net/bugs/1214732
+[08:53] <xnox> darkxst: logind bug is bug #1178638
+[08:53] <ubottu> bug 1178638 in ubiquity (Ubuntu Saucy) "Exception in GTK frontend when attempting to connect to wifi: no logind support" [High,Triaged] https://launchpad.net/bugs/1178638
+[08:58] <darkxst> xnox, if its so backwards why does ubuntu even use ubiquity-dm? other than that it would have been super easy if it wasnt for the missing logind stuff
+[08:59] <xnox> darkxst: up to raring, we were using consolekit in ubiquity-dm so it all did work. (we recently switched to logind in the distro, and ubiquity-dm is one of the few remaining ones to switch).
+[09:00] <xnox> darkxst: we use ubiquity-dm: as it uses less resources than a full-session, less confusion, and it crashes way less on slow hardware, doesn't require 3D graphics drivers, more reliable.
+[09:01] <xnox> darkxst: i have tried recently, but gnome-shell was failing to load/display in Qemu, thus for example there was no way for me to install fedora 19
+[09:02] <xnox> darkxst: i did experiment with running ubiquity-dm under compiz but there was a large increase of "compiz crash, installer froze" bugs.
+[09:02] <darkxst> xnox, perhaps that is the same issue that stops boxes working properly on ubuntu?
+[09:03] <xnox> darkxst: what is "boxes"? GNOME boxes?
+[09:04] <darkxst> xnox, yes, the GNOME  VM thing
+[09:04] <xnox> darkxst: Qemu & kvm works correctly here and displays all ubuntu releases / FreeBSD / Debian / Windows here.
+[09:04] <xnox> under virtual-manager.
+[09:11] <darkxst> xnox, anyway assuming we go the auto-login route, how to bypass ubiquity-dm?
+[09:11] <xnox> darkxst: "echo manual" > /etc/init/ubiquity.override
+[09:11] <darkxst> xnox, from casper?
+[09:11] <xnox> darkxst: echo "manual" > /etc/init/ubiquity.override
+[09:12] <xnox> darkxst: yeah, or some such.
+[09:13] <xnox> darkxst: note that you get to keep both pieces, e.g. gnome-shell behaving really/slow crashing with free drivers, and proprietary drivers are not activated by default on the cd, thus dead-locking and preventing a user from installing your flavour =)
+[09:13] <darkxst> xnox, is there anychance the logind thing would get fixed this cycle?
+[09:13] <xnox> darkxst: yeah, it should be. I had other things piling up on me.
+[09:14] <darkxst> xnox, well in that case, their experience is hardly going to get any better after installing!
+[09:14] <xnox> darkxst: you can use raring image to develop ubiquity-dm under gnome-shell, cause that shouldn't have logind problems.
+[09:15] <xnox> darkxst: sure it will, if they can install, they can tick install proprietary drivers on second page, and after install it will all be dandy good.
+[09:16] <darkxst> xnox, that doesnt actually install proprietry graphics drivers does it?
+[09:17] <xnox> darkxst: it does. ubuntu-drivers-common is run and if drivers are needed they are downloaded and installed into target installation.
+[09:17] <darkxst> ok I will test my ubiquity patches with a raring image
+[09:17] <darkxst> although gnome-shell doesnt have the external session modes on raring, but that shouldnt really matter too much
+[09:19] <darkxst> ok don't think its ever worked for me, but then I don't do real installs that often
+[09:30] <Wellark> Mirv: ...
+[09:32] <seb128> Wellark, hey, are you looking at that or should we find somebody else? (it's blocking the indicator stack)
+[09:32] <Wellark> seb128: if it's blocking the stack, then it's my 1st priority
+[09:33] <Wellark> deprecations...
+=== Guest35326 is now known as vibhav
+[09:35] <seb128> Wellark, deprecations are fine, the issue is that ted insists on failing build on those
+[09:35] <seb128> which doesn't make sense...
+[09:36] <Wellark> seb128: well, we could argue on that, but I have my hands full on fixing the hud build ;)
+[09:36] <seb128> Wellark, yeah, let's fix that an move on ;-)
+[09:45] <Wellark> seb128: https://code.launchpad.net/~indicator-applet-developers/hud/g_action_map_lookup_action/+merge/181508
+[09:45] <Wellark> now we can argue. :P
+[09:47] <dholbach> lool, do you think we should have a catch-all session about click and surrounding technologies or do you feel we're all set with what's been proposed up until now?
+[09:48] <dholbach> Just asking because will be on vacation until shortly before vUDS.
+[09:54] <lool> dholbach: it might be good just to socialize latest update / status, yeah
+[09:55] <lool> dholbach: BTW I've got the details on the Click failure that M Fisch was seeing; not sure it's still affecting us or whether other things are still on the way for Click on read-only images
+[09:55] <Wellark> seb128, Mirv: coulc you approve the MR?
+[09:55] <seb128> Wellark, it's already approved by larsu
+[09:56] <lool> dholbach: with Colin on leave this week, who do you think could poke at this?
+[09:56] <seb128> Wellark, waiting on CI to be run to top approve
+[09:56] <Wellark> seb128: great
+[09:56] <lool> dholbach: essentially it seems click checks permissions of all parent dirs instead of just the directory where clicks get installed
+[09:56] <lool> dholbach: fwding you
+[09:57] <dholbach> lool, there were a few commits by barry in lp:click - maybe slangasek could suggest somebody who could help
+[09:57] <dholbach> lool, do we have a bug report?
+[09:59] <seb128> Laney, seems like those retries didn't help :/
+[09:59] <dholbach> lool, so shall I go file a click blueprint?
+[09:59] <lool> dholbach: no; I'll file one if I see issue with today's image which will have the apparmor stuf
+[09:59] <lool> stuff
+[10:00] <dholbach> lool, can you tag it with 'appstore' please?
+[10:00] <lool> sure
+[10:00] <dholbach> merci bien
+[10:00] <lool> dholbach: blueprint >> you feel strongly about it, and I think it would be benefitial as a fallback or just socializing time, so go for it   :-)
+[10:00]  * lool hugs dholbach 
+[10:01] <dholbach> will do thanks
+[10:01]  * dholbach hugs lool back
+[10:04] <Laney> seb128: yeah
+[10:04] <Laney> i'll look at it some more in a bit
+[10:05] <seb128> Laney, thanks
+[10:05] <seb128> pitti, can you help on autopkgtests being stucked in RUNNING state?
+[10:05] <pitti> seb128: same thing as last time, just retrying them? I can do that, yes
+[10:05] <pitti> which one?
+[10:05] <seb128> pitti, no, don't
+[10:05] <seb128> pitti, it's glib, but Laney already retried, didn't seem to make a difference
+[10:06] <seb128> though chromium-browser is still running
+[10:06] <seb128> so maybe that's going to change once it's done
+[10:06] <pitti> hm, http://people.canonical.com/~ubuntu-archive/proposed-migration/update_excuses.html has an awful lot of running
+[10:07] <pitti> the only ones which are actually running are chromium-browser and maas-daily
+[10:07] <dholbach> lool, hum, I'm not sure if foundations-1305-click-package should/could be reused...
+=== tkamppeter_ is now known as tkamppeter
+[10:07] <pitti> (and openvswitch which is known to hang with the new kernel)
+[10:08] <dholbach> sending a mail about it
+[10:09] <lool> dholbach: feel free to
+[10:09] <Laney> pitti: yeah, they're being collected as RUNNING as you can see in http://people.canonical.com/~ubuntu-archive/proposed-migration/log/2013-08-22/09:51:05.log
+[10:09] <Laney> I think that means the bug is in adt-britney / jenkins somehow
+[10:10] <pitti> right
+[10:10] <seb128> pitti, do we have anyone that knows those stuff while Colin and jibel are on vac?
+[10:10] <pitti> these are the only two, I'm afraid :/
+[10:11] <seb128> :-(
+[10:11] <pitti> I guess we can manually hack the status files somehow until that gets fixed
+[10:11] <seb128> infinity, ^ can you help?
+[10:13] <pitti> I found work/adt.result.saucy which e. g. says bzr-upload 1.1.0-3ubuntu1 RUNNING bzr-upload 1.1.0-3ubuntu1
+[10:13] <pitti> (which has finished yesterday)
+[10:14] <pitti> and data/adt/saucy-proposed/amd64/saucy-proposed_amd64_glib2.0 whcih also has these RUNNING bits
+[10:14] <pitti> but chromium is indeed running, let me check some others
+[10:15]  * pitti arghs at people.u.c. having a load of ~ 20
+[10:15] <xnox> ubiquity is stuck (i re-run it, but the original result from 19:10 yesterday, should have migrated ubiquity)
+[10:16] <jodh> smb: any further thoughts on bug 1208455? pitti/jibel: we may need to explore alternative solutions to bug 1158391 that don't involve nested kvm.
+[10:16] <ubottu> bug 1208455 in linux (Ubuntu Saucy) "general protection fault running apt-get inside double nested kvm VM" [High,In progress] https://launchpad.net/bugs/1208455
+[10:16] <ubottu> bug 1158391 in Auto Package Testing "ability to have a DEP-8 test run a test in a separate full system environment" [High,Confirmed] https://launchpad.net/bugs/1158391
+[10:16] <pitti> seb128: I'll try fiddling the status files for bzr-upload, that's got a small dep chain
+[10:17] <seb128> pitti, thanks
+[10:17] <pitti> seb128: if that works, and it propagates after the next publisher run, we can do the same for glib
+[10:18] <seb128> pitti, great, let me know how that goes
+[10:18] <pitti> if it just resets it, we need to force it
+[10:18] <pitti> and wait until Colin and JB fix it
+[10:18] <seb128> we need also more people to be able to deal with those magics
+[10:18] <smb> jodh, Not much. Second level nesting seems to suffer various odd problems but the many variations of os/arch do not make it easy
+[10:18] <seb128> or not let jb and Colin take holidays at the same time :p
+[10:19] <pitti> jodh: well, you said you do need the inner KVM and that lxc isn't enough (because of kernel crashes, etc.), right?
+[10:20] <pitti> jodh: is that a new crash with a recent kernel? stuff seemed to work quite well a few weeks ago when I played with that
+[10:21] <jodh> pitti: yes, we can't use lxc, but an alternative might be for autopkgtest to provide an (external) vm that the test can control. Avoiding nested kvm (or getting the kernel fixed in that regard) look like the best plans right now.
+[10:22] <jodh> pitti: were you running autopkgtest on your home systems or via canonistack?
+[10:22] <pitti> jodh: just at home
+[10:22] <jodh> pitti: that might be relevant as with canonistack and I guess the autopkgtest jenkins setup there is atleast 1 extra kvm instance running.
+[10:22] <pitti> jodh: but our production autopkgtest servers are real iron too, not on canonistack
+[10:23] <pitti> jodh: if that only affects canonistack, is that a big issue?
+[10:23] <Mirv> Wellark: let's wait for the rebuild, 10:00 UTC builds are already going, hud can be restarted later
+[10:23] <pitti> test development can happen locally, and production tests won't be on canonistack either
+[10:23] <jodh> pitti: maybe not. But I don't have the h/w at home and need to test somehow that it might work when deployed on autopkgtest
+[10:24] <pitti> uh, no kvm capable hw?
+[10:25] <jodh> pitti: I have that, but smb believes we should stick to an initial 64-bit environment. Thats the problem as my 64-bit h/w is not kvm capable.
+[10:26] <smb> jodh, pitti It was mostly to find you some setup that allows you to test.
+[10:27] <pitti> smb: why would nested kvm not work on a 32 bit host and guest?
+[10:27] <smb> In theory, even with the canonistack guest being 32bit userspace, you still have a 64bit capable cpu provided
+[10:27] <pitti> smb: I mean locally, not on cstack
+[10:28] <pitti> "prepare-testbed i386" builds a 32 bit VM which should work just fine on 32 bit
+[10:29] <smb> pitti, It should work but factually it has issues while using the 32bit version did not. But then this looses vmx which is of no use for jodh . But I did not know at that point he is trying a third level
+[10:29] <pitti> you wouldn't use a third level
+[10:29] <pitti> locally
+[10:29] <pitti> AFAICS jodh only runs on canonistack because he doesn't have 64 bit kvm capable hw, but if he has 32 bit kvm hw that should be fine?
+[10:30] <smb> pitti, The variation was which qemu command to use. qemu-system-i386 or qemu-system-x86_64. The former seemed to work from the 32bit userspace guest while the latter did not
+[10:30] <pitti> jodh: does anything in your tests actually require 64 bits?
+[10:31] <pitti> after all, these tests ought to work on i386 too
+[10:31] <jodh> pitti: how many "levels" of kvm will the autopkgtest jenkins env have?
+[10:31] <jodh> pitti: no. correct.
+[10:31] <pitti> jodh: the jenkins slave is real iron, and the normal "run-adt-testbed" is the topmost VM
+[10:31] <pitti> jodh: thus, your sub-vm within the upstart test is the second level
+[10:32] <pitti> while it would be the third on cstack
+[10:32] <jodh> pitti: ftr, I finished writing these tests a few weeks ago. But we are still attempting to find an environment that actually works where we can test the tests :)
+[10:32] <pitti> jodh: I thought you can do 32 bit kvm on your machine?
+[10:33] <jodh> pitti: ok. well I can retry locally with 32-bit but ftr that was also failing when running with qemu-system-x86_64.
+[10:33] <pitti> jodh: maybe, but why do you want qemu-system-x86_64 in the first place?
+[10:34] <jodh> pitti: yes I can, but the combinations we have tried as documented on various bugs show that although the systems *should* work, they do not.
+[10:34] <jodh> pitti: However, as I say, I'll try once more locally with 'qemu' at all levels rather than the existing hard-coded autopkgtest qemu-* variant.
+[10:34] <pitti> jodh: oh, do you mean because run-adt-test and prepare-testbed hardcode qemu-system-x86_64 for >= 13.04?
+[10:35] <pitti> jodh: yeah, we should check the host architecture and use qemu-system-i386 if it's 32 bit
+[10:35] <pitti> jodh: you can just change these locally in these scripts
+[10:35] <jodh> pitti: correct
+[10:36] <jodh> pitti: yes, it feels I've been changing those scripts almost hourly :)
+[10:38] <pitti> seb128: hm, britney sets back the status to RUNNING, so hacking the state files doesn't work :(
+[10:38] <pitti> so we'll need release team nudges for these
+[10:42] <smb> pitti, The problem with the whole nested kvm is that each level can vary in the kernel(+kvm kernel module) and the qemu/kvm user-space driving it. Which makes it very hard to figure out what broke when.
+=== 31NAAIEV5 is now known as tvoss
+[11:07] <Wellark> seb128: now the same test passed on i386 and failed on ARM :(
+[11:07] <seb128> Wellark, :/
+[11:08] <seb128> Wellark, doing another retry...
+=== MacSlow is now known as MacSlow|lunch
+[11:08] <Wellark> pete-woods: did you touch the watchdog code yesterday?
+[11:09] <Wellark> pete-woods: test-watchdog first failed on i386 and passed on ARM but on the second run it passed on i386 and failed on ARM
+[11:09] <Wellark> we need to tweak the urand()...
+[11:09] <Wellark> just for the lulz
+[11:10] <pete-woods> Wellark: no touches, unfortunately
+[11:12] <seb128> pete-woods, hey, thostr mentioned you were doing hud work, is fixing bug #1192646 on your list?
+[11:12] <ubottu> bug 1192646 in hud (Ubuntu) "shouldn't list unactive items" [High,Confirmed] https://launchpad.net/bugs/1192646
+[11:13] <Wellark> pete-woods: seems that the timer check is way too strict
+[11:14] <Wellark> pete-woods: I will give it some more margin
+[11:16] <pete-woods> seb128: I had only been assigned fixing the "hud doesn't work at all on the phone" bug (https://bugs.launchpad.net/hud/+bug/1205097)
+[11:16] <ubottu> Launchpad bug 1205097 in Unity 8 "HUD isn't working" [Critical,Triaged]
+[11:16] <seb128> pete-woods, ok :/
+=== 17SAC91IG is now known as tvoss
+[11:41] <Wellark> pete-woods, seb128: letäs try this one: https://code.launchpad.net/~indicator-applet-developers/hud/g_action_map_lookup_action/+merge/181533
+[11:41] <Wellark> I'm suspecting that the builders are simply just under such heavy load that it causes the timing sensitive tests to sometimes fail
+[11:43] <seb128> Wellark, the build fix finally got merged btw, but yeah, it makes sense to increase a bit the timeout I guess
+[11:58] <Mirv> Wellark: hud amd64 built fine now
+[12:02] <Wellark> Mirv: it has always built fine. :)
+[12:03] <Wellark> oh, sweet.. armhf failed again
+=== tvoss_ is now known as tvoss|lunch
+=== MacSlow|lunch is now known as MacSlow
+[12:16] <seb128> doko_, https://launchpad.net/ubuntu/+source/google-mock/1.6.0+svn437-0ubuntu3 is stucked in proposed, britney doesn't like your "python:any" depends
+[12:23] <seb128> Riddell, did you see that your qtwebkit-source recent update fails to build on arm?
+[12:25] <seb128> jamespage, hey, not sure if you noticed but samba is depwaiting on libtevent-dev ... do you plan to file a MIR for tevent?
+[12:28] <xnox> doko_: javac seems to segfault during android build here. Not sure what broke, as both oracle and openjdk are segfaulting here.
+[12:29] <paulliu> Hi, I got "Module 'HudClient' does not contain a module identifier directive - it cannot be protected from external registrations.
+[12:29] <paulliu> Is there some packages I missed?
+[12:30] <paulliu> wrong channel, sorry.
+[12:30] <xnox> doko_: that's 6, openjdk 7 works fine, so i'll port our build to use that..... or like not build that one single java util.
+[12:41] <jamespage> seb128, yeah - zul is going todo that
+[12:42] <seb128> jamespage, great, thanks
+=== _salem is now known as salem_
+=== gusch is now known as gusch|brb
+=== Ursinha is now known as Ursinha-afk
+=== Ursinha-afk is now known as Ursinha
+[13:34] <dobey> kenvandine: hey, in system-settings-online-accounts, how do i go back to the main list of accounts (and also back to the main system settings view once in accounts), after i've clicked on or added an account?
+=== gusch|brb is now known as gusch
+[13:35] <Laney> dobey: the same way you always go back, by dragging up the toolbar from the bottom
+[13:35] <dobey> awesome. so i can't go back (running it on workstation)
+[13:36] <xnox> Laney: i usually exit by fallowing "Exit" signs....
+[13:36] <Laney> why not?
+[13:36] <dobey> because i can't drag the toolbar up with a mouse?
+[13:36] <Laney> sure you can
+[13:36] <dobey> no. i can't
+[13:36] <xnox> dobey: hm, i thought i could, also I thought on desktop the toolbar is always expanded.
+[13:37] <dobey> oh, i can. i guess there's just no toolbar on the main screen
+[13:37] <dobey> you know, because *that's* obvious
+[13:37] <dobey> xnox: it's not
+[13:37] <xnox> interesting.
+[13:38] <dobey> also, why can't i just flick from left to right in the app, or on the header, to do that?
+[13:38] <dholbach> lool, maybe my memory is failing me right now, but did you file a bug on the click permissions thing?
+[13:42] <Laney> it's a design pattern
+[13:42] <Laney> http://design.ubuntu.com/apps/global-patterns/navigation
+[13:42] <Laney> "Deep"
+=== greyback is now known as greyback|food
+=== tvoss|lunch is now known as tvoss_
+[13:49] <lool> dholbach: no, have to test it with today's image still; upgrading now
+[13:49] <dholbach> gotcha
+[13:49]  * lool was visiting a collocation space in the last hour
+[13:49] <lool> will be trying it out tomorrow
+[13:50] <lool> drilling noise at home + heat + nobody => I'd like to see some faces  ;-)
+[13:50] <lool> I can open my G+ stream and look at hackergotchis, but somehow it's not the same
+[13:53] <tvoss_> lool, :)
+=== steveire_ is now known as steveire
+[14:35] <w1nt3r> where does one goes to seek/request changes/additions in the distro iso?
+[14:36] <dobey> bug reports
+[14:37] <w1nt3r> have a link?
+=== freeflying is now known as freeflying_away
+=== greyback|food is now known as greyback
+=== Ursinha is now known as Ursinha-afk
+[15:26] <pitti> sforshee: thanks for filing the upower bugs! I have another question/request for info in https://bugs.freedesktop.org/show_bug.cgi?id=68337, in case you missed it
+[15:26] <ubottu> Freedesktop bug 68337 in general "UPower reports percentage as 0 with some Android battery drivers" [Normal,New]
+=== Ursinha-afk is now known as Ursinha
+[15:29] <sforshee> pitti: I responded already ... did I miss something
+[15:41] <pitti> sforshee: ah thanks; that ought to be enough to reproduce
+=== psivaa is now known as psivaa-afk
+[16:02] <qengho> Weird. So, why would the first step in "apt-get", "Reading package lists" take y
+[16:02] <qengho> oops.
+[16:03] <qengho> take a really long time?  Like, previously, 30 seconds.  Now, minutes.
+=== Ursinha-afk is now known as Ursinha
+[16:06] <qengho> strace has long pauses between each read() of the downloaded Packages file.  ~32000 bytes per read().  Seems normal.
+[16:06] <qengho> ...The size, not delay.
+[16:14] <seb128> qengho, hey, how are you? are you getting somewhere with the chromium build fail on saucy?
+[16:15] <ogra_> again ?
+[16:15] <seb128> ogra_, yes...
+[16:15] <ogra_> oh man ... do they change their whole code each micro release ?
+[16:26] <qengho> seb128: yes, got it solved. Preparing next version now. Should be soon.
+=== Zilvador_ is now known as Zilvador
+[16:30] <seb128> qengho, great
+[17:02] <w1nt3r> are there (detailed) docs somewhere on the process ubuntu uses to master their isos? (specifically how is the boot record created)
+[17:05] <infinity> pitti: Erk, did you actually hack status files?  It would have been much less hassle to ask a release team member to just add test hint.
+[17:40] <w1nt3r> where should I file a bug to add more crypt kmods to the live cd's initrd?
+[17:41] <xnox> w1nt3r: $ ubuntu-bug cryptsetup
+[17:42] <xnox> w1nt3r: although it could be ubuntu-cdimage bug, since cryptsetup has been changed to include only some crypt modules to live cd's initrd.
+[17:42] <xnox> http://pad.lv/p/ubuntu-cdimage
+[17:43] <w1nt3r> xnox: thanks, that was very non-intuitive
+[18:55] <ScottK> sip4 and python-qt4 migration are blocked by python-qt4 autopkgtests still RUNNING after many hours. Could someone please have a look?
+[18:57] <gQuigs> looking for the right people to ping about my blueprint: recommending 64 bit by default: https://blueprints.launchpad.net/ubuntu/+spec/client-s-32v64-bit
+[19:00] <gQuigs> or just people who would want to discuss it this UDS.
+[19:16] <xnox> ScottK: known problem, please check the result on public jenkins and add a hint.
+[19:16] <xnox> ScottK: infinity unblocked ubiquity in a similar fashion for me.
+[19:17] <xnox> ScottK: jibel + cjwatson are away, and they kind of the two people who did "jenkins <-> britney" integration.
+[19:22] <Laney> yeah i've added a force-skiptest or two for that
+=== psivaa-afk is now known as psivaa
+=== bschaefer_ is now known as bschaefer
+[20:27] <ScottK> Last time I was told it was all fixed.
+[20:35] <xnox> ScottK: sure, it was working fine, but yesterday is when i noticed problems.
+[20:35] <xnox> so something new has gone astray
+[21:10] <robert_ancell> tedg, you're handling indicate-bluetooth reviews right?
+[21:11] <tedg> robert_ancell, Either myself or charles, yes.
+[21:11] <tedg> What's up?
+[21:12] <robert_ancell> tedg, just checking i'm not blocking any of the changes charles is making
+[21:12] <robert_ancell> looking good though!
+[21:13] <tedg> robert_ancell, No, we've assumed that you've moved on to some space ship thingy ;-)
+[21:13] <robert_ancell> tedg, don't worry, we'll be crashing to earth soon enough :)
+[21:13] <charles> robert_ancell: :-)
+[21:14]  * tedg buys an umbrella
+[21:14] <charles> robert_ancell: do you know of any way to get the battery charge level from a bluetooth device?
+[21:14] <charles> bluez doesn't seem to have anything addressing it
+[21:14] <tedg> charles, I thought upower had it?
+[21:14] <robert_ancell> charles, no, sorry
+[21:14] <charles> but I'm still getting up to speed on this
+[21:15] <charles> tedg, at least when I tested, upower wasn't reporting anything on mpt's use cases
+[21:15] <charles> for example it didn't tell me anything about the bluetooth headset I have connected
+[21:16] <tedg> I wonder if it's a specific bluetooth profile that's required
+[21:16] <charles> wrt upower, iirc there's not even an entry for them in the upower device type enum
+[21:18] <tedg> charles, Hmm, perhaps it was a gnome-power thing that I'm remembering then.
+[21:23] <charles> tedg, I don't think gnome-power does that but I'll recheck
+[21:24] <tedg> charles, Well, I haven't played with gnome-power for probably 5 years... so trusting my memory here is probably not too wise :-)
+[21:24] <tedg> charles, When I was a kid we didn't have these fancy system services you kids have today!
+[21:25] <charles> tedg, I'm going to have to ask to see your driver's license, sir
+[21:25] <tedg> We did everything in the user session, and we liked it!
+=== freeflying_away is now known as freeflying
+=== freeflying is now known as freeflying_away
+=== Ursinha is now known as Ursinha-afk
+[22:26] <darkxst> cjwatson, how do we change the isolinux theme on our livecd?
+=== Ursinha-afk is now known as Ursinha
+=== salem_ is now known as _salem
+=== Ursinha is now known as Ursinha-afk
+=== Ursinha-afk is now known as Ursinha
+[23:30] <TheMuso> @pilot in
+=== udevbot changed the topic of #ubuntu-devel to: Ubuntu 13.04 released | Archive: open | Devel of Ubuntu (not support or app devel) | build failures -> http://qa.ubuntuwire.com/ftbfs/ | #ubuntu for support and discussion of lucid -> raring | #ubuntu-app-devel for app development on Ubuntu http://wiki.ubuntu.com/UbuntuDevelopment | See #ubuntu-bugs for http://bit.ly/lv8soi | Patch Pilots: TheMuso
+[23:45] <smoser> hey...
+=== freeflying_away is now known as freeflying
+[23:45] <smoser> i wonder what people woudl think abou thits.
+[23:45] <smoser> i like eatmydata.
+[23:45] <smoser> i like using eatmydata with apt.
+[23:46] <smoser> the one thing i'm concerned about is 'eatmydata apt-get install some-daemon-package'
+[23:46] <smoser> because if some-daemon-package is sysvinit, afaik, it will inherit eatmydata. which is probably not what i want.
+[23:47] <smoser> would there be an insertion point (maybe in 'service' or somewhere) where we could drop libeatmydata's LD_PRELOAD .
+[23:47] <smoser> unless there was another environment variable EATMYDATA_SYSVINIT or something also present.

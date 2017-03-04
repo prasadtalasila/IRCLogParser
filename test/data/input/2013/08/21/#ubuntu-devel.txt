@@ -1,0 +1,455 @@
+=== Ursinha is now known as Ursinha-afk
+=== Ursinha-afk is now known as Ursinha
+=== _salem is now known as salem_
+=== salem_ is now known as _salem
+=== vibhav is now known as Guest35326
+=== mfisch` is now known as mfisch
+=== mfisch is now known as Guest79256
+=== WinLinOSX is now known as macwolf74
+[03:37] <goddard> does nautilus have any bookmark bugs?
+[03:37] <goddard> because some of my bookmarks disappear and reappear
+[05:13] <pitti> Good morning
+[05:36] <infinity> Riddell: FYI: https://launchpad.net/ubuntu/+source/libnm-qt/0.0~git20130816-0ubuntu4
+=== jono is now known as Guest36288
+[06:45] <dholbach> good morning
+[07:40] <mlankhorst> bah libx11 1.6.1-1 build is failing because of w3m crashing..
+[07:41] <infinity> mlankhorst: llvm3.2 uploaded, BTW.
+[07:42] <mlankhorst> \o/
+[07:43] <mlankhorst> infinity: after some testing of mesa 9.2 can llvm-3.3 be moved to main so mesa 9.2 can be uploaded?
+[07:44] <mlankhorst> doesn't have to be done today though
+[07:44] <infinity> mlankhorst: When you upload mesa 9.2 with an llvm-3.3 build-dep, let me know.
+[07:45] <infinity> mlankhorst: Do me a favour, though, and compare the llvm testsuite output from 3.2 and 3.3 and make sure we're not horribly regressing anywhere.  I didn't look closely, I just saw a few failures in my test build and wondered if it's always been that buggy and no one cares. :P
+[07:45] <mlankhorst> infinity: heh testsuite was passing on x86
+[07:46] <mlankhorst> at least the main one, dno about clang stuff
+[07:47] <infinity> mlankhorst: Well, define "passing".  The package ignores failures, so you have to hunt for them in the log.
+[07:47] <infinity> mlankhorst: But I wouldn't be shocked if x86 passes with flying colors, ARM fails a few, and every other arch fails more.
+[07:48] <infinity> mlankhorst: llvm upstream (and especially Apple) seem to fail miserably at actually building portable cross-compilers.
+[07:48] <mlankhorst> infinity: I know it does make check || true, but I did run the same thing manually
+[07:48] <mlankhorst> mainly to isolate why it was hanging on i386  to begin with
+[07:49] <infinity> mlankhorst: Realistically, if x86 and ARM are fine, that's Good Enough for now.
+=== smb` is now known as smb
+[07:55] <mlankhorst> yeah
+[07:56] <infinity> mlankhorst: (Not that ppc appears to be in rough shape, it just had a few curious failures)
+[08:12] <ricotz> jamespage, hello :), please take a look at http://paste.debian.net/plain/27853
+=== Zic is now known as Guest94567
+[08:18] <mlankhorst> infinity: yay it builds
+[08:20] <infinity> mlankhorst: It would be rather embarassing if it didn't, after I test-built it locally. :P
+[08:20] <infinity> mlankhorst: (Though it sure does build FASTER on sagari than my machine... Time for an upgrade)
+=== iahmad is now known as iahmad|lunch
+[08:21] <infinity> mlankhorst: do you have a devirt PPA to test your mesa9.2 in, or do you want to toss some sources at me, and I can give them a spin?
+[08:22] <mlankhorst> I don't know if x-staging is de-virted or not
+[08:22] <mlankhorst> https://launchpad.net/~canonical-x/+archive/x-staging
+[08:23] <infinity> mlankhorst: It's devirt but doesn't have PPC turned on.  You should fix that, IMO.
+[08:23] <mlankhorst> ah right
+[08:23] <infinity> In fact, I'll fix that right now.
+[08:23] <mlankhorst> could you add a small priority bump too?
+[08:24] <mlankhorst> I think I'll use that one for the s lts-backports too then
+[08:24] <infinity> You shouldn't need one.
+[08:24] <mlankhorst> ok
+[08:25] <infinity> mlankhorst: PPC enabled on it now, though.  Doesn't make sense to skip arches on a staging PPA, IMO.  Cause you get everything just right, upload to the distro, and find out it's still broken. :P
+[08:26] <mlankhorst> hey I had that with armel, I just disable arm archs for lts backports now
+[08:26] <infinity> Which is a less than ideal situation and something we might need to revisit for 14.04's HWE plan.
+[08:27] <mlankhorst> yeah but the only hardware we support for arm is the pandaboard, and that one works best with precise xserver anyway..
+[08:27] <infinity> mlankhorst: Right, for precise, it was mostly a non-issue for that reason.
+[08:27] <infinity> mlankhorst: Well, we support more hardware, but it's all server kit, so doesn't affect you, really.
+[08:28] <mlankhorst> oh and there's no point backporting xorg if the kernel team doesn't support the kernel that's required for it..
+[08:29] <infinity> mlankhorst: We now have an lts-raring ARM generic kernel. ;)
+[08:29] <infinity> mlankhorst: (I still need to smack together the installer support for it, but the kernel's there)
+[08:29] <infinity> mlankhorst: But, again, that's mostly for server kit right now, so not really a concern for you.
+[08:29] <mlankhorst> yeah
+[08:29] <mlankhorst> I mostly disabled it on arm because it got in the way..
+[08:30] <infinity> mlankhorst: But some day, I'm sure, there will be ARM stuff with a GUI that we might want to actually try to support (other than crazy Android kernels on phones, that is).
+[08:30] <infinity> mlankhorst: Also, if build times were one of the concerns, the new buildds should mostly solve that.
+[08:30] <mlankhorst> mir will solve it!111eleventy
+[08:30] <infinity> mlankhorst: *smirk*
+[08:31] <mlankhorst> speaking of that are there any plans of backporting mir?
+[08:31] <infinity> Speaking with various hats on, "over my dead body".
+[08:32] <infinity> Backporting Mir and Unity8 would *not* be HWE, it would be jamming new features (lots of new features) into an LTS.
+[08:32] <mlankhorst> not to precise, but backports to the next lts
+[08:32] <jamespage> ricotz, hey
+[08:32] <infinity> 14.04 isn't that far away, people can wait.
+[08:32] <jamespage> ricotz, thats actually already been fixed in Debian - it just needs a merge
+[08:32] <mlankhorst> so from 14.10 to 14.04
+[08:32] <infinity> mlankhorst: Well, for 14.04, if Mir/Unity8 are the default desktop, then I guess we need to sort out what HWE will look like, yes.
+[08:32] <mlankhorst> hm true
+[08:33] <infinity> mlankhorst: I'm still fuzzy on if we plan to have a full native stack there by 14.04, or just XMir.
+[08:33] <mlankhorst> I think just xmir
+[08:33] <infinity> mlankhorst: If it's just XMir, then backporting the X stack (as we do now), should be Good Enough, I'd think, barring XMir bugs.
+[08:34] <infinity> Well, and possibly rebuilding XMir for ABI changes or whatever.
+[08:34] <infinity> That could get messy, if we plan to support two stacks again.
+[08:34] <infinity> Meh.
+[08:34] <infinity> We really need to have an HWE sprint to argue about all of this in person, over alcohol.
+[08:34] <infinity> I feel like IRC and Hangouts don't cut it for this sort of thing.
+[08:34] <mlankhorst> tbh the plan forward I see for mir is simply taking away features from x one at a time
+[08:35] <infinity> All I think we can all agree on is that HWE in 12.04 wasn't ideal, and we can do better.
+[08:35] <mlankhorst> like no longer relying on xserver for input, but mir passing input events to xorg-server
+[08:36] <mlankhorst> same for randr support, xorg-server being a client
+[08:36] <mlankhorst> and I guess eventually video support being a simple passthrough
+[08:37] <infinity> mlankhorst: If I was to try to put together an HWE sprint to hit each other in person and walk away with a sane(r) plan for the next LTS, who from the desktop side do you think I should get?
+[08:38] <mlankhorst> well not really desktop side, tjaalton has been the main other person working on it I think
+[08:38] <infinity> mlankhorst: I mean, we could do it as a series of video calls or something, but sometimes, you just need to be in smacking distance.
+=== doko_ is now known as doko
+[08:38] <mlankhorst> I'm the only person on desktop working on lts I think
+[08:39] <mlankhorst> but you should try to get raof and tjaalton
+[08:39] <tjaalton> :)
+[08:39] <tjaalton> actually, we'll be at plumbers (not raof though)
+[08:39] <mlankhorst> yeah
+[08:39] <mlankhorst> maybe some from the kernel team will be too
+[08:40] <tjaalton> let's hit bourbon street and come up with a plan, can't be worse than what we have, right :)
+[08:40] <mlankhorst> ogasawara: you coming to plumbers?
+[08:40] <tjaalton> the list is on wiki
+[08:40] <mlankhorst> ah right
+[08:41] <tjaalton> don't see ogasawara there
+[08:42] <tjaalton> but I think we have enough people
+[08:42] <mlankhorst> can always grab one of the other kernel people :P
+[08:47] <RAOF> mlankhorst, tjaalton: Neither of you are going to be at XDC, are you?
+[08:48] <tjaalton> nah
+[08:51] <mardy> cjwatson: hi! Given the unique name of a click package, will there be some API which returns it's display name, icon and maybe other metadata?
+[08:52] <mardy> s/it's/its/
+[08:59] <mlankhorst> RAOF: correct, I won't be able to make xdc :(
+[09:01] <RAOF> mlankhorst: Boo.
+=== Uninstall_ is now known as Uninstall
+[09:02] <mlankhorst> next year
+=== iahmad|lunch is now known as iahmad
+[09:09] <pitti> @pilot in
+=== udevbot changed the topic of #ubuntu-devel to: Ubuntu 13.04 released | Archive: open | Devel of Ubuntu (not support or app devel) | build failures -> http://qa.ubuntuwire.com/ftbfs/ | #ubuntu for support and discussion of lucid -> raring | #ubuntu-app-devel for app development on Ubuntu http://wiki.ubuntu.com/UbuntuDevelopment | See #ubuntu-bugs for http://bit.ly/lv8soi | Patch Pilots: pitti
+[09:11] <seb128> pitti \o/
+[09:11] <pitti> seb128: salut mon amis, ça va ?
+[09:12] <seb128> pitti, très bien, et toi ?
+[09:12] <pitti> seb128: mon aussi
+[09:29] <seb128> Mirv, dholbach:
+[09:29] <seb128> ./share/qtcreator/templates/wizards/ubuntu/cordovaubuntu/index.html: *No copyright* Apache (v2.0)
+[09:29] <seb128> ./share/qtcreator/templates/wizards/ubuntu/cordovaubuntu/css/index.css: *No copyright* Apache (v2.0)
+[09:29] <seb128> ./share/qtcreator/templates/wizards/ubuntu/cordovaubuntu/plugins.xml: *No copyright* Apache (v2.0)
+[09:29] <seb128>  
+[09:29] <seb128> the debian/copyright of qtcreator-plugin-ubuntu needs fixing
+[09:29] <dholbach> Mirv, weird, I must have missed that one
+[09:30] <dholbach> Mirv, let me know once you fixed it and I'll reupload
+[09:31] <Mirv> dholbach: darn. ok.
+[09:39] <dholbach> Mirv, I'll be gone briefly - but I'm running a test build of your qtcreator branch at the same time now - so just ping me when it's done and I'll take a look at it again
+[09:40] <seb128> Mirv, that package is weird
+[09:40] <seb128> Package: qtcreator-plugin-ubuntu-common
+[09:40] <seb128> Replaces: qtcreator-plugin-ubuntu (<= 2.7.1-0ubuntu4),
+[09:41] <seb128> d
+=== Guest94567 is now known as Zic
+[09:41] <seb128> Mirv, it should also Conflicts with it or something...
+[09:44] <Mirv> dholbach: https://code.launchpad.net/~timo-jyrinki/qtcreator-plugin-ubuntu/add_apache_files_to_debian_copyright/+merge/181232 - added the conflicts as well
+=== tvoss_ is now known as tvoss|lunch
+[09:50] <mapreri> pitti: thank you :)
+[09:50] <pitti> mapreri: thanks for the merge
+[09:50] <mapreri> pitti: my pleasure
+[10:06] <dholbach> seb128, Mirv, uploaded
+[10:06] <seb128> dholbach, great
+[10:08] <Mirv> thank you Daniel
+=== tvoss|lunch is now known as tvoss_
+=== MacSlow is now known as MacSlow|lunch
+=== gusch_ is now known as gusch|lunch
+[11:08] <dholbach> Mirv, qtcreator looks good and it passed a local build, so I'd upload it as soon as the other package is accepted
+[11:10] <mapreri> pitti: how do you uploaded the package? I see the branch now have a commit from me, but I pushed nothing. The previous package I merge don't have a branch updated with my name
+[11:23] <Mirv> dholbach: excellent news!
+[11:24] <seb128> Mirv, did you meant to add an extra else before the if in that new upload?
+[11:25] <dholbach> seb128, let me reupload
+[11:26] <seb128> dholbach, is that a "no"? I'm just wondering if that was wanted or not
+[11:26] <Mirv> seb128: no, dholbach removed one extra else
+[11:26] <dholbach> seb128, maybe it didn't contain the newest fix yet, but just the debian/co* changes
+[11:27] <dholbach> seb128, I uploaded a new one which should have all the newest fixes (removing the 'else' + copyright + control file changes)
+[11:28] <seb128> dholbach, the one at the top of the queue still has the extra else
+[11:32] <seb128> dholbach, I'm going for lunch, just ping didrocks once you reupload with that fixed and he's going to ack it
+[11:32] <didrocks> dholbach: can you just ping me once you reupload?
+[11:32] <seb128> ;-)
+[11:32] <didrocks> ;)
+[11:32] <seb128> didrocks, dholbach: thanks
+[11:32]  * seb128 bbiab
+[11:32] <didrocks> seb128: enjoy!
+[11:32] <seb128> thanks
+[11:35] <pitti> mapreri: the lp:ubuntu/<pkgname> branches are auto-updated from the archive, by a "package import robot"
+[11:36] <dholbach> didrocks, uploaded
+[11:38] <didrocks> dholbach: seb128: NEWed
+[11:38] <mapreri> pitti: i know (~package-importer lp user, i guess), but what's about ecl? I merged it some days ago (https://launchpad.net/ubuntu/+source/ecl/12.12.1-3ubuntu1) but the code still old (https://code.launchpad.net/~ubuntu-branches/ubuntu/saucy/ecl/saucy)
+[11:38] <dholbach> didrocks, seb128, Mirv: ROCK!
+[11:40] <Mirv> dholbach: seb128: rock rock!
+[11:40] <dholbach> Mirv, uploading qtcreator now too
+[11:40]  * Mirv repeats
+[11:40] <dholbach> Mirv, or do we want to wait until the new package is out of binary new?
+[11:41] <pitti> mapreri: yeah, unfortunately a lot of UDD branches are broken/behind
+[11:41] <Mirv> dholbach: it'd be better, since the new QtC binaries depend on that
+=== cyphermox_ is now known as cyphermox
+[11:42] <mapreri> pitti: well...
+[11:43] <Mirv> qtcreator-plugin-ubuntu just built and landed in queue
+=== dosaboy_ is now known as dosaboy_afk
+[11:45] <dholbach> ^ if somebody could get that out of binary NEW, that'd be awesome
+[11:45] <didrocks> done
+[11:48] <dholbach> didrocks, AWESOME
+[11:49] <dholbach> Mirv, ...
+[11:49] <dholbach>   Uploading qtcreator_2.7.1-0ubuntu5_source.changes: done.
+[11:49] <dholbach> Successfully uploaded packages.
+=== gusch|lunch is now known as gusch
+[11:52] <Mirv> dholbach: awesome, now PPAs and archives are again in sync!
+[11:53] <dholbach> Mirv, let me know once you have your developer application set up and I'll add an endorsement :)
+[11:53] <Mirv> dholbach: haha, ok :)
+[11:53] <Mirv> I'll, when it happens
+[11:59] <seb128> didrocks, dholbach, Mirv: great, thanks
+[11:59] <didrocks> yw
+[11:59] <cyphermox> slangasek: didrocks mentioned you said you could help with some packaging review for new packages -- I'm adding lp:indicator-keyboard today
+[12:00] <didrocks> slangasek: ignore that ping, seb128 just told he already reviewed it
+[12:00] <cyphermox> slangasek: scratch that
+[12:00] <cyphermox> right
+=== psivaa is now known as psivaa-afk
+=== Ursinha is now known as Ursinha-afk
+=== Ursinha-afk is now known as Ursinha
+=== _salem is now known as salem_
+=== MacSlow|lunch is now known as MacSlow
+[12:50] <pitti> Sweetshark: does it still make sense for bug 1194740 to be on the sponsoring queue? seems you are already at it
+[12:50] <ubottu> bug 1194740 in libreoffice (Ubuntu Precise) "[precise] Saving xls files originally created in Excel 2003 causes considerable increase of file size" [Medium,In progress] https://launchpad.net/bugs/1194740
+[12:50]  * pitti unsubscribes sponsors
+[12:51] <xnox> pitti: i thought it needs upload/copy into -proposed
+[12:52] <pitti> xnox: yes, but Sweetshark already has it in a PPA, and thus I guess he has it in some packaging git
+[12:52] <pitti> I left a comment on the bug
+[13:04] <seb128> pitti, xnox: Sweetshark is waiting on sponsoring for libreoffice updates to precise and raring for a while
+[13:05] <seb128> bdrung is busy
+[13:05] <seb128> DBM doesn't want to give him upload right
+=== tkamppeter_ is now known as tkamppeter
+[13:05] <seb128> and nobody else is having wanting to review/sponsor libreoffice it seems
+[13:06] <pitti> seb128: right, that's bug 1204449, right?
+[13:06] <ubottu> bug 1204449 in libreoffice (Ubuntu) "[SRU] LibreOffice 4.0.4 for Ubuntu 13.04 (raring)" [Undecided,Confirmed] https://launchpad.net/bugs/1204449
+[13:06] <seb128> pitti, I guess, there is also one for precise
+[13:06] <seb128> Sweetshark, ^?
+[13:13] <xnox> seb128: pitti: as far as I remember it only mattered to be fixed in precise, with quantal/raring of lower or even no priority.
+[13:14] <pitti> Sweetshark: do you have a source.changes to go along with the raring 4.0.4 upload, so that I don't mess up with re-building the source?
+[13:22] <hallyn_> hm, odd.  i have this lvm LV that refuses to let me remove it.  not mounted anywhere, not showing up in lsof...
+[13:26] <xnox> hallyn_: snapshot? /var/lib/schroot/mount/saucy-amd64-27cbc3c9-bb0e-4086-b6de-410643ade53e/
+[13:26] <xnox> hallyn_: ah... http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=618016
+[13:26] <ubottu> Debian bug 618016 in lvm2 "lvremove sometimes fails to remove snapshot volumes" [Important,Open]
+[13:27] <hallyn_> xnox: no, it had snapshots but all have been removed...  so yeah, maybe that bug  (/me goes to look)
+[13:28] <pitti> @pilot out
+=== udevbot changed the topic of #ubuntu-devel to: Ubuntu 13.04 released | Archive: open | Devel of Ubuntu (not support or app devel) | build failures -> http://qa.ubuntuwire.com/ftbfs/ | #ubuntu for support and discussion of lucid -> raring | #ubuntu-app-devel for app development on Ubuntu http://wiki.ubuntu.com/UbuntuDevelopment | See #ubuntu-bugs for http://bit.ly/lv8soi | Patch Pilots:
+[13:29] <hallyn_> xnox: makes me feel less secure in having everything depending on lvm :)
+[13:29] <xnox> hallyn_: tell me about it =)
+[13:29] <hallyn_> but i've not seen this before
+[13:30]  * hallyn_ descending into "see this bug" dereferencing hell
+[13:30] <xnox> hallyn_: i only recently found out that "cosmic rays" is not a joke, but actual problem affecting electronics, especially on higher altitudes and may have caused a few plane / rocket crashes.
+[13:31] <hallyn_> <grimace>
+[13:31] <hallyn_> ecc, it's not just for cool kids anymore
+[13:36] <hallyn_> xnox: alas, while [ $? -eq "5" ]; do sudo lvremove -f /dev/vg0/c-saucy-delme; done doesn't work for me :)
+[13:39] <hallyn_> all right, i guess i'll just be stashing those in /dev/vg0/*-delme
+=== psivaa-afk is now known as psivaa
+=== Guest79256 is now known as mfisch
+[14:18] <rtg> hallyn_, stgraber: I'm getting lxc package install errors on 2 different precise servers. How can I figure out why ?
+[14:18] <rtg> Setting up lxc (0.7.5-3ubuntu67) ...
+[14:18] <rtg> Feature buffer full.dpkg: error processing lxc (--configure):
+[14:18] <rtg>  subprocess installed post-installation script returned error exit status 1
+[14:18] <rtg> Errors were encountered while processing:
+[14:18] <rtg>  lxc
+[14:18] <rtg> E: Sub-process /usr/bin/dpkg returned an error code (1)
+[14:20] <rtg> both are running LTS kernels
+[14:20] <stgraber> rtg: looks like it may be the upstart job failing to start, anything interesting in /var/log/upstart/lxc*.log?
+[14:20] <rtg> stgraber, o such file
+[14:20] <rtg> no*
+[14:21] <mitya57> Mirv: Are we landing Qt 5.1? I see you were adding some commits to qtbase branch...
+[14:21] <rtg> stgraber, its working on a stock precise install with a 3.2 kernel
+[14:22] <stgraber> rtg: if you want a quick workaround, try the lxc in precise-backports. I'll have to get myself a 12.04.3 VM to see what's going on.
+[14:23] <rtg> stgraber, I have backports enabled already
+[14:23] <rtg> same package name ?
+[14:24] <stgraber> rtg: yep
+[14:24] <rtg> stgraber, its a Saucy LTS kernel though, not Raring
+[14:44] <hallyn_> rtg: which kernel package exactly?
+[14:44] <hallyn_> stgraber: are you setting that up right now?  (if not, i can try on an instance)
+[14:45] <rtg> hallyn_, https://launchpad.net/~ubuntu-x-swat/+archive/s-lts-backport
+[14:47] <stgraber> hallyn_: I've got the .iso here but haven't installed the VM yet, so if you can quickly test in an instance, go ahead
+[14:48] <seb128> dholbach, Mirv: shouldn't be the dummy qtcreator-plugin-cordovaqt arch: all?
+[14:48] <seb128> dholbach, Mirv: binNEWed qtcreator anyway, not a blocker
+[14:49] <dholbach> seb128, yep, that'd make sense - let me file a bug on qtcreator to track it
+[14:49] <seb128> dholbach, thanks
+[14:49] <rtg> hallyn_, appears to work on a abre metal machine with a Raring LTS kernel (which is essentially the point release config)
+[14:50] <wzssyqa> doko: how to checkout gcc svn? svn co svn://svn.debian.org/svn/gcccvs/branches/sid/gcc-4.8 seems cannot work
+[14:51] <dholbach> seb128, Mirv: https://bugs.launchpad.net/ubuntu/+source/qtcreator/+bug/1214955
+[14:51] <ubottu> Launchpad bug 1214955 in qtcreator (Ubuntu) "qtcreator-plugin-cordovaqt should be "Architecture: all"" [Undecided,New]
+[14:51] <seb128> dholbach, danke
+[14:52] <dholbach> de rien mon ami
+[14:54] <mitya57> Mirv: Also, I've just made our qtbase packaging a bit more close to Debian
+=== freeflying is now known as freeflying_away
+[14:55] <doko> wzssyqa, works for me
+[14:56] <mitya57> Mirv: if we are going to upload 5.1, I'll update all universe stuff and try to land qtcomponents and qtdoc
+[14:56] <rtg> hallyn_, it definitely seems to be kernel related, e.g., 3.11 doesn't work whereas 3.8 does. I guess that is a problem for the .4 point release.
+[15:01] <hallyn_> rebooting my precise instance now
+[15:05] <hallyn_> rtg: yeah, reproduced.  checking postinst
+[15:05] <slangasek> bdmurray: bug #1214719: does that look like a known casper bug to you?
+[15:05] <ubottu> bug 1214719 in plymouth (Ubuntu) "package plymouth-theme-ubuntu-text 0.8.8-0ubuntu6.2 failed to install/upgrade: subprocess installed post-installation script returned error exit status 1" [Undecided,New] https://launchpad.net/bugs/1214719
+[15:06] <bdmurray> slangasek: looking
+[15:08] <hallyn_> ubuntu@ip-10-31-166-138:~/lxc-0.7.5/debian$ sudo /lib/init/apparmor-profile-load lxc-containers
+[15:08] <hallyn_> Feature buffer full.ubuntu@ip-10-31-166-138:~/lxc-0.7.5/debian$
+[15:08] <hallyn_> I did wonder where "feature buffer full" came from
+[15:09] <hallyn_> no jjohansen around :(
+[15:09] <hallyn_> sarnold: ^
+[15:09] <hallyn_> rtg: I'm guessing that kernel is missing an apparmor patch from jjohansen
+[15:09] <rtg> hallyn_, possibly. lemme check
+[15:10] <rtg> hallyn_, actually, the saucy kernel should be ahead of raring, e.g., "UBUNTU: SAUCE: (no-up) apparmor: Sync to apparmor 3 - alpha 4 snapshot"
+[15:10] <rtg> maybe its just broken
+=== Ursinha is now known as Ursinha-afk
+[15:11] <rtg> hallyn_, or perhaps its a userspace issue 'cause this works on saucy with the same kernel
+[15:13] <hallyn_> lessee - libfirt should fail the same way
+[15:13] <hallyn_> but it didn't
+[15:14] <jamespage> slangasek, any idea on why use of the embedded tevent source was dropped in Debian for samba?
+[15:14] <hallyn_> jdstrand: will jjohansen be in today?  (it's august... :( )
+[15:17] <hallyn_> sudo /sbin/apparmor_parser -r -W /etc/apparmor.d/lxc/lxc-default also gives me "Feature buffer full."
+[15:17] <slangasek> jamespage: other than the obvious "embedded copies are bad"? :)
+[15:18] <jamespage> slangasek, well I don't disagree with that sentiment
+=== Ursinha-afk is now known as Ursinha
+[15:18] <jamespage> slangasek, OK - we'll get tevent MIR'ed
+[15:18] <slangasek> jamespage: should be trivial since the code is already in main
+[15:18] <jamespage> slangasek, sure
+[15:23] <jdstrand> hallyn_: he is on vacation, so no. as for the feature buffer full-- that should be fixed in apparmor 2.8.0-0ubuntu24
+[15:23] <jdstrand> hallyn_: are you up to date?
+[15:25] <jdstrand> hallyn_: did you have specific questions wrt to it being August?
+=== lucas_ is now known as lucas
+[15:28] <diwic> pitti, hi, two builds are waiting at this ppa: https://launchpad.net/~phablet-team/+archive/pulseaudio - one for audio-mixer-touch and one for telepathy-ofono, could you bump them?
+[15:29] <hallyn_> jdstrand: apparmor 2.8.0-0ubuntu24 is in saucy.
+[15:29] <hallyn_> jdstrand: is 2.7.102-0ubuntu3.8 going to have the same fix for precise?
+[15:30]  * hallyn_ tries precise-proposed
+[15:31] <rtg> hallyn_, that version was uploaded to proposed last march.
+[15:31] <hallyn_> jinkeys
+[15:31] <hallyn_> and it doesn't fix it
+[15:31]  * hallyn_ checks for a bug # in saucy apparmor changelog
+[15:32] <hallyn_> I assume that's debian/patches/0041-parser-fix-flags.patch.  no bug
+[15:33] <jdstrand> hallyn_: it is
+[15:34] <jdstrand> hallyn_: that should be an SRU-able candidate. it is extremely simple.
+[15:34] <hallyn_> jdstrand: yeah, but we seem to ahve 2.7.102-0ubuntu3.8 stuck in -proposed :)
+[15:34] <hallyn_> jdstrand: I'll open a bug?
+[15:34] <jdstrand> hallyn_: sure
+[15:34] <hallyn_> jdstrand: ok, thanks
+[15:35] <rtg> jdstrand, seems like that version should get processed before the point release is minted
+[15:35] <hallyn_> rtg: did you track down which of the bugs that precise-proposed package is hung on?
+[15:35] <rtg> nope, just looked at the LP source page
+[15:36] <jdstrand> bug #987578
+[15:36] <ubottu> bug 987578 in apparmor (Ubuntu Precise) "Evince is not allowed to use exo-open" [Undecided,Fix committed] https://launchpad.net/bugs/987578
+[15:36] <jdstrand> sarnold tried to verify it, but could not reproduce
+[15:36] <hallyn_> jdstrand: at some point don't we fall back to "it didn't regress so we roll with it" ?
+[15:37] <hallyn_> can we do that at this point?
+[15:37] <pitti> diwic: bumped
+[15:37] <jdstrand> I think we can test it again
+[15:37] <diwic> pitti, thanks, much appreciated
+[15:38] <hallyn_> jdstrand: bug 1214979 fwiw.  thanks
+[15:38] <ubottu> bug 1214979 in apparmor (Ubuntu) "Feature buffer full in precise with LTS kernel" [Critical,Confirmed] https://launchpad.net/bugs/1214979
+[15:39] <jdstrand> sarnold: can you look at bug #987578? you mentioned firefox, but the bug is for evince. I don't think you need xfce4-- you just need evince to use exo-open. perhaps this was fixed via some other means?
+[15:39] <ubottu> bug 987578 in apparmor (Ubuntu Precise) "Evince is not allowed to use exo-open" [Undecided,Fix committed] https://launchpad.net/bugs/987578
+=== jasoncwarner__ is now known as jasoncwarner
+[16:38] <bdmurray> infinity: did you say you'd have a look at bug 1214352?
+[16:38] <ubottu> bug 1214352 in LibreOffice Productivity Suite "GUINT32/64_SWAP_LE_BE macros do not enclose val argument in parentheses" [Critical,Confirmed] https://launchpad.net/bugs/1214352
+[16:42] <infinity> bdmurray: I didn't say I wouldn't. :P
+[16:44] <roaksoax> xnox: ping
+[16:45] <xnox> roaksoax: heya
+[16:46] <roaksoax> xnox: hey! So I've been trying to re-enable clvm for testing (dlm still needs to be MIR'd), and I'm still seeing the FTBFS that I told you about a few weeks ago
+[16:46] <xnox> roaksoax: right.
+[16:46] <roaksoax> xnox: this is the diff: http://paste.ubuntu.com/6010928/
+[16:47] <roaksoax> xnox: funny thing is that if I install libcorosync-dev locally, and try to configgure locally, it works
+[16:47] <xnox> roaksoax: i see. I'm rebuilding ubiquity & wubi at the moment. I'll look into lvm2 today/tomorrow.
+[16:48] <roaksoax> xnox: awesome! Thanks :)
+[16:48] <roaksoax> i'll work on the MIR
+[16:48] <xnox> roaksoax: there should be no MIR needed.
+[16:48] <roaksoax> xnox: it should,m 'dlm' is a new package that has the dependencies to build clvm
+[16:49] <roaksoax> since it was separated from redhat-cluster (which was removed from the archives)
+[16:49] <xnox> roaksoax: but redhat-cluster was in main, no?! =) /me thought there is an exception for when packages are essentially reshuffled/renamed around.
+[16:50] <roaksoax> xnox: yes, but since 'dlm' is a completely new package it still needs MIR
+[16:50] <infinity> roaksoax: Not if it's a source split from rhcs.
+[16:51] <infinity> roaksoax: (Not that I'm saying it is, I haven't looked at it, just sayin'... If it *is* a source split from something that was in main, just tell an AA, and we'll process accordingly)
+[16:51] <rtg> hallyn_, I verified that 0041-parser-fix-flags.patch added to apparmor 2.7.102-0ubuntu3.8 fixes the lxc install problem
+[16:51] <rtg> (with the Saucy LTS kernel)
+[16:52] <roaksoax> infinity: well it is not exactly the same source which was in mean. Upstream split the code long ago but was never packaged because redhat-cluster was still being shipped
+[16:52] <hallyn_> rtg: cool.
+[16:52] <roaksoax> so 'dlm' used to be shipped with redhat-cluster until it got split into its own source by upstream
+[16:52] <hallyn_> (if i had upload rights i'd consider pushing the trivial debdiff to -proposed...)
+[16:52] <hallyn_> (but i'd probably mess it up, which is why i don't have upload rights :)
+[16:53] <roaksoax> so with the removal of redhat-cluster, dlm had to be packaged (the latest upstream release)
+[16:53] <infinity> roaksoax: New versions aren't "exactly the same source" either.  If it's the same ancestry, and basically the same project, and wasn't gratuitously relicensed or adopted a mandate of insecurity by default, etc...
+[16:53] <rtg> hallyn_, I'll run my packaging changes by jdstrand and see about getting it uploaded
+[16:54] <jdstrand> rtg: you are referring to apparmor?
+[16:54] <infinity> roaksoax: So, my point still stands, if it was part of rhcs, then broken out, and it's basically the same project without any added insanity, it doesn't need a whole new MIR process.
+[16:54] <rtg> jdstrand, yes
+[16:55] <roaksoax> infinity: right. But it does still require a new MIR bug filled, right?
+[16:55] <roaksoax> infinity: (all the previous package splits I've done in the past had to go through a MIR process, which I guess might not have been as extensive as new apckages, and were accepted under the condition that they were a package split)
+[16:56] <jdstrand> rtg: I'm coordinating getting someone to retest 3.8
+[16:56] <rtg> jdstrand, do you want me to wait then ?
+[16:56] <roaksoax> infinity: example: bug #1205019
+[16:56] <ubottu> bug 1205019 in crmsh (Ubuntu) "[MIR] crmsh" [Critical,Fix released] https://launchpad.net/bugs/1205019
+[16:56] <jdstrand> rtg: what version did you use?
+[16:57] <rtg> jdstrand, I started with  2.7.102-0ubuntu3.8 (the version in -proposed)
+[16:57] <infinity> roaksoax: Package splits and renames don't need bugs filed.  It doesn't HURT to have one filed, but they don't need it.
+[16:58] <jdstrand> rtg: basically, I was thinking that we could try to test 2.7.102-0ubuntu3.8 and if we could get to verification-done, we'd poke ubuntu-sru to push that though, paving the way for 3.9
+[16:58] <infinity> roaksoax: They need NEW review in the queue to make sure nothing crackful happened to them on the split/rename (but that's already happened for dlm).
+[16:58] <infinity> roaksoax: Anyhow, looks like you filed an MIR anyway, so I'll just ack that when something actually depends on it.
+[16:58] <jdstrand> rtg: if we couldn't, then we would need to do a 3.9 with just the patch for your bug and push that to -proposed
+[16:58] <rtg> jdstrand, I'm OK with that. I'll just start a bug on this lxc installation failure so we don't forget.
+[16:59] <jdstrand> then redo what is in proposed now as 3.10
+[16:59] <roaksoax> infinity: I see. Good to know then. And thanks :)
+[16:59] <jdstrand> rtg: hallyn already filed one
+[16:59] <jdstrand> bug #1214979
+[16:59] <ubottu> bug 1214979 in apparmor (Ubuntu) "Feature buffer full in precise with LTS kernel" [Critical,Confirmed] https://launchpad.net/bugs/1214979
+[16:59] <infinity> roaksoax: Oh, do make sure to get a team subscribed to its bugs, though.
+[17:00] <jdstrand> rtg: is the saucy lts kernel already in -security?
+[17:00]  * jdstrand is guessing 'no'
+[17:00] <rtg> jdstrand, nope, its coming from a PPA until saucy is released
+[17:00] <infinity> jdstrand: https://launchpad.net/~canonical-kernel-team/+archive/ppa/+packages
+[17:01] <infinity> Of course, it's also out of date...
+[17:01] <rtg> infinity, jdstrand: its really https://launchpad.net/~ubuntu-x-swat/+archive/s-lts-backport
+[17:02] <rtg> I'll delete the c-k-t PPA version
+[17:02] <infinity> rtg: Ahh.  Yes, please do.  It confuses my tools too. :)
+[17:03] <rtg> infinity, done
+=== psivaa is now known as psivaa_
+=== psivaa_ is now known as psivaa-
+=== psivaa- is now known as psivaa
+[17:22] <bdmurray> slangasek: I found bug 1185571 and bug 823778 which are similar
+[17:22] <ubottu> bug 1185571 in initramfs-tools (Ubuntu) "Update failed for linux-image-3.5.0-31-generic 3.5.0-31.52~precise1 - running Ubuntu from USB drive with casper-rw" [Undecided,New] https://launchpad.net/bugs/1185571
+[17:22] <ubottu> bug 823778 in initramfs-tools (Ubuntu) "package initramfs-tools 0.98.8ubuntu3.1 failed to install/upgrade: subprocess installed post-installation script returned error exit status 1" [Undecided,New] https://launchpad.net/bugs/823778
+[17:33] <slangasek> bdmurray: ok, marking as a duplicate - thanks
+[17:41] <jdstrand> rtg: I've asked sarnold to look at the previous sru and to coordinate with you on fixing your bug
+[17:41] <rtg> jdstrand, ack
+[17:50] <dobey> hey guys, why this? http://pastebin.ubuntu.com/6011145/
+[17:58] <sil2100> Hi everyone, looking for a core-dev that's willing to review a diff and give green light for release:
+[17:58] <sil2100> http://10.97.0.1:8080/view/cu2d/view/Head/view/Platform/job/cu2d-platform-head-3.0publish/lastSuccessfulBuild/artifact/packaging_changes_qtubuntu_0.52+13.10.20130821-0ubuntu1.diff
+[17:59]  * sil2100 sighs
+[17:59] <sil2100> Public jenkins still down
+[17:59] <sil2100> Let me pastebin it
+[17:59] <sil2100> http://paste.ubuntu.com/6011168/
+[18:00] <slangasek> sil2100: fwiw (and not to bounce you around too much), given that this url is only available to Canonical employees with VPN access, it might be best to ask on a Canonical channel and not bother the rest of the community
+[18:00] <slangasek> anyway, looking
+[18:01] <infinity> sil2100: That seems like a no-brainer.
+[18:01] <sil2100> slangasek: sorry about that, that's why I pastebinit'ed, since normally I use the public jenkins URL
+[18:01] <infinity> sil2100: configure in install is almost certainly wrong.
+[18:01] <sil2100> infinity: yep, but formality says: need a green light before I can press the button ;)
+[18:04] <slangasek> sil2100: the change is correct; do you need one of us to actually press the button, or do you just need our ack?
+[18:05] <sil2100> No, just an ACK
+[18:05] <sil2100> Thank you
+=== leoquant is now known as Soul-Sing
+[18:29] <pepper_chico> anyone have a tip about this: http://askubuntu.com/questions/335489/is-there-a-way-to-define-a-hotkey-to-unhide-the-launcher ?
+=== hholtmann is now known as heston
+=== cp is now known as Guest90522
+[20:34] <Noskcaj> pitti, Thanks for merging all the branch i had waiting
+[20:56] <robert_ancell> mterry, hey, do you have a lightdm merge to match https://code.launchpad.net/~mterry/unity-system-compositor/set-next-session/+merge/181325?
+[20:57] <mterry> robert_ancell, I do, yeah
+[20:57] <robert_ancell> cool
+[20:57] <mterry> robert_ancell, want me to file that too?
+[20:57] <mterry> I have it locally
+[20:57] <robert_ancell> mterry, yeah, just so we reserve the number on the other side
+=== Nisstyre-laptop is now known as Nisstyre
+[20:59] <mterry> robert_ancell, so...  how again does a session get named?  Like the greeter or user-sessions?  LightDM is going to set the name somehow?  I don't see that being done yet, mostly becuase it doesn't seem like LightDM creates a Mir connection for them
+[20:59] <mterry> Which is where I think you can provide a name
+[21:00] <mterry> a client connection that is
+[21:00] <robert_ancell> mterry, it provides the name to XMir with the -mir flag
+[21:00] <mterry> robert_ancell, what about nested Mir?
+[21:00] <robert_ancell> and that is passed to u-s-c in the Mir connect message
+[21:01] <robert_ancell> it will be passed in an environment variable like the socket name for u-s-c
+[21:01] <robert_ancell> mterry, the socket name MP is https://code.launchpad.net/~robert-ancell/mir/mirclient-env-var/+merge/179626
+[21:01] <robert_ancell> we'll need another one for nested once implemented
+[21:02] <mterry> robert_ancell, OK.  I won't try to land any of my naming stuff yet, but will propose a branch that calls the new API
+[21:13] <mterry> robert_ancell, https://code.launchpad.net/~mterry/lightdm/set-next-session/+merge/181411
+[21:39] <robert_ancell> mterry, btw, ignore the jenkins failure. I'm merging in the packaging branch and things will fail until that lands
+[21:39] <robert_ancell> I'll re-run it once that's done
+[21:43] <mterry> k
+[22:16] <ari-tczew> cjwatson: ping
+[22:31] <sarnold> infinity: may I ask for special SRU focus on 987578 for precise apparmor please? the verification was overlooked for far too long, and now is impeding progress on a more important sru for apparmor, bug 1214979 -- I have performed precise apparmor verification, marked it verification-done -- is anything else needed? thanks
+[22:31] <ubottu> bug 1214979 in apparmor (Ubuntu Precise) "Feature buffer full in precise with LTS kernel" [Undecided,In progress] https://launchpad.net/bugs/1214979
+[22:46] <infinity> sarnold: Given a point release is in progress pretty much as we speak, releasing that today is a no-go anyway.
+[22:47] <infinity> sarnold: So, you could just upload on top of that for the other bug as well, verify the lot, and we can push it all in on, say, Monday.
+[22:47] <sarnold> infinity: thank you :)
+=== salem_ is now known as _salem
+=== mhall119_ is now known as mhall119

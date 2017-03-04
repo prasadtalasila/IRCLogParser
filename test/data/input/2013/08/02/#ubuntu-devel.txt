@@ -1,0 +1,371 @@
+=== JZTech101 is now known as Andromeda
+=== Andromeda is now known as JZTech101
+=== JZTech101 is now known as Hydrogenbomb
+=== Hydrogenbomb is now known as HydrogenBomb
+=== HydrogenBomb is now known as JZTech101
+=== JZTech101 is now known as Hydrogenbomb
+=== Hydrogenbomb is now known as JZTech101
+=== JZTech101 is now known as JZTech101|afk
+=== JZTech101|afk is now known as JZTech101
+=== _salem is now known as salem_
+=== salem_ is now known as _salem
+[04:26] <pitti> Good morning
+[06:33] <pitti> ev: good morning
+[06:33] <pitti> ev: WDYT about http://bazaar.launchpad.net/~apport-hackers/apport/trunk/view/head:/data/whoopsie-upload-all ?
+[06:34] <pitti> ev: this skips all the hooks and UnreportableReason stuff (as daisy doesn't care about that anyway, right?)
+[06:34] <pitti> ev: it's a completely noninteractive script which we can run after e. g. CI/autopilot tests on the phone (or elsewhere) to upload everything to whoopsie, but not to LP or any other crash DB
+[06:35] <pitti> (plars and gema were asking for that specifically for phone CI testing)
+[06:35] <pitti> ev: this collects package+os+gdb stuff; anything else missing?
+[07:22] <rickspencer3> hi msm
+[07:22] <rickspencer3> oops, wrong channel ;)
+[08:02] <ev> pitti: having a look now
+=== iahmad is now known as iahmad|afk
+[08:08] <seb128> jibel, hey, do you if the firefox autopilot tests hit an infrastructure issue?
+[08:09] <seb128> jibel, seems they hit a timeout
+[08:09] <seb128> http://10.98.0.1:8080/view/Saucy/view/AutoPkgTest/job/saucy-adt-firefox/ARCH=amd64,label=adt/102/
+[08:10] <seb128> jibel, the gtk+3.0 on update_excuse seems buggy as well
+[08:10] <seb128> it lists itself, and it lists other tests as RUNNING when they are done for hours
+[08:10] <seb128> jibel, same issue than yesterday of picking the wrong version?
+[08:11] <jibel> seb128, I am not sure it is infrastructure or maybe a test is firewalled, but they hang starting with saucy.
+[08:11] <seb128> chrisccoulson, ^
+[08:11] <jibel> seb128, it's on my list for next week before holidays
+[08:12] <jibel> seb128, I'll unblock gtk+3
+[08:12] <seb128> jibel, thanks ... and thanks
+[08:12] <chrisccoulson> seb128, jibel, i can't reproduce it here. and from looking at the log, it doesn't look like it even gets to the point of starting the test harness
+[08:12] <seb128> jibel, and we need you, they shouldn't let you go in holidays :p
+[08:13] <ev> pitti: syntactically it looks fine, but I'm not clear on the motivation for this over using something like apport-noui, which seems to do much the same thing?
+[08:13] <ev> pitti: oh, is it because you don't want to go through Launchpad and don't want jenkins to tear down the machine state before whoopsie has had a chance to upload?
+[08:16] <jibel> ev, correct.
+[08:16] <ev> cool, looks good to me then
+[08:20] <pitti> ev: right
+[08:20] <pitti> ev: we also found a funny corner case with apport-noui yesterday
+[08:21] <pitti> ev: when running it on a powerd crash, -noui does nothing as it would ask a "this uses non-disto libraries; are you sure that you want to send this?" questino which -no-ui answers as "no"
+[08:21] <ev> oh?
+[08:21] <pitti> ev: this reduced script avoids this and send everything
+[08:21] <ev> yikes
+[08:22] <ev> any thoughts on how we can resolve that, short of flipping the default to "yes"?
+[08:23] <pitti> I'm not sure that we do want to resolve that in general
+[08:23] <ev> ah right
+[08:23] <pitti> all the UnreportableReason stuff are things that we don't want to see on LP
+[08:23] <pitti> they make (some) sense on errors.u.c. by way of sheer mass, but individual Unreportable reports are just noise
+[08:24] <pitti> as whoopsie-upload-all does not upload to anything but whoopsie, we can send those
+[08:24] <pitti> ev: ^ I think that's what you intend, right?
+[08:25] <ev> so that brings up an interesting point. Should we kill the Launchpad path for apport-noui, given that there's no sense in launching a browser for those? :)
+[08:25] <pitti> ev: also, if whoopsie creates an .uploaded, it's really "done", so the testbed can disappear in the next second? or does it still do communication after that?
+[08:26] <pitti> ev: so apport-noui would essentially do process_report()?
+[08:27] <ev> yes
+[08:27] <ev> (just checking on your whoopsie question)
+[08:28] <ev> pitti: yes, whoopsie is done when the .uploaded file exists
+[08:29] <ev> core file upload and all
+[08:29] <pitti> ev: great, thanks for verifying
+=== jamesh_ is now known as jamesh
+=== iahmad|afk is now known as iahmad
+=== paulliu is now known as paulliu-to-confe
+=== paulliu-to-confe is now known as paulliu-conferen
+[09:40] <jibel> chrisccoulson, wrt firefox tests, from the logs inside the VM, the session doesn't even start
+[09:40] <jibel> ** (gnome-session:10322): CRITICAL **: We failed, but the fail whale is dead. Sorry....
+[09:41] <jibel> http://paste.ubuntu.com/5939469/
+[09:41] <chrisccoulson> jibel, ah, interesting
+[09:43] <jibel> and the test is blocked on the following processes http://paste.ubuntu.com/5939474/
+[09:45] <chrisccoulson> jibel, thanks. are there any messages from any other session components?
+=== smb` is now known as smb
+[09:50] <jibel> chrisccoulson, nothing else. On my machine running saucy, xfvb-run dies the same way when executed directly and the same arguments then FF tests
+[09:50] <jibel> than
+[09:51] <jibel> s/xvfb-run/gnome-session/
+[09:51] <chrisccoulson> jibel, yeah, i'd expect that to be the case, unless you run it from inside the test script (which sets up a home directory and test session configuration)
+[09:53] <jibel> chrisccoulson, is there any other information I can collect from the testing env?
+[09:54] <chrisccoulson> jibel, not sure at the moment, just trying to think of things that might make it fail
+[10:03] <chrisccoulson> jibel, it might help to run gnome-session with the --debug option
+=== Sweetsha1k is now known as Sweetshark
+[10:47] <jibel> pitti, ev I tried whoopsie-upload-all on a phone with 2 crash files (powerd and gallery-app) and after 700s it is still waiting for .uploaded files
+[10:47] <jibel> pitti, ev where should I look to find why it is not uploading them?
+[10:47] <pitti> I asked ev about that yesterday, unfortuantely whoopsie is not very talkative
+[10:47] <ev> jibel: is whoopsie running?
+[10:47] <ev> yes, let's fix that now
+[10:47]  * ev works on a branch to be more verbose
+[10:47] <jibel> ev, yes it is running
+[10:48] <pitti> ev: w-u-a actually fails if pidof whoopsie fails
+[10:48] <pitti> so it should at least discover that case quickly
+[10:48] <ev> jibel: so I've seen a weird bug on my nexus where whoopsie doesn't seem to be using its inotify watch initially. calling restart whoopsie fixes this for me
+[10:48] <ev> jibel: can you give that a try and let me know?
+[10:48] <ev> pitti: *nods*
+[10:49] <jibel> ev, restart whoopsie fixed it
+[10:50] <ev> jibel: okay, that one is going up a few pegs on the todo list
+[10:53] <pitti> something wrong with inotify on the phone?
+[10:53] <infinity> xnox: Can you merge vtk?
+[10:53] <xnox> infinity: yes.
+[10:53] <ev> pitti: only initially. The whoopsie that spawns from the upstart job at boot doesn't seem to be paying attention to /var/crash, but if you restart it, it's fine
+[10:54] <xnox> infinity: Can you denew tcl8.6 for me please?
+[10:59] <infinity> xnox: Sure.
+[11:06] <SuperLag> Are there any Launchpad admins in here?
+[11:06] <SuperLag> or am I asking in the wrong place?
+[11:07] <xnox> SuperLag: it's best to just ask a question, then we can answer and redirect you.....
+[11:07] <xnox> s/and/or/
+[11:07] <SuperLag> trying to consolidate email under one account, and I forgot I'd actually registered two addresses
+[11:08] <SuperLag> (on Launchpad, that is)
+[11:08] <ev> pitti: so I'm just realising that whoopsie is super quiet because it relies on upstart's logging, but that means in its daemon mode that you only get the messages it prints to stderr before the fork and privilege drop. As mentioned above, fixing :)
+=== Guest85887 is now known as LoganCloud
+[11:09] <cjwatson> SuperLag: You want #launchpad
+[11:09] <infinity> SuperLag: https://help.launchpad.net/YourAccount/Merging
+[11:09] <infinity> SuperLag: (And what cjwatson said)
+[11:09] <pitti> ev: I tried yesterday to just run it in the foreground, but that also didn't say anything
+[11:12] <xnox> ev: run in foreground, and instead of forking, do sigstop yourself & in the upstart job do "expect stop", upstart will send sigcont and will consider whoopsie as started.
+[11:13] <xnox> ev: you might want to call sigstop if a command line option is present, or if there is UPSTART_JOB environment variable and/or somesuch.
+=== tkamppeter_ is now known as tkamppeter
+=== MacSlow is now known as MacSlow|lunch
+[11:26] <SuperLag> cjwatson: infinity: thank you. Much appreciated.
+[12:15] <cjwatson> doko: I noticed the separate dh-python package just hit unstable.  Do we want it in saucy, and/or does it need a new python3-defaults first?
+[12:15] <cjwatson> Likewise I wonder if anyone cares about having dh-golang in saucy
+[12:16] <doko> cjwatson, I'll have to look at python3-defaults. dh-golang sure, will be universe anyway
+[12:17] <Daviey> ooo, i had not seen dh-golang .. That sounds interesting.
+[12:18] <doko> no, it's not that interesting, and because juju shoves everything into one package, it doesn't help either
+[12:18] <Daviey> ugh
+[12:21] <cjwatson> Likewise golang-godebiancontrol-dev golang-mux-dev golang-pq-dev golang-pty-dev?
+[12:22] <cjwatson> I assume from the package names that those are still static linking, but having some patterns for Go packaging outside golang itself seems like a step forward
+[12:23] <davmor2> seb128: on saucy if you let the system lock the lightdm password unlock screen seems to look like gnome rather than Ubuntu is that a bug or deliberate, do you happen to know?
+=== _salem is now known as salem_
+[12:24] <doko> cjwatson, sure, won't hurt
+[12:25] <seb128> davmor2, it's likely an environment problem due to the upstart user session
+[12:25] <seb128> we have similar problems with indicators
+[12:26] <seb128> XDG_CURRENT_DESKTOP is not correctly set
+[12:26] <davmor2> seb128: that would probably explain it
+=== MacSlow|lunch is now known as MacSlow
+[12:56] <smoser> xnox, http://package-import.ubuntu.com/status/cloud-init.html#2013-08-01%2022:12:33.994912 ?
+[12:56] <smoser> is that just retriable ?
+[12:56] <xnox> smoser: no idea. i'll poke lp folks about it.
+[12:56] <smoser> thank you. 401 error on launchpad access.
+=== Nitrodex is now known as Guest93127
+[13:33] <jdstrand> tyhicks: hey, mardy and I were chatting a bit about online accounts. he will be able to handle confined apps fine, as well as unconfined (he'll add 'unconfined' as allowed on account creation-- I asked him to talk to you about that)
+[13:33] <jdstrand> tyhicks: but there is a small corner case that may or may not be interesting
+[13:34] <jdstrand> tyhicks: apparmor-easyprof-ubuntu provided an 'unconfined' template for special circumstances when a click package should not be confined (note to app developers, using this for your app will almost certainly result in the upload being rejected)
+[13:35] <jdstrand> tyhicks: these unconfined apps label will still be of the normal form since it is generated via the click apparmor hook: appname_name_version
+[13:37] <jdstrand> tyhicks: which means that they won't match the preseeded 'unconfined' label mardy is using. I don't think this is actually a problem though (and may be a feature): these unconfined click packages will be prompted just like any other click pacakge
+[13:37] <jdstrand> tyhicks: I don't think there is anything to do, but I wanted to at least mention it
+[14:04] <jdstrand> tyhicks: change of subject: here is an updated ubuntu-unity-hud abstraction: http://paste.ubuntu.com/5940168/
+=== salem_ is now known as _salem
+[14:07] <jdstrand> mardy: I was looking at friends-app to test online accounts. it is accessing ~/.config/libaccounts-glib/accounts.db directly
+[14:08] <jdstrand> mardy: I'm thinking it is trying to see which accounts are available. shouldn't this be happening over dbus? is friends-app doing it wrong?
+[14:14] <tsdgeos> anyone knows why intalling wine1.4 in saucy wants to remove ia32-libs?
+[14:15] <cjwatson> It probably depends on the proper multiarch versions instead
+[14:15] <cjwatson> ia32-libs is obsolete
+[14:15] <cjwatson> We explicitly made sure everything in it was replaced by multiarch versions
+[14:16] <tsdgeos> cjwatson: not sure i understand that :D
+=== _salem is now known as salem_
+[14:16] <tsdgeos> cjwatson: fwiw it also wants to uninstall ia32-libs-multiarch:i386
+[14:17] <cjwatson> Fairly sure that's obsolete too
+[14:17] <cjwatson> I can't tell by piecemeal reports whether what it wants to do is correct.  pastebin the whole output
+[14:17] <tsdgeos> sure
+[14:18] <cjwatson> But we deleted ia32-libs entirely in saucy
+[14:18] <cjwatson> Wine shouldn't need it or ia32-libs-multiarch any more
+[14:18] <tsdgeos> so one has to install libs one by one to get 32 bit deps?
+[14:18] <xnox> tsdgeos: didn't it migrate without it's libs or something
+[14:18] <jdstrand> tyhicks: please use this instead: http://paste.ubuntu.com/5940216/
+[14:18]  * xnox looks up
+[14:19] <cjwatson> tsdgeos: No, wine1.4 already depends on the libraries it needs
+[14:19] <cjwatson> ia32-libs was an unmaintainable horror.  It is not coming back
+[14:19] <tsdgeos> cjwatson: sure, i mean if e.g. i have a non .deb game
+[14:19] <tsdgeos> cjwatson: sure, makes sense to me, always found it weird we shoved all the stuff in there
+[14:19] <cjwatson> tsdgeos: You might have to install the odd library to support it, but that's just the same as if you got a 64-bit non-.deb game
+[14:19] <tsdgeos> yep
+[14:20] <jdstrand> mardy: right, so if I give access to @{HOME}/.config/libaccounts*/*db, then friends-app works. if I take it away, it does not. It doesn't use the DBus interfaces you mentioned
+[14:20] <tsdgeos> cjwatson: wasn't complaining
+[14:20] <tsdgeos> cjwatson: http://paste.ubuntu.com/5940223/
+[14:20] <cjwatson> weird> indeed, ia32-libs was always intended to be a transitional measure - it was just transitional for longer than anyone involved hoped
+[14:21] <tsdgeos> so removes some gphotos but then install some others
+[14:21] <jdstrand> mardy: I guess it is doing it wrong. account-console seems to be doing the same fwiw (I could only get 'list' to do anything meaningful)
+[14:21] <tsdgeos> if the ia32libs is correct
+[14:21] <tsdgeos> doesn't look that bad
+[14:21] <cjwatson> Looks fine to me
+[14:22] <tsdgeos> tx :-)
+[14:22] <cjwatson> I suspect a dist-upgrade would have done the gphoto stuff even without wine
+[14:22] <cjwatson> You might not want to remove the "automatically installed and no longer required" stuff until you confirm that any other unpackaged 32-bit binaries you have lying around don't need those
+=== _salem is now known as salem_
+[14:35] <ev> I don't suppose anyone has some free time for code review? https://code.launchpad.net/~ev/whoopsie/android-serial/+merge/178306 opinions definitely welcome on what we use to form the system identifier on Android
+[14:36] <ev> trying to get as much hardware-static data in there as possible, to reduce the risk of collision
+=== jono is now known as Guest51067
+[14:53] <xnox> ev: wasn't there system-settings already listing IMEI and something else. Cause on the phone / sim capable devices IMEI is usually more unique.... (excluding usb-SIM dongles that is)
+[14:54] <xnox> IMEI is suppose to be unique in the world.
+=== steveire_ is now known as steveire
+[14:55] <ev> xnox: investigating, but do feel free to update the MP with those comments
+[14:55] <xnox> ev: you might want to fetch a Nexus4 in the office to test.
+[14:57] <ev> oh yes, my nexus 7 isn't going to have that, is it? :D
+[14:57] <xnox> ev: there is grouperg with sim cards, but i guess you have a wifi only model =)
+[14:57] <slangasek> ev: so I'm strongly opposed to using hybris for something like this
+[14:58] <ev> slangasek: oh?
+[14:58] <slangasek> we should only be relying on the android layer for critical bits that must be done through android
+[14:58] <slangasek> is this possibly exposed in /sys
+[14:58] <slangasek> ?
+[14:59] <ev> interestingly, grepping through /sys ends up rebooting my nexus
+[14:59] <xnox> ev: reboot works \o/
+[14:59] <ev> it does show /sys/devices/platform/grouper_misc/grouper_chipid and /sys/devices/virtual/android_usb/android0/iSerial before it goes down
+[14:59] <ev> but those will vary from device to device, obviously
+[15:00]  * slangasek nods
+[15:00] <slangasek> but there may be a suitable kernel-level abstraction?
+[15:00] <xnox> ev: ideally ubuntu-system-settings would expose those numbers that you can use.... but then again whoopsie can't just depend on system-settings (especially if system-settings is the one that crashes....)
+[15:00] <ev> xnox: ubuntu-system-settings gets them from the same place
+[15:01] <ev> the about page uses hybris' property_get
+[15:01] <ev> slangasek: possibly; I'll have a look
+[15:01] <slangasek> sure... but ubuntu-system-settings should provide some settings-querying interface that's not hybris
+[15:01] <slangasek> it may not be there yet, but in that case it's a bug in u-s-s that should be filed
+[15:01] <ev> slangasek: would you mind updating the MP with your thoughts on why hybris is bad for this?
+[15:02] <slangasek> ev: can't do it this moment, I'll try to remember :)
+[15:10] <ev> slangasek: *nods* thanks
+[15:58] <semiosis> fyi, packages in the us-east-1 ec2 mirror are not passing signature validation. https://forums.aws.amazon.com/thread.jspa?threadID=131469
+[15:59] <semiosis> i just switched to us.archive.ubuntu.com and everything works now
+[15:59] <semiosis> if this isn't the right place to report this, please forgive me, where should I go?
+[16:01] <xnox> semiosis: not sure who manages ec2 mirrors, but you can also try #ubuntu-mirrors channel which is usually where mirror network is co-ordinated.
+[16:02] <semiosis> great, thanks!
+[16:15] <dobey> barry, doko: any chance one of you could get twisted-py3 updated to 13.1.0 ? and maybe plain twisted too?
+=== james_ is now known as Guest30414
+[17:00] <cjwatson> doko: Should I retry https://launchpad.net/ubuntu/+source/gcc-snapshot/20130731-1ubuntu1/+build/4841314 ?  Looks like the builder lost its mind.
+[17:03] <cjwatson> kirkland: Looks like you dropped doko's 1.4-0ubuntu2 change from anerd.  Do you think you could restore it so that the new version can migrate from -proposed?
+[17:04] <cjwatson> (bug 1139188)
+[17:04] <ubottu> bug 1139188 in anerd (Ubuntu) "Unsatisfiable dependency on powerpc" [High,New] https://launchpad.net/bugs/1139188
+[17:10] <cjwatson> mterry,jdstrand: If I promote ust (bug 1203589) for mir, I guess I should leave the bug open for a security review?
+[17:10] <ubottu> bug 1203589 in ust (Ubuntu) "[MIR] ust" [Undecided,Triaged] https://launchpad.net/bugs/1203589
+[17:10] <mterry> cjwatson, yes, I assume that's easiest for jdstrand
+[17:10] <cjwatson> mesa is dep-wait on mir, so now seems like a reasonable point for me to start promotions
+[17:13] <cjwatson> For some value of "now" that means "over the next day or so".
+[17:14] <seb128> cjwatson, mterry, jdstrand: I think didrocks&co were counting on stuff not being promoted/building before monday ... but he asked Laney to put a britney lock in case that's happening
+[17:14] <cjwatson> seb128: do you know why?
+[17:14] <cjwatson> and surely this doesn't go for mir's dependencies?
+[17:15] <seb128> <didrocks> Laney: xorg-server with Mir support is coming
+[17:15] <seb128>  well, it's already build-depending
+[17:15] <seb128>  but apparently, the version set is tomorrow's Mir version
+[17:15] <cjwatson> I see Laney didn't know either, judging by his comment in the hints file
+[17:15] <seb128> <didrocks> (which should be blocked through the week-end anyway as Mir is in universe, not promoted yet)
+[17:15] <seb128>  but as the Mir MIR was acked
+[17:15] <seb128>  maybe someone will promote during the week-end
+[17:15] <kirkland> cjohnston: doh, sure, I never saw a merge or anything from doko
+[17:15] <seb128> cjwatson, ^ that's what didrocks said
+[17:15] <Laney> they don't want the xorg-server to migrate over the weekend
+[17:15] <cjwatson> seb128: Eh, so that makes no sense
+[17:15] <cjwatson> If it dep-waits on a newer version, it'll keep dep-waiting
+[17:15] <seb128> well, until mir daily land tomorrow
+[17:15] <seb128> when nobody is around
+[17:16] <seb128> I think it was just being on the paranoid side
+[17:16] <seb128> and not wanting those stuff to hit saucy on saturday
+[17:16] <seb128> in case there is an issue and nobody around
+[17:16] <cjwatson> OK, so this doesn't apply to mir's dependencies
+[17:16] <seb128> right
+[17:16] <seb128> I think didrocks just didn't want the new xorg/drivers to hit saucy while they are not around
+[17:17] <seb128> I don't get why they uploaded those today though, if they didn't want them to land, but I can't reply to that one either
+[17:18] <cjwatson> No, indeed.  It's extra cognitive load for anyone trying to move -proposed along.
+[17:18] <seb128> I *think* they aimed at having it done today, and noticed the wrong mir depends
+[17:18] <seb128> by which time it was getting late to be able to get it in today
+[17:18] <seb128> and didrocks decided to back out
+[17:18] <seb128> just my theory...
+[17:19] <d4m> Seeing bad signature errors on ubuntu repos on ec2 and s3, any maintainers here?
+[17:20] <cjwatson> Probably just a race - I expect it'll go away shortly
+[17:21] <d4m> cjwatson: load issue?
+[17:21] <cjwatson> No, the update process for mirrors is unfortunately not totally atomic
+[17:21] <cjwatson> So you can get unlucky
+[17:21] <d4m> cjwatson: Oh, really?  ok.
+[17:21] <cjwatson> And get Release and Release.gpg out of sync
+[17:21] <d4m> cjwatson: Ah, that is exactly what I am seeing.
+[17:22] <cjwatson> It generally clears up the next time the mirror updates
+[17:22] <d4m> cjwatson: What is the update interval?
+[17:22] <cjwatson> No idea, sorry
+[17:22] <cjwatson> The master updates several times an hour, but mirrors rather less so
+[17:22] <d4m> I c, ty
+[17:23] <cjwatson> Master looks fine, anyway
+[17:32] <doko> dobey, sorry, not planned
+[17:32] <doko> cjwatson, given back
+[17:33] <seb128> cjwatson, oh, I just remembered I had a click question for you ... I went over the system settings with lool, and he suggested that computing the size of click packages (e.g their installed size + owned datas) should probably be service provided by click itself ... was that discussed before?
+[17:34] <seb128> cjwatson, is that a bug report/mailing list/irc/... topic?
+[17:34] <xnox> d4m: being looked into on #ubuntu-mirrors
+[17:34] <seb128> cjwatson, his point is that several part of the systems will need that info (at least the settings and the installer app) so it would make sense to have a common implementation
+[17:37] <d4m> xnox: ty
+[17:38] <seb128> stgraber, around?
+[17:40] <kirkland> cjwatson: done;  uploaded
+[17:44] <stgraber> seb128: kinda, what's up?
+[17:45] <seb128> stgraber, I emailed the phone list and CCed you, no hurry, it's about device reset/factory reset
+[17:45] <seb128> stgraber, lool suggested that it might be close enough of what the system image was doing to add the feature there
+[17:46] <seb128> stgraber, I wanted to get your opinion on that ... but we can discuss next week
+[17:52] <stgraber> seb128: right, factory reset is basically a two lines file to dump in /cache/recovery/ubuntu_command, then call reboot -f recovery
+[17:52] <stgraber> seb128: should be trivial for barry to add this as a flag or dbus API call
+[17:52] <seb128> stgraber, excellent!
+[17:52] <seb128> stgraber, thanks
+[17:54] <barry> stgraber, seb128 please file a bug with all necessary info.  you're right it probably wouldn't be difficult.
+[17:57] <seb128> barry, thanks, I'll do that
+=== james_ is now known as Guest23475
+[18:00] <dobey> kenvandine: hrmm, a small discrepency between the online-accounts docs, and the real world. docs say "/usr/share/accounts/service-types/" but folder name is "service_types"
+[18:00] <dobey> also, _ is evil
+=== ogra_ is now known as _ogra_
+[18:04] <_ogra_> _ isnt evil ...
+[18:05] <_ogra_> _  gives you wings on IRC !
+=== _ogra_ is now known as ogra_
+[18:06] <sarnold> haha
+=== barry is now known as __barry__
+[18:07] <__barry__> if single underscores are good, double underscores are better
+[18:07] <ogra_> streched wings !
+[18:07] <dobey> python nerd.
+[18:07]  * __barry__ is a magic attribute
+=== __barry__ is now known as barry
+[18:07]  * ogra_ calls barry A380 from now on :)
+[18:08] <barry> ogra_: you calling me an airbus?!
+[18:08] <ogra_> you had big wings :)
+[18:08] <xnox> barry: whatever, 737-800 series =)
+[18:09] <seb128> barry, stgraber: https://bugs.launchpad.net/ubuntu-system-image/+bug/1207860
+[18:09] <ubottu> Launchpad bug 1207860 in Ubuntu system image "having a factory reset option would be nice" [Undecided,New]
+[18:09]  * ogra_ bets nobody wants to be called dreamliner
+[18:09] <dobey> xnox: surely you mean 767 or 777. 737 is pretty small :)
+[18:10] <barry> stgraber: what's the "two line file"?  can you fill that in on the bug?
+[18:11] <dobey> kenvandine: also, is there API docs for the online accounts stuff that's in 13.10, anywhere?
+[18:17] <dobey> also, why does http://developer.ubuntu.com/resources/platform/api/ still list 11.10 (which is EOL), but doesn't list 13.04?
+[18:19] <stgraber> barry: actually, just one: format data
+[18:20] <barry> stgraber: thanks
+[18:25] <kenvandine> dobey, use the docs in libaccounts-glib-doc
+[18:26] <kenvandine> i don't think the online ones have been updated in ages...
+[18:28] <dobey> are those posted anywhere on-line?
+[18:28] <kenvandine> i guess not
+[18:28] <kenvandine> the API docs on d.u.c come from the packages
+[18:29] <kenvandine> but i guess those aren't automatically updated
+[18:29] <dobey> are there no docs for the qt5 lib?
+[18:30] <kenvandine> dobey, not in the package
+[18:30] <kenvandine> but i think they could be generated
+[18:37] <dobey> kenvandine: in normal ubuntu 13.10, are the web page views supposed to pop up in an external window currently?
+[18:37] <kenvandine> you mean in a browser?
+[18:37] <kenvandine> it should be embedded in g-c-c
+[18:37] <dobey> no, it's not a browser
+[18:38] <kenvandine> oh
+[18:38] <dobey> it's jut a window with the widget
+[18:38] <dobey> it is webkit, but it's in a separate window
+[18:38] <kenvandine> right...
+[18:38] <dobey> i guess because they are qml, and g-c-c isn't?
+[18:38] <kenvandine> yeah
+[18:38] <kenvandine> what are you working on?
+[18:38] <dobey> is that known/being fixed?
+[18:39] <dobey> i'm just looking at what we can do for u1 with regards to UOA, so i can tell ralsina/etc if it's a good/bad idea to move to UOA for it :)
+[18:39] <kenvandine> that will be designed after we switch to MIR on the phone
+[18:39] <kenvandine> s/designed/changed/
+[18:39] <kenvandine> it'll get embedded
+[18:40] <kenvandine> but we don't have xembed available
+[18:40] <kenvandine> so this is a temporary solution until we can rely on mir to do that
+[18:40] <dobey> right. i presume GtkSocket/plug will work differently on mir
+[18:41] <dobey> is mir going to be the default on non-phone too?
+[18:42] <kenvandine> for the desktop we can still use g-c-c
+[18:42] <kenvandine> for now
+[18:42] <dobey> (so many announcements lately i can't remember them all)
+[18:42] <kenvandine> which does xembed
+[18:42] <dobey> well right
+[18:42] <kenvandine> i don't recall either :)
+[18:43] <dobey> so how will mir on the phone have any impact on what g-c-c does?
+[19:07] <dobey> kenvandine: is "emapthy-accounts-plugin" a built-in thing or something?
+[19:11] <psusi> cjwatson, just wanted to ping you again about the parted upload, and also my dm application ( pretty sure you said at one point you'd sponsor me )
+=== Cimi_ is now known as Cimi
+=== vanhoof_ is now known as vanhoof
+=== hggdh_ is now known as hggdh
+[19:42] <doko> since the last kernel update my wireless is so unstable
+[20:15] <Noskcaj> kirkland, can you review https://code.launchpad.net/~noskcaj/testdrive/enable-translations ?
+[20:50] <mcs-seattle> Hi. Am I in the right place to help with hardware integration for Ubuntu?
+[20:54] <mcs-seattle> I am a developer and I'd like to know the best way to help.
+=== salem_` is now known as _salem
+[21:08] <dobey> mcs-seattle: what do you mean by "hardware integration" exactly?
+[21:12] <mcs-seattle> dobey: Hardware integration meaning supporting new laptops on the market. I have a new one and I would like to get my hands dirty.
+[21:15] <dobey> mcs-seattle: #ubuntu-kernel might be a good place for you to discuss issues and bugs in then. if you want to fix kernel issues that's the best place to hang out. this channel is more for general development of the set of packages which make up ubuntu as a whole
+[21:17] <mcs-seattle> dobey: Thanks. I was referred here by #ubuntu. I'll jump into #ubuntu-kernel -- thanks for pointing me in the right direction.
+[21:18] <dobey> sure
+[22:07] <doko> infinity, is it intended to apply all the eglibc patches for archs that we don't have?
+=== kentb is now known as kentb-out
+=== paulproteus_ is now known as paulproteus

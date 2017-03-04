@@ -1,0 +1,886 @@
+=== slank is now known as slank_away
+[00:30] <slangasek> robert_ancell: https://bugs.launchpad.net/ubuntu/+source/lightdm/+bug/972537/comments/16 ?
+[00:31] <ubottu> Ubuntu bug 972537 in unity-greeter (Ubuntu Precise) "lightdm doesn't allow expired passwords" [High,Fix committed]
+[00:35] <Bluefoxicy> again, using a Windows VM to access a Google Nexus phone because Linux can't do it.  Well known problem though.
+[00:51] <Phonequer> Should I create one bazar repo for each package version? (I am following http://developer.ubuntu.com/packaging/html/packaging-new-software.html)
+[00:53] <robert_ancell> slangasek, oh duh. Cheers :)
+=== chiluk_away is now known as chiluk
+=== Ursinha is now known as Ursinha-afk
+=== Ursinha-afk is now known as Ursinha
+=== EagleScreen is now known as Guest68724
+=== rafael is now known as Guest18012
+=== Ursinha is now known as Ursinha-afk
+[04:23] <pitti> Good morning
+[04:25] <pitti> hallyn: TBH I don't understand the problem -- how do udev's dynamic ACLs get in the way of static group permissions?
+[04:26] <pitti> dobey: since yesterday, ubuntuone-syncd goes crazy, creates a million /tmp/tmp* files, and uses 100% CPU all the time
+[04:27] <pitti> dobey: there hasn't been a new ubuntuone-client upload in a while; do you know what changed, and how to debug this?
+[04:30] <hallyn> pitti: if you setfacl group::--- /dev/kvm; chmod g+rw /dev/kvm; then ls -l will show ???rw-??? for /dev/kvm, but group owner won't actually have rw.  so, the problem
+[04:30] <hallyn> is only when you isntall a new system and do 'apt-get install qemu-kvm'
+[04:31] <hallyn> bc udev won't remove that acl, so until you reboot group kvm can't use /dev/kvm
+[04:31] <hallyn> once you reboot, the acl doesn't get reinstalled, so it's ok after that
+[04:32] <hallyn> pitti: look at qemu-system.postinst and qemu-system.udev in raring's qemu for what we have to do to work around it
+[04:32] <pitti> hallyn: the postinst only triggers udev to reapply its rules AFAICS
+[04:32] <hallyn> pitti: yes, and without adding an explicit setfacl to those rules, it's not enough
+[04:33] <hallyn> pitti:  (which is why i pointed out the new qemu-system.udev;  it's kind of ugly and unfortunate, and requires a depends from qemu on acl which wasn't there before)
+[04:34] <pitti> hallyn: so you are saying that GROUP="kvm" doesn't actually work?
+[04:34] <pitti> or that MODE="0660" doesn't?
+[04:34] <hallyn> pitti: well, ACTUALLY GROUP=kvm sometimes doesnt' work but that's another story,
+[04:34] <hallyn> MODE=0660 does work, but doesn't remove the acl
+[04:35] <hallyn> so you end up with file perms allowing g+rw, but acl denying it
+[04:35] <pitti> yeah, it's not supposed to remove ACLs
+[04:35] <hallyn> well something has to
+[04:35] <pitti> but ACLs ought to be additive, not remove permissions
+[04:35] <hallyn> they're additive in that they are always checked on top of the file perms, not in the "add more permission" sense :)
+[04:36] <hallyn> pitti: more to the point, though, there is no reason for a group acl ever,
+[04:36] <hallyn> the user acl is used by consolekit to allow the loggedin user to access /dev/kvm, but group acl is worthless,
+[04:36] <pitti> hallyn: I thought the point of the ACLs was to allow the local active user to access it
+[04:36] <hallyn> so easiest just to remove it (as in my patch)
+[04:36] <hallyn> yes.  user acl.
+[04:36] <hallyn> the group acl though is worthless
+[04:37] <pitti> hallyn: so why does the udev rule add this group ACL in the first place?
+[04:37] <hallyn> dunno
+[04:37] <pitti> it seems odd to me to introduce the RUN:="/usr/bin/setfacl -m g::rw $env{DEVNAME}" in the distro, and then add a patch to revert it
+[04:37] <hallyn> oh, i'm mis-stating what my patch does - doesn't remove the acl, just sets it to group::rw-
+[04:38] <hallyn> <blink>
+[04:38] <hallyn> i introduced that to workaroudn this udev bug
+[04:38] <hallyn> and want to remove it as soon as the udev bug is fixed
+[04:38] <pitti> (also, I'm not sure that RUN:= actually does anything different than RUN=)
+[04:38] <hallyn> i'm not advocating keeping my changes to the qemu-system.udev in qemu source
+[04:38] <hallyn> i'm advocating simply adding GROUP=0660 to the 70-udev-acl.rules
+[04:39] <hallyn> so that /dev/kvm always gets group::rw- rather than group::--- acl
+[04:39] <pitti> so I'm still confused -- why can't we just drop that odd RUN from /lib/udev/rules.d/40-qemu-system.rules ?
+[04:39] <hallyn> then qemu can ship a simple udev rules file to chgrp /dev/kvm to group kvm
+[04:39] <pitti> that already sets the MODE correctly AFAICS
+[04:39] <hallyn> pitti: if we *just* drop that, then after install qemu-kvm (and until rebooting) group kvm can't access /dev/kvm
+[04:39] <hallyn> yes, but it's too late
+[04:40] <hallyn> that MODE only does chmod, not setfacl
+[04:40] <hallyn> bc udev is not smart enough to update the acl
+[04:40] <pitti> hallyn: oh, you mean this is solely to fix the upgrade from that current .rules which sets that odd group ACL?
+[04:41] <hallyn> pitti: (if i understand you right) yes
+[04:41] <pitti> hallyn: i. e. you are going to drop the RUN part in 40-qemu-system.rules, but you want it to work at instant?
+[04:41] <hallyn> right,
+[04:41] <pitti> hallyn: that kind of thing is usually a job for the postinst
+[04:41] <hallyn> i'll go back to the old 40-qemukvm.rules
+[04:41] <pitti> i. e. check the version you are upgrading from, and just call chmod
+[04:42] <hallyn> which iirc was jsut KERNEL=="kvm", GROUP="kvm", MODE="0660"
+[04:42] <pitti> yeah, and that looks nice and clean
+[04:42] <hallyn> pitti: well i'm not sure about calling chmod - that's what debian does so i may go back to it, but slangasek prefers we do udevadm trigger...  but either way the udev rule would like tobe KERNEL=="kvm", GROUP="kvm", MODE="0660" :)
+[04:43] <hallyn> pitti: so all i was really pinging you about was adding 'GROUP="0660"' for the kvm case to 70-udev-acl.rules
+[04:43] <pitti> hallyn: calling trigger is fine, and should always be done on upgrade
+[04:43] <hallyn> pitti: it's fine, but it's currently insufficient :)
+[04:43] <hallyn> inotify is sucking
+[04:43] <pitti> hallyn: and on upgrade to the next version, you just additionall call chmod
+[04:44] <hallyn> but again that (inotify) is a different problem
+[04:44] <hallyn> pitti: so do you have any objectio to adding 'GROUP="0660"' to 70-udev-acl.rules? :)
+[04:45] <pitti> yes
+[04:45] <pitti> as that potentially breaks custom rules, and also is the wrong place for one-time upgrade fixes
+[04:45] <hallyn> one-time?
+[04:46] <pitti> well, it only applies for upgrades from <= 1.3.0+dfsg-1~exp3ubuntu7 (assuming that ubuntu8 will fix it)
+[04:46] <hallyn> group=--- for /dev/kvm (when owned by root:root) has zero advantages
+[04:46] <hallyn> pitti: this has nothing to do with any version of qemu-kvm, really
+[04:47] <pitti> so its postinst shoudl call chmod on upgrades from those versions, and then be done with it
+[04:47] <hallyn> chmod is not enough
+[04:47] <hallyn> qemu did not wrongly label anything
+[04:47] <hallyn> every time you install an ubuntu system,
+[04:47] <hallyn> /dev/kvm gets set up (when someone logs in on consoel) with a group::--- acl,
+[04:47] <pitti> hallyn: I thought /lib/udev/rules.d/40-qemu-system.rules was wrong (it certainly looks odd), and you were going to fix that?
+[04:47] <hallyn> which never gets cleared by udev (bc udev doesn't support that)
+[04:48] <pitti> so apparently we still talk about completely different things then
+[04:48] <hallyn> pitti: if the udev bug gets fixed (which is what i'm pinging you about) then i'll simplify the 40-qemu-system.rules, yes.
+[04:48] <pitti> udev does not add any group ACLs
+[04:48] <pitti> that's only from that rule
+[04:49] <pitti> hallyn: I still don't understand what the udev bug is here?
+[04:49] <hallyn> well, udev sets the initial perms, and then consolekti adds ana cl for it
+[04:49] <hallyn> the udev bug is that it sets group perms to --- instead of rw-
+[04:49] <pitti> hallyn: ^ but that ACL has nothing to do with the one from 40-qemu-system.rules
+[04:49] <hallyn> no it has to do with 70-udev-acl.rules
+[04:50] <hallyn> i pointed you to 40-qemu-system.rules to show you how we have to work around the udev bug right now
+[04:50] <hallyn> (i originally did it as an explicit setfacl in qemu-system.postinst, but slangasek asked me to change that)
+[04:51] <hallyn> pitti: so one more time (since you've set me straight :), the order of events is:
+[04:51] <pitti> ok, so back to my originally question: what _is_ the udev bug?
+[04:51] <hallyn> 1. set up a new ubuntu system, it modprobes kvm_intel, /dev/kvm gets created,
+[04:51] <hallyn> 2. 70-udev-acl.rules sets /dev/kvm to root:root rwx------, and tags it with acl
+[04:51] <hallyn> 3. user logs in, consolekit adds a group::--- acl
+[04:51] <pitti> hang on, why root:root?
+[04:51] <pitti> that should be root:kvm, as per 40-qemu-system.rules
+[04:51] <hallyn> because group kvm doesn't yet exist,
+[04:52] <hallyn> qemu-kvm has not yet been installed
+[04:52] <pitti> ok
+[04:52] <hallyn> 4. admin logs in remotely, installs qemu-kvm, triggers udev,
+[04:52] <hallyn> 5. udev chowns /dev/kvm to root:kvm, and sets it to rwxrw----,
+[04:52] <pitti> (qemu-system, BTW)
+[04:52] <hallyn> right
+[04:52] <hallyn> 6. libvirt tries to start a vm as group kvm, but the group:--- acl refuses it
+[04:53] <pitti> I don't understand 3.
+[04:53] <pitti> udev-acl only applies ACL_USER acls, it doesn't touch group ACLs
+[04:53] <pitti> that's only from that weird 40-qemu-system.rules run rule
+[04:53] <hallyn> nope
+[04:54] <hallyn> i don't know why the acl gets added, but it has done it since at least q,
+[04:54] <hallyn> i only updated that 40-qemu-kvm.rules recently to work around it
+[04:54] <hallyn> it only does it when user logs in on console before qemu-kvm gets installed
+[04:55] <hallyn> but it's hit quite a few people over the past 6-12 months
+[04:55] <hallyn> so anyway, all that is to say that if the 70-udev-acl.rules shipped with udev would just set GROUP=0660, then the acl gets set as group::rw-, and all works out fine
+[04:55] <pitti> but nowhere in udev's source code a group ACL is set
+[04:56] <hallyn> no, but somewhere (in the dank depths of consolekit iiuc) an acl gets set to mirror the perms udev has set
+[04:56] <hallyn> (well, and no, acls DO get set in udev code...)
+[04:56] <pitti> that's /usr/lib/ConsoleKit/run-seat.d/udev-acl.ck
+[04:56] <hallyn> (but i believe you that it isn't causing this acl)
+[04:56]  * hallyn goes to look
+[04:56] <pitti> hallyn: yes, udev-acl.ck sets user ACLs, but not group
+[04:57] <pitti> so we need to understand where that  group:--- ACL gets set in the first place, and eliminate that
+[04:57] <hallyn> that woudl be ideal
+[04:58] <pitti> hallyn: so you are saying that group ACL had been set even before 40-qemu-system.rules got that RUN rule?
+[04:58] <hallyn> yes
+[04:59] <hallyn> that acl is there if you just boot a new ubuntu system without qemu-system installed, and log in on cnosole
+[04:59] <hallyn> pitti: you're sure udev-acl.c can't set that?
+[04:59] <pitti> hallyn: http://bazaar.launchpad.net/~ubuntu-branches/ubuntu/quantal/udev/quantal/view/head:/extras/udev-acl/udev-acl.c is that code
+[05:01] <pitti> hallyn: I don't see where it should set group ACLs, and that thing isn't supposed to
+[05:02] <hallyn> yeah doesn't look like it, good
+[05:02] <pitti> hallyn: you can temporarily remove /lib/udev/rules.d/70-udev-acl.rules and /usr/lib/ConsoleKit/run-seat.d/udev-acl.ck and check if that group ACL is still there, to be 100% sure
+[05:02] <pitti> weird bugs are always possible, of course
+[05:03] <hallyn> pitti: or perhaps this is a time for systemtap (if it actually works in raring atm)
+[05:03] <pitti> so IF udev-acl.ck sets a group ACL, then that's indeed a nasty bug
+[05:04] <hallyn> and what exaclty does /usr/lib/ConsoleKit/run-seat.d/udev-acl.ck do?
+[05:05] <hallyn> (i can aim to test this tomorrow, but will need to find some space to test it :)
+[05:05] <hallyn> (i never did trust new-fangled consolekit :)
+[05:06] <pitti> hallyn: it adds an rw ACL for the user that is on the currently active console, and removes ACLs for the previously active user
+[05:06] <pitti> hallyn: for all devices which are tagged with UDEV_ACL
+[05:06] <hallyn> so if i *just* remove that that should be enough to test
+[05:06] <pitti> hallyn: the idea being to allow the current foreground session access to things like sound cards, cameras, or said /dev/kvm, but deny it to background sessions or remote users
+[05:07] <pitti> e. g. getfacl /dev/dri/card0
+[05:07] <pitti> user::rw-
+[05:07] <pitti> user:martin:rw-
+[05:08] <pitti> the second is what udev-acl.ck does; and if I switch user, or to VT1, I lose that again
+[05:08] <pitti> (that makes more sense on a sound card or digicam, of course)
+[05:08] <hallyn> pitti: you're on raring?
+[05:08] <pitti> yes
+[05:09] <hallyn> waht does getfacl /dev/console give you?
+[05:09] <hallyn> do you get group::--- ?
+[05:09] <hallyn> oh nm, that's not an acl in that instance
+[05:10] <pitti> yes, but that's from normal unix perms?
+[05:10] <pitti> right
+[05:10] <pitti> /dev/kvm has
+[05:10] <pitti> group::rw-
+[05:11] <pitti> which might be either from the static unix permissions or from 40-qemu-system.rules (g::rw is the same, isn't it?)
+[05:12] <hallyn> pitti: right.
+[05:12] <hallyn> pitti: well if you have a raring iso handy to do a vmware install you can just give it a shot - but i've got to go, will see about udev-acl.ck tomorrow.
+[05:12] <hallyn> thanks - good ngiht
+[05:13] <pitti> good night!
+[05:14] <sarnold> removing the acl won't revoke access, though; does consolekit kill -9 processes that have resources open?
+[05:16] <pitti> no, it doesn't; that would be quite rude :)
+[05:18] <sarnold> perhaps; but perhaps someone holds a webcam open or something..
+[05:19] <sarnold> I guess that's one more reason to put a piece of tape over webcams and microphone ports..
+[05:19] <pitti> heh
+[05:55]  * hallyn pokes his head in just to remind sarnold real quick that we've been asking for revoke(2) syscall since around 2002 :)
+[05:56] <sarnold> hallyn: .. if not even earlier :)
+[06:34] <alwin> I was on the look out for a C++ project in ubuntu so i can apply my programming skills
+[06:34] <alwin> any help
+[06:44] <jackyalcine> alwin: a lot of stuff in Ubuntu seems to be done in Python or Vala nowadays
+[06:45] <jackyalcine> with the bigger dependency on GNOME.
+[06:45] <jackyalcine> alwin: check out U1, most of it is written in C++ using the Qt framework
+[06:49] <alwin> Jack: what is U1
+[06:51] <infinity> Pretty much anything that depends on libqt will be C++ somewhere.
+[06:51] <infinity> Plus all the Mozilla products.
+[06:51] <infinity> LLVM.
+[06:51] <infinity> Lots of stuff.
+[06:52] <infinity> But if you're asking "what do we need help with?", the answer is "I dunno".  Find a package you feel passionately about and check its bugs.
+[06:52] <TheLordOfTime> alwin, u1 = ubuntu one.
+[06:53] <TheLordOfTime> but i agree with infinity, find a package you're passionate about and start on the bugs in the package
+[06:53] <infinity> (base)adconrad@cthulhu:~$ reverse-depends libstdc++6 | wc -l
+[06:53] <infinity> 4695
+[06:53] <TheLordOfTime> that's what happened to me, except i went down the bug triage direction, and kind of pseudo-adopted nginx :p
+[06:53] <infinity> Should be some choices in those 4695 packages. :)
+[06:53] <TheLordOfTime> lol....
+[06:53] <TheLordOfTime> 4695 packages... xD
+[06:53] <TheLordOfTime> infinity, is gcc one of those packages?  :p
+[06:54] <infinity> Of course.
+[06:54] <TheLordOfTime> figures :P
+[06:54]  * TheLordOfTime is curious what you need to build gcc... *checks builddeps*
+[06:55] <alwin> Rabbit hole it is then :)
+[06:55] <infinity> TheLordOfTime: To build just the C compiler, you need precious little.  The more languages you add, the more interesting it gets.
+[06:55] <TheLordOfTime> infinity, i meant gcc and the whole shebang that goes with the language :P
+[06:56] <TheLordOfTime> basically, "What is necessary to build all the GCC and related library packages" :P
+[06:56] <infinity> (The only real gotcha for the C portion of GCC is that gcc/glibc are very tightly intertwined, and the bootstrap between the two is mildly entertaining)
+[07:14] <jackyalcine> alwin: U1 = Ubuntu One
+[07:14] <jackyalcine> sorry about that
+[07:14] <jackyalcine> upgrading to 13.04 :)
+[07:34] <dholbach> good morning
+[07:34] <pitti> hey dholbach
+[07:35] <dholbach> hi pitti
+[07:48] <pitti> hallyn: I responded to the bug again with a detailled analysis
+[07:56] <pitti> hallyn: ah, saw your response, thanks! Will check that out
+[07:56] <pitti> hallyn: so apparently that setfacl -m g::rw does something I don't understand
+[07:57] <pitti> hallyn: but "man setfacl" says that it will adjust the unix permissions as close as possible to the specified ACL, so apparently this is resetting the group to "root"
+[09:04] <pitti> infinity: time to build fresh precise langpacks
+[09:04] <pitti> infinity: I didn't hear from the RT, so I guess I'll build them on a porter box instead of macquarie's chroto?
+[09:04] <pitti> chroot
+[09:04] <infinity> pitti: Yeah.  I'm guessing your chroot didn't get updated yet?
+[09:04] <infinity> pitti: If you can fudge it with a porter box this time, that might be nice.
+[09:04] <pitti> nope, hardy
+[09:05] <infinity> Or we can ask a vanguard if they can get to the ticket today.
+[09:05] <infinity> If there was one.
+[09:05] <infinity> I guess London's still snoozing.
+[09:06] <pitti> I need to copy around the GPG key, launchpadlib token, etc, but no biggie
+[09:08] <infinity> pitti: Alright, then let's not block on the ticket, and just hope it gets done before the next raring or precise.3 langpacks.
+[09:21] <pitti> infinity: ok, it's running
+[09:21] <infinity> pitti: Shiny.
+[09:22]  * pitti hopes that the porter box can talk to launchpad
+[09:23] <infinity> pitti: If it can't, we'll escalate the chroot ticket with vigor.
+[09:26] <pitti> infinity: .launchpadlib/api.launchpad.net/cache/ is getting data, so I guess it's alright
+[09:27] <infinity> \o/
+[10:13] <hrw> I hate writing xorg.conf ;(
+[10:30] <xnox> hrw: it's ok, it hates you too. =(
+[10:30]  * xnox hopes to never edit the "safe-fallback" xorg.conf in the installer.
+[10:31] <hrw> xnox: I have a feeling that nevermind which gfx card I have foss driver fails
+[10:32] <hrw> xnox: radeon + two monitors (one landscape, second portrait) can be configured in first minutes of x11 session only. later one has to display garbage instead
+[10:38] <ogra_> haha
+[10:38] <ogra_> radeon with three monitors made me eventually buy an nvidia card
+[10:50] <tedg> Is there a way to get a test suite to clean up child processes, no matter what?
+[10:50] <tedg> Like if a test that spawns a process crashes, still kill the children.
+[10:51] <pitti> infinity: built; I downloaded, built and binary-debdiffed all packages for de and es, looking fine
+[10:51] <pitti> infinity: downloading current precise daily to give them a live test in a VM
+[10:53] <Laney> Quintasan: Yo. I understand you've been working on packaging maliit - is that right? Where are you up to with that? I'm interested in helping out. :-)
+=== Ursinha-afk is now known as Ursinha
+[11:09] <sladen> tedg: Lennart would probably say "use systemd process containers!!!"
+[11:27] <tedg> sladen, Looking at cgroups, yes.
+[11:30] <xnox> tedg: or you can use PR_SET_CHILD_SUBREAPER to something which will not die (meta-testsuite running process), such that it will be the parent of all run away processes. Which you will be able to kill.
+[11:30] <xnox> (which is what user session upstart will do)
+[11:32] <notgary> Does anyone here know how I can have a regular event added to the Fridge Calendar (http://fridge.ubuntu.com/calendars/)?
+=== _salem is now known as salem_
+[11:34] <cjwatson> tedg: Or separate the child processes a bit less vigorously in the first place
+[11:34] <tedg> xnox, I'm a bit confused on how to do that... is it something I could have a shell script set?
+[11:35] <cjwatson> (For instance, it should be possible to at least keep them as a member of the same session, I'd have thought)
+[11:35] <cjwatson> The relevant chapter of Stevens APUE should be useful
+=== Amaranthus is now known as Amaranth
+[11:37] <tedg> cjwatson, acquired the volume... turns out it's in the library here at Blue Fin :-)
+[11:38] <xnox> tedg: well it's a syscall, but somebody did write a package $ sudo apt-get install prctl, but that package seems to lack the subreaper support. So adding subreaper option to that package would be useful, as by default it can spawn shell or execute commands with those process options set.
+[11:38] <cjwatson> tedg: I only need to reach for it about once or twice a year nowadays, but when I do it's invaluable
+[11:39] <xnox> and then it all should die gracefully.
+[11:39] <cjwatson> It won't document Linux-specific things; but I'd be surprised if those were necessary here, as opposed to useful
+[11:40] <cjwatson> xnox: PR_SET_CHILD_SUBREAPER is no use here - it was introduced in Linux 3.3, and the buildds run 3.2
+[11:40] <cjwatson> (i.e. precise)
+[11:40] <cjwatson> So it won't be usable in test suites until at least 2014
+[11:42] <xnox> =( can be used in DEP-8 autopkgtests and / or UTAH based tests at least.
+[11:42] <cjwatson> xnox: tedg's situation is that a runaway test suite is killing LP builders, so we need a solution that works there
+[11:42] <xnox> ack.
+[11:43] <cjwatson> tedg: As a belt-and-braces solution, you could get a process list before and after running your test suite, and kill any extra dbus processes that appear
+[11:43] <cjwatson> tedg: It's obviously not perfect but would deal with the immediate problem easily enough
+[11:43] <tedg> cjwatson, Yeah, I was thinking using a killall -9 -y dbus-daemon
+[11:43] <cjwatson> Well, I wouldn't do that, because people are allowed to build packages in their ordinary sessions
+[11:43] <tedg> cjwatson, It might be easier... though very brute.
+[11:43] <cjwatson> (also, killall is evil, use pkill)
+[11:44] <ogra_> ++ for pkill
+[11:44] <tedg> Well in their sessions the dbus-daemon wouldn't be younger than the test suite.
+[11:44] <cjwatson> (sorry, gut reaction from somebody who used to have to use more SysV-ish systems ...)
+[11:44] <cjwatson> Sure, but just killing all dbus-daemon processes would kill their session dbus too
+[11:44] <cjwatson> Hence needing to take a process list
+[11:44] <cjwatson> Oh, -y - sorry, I misunderstood that option
+[11:45] <tedg> It doesn't seem pkill has the same option.
+[11:45] <cjwatson> I guess.  I think I'd prefer something more explicit, but as you wish :)
+[11:47] <infinity> tedg: Why not just specify a pidfile in the config...?
+=== Ursinha is now known as Ursinha-afk
+[11:47] <infinity> Though, I'm also curious why this dbus-daemon, being run with --nofork is being reparented to init at all.
+[11:47] <cjwatson> If I could control enough of the software involved, the way I'd do this would probably be simply to make sure that dbus-daemon remains in the same process group
+[11:47] <infinity> Isn't that kind exactly the opposite of what one would expect?
+[11:48] <infinity> s/kind/kinda/
+[11:48] <cjwatson> Then you can kill it with kill(-pgrp)
+[11:48] <tedg> Yeah, I do think it's odd that it's hanging out.
+[11:48] <tedg> This is all in libdbustest -- patches more than welcome :-)
+[11:48] <tedg> So if we used the temp file stuff to make PID files, and then we killed all of them.
+[11:48] <cjwatson> An strace would probably be illuminating (although in this case strace will probably change behaviour - I just mean to see where it's disconnecting itself)
+[11:54] <infinity> I'd have to go digging into other packages, but I assume the pidfile way is the general way to go.
+[11:54] <infinity> And it doesn't need to be in randomly-named tmpfiles.  You control the namespace in your package build.
+[11:57] <tedg> infinity, The problem is that we spawn probably 20-30 dbus-daemons
+[11:58] <tedg> infinity, Some tests spawn several.
+[11:59] <tedg> I guess we could have a unique name for each test... that'd be a bit crazy to manage though.
+[11:59] <infinity> tedg: Err, are the tests in paralle or serial?
+[12:00] <infinity> tedg: If they're serial, there's no problem with just reusing the same pidfile all over again (or grabbing the pid from --print-pid)
+[12:00] <tedg> infinity, Uhm, that's a trick question.  They can be run in parallel locally, but the packaging runs them serially.
+[12:00] <tedg> infinity, The problem with using the same file is that I'd have to clean up in the shell script, that would have an unknown number of dbus-daemons started.
+[12:02] <tedg> After the debs are published can we just kill the builder :-)
+[12:02] <infinity> >:(
+=== Ursinha-afk is now known as Ursinha
+[12:07] <infinity> tedg: tools/with-session-bus.sh from the telepathy-glib source may be enlightening.
+[12:08] <infinity> tedg: And yeah, they use --print-pid=6 and then exec 6> $me-$$.pid
+[12:08] <infinity> tedg: But the whole thing may be worth cargo-culting.  I doubt there are many testsuites that hit dbus harder than telepathy, and it never has a sad.
+[12:09] <tedg> infinity, Well, we're a bit more sophisticated in our dbus testing than they are :-)
+=== Ursinha is now known as Ursinha-afk
+[12:09] <infinity> tedg: I disagree. :P
+[12:09] <tedg> infinity, But, yes, writing out the PIDs makes sense.
+[12:12] <infinity> tedg: And they intentionally fork, so they can get on with their scripts.  Which is probably the right thing to do, since --nofork doesn't do anything particularly useful.
+[12:12] <infinity> (Sure, it keeps it attached and in the foreground... Right up until the parent dies, and it double-forks to oblivion)
+=== mpt_ is now known as mpt
+[12:42] <pitti> meh, I can't get the current precise dailys to work in kvm
+[13:08] <pitti> ... nor in virtualbox -- oh for heaven's sake!
+[13:08]  * pitti grumpily downloads the i386 one instead and test on his netbook
+=== Ursinha-afk is now known as Ursinha
+[13:27] <pitti> ev: just caught my eye -- we still ship udisks in raring by default due to usb-creator; as gnome disks has had the ability to write images onto devices for a while, and our images are bootable by themselves now, do you think we could drop that? or do you (or someone else) plan to port it to udisks2?
+=== Ursinha is now known as Ursinha-afk
+=== Ursinha-afk is now known as Ursinha
+[13:51] <infinity> tseliot: I see no point in that nvidia-common upload to precise-proposed.
+[13:52] <tseliot> infinity: It was just to reassure people who kept on blaming nvidia-common for a bug reported on errors.ubuntu.com
+[13:53] <infinity> tseliot: Sure, but if it's just running a test at build time, you could have done the same thing in a PPA. :P
+[13:54] <tseliot> infinity: oh, sure. Had it been for me I wouldn't have done anything as the code speaks clearly ;)
+[13:55] <infinity> tseliot: Right, well, given that it's only ever going to show up in a build log, rather than doing something different on users' machines, I'll just reject it.
+[13:56] <infinity> tseliot: Should you ever upload nvidia-common to fix some other bug, feel free to include the shinier test suite too.
+[13:56] <tseliot> infinity: I will have to backport the linux-headers installation code, so I'll include the test suite in that upload
+[13:57] <infinity> tseliot: Sure.  When you do, make the bug closure reference in the changelog actually have proper syntax next time. :P
+[13:59] <tseliot> infinity: oh, it was missing #
+[13:59] <tseliot> good point
+[14:00] <xnox> pitti: ev: I am working on porting to udisks2 now.
+[14:01] <xnox> pitti: ev: we can certainly use the "dd image from here to there" method. But doing that we will lose ability to create persistence file, won't we?!
+[14:02] <xnox> ogra_: there are a few bugs about not being able to do update-initramfs and/or update-grub when booting from persistent usb. Can we somehow use flash-kernel to update the kernel on the real partition that has the kernel and not the bits inside squashfs?
+[14:06] <pitti> xnox: ah, right
+[14:06] <MCR1> andyrock, if you are here, could you re-approve https://code.launchpad.net/~unity-team/unity/dash-blur-to-linear-sample/+merge/144104 ?
+=== Ursinha is now known as Ursinha-afk
+[14:07] <andyrock> MCR1, sure
+[14:07] <MCR1> there was a conflict with trunk that is now fixed
+[14:07] <MCR1> thx
+[14:07] <andyrock> MCR1, i now nic just pinged me
+[14:07] <MCR1> hehe
+[14:07] <MCR1> ;)
+[14:07] <andyrock> thanks for testing it ;)
+[14:08] <MCR1> I just saw the diff ;)
+[14:09] <ev> xnox: cheers!
+[14:11] <xnox> ev: not that I enjoy the new UDisks2 API with org.desktop.DBus.ObjectManager a whole load of new interfaces.
+[14:11] <xnox> pitti: any good examples of GDBus server python API used in the wild?
+[14:11] <pitti> xnox: no, because that doesn't work :(
+[14:11] <hallyn> pitti: oh?  when i manually do 'setfacl -m g::rw' it doesn't change the group for me.  (but i'd believe it)
+[14:12] <pitti> xnox: mostly due to gnome bug 656325
+[14:12] <ubottu> Gnome bug 656325 in gdbus "Make GDBusInterfaceVTable binding friendly" [Normal,Assigned] http://bugzilla.gnome.org/show_bug.cgi?id=656325
+[14:12] <pitti> xnox: so you need to use python-dbus
+[14:12] <pitti> xnox: or python3-dbus
+[14:12] <ev> xnox: this was the one that davidz was trying to defend by claiming that it was never intended to be consumed by anything but gdu, right?
+[14:13] <pitti> that bug has been on my "assigned" list for far too long; the urgency has greatly been diminished by barry porting python-dbus to python3
+[14:13] <xnox> ev: yeah.... well new API is nice and gives a bucket loads more information, but it's very backwards. And one has to do bottom-up lookups =/ (filesystem->block-device->drive-type)
+[14:14] <pitti> xnox: but you know there's gir1.2-udisks-2.0 ?
+[14:14] <pitti> xnox: that's the API you ought to use, not the raw D-BUS one
+[14:14] <xnox> and do guess work - oh this object has: filesystem & block interface, and it's parent drive has property Optical then I'm guessing it's optical drive.
+[14:14] <pitti> xnox: well, you can still use raw D-BUS if you like
+[14:14] <xnox> pitti: ha. let me check that.
+[14:15] <pitti> xnox: http://cgit.freedesktop.org/udisks/tree/src/tests/integration-test uses it, so if you want to look at that for an example
+[14:15] <seb128> ogra_, ok, so my nothing-on-screen-after-nexus-distupgrade ... I can see the session when I change screen backlight level
+[14:15] <seb128> well, it does display when I change the value then goes back to blank
+=== Ursinha-afk is now known as Ursinha
+[14:18] <xnox> pitti: thanks. looks very similar to DBus api, apart from no need to create connection first.
+[14:18] <pitti> xnox: yeah, libudisks and the gir are autogenerated from the D-BUS interface
+[14:18] <pitti> xnox: need to run out for a bit, bbl
+[14:19] <xnox> =/ why would anyone support multiple ways to access the same crapy API is beyond me
+[14:20] <pitti> xnox: try to use libudisks from C, and then do the same with plain gdbus, and you'll know :)
+[14:20] <pitti> the difference is a lot smaller in Python of course
+=== francisco is now known as Guest38765
+[14:29] <Quintasan> Laney: uh oh, I'm supposed to start packaging plugins
+[14:30] <Quintasan> frameworks are done with the exception of tests which fail because they need an X instance, xvfb fails ofc
+[14:30] <Laney> Quintasan: did you start from their ppa package?
+[14:30] <dobey> pitti: the issue is probably due to the new libc6 version, which broke some stuff. there hasn't been a new upload in a while, because lots of upstream changes broke lots of things, and i've been having to deal with them all across the u1 stack for the past week, including some infrastructure breakaage/downtime
+[14:30] <Quintasan> Laney: More or less, I just took dependencies from there. The rest was done from scratch
+[14:33] <Quintasan> Laney: Do you want to see frameworks pacakging?
+[14:33] <Laney> Quintasan: sure
+[14:33] <Laney> do you think it's ready to go?
+[14:33] <Quintasan> If missing tests are not a problem then yes
+[14:33] <Laney> here I got xvfb tests working but then it's failing later on when trying to link some test with "dummyimplugin"
+[14:34] <Quintasan> 0.94.0?
+[14:34] <Laney> yeah
+[14:34] <Quintasan> hmm
+[14:34] <Laney> well I say "got", I just xvfb-run make check ...
+[14:34] <Quintasan> oh
+[14:34] <Quintasan> That's how you did it.
+[14:35] <dholbach> coolbhavi, tumbleweed, mhall119, notgary: ready? :)
+[14:36] <coolbhavi> dholbach, yup :-)
+[14:36] <Quintasan> dholbach: I believe I won't be able to translate the packaging manual for this cycle
+[14:36] <dholbach> Quintasan, do you think you could reach out to the polish loco for some help with translations?
+[14:36] <Quintasan> uni has to eat more stuff than I expected it to.
+[14:37] <Quintasan> dholbach: I'll try, but I can't promise anything
+[14:37] <dholbach> Quintasan, dzieki!
+[14:37] <Quintasan> dholbach: nie ma za co :)
+[14:37] <Quintasan> Laney: I'll just testbuild it before I sent you not working stuff or something :P
+[14:37] <Laney> ok
+[14:38] <Quintasan> Laney: mikhas is at #kubuntu-devel so if you have any particular thing to ask about maliit you can ping him there, or I can ask him to get in here
+[14:40] <Laney> ah, I just had to make -C tests and it builds those libraries
+[14:40] <Laney> Quintasan: here would be good so I don't have to join another channel :P
+[14:41] <Quintasan> Laney: http://people.ubuntu.com/~quintasan/uploads/maliit-framework_0.94.0-0ubuntu1.debian.tar.gz
+[14:41] <Quintasan> Here is what I got
+[14:41] <dobey> pitti: looks like all our necessary fix branches have landed now in our trunk, and our nightlies PPA has built fine, so i'll be able to upload the new version today
+[14:42] <Laney> Quintasan: thanks; I'll combine it up with what I have
+[14:42] <Quintasan> Laney: I don't think I have symbols file there but they (i386, amd64, arm) are pending till I get my ARM box running.
+[14:42] <Quintasan> Laney: I'd appreciate it if you left the uploading magic to me since we have to get it along with Plasma Active 3
+[14:43]  * Quintasan looks at plugins
+[14:43] <Laney> Quintasan: Right, I don't know anything about that
+[14:43] <Laney> how does that impact uploading to Debian?
+[14:43] <Quintasan> Hmm.
+[14:43] <Quintasan> Oh wait
+[14:43] <Quintasan> Laney: You think you can get it to Debian?
+[14:44] <Laney> my key's a bit rusty but it probably still fits the lock ;-)
+[14:44] <Quintasan> That would be like...great.
+[14:44] <Laney> anyway I'll get back to you before doing that
+[14:44] <Quintasan> Sure.
+[14:45] <Quintasan> I'll be taking a look at plugins then
+[14:45] <Laney> neat
+[14:46] <tseliot> cyphermox: hi, I was told that you worked on the drivers manager code for software-properties-gtk. Can you have a look at my code, please? https://code.launchpad.net/~albertomilone/software-properties/linux-headers/+merge/145386
+[14:46] <mhall119> dholbach: not my turn yet
+[14:47] <dholbach> mhall119, not immediately, but today, right? :)
+[14:47] <dholbach> https://wiki.ubuntu.com/UbuntuDeveloperWeek Day 1  starting in 13 minutes in #ubuntu-classroom
+[14:47] <Quintasan> Laney: I think framework still needs symbols file to be generated, got arm box or something to do that or want me to take care of that?
+[14:48] <mhall119> dholbach: today yes, not yesteray :)
+[14:48] <dholbach> :-)
+[14:48]  * mhall119 needs much more coffee before he'll be ready
+[14:49] <dholbach> you should have one or the other minute :)
+[14:49] <Laney> Quintasan: I can do that, yeah
+[14:49] <Quintasan> Splendid.
+[14:49]  * Quintasan doesn't have to set up his arm box
+[14:49] <Quintasan> Muahahaha
+[14:49]  * Quintasan hides
+=== slank_away is now known as slank
+[14:50] <Laney> armhf is actually the only arch on which I've run maliit :P
+[14:50] <Laney> (nexus 7)
+[14:54] <cyphermox> tseliot: why have the driver packages changed in that way? seems like a better way to depends rather than introduce code to do this is it's needed to build...
+[14:54] <cyphermox> but I'm not aware of all the details
+=== Ursinha is now known as Ursinha-afk
+[14:55] <tseliot> cyphermox: we agreed with infinity that we cannot make sure that the correct headers flavour can be installed with package dependencies if users decide to install a kernel flavour other that the one ubiquity installed or if they simply removed the headers
+[14:55] <cyphermox> ah, makes sense
+[14:55] <Quintasan> Laney: Mmmkay, also, be sure to bash me if I made any graves mistakes, never did libraries from scratch
+[14:56] <cyphermox> tseliot: I would have thought the headers to be mostly always the same though ;)
+[14:56] <tseliot> cyphermox: yes, I wish ;)
+[14:57] <cyphermox> tseliot: ah, if you could just have not added one extra space in the PEP8 reformat it would have been so much easier to review :P
+[14:58] <tseliot> cyphermox: heh, sorry but my text editor couldn't live with 2-spaces indentation ;)
+[15:03] <infinity> cyphermox: Installers always install "linux-$flavour" which, as of recent SRUs, always depends on the headers for your flavour.
+[15:03] <infinity> cyphermox: Any attempts to manage this outside the installer or kernel metapackages will invariably fail, as other packages just plain have no clue what you have installed.
+[15:04] <infinity> cyphermox: (Though, the belt-and-bracers idea to also have jockey/drivers-common/whatever suggest installing headers if you've removed them is a good thing too)
+[15:04] <cyphermox> yeah
+[15:05] <infinity> tseliot: I'm too lazy to read the diff, but if it does what the changelog says, it's not ideal.
+[15:05] <tseliot> infinity: how so?
+[15:06] <infinity> tseliot: Installing the missing headers isn't the right answer, installing "linux-$flavor" is.  Otherwise, as soon as they upgrade, they'll have mismatched headers again.
+[15:06] <tseliot> infinity: are you saying that linux-headers-$flavour is not enough?
+[15:07] <ogra_> they wouldnt be upgraded with the kernel
+[15:07] <ogra_> thats what the metapackages are for
+[15:07] <infinity> tseliot: Oh, linux-headers-$flavour (without the ABI) is enough too, but we ideally want people to have the parent package anyway.
+[15:08] <cyphermox> Is there any case where the headers from get_kernel_headers() might not include all that is necessary to build a dkms package while another package does? Assuming a user has removed headers before, can they install a dkms package which will cause headers to be installed and the dkms package to still finish installing?
+[15:08] <tseliot> infinity: yes, it's just linux-headers-$flavour, no abi or version in it
+[15:08] <cyphermox> (I mean still not finish)
+[15:10] <infinity> tseliot: Did you test the regex against various differently-named kernels?
+[15:10] <Esokrates> I need to setup an lxc conatiner using Xephyr for graphical output of an app. Do you know a good guide to help me achieving this? Is there a possibilite to resize the forwarded window? (I think a patch was applied to Xephyr, but I do not know if it made into the package)
+[15:10] <tseliot> cyphermox: when you install a driver you get: 1) the driver and its dependencies hence 2) dkms and 3) the headers (Thanks to this change)
+[15:10] <infinity> tseliot: Like, ones with '-' or numbers in the flavour name?
+[15:11] <tseliot> infinity: such as?
+[15:11] <cyphermox> tseliot: yeah, I'm concerned that $dkmspackage doesn't depends on $headers anymore, and $headers-flavor doesn't contain what it needs to successfully build
+[15:11] <infinity> tseliot: omap4, nexu7, lowlatency-pae, or the ultimate test, powerpc64-smp
+[15:12] <tseliot> cyphermox: headers + dkms + driver should be enough
+[15:12] <cyphermox> ok
+[15:12] <infinity> cyphermox: Erm, headers-flavour depends on exactly what dkms used to (except correctly).
+[15:12] <cyphermox> infinity: alright
+[15:12] <tseliot> infinity: I can certainly add a test for those packages in my test suite
+[15:13] <cyphermox> as far as I'm concerned the code for softwareproperties looks fine (although I'm not super fond of reformatting), and if we agree that the actual package to install from detect.get_linux_headers() is right, then it's all fine
+[15:14] <infinity> tseliot: I didn't read the regex closely, but greediness can tend to bite one if you assume things like "linux-image-(.+)-(.+) will get you what you want from the end (it may end up just returning "pae" or "smp")
+[15:15] <tseliot> infinity: I remember testing -generic-pae but I haven't tested all of the possible flavours. This is what the testsuite is for and I'll make sure that these cases are covered
+[15:18] <tseliot> cyphermox: the other changes that I'm discussing with infinity are meant will land in ubuntu-drivers-common, without any need to touch software-properties-gtk any more
+[15:19] <hallyn> smb: plars: do you remember or have handy the bug # for qemu failures we had with cirrus vga, which were worked around by disabling cirrus driver at boot (or something like that)?
+[15:19] <hallyn> I'm asking so I can tie it to bug 1103385
+[15:19] <ubottu> bug 1103385 in qemu-kvm (Ubuntu) "Raring crashes on 12.04 LTS host with cirrus @800x600" [Medium,Confirmed] https://launchpad.net/bugs/1103385
+[15:20] <smb> hallyn, Maybe ... a sec
+[15:25] <smb> hallyn, one related was one I opened myself: bug  1039647 (its different though because the symptom was not "no fb" back then)...
+[15:25] <ubottu> bug 1039647 in unity (Ubuntu) "KVM/cirrus desktop fails to start" [High,Confirmed] https://launchpad.net/bugs/1039647
+[15:26] <hallyn> smb: thanks.  so that's yet another.
+[15:26] <hallyn> smb: i was just trying out unity on 1.3.0 qemu withi vmware vga yesterday, corruption is definately still there
+[15:27] <smb> hallyn, Yeah I think vmware could be. Cirrus was not crashing as badly as before but the underlying circular_area thingy was maybe fixed recently
+[15:29] <mino> hi guys. i have a package building related question posted here: http://askubuntu.com/questions/248994/howto-handle-packaging-and-development-in-one-git-repository . Any suggestions?
+[15:30] <plars> hallyn: I think the one I had was https://bugs.launchpad.net/ubuntu/+source/qemu-kvm/+bug/1054129
+[15:30] <ubottu> Ubuntu bug 1054129 in qemu-kvm (Ubuntu Quantal) "reboot with -vga cirrus can result in broken output" [Medium,Confirmed]
+[15:30] <smb> hallyn, actually the better one was bug 1038055
+[15:30] <ubottu> bug 1038055 in linux (Ubuntu) "graphics fail to initialise correctly, in kvm with cirrus graphics (after LUKS install)" [High,Fix released] https://launchpad.net/bugs/1038055
+[15:31] <xnox> smb: yeah for above bug, in quantal the relevant kernel driver bit was reverted. is it back in, in raring?
+[15:32] <smb> xnox, Yes and now causing no-framebuffer cases for a change :)
+[15:32] <notgary> dholbach, ready :)
+[15:32] <xnox> smb: awesome!
+[15:32] <xnox> wait, a second....!
+[15:33] <dholbach> notgary, great
+[15:34] <smb> hallyn, For reference, this one seemed to bite occasionally when using 3D under KVM (with cirrus): bug 1043513
+[15:34] <ubottu> bug 1043513 in xserver-xorg-video-cirrus (Ubuntu) "Xorg crashed with SIGABRT in memcpy() via cirRefreshArea() under KVM virtual machine" [Medium,Fix released] https://launchpad.net/bugs/1043513
+[15:36] <hallyn> smb: meaning you still occasionally get that one?
+[15:37] <hallyn> funny i've patched a similar one not that long ago
+[15:37] <hallyn> oh, that was in xserver-xorg-video-qxl
+[15:37] <smb> hallyn, Must admit I have not run desktop in KVM since then... On usual machine 3D in KVM sucks a lot of time
+[15:38] <hallyn> smb: odd, bc so long as i dont specify -vga, desktop works pretty well for me over vnc usually
+[15:38] <hallyn> smb: plars: thanks for the links
+[15:39] <hallyn> jdstrand: do you think the security review for MIR of spice will happen soon?  If not then I should go ahead and submit a new qemu-kvm-spice source so qemu-linaro can be dropped (to make infinity happy :)
+[15:39] <smb> hallyn, I had a feeling it was also related to the speed of your guest. Since mine sucked it was more common. The machine I use for Xen mostly also uses an emulated cirrus but is quicker and so sees less crashes
+[15:39] <hallyn> smb: so then i should be able to better reproduce it with a nested guest perhaps
+[15:41] <jdstrand> hallyn: I can probably get to it this week. not today though
+[15:41] <smb> (beside the fact that Xen uses a different pci subvendor ID and thus uses the xorg-cirrus driver, while kvm when the kernel drm driver works, uses  a different one (forgot the exact name gain)
+[15:44] <hallyn> jdstrand: that'd be awesome, thanks!
+[15:45] <mdeslaur> hrm, I use quantal in kvm with llvmpipe every day with -cirrus
+[15:46] <smb> mdeslaur, As I said it seemed much more likely when the host was overwhelmed. Like in my case when it took 3s to fade in windows...
+[15:46] <mdeslaur> oh, yeah, it's slow as heck...you have to be patient :)
+[15:46] <mdeslaur> I usually switch it to gnome-panel if I have something graphical to test
+[15:47] <mdeslaur> but maybe I'm lucky
+[15:47] <smb> Yeah, much better. :)
+[15:47] <smb> Actually classic gnome with no fuzz... :-P
+[15:48] <mdeslaur> it makes me miss unity though, switching back to gnome 2/gnome panel makes me realize how awful that desktop was :P
+[15:49] <mdeslaur> (how awful gnome 2 was)
+[15:51] <smb> I would not say awful. Different. Sure now it feels as bad going back as it felt going forward. Nothing works like your fingers/hands think. ;)
+[15:55] <dobey> eh
+=== Ursinha-afk is now known as Ursinha
+[15:56] <dobey> i'm "using" unity now, but it actually is far inferior for me, than the setup i had with the old gnome 2 panel was. :-/
+[16:01] <mdeslaur> sorry, didn't mean to be insulting :P
+[16:08] <Quintasan> Laney: Man, that xvfb-run is like magic
+[16:09] <Laney> heh
+[16:09] <Quintasan> Laney: plugins should be done today or tomorrow.
+[16:10] <Laney> Quintasan: Nice :-). I've been tinkering with framework a bit.
+[16:10] <Laney> I'll upload it somewhere later today and you'll be able to see what I've changed
+[16:11] <Quintasan> Laney: Be sure to poke me serveral times or send me an email - quintasan@kubuntu.org
+[16:11]  * Quintasan is sometimes forgetful
+[16:14] <Laney> sure
+[16:18] <tseliot> infinity: so, apparently all linux flavours but "-omap4" seem to work. The main problem is that the package source is named linux-ti-omap4 whereas the package is e.g. linux-image-3.2.0-1419-omap4 (without the "ti" part)
+[16:19] <infinity> tseliot: You're using the source to map?  That's going to end in pain.
+[16:22] <infinity> tseliot: linux-ti-omap4 isn't the only one with that oddity.
+[16:22] <tseliot> infinity: only when the source is linux-$something. For example, in the case of linux-image-3.5.0-19-generic in precise (a backported kernel from quantal) the source is linux-lts-quantal, therefore the correct headers are linux-headers-generic-lts-quantal, instead of linux-headers-generic
+[16:22] <infinity> tseliot: Oh, yeah, the lts-* stuff is special.
+[16:23] <infinity> tseliot: And probably makes more sense to special-case lts-* than to try to divine generic rules from it.
+[16:24] <infinity> tseliot: (linux-ppc in raring would trip similar issues, no?)
+[16:24] <tseliot> infinity: linux-image-3.5.0-19-powerpc64-smp works fine
+[16:24] <infinity> tseliot: That's quantal, where it comes from the linux source package. In raring, it doesn't.
+[16:25] <tseliot> infinity: oh, let me check
+[16:25] <infinity> tseliot: Anyhow, you're probably better off doing the mapping based on binary packages, unless source contains -lts-
+[16:26] <infinity> tseliot: Or something like that.
+[16:26] <tseliot> infinity: yes, if -lts is the only special case
+[16:29] <tseliot> infinity: thanks for the heads up, I'll change the logic a bit and make sure to add more tests
+[16:30] <infinity> tseliot: Cool, thanks.
+=== tkamppeter_ is now known as tkamppeter
+[16:57] <pitti> dobey: thanks for the heads-up!
+[16:59] <hallyn> stgraber: I'm looking to make qemu-user-static not install cross-32/64-bit handlers (work item in https://blueprints.launchpad.net/ubuntu/+spec/servercloud-r-binfmtns).  How would you recommend detecting that?
+[16:59] <hallyn> stgraber: should i just do a straight 'uname -m' comparison with blacklist?
+[16:59] <hallyn> or is there a way to just get the word size?
+[16:59] <hallyn> (cleanly)
+[17:01] <ogra_> hallyn, !
+[17:01] <hallyn> cjwatson: sorry to distract you, but i'm tryin gto remember our conversation at UDS about your machien... would checking 'uname -m' and refusing to install 64-bit handlers on i386 suffice?  or is that not enoguhf or you?
+[17:01] <hallyn> ogra_: hi
+[17:01] <ogra_> i think i have a never closed linux bug open for that
+[17:01] <infinity> hallyn: The wordsize of... The kernel, or userspace?
+[17:01] <hallyn> infinity: that's what i'm asking cjwatson about right now :)
+[17:01] <infinity> hallyn: Checking his uname would be fine.
+[17:01] <hallyn> i think userspace
+[17:02] <hallyn> because you can run a 32-bit userspace on 64-bit kernel, and then you want to stick with 32-bit binfmt handler, right?
+[17:02] <infinity> hallyn: I assume the bug was that on i386, it was installing an emulation handler for x86_64?
+[17:02] <hallyn> infinity: also installing 386 handler on 64-bit,
+[17:02] <hallyn> as after that you can't run 64-bit binaries any more
+[17:03] <infinity> That can't be true, or I wouldn't be able to run anything.
+[17:03] <mlankhorst> hallyn: erm wouldn't that fail on cross compile?
+[17:03] <ogra_> hallyn, bug 427863
+[17:03] <ubottu> bug 427863 in linux (Ubuntu) "binfmt allows breaking out of chroots due to not respecting namespaces" [Medium,Invalid] https://launchpad.net/bugs/427863
+[17:04] <rtg> cjwatson, upower is still harshing my buzz. see bug #1109076
+[17:04] <ubottu> Error: Launchpad bug 1109076 could not be found
+[17:04] <hallyn> ogra_: that looks like it'll be solved by the blueprint i linked above :)
+[17:05] <ogra_> hallyn, though my prob was rather stacked binfmt stuff there, but its also namespace related
+[17:05] <ogra_> yeah
+[17:05] <ogra_> great to see someone finally cares :)
+[17:05] <hallyn> ogra_: yeah, though i'm afraid it's going ot be postponed ntil 13.10
+[17:05] <ogra_> well, i opened the bug in 2009
+[17:06]  * ogra_ is patient 
+[17:08] <hallyn> ogra_: :)
+[17:08] <hallyn> hm, i don't seem able to install qemu-user-static:i386
+[17:09] <ogra_> i wonder if thats actuallyl being built
+[17:10] <Laney> rtg: I just saw a segfault immediately after dist-upgrading it; is that what you got too?
+[17:10]  * ogra_ wouldnt mind trying that on an arm ... running wine uder it to play a windows game or so *g*
+[17:10] <Laney> (can't see that bug)
+[17:11] <rtg> Laney, yeah, it happens pretty early.
+[17:11] <Laney> upowerd crashed with SIGSEGV in __GI___libc_free()
+[17:11] <rtg> Laney, my bug report is likely still waiting on the stack sanitizer
+[17:11] <rtg> but that looks like what I saw as well
+[17:11] <Laney> yep
+[17:22] <apw> bug #1109076
+[17:22] <ubottu> Error: Launchpad bug 1109076 could not be found
+[17:22] <GunnarHj> cjwatson: ping?
+[17:23] <Laney> here comes the pingfest ;-)
+[17:23] <GunnarHj> you bet :)
+[17:24] <jsalisbury> rtg, apw, I don't think 1109076 is a valid bug number
+[17:24] <Laney> it's just private while it waits to be retraced
+=== Ursinha is now known as Ursinha-afk
+[17:50] <pitti> cjwatson: hm, new upower is causing crashes (like bug 1108995) and retracing fails because apache on allspice is AWOL (I'll go ask IS)
+[17:50] <ubottu> Error: Launchpad bug 1108995 could not be found
+[17:51] <pitti> not the best day
+[17:52] <seb128> pitti, some others pinged him earlier, he seems to not be around ... I guess one of the leak fixes turned out to be a too-much-free ... do you have an idea which one or should we just revert meanwhile?
+[17:52] <pitti> they both looked good, let me look again
+[17:52] <pitti> seb128: no firm gut feeling I'm afraid
+[17:53] <seb128> pitti, laney is getting the issue if you need debug infos
+[17:53] <Laney> you'll probably get it too if you dist-upgrade to the new upower
+[17:54] <pitti> just finished upgrading
+[17:54] <seb128> upgrade runninghere...
+[17:54] <pitti> I have tons of oneconf crashes, but no upower
+[17:54] <seb128> Laney, it might depend of the type of device, if you are on battery/ac, etc
+[17:55] <pitti> ah, I don't have a battery
+[17:55] <Laney> let me try it on my other machine
+[17:55] <pitti> if so, then it's the one in up_device_supply_get_design_voltage()/    up_history_finalize()
+[17:55] <seb128> pitti, I'm building a dbg version of upower
+[17:57] <cjwatson> hallyn: My system is amd64 kernel, i386 userspace, some amd64 chroots/VMs; so IMO qemu-* should avoid installing an x86_64 emulation binfmt handler if uname -m says x86_64
+[17:57] <cjwatson> hallyn: And this has broken for me quite recently
+[17:57] <Laney> seb128: pitti: Yeah must be something about batteries; saw it on the nexus
+[17:57] <Laney> but not on the desktop PC
+[17:57] <cjwatson> rtg: I can't see thatbug
+[17:57] <pitti> apw: seems we have some bigger prroblems with ddebs as well, cannot fetch from 7 buildds (sorting out with IS ATM)
+[17:57] <cjwatson> Oh, never mind, now I cn
+[17:58] <cjwatson> I'll sort out upower in a bit, finishing up a call
+[17:58] <rtg> cjwatson, np
+[17:58] <pitti> cjwatson: I can upload a revert if you want, to take out the pressure?
+[17:59] <cjwatson> pitti: please do - I haven't seen a valid stacktrace yet
+[17:59] <hallyn> cjwatson: when i create i386 chroot/container on amd64, install qemu-user-static doesn't break it...  did in precise, does not in raring.  but your exact use case i haven't tried.  but binfmt was acting like it has some new safeguards
+[17:59] <apw> cjwatson, if you run the daemon on the command line it blows up in your face
+[17:59] <cjwatson> apw: Didn't for me, but that was armhf.  But OK, I'll try that
+[17:59] <seb128> cjwatson, pitti: http://paste.ubuntu.com/1586544/
+[17:59] <pitti> cjwatson: yeah, that's the part of the problem I'm dealing with ATM
+[18:00] <cjwatson> hallyn: That isn't the same thing, certainly
+[18:00] <pitti> seb128: merci, that helps
+[18:00] <apw> *** Error in `/usr/lib/upower/upowerd': free(): invalid pointer: 0x098cfdd8 ***
+[18:00] <apw> cjwatson, ^
+[18:00] <cjwatson> The top level userspace on my system is i386, not amd64
+[18:00] <pitti> apw: see seb128's stack trace, got it
+[18:00] <cjwatson> GunnarHj: upower, or something else?
+[18:01] <apw> pitti, ahh right
+[18:01] <seb128> pitti, cjwatson: http://paste.ubuntu.com/1586548/
+[18:01] <seb128> valgrind log
+[18:01] <GunnarHj> cjwatson: Hi Colin! It's something else, not urgent, asked my question on bug 960314 instead.
+[18:01] <ubottu> bug 960314 in ubiquity (Ubuntu) "Unnecessary languages listed but not installed after install" [Undecided,New] https://launchpad.net/bugs/960314
+[18:02] <hallyn> cjwatson: well, i can try a amd64 chroot under i386 container on amd64...  maybe that comes close
+[18:02] <cjwatson> GunnarHj: can't deal with that this week
+=== Ursinha-afk is now known as Ursinha
+[18:03] <GunnarHj> cjwatson: That's fine.
+[18:03] <cjwatson> hallyn: probably not
+[18:03] <hallyn> cjwatson: why not?  since there is no namespace for binfmt, i'd expec tsomething in that stack to get corrupted...
+[18:03] <cjwatson> pitti,seb128: IDGI, how can "energy = sysfs_get_double (native_path, "energy_avg") / 1000000.0;" be calling free on that value?
+[18:04] <cjwatson> hallyn: oh, container, I misread
+[18:04] <cjwatson> Maybe
+[18:04] <cjwatson> hallyn: But why don't you just tell me what you want me to try here ...
+[18:04] <pitti> cjwatson: it's the new free() in up_device_supply_get_design_voltage apparenlty, that's the bit I'm reverting
+[18:04] <hallyn> cjwatson: welli'm wondering whether new qemu-user-static (now coming from debian's qemu) or new binfmt has alredy worked around the problem you were having,
+[18:05] <hallyn> i.e. juts do what normally breaks (installing qemu-user-static in amd64 chroot?)
+[18:05] <cjwatson> GunnarHj: TBH, I don't think your mail was really very related to what I'm trying to fix, and what I am determined needs to be fixed
+[18:05] <hallyn> cjwatson: how did you set up your system?  install i386 system then compile your own adm64 kernel and install it?
+[18:05] <pitti> apw, seb128: care to try http://people.canonical.com/~pitti/tmp/upower_0.9.19-1ubuntu2_amd64.deb ?
+[18:05] <cjwatson> hallyn: I installed i386 eons ago, then a little while back I installed the Ubuntu amd64 kernel using multiarch
+[18:05] <seb128> pitti, I'm on i386; can run "make" on my current build tree if you tell me what to change though
+[18:05] <cjwatson> Life is far too short to be compiling my own kernels
+[18:06] <apw> pitti, will do
+[18:06] <hallyn> haha - multiarch for kernel, too cool
+[18:06] <pitti> seb128: http://paste.ubuntu.com/1586563/
+[18:07] <seb128> pitti, that fixes it
+[18:07] <pitti> seb128: merci, uploaded
+[18:07] <GunnarHj> cjwatson: Hmm.. Are possibly mixing up the paper size thing and the redundant Chinese locales?
+[18:07] <seb128> pitti, danke
+[18:07]  * pitti goes to play some whack-a-rat with the dupes
+[18:07] <xnox> pitti: bug #960314 links to bug #863378 which has a branch merge proposal which is against langpack-locales not special casing for zh-XXXX lang packs.
+[18:07] <ubottu> bug 960314 in ubiquity (Ubuntu) "Unnecessary languages listed but not installed after install" [Undecided,New] https://launchpad.net/bugs/960314
+[18:07] <ubottu> bug 863378 in langpack-locales (Ubuntu) "Locales not removed when removing Chinese translations" [Low,In progress] https://launchpad.net/bugs/863378
+[18:08] <xnox> pitti: maybe you can review it?
+[18:08] <pitti> xnox: sorry, not right now; two "OMGnow" things ongoing right now, and I actually wanted to call it a day over an hour ago ..
+[18:08] <pitti> xnox: but I can review it in general, yes; can you please subscribe me so that I get a mail?
+[18:09] <apw> pitti, you got a 32bit to test as well
+[18:09] <pitti> apw: seb128 should have a deb now
+[18:10] <seb128> apw, pitti: let me scp that
+[18:10] <pitti> lool: oh, that's also your upower crash, BTW (very very likely)
+[18:11] <pitti> although, maybe not; I'll have a look tomorrow
+[18:12] <xnox> pitti: ack.
+[18:12] <seb128> apw, http://people.canonical.com/~seb128/upower_0.9.19-1ubuntu2_i386.deb
+[18:12] <apw> wget *** Error in `/usr/lib/upower/upowerd': free(): invalid pointer: 0x098cfdd8 ***
+[18:12] <apw> IGNORE that
+[18:12] <seb128> ;-)
+[18:12] <pitti> amd64 build is somewhat blocked (where did all our buildds go}), rest building
+[18:13] <pitti> oh, moved to i386 for precise langpacks, I guess
+[18:13] <Laney> they probably got switched to i386 to ... that
+[18:13] <apw> pitti, seb128's 32bit works for me
+[18:14] <cjwatson> GunnarHj: I only linked the Chinese one for reference - I don't think this is directly related
+=== ximion is now known as ximion-afk
+[18:16] <GunnarHj> cjwatson: Ok, thought it was worth asking. ;-) Thanks.
+[18:17] <GunnarHj> pitti: You are already asked to review the bug 863378 MP, so you probably have a mail. Not urgent.
+[18:17] <ubottu> bug 863378 in langpack-locales (Ubuntu) "Locales not removed when removing Chinese translations" [Low,In progress] https://launchpad.net/bugs/863378
+[18:20] <pitti> apw, seb128, cjwatson: ok, built everywhere (armhf is at dh_builddeb), so should be fine; leaving now, please call my mobile if you need more help
+[18:20] <apw> pitti, thanks
+[18:20] <seb128> pitti, thanks, have a good evening!
+[18:24] <ian__605> Can anyone give me some advice for debugging an app? A user gets inconsistent crashes with a SIGSEGV in ccsGSettingsValueChanged(). I can't reproduce it but it seems to happen every 7-8 program starts for him. Starting with gdb never reproduces it, but an apport bug report gives some info. seems that SegvReason is reading unknown VMA
+[18:25] <ian__605> From the top of the stacktrace: #0  0x00007fbb283f74b3 in ccsGSettingsValueChanged () from /usr/lib/libcompizconfig_gsettings_backend.so
+[18:26] <seb128> ian__605, try asking on #ubuntu-unity
+[18:26] <seb128> seems like a bug in the unity-gsettings backend
+[18:26] <seb128> compiz-gsettings rather
+[18:26] <lool> pitti: Yeah, sounds like it; I had installed updates at around the same time
+[18:26] <lool> pitti: thanks!
+[18:28] <ian__605> yeah... I will ask on #ubuntu-unity too, but is should I file a bug report with compiz-gnome since that's the package libcompizconfig_gsettings_backend.so comes from?
+=== ximion-afk is now known as ximion
+[18:30] <seb128> ian__605, you should get an apport prompt leading you to report a bug when that happens...
+[18:31] <ian__605> The user gets one sometimes, but since it originated with my app, it goes to me (or would if it wasn't a ppa)
+[18:31] <seb128> well; it's up to you to get the infos and report the bug then I guess
+[18:31] <seb128> for what we know it could be a bug in your ppa and not in Ubuntu
+[18:33] <cjwatson> pitti: Oh, whoops, I see the bug
+=== Ursinha is now known as Ursinha-afk
+[18:33] <ian__605> seb128, Right.. so how would I figure that out?
+[18:34] <seb128> ian__605, dunno, it's your ppa, you should know what you have in there and if it's likely to create such issues?
+[18:34] <cjwatson> pitti: For some reason the patch I uploaded didn't match the one I attached upstream
+[18:34] <seb128> ian__605, getting a stacktrace would be useful in any case
+[18:34] <cjwatson> (missing = NULL)
+[18:35] <ian__605> seb128, I've got the stacktrace here: https://launchpadlibrarian.net/129813827/_opt_extras.ubuntu.com_drawers_bin_drawers.1000.crash
+[18:35] <infinity> seb128 / tedg: More hung builds on the buildds, I thought you were going to keep that disabled until it was fixed. :/
+[18:35] <seb128> tedg, ^ can you get those builds disabled until the issue is resolved?
+[18:36] <ian__605> My app uses gsettings to store some configuration. It also uses python-compizconfig to get some info on settings
+[18:36] <tedg> Yeah, I'll try to figure that out.  Almost done with a fix.
+[18:37] <ian__605> seb128, app sets up ok, but once the Gtk.main() is called it crashes. Again, it's just once-in-a-while and I can't reproduce on my system
+[18:38] <seb128> ian__605, sorry, I'm not familiar with that codebase, best is to get a debug stacktrace and file a bug and see what the compiz guys say
+[18:38] <cjwatson> pitti,seb128: uploaded a corrected fix
+[18:38] <seb128> cjwatson, great, thanks ... I will install the deb once it's on launchpad to confirm if that version is working for me
+[18:39] <cjwatson> hallyn: Yeah, looks like it's better at the moment because qemu-user-static_i386 doesn't ship /usr/share/binfmts/qemu-x86_64
+=== Ursinha-afk is now known as Ursinha
+[18:40] <cjwatson> hallyn: Of course, this means that for people running an i386 kernel, they don't get automatic x86_64 emulation, so it's just moved the bug around :-)
+[18:40] <cjwatson> (Well, assuming that's possible - maybe it isn't)
+[18:40] <infinity> It's possible.
+[18:41] <infinity> But painfully crap.
+[18:41] <hallyn> cjwatson: ok - i wonder if we'll be seeing a bug about restoring that emulation
+[18:41] <hallyn> cjwatson: thanks for checking!
+[18:42] <hallyn> cjwatson: so do you prefer that we postpone binfmt namespace discussions  until next cycle?
+[18:43] <cjwatson> hallyn: It's no particular rush for me
+[18:43] <cjwatson> And bazillion other things to do as usual, so as you like :)
+[18:43] <hallyn> cjwatson: yeah at this point it seems liek finishing up started items is more important
+[18:44] <hallyn> cjwatson: i'll re-raise it next cycle, thanks :)
+[18:44] <hallyn> smb: ^
+[18:44] <smb> hallyn, ok, thanks
+[18:45] <cjwatson> Certainly from my point of view it's been a problem since <=2000, so, you know, what're another couple of years
+[18:47] <hallyn> cjwatson: hopefully only a few more months! :)
+[18:49] <smb> hallyn, In my optimistic ways I hope to have at least done a bit more preparation (research) work until for the next discussion...
+[18:51] <hallyn> smb: I still think it'll have to start with my coaxing cjwatson to write the detailed namespace motivation (first WI int he blueprint)
+[18:51] <hallyn> oh well - lunch - bbl
+[18:52] <smb> late enough for me - bbml :)
+=== Ursinha is now known as Ursinha-afk
+[19:03] <barry> @pilot in
+=== udevbot changed the topic of #ubuntu-devel to: Ubuntu 12.10 released | Archive: Open | Dev' of Ubuntu (not support or app devel) | build failures -> http://qa.ubuntuwire.com/ftbfs/ | #ubuntu for support and discussion of hardy -> quantal | #ubuntu-app-devel for app development on Ubuntu http://wiki.ubuntu.com/UbuntuDevelopment | See #ubuntu-bugs for http://bit.ly/lv8soi | Patch Pilots: barry
+[19:04] <rtg> cjwatson, upower_0.9.19-1ubuntu2 appears to have fixed my problem
+[19:06] <cjwatson> rtg: ubuntu3 should too
+[19:06] <cjwatson> hopefully
+[19:06] <cjwatson> my own stupid fault, I evidently misapplied the patch by hand rather than applying the one I'd sent upstream
+[19:07] <rtg> cjwatson, , thats the I really meant to build. drat.
+[19:07] <cjwatson> because it was short enough that I couldn't possibly get it wrong, right?
+[19:36] <dobey> slangasek and stokachu: would you care to check out my patch on https://bugs.launchpad.net/ubuntu/+source/gnome-keyring/+bug/859600 ? xnox already looked at it, but said he'd prefer one of you to look at it as well, as you've had issues with doing this in gnome-keyring before
+[19:36] <ubottu> Ubuntu bug 859600 in gnome-keyring (Ubuntu Precise) "Please convert gnome-keyring to multiarch" [High,In progress]
+[19:46] <seb128> dobey, sorry about that one, you pinged me about it but I also decided it would be better if some of the multiarch gurus had a look ;-)
+=== glebihan_ is now known as glebihan
+=== andyrock is now known as andyrock|window
+=== andyrock|window is now known as andyrock|dinner
+[20:37] <stokachu> cjwatson: if a precompiled driver exist on an external source as a udeb that driver should be copied over to the existing target or does the installer rebuild the initrd?
+[20:39] <cjwatson> stokachu: nothing is copied out of the installer environment to the target.  the installer rebuilds the initrd; any driver that's to be on the target system must be available as a deb
+[20:41] <stokachu> cjwatson: so providing a udeb to the installer should make that driver available after installation and a reboot correct?
+[20:44] <infinity> stokachu: No, that's the exact opposite of what he said. :)
+[20:45] <xnox> udeb makes that driver available during installation, you need a deb on top to make it available in the target / post-install.
+[20:45] <infinity> stokachu: udebs are only available to the installer itself.
+[20:45] <stokachu> ah i see
+[20:45] <xnox> stokachu: e.g. if that driver is need both during install & in the final system, one needs both .deb & .udeb.
+[20:46] <stokachu> ah ok that makes sense now
+[20:46] <xnox> there should be some examples in the archive of how to package that (e.g. duplicate the driver into two package)
+[20:46] <stokachu> yea ive been looking for some documentation on that
+[20:46] <xnox> stokachu: also note the ModAliases feature that packages can declare for ubuntu-drivers-common to auto-install relevant .deb for you.
+[20:46] <xnox> (e.g. any nvidia package)
+[20:47] <xnox> .udeb drivers are typically ethernet/wifi cards
+[20:47] <infinity> And filesystem and storage drivers.
+[20:47] <infinity> And other stuff.
+[20:48] <stokachu> hah ok
+[20:48] <infinity> stokachu: But, yeah, if it's not vital to perform the install, you don't want a udeb at all.
+[20:48] <infinity> stokachu: You want a deb, ideally a dkms package.
+[20:48] <stokachu> this is a storage driver to detect during install and after
+=== Ursinha-afk is now known as Ursinha
+[20:49] <stokachu> it detects during installation but im missing the second part for the target system
+[20:56] <stokachu> if i've emailed an uploader about merging a new version of their package how long should i wait for a response?
+[20:56] <stokachu> the latest aptitude won't run its google mock tests without a newer google-mock package
+[20:59] <infinity> stokachu: We seem to be up to date with Debian already.
+[20:59] <infinity> stokachu: Unless their packaging had bugfixes you need.
+[21:01] <stokachu> there seems to be some differences in our package compared to debian's
+[21:02] <stokachu> i ran a test build of aptitude in sid against their google-mock and it ran the tests successfully
+[21:02] <stokachu> with raring it fails to find gtest
+[21:04] <stokachu> im still going through the changes to see what may be inconsistent
+[21:10] <stokachu> looks like we allow make install to proceed where debian does not
+[21:11] <stokachu> im guessing other software is still dependent on the previous way google-mock worked before the recommendation was to include during each application build
+[21:15] <xnox> stokachu: well in ubuntu, it looks to me like we have an aptitude patch that turns off building/running google-mock tests
+[21:15] <stokachu> xnox: yea in 0.6.8.1 but i was attempting to merge in 0.6.8.2 and re-enable google-mock since it landed in main
+[21:15] <xnox> I see.
+=== Ursinha is now known as Ursinha-afk
+[22:11] <bryce> slangasek, btw on SRU #1078290 the driver got moved to -updates but there's a jockey fix that goes along with that update, which has to be rolled out as well; otherwise the driver won't install properly
+[22:12] <bryce> slangasek, I've tested jockey 0.9.7-0ubuntu7.7 along with the fglrx-experimental-9 update and verified that combination installs and boots fine
+=== salem_ is now known as _salem
+[22:15] <slangasek> bryce: right, but the jockey in -proposed is currently awaiting verification of a different bug
+[22:15] <slangasek> oh, /was/
+[22:15] <slangasek> I guess we can move that too then
+[22:15] <infinity> It doesn't hurt anything to have the driver preceed jockey, does it?
+[22:16] <bryce> slangasek, Sarvatt verified it
+[22:16] <slangasek> infinity: indeed not
+[22:16] <bryce> well
+[22:16] <bryce> the kernel module will display in jockey prior to the jockey update
+[22:16] <bryce> if the user attempts to install that, then they get half a driver, and thus a busted system
+[22:17] <bryce> so I generally prefer to see the jockey changes go in first, then the driver update
+[22:17] <slangasek> dobey: I haven't built the package, but the source diff looks sane to (gnome-keyring)
+[22:18] <slangasek> bryce: ah - ok, then I'll get that published
+[22:18] <xnox> stokachu: right so aptitude's configure.ac is at fault here. It says if I can link mock, I don't need to build neither mock nor gtest. Which is not true in ubuntu currently as one has to still build gtest. It would be better if aptitude configure.ac checked mock & gtest separately whether to build none, one or both.
+[22:18] <bryce> in the jockey dialog, this situation shows up when you see the driver listed as "Experimental blah blah" rather than "AMD/ATI blah blah (**experimental**)...", which I notice is what is happening presently if you have only -updates
+[22:18] <xnox> stokachu: I have a crude fix to override this behaviour, by hardcoding BUILD_LOCAL_GMOCK to true.
+[22:19] <bryce> slangasek, thanks
+[22:19] <dobey> slangasek: thanks. i've built it in my PPA, and have been running with the packages installed for some time now (on amd64 with the i386 p11kit bit installed as well)
+=== yofel_ is now known as yofel
+[22:36] <JanC> if any of you are coming to FOSDEM, please put your names on https://wiki.ubuntu.com/Fosdem/2013  ☺
+[22:37] <mlankhorst> It's really tentative for me
+[22:37] <mlankhorst> no longer sure I'm going since the train from amsterdam to brussel has been cancelled :(
+[22:40] <JanC> mlankhorst: there is a train between Roosendaal & Antwerp, which means you get 2 changeovers, but you should be able to get there  ☺
+[22:40] <mlankhorst> 2 additional changeovers
+[22:40] <mlankhorst> its groningen->schiphol->rotterdam->roosendaal->antwerp->brussels
+[22:40] <mlankhorst> >:(
+[22:40] <mlankhorst> noty
+[22:40] <JanC> or you use the Thalys, if you are rich enough...
+[22:41] <JanC> ugh
+[22:41] <JanC> mlankhorst: or try to find a ride with someone else?
+[22:41] <mlankhorst> startpoint is groningen, good luck :/
+[22:42] <JanC> well, if you can get a ride from Amsterdam or so, that would help a lot too, I suppose?
+[22:48] <JanC> mlankhorst: I also asked in #debian-nl (on OFTC), maybe somebody there can help
+[22:48] <mlankhorst> I might be getting a car though
+[22:49] <JanC> well, at least they don't expect the weather we got last year  :p
+[22:51] <JanC> (last year I had to bring the Ubuntu mobile multiseat to FOSDEM during a snow storm on Friday)
+[22:55] <mlankhorst> hah
+[22:55] <mlankhorst> i was stuck for 7 hours in a car for what should have been a 2.5 hour trip to eindhoven
+[22:57]  * ogra_ will probably come but decide spontaneous based on the weather
+[22:58] <ogra_> (i'll drive)
+[23:00] <TheMuso> @pilot in
+=== udevbot changed the topic of #ubuntu-devel to: Ubuntu 12.10 released | Archive: Open | Dev' of Ubuntu (not support or app devel) | build failures -> http://qa.ubuntuwire.com/ftbfs/ | #ubuntu for support and discussion of hardy -> quantal | #ubuntu-app-devel for app development on Ubuntu http://wiki.ubuntu.com/UbuntuDevelopment | See #ubuntu-bugs for http://bit.ly/lv8soi | Patch Pilots: barry, TheMuso
+[23:01] <barry> hi TheMuso.  perfect timing :)
+[23:01] <barry> @pilot out
+=== udevbot changed the topic of #ubuntu-devel to: Ubuntu 12.10 released | Archive: Open | Dev' of Ubuntu (not support or app devel) | build failures -> http://qa.ubuntuwire.com/ftbfs/ | #ubuntu for support and discussion of hardy -> quantal | #ubuntu-app-devel for app development on Ubuntu http://wiki.ubuntu.com/UbuntuDevelopment | See #ubuntu-bugs for http://bit.ly/lv8soi | Patch Pilots: TheMuso
+=== Ursinha-afk is now known as Ursinha
+[23:05] <jbebel> What/where is the list of packages which are supported as part of 12.04 LTS?
+[23:06] <jbebel> I remember there used to be a file that listed them specifically, but I can't seem to find it now.
+[23:06] <jbebel> It was fewer than just those in main, especially when the LTS was reduced to just server.
+[23:07] <jbebel> but that was for dapper, I think that I'm remembering.
+[23:07] <ScottK> Define "supported"
+[23:07] <ScottK> It can mean multiple things.
+[23:07] <jbebel> The S in LTS.
+[23:07] <TheMuso> barry: Heh cool. I often wonder whether you just forget to do that... :p
+[23:07] <jbebel> How does canonical define it?
+[23:08] <barry> TheMuso: sometimes i do! :)
+[23:08] <jbebel> I expected it meant security updates are provided.
+[23:08] <ScottK> There's a field in LP that says.
+[23:08] <ogra_> didnt we have a tool ?
+[23:08] <ScottK> For 12.04 it's somewhat complex since some desktop packages are supported for 5 years too.
+[23:08] <ogra_> supported-in-ubuntu or so ?
+[23:09] <ScottK> Dunno.
+[23:09] <ogra_> or was that only seeded stuff
+[23:09] <ScottK> We do have seeded-in-ubuntu.
+[23:09] <ogra_> ah, then i mixed it up
+[23:10] <sarnold> is that the Supported: line in apt-cache show <packagename> ?
+[23:10] <jbebel> I'm guessing it's at least a subset of main, not a superset.
+[23:11] <JanC> ogra_: the expected weather seems fine  http://www.yr.no/place/Belgium/Brussels/Brussels/long.html  ☺
+[23:11] <xnox> sarnold: depends on the value in the support field.
+[23:11] <ogra_> JanC, well, its the weather inbetween :)
+[23:12] <ogra_> if i arrive in brussels i wont be much outside anyway :)
+[23:12] <ScottK> jbebel: It is a subset.
+[23:13] <ScottK> sarnold: Yes.  That's what I was thinking of.
+[23:14] <sarnold> jbebel: I think from 12.04 LTS on, the idea is we'll support main/ for five years: https://wiki.ubuntu.com/Releases
+[23:14] <slangasek> ogra_, ScottK: "ubuntu-support-status"
+[23:15] <ogra_> ah, i knew there was something !
+[23:15] <sarnold> jbebel: (at least, I haven't seen an equivalent to the hardy-supported.txt yet)
+[23:15] <matttbe> JanC: yes, I confirm that the weather is fine (much better than the week before ;) )
+[23:15] <ScottK> jbebel: ^^^ see slangasek's remark.
+[23:16] <ScottK> slangasek: Thanks.  I didn't know about that one.
+[23:16] <sarnold> ScottK: thanks :)
+[23:16] <JanC> matttbe: if you come --> see the wiki page  ;)
+[23:16] <sarnold> err, slangasek thanks, rather :) hehe
+[23:18] <JanC> matttbe: last year we had to drive through 15cm of snow in some places (first with my personal car, then with the van with the multiseat system), that was worse than anything we've had this year, I think
+[23:19] <matttbe> JanC: yes I remember :) And it was very hot in some classrooms!
+[23:19]  * xnox is 75.0% supportable and 1.2% no longer downloadable
+[23:19] <jbebel> Thanks everyone.
+=== matttbe_ is now known as matttbe

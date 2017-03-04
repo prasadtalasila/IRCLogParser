@@ -1,0 +1,132 @@
+[02:10] <manchicken> apachelogger: yo
+[03:44] <manchicken> JontheEchidna: save() doesn't properly remove records if you put them all in the same file. E.g. ddebs.list contains four entries. When I remove those four entries, I would expect the file to disappear (or at least lose its length). That doesn't seem to happen.
+[03:44] <manchicken> SourcesList::save() that is.
+[03:44] <manchicken> JontheEchidna: I think that's because when you're constructing the list of files to write, you're only tracking which files you have records for in your QList.
+[03:45] <manchicken> JontheEchidna: For my application, the answer is simple: just delete the file after removing them from the SourcesList in memory... but I thought you might want to know that this problem was there.
+[04:05] <smartboyhw> Hmm, is Planet KDE down?
+[04:06] <valorie> yes
+[04:07] <valorie> #kde-sysadmin /topic: Disk failure on Saba, expect downtime of email and some web services
+[04:10] <smartboyhw> valorie, :(
+[04:17] <valorie> bcooksley's on the job
+[04:23] <smartboyhw> yofel, no. It still failed (even with the backport of libkolab and libkolabxml)
+[04:26] <smartboyhw> It = kdepim-runtime
+[04:47] <manchicken> JontheEchidna: No, I can't cheat this one... I have to modify QApt since that's where all of the dbus stuff lives.
+[05:08] <manchicken> Something's funky with polkit... keeps on dying.
+=== himcesjf_ is now known as himcesjf
+[06:49] <manchicken> JontheEchidna: ping
+[07:24] <smartboyhw> Hmm, bumping artikulate's debhelper and compat version to 9 actually reduces lintian warnings:O
+[07:25] <smartboyhw> Now there's one only!
+[07:25] <smartboyhw> yofel, you should be happy:P
+[07:45] <manchicken> Hey all, anybody know how to run krazy? I'm trying to install it... it's not working.
+[07:49] <manchicken> I may just have to submit this without running krazy myself... weak.
+[08:07] <manchicken> What's my deadline for this thing again? :)
+[08:09] <smartboyhw> manchicken, did you set it in IRC or Trello!?
+[08:09] <smartboyhw> IRC -> refer to irclogs.ubuntu.com :p
+[08:11] <manchicken> I don't like your answer :)
+[08:12] <manchicken> Especially because I have no idea what day we said the deadline on :)
+[08:34] <manchicken> Okay, I can't hack this anymore tonight.
+[08:34] <yofel> manchicken: August 29th - Feature Freeze https://wiki.ubuntu.com/SaucySalamander/ReleaseSchedule
+[08:34] <manchicken> yofel: You and your "documentation" :) Thanks.
+[08:35]  * manchicken bookmarks...
+[08:35] <yofel> heh
+[08:36] <manchicken> I'm wondering if kubuntu-debug-installer is in the freeze yet, or if they have to accept my commit first.
+[08:36] <manchicken> I think we may have to update libqapt in order to get the part that cleans the sources up working.
+[08:37] <manchicken> Okay, good night.
+[08:38] <yofel> they'll have to accept it first
+[08:38] <yofel> good night :)
+[10:01] <smartboyhw> yofel, you want to review artikulate?
+[10:01] <smartboyhw> And also, kdepim-runtime still doesn't work
+[10:02] <yofel> smartboyhw: get a MOTU to review it, will be more productive as I can't upload it anyway
+[10:02] <smartboyhw> yofel, OK....
+[10:03] <yofel> and I want to take a break a bit, hacking on kde the last 2 days wore me out
+[10:03] <smartboyhw> yofel, :)
+[10:03] <smartboyhw> It's summer holidays, so it doesn't wear me out:P
+[10:04] <yofel> heh, my vacation was akademy, no more breaks for me over summer this year
+[10:05] <yofel> kdepim-runtime at least failed for a *different* reason this time
+[10:05] <yofel> if you have sudden missing files, always look if cmake reports any optional build-deps as missing
+[10:05] <yofel> (which is the case right now)
+[10:07] <smartboyhw> yofel, um, I thought it failed due to code
+[10:07] <yofel> *that* was kolab, and fixed by the backport
+[10:08] <yofel> but I wonder how the current failure happened as kdepim-runtime has a build-dep on libkgapi-dev (>= 1.9.81)
+[10:08] <yofel> so it should've been in dep-wait, not failure
+[10:10] <smartboyhw> yofel, oh well
+[10:10] <smartboyhw> BACKPORT
+[10:10]  * smartboyhw hates backporting so many packages:P
+[10:11] <yofel> smartboyhw: I just remembered something: try to testbuild kgapi first. It might have issues with cmake
+[10:11] <yofel> if it does, take my precise backport in ninjas, that'll work
+[10:11] <smartboyhw> yofel, alright..........
+[10:11] <smartboyhw> Maybe I'll just copy the ninjas backport (for the convenience sake:P)
+[10:12] <yofel> wrong series :P
+[10:12] <yofel> though a source copy might actually work, would just look wrong
+[10:12] <smartboyhw> yofel, I know, I mean download
+[10:12] <smartboyhw> And change and upload
+[10:12] <yofel> yeah, probably easiest
+[10:13] <yofel> I would expect the same thing to happen otherwise as it's the same cmake version
+[10:16] <smartboyhw> yofel, backported to quantal!
+[10:16] <smartboyhw> Actually, upported
+[10:16] <smartboyhw> uh
+[10:16] <smartboyhw> yofel, oh no
+[10:17] <smartboyhw> PPA build status
+[10:17] <smartboyhw> i386 	12 	215 jobs (5 hours) 
+[10:17] <smartboyhw> :O
+[10:17] <smartboyhw> Uh oh
+[10:19] <yofel> oh fun, most buildd's down
+[10:20] <smartboyhw> yofel, probably because of a Sunday
+[10:20] <smartboyhw> :9
+=== yofel changed the topic of #kubuntu-devel to: Kubuntu - Friendly Computing | https://trello.com/kubuntu | https://notes.kde.org/p/kubuntu-ninjas 4.10.97 saucy/archive raring/beta quantal/staging precise/read_notes_on_pad | 13.10 Alpha 2 released | 13.10 milestoned bugs tagged Kubuntu http://goo.gl/vHRjj
+[10:23] <yofel> s#precise/ninjas#precise/read_notes_on_pad
+[10:24] <smartboyhw> yofel, read notes on pad!?
+[10:24] <smartboyhw> hmmm
+[10:25] <smartboyhw> Ah, got it
+[10:25] <yofel> we need to figure out how to make the packages pull the HW enablement stack in, that currently doesn't work right
+[10:25] <yofel> at least everything built now
+[10:26] <yofel> except for the digikam rebuild :S http://paste.kde.org/p29e2b96d
+[10:26] <smartboyhw> yofel, :S
+[10:26] <yofel> which is weird as that's just a rebuild of the package in backports
+[10:27] <BluesKaj> Hiyas all
+[10:28] <yofel> hi BluesKaj
+[10:28] <BluesKaj> hi yofel
+[10:30] <yofel> oh hm, we actually have a qtgstreamer backport
+[10:30]  * yofel copies
+[10:31] <BluesKaj> gstreamer Qt GUI ?
+[10:32] <yofel> no gui, just the interface libs for Qt
+[11:07] <soee> good morning
+=== G4MBY2 is now known as Paulw2U
+=== Paulw2U is now known as PaulW2U
+[13:37] <smartboyhw> Hell
+[13:37] <smartboyhw> yofel, do you have any experience with Multi-Arch ?
+[15:09] <manchicken> apachelogger: You around?
+[15:42] <yofel> smartboyhw: a bit, what's the problem?
+[15:50] <smartboyhw> yofel, I don't know how to deal with those .install and the /rules file;P
+[15:51] <yofel> you shouldn't need anything in rules for multiarch, and install would be /usr/lib/*/...
+[15:51] <smartboyhw> yofel, OK
+[15:54] <smartboyhw> yofel, no it doesn't work
+[15:54] <yofel> could you pastebin what actually goes wrong please?
+[15:55] <smartboyhw> yofel, the file just doesn't exist
+[15:55] <smartboyhw> dh_install: libartikulate-dev missing files (usr/lib/*/libartikulatecore.so), aborting
+[15:55] <smartboyhw> Well, this is NOT the uploaded version:P
+[15:55] <smartboyhw> I mean, the about-to-be-reviewed version
+[15:56] <yofel> what *does* exist?
+[15:56] <smartboyhw> yofel, the no * version
+[15:56] <smartboyhw> i.e. usr/lib/libartikulatecore.so
+[15:56] <yofel> that's not multiarch then
+[15:57] <smartboyhw> yofel, but I did see on the Debian manuals that there IS a way to do multi-arch
+[15:57] <yofel> either compat is < 9, or the build system doesn't know how to automatically install in mutliarch paths
+[15:57] <smartboyhw> It just that I can't undetstand...
+[15:57] <smartboyhw> yofel, it's 9 already
+[15:57] <yofel> what build system?
+[15:58] <smartboyhw> yofel,  cmake + make
+[15:58] <smartboyhw> kde style
+[15:58] <yofel> hm
+[16:00] <yofel> grr, I need a chroot with qt4-default for such stuff
+[16:00] <smartboyhw> yofel, oh:(
+[16:02] <yofel> ah hm, that's KDE
+[16:16] <manchicken> JontheEchidna: libqapt *does* successfully trash my sources.list when I have a bug :)
+[19:08] <manchicken> apachelogger: Did you see my latest changes?
+[20:45] <Mamarok> somehow I can't use the function keys anymore on my Lenovo X220, especially for disabling the Trackpad (Fn+F8)
+[20:46] <Mamarok> that is really very inconvenient, it worked a few kernels back (presuming this is a kernel isuse)
+[20:49] <Mamarok> or is this configured in the x server?
+[21:35] <Quintasan> Mamarok: I think this is a problem with X
+[21:36] <Quintasan> Stitting on a fresh Saucy Alpha 1 install
+[21:36] <Quintasan> Seems good to me
+[21:39] <Mamarok> yep, I was able to disable it using xinput directly

@@ -1,0 +1,872 @@
+=== freeflying is now known as freeflying_away
+=== freeflying_away is now known as freeflying
+[04:12] <pitti> Good morning
+[04:14] <pitti> tyhicks: hey Tylor!
+[04:15] <pitti> tyhicks: sorry, Tyler
+[04:15] <pitti> tyhicks: your new d-bus introduces a stderr message "AppArmor D-Bus mediation is enabled"; that looks like a debugging leftover?
+[04:15] <pitti> tyhicks: it breaks the bluez test (https://jenkins.qa.ubuntu.com/job/saucy-adt-bluez/66/)
+[04:17] <pitti> hm, it's just a DBUS_SYSTEM_LOG_INFO
+[04:17] <jjohansen> pitti: actually logging that the MAC is enabled is standard practice, we have 3 messages in the kernel about apparmor enablement
+[04:18] <jjohansen> its a way of verifying that your mediation is enabled for an audit trail
+[04:18] <pitti> jjohansen: that should go to kmsg though, right?
+[04:19] <pitti> tyhicks: FYI, dbus doesn't currently propagate because britney thinks that the fluidsynth test is still running; once jibel comes online we'll clean that up
+[04:19] <pitti> so it'll land today
+[04:21] <jjohansen> pitti: yeah the kernel one go through kmesg, the dbus message might not be able to go through the audit system, I know there was problems with audit not being available or something like that when dbus came up. I've forgotten the details, tyhicks would know better
+[04:21] <jjohansen> pitti: thanks
+[04:22] <pitti> so I'll look at the bluez test and adjust it for the stderr message
+[04:23] <pitti> meh, it breaks the network-manager, upstart, and ubuntuone-dev-tools tests too
+[04:24] <pitti> ah no, that was the new kernel
+[04:26] <sarnold> pitti,jjohansen: as I understand it, to log through auditd would require dbus daemons to run with CAP_AUDIT_WRITE -- which the user-started ones won't have and probably shouldn't have.
+[04:28] <sarnold> which considering that now log messages will go through two separate logging systems, we may wish to reconsider using fscaps to start dbus with CAP_AUDIT_WRITE so we can return to a single log sink.
+[04:41] <jjohansen> sarnold: yeah that sounds familiar, I remembered their being issues, but just didn't remember what they where
+[05:00] <darkxst> cjwatson, how do we change the syslinux theme on Ubuntu GNOME CD?
+[05:05] <darkxst> cjwatson, as in where does the image builder get the themes from? I couldnt find anything for the other flavours?
+[05:49] <pitti> lifeless: hey Robert, how are you?
+[05:51] <pitti> lifeless: I want to have a go at adding a python3-junitxml binary; a couple of other patches piled up in Debian BTS (dh_python2, unused build dep, etc.); are you interested in an NMU?
+[05:52] <tyhicks> pitti: hello - the "AppArmor D-Bus mediation is enabled" message should be context aware
+[05:52] <tyhicks> pitti: the message from the session bus should go to stdout and the message from the system bus should go to syslog
+[05:53] <pitti> tyhicks: the bluez test runs its own dbus-daemon, I guess it comes from there; but it goes to stderr
+[05:53] <tyhicks> oh, that isn't happening
+[05:53] <lifeless> pitti: hi
+[05:53] <lifeless> pitti: NMU away
+[05:53] <lifeless> pitti: I keep meaning to move that and a number of pythons into the Python packaging team
+[05:53] <lifeless> pitti: I'm good :)
+[05:53] <pitti> tyhicks: but anyway, I guess that's really a problem in the bluez test, but I wondered why debug messages need to go to stderr if anything else goes to stdout
+[05:54] <tyhicks> pitti: well, it is more than a debug message
+[05:54] <tyhicks> pitti: but it should go to stdout
+[05:56] <pitti> lifeless: while I'm at it, would you like me to do some other packaging refreshing, like updating to a non-deprecated dh level, dropping simple-patchsys and move to 3.0(quilt), and so on?
+[05:58] <lifeless> pitti: be my guest
+[05:58] <lifeless> pitti: though, hmm, quilt - eek
+[05:58] <lifeless> pitti: I still have the packaging for that in straight bzr
+[05:58] <lifeless> pitti: and the Python packaging team is svn
+[05:59] <lifeless> pitti: I'm not sure what setup works best there; but whatever it is, thats what I'd want to converge on.
+[05:59] <pitti> lifeless: well, it' doesn't actually have patches; but I'd like to convert it to pybuild which makes things a whole lot easier
+[06:00] <tyhicks> pitti: I created bug #1217710 for the stderr issue
+[06:00] <pitti> i. e. drop teh cdbs bits and just use the current python packaging stuff
+[06:00] <ubottu> bug 1217710 in dbus (Ubuntu) "Message about AppArmor mediation status goes to stderr instead of stdout" [Medium,Confirmed] https://launchpad.net/bugs/1217710
+[06:00] <pitti> tyhicks: thanks, I'll investigate that a bit more and follow up there
+[06:00] <pitti> tyhicks: ah, you can reproduce? good
+[06:00] <tyhicks> pitti: I'll be happy to fix it tomorrow
+[06:00] <pitti> tyhicks: thanks
+[06:00] <lifeless> pitti: that sounds great
+[06:01] <tyhicks> pitti: to be clear, ubuntu4 can land as it is today and then I can prepare an ubuntu5 with the fix tomorrow, correct?
+[06:01] <lifeless> pitti: all I ask is you cross-check with the python packagnig team standard setup and use that
+[06:01] <lifeless> pitti: that *might* be 3.0(quilt), and if so cool.
+[06:01] <lifeless> pitti: I'm sure it's pybuild etc :)
+[06:01] <pitti> tyhicks: yes; in theory britney should hold back dbus because it breaks the bluez test, but it doesn't (I'll ask jibel about that once he comes online)
+[06:02] <tyhicks> pitti: great - thanks! (jibel just came online)
+[06:25] <jibel> pitti, tyhicks good morning. Investigating the bluez case (once X stops crashing :( )
+[06:26] <pitti> jibel: bonjour
+[06:26] <pitti> jibel: we have a handle on the actual failure; I just wondered why it isn't in excuses for holding back dbus
+[06:26] <tyhicks> hi jibel
+[06:26] <pitti> jibel: btw, could you please run your magic script to fix the "fluidsynth 1.1.6-2: RUNNING"? it finished long ago
+[06:28] <pitti> lifeless: first time that I have used pybuild; it's lovely
+[06:28] <jibel> pitti, right, that's the part I'm checking. The result is correct in the history file, I'm looking why it is not reported correctly to britney
+[06:29] <pitti> lifeless: it's quite straightforward now: http://bazaar.launchpad.net/~ubuntu-branches/ubuntu/saucy/pyjunitxml/saucy/revision/11
+[06:29]  * pitti remembers the time of all these "set -ex; for python in $(shell py3versions -r); do" overrides
+[07:00] <pitti> lifeless: ok, all done; I'll upload to saucy, and (with a consolidated changelog) to Debian
+[08:24] <pitti> jibel: I removed the broken libgtkada from saucy-proposed again; how would I convince britney to stop blocking cairo now? (libgtkada test is green again)
+[08:27] <xnox> wgrant: ~package-import is member of ~ubuntu-branches (which i thought gives the privileges to set the branch for series), but now core-dev is member of ~ubuntu-branches as well.
+[08:27] <xnox> so ~ubuntu-branches doesn't sound that special any more.
+[08:28] <wgrant> xnox: Right, ~ubuntu-branches used to be a celebrity, but now it just owns the branches.
+=== smb` is now known as smb
+[08:28] <wgrant> ~package-import's primary permission today is its membership in ~ubuntu-core-dev. The upload privs allow it to set official branches.
+[08:30] <xnox> wgrant: maybe ~package-import shouldn't be direct member of ~ubuntu-branches then, since it's part of ~ubuntu-core-dev anyway.
+[08:30] <wgrant> It shouldn't make any difference now.
+[08:31] <xnox> wgrant: shall i file a bug against udd & launchpad, to figure out what udd is trying to do, why, whether it's needed and how to fix it (in either udd or launchpad)
+[08:31] <wgrant> I think there's a question open atm that I haven't had time to look at yet.
+[08:31] <wgrant> https://answers.launchpad.net/launchpad/+question/234047
+[08:33] <xnox> wgrant: and there is comment from maxb about it as well.
+[08:33] <wgrant> Right
+[08:35] <Laney> infinity: did you shelve libav 9?
+[08:37]  * pitti sobs at lillypilly having a load of 35
+[08:37] <maxb> "The upload privs allow it to set official branches." .... they used to
+[08:37] <pitti> it never fell < 10 in the past week
+[08:37] <maxb> But now, they don't for old series
+[08:37] <wgrant> maxb: Not quite.
+[08:38] <wgrant> maxb: It used to be able to set for obsolete series because ~ubuntu-branches was a celebrity.
+[08:38] <wgrant> Which could set anything anywhere.
+[08:38] <maxb> Oh
+[08:39] <maxb> I thought it had not been a celebrity for a long time, I didn't realise that was a relatively recent change
+[08:39] <wgrant> Though this particular failure may be because of the new obsolete series restrictions, it could occur with the release pocket since we made ~ubuntu-branches a non-celebrity.
+[08:39] <wgrant> In fact, let's see if relaxing the obsolete series restriction works.
+[08:40] <infinity> Laney: It's not Thursday yet!
+[08:40] <infinity> siretart: *nudge*
+[08:40] <Laney> heh
+[08:40] <Laney> well... I'm trying to upgrade to gstreamer 1.1 and gst-libav1.0 1.1.3 requires this version
+[08:41] <Laney> of course, there's always the internal copy of libav :-)
+[08:41] <infinity> Laney: Ew, no.
+[08:41] <infinity> Laney: Bad Laney.
+[08:41] <Laney> see my previous poke
+[08:41] <infinity> Laney: Honestly, I'd probably grant an FFe and try to jam the transition through ANYWAY, just to avoid having to do it in the 14.04 cycle.
+[08:41] <wgrant> xnox, maxb: I've relaxed the obsolete series restriction for the primary archive and requeued cloud-init, so we'll see if this works.
+[08:42] <infinity> siretart: I'll be your best friend if you get me the new libav in saucy before Thursday.
+[08:43] <Laney> OK, I'll upload the rest and leave libav for a bit then
+[08:43] <infinity> Laney: If it had a sane versioned build-dep, you can do it now, and just assume libav9 is on the way.
+[08:44] <Laney> Mmm, yeah it does.
+[08:46]  * infinity debates debugging this eglibc test failure further, doing expense reports, or napping.
+[08:46] <infinity> Note that's "napping in oppressive humidity and heat", so not actually much more fun than the other two activities.
+[08:46] <Laney> Didn't you promise messagingmenu-sharp? :P
+[08:46] <infinity> Laney: Did I?
+[08:46] <seb128> infinity, Laney, cjwatson: current dbus in proposed is creating issues (basically the apparmor integration is buggy on buildds and prevent dbus from starting, which makes tests unhappy and block landing)
+[08:47] <seb128> infinity, Laney, cjwatson: do you have any objection to delete it to reupload once we have the issue fixed?
+[08:47] <pitti> seb128: oh, I just fixed the wrong "RUNNING" in excuses, should I un-fix that to keep it in -proposed?
+[08:47] <pitti> seb128: (IOW, it'll migrate soon)
+[08:47] <seb128> pitti, yes, please
+[08:47] <seb128> or just delete it from proposed
+[08:47] <seb128> I was asking before doing it, in case there is a good reason we shouldn't
+[08:48] <infinity> pitti: You fixed at the jenkins level you mean, or...?
+[08:48] <pitti> infinity: no, jibel said to update the .history file on lillypilly
+[08:48] <infinity> Ick.
+[08:48] <infinity> Please just use britney hints for one-time things like that.
+[08:49] <pitti> something else is wrong there; the failing bluez test ought to hold back dbus
+[08:49] <infinity> Hacking the actual infrastructure doesn't seem helpful unless we're FIXING the infrastructure.
+[08:49] <pitti> infinity: well, jibel is at debugging it
+[08:49] <seb128> ok, I take that as "no objection"
+[08:49]  * seb128 deletes
+[08:49] <pitti> seb128: ack
+[08:49] <infinity> seb128: Yeah, delete away.
+[08:50] <infinity> seb128: I assume a fix is on the horizon, though?
+[08:50] <seb128> infinity, yes, tyhicks is on it
+[08:50] <tyhicks> yep
+[08:51] <tyhicks> infinity: I'll reupload an entirely new dbus that includes the fix
+[08:53] <Laney> infinity: I thought you said so to hyperair
+[08:53] <seb128> pitti, jibel: cairo moved to saucy, thanks!
+[08:53] <Laney> the upstream / Debian guy has been asking us about it with increasing frequency
+[08:53] <pitti> seb128: yw
+[08:54] <infinity> Laney: Oh, I think he asked me about it last week, I told him to poke me later, and he never poked, and I forgot.
+[08:54] <Laney> Doh.
+[08:54] <seb128> tyhicks, https://bugs.launchpad.net/ubuntu/+source/gedit/+bug/1217757 might be due to that dbus as well
+[08:54] <Laney> Well, here be a poke.
+[08:54] <ubottu> Launchpad bug 1217757 in gedit (Ubuntu) "Error retrieving accessibility bus address: org.freedesktop.DBus.Error.NoReply: Did not receive a reply. " [Undecided,New]
+[08:54] <hyperair> infinity: i did, but i don't think you read your scrollback pings
+[08:54] <hyperair> infinity: at least, you appeared afk all the times i tried
+[08:54] <infinity> hyperair: I normally do.  May have missed some, it's been a weird week.
+[08:54] <hyperair> heh oh well
+[08:54] <infinity> hyperair: So, is this going to Debian as well, or just us?
+[08:55] <hyperair> it's in debian already i think
+[08:55] <hyperair> oh wait
+[08:55] <infinity> It sure isn't.
+[08:55] <hyperair> it'll get into debian when rdeps are done
+[08:55] <hyperair> it's messaging menu stuff after all. the status of packaging all of the indicator stack is rather incomplete in debian iirc
+[08:55] <infinity> hyperair: See, this would have been much less hassle if you got it into Debian and synced, but meh.  I'll review it here quickly.
+[08:56] <Laney> Isn't MessagingMenu  an Ubuntu thing?
+[08:56] <hyperair> infinity: ^ that's the problem.
+[08:56] <infinity> Laney: It is, but there's no reason we can't have it in Debian too, and some of the bits are, AFAIK.
+[08:56] <hyperair> some bits are, but it's horribly incomplete
+[08:56] <infinity> Yeah.  We should fix that.
+[08:56] <infinity> But not today. :P
+[08:56] <hyperair> yeah
+[08:57]  * hyperair thinks zhenech was taking care of that..
+[08:57] <tyhicks> seb128: thanks - I'll look into that some more
+[08:57] <seb128> tyhicks, I commented on the bug
+[08:57] <seb128> tyhicks, the a11y stack uses its own private bus, not the session one
+[08:57] <seb128> tyhicks, so that's sort of a special case, maybe that's not handled well by the confinement?
+[08:58] <tyhicks> seb128: it is a possibility if an app on one end of the dbus connection is confined
+[09:01] <hyperair> infinity: oh yeah, i think i recall why i didn't get involved in packaging indicator stuff for debian. it's all bzr. >:(
+[09:02] <Laney> I'm not sure that pkg-ayatana team is really active any more
+[09:02] <hyperair> bleh
+[09:03] <infinity> It could probably do with a friendly hijack by someone who actually intends to use the stack in Debian.
+[09:03] <hyperair> maybe if it didn't use bzr..
+[09:03] <infinity> You mean upstream?
+[09:04] <infinity> Cause I don't really care what my upstreams use.  Hide it in a get-orig-source debian/rules target and scream "LA LA LA" while you ignore the upstream VCS.
+[09:04] <Laney> gosh
+[09:04] <seb128> yeah for vcs trolling...
+[09:04] <Laney> pitti: you were right about lillypilly
+[09:04] <infinity> If you mean the Debian packaging, as Laney points out, pkg-ayatana is probably dead.
+[09:04] <Laney> even http sucks
+[09:04] <seb128> it's the same commit/diff/push/etc than with most other vcses, that should be good enough for packaging
+[09:07] <hyperair> infinity: no, pkg-ayatana uses bzr.
+[09:07] <hyperair> maybe it deserves a hijack..
+[09:08] <hyperair> seb128: that's if you only use commit/diff/push/etc
+[09:09] <pitti> Laney: too much stuff running on it these days :/
+[09:09] <hyperair> and i was just being grumpy about it, not intentionally trolling. you turned it into trollbait and bit on it.
+[09:09] <Laney> pitti: the archive box should offload some of that
+[09:09] <seb128> hyperair, which, for a packaging vcs, is mostly the case ... (at least if you don't do full source based on upstream style)
+[09:09] <infinity> hyperair: Accepted, built, and accepted again.
+[09:10] <hyperair> infinity: thanks
+[09:10] <hyperair> seb128: which i do.
+[09:10] <hyperair> seb128: while i'm at it, i also use pristine-tar.
+[09:10] <hyperair> and i have a whole bunch of custom scripts built around my workflow on git, and bzr breaks all of that
+[09:11] <hyperair> and i dislike the way the bzr tools work
+[09:11] <hyperair> can we end this here now?
+[09:12] <pitti> well, you started it :)
+[09:12] <infinity> hyperair: Only via a fight to the death with foam swords emblazoned with catchy sayings about your favourite VCS.
+[09:12] <hyperair> pitti: 17:09:17 <hyperair> and i was just being grumpy about it, not intentionally trolling. you turned it into trollbait and bit on it.
+[09:12] <RAOF> infinity: Etched in reverse runes?
+[09:12]  * hyperair sighs
+[09:12] <infinity> RAOF: Etching a foam sword is hard.  I was thinking written in Sharpie.
+[09:13] <hyperair> couldn't a foam cutter thing work?
+[09:13] <RAOF> Lasers.
+[09:13] <RAOF> It's the solution to everything!
+[09:13] <infinity> Lasers solve everything.
+[09:13] <infinity> Jinx.
+[09:13] <hyperair> oh yes, lasers.
+[09:13] <hyperair> to be cheap you could just use a soldering iron as well
+[09:14] <infinity> Well, a nice precision CNC would do the trick.  But a laser CNC would be nicer.  Maybe it's time to upgrade.
+[09:30] <xnox> wgrant: failed due to existing merge-proposal \o/ set it to rejected.
+[09:31] <xnox> wgrant: requeued cloud-init again.
+[09:31] <darkxst> xnox, hi
+[09:31] <xnox> darkxst: hello.
+[09:32] <darkxst> so I got no where trying to setup a pam session, python3-pam seems broken
+[09:32] <darkxst> but anyway can you merge my changes before feature freeze?
+[09:35] <xnox> darkxst: sure. Gnome-shell is not listed as alternative dependency, but I can fix that up.
+[09:35] <darkxst> xnox, and really need to get the sso thing fixed before beta, but I have no idea what is causing it other than presumably some missing dep
+[09:35] <darkxst> xnox, or just disable sso on ubuntu GNOME
+[09:35] <xnox> darkxst: i'll check / fix u1
+[09:38] <cjwatson> darkxst: the syslinux and gfxboot themes (you probably need to change both - just make sure to keep the exact same image formats) are in data/saucy/ in lp:~ubuntu-cdimage/debian-cd/ubuntu
+[09:40] <lifeless> pitti: cool, thank you!
+[09:42] <xnox> roaksoax: seems like everything works now "checking for COROSYNC... yes" will upload lvm2 in a moment.
+[09:42] <darkxst> cjwatson, thanks
+[09:47] <jamespage> doko_, if you are around can you take a look at the build failure for libunwind - I can get things building OK on amd64 but all other archs are failing with a lzma linking error
+[10:00] <xnox> roaksoax: lvm2 uploaded, now it build-dep-waits on dlm to be promoted to main. pinged release team about it.
+[10:03] <jbicha> can we drop the packagekit stuff from the sync-blacklist now?
+[10:03] <cjwatson> jbicha: I just did
+[10:04] <cjwatson> jbicha: I'm working through a sequence of things to sponsor provided by glatzor
+[10:04] <jbicha> cool, thanks
+[10:10] <jbicha> cjwatson: I have gnome-packagekit ready or I can defer to you if you just want to handle it
+=== freeflying is now known as freeflying_away
+=== DrKranz is now known as DktrKranz
+[10:16] <cjwatson> jbicha: is it the same as glatzor's work in bug 1200303?
+[10:17] <ubottu> bug 1200303 in gnome-packagekit (Ubuntu) "Sync gnome-packagekit 3.8.2-4 (universe) from Debian unstable (main)" [Wishlist,New] https://launchpad.net/bugs/1200303
+[10:17] <cjwatson> (mistitled, it's not a sync)
+[10:18] <jbicha> yes
+[10:19] <cjwatson> jbicha: feel free then
+=== sergiuse1s is now known as sergiusens
+[11:07] <jibel> pitti, latest upload of cloud-utils broke the test VMs
+[11:07] <pitti> jibel: yeah, I noticed; but it's not really uninstallable in saucy
+[11:08] <pitti> jibel: is that because it's already pre-installed?
+[11:09] <jibel> pitti, not sure what's wrong. cloud-utils is installed by default on cloud images and 0.27-0ubuntu3 splits cloud-utils into cloud-guest-utils and cloud-image-utils
+[11:09] <jibel> furthermore there is no daily cloud-image for today
+[11:12] <jibel> pitti, ah file conflict during package upgrade http://paste.ubuntu.com/6036233/
+[11:12] <jibel> smoser, ^
+[11:13] <penguin42> when I start soffice on saucy; and select a sheet - it's displaying a ludicrous number of columns/rows that I can hardly see - is that just me or are others seeing it?
+[11:13] <pitti> jibel, smoser: indeed, cloud-*-utils need a C:/B: on cloud-utils (<< 0.27-0ubuntu3)
+[11:13] <pitti> err, C:/R:
+=== gusch is now known as gusch|lunch
+[11:33] <doko_> jamespage, will do
+[11:34] <jamespage> doko_, thanks
+[11:38] <pitti> jibel: annoying, this is breaking even more tests..
+[11:39] <pitti> jibel, smoser: as smoser didn't respond, I'll upload cloud-utils now
+[11:39] <pitti> bug 1217846
+[11:39] <ubottu> bug 1217846 in cloud-utils (Ubuntu) "package cloud-image-utils (not installed) failed to install/upgrade: trying to overwrite '/usr/bin/ubuntu-cloudimg-query', which is also in package cloud-utils 0.27-0ubuntu2" [Undecided,New] https://launchpad.net/bugs/1217846
+[11:39] <jibel> pitti, k, that'll be faster than me fixing all the base VMs manually
+[11:41] <pitti> jibel: done
+[11:42] <jibel> pitti, thanks
+[11:43] <pitti> yay, all i386 builders busy
+[11:43] <cjwatson> shouldn't last that long
+[11:43] <pitti> yeah, compiz is almost done
+[12:04] <wgrant> xnox: That looks like success.
+[12:06] <xnox> wgrant: \o/
+=== gusch|lunch is now known as gusch
+[12:11] <smoser> jibel, i'm sorry. and i told you yesterday i wouldn't break things.
+[12:13] <smoser> thank you pitti  and jibel
+[12:13] <smoser> sorry.
+[12:18] <jibel> smoser, it's okay, I'm running the tests again with the new package. It seems fine now.
+=== _salem is now known as salem_
+=== doko_ is now known as doko
+[13:02] <pitti> jibel: ah, you already retried the recent lot, thanks
+[13:02] <pitti> (back from lunch, was about to kick them)
+[13:07] <sil2100> Hi everyone
+[13:07] <sil2100> I would need some core-dev to ACK the following packaging change: http://paste.ubuntu.com/6036553/
+[13:08] <sil2100> ogra_: ^? ;)
+[13:08] <sil2100> kenvandine: !
+[13:08] <ogra_> sil2100, looks fine
+[13:08] <sil2100> kenvandine: morning, as you just joined I guess you have 15 seconds?
+[13:08] <kenvandine> hey sil2100
+[13:08] <sil2100> ogra_: thanks!
+[13:08] <sil2100> kenvandine: nevermind !
+[13:08] <kenvandine> :-D
+[13:10] <sil2100> kenvandine: but while you're still around, maybe you know something from the daily-release bits...
+[13:10] <sil2100> kenvandine: since I'll be switching to manualpublish: True for all stacks (request from asac which got ACKed more-or-less by seb128)
+[13:11] <sil2100> kenvandine: do you know if I have to redeploy a stack after that?
+[13:11] <asac> kenvandine: hi, let me forward the mail./ also to cypher
+[13:11] <kenvandine> i think so
+[13:11] <sil2100> ;/
+[13:11] <sil2100> kenvandine: thanks
+[13:11] <kenvandine> sil2100, but i doubt you need to reconfigure the branches, so use the flag to skip that part
+[13:13] <Ampelbein> Hello everybody. Why does "bzr branch ubuntu:saucy-proposed/blackbox" say "ERROR: Not a branch"? https://launchpad.net/ubuntu/+source/blackbox shows a version in saucy-proposed.
+[13:14] <cjwatson> Because http://package-import.ubuntu.com/status/blackbox.html
+[13:14] <Ampelbein> cjwatson: Thanks.
+[13:23] <roaksoax> xnox: cool thanks!
+[13:32] <pitti> xnox: dh-python fails with real errors now (the cloud-init problem is fixed in saucy now)
+[13:32] <xnox> pitti: looking. it passed here.
+[13:33] <pitti> xnox: it can't ever have, as the nosetest outputs to stderr
+[13:33] <xnox> pitti: and declares that stderr is allowed...
+[13:33] <pitti> xnox: "Restrictions: allow-stderr" or teach it to output to stdout
+[13:33] <pitti> xnox: ah, then I guess it's the dh-python test which errors out with 1
+[13:34] <xnox> pitti: yeah t205 failed.
+[13:38] <xnox> pitti: haha, so python-support must be installed for the dh_python2 tests to work *lol*
+[13:38]  * xnox goes to fix.
+[13:51] <pitti> xnox: uh, how that? not dead enough yet?
+[13:52] <xnox> pitti: dh_python test-suite doesn't use --with python2, instead it was doing "override_dh_pysupport:" to call dh_python2. Well, neither dh_pysupport nor override_dh_pysupport are called any more, if python-support is not installed.
+[13:52] <xnox> so i ported those tests, to not rely on dh_pysupport =)))
+[13:54] <pitti> *applaud*
+=== Dr_Who is now known as tgall_foo
+=== sam113101 is now known as sam113101_afk
+=== freeflying_away is now known as freeflying
+=== freeflying is now known as freeflying_away
+=== sam113101_afk is now known as sam113101
+[14:59] <slangasek> barry beuno cjwatson dholbach sergiusens ssweeny xnox lool: can I move this session up to be 18:00 today?  tvoss__ needs his session moved to tomorrow. http://summit.ubuntu.com/uds-1308/meeting/21909/foundations-s-touch-download-service/
+[15:00] <sergiusens> slangasek: fine by me, but I am not mandatory
+[15:00] <barry> slangasek: yep.  i see no other conflicts at that slot
+[15:01] <beuno> slangasek, sure
+[15:01] <pitti> xnox: nice, it passed now
+[15:01] <ssweeny> slangasek, sure thing
+[15:01] <xnox> slangasek: sure.
+[15:01] <dholbach> sure
+[15:02] <cjwatson> slangasek: I might need to be in the click/appstore CI session at that time, but I doubt I'm required for all of that, and in any case I already gave xnox my feedback on the rapid start session to pass on in case I couldn't make it
+[15:02] <lool> slangasek: yes
+[15:03] <lool> slangasek: I have some conflicts, but nothing critical
+[15:03] <slangasek> ok, moving - thanks
+[15:04] <tvoss__> slangasek, thanks for the help
+[15:06] <cjwatson> oh, you said the touch download service session anyway, not rapid start ...
+[15:17] <seb128> do we support updates from LTS to newer non versions when they are out of their support period?
+[15:17] <seb128> nonLTS versions
+[15:18] <seb128> to give some context, that's being asked in the libreoffice session
+[15:19] <seb128> e.g if next year precise get a libreoffice newer than quantal, is that an issue?
+[15:19] <seb128> (that would be problematic for precise->quantal updates)
+[15:23] <slangasek> seb128: definitely not supported, we have a hard time even supporting upgrades from EOLed non-LTS versions to a supported LTS
+[15:23] <seb128> slangasek, ok, thanks
+[15:42] <seb128> cjwatson, libunity-webapps hits "autopkgtest for unity-firefox-extension 2.4.7bzr13.04.15-0ubuntu1: FAIL (Jenkins: public, private) "
+[15:43] <seb128> cjwatson, well, we get the rebuild uploaded, but it's blocked by britney on that, seems like those tests were never green, you might want to force it
+[15:43] <cjwatson> yeah, I was just checking that
+[15:44] <cjwatson> if nobody cares about that test, maybe it should be deleted?
+[15:44] <Laney> More always broken tests that nobody cares about :|
+[15:44] <cjwatson> (it looks like it's failing due to trying to go off to pypi, rather than because the package is broken ... i.e. test framework failure)
+[15:45] <cjwatson> seb128: force-badtest'ed, anyway
+[15:45] <seb128> k
+[15:49] <ScottK> Mirv: Debian's already started uploading 5.1.1, so a direct merge ought to be easy enough when the time is right.
+[15:50] <Mirv> ScottK: that's nice, I'd like to sync at least 9 packages directly
+[15:51] <Mirv> we've some package transitions because of raring, and then qtbase+qtdeclarative+qtwebkit additional patches, as approximate summary
+[15:52] <ScottK> Also qtcreator.
+[15:52] <ScottK> It'd be nice to get the Ubuntu SDK stuff into a different source so we could sync that too.
+[15:53] <Mirv> yes, that's the plan of the SDK team, now partially done but the real compiled plugin also needs to move to lp:qtcreator-plugin-ubuntu
+[16:04] <linuxtech> Lamont Jones has uploaded  bind9_9.9.3.dfsg.P2-3 to incoming.debian.org and I know he planned to get it into saucy prior to the FeatureFreeze, but I am not seeing the package in Ubuntu yet.  Ubuntu doesn't have an incoming.ubuntu.com and I checked http://archive.ubuntu.com/ubuntu/pool/main/b/bind9/, where else should I look for it?
+[16:05] <cjwatson> lamont: ^-
+[16:05] <cjwatson> linuxtech: https://launchpad.net/ubuntu/+source/bind9
+[16:05] <cjwatson> if it's not visible there it hasn't been uploaded
+[16:05] <lamont> I was letting it age until this afternoon
+[16:06] <linuxtech> It's not there yet, thanks!
+[16:06] <cjwatson> we don't have an incoming.ubuntu.com because we don't need one :-)
+=== dholbach_ is now known as dholbach
+=== dholbach_ is now known as dholbach
+[16:48] <xnox> barry: os.path.exists is lying to me! It says False, when the right answer is to raise PermissionError
+[16:49] <cjwatson> Not sure I agree
+[16:49] <cjwatson> I think of os.path.exists as something that should parallel test -e
+[16:50] <cjwatson> Anyway it's documented behaviour :-)
+[16:50] <barry> xnox: well, os.path.exists() returns False if os.stat(path) raises an OSError
+[16:51] <barry> does not check what kind of OSError you get
+[16:52] <barry> cjwatson, xnox: correct :) http://docs.python.org/3/library/os.path.html#os.path.exists
+[16:52] <xnox> barry: but "try: found=True; os.stat(path) except OSError: found=False" is ugly!
+[16:53] <barry> xnox: EAFP!
+[16:54] <xnox> barry: European Association of Fish Pathologists ?
+[16:54]  * xnox is confused
+[16:54] <cjwatson> add "python" to your google search terms :)
+[16:55] <xnox> i see. ok
+[16:55]  * xnox goes to apply.
+=== bschaefer_ is now known as bschaefer
+[17:27] <sarnold> seb128: 1217841 has been six hours without retracing, are they broken again?
+[17:29] <seb128> sarnold, yep, down again
+[17:29] <seb128> I hate those retracers :p
+[17:29] <seb128> the stacktrace doesn't really make sense to me
+[17:29] <seb128> I guess I'm going to untag the bug it fails on so it can keep retracing others
+[17:30] <seb128> then check with pitti tomorrow
+[17:33] <sarnold> seb128: heh, yes, I can imagine :) they're very nearly magical, and when they work, it's impressive, but daily work stoppages is less than ideal. Thanks for re-poking them. :)
+=== bfiller is now known as bfiller_
+=== bfiller_ is now known as bfiller
+[17:35] <seb128> sarnold, is that your own reported bug you are checking on or do you watch some list of bugs coming from somewhere?
+[17:35] <tkamppeter> anyone has an idea why a package can build on amd64, armhf, and powerpc but not on i386? See https://launchpad.net/ubuntu/+source/ghostscript/9.10~dfsg~rc1-0ubuntu1.
+[17:36] <seb128> tkamppeter, i386 builds the arch all binaries, the other archs not
+[17:38] <tkamppeter> seb128, yes "make" seems to have succeeded, so it seems that it is in the distribution of the built files in the binary packages, but there is no useful error message after the succeeded "make".
+[17:38] <seb128> tkamppeter, that doesn't seem the case here
+[17:38] <seb128> tkamppeter, the error is at the start of the log
+[17:38] <seb128> tkamppeter,
+[17:38] <sarnold> seb128: I just go through the pile of bugs labelled 'security' and try to shove them on their way. When I notice something hasn't been retraced in a handful of hours, I ask if it's been held up. not that I care abou any specific bug, but that it'd be nice to keep things moving for users. :)
+[17:38] <seb128> "cp ./openjpeg/opj_config.h.in.user ./obj/opj_config.h
+[17:38] <seb128> cp: cannot create regular file './obj/opj_config.h': No such file or directory
+[17:38] <seb128> make[1]: *** [obj/opj_config.h] Error 1"
+[17:38] <seb128> sarnold, right ;-)
+[17:39] <sarnold> seb128: since nearly everything with a coredump is labeled a private security problem, I figure they won't get any attention at all from anyone until we can knock that 'private' off of them :)
+[17:39] <seb128> tkamppeter, could be a race bug combined with the -j option
+[17:39] <seb128> tkamppeter, let me retry the build
+[17:41] <seb128> sarnold, any news on the openjpeg mir btw? ;-) (seeing that ghostscript build made me think to it)
+[17:42] <sarnold> seb128: yes, I think I'm about 1/3 of the way through it. it's highly intricate / global-variable heavy code. :/
+[17:42] <seb128> sarnold, I guess there is no hurry, ghostscript went back to use their copy because some fix didn't made upstream yet it seems
+[17:43] <seb128> sarnold, I'm mostly asking because I would like to build poppler with it though
+[17:43] <infinity> sarnold: If other image manipulation libraries are anything to go by, I think we can just count on it being insecure by design and weep quietly as we let it in anyway, right? :P
+[17:43] <sarnold> infinity: haha, yes. :)
+[17:44] <tkamppeter> seb128, sarnold, from the Ghostscript side I will not need openjpeg in this cycle. My attempts to build GS with system openjpeg failed and I returned to Ghostscript's own openjpeg.
+[17:44] <sarnold> cripes that's just as bad :) hehe
+[17:45] <sarnold> it'd be nice to only have one copy of whatevre it is... hehe.
+[17:45] <infinity> Indeed.
+[17:46] <infinity> seb128: You mentioned "some fix didn't make it upstream", surely we could identify that and carry it in our system copy, rather than perpetuating the code duplication of this (apparently hideous) codebase. :P
+[17:46] <seb128> tkamppeter, ^
+[17:47] <seb128> infinity, right, I was mostly reading the changelog from that ghostscript upload from tkamppeter
+[17:47] <seb128> sarnold, infinity: btw I should try to update our version to the current serie (1.5 at least)
+[17:48] <tkamppeter> seb128, it seems that the "make" of GS seems to try to copy a file into obj/ before mkdie obj/, perhaps I have to call mkdir obj before running "make"?
+[17:49] <infinity> tkamppeter: That usually means they're missing a dependency in one of their makefiles.
+[17:49] <qengho> seb128: I know a guy who needs help getting a dependency of his project updated. Who should I point to his (non-Desktop, Universe) bug report to? https://bugs.launchpad.net/ubuntu/+source/couchdb/+bug/1212481
+[17:49] <seb128> tkamppeter, why did it work on other archs?
+[17:49] <ubottu> Launchpad bug 1212481 in couchdb (Ubuntu) "Saucy: CouchDB 1.4.0 needed to work with Erlang 16.b.1" [Undecided,Confirmed]
+[17:49] <infinity> tkamppeter: Which is exacerbated by building with multiple threads.
+[17:49] <seb128> qengho, tell them to subscribe ubuntu-sponsors I guess?
+[17:49] <qengho> Thx!
+[17:50] <tkamppeter> seb128, why it fails on 1386 and succeeds on all the others I do not understand.
+[17:51] <infinity> tkamppeter: Because i386 calls different rules than other arches.
+[17:51] <infinity> tkamppeter: It can probably be reproduced on amd64 by using "dpkg-buildpackage -b" instead of "dpkg-buildpackages -B".
+[17:52] <infinity> s/buildpackages/buildpackage/
+[17:55] <tkamppeter> infinity, and the build server does "make -j8", my machines at home do not use the -j option when building GS.
+[17:55] <infinity> tkamppeter: They would if you used DEB_BUILD_OPTIONS="parallel=8" :P
+[17:56] <infinity> If your package claims to support that, it will be used.
+[17:56] <tkamppeter> seb128, infinity, should I perhaps make -j on the build servers be suppressed, perhaps by DEB_BUILD_OPTIONS="parallel=1"?
+[17:57] <pitti> seb128: thanks, amd64 is again catching up
+[17:57] <infinity> Anyhow, got the same failure here with -j4.
+[17:57] <infinity> Let me try with 1.
+[17:58] <infinity> Ugh, why is this still CDBS?
+[17:59] <infinity> tkamppeter: I believe the CDBS way is to set DEB_PARALLEL_JOBS to 1.
+[17:59] <infinity> I think.
+[17:59] <infinity> Anyhow, that might not even be the problem.
+=== zyga_ is now known as zyga
+[18:05] <slangasek> barry: joining the hangout?
+[18:05] <barry> slangasek: sure :)
+[18:06] <slangasek> barry: https://plus.google.com/hangouts/_/6dd72c850c11015d570e57ed45e02492a2755a11
+[18:08] <tkamppeter> infinity, did it build with 1?
+[18:09] <infinity> tkamppeter: Yes.  Oh, and there's a DEB_BUILD_PARALLEL right there in debian/rules.  Flipping that from 'yes' to 'no' probably fixes it. :P
+[18:10]  * infinity tests.
+[18:11] <slangasek> or fixing the make dependencies properly
+[18:11] <infinity> tkamppeter: Of course, finding the actual dependency bug would be better.
+[18:11] <infinity> slangasek: Jinx.
+[18:11] <xnox> infinity: no, one needs to remove it. or set it to empty, as the test is $(if $(DEB_BUILD_PARALLEL),...)
+[18:12] <infinity> xnox: CDBS is so much fun!
+[18:12] <xnox> infinity: with '0' or 'no' it will still keep parallel build =)
+[18:15] <tkamppeter> infinity, so I will comment out the DEB_BUILD_PARALLEL line and reupload that. Is this OK?
+[18:15] <infinity> tkamppeter: I'm testing now to see if that DTRT.
+[18:16] <infinity> tkamppeter: Yeah, that seems to disable -jX
+[18:16] <infinity> tkamppeter: As mentioned, of course, it would be best to find the actual bug, but this works as a stopgap.
+[18:17] <infinity> But the part where you've just made the build take between 4 and 24 times longer on the buildds kinda sucks. :P
+[18:29] <xnox> stgraber: slangasek: cjwatson: ogra_: not sure who pinged me, but android build does pull stuff from -proposed for embedded components. So as soon as src packages are published in -proposed, one can rebuild the android package.
+[18:29] <ogra_> xnox, awesome !
+[18:29] <tkamppeter> infinity, seb128, thank you very much, new GS without parallel build uploaded.
+[18:30] <slangasek> xnox: it just pulls those as build-dependencies, I hope?
+[18:30] <stgraber> ogra_: can you do the same for ubuntu-touch-generic-initrd?
+[18:30] <ogra_> stgraber, if xnox teaches me :)
+[18:31] <slangasek> ogra_: build-depends
+[18:31] <slangasek> nothing else required (and nothing else is appropriate)
+[18:31] <cjwatson> xnox: great, thanks
+[18:31] <xnox> stgraber: slangasek: ogra_: well.... a couple of debs & src packages.
+[18:31] <slangasek> ah, source packages, boo
+[18:31] <ogra_> slangasek, what about them ?
+[18:32] <slangasek> ogra_: "do the same for ubuntu-touch-generic-initrd" should just need build-dependencies...
+[18:32] <xnox> slangasek: i'd pull them as build-dependencies if I could pull: pkg:armhf on i386 build =)
+[18:32] <slangasek> xnox: hmph, right ;)
+[18:32] <slangasek> ok
+[18:32] <xnox> =)))
+[18:32]  * slangasek steps back into the multiarch shadows
+[18:32] <ogra_> oh, i forgot that this is a cross built thingie
+[18:33] <slangasek> it's built for android, therefore it's always cross-built even if we did it on arm :)
+[18:35] <ogra_> slangasek, its not built for android, its just an initrd
+[18:35] <ogra_> it creates a fakechroot and runs update-initramfs in it
+[18:35] <slangasek> ogra_: I meant the android source package
+[18:35] <ogra_> i just dont get how build-deps can have any influence on the pocket the deps are pulled from
+[18:36] <slangasek> ogra_: because the buildds always pull build-deps from -proposed
+[18:36] <ogra_> ah !
+[18:36] <slangasek> otherwise, library transitions would be difficult ;)
+[18:36] <ogra_> yeah
+[18:37] <slangasek> however, if you're calling debootstrap, that's something else entirely
+[18:38] <ogra_> slangasek, yeah, i think i would have to add proposed to the chroot sources.list
+[18:38] <ogra_> or some such
+[18:39] <infinity> Yeahp.  d-i has to pull similar tricks.
+[18:39] <slangasek> yeah; you can't debootstrap from multiple pockets simultaneously (unless someone's implemented that recently), so it's: debootstrap from saucy, add -proposed, dist-upgrade, etc.
+[18:39] <ogra_> but i dont want everything to come from proposed ... so there it gets tricky or hackish
+[18:39] <infinity> Also, I assume you're using the "use the same mirror as the buildd chroot" trick?
+[18:39] <slangasek> why don't you?
+[18:39] <slangasek> I think you do want everything from -proposed
+[18:39] <ogra_> infinity, indeed
+[18:40] <infinity> ogra_: You absolutely want everything from -proposed, you're not a unique snowflake here.
+[18:40] <slangasek> or you want to build exclusively against *not* -proposed
+[18:40] <infinity> All packages should build against proposed.
+[18:40] <slangasek> but you don't want to cherry-pick from -proposed.
+[18:40] <ogra_> ok
+[18:40] <infinity> Well, rather, all packages should build against the pocket they're in.
+[18:40] <slangasek> why are we doing this as a package, btw?
+[18:40] <infinity> If you want to be properly anal retentive about this.
+[18:40] <ogra_> but that means that i might end up with stuff inside the initrd that never makes it out of proposed
+[18:40] <slangasek> initramfses for distribution are traditionally built on the livefs builders
+[18:40] <infinity> Which also means supporting building in PPAs (for security updates).
+[18:41] <infinity> And security updates don't build against proposed, so that shouldn't be hardcoded, but detected.
+[18:41] <ogra_> slangasek, so the android build can pull it in from LP during build
+[18:41] <ogra_> slangasek, we dont need the initrd per se, we need the boot.img
+[18:41] <ogra_> and that comes from the android package
+[18:42] <slangasek> hmm, hmm
+[18:42] <infinity> ogra_: The answer to the "it might include stuff that migrates out of sync" is to do what I did for d-i with a metapackage with hard deps.
+[18:42] <infinity> (Well, one way to deal with the problem)
+[18:42] <ogra_> so we drop the ubuntu initrd into the tree and the android build scripts pick it up when generating the boot.img
+[18:42] <slangasek> I am unconvinced that it makes sense to do anything that needs the boot.img as part of the package build, as opposed to deferring all of that, and any dependencies on it, out of the android package to the livefs builder
+[18:42] <infinity> So you don't get to migrate until your deps all can.
+[18:42] <ogra_> infinity, well, after all i only want one package
+[18:43] <slangasek> (and I think either you or xnox tried to explain this to me once before, but I didn't manage to internalize it)
+[18:43] <tkamppeter> infinity, seb128, the i386 is succeeding now (currently it is writing the binary packages).
+[18:43] <seb128> tkamppeter, great
+[18:43] <xnox> ?
+[18:43] <ogra_> slangasek, i think rather rsalveti or sergiusens  :)
+[18:43] <tkamppeter> seb128, infinity, now it has completed.
+[18:44] <slangasek> xnox: I'm trying to understand why ubuntu-touch-generic-initrd is a package
+[18:44] <slangasek> though now I wonder if ogra is talking about boot.img from the android source rather than ubuntu-touch-generic-initrd
+[18:44] <ogra_> slangasek, because we need a binary initrd.img
+[18:44] <infinity> slangasek: If the artifacts of ubuntu-touch-generic-initrd are needed for the android build, I imagine that's the sticking point.  Since the android package build can't pull random bits from cdimage.
+[18:44] <ogra_> yes
+[18:45] <infinity> (Can't and shouldn't)
+[18:45] <ogra_> slangasek, the android package pulls in ubuntu-touch-generic-initrd during build (like it does for libhybris, compilers etc)
+[18:45] <slangasek> right, so I'm asking, can't we make the android package not need it
+[18:45] <ogra_> slangasek, our boot.img that we use in the zips is created by the android package
+[18:45] <slangasek> and maybe the answer is "yes, but not right now"
+[18:45] <slangasek> ogra_: telling me "that's how it's done today" doesn't address my point :)
+[18:45] <ogra_> we didnt use it from there until recently
+[18:45] <infinity> ogra_: He might be suggesting that the boot.img shouldn't be produced by a package build.
+[18:46] <slangasek> I might
+[18:46] <ogra_> i used to create the boot.img on the livefs builder before
+[18:46] <ogra_> but if there are changes in android ... i.e. cmdline defaults or some such they wouldnt get picked up
+[18:47] <infinity> I have no fundamental issues, personally, with a package build creating boot images (hi, debian-installer), but you do need to take care of sane dependencies and migration for things that include random binary bits from other packages in their output.
+[18:47] <ogra_> slangasek, all ports need this initrd during their android build ...
+[18:47] <ogra_> thats why we integrated it there instead of on the livefs builder
+[18:48] <ogra_> we could rip that bit out for our own builds, but that means dual maintenance of the same thing
+[18:48] <rsalveti> yeah, iirc this was the main reason why we decided to make it a package
+[18:48] <ogra_> right, took me a bit to remember :)
+[18:49] <slangasek> I don't see how having it in the package instead of on cdimage matters to the ports
+[18:49] <ogra_> slangasek, it needs to be pulled in during build for them ... we already have some lp_pull magic ... that pulls in all the other bits packaged
+[18:49] <rsalveti> avoid duplication
+[18:50] <slangasek> what duplication?
+[18:50] <rsalveti> maintaining a package for porters and our own in cdimage
+[18:50] <ogra_> slangasek, we need the initrd.img in any case... you woulldnt create that on the livefs builder unless you do exactly the same as the package currently does (a dedicated chroot)
+[18:51] <ogra_> since you dont want to taint your livefs build with the initrd stuff
+[18:51] <ogra_> at least the build scripts woould be duplicated and cause dual maintenance
+[18:52]  * ogra_ thinks a package is the most elegant solution we have here 
+[18:52] <slangasek> rsalveti: I'm saying it shouldn't be maintained as a package *at all*
+[18:52] <slangasek> unlike infinity, I do have a fundamental problem with doing this kind of thing in a package if it's not absolutely needed ;)
+[18:52] <ogra_> why ?
+=== natefinch is now known as natefinch-afk
+[18:53] <slangasek> because fakechroot, frankly :)
+[18:53] <ogra_> just because we "traditionallz do it on a live builder" ?
+[18:53] <xnox> ogra_: but you can update the .zip on livefsbuilder / cdimage ?!
+[18:54] <slangasek> we traditionally do it on the live builder because that's the sensible architecture we came up with for handling these cases
+[18:54] <ogra_> xnox, update ?
+[18:54] <xnox> ogra_: zip -u
+[18:54] <ogra_> yes
+[18:54] <rsalveti> slangasek: but then we'd need to duplicate the logic somewhere for the porters :-)
+[18:54] <ogra_> xnox, thats what we did until the package was around
+[18:54] <xnox> rsalveti: we'll keep the one in android, but update it on cdimage, just-in-case or to seed up the respin.
+[18:54] <slangasek> rsalveti: I still don't see why.  If we've created the boot.img, we publish it to cdimage, boom we're done?
+[18:54] <xnox> s/seed/speed/
+[18:55] <ogra_> slangasek, and how do ports get the content of boot.img ?
+[18:55] <stgraber> ogra_: wget + abootimg -x ?
+[18:56] <stgraber> ogra_: we could also publish the raw initrd.img somewhere on cdimage.u.c so they don't need the abootimg step
+[18:56] <ogra_> stgraber, great, so we force them to download stuff they absolutely dont need to fish a binary bit out of another binary file ?
+[18:56] <rsalveti> I don't see how much more elegant that would be
+[18:56] <rsalveti> would we fix any issue if we do that?
+[18:56] <ogra_> instead of giving them the bit they need cleranly without extra cruft around
+[18:56] <rsalveti> or would just make it easier to update the boot.img without respining the android package?
+[18:56] <xnox> slangasek: you are trying to have 1 true way to do something =) at the moment I ignored that by providing options ;-)
+[18:56] <rsalveti> which I'm not sure it's an ideal solution either
+[18:57] <xnox> rsalveti: that's what i offered, keep android package as it is, but on cdimage respin rebuild & in-place update the .zip because it's quick.
+[18:57] <xnox> rsalveti: same with kernel, preferably.
+[18:57]  * ogra_ really likes the package way (even though i didnt in the beginning) ... and i havent heard anmything convincing yet that makes me want to roll back to the former model
+[18:58] <slangasek> ogra_: sorry, but I'm really not understanding your arguments.  "How do they get the content of boot.img" - I don't see any boot.img in any of the packages, either
+[18:58] <rsalveti> xnox: right, that would be the only benefit, but not sure if the pain for porters would justify
+[18:58] <ogra_> xnox, right, but we need a setup that works for all of us, including the ports
+[18:58] <xnox> ogra_: do both =) \o/   the respin speed - no need to rebuild android package to update (a) kernel (b) any of initrd.
+[18:58] <ogra_> slangasek, the porters nmeed the initrd
+[18:59] <xnox> ogra_: correct that's why android package will continue to pull initrd the way it is.
+[18:59] <ogra_> slangasek, if the onlz way to get it is from cdimage by ripping it out of the bootimg ....
+[18:59] <slangasek> ogra_: that is not the point of contention - I don't see anywhere you're *CURRENTLY PROVIDING IT*
+[18:59] <slangasek> and I don't see any reason that providing it in a package is in any way superior to providing it on cdimage as a build artifact
+[18:59]  * xnox steps out for a moment before next session.
+[18:59] <stgraber> xnox: we'd need to update both the .zip and the .img (system-image doesn't use the .zip at all)
+[18:59] <ogra_> slangasek, android ships it, cdimage porvides it
+[18:59] <ogra_> slangasek, adnroid as in the package
+[19:00] <ogra_> slangasek, http://cdimage.ubuntu.com/ubuntu-touch/daily-preinstalled/20130822/*boot-armhf+$subarch.img
+[19:00] <slangasek> ogra_: what does that have to do with ports?  those are the per-subarch images for our supported devices
+[19:00] <ogra_> these are the only public files (beyond the package) that provide you the latest initrd.img for touch
+[19:01] <ogra_> slangasek, right, these are results of the android build that the package does (as well as the tree on phablet.u.c)
+[19:01] <ogra_> the only thing thats not coming from the adnroid tree is the rootfs zip in that cdimage place
+[19:02] <rsalveti> we could do whatever hack we want to make the porters to pull that boot.img and extract the initrd, but I don't see why we should do that
+[19:02] <ogra_> yeah, thats extremely ugly
+[19:02] <slangasek> I'm not arguing for forcing porters to extract anything from anywhere
+[19:02] <rsalveti> we're trying to optimize something that already works just to reduce the amount of package uploads
+[19:02] <rsalveti> well, porters would need to get it from somewhere
+[19:02] <rsalveti> the archive seems to be the best place to be
+[19:02] <slangasek> I'm saying that, whatever the deliverable object is that you need to hand off to porters, it should just be built on the livefs builder and distributed from cdimage
+[19:03] <slangasek> rather than shoehorning it into the archive and then having to contend with questions of "how do we pull from -proposed"
+[19:03] <ogra_> slangasek, so we should build hybvtris and the toolchains on the livefs builder too so their android build can pull them from there ?
+[19:03] <slangasek> no
+[19:03] <ogra_> why not just use a consistem way for all the bits we have to pull into the build
+[19:03] <ogra_> *consistent
+[19:04]  * ogra_ neeeds to relocate for a session ... 
+[19:04] <slangasek> because your "consistency" led to the ubuntu-touch-generic-initrd package
+[19:04] <slangasek> which is a second layer of package hackery
+[19:09] <ogra_> slangasek, its a deboostrap, installation of one package and a call to update-initramfs ... its not sexy but fine for the purpose
+[19:10] <slangasek> stgraber: it would be good to have you in the call about 13.10 post-release support, are you available to join? https://plus.google.com/hangouts/_/006bf4a2afd21e219c0b18cbd32a8d53e9dc89bb
+[19:13] <sergiusens> ogra_: I think I have a big backlog to read
+[19:13] <ogra_> haha
+[19:13] <mitya57> Mirv: FYI, I've updated qtwebkit-examples, qtdoc and qtquickcontrols branches in bzr. I
+[19:14] <mitya57> *It would be nice to get at least qtquickcontrols in Saucy
+=== bschaefer_ is now known as bschaefer
+[19:22] <stgraber> slangasek: messed up my timezone maths and started working on something else... will be there in a sec
+=== natefinch-afk is now known as natefinch
+[19:42] <lamont> linuxtech: bind9 1:9.9.3.dfsg.P2-3 synced
+[19:45] <tkamppeter> infinity, seb128, GS 9.10rc1 has made it into Main now.
+[19:50] <ESphynx> Hey guys, so the various compositors that are installed with Ubuntu all suffer from this delayed update bug here on my laptop with nVidia card
+[19:50] <ESphynx> it's a serious useability issue, the only thing that doesn't suffer from it is Gnome Flashback (No effects)
+[19:52] <ESphynx> As described in http://ecere.com/mantis/view.php?id=987 ... People in #nVidia are agreeing with me the compositors are at fault
+[19:53] <sladen> ESphynx: bug number?
+[19:53] <ESphynx> sladen: I'm not sure if there is an Ubuntu bug for it, that's sort of what I'm asking if anyone's aware of one
+[19:55] <ESphynx> Is the compositor for Unity/Gnome classic/flashback all the same? Is it still compiz?
+[19:59] <sladen> ESphynx: there are/have been several differnt compositors (metacity/Compiz/unity-system-compositor).  We would need to know more details, including the Ubuntu release
+[20:01] <sladen> ESphynx: and some high-level context.  Is this something to do with eg. dragging windows around and having the decoration lag?
+[20:02] <ESphynx> sladen: This is the latest Saucy
+[20:02] <ESphynx> no, this is within the application
+[20:03] <ESphynx> I'm rendering to a pixmap with XRender, and then doing an XCopyArea()
+[20:03] <ESphynx> and this happens with Unity, Gnome Classic, even Gnome Flashback if I don't select "No effects"
+[20:03] <ESphynx> and within the application I just go right/left to expand/collapse a tree view, and I end up in a lagged state when I think i'm on one tree view item, but I'm actually on another
+[20:04] <ESphynx> I also get this on our popup menu, where the previously selected item ends up the one being highlighted
+[20:04] <tarpman> nvidia+compositor makes me think of bug 861268 / bug 888666
+[20:04] <ubottu> bug 861268 in nvidia-graphics-drivers (Ubuntu) "text corruption in terminals (xterm, urxvt) and emacs" [Undecided,Confirmed] https://launchpad.net/bugs/861268
+[20:04] <ubottu> bug 888666 in gnome-shell (Ubuntu) "terminal doesn't refresh properly with nvidia-current drivers" [Undecided,Confirmed] https://launchpad.net/bugs/888666
+[20:06] <slangasek> ogra_: so the root problem is that putting this in a package is an extra layer of indirection that requires manual action from a maintainer to trigger an update.  Instead of just "trigger a livefs build against everything that's current in the archive", if you want to change something that affects the initramfs, you now have to do: upload the fix; wait for publication; upload ubuntu-touch-generic-initrd; wait for publication; upload *and
+[20:06] <slangasek> ... for publication; trigger the build
+[20:06] <slangasek> ogra_: that's two extra steps that we could completely avoid by just doing the initramfs handling entirely in the livefs builder
+[20:06] <slangasek> rsalveti: ^^
+[20:07] <sergiusens> slangasek: ogra_ rsalveti xnox sorry for coming in late, but can we strip out boot.img creation from android into it's own package that gets kernel + ramdisk setup for each device?
+[20:08] <slangasek> sergiusens: :-)  I am 100% arguing that assembly of the image should be on the livefs builder, and not in the package at all
+[20:08] <rsalveti> slangasek: we had that before, and ogra_ moved to be package based
+[20:08] <rsalveti> because of the porters
+[20:08] <rsalveti> so we could use one simple and the same solution for everyone
+[20:08] <slangasek> rsalveti: I think that's a false justification
+[20:08] <sergiusens> rsalveti: I don't see the problem with porters
+[20:09] <ESphynx> tarpman / sladen: I've added to http://ecere.com/mantis/view.php?id=987  a discussion with aaronp on #nVidia regarding this issue
+[20:09] <rsalveti> so we could have one generic initrd that was maintained in the archive
+[20:09] <ogra_> slangasek, no
+[20:09] <slangasek> there are generic bits that we have to provide to the porters as build artifacts; those can be provided on cdimage
+[20:09] <sergiusens> slangasek: +1
+[20:09] <sergiusens> rsalveti: exactly, we can just publish the ramdisk on cdimage
+[20:09] <ogra_> slangasek, you have to trigger the binary build of an initrd for the porters in any case ... i wouldnt want to have to roll a full image just for a one line fix that only helps the porters
+[20:10] <rsalveti> sergiusens: why not in the archive?
+[20:10] <rsalveti> yeah
+[20:10] <sergiusens> rsalveti: that goes to my other suggestion above
+[20:10] <rsalveti> it's not ideal either
+[20:10] <ESphynx> Should I file a new bug as well?
+[20:10] <rsalveti> we do get quite a few uploads in the initrd just because of the porters
+[20:10] <slangasek> there are bits that the porters have to do locally as part of the porting; currently they do that using upstream android trees, *not* using our android source package; but our android source package should soon be built from the "official" Ubuntu Touch tree (?)
+[20:10] <rsalveti> connecting that with the image build seems just a waste
+[20:10] <ogra_> it means we kick off the whole infrastructure including asac and a test run
+[20:11] <ogra_> just for a change in the initrd for some porter
+[20:11] <slangasek> ogra_: is that really something that's happening now?  Having to make uploads for one-line fixes to the generic initrd, that only help the porters?
+[20:11] <rsalveti> yes
+[20:11] <rsalveti> quite frequently actually
+[20:11] <ogra_> yeah, all the time
+[20:13] <slangasek> hum
+[20:13] <ogra_> slangasek, i dont mind changing it, but i dont buy the "it's one more layer in the generic-initrd package" give me something convincing, i'll happilky change it ... having to do a full image build for a changed initrd doesnt cut it though
+[20:13] <slangasek> ogra_: *two* more layers
+[20:13] <slangasek> and I seem to remember you were complaining not so long ago about the time it took for changes to land
+[20:13] <ogra_> the android layer is needed in all cases
+[20:13] <slangasek> no, the android source package doesn't have to be a layer on top
+[20:14] <ogra_> true,  long enough it wasnt
+[20:14] <ogra_> as i said, i only moved the boot.img creation recently
+[20:15] <ogra_> but simply to make sure we get git updates for the boot.img configs
+[20:15] <ogra_> i.e. if cmdline options change in android/CM, these are only in the git tree
+[20:24] <ogra_> slangasek, so how about i merge the two initrd packages, would that make you happier since we have one layer less ?
+[20:25] <sladen> ESphynx: so you're (only) seeing this on Saucy + Nvidea hardware and X?  (Could you add the exact package version numbers for Ubuntu/X/drivers)---I hadn't realised you were on Saucy.  Do you have a minimal test-case (ie basically just with the boilerplate and  XRenderFillRectangle()?
+[20:26] <sladen> ESphynx: then it can be filed in Launchpad (and linked to the other mantis tracker), and the relevant graphics people in Ubuntu can have a look
+[20:27] <sladen> ESphynx: +exact compositor version(s), as this is what aaronp is noting
+[20:33] <stgraber> barry, infinity, lool, slangasek: http://paste.ubuntu.com/6037949/
+[20:37] <lool> stgraber: ah right, I wasn't in the support session but in the SDK one; how did it go?
+[20:38] <stgraber> lool: well, I messed up my tz math so I made it 20min late, but besides that I think it was a good chat
+[20:38] <stgraber> lool: the conclusion is that I need to rewrite import-cdimage but I pretty much came to that one on my own before ;)
+[20:38] <barry> stgraber: so we'll have a channels.json entry called "13.04"?
+[20:38] <stgraber> barry: yep, each series will have at least 3 channels, one of which will be hidden
+[20:39] <stgraber> barry: then we'll have a few fake channels like stable and daily which will still be listed in channels.json but contain the same files as their target (except for a re-generated version.tar.xz)
+[20:39] <barry> stgraber: i'll have to make sure we can handle dots in channel names, but now that i fixed daily-proposed it should be easy
+[20:39] <lool> stgraber: notes >> 13.04?  13.10 or 14.04 surely?
+[20:39] <lool> stgraber: what happens at 13.10 release time?  do we keep updating the 13.10 bucket?
+[20:40] <lool> stgraber: otherwise LGTM, there will probably be a customized-proposed too, but that's for later
+[20:40] <lool> barry: it strikes me that we lack channel descriptions
+[20:41] <lool> barry: and .... translations  :-)
+[20:41] <lool> we aboslutely need to translate
+[20:41] <lool> stable
+[20:41] <lool> to stable
+[20:41] <barry> stgraber: so i see these feature/bugs here.  make sure 13.04 can be supported as a channel name, add a --list option to -cli, and handle the 'hidden' field
+[20:41] <lool> and unstable to instable
+[20:41] <barry> lool: ask didrocks about i18n image descriptions :/
+[20:42] <barry> our current approach is apparently not so much fun from a qt dbus perspective
+[20:42] <stgraber> lool: ah yeah, sure, 13.10 :)
+[20:43] <stgraber> barry: we also need support for phased-percentage in the client
+[20:43] <barry> stgraber: how would that work?
+[20:44] <stgraber> barry: same way update-manager does it, though I don't really know the details
+[20:45] <barry> stgraber: then, yay! :)
+[20:45] <stgraber> barry: IIRC you need to hash the version number with something unique to the device, then use that as a fixed seed to get a random number between 0 and 100. If that number is > phased-percentage, you apply the update, if it's not, you ignore it.
+[20:46] <stgraber> the idea being that we get that percent of devices to update to the new stuff but that the list of devices that get it first changes between updates (so we can't just seed with the IMEI only)
+[20:46] <barry> stgraber: but where does the phased-percentage value live?  in the index.json? channel.json?  is it per image, file record, device?
+[20:47] <stgraber> barry: it'll be an extra field of the image in index.json
+[20:47] <stgraber> barry: the last (and only the last) full and delta will have it set (if applicable)
+[20:47] <slangasek> ogra_: what are the two initrd packages?  android + ubuntu-touch-initrd-generic?
+[20:48] <ogra_> slangasek, initramfs-tools-ubuntu-touch and ubuntu-touch-generic-initrd could be one package
+[20:48] <ogra_> that would remove one upload from the chain
+[20:48] <ogra_> and not make us lose git changes to the bootimg creation from android
+[20:49] <barry> stgraber: so, if we have an update candidate path, we look at the last image in that path and check its phased-percentage.  if our randint is > then we can apply that candidate.  what if it's < ?  do we just ignore that as a candidate and try to upgrade to some other path?  or do we calculate the winning path first, then check it's phased-percentage, such that it's < we do no upgrades at all?
+[20:49] <stgraber> lool: update descriptions support translations. Channels don't have descriptions specifically because we didn't want to deal with translations. IIRC we said that those would either simply not be exposed in the UI or would be translated on the client side.
+[20:50] <stgraber> lool: when 13.10 releases we'll keep daily pointing to 13.10 for a while and maybe push a few bugfixes to that release with the mechanism we want to use for 14.04 (monthly bugfixes + security updates whenever they show up)
+[20:51] <stgraber> lool: then once 14.04 is ready for daily testing, we'll change the alias to point to 14.04
+[20:51] <stgraber> lool: and at some point after that, we'll consider the 13.10 stable experiment as over and will stop pushing updates there
+[20:52] <lool> ok
+[20:53] <barry> lool, stgraber we will have to discuss translations with didrocks when he returns.  there are several technical problems that will need to be ironed out (and some probably more global than system-image)
+[20:53] <lool> agreed
+[20:58] <stgraber> barry, lool, slangasek, infinity: so one remaining problem I have to solve in my plan is how to tell the client that it go moved to another channel when we change the target of an alias
+[20:58] <stgraber> barry, lool, slangasek, infinity: because we want the first update after the alias change to necessarily be a full image
+[20:58] <barry> stgraber: will that full image version > the current version of the old channel you're moving from
+[20:59] <stgraber> barry, lool, slangasek, infinity: but we have the problem that the current image from the new target may have a version lower than the one from the previous target
+[20:59] <ScottK> xnox: Did you send your dh-python changes to piotr?
+[20:59] <stgraber> barry: not necessarily, that's my problem :)
+[20:59] <barry> stgraber: yeah, exactly ;)
+[20:59] <barry> xnox: please do that!
+[21:00] <xnox> barry: i presume you are replying to my email, right?
+[21:00] <stgraber> barry: so I think we need an extra flag in channel.ini and in channels.json which tells us what's the target channel for the alias
+[21:00] <stgraber> barry: and if we see that change, then the next update has to be a full to the latest available image
+[21:00] <barry> xnox: to ScottK's request.  i'll let piotr respond to your email
+[21:01] <ScottK> xnox: Different changes.  He made some fixes in the autopkgtests.
+[21:01] <ScottK> err barry
+[21:01] <barry> ah
+[21:01] <xnox> ScottK: not yet, it only took 4 tries to get it working in the end today between vUDS sessions. And I have more urgent FF things to do at the moment.
+[21:01] <ScottK> I'm looking at ubuntu2 -> ubuntu4.
+=== bschaefer is now known as bschaefer|lunch
+[21:02] <xnox> ScottK: yes, and?! that's today between vUDS sessions.
+[21:02] <barry> stgraber: we could almost handle it all on the client side, i think.  let's say your on channel X and you give system-image-cli --change-to-channel Y.  we could force the current build number to 0 and select the winning target that gives us a full update, kind of like what --filter=full is going to do
+[21:02] <lool> stgraber: how about we list aliases as such and the client knows the channel it is on before the alias change, then decides to pick a full when the alias changes?
+[21:03] <xnox> ScottK: do you mind forwarding them if you have time now?
+[21:03] <ScottK> I don't have time now and won't before Friday.
+[21:03] <lool> stgraber: so basically target_channel = resolve_alias(configured_channel); if source_channel != target_channel: do a full update; else: look for deltas
+[21:03] <xnox> ScottK: same here =)
+[21:03] <ScottK> Maybe he'll look at the package.
+[21:03]  * cjwatson does a little dance as a non-virtual build abort works on dogfood.
+[21:04] <xnox> ScottK: plus i'd rather send pull-requests, than patches.
+[21:04] <barry> stgraber, lool oh wait, so the device could be on an alias, and there isn't exactly a literal channel change involved.  the alias "symlink" could just change out from under the device?
+[21:04] <cjwatson> (Albeit by way of a python prompt with xmlrpclib, but that'll be sorted soon ...)
+[21:04] <lool> barry: yeah
+[21:04] <stgraber> barry: right
+[21:04] <ScottK> xnox: He says he'll grab the package and look at it this weekend, so it should be fine.
+[21:05] <lool> barry: stable -> 13.10 becomes stable -> 14.04
+[21:05] <xnox> ScottK: cool, thanks.
+[21:05] <stgraber> lool: then we couldn't flash to an alias with phablet-flash because we wouldn't have the alias name anywhere on the flashed device. That's why I didn't go with simple symlinks on the server... we store the channel name in the version tarball
+[21:06] <lool> stgraber: not sure how you propose we write the alias name after a phablet-flash; why wouldn't that be preserved?
+[21:06] <stgraber> barry, lool: but having an extra field in channels.json giving us the target channel name should be reasonable and with that info in device.tar.xz too makes it trivial for system-image to figure out the target changed and then go with version = 0 + update (which will typically grab the latest full)
+[21:07] <barry> lool, stgraber what if channel.ini held both the channel name (e.g. 'stable') and the alias name (e.g. "13.10")?  then we'd know what actual channel we were on, and the channel.json file would tell us if that alias changed.  if they did, then we slam version to 0, --filter=full and do the upgrade
+[21:07] <lool> barry: that's what I had in mind
+[21:07] <lool> but stgraber has a point that this would need to be written by phablet-flash
+[21:07] <lool> since images don't know what channels they belong to
+[21:08] <stgraber> I'm confused, we all seem to agree but not quite, so let me rephrase :)
+[21:08] <stgraber> 1) I create a stable channel on system-image.u.c with an extra field "channel_target" which points to say "13.04"
+[21:09] <stgraber> 2) That channel is identical to its target except for version.tar.xz which contains the alias name as its channel name and also contains channel_target
+[21:09] <stgraber> 3) When switching the alias, channel_target changes to 14.04
+[21:10] <slangasek> stgraber: http://paste.ubuntu.com/6037949/> LGTM!
+[21:10] <stgraber> 4) system-image-cli looks at channels.json, finds the channel but sees channel_target is different than the local value it has, so decides to consider its version to be 0 and run a new update
+[21:10] <lool> oh wow
+[21:10] <lool> I didn't actually think you'd have real version.tgz for the alias channels
+[21:10] <barry> stgraber: that looks reasonable to me
+[21:11] <stgraber> lool: I'd. I already have that logic for the proposed channel anyway
+[21:11] <stgraber> lool: (otherwise everytime you'd update a device in the proposed channel, it'd revert to the daily channel)
+[21:11] <lool> ok
+[21:11] <lool> I thought we'd have cleverness in client to deal with this, but that works too
+[21:12] <lool> and the client is kept dumber, which is good
+[21:12] <barry> lool: indeed :)
+[21:12] <stgraber> so all the important bits (ubuntu, android, customization) are identical and shared between channels but the version tarball is always channel specific and is what tells system-image-cli where the image comes from (server, ports, channel name, ...)
+[21:12] <stgraber> barry: ok, good. I'll add myself a bunch of todo items for that. I unfortunately expect we'll have to change channels.json quite a bit to allow per-channel settings
+[21:13] <stgraber> barry: since we need to add per-channel settings, I'll also be moving the hidden flag there (instad of in the device section of channels.json) since we'll typically want to hide the whole channel and not just hide it for a single device
+[21:13] <barry> stgraber: can you please file bugs for all these new features?  i'm trying to finish up a different new feature before my eod so i can upload a new version today
+[21:13] <stgraber> barry: anyway, expect some spec changes and bug reports from me
+[21:14] <barry> +1
+[21:14] <barry> thanks
+[21:14] <lool> cool
+[21:15] <slangasek> stgraber: version numbers> argh
+[21:15] <stgraber> slangasek: that's solved ;)
+[21:15] <slangasek> oh, ok :)
+[21:16] <stgraber> slangasek: tl&dr: We'll store the target channel name in channels.json and on the device, if they differ, we know the target changed so we assume a version number of 0 and run an update from there
+[21:16] <slangasek> aha, cool
+=== bschaefer|lunch is now known as bschaefer
+=== freeflying_away is now known as freeflying
+=== salem_ is now known as _salem
+[22:25] <xnox> infinity: $ bzr branch lp:ubuntu/eglibc
+[22:25] <xnox> Most recent Ubuntu version: 2.17-91ubuntu1
+[22:25] <xnox> Packaging branch status: CURRENT
+[22:31] <slangasek> xnox: ah, so it was you making that noise earlier about ancient eglibc branches suddenly being linked to bugs? ;)
+[22:32] <xnox> slangasek: yes. well, thanks to wgrant fixing permissions =)
+[22:32] <slangasek> \o/
+[22:32] <xnox> slangasek: ifupdown should be up to date as well.
+[22:32] <slangasek> sw33t
+[22:33] <xnox> slangasek: i don't like debian's proposal on d-d to only have dinstall x2 a day, instead of current x4.
+[22:34] <slangasek> xnox: I haven't read it through yet, but at first blush I don't like it either
+[22:39] <ESphynx> sladen: Are you still around? just got back... I could give you all the info, but that was all the latest as of last week or so, and so far yes I've only seen this on nVidia hardware, though aaronp seems to be quite confident the compositor is to blame
+[22:40] <ESphynx> I do not have a 'minimal' test case, but I have an easy enough to reproduce test case with the Ecere IDE
+[22:41] <xnox> stgraber: please merge/sync procenv, jodh wanted 0.26 to land in saucy. =) also he is very responsive to merge proposals on lp:procenv
+[22:41] <ESphynx> (I think it would happen as well with the version already in Saucy, but that suffers from additional bugs we've fixed or we're trying to fix)
+[22:43] <stgraber> xnox: straight sync is fine, the only delta we have is a call to df -h and df -i in autopkgtest because procenv didn't support showing free/total blocks/inodes yet (but 0.26 does)
+[22:44] <stgraber> (and done)
+=== kentb is now known as kentb-out
+[22:57] <sladen> ESphynx: don't give myself (only) all the information.  Give all the information to the bug tracker!
+[22:58] <ESphynx> sladen: right, so you suggest I file a new issue?
+[22:59] <ESphynx> I don't want to do a duplicate of that terminal thing though if it's basically the same thing, and I'm not sure what I should file it against? compiz?
+[23:02] <xnox> stgraber: thanks !
+[23:02] <sladen> ESphynx: yes, file a new issue, with the minimal test example to reproduce the issue (ie. a cut-down version of your own code)
+[23:03] <ESphynx> sladen: Can I put using the IDE as a sample?
+[23:03] <sladen> ESphynx: state, clearly, how to reproduce it; exactly on what version of Ubuntu it occurs, and with exactly what hardware/driver
+[23:05] <sladen> ESphynx: earlier you talked about XRenderFillRectangle(), so I'm presumably that you have a piece of code that uses XRenderFillRectangle() and exhibits the issue you're seeing (== the one you're going to detail in the bug report).
+[23:06] <sladen> ESphynx: so attach this piece of code (==minimal test case), instructions on how to compile and run the minimal test case
+[23:06] <sladen> ESphynx: and this will enable somebody more familiar with the code to investigate, debug and now know a solution is found
+[23:07] <ESphynx> sladen: I do not have time to cut down this into a piece of X11 code
+[23:08] <ESphynx> I can detail how to reproduce this by running the Ecere IDE from the Saucy repo, however.
+[23:08] <sladen> ESphynx: well attach what you have
+[23:08] <sladen> ESphynx: okay
+[23:08] <ESphynx> I can also point to the whole X11 driver in Ecere doing it
+[23:08] <ESphynx> k, and against compiz ?
+[23:09] <ESphynx> of course whoever's taking a look at it can contact me if they need any info
+[23:09] <sladen> ESphynx: remember that by filing a bug report, you're asking for the help and assistance of others, in order that we all benefit from finding the solution.  The more pre-debugging that you can do in clearly defining the problem, and test-case the easier and more speedy it is likely to be investigate further
+[23:11] <ESphynx> sladen: I've gathered quite a bit of info already in our own bug tracker @ http://ecere.com/mantis/view.php?id=987
+[23:11] <ESphynx> I'll be filing this bug against compiz and adding the exact version numbers
+[23:12] <sladen> ESphynx: yes, file it against compiz (if this is the compositing Window Manager in use), and make it clearly that you're on saucy
+[23:12] <ESphynx> https://bugs.launchpad.net/compiz/+bug/269904 -- this all looks very similar
+[23:13] <ubottu> Launchpad bug 269904 in Compiz "Screen refresh problems with nvidia on intrepid" [Unknown,In progress]
+[23:13] <ESphynx> there are tons of these bugs on Compiz
+[23:13] <infinity> xnox: Fantastic, now I can ignore it and not have people constantly ask why it's out of date.  Thanks.
+[23:13] <sladen> ESphynx: this is a bug report from several years ago.  As I understand from reading what you've written, you had discovered something that was specific to saucy (?)
+[23:14] <ESphynx> sladen: I didn't say it was. I presume it still hasn't been fixed, or might be back to haunt us (possibly because of a chance in the nVidia driver)
+[23:15] <sladen> ESphynx: it's past midnight for me.  If you get around filing a bug, add 'sladen' as a subscriber and I'll look over it tomorrow
+[23:15] <xnox> infinity: \o/ mission accomplished.
+[23:15] <ESphynx> sladen : thank you. add a good night!
+[23:15] <ESphynx> have*
+[23:16] <ESphynx> I'll file just to make sure people realize there's still an issue.
+[23:19] <ESphynx> hold on, Unity has got its own compositor now?
+[23:21] <ESphynx> ah no I see compiz running now
+[23:27] <xnox> ESphynx: depends =) unity8 will not have compiz
+[23:27] <ESphynx> Is that gonna be default on Suacy?
+[23:27] <ESphynx> Seriously this bug is killing me!
+[23:27] <ESphynx> aaron is saying the compositor's to blame...
+[23:28] <ESphynx> I sincerely hope it gets fixed for Saucy...
+[23:28] <xnox> ESphynx: no, in 14.10 the latest, possibly 14.04
+[23:29] <ESphynx> He said "It's a longstanding issue with GL-based compositors. The tools to fix it were added only fairly recently so I don't think any of them take advantage of them yet. The new fence sync stuff allows you to make GL wait for X rendering inside the GL server (i.e. the GPU) rather than waiting on the CPU."
+[23:31] <RAOF> ESphynx: Ah. I see you've discovered one of the annoyances with X :)
+[23:31] <xnox> ESphynx: well unity8 will work without X, and instead Mir will be used as system level GL compositor. =)
+[23:32] <ESphynx> yeah hopefully it gets along with the nVidia driver.
+[23:33] <ESphynx> RAOF: annoyance with X? more like horribly buggy default User interfaces on what I still wish was a production ready/problem free distro
+[23:34] <RAOF> Yeah, but the reason why it's buggy is because X made it difficult to be not buggy.
+[23:35] <ESphynx> understood ;)
+[23:35] <ESphynx> but thousands of the brightest engineers on the planet are working on this :P
+[23:35] <ESphynx> or is that just in my fantasy world ;)
+[23:36] <ESphynx> despite still not having open specs/open drivers, nVidia still has a good dedicated team working on the drivers right?
+[23:44] <RAOF> Yeah, nvidia have a pretty good proprietary team.
+[23:44] <ESphynx> Here is my bug report ... https://bugs.launchpad.net/compiz/+bug/1218116
+[23:44] <ubottu> Launchpad bug 1218116 in Compiz "nVidia driver/Saucy: Intermittent delayed update running Ecere IDE" [Undecided,New]
+[23:49] <ESphynx> Goto Utility->Workarounds->Force full screen redraws (buffer swap) on repaint -- that's something I could try
+[23:54] <ESphynx> "Force synchronization between X and GLX" in CompizComfig / Utility / Workarounds !
+[23:54] <RAOF> That sounds like a winner!
+[23:55] <ESphynx> doesn't seem to fix it, but sounds like something that should be enabled by default if it really is required :P
+[23:59] <ESphynx> "Goto Utility->Workarounds->Force full screen redraws (buffer swap) on repaint" however, seems to fix it!
+[23:59] <ESphynx> Just like https://bugs.launchpad.net/ubuntu/+source/compiz/+bug/861268
+[23:59] <ubottu> Launchpad bug 861268 in nvidia-graphics-drivers (Ubuntu) "text corruption in terminals (xterm, urxvt) and emacs" [Undecided,Confirmed]

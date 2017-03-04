@@ -1,0 +1,96 @@
+[01:25] <kubotu> ::workspace-bugs:: [1214668] No login sound on Kubuntu 13.10 with KDE 4.11 @ https://bugs.launchpad.net/bugs/1214668 (by Marco Parillo)
+[01:25] <ubottu> Launchpad bug 1214668 in kde-workspace (Ubuntu) "No login sound on Kubuntu 13.10 with KDE 4.11" [Undecided,New]
+[02:10] <ScottK> Riddell: Infininty fixed it to build on powerpc
+[03:00] <ScottK> rdieter: The next PyQt4 release has arm* stuff fixed upstream, so you all will be able to drop the big patch you got from us.
+[03:43] <rdieter> ScottK: yay, thx
+[06:07] <soee> good morning
+=== jono is now known as Guest36288
+[08:48] <apachelogger> Riddell: I don't think pmc uses phonon
+[08:49] <shadeslayer> IIRC I was told it uses QtMM
+[08:49] <shadeslayer> because phonon didn't QML stuff when they started
+[08:50] <shadeslayer> or something like that
+=== smartboyhw changed the topic of #kubuntu-devel to: Kubuntu - Friendly Computing | https://trello.com/kubuntu | https://notes.kde.org/p/kubuntu-ninjas 4.11.0 saucy/archive raring/backports precise/ninjas| 13.10 Alpha 2 released | 13.10 milestoned bugs tagged Kubuntu http://goo.gl/vHRjj | Kubuntu 12.04.3 is on coming Thursday, please test the images at the ISO QA Tracker
+[09:30] <smartboyhw> !testers | Please help test the Kubuntu 12.04.3 LTS images
+[09:30] <ubottu> Please help test the Kubuntu 12.04.3 LTS images: Help is needed in #kubuntu-devel. Please ping Riddell, yofel, soee, Tm_T, shadeslayer, BluesKaj, James147, smartboyhw, Quintasan, lordievader, shrini, tester56 for information.
+[09:44] <markey> rdieter: getting more reports about issues with OpenGL (Intel driver) on Fedora, leading to crashes on startup. I've CC'ed you
+=== ghostcube_ is now known as ghostcube
+[09:52] <shadeslayer> Riddell: can you sponsor https://launchpad.net/~rohangarg/+archive/kde-extra/+files/plasma-widget-fastuserswitch_0.3.2-0ubuntu1.dsc
+[09:52] <smartboyhw> shadeslayer, maybe you can do some 12.04.3 testing after that?:P
+[09:52] <shadeslayer> maybe
+[09:53] <shadeslayer> smartboyhw: url ?
+[09:53] <smartboyhw> shadeslayer, http://iso.qa.ubuntu.com/qatracker/milestones/301/builds
+=== smartboyhw changed the topic of #kubuntu-devel to: Kubuntu - Friendly Computing | https://trello.com/kubuntu | https://notes.kde.org/p/kubuntu-ninjas 4.11.0 saucy/archive raring/backports precise/ninjas| 13.10 Alpha 2 released | 13.10 milestoned bugs tagged Kubuntu http://goo.gl/vHRjj | Kubuntu 12.04.3 is on coming Thursday, please test the images at the ISO QA Tracker http://iso.qa.ubuntu.com/qatracker/milestones/301/builds
+[10:21] <BluesKaj> HI folks
+[10:53] <shadeslayer> apachelogger: yofel do you think cmake can be sandboxed in /opt/project-neon5 ?
+[10:54] <apachelogger> wut?
+[10:55] <shadeslayer> see the frameworks mailing list?
+[10:56] <shadeslayer> if we sandboxed cmake to /opt/project-neon5 ... any speculation on how debhelper react?
+[10:59] <apachelogger> unnecessary work
+[11:00] <shadeslayer> plz be replying as such>
+[11:00] <apachelogger> not subscribed
+[11:00] <shadeslayer> :O
+[11:00] <apachelogger> also you raised a problem that is no problem :P
+[11:01] <apachelogger> anyway, you'd simply fiddle PATH in rules to include pn5
+[11:01] <apachelogger> which is likely done via the include already
+[11:02] <shadeslayer> I don't think I raised an unnecessary problem since atleast for me I tend to use the system cmake which suffices most things
+[11:02] <shadeslayer> *for most things
+[11:02] <apachelogger> so there is no reason not to do it, except for having to change cmake which is unnecessary effort considering the scope of the PPA and the fact that the topic is about a release client not a random snapshot IMHO
+[11:02] <shadeslayer> what's to say the RC won't break phonon :P
+[11:02] <apachelogger> if the rc breaks phonon then it needs fixing anyway
+[11:02] <apachelogger> you have that problem regardless
+[11:02] <shadeslayer> ( but then whats to say the final release won't break it since none of us tested the RC )
+[11:02] <apachelogger> .10 or so actually broke phonon
+[11:03] <shadeslayer> it's a chicken and egg problem IMHO
+[11:03] <apachelogger> exactly
+[11:03] <apachelogger> that's why I think it is a non-problem
+[11:06] <shadeslayer> I don't think it's a non problem
+[11:07] <apachelogger> shadeslayer: what's the problem then?
+[11:07] <lordievader> Good afternoon.
+[11:07] <shadeslayer> the problem is that if KF5 depends on cmake RC, we either replace stable cmake in the ppa with a potentially unstable one or sandbox cmake which will require more effort
+[11:08] <shadeslayer> and then if the unstable cmake breaks a build for someone ... then he will have a broken build for a fair amount of time untill he : a) rolls back to stable cmake in which case the developer can't contribute to kf5
+[11:08] <shadeslayer> b) we patch the cmake package, which creates more work
+[11:09] <BluesKaj>  is the "audio and video settings" section in multimedia just phonon rename?
+[11:09] <shadeslayer> yes
+[11:09] <apachelogger> shadeslayer: you are not reading me
+[11:09] <apachelogger> this can happen with *any* release of cmake
+[11:09] <apachelogger> pre-release, release, snapshot, whatever
+[11:10] <shadeslayer> apachelogger: but the potential to break in a RC is higher?
+[11:10] <apachelogger> no
+[11:10] <apachelogger> new versions have potential to break
+[11:11] <apachelogger> it does not matter what name stamp you put on it
+[11:11] <apachelogger> so this is a pointless discussion
+[11:12] <apachelogger> if you feel that the risk is too big, then change the prefix in cmake's rules
+[11:39] <shadeslayer> apachelogger: can you upload https://launchpad.net/~rohangarg/+archive/kde-extra/+files/plasma-widget-fastuserswitch_0.3.2-0ubuntu1.dsc
+=== cyphermox_ is now known as cyphermox
+[12:44]  * smartboyhw has a new PPA specifically for ARM builds \o.
+[12:44] <smartboyhw> \o/
+[13:34] <smartboyhw> lordievader, got anytime to help test 12.04.3 images?
+[13:35] <lordievader> smartboyhw: No sorry, I'm at my parents house.
+[13:35] <smartboyhw> lordievader, oh:(
+[13:44] <Riddell> afternoon
+[13:44] <Riddell> sigh trains broken I got stuck half way across the country :(
+[13:46] <smartboyhw> Riddell, oh:(
+[13:46] <smartboyhw> It's time to test the 12.04.3 images BTQ
+[13:46] <Riddell> smartboyhw: how's 12.04.3 looking?
+[13:46] <smartboyhw> *BTW
+[13:46] <smartboyhw> Riddell, I have a lot of flavours to test for
+[13:46] <smartboyhw> And Kubuntu will come last (since it relatively has more people:P)
+[13:46] <smartboyhw> I will test tmr
+[13:46] <smartboyhw> if needed
+[13:46] <smartboyhw> But not today
+[13:48] <Riddell> yep, I'll get onto it shortly
+[14:36] <shadeslayer> Riddell: already tested i386
+[14:47] <Riddell> shadeslayer: looking good?
+[14:47] <shadeslayer> Riddell: yes :)
+[14:47] <Riddell> awooga
+[14:48] <smartboyhw> awooga
+=== Blizzz is now known as TributeToManning
+[15:31] <smartboyhw> Riddell, how is the Kubuntu 12.04.3 Release notes going?
+[16:59] <shadeslayer> Riddell: can you plz also upload that package that I mentioned earlier? :D
+[17:29] <shadeslayer> ScottK: uhm KTP now in unapproved for a week now :(
+[18:17] <lordievader> Good evening.
+[20:53] <Noskcaj> Can someone look at the FTBFS for https://launchpad.net/ubuntu/+source/ktp-call-ui/0.6.3-1ubuntu1 ? i'm too crippled to fix it for saucy
+[21:26] <ScottK> Should have test built before upload.
+[22:31] <Riddell> hmm,it doesn't look like I'm going to be able to do much 12.04.3 tests
+[22:31] <Riddell> /build/buildd/ktp-call-ui-0.6.3/libqtf/qtf.cpp:22:53: fatal error: telepathy-farstream/telepathy-farstream.h: No such file or directory
+[22:31] <Riddell> oh he left
