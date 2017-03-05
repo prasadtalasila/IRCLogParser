@@ -442,7 +442,7 @@ def degree_analysis_on_graph(nx_graph, date=None):
     }
 
 
-def create_message_time_graph(log_dict, nicks, nick_same_list):
+def message_time_graph(log_dict, nicks, nick_same_list, DAY_BY_DAY_ANALYSIS=False):
     """ creates a directed graph where each edge denotes a message sent from a user to another user
     with the stamp denoting the time at which the message was sent
 
@@ -463,10 +463,6 @@ def create_message_time_graph(log_dict, nicks, nick_same_list):
     def compare_spliced_nick(nick_to_compare, spliced_nick, nick_name, line):
         if(nick_to_compare == nick_name):
             if(spliced_nick != nick_name):
-                #for i in range(config.MAX_EXPECTED_DIFF_NICKS):
-                    #if nick_name in conn_comp_list[i]:
-                        #nick_receiver = conn_comp_list[i][0]
-                        #break
                 nick_receiver = nick_receiver_from_conn_comp(nick_name, conn_comp_list)        
                 util.build_graphs(nick_sender, nick_receiver, line[1:6], year, month, day, graph_conversation, msg_time_aggr_graph)             
      
@@ -489,10 +485,7 @@ def create_message_time_graph(log_dict, nicks, nick_same_list):
                         rec_list = [e.strip() for e in line.split(':')]  #receiver list splited about :
                         util.rec_list_splice(rec_list)
                         if not rec_list[1]:  #index 0 will contain time 14:02
-                            break
-                        #for i in range(len(rec_list)):
-                            #if(rec_list[i]):  #checking for \
-                                #rec_list[i] = util.correctLastCharCR(rec_list[i])
+                            break                        
                         rec_list = util.correct_last_char_list(rec_list)        
                         for nick_to_search in rec_list:
                             if(nick_to_search == nick_name):
@@ -504,9 +497,6 @@ def create_message_time_graph(log_dict, nicks, nick_same_list):
                         if "," in rec_list[1]:  #receiver list may of the form <Dhruv> Rohan, Ram :
                             flag_comma = 1
                             rec_list_2 = [e.strip() for e in rec_list[1].split(',')]
-                            #for i in range(len(rec_list_2)):
-                                #if(rec_list_2[i]):  #checking for \
-                                    #rec_list_2[i] = util.correctLastCharCR(rec_list_2[i])
                             rec_list_2 = util.correct_last_char_list(rec_list_2)        
                             for nick_to_search in rec_list_2:                              
                                 compare_spliced_nick(nick_to_search, spliced_nick, nick_name, line)   
@@ -518,12 +508,12 @@ def create_message_time_graph(log_dict, nicks, nick_same_list):
 
             msg_time_graph_list.append(graph_conversation)
 
-    if config.DAY_BY_DAY_ANALYSIS:
+    if DAY_BY_DAY_ANALYSIS:
         return msg_time_graph_list
     else:
         return msg_time_aggr_graph
 
-def create_message_number_binsCSV(log_dict, nicks, nick_same_list):
+def message_number_bins_csv(log_dict, nicks, nick_same_list):
     """ creates a CSV file which tracks the number of message exchanged in a channel 
         for 48 bins of half an hour each distributed all over the day 
         aggragated over the year.
@@ -535,24 +525,24 @@ def create_message_number_binsCSV(log_dict, nicks, nick_same_list):
 
     Returns:
        null 
-    """    
-    tot_msgs = [0] * 48
+    """   
+    
+    no_of_bins = (config.HOURS_PER_DAY * config.MINS_PER_HOUR) / config.BIN_LENGTH_MINS
+    tot_msgs = [0] * no_of_bins
     bin_matrix = []                      
             
     for day_content_all_channels in log_dict.values():
         for day_content in day_content_all_channels:
             day_log = day_content["log_data"]
-            bins = [0] * 48
+            bins = [0] * no_of_bins
 
             for line in day_log:
                 if(line[0] != '='): 
-                    time_in_min=int(line[1:3])*60+int(line[4:6])
+                    time_in_min = int(line[1:3]) * 60 + int(line[4:6])
 
-                    if(time_in_min < int(line[1:3])*60+30):
-                        bin_index = int(line[1:3])*2 
-                    else:
-                        bin_index = int(line[1:3])*2+1
-                    flag_comma = 0
+                    bin_index = time_in_min / config.BIN_LENGTH_MINS #gives the index of the bin for eg 01:35 in mins is 95 then 95/30 --> 3 , puts it in bin index 3
+                    
+                    flag_comma = 0 # sometimes messages are sent to users like [22:55] <Rohan> Krishna, i hope we are on track. and sometimes like [22:56] <Krishna> Rohan: Yes it is.  
 
                     if(line[0] != '=' and "] <" in line and "> " in line):
                         m = re.search(r"\<(.*?)\>", line)
@@ -562,41 +552,35 @@ def create_message_number_binsCSV(log_dict, nicks, nick_same_list):
                             rec_list = [e.strip() for e in line.split(':')]
                             util.rec_list_splice(rec_list)
                             if not rec_list[1]:
-                                break
-                            #for i in range(len(rec_list)):
-                                #if(rec_list[i]):
-                                    #rec_list[i] = util.correctLastCharCR(rec_list[i])
+                                break                            
                             rec_list = util.correct_last_char_list(rec_list)        
                             for nick_name in rec_list:
                                 if(nick_name == messager):
                                     if(nick_spliced != messager):  
-                                        bins[bin_index]=bins[bin_index]+1
+                                        bins[bin_index] = bins[bin_index] + 1
                                             
                             if "," in rec_list[1]: 
                                 flag_comma = 1
-                                rec_list = [e.strip() for e in rec_list[1].split(',')]
-                                #for i in range(len(rec_list)):
-                                    #if(rec_list[i]):
-                                        #rec_list[i] = util.correctLastCharCR(rec_list[i])
+                                rec_list = [e.strip() for e in rec_list[1].split(',')]                                
                                 rec_list = util.correct_last_char_list(rec_list)        
                                 for j in rec_list:
                                     if(j == messager):
                                         if(nick_spliced != messager):  
-                                            bins[bin_index]=bins[bin_index]+1
+                                            bins[bin_index] = bins[bin_index] + 1
                         
                             if(flag_comma == 0):
                                 rec = line[line.find(">")+1:line.find(", ")][1:] 
                                 rec = util.correctLastCharCR(rec) 
                                 if(rec == messager):
                                     if(nick_spliced != messager):
-                                        bins[bin_index]=bins[bin_index]+1
+                                        bins[bin_index] = bins[bin_index] + 1
 
             bin_matrix.append(bins)        
             tot_msgs = [tot_msgs[i] + bins[i] for i in range(len(bins))]
             
-    return bin_matrix, sum(tot_msgs)        
+    return bin_matrix, sum(tot_msgs)
 
-def degreeNodeNumberCSV(log_dict, nicks, nick_same_list):
+def degree_node_number_csv(log_dict, nicks, nick_same_list):
     """ creates two csv files having no. of nodes with a certain in and out-degree
         for number of nodes it interacted with, respectively.
         Also gives graphs for log(degree) vs log(no. of nodes)
