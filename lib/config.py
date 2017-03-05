@@ -1,6 +1,6 @@
 DEBUGGER = True
-LOG_DIRECTORY = "/home/rohan/parser_files/YearlyLogFiles/"
-OUTPUT_DIRECTORY = "/home/rohan/Desktop/"
+LOG_DIRECTORY = "/media/krishna/Media/ParserIn/YearlyLogFiles/"
+OUTPUT_DIRECTORY = "/home/krishna/Desktop/Today/"
 STARTING_DATE = "2013-1-1"
 ENDING_DATE = "2013-1-31"
 MINIMUM_NICK_LENGTH = 3
@@ -33,6 +33,9 @@ FILTER_TOP_USERS = 100
 FILTER_TOP_CHANNELS = 30
 GENERATE_DEGREE_ANAL = False
 PRINT_CHANNEL_USER_HASH = False
+
+#MessageTimeGraph and NickChange constants
+DAY_BY_DAY_ANALYSIS = True
 
 # ConvL_ConvRT constants
 MAX_CONVERSATIONS = 10000

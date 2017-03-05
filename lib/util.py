@@ -142,3 +142,20 @@ def extend_conversation_list(nick_sender, nick_receiver, conversation):
             conversation[i][0]=conversation[i][0]+ 1
             break
     return conversation
+
+def create_connected_nick_list(conn_comp_list):
+    """ A function that converts each individual list member to a list 
+
+    """
+    for i in range(len(conn_comp_list)):
+        conn_comp_list[i] = list(conn_comp_list[i])
+
+def correct_last_char_list(rec_list):
+    """
+    corrects last char for all elements in rec_list
+    """
+    for i in range(len(rec_list)):
+        if(rec_list[i]):
+            rec_list[i] = correctLastCharCR(rec_list[i])
+
+    return rec_list        

@@ -178,9 +178,10 @@ def keywords(log_dict, nicks, nick_same_list):
                         util.rec_list_splice(rec_list)
                         if not rec_list[1]: #index 0 will contain time 14:02
                             break
-                        for k in xrange(len(rec_list)):
-                            if(rec_list[k]): #checking for \
-                                rec_list[k] = util.correctLastCharCR(rec_list[k])
+                        #for k in xrange(len(rec_list)):
+                            #if(rec_list[k]): #checking for \
+                                #rec_list[k] = util.correctLastCharCR(rec_list[k])
+                        rec_list = util.correct_last_char_list(rec_list)        
                         for z in rec_list:
                             if(z == i):
                                 if(var != i):
@@ -194,9 +195,10 @@ def keywords(log_dict, nicks, nick_same_list):
                         if "," in rec_list[1]:  #receiver list may of the form <Dhruv> Rohan, Ram :
                             flag_comma = 1
                             rec_list_2 = [e.strip() for e in rec_list[1].split(',')]
-                            for y in xrange(len(rec_list_2)):
-                                if(rec_list_2[y]): #checking for \
-                                    rec_list_2[y] = util.correctLastCharCR(rec_list_2[y])
+                            #for y in xrange(len(rec_list_2)):
+                                #if(rec_list_2[y]): #checking for \
+                                    #rec_list_2[y] = util.correctLastCharCR(rec_list_2[y])
+                            rec_list_2 = util.correct_last_char_list(rec_list_2)        
                             for j in rec_list_2:
                                 if(j == i):
                                     if(var != i):   
