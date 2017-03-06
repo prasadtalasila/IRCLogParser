@@ -63,7 +63,7 @@ def nick_change_graph(log_dict, DAY_BY_DAY_ANALYSIS = False):
                             earlier_line_no = earlier_line_no - 1
                             if(day_log[earlier_line_no][0] != '='):                             
                                 year, month, day = util.get_year_month_day(day_content)
-                                util.build_graphs (nick1, nick2, day_log[earlier_line_no][1:6], year, month, day, today_nick_change_graph, aggregate_nick_change_graph)
+                                util.build_graphs(nick1, nick2, day_log[earlier_line_no][1:6], year, month, day, today_nick_change_graph, aggregate_nick_change_graph)
                                 break
 
                         if(earlier_line_no == -1):
@@ -177,10 +177,7 @@ def keywords(log_dict, nicks, nick_same_list):
                         rec_list = [e.strip() for e in line.split(':')] #receiver list splited about :
                         util.rec_list_splice(rec_list)
                         if not rec_list[1]: #index 0 will contain time 14:02
-                            break
-                        #for k in xrange(len(rec_list)):
-                            #if(rec_list[k]): #checking for \
-                                #rec_list[k] = util.correctLastCharCR(rec_list[k])
+                            break                        
                         rec_list = util.correct_last_char_list(rec_list)        
                         for z in rec_list:
                             if(z == i):
@@ -194,10 +191,7 @@ def keywords(log_dict, nicks, nick_same_list):
                 
                         if "," in rec_list[1]:  #receiver list may of the form <Dhruv> Rohan, Ram :
                             flag_comma = 1
-                            rec_list_2 = [e.strip() for e in rec_list[1].split(',')]
-                            #for y in xrange(len(rec_list_2)):
-                                #if(rec_list_2[y]): #checking for \
-                                    #rec_list_2[y] = util.correctLastCharCR(rec_list_2[y])
+                            rec_list_2 = [e.strip() for e in rec_list[1].split(',')]                            
                             rec_list_2 = util.correct_last_char_list(rec_list_2)        
                             for j in rec_list_2:
                                 if(j == i):

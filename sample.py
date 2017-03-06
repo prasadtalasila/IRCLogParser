@@ -1,8 +1,8 @@
 import sys
 sys.path.insert(0, "lib/")
 from in_out import reader, saver
-import nickTracker, vis, config, validate
-from analysis import network, user, channel, community
+import nickTracker, config, vis, validate
+from analysis import network, channel, user, community
 
 log_directory = config.LOG_DIRECTORY
 channel_name = config.CHANNEL_NAME
@@ -15,17 +15,19 @@ log_data = reader.linux_input(log_directory, channel_name, starting_date, ending
 nicks, nick_same_list = nickTracker.nick_tracker(log_data)
 
 # ============== ANALYSIS =============
-#message_number_graph_day_list = network.message_number_graph(log_data, nicks, nick_same_list, DAY_BY_DAY_ANALYSIS = True)
+#message_number_graph = network.message_number_graph(log_data, nicks, nick_same_list, False)
+#message_number_graph_day_list = network.message_number_graph(log_data, nicks, nick_same_list, True)
 #degree_anal_message_numder = network.degree_analysis_on_graph(message_number_graph)
 #message_time_graph_list = network.message_time_graph(log_data, nicks, nick_same_list, True)
+#message_time_graph = network.message_time_graph(log_data, nicks, nick_same_list, False)
 #out_degree_node_number, in_degree_node_number, total_degree_node_number = network.degree_node_number_csv(log_data, nicks, nick_same_list)
-#nick_change_graph_list =  user.nick_change_graph(log_data)
+#nick_change_graph_list =  user.nick_change_graph(log_data, True)
 bin_matrix, total_messages = network.message_number_bins_csv(log_data, nicks, nick_same_list)
-# conv_len, conv_ref_time = channel.conv_len_conv_refr_time(log_data, nicks, nick_same_list)
-# resp_time = channel.response_time(log_data, nicks, nick_same_list)
+#conv_len, conv_ref_time = channel.conv_len_conv_refr_time(log_data, nicks, nick_same_list)
+#resp_time = channel.response_time(log_data, nicks, nick_same_list)
 
-# user.keywords_clusters(log_data, nicks, nick_same_list)
-# network.degree_analysis_on_message_number(log_data, nicks, nick_same_list)
+#user.keywords_clusters(log_data, nicks, nick_same_list)
+#network.degree_analysis_on_message_number(log_data, nicks, nick_same_list)
 
 # adjCC_graph, adjCC_membership = community.infomap_igraph(ig_graph=None, net_file_location="/home/rohan/Desktop/adjCC.net")
 
@@ -38,12 +40,16 @@ bin_matrix, total_messages = network.message_number_bins_csv(log_data, nicks, ni
 #saver.save_csv(in_degree_node_number, output_directory, "node_in_degree"+ starting_date +'-'+ending_date)
 #saver.save_csv(total_degree_node_number, output_directory, "node_total_degree"+ starting_date +'-'+ending_date)
 saver.save_csv(bin_matrix, output_directory, "MessageNumber_binsize_"+str(config.BIN_LENGTH_MINS))
-#for i in range(len(message_time_graph_list)):
-    #saver.draw_nx_graph(message_time_graph_list[i], output_directory, "mtg" + str(i+1))
+#for i in range(len(message_number_graph_day_list)):
+    #saver.draw_nx_graph(message_number_graph_day_list[i][0], output_directory, "mng" + str(i+1))
+#for i in range(len(nick_change_graph_list)):
+    #saver.draw_nx_graph(nick_change_graph_list[i], output_directory, "ncg" + str(i+1))
+
+#saver.draw_nx_graph(message_number_graph, output_directory, "mnagg")    
 #saver.draw_nx_graph(message_time_graph, output_directory, "mtgagg")
-# saver.save_csv(conv_len, output_directory, "conv_len")
-# saver.save_csv(resp_time, output_directory, "resp_time")
-# saver.save_csv(conv_ref_time, output_directory, "conv_ref_time")
+#saver.save_csv(conv_len, output_directory, "conv_len")
+#saver.save_csv(resp_time, output_directory, "resp_time")
+#saver.save_csv(conv_ref_time, output_directory, "conv_ref_time")
 
 # =============== VIZ ===================
 # conv_len_curve_fit_parameters = vis.exponential_curve_fit_and_plot(conv_len, 20, output_directory, "conv_len")
@@ -60,9 +66,9 @@ saver.save_csv(bin_matrix, output_directory, "MessageNumber_binsize_"+str(config
 
 # ============== PRESENCE ACROSS MULTIPLE CHANNELS ==============
 # Change analysis to all channels in config
-# nicks, nick_same_list, channels_for_user, nick_channel_dict, nicks_hash, channels_hash = nickTracker.nick_tracker(log_data, True)
-# dict_out, graph = network.channel_user_presence_graph_and_csv(nicks, nick_same_list, channels_for_user, nick_channel_dict, nicks_hash, channels_hash)
+#nicks, nick_same_list, channels_for_user, nick_channel_dict, nicks_hash, channels_hash = nickTracker.nick_tracker(log_data, True)
+#dict_out, graph = network.channel_user_presence_graph_and_csv(nicks, nick_same_list, channels_for_user, nick_channel_dict, nicks_hash, channels_hash)
 
-# saver.save_csv(dict_out["UU"]["reducedMatrix"],output_directory, "rUU")
-# saver.save_csv(dict_out["CC"]["reducedMatrix"],output_directory, "rCC")
-# saver.save_csv(dict_out["CU"]["reducedMatrix"],output_directory, "rCU")
+#saver.save_csv(dict_out["UU"]["reducedMatrix"],output_directory, "rUU")
+#saver.save_csv(dict_out["CC"]["reducedMatrix"],output_directory, "rCC")
+#saver.save_csv(dict_out["CU"]["reducedMatrix"],output_directory, "rCU")

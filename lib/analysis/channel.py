@@ -62,10 +62,7 @@ def conv_len_conv_refr_time(log_dict, nicks, nick_same_list):
 						rec_list = [e.strip() for e in line.split(':')]
 						util.rec_list_splice(rec_list)						
 						if not rec_list[1]:
-							break
-						#for i in range(len(rec_list)):
-							#if(rec_list[i]):
-								#rec_list[i] = util.correctLastCharCR(rec_list[i])
+							break						
 						rec_list = util.correct_last_char_list(rec_list)		
 
 						for names in rec_list:
@@ -89,10 +86,7 @@ def conv_len_conv_refr_time(log_dict, nicks, nick_same_list):
 							
 						if "," in rec_list[1]: 
 							flag_comma = 1
-							rec_list_2 = [e.strip() for e in rec_list[1].split(',')]
-							#for i in range(len(rec_list_2)):
-								#if(rec_list_2[i]):
-									#rec_list_2[i] = util.correctLastCharCR(rec_list_2[i])
+							rec_list_2 = [e.strip() for e in rec_list[1].split(',')]							
 							rec_list_2 = util.correct_last_char_list(rec_list_2)		
 
 							for names in rec_list_2:
@@ -225,10 +219,7 @@ def response_time(log_dict, nicks, nick_same_list):
 						util.rec_list_splice(rec_list)
 
 						if not rec_list[1]:
-							break
-						#for i in range(len(rec_list)):
-							#if(rec_list[i]):
-								#rec_list[i] = util.correctLastCharCR(rec_list[i])
+							break						
 						rec_list = util.correct_last_char_list(rec_list)		
 
 						for name in rec_list:
@@ -252,10 +243,7 @@ def response_time(log_dict, nicks, nick_same_list):
 							
 						if "," in rec_list[1]: 
 							flag_comma = 1
-							rec_list_2 = [e.strip() for e in rec_list[1].split(',')]
-							#for i in range(len(rec_list_2)):
-								#if(rec_list_2[i]):
-									#rec_list_2[i] = util.correctLastCharCR(rec_list_2[i])
+							rec_list_2 = [e.strip() for e in rec_list[1].split(',')]							
 							rec_list_2 = util.correct_last_char_list(rec_list_2)		
 									
 							for name in rec_list_2:
