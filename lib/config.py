@@ -12,6 +12,7 @@ CHANNEL_NAME = ["#kubuntu-devel"]
 
 # increase if using channel_user_presence
 MAX_EXPECTED_DIFF_NICKS = 5000
+
 # MAX_EXPECTED_DIFF_NICKS = 100000
 
 # message_number_graph
@@ -23,6 +24,9 @@ NUMBER_OF_ENTRIES_IN_LOG_PLOTS = 20
 #use pyplot
 USE_PYPLOT = True
 
+#Message Number CSV
+BIN_LENGTH_MINS = 30
+
 # channel_user_presence
 STARTING_HASH_CHANNEL = 1000000
 FILTER_FOR_CHANNEL_USER_GRAPH = 0
@@ -33,6 +37,7 @@ FILTER_TOP_USERS = 100
 FILTER_TOP_CHANNELS = 30
 GENERATE_DEGREE_ANAL = False
 PRINT_CHANNEL_USER_HASH = False
+
 
 # ConvL_ConvRT constants
 MAX_CONVERSATIONS = 10000
@@ -55,4 +60,3 @@ ENABLE_ELBOW_METHOD_FOR_K = False
 NUMBER_OF_CLUSTERS = 11
 # ELBOW SETTINGS
 CHECK_K_TILL = 20
-    

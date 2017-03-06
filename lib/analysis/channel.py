@@ -26,8 +26,7 @@ def conv_len_conv_refr_time(log_dict, nicks, nick_same_list):
 	G = util.to_graph(nick_same_list)
 	conn_comp_list = list(connected_components(G))
 
-	for i in range(len(conn_comp_list)):
-		conn_comp_list[i] = list(conn_comp_list[i])
+	util.create_connected_nick_list(conn_comp_list)
 
 	# We use connected components algorithm to group all those nick clusters that have atleast one nick common in their clusters. So e.g.
 	#Cluster 1- nick1,nick2,nick3,nick4(some nicks of a user) #Cluster 2 -nick5,nick6,nick2,nick7. Then we would get - nick1,nick2,nick3,nick4,nick5,nick6,nick7 and we can safely assume they belong to the same user.
@@ -63,10 +62,8 @@ def conv_len_conv_refr_time(log_dict, nicks, nick_same_list):
 						rec_list = [e.strip() for e in line.split(':')]
 						util.rec_list_splice(rec_list)						
 						if not rec_list[1]:
-							break
-						for i in range(len(rec_list)):
-							if(rec_list[i]):
-								rec_list[i] = util.correctLastCharCR(rec_list[i])
+							break						
+						rec_list = util.correct_last_char_list(rec_list)		
 
 						for names in rec_list:
 							if(names == nick):
@@ -89,10 +86,8 @@ def conv_len_conv_refr_time(log_dict, nicks, nick_same_list):
 							
 						if "," in rec_list[1]: 
 							flag_comma = 1
-							rec_list_2 = [e.strip() for e in rec_list[1].split(',')]
-							for i in range(len(rec_list_2)):
-								if(rec_list_2[i]):
-									rec_list_2[i] = util.correctLastCharCR(rec_list_2[i])
+							rec_list_2 = [e.strip() for e in rec_list[1].split(',')]							
+							rec_list_2 = util.correct_last_char_list(rec_list_2)		
 
 							for names in rec_list_2:
 								if(names == nick):
@@ -189,8 +184,7 @@ def response_time(log_dict, nicks, nick_same_list):
 	G = util.to_graph(nick_same_list)
 	conn_comp_list = list(connected_components(G))
 
-	for i in range(len(conn_comp_list)):
-		conn_comp_list[i] = list(conn_comp_list[i])
+	util.create_connected_nick_list(conn_comp_list)
 	
 	graph_cumulative = []
 	graph_x_axis = []
@@ -225,10 +219,8 @@ def response_time(log_dict, nicks, nick_same_list):
 						util.rec_list_splice(rec_list)
 
 						if not rec_list[1]:
-							break
-						for i in range(len(rec_list)):
-							if(rec_list[i]):
-								rec_list[i] = util.correctLastCharCR(rec_list[i])
+							break						
+						rec_list = util.correct_last_char_list(rec_list)		
 
 						for name in rec_list:
 							if(name == nick):
@@ -251,10 +243,8 @@ def response_time(log_dict, nicks, nick_same_list):
 							
 						if "," in rec_list[1]: 
 							flag_comma = 1
-							rec_list_2 = [e.strip() for e in rec_list[1].split(',')]
-							for i in range(len(rec_list_2)):
-								if(rec_list_2[i]):
-									rec_list_2[i] = util.correctLastCharCR(rec_list_2[i])
+							rec_list_2 = [e.strip() for e in rec_list[1].split(',')]							
+							rec_list_2 = util.correct_last_char_list(rec_list_2)		
 									
 							for name in rec_list_2:
 								if(name == nick):
