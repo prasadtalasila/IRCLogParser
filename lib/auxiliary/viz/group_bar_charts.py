@@ -2,7 +2,7 @@ import plotly.plotly as py
 import plotly.graph_objs as go
 py.sign_in('rohangoel963', 'vh6le8no26')
 
-def generate_group_bar_charts(y_values)
+def generate_group_bar_charts(y_values):
     trace1 = go.Bar(
         x=['#kubuntu-devel', '#ubuntu-devel','#kubuntu'],
         y=y_values[0],

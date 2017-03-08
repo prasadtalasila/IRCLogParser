@@ -1,6 +1,6 @@
 import csv
 
-def freq_analysis_CU(CU_matrix_location)
+def freq_analysis_CU(CU_matrix_location):
 	# CU_matrix_location = "/home/rohan/Desktop/CU/"
 	freq_anal_matrix = [0 for i in range(31)]
 
