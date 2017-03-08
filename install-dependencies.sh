@@ -1,3 +1,5 @@
+#!/bin/sh
+
 echo "Updating Package list to install latest dependencies"
 #Update package lists to retrieve latest version of packages
 sudo apt-get update
@@ -6,7 +8,7 @@ echo "Installing Python Index Package (pip)."
 echo "We will require pip to install some of the dependencies"
 #install Python Index Package
 sudo apt-get install python-pip
-sudo pip install --upgrade pip
+sudo -H pip install --upgrade pip
 
 echo "--------------------------------------------------------"
 echo "### Installing package dependencies for IRC LogParser ###"
@@ -14,7 +16,7 @@ echo "--------------------------------------------------------"
 
 echo "Installing networkx"
 #Install newtworkx package
-sudo pip install networkx
+sudo -H pip install networkx
 echo "Finished installing networkx"
 
 echo "--------------------------------------------------------"
@@ -41,7 +43,7 @@ echo "--------------------------------------------------------"
 echo "Installing scipy and scikit learn"
 #Install scipy and sklearn
 sudo apt-get install python-scipy
-sudo pip install -U scikit-learn
+sudo -H pip install -U scikit-learn
 echo "Finished installing scipy and scikit learn"
 
 echo "--------------------------------------------------------"
@@ -49,7 +51,7 @@ echo "Installing NLTK and NLTK-Data"
 echo "Please Wait!!. This may take some time "
 
 #Install Natural Language Toolkit
-sudo pip install -U nltk
+sudo -H pip install -U nltk
 python -c "import nltk;nltk.download('wordnet');"
 echo "Finished installing NLTK and NLTK-Data"
 
@@ -62,18 +64,18 @@ echo "Finished installing Python-Pandas"
 echo "--------------------------------------------------------"
 echo "Installing Sphinx documentation and it's dependencies"
 #Install Sphinx
-sudo pip install --upgrade pip
-sudo pip install --upgrade sphinx
-sudo pip install --upgrade pyyaml
-sudo pip install --upgrade t3SphinxThemeRtd
-sudo pip install --upgrade t3fieldlisttable
-sudo pip install --upgrade t3tablerows
-sudo pip install --upgrade t3targets
-sudo pip install --upgrade sphinxcontrib-googlechart
-sudo pip install --upgrade sphinxcontrib-googlemaps
-sudo pip install --upgrade sphinxcontrib-httpdomain
-sudo pip install --upgrade sphinxcontrib-slide
-sudo pip install --upgrade sphinxcontrib.youtube
+sudo -H pip install --upgrade pip
+sudo -H pip install --upgrade sphinx
+sudo -H pip install --upgrade pyyaml
+sudo -H pip install --upgrade t3SphinxThemeRtd
+sudo -H pip install --upgrade t3fieldlisttable
+sudo -H pip install --upgrade t3tablerows
+sudo -H pip install --upgrade t3targets
+sudo -H pip install --upgrade sphinxcontrib-googlechart
+sudo -H pip install --upgrade sphinxcontrib-googlemaps
+sudo -H pip install --upgrade sphinxcontrib-httpdomain
+sudo -H pip install --upgrade sphinxcontrib-slide
+sudo -H pip install --upgrade sphinxcontrib.youtube
 echo "Finished installing Sphinx"
 
 echo "--------------------------------------------------------"
