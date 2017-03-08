@@ -1,7 +1,7 @@
 import numpy as np
 
-def analyse_monthly_RT_CL_CRT_degree(file_loc, log_type)
-	if log_type == "RT" or log_type =="CL"
+def analyse_monthly_RT_CL_CRT_degree(file_loc, log_type):
+	if log_type == "RT" or log_type =="CL":
 		'''
 		Monthly RT/CL
 		'''
@@ -52,7 +52,7 @@ def analyse_monthly_RT_CL_CRT_degree(file_loc, log_type)
 
 			i+=24
 	
-	else if log_type=="CRT":
+	elif log_type=="CRT":
 		'''
 		Monthly CRT
 		'''
@@ -103,7 +103,7 @@ def analyse_monthly_RT_CL_CRT_degree(file_loc, log_type)
 		print "shift", "{0:.4f}".format(min(list_shift)), "{0:.4f}".format(max(list_shift)), "{0:.4f}".format(np.average(list_shift))
 		print "\n"
 
-	else if log_type=="degree":
+	elif log_type=="degree":
 		'''
 		Monthly Node
 		'''
@@ -161,7 +161,7 @@ def analyse_monthly_RT_CL_CRT_degree(file_loc, log_type)
 			i+=36
 
 
-def analyse_weekly_RT_CL_CRT_degree(file_loc, log_type)
+def analyse_weekly_RT_CL_CRT_degree(file_loc, log_type):
 
 	if log_type=="RT" or log_type=="CL":
 		'''
@@ -204,7 +204,7 @@ def analyse_weekly_RT_CL_CRT_degree(file_loc, log_type)
 		print " B ", "{0:.5f}".format(min(list_b)), "{0:.5f}".format(max(list_b)), "{0:.5f}".format(np.average(list_b))
 		print " C ", "{0:.5f}".format(min(list_c)), "{0:.5f}".format(max(list_c)), "{0:.5f}".format(np.average(list_c))
 
-	else if log_type == "CRT":
+	elif log_type == "CRT":
 		'''
 		CRT Weekly
 		'''
@@ -250,7 +250,7 @@ def analyse_weekly_RT_CL_CRT_degree(file_loc, log_type)
 		print "  C  ", "{0:.5f}".format(min(list_c)), "{0:.5f}".format(max(list_c)), "{0:.5f}".format(np.average(list_c))
 		print "shift", "{0:.4f}".format(min(list_shift)), "{0:.4f}".format(max(list_shift)), "{0:.4f}".format(np.average(list_shift))
 
-	else if log_type=="degree":
+	elif log_type=="degree":
 		'''
 		Degree[weekly]
 		'''
