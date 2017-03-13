@@ -247,6 +247,15 @@ def channel_user_presence_graph_and_csv(nicks, nick_same_list, channels_for_user
         for i in range(max_degree_possible):
             print "deg"+str(i)+'\t'+str(nodes[i])
 
+    degree_map = {"out":full_presence_graph.out_degree.values(), "in":full_presence_graph.in_degree.values(), "all":full_presence_graph.degree.values()}
+
+    def inc_degree(degree_list, nodes, max_degree_possible):        
+        for degree in degree_list:
+            if not degree < max_degree_possible:
+                print "===error", degree
+            nodes[degree] += 1    
+        return nodes
+
     #=========================================================================
     if config.GENERATE_DEGREE_ANAL:
 
@@ -257,7 +266,11 @@ def channel_user_presence_graph_and_csv(nicks, nick_same_list, channels_for_user
         nodes_with_TOTAL_degree = [0]*max_degree_possible
         
         # print full_presence_graph.out_degree().values()
-        for degree in full_presence_graph.out_degree().values():
+
+        nodes_with_OUT_degree = inc_degree(degree_map["out"], nodes_with_OUT_degree, max_degree_possible)
+        nodes_with_IN_degree = inc_degree(degree_map["in"], nodes_with_IN_degree, max_degree_possible)
+        nodes_with_TOTAL_degree = inc_degree(degree_map["all"], nodes_with_TOTAL_degree, max_degree_possible)
+        '''for degree in full_presence_graph.out_degree().values():
             if not degree < max_degree_possible:
                 print "===error", degree
             nodes_with_OUT_degree[degree] += 1
@@ -270,7 +283,7 @@ def channel_user_presence_graph_and_csv(nicks, nick_same_list, channels_for_user
         for degree in full_presence_graph.degree().values():
             if not degree < max_degree_possible:
                 print "===error", degree
-            nodes_with_TOTAL_degree[degree] += 1
+            nodes_with_TOTAL_degree[degree] += 1'''
 
         print "========= OUT DEGREE ======="        
         print_node_degree(nodes_with_OUT_degree, max_degree_possible) 
@@ -408,17 +421,26 @@ def degree_analysis_on_graph(nx_graph, date=None):
     raw_in = [str(date)]
     raw_total = [str(date)]
 
-    for i in range(1, len(nodes_with_OUT_degree)):
-        raw_out.append(nodes_with_OUT_degree[i][1])
-        nodes_with_OUT_degree[i][2] = give_userlist_where_degree_helper(nx_graph.out_degree(), i - 1)
+    degree_map = {"out":nx_graph.out_degree(),"in":nx_graph.in_degree(),"all":nx_graph.degree()}
+    
+    def raw_node_append(nodes, raw, degree_type):        
+        """
+        Args:
+            nodes(List) : nodes_with_OUT/IN/TOTAL degree\
+            raw(List) : raw_in/out/total
+            degree_type(str) : "in" "out" or "all" , basically keys of degree_map          
+        Returns:
+            raw(List)
+            nodes(List)
+        """  
+        for i in range(1, len(nodes)):
+            raw.append(nodes[i][1])
+            nodes[i][2] = give_userlist_where_degree_helper(degree_map[degree_type], i - 1)
+        return raw, nodes
 
-    for i in range(1, len(nodes_with_IN_degree)):
-        raw_in.append(nodes_with_IN_degree[i][1])
-        nodes_with_IN_degree[i][2] = give_userlist_where_degree_helper(nx_graph.in_degree(), i - 1)
-
-    for i in range(1, len(nodes_with_TOTAL_degree)):
-        raw_total.append(nodes_with_TOTAL_degree[i][1])
-        nodes_with_TOTAL_degree[i][2] = give_userlist_where_degree_helper(nx_graph.degree(), i - 1)
+    raw_out,nodes_with_OUT_degree = raw_node_append(nodes_with_OUT_degree,raw_out, "out")
+    raw_in,nodes_with_IN_degree = raw_node_append(nodes_with_IN_degree,raw_out, "in")
+    raw_total,nodes_with_TOTAL_degree = raw_node_append(nodes_with_TOTAL_degree,raw_out, "all")   
 
     return {
         "out_degree": {
@@ -634,5 +656,5 @@ def nick_receiver_from_conn_comp(nick, conn_comp_list):
         if nick in conn_comp_list[i]:
             nick_receiver = conn_comp_list[i][0]
             break
-    return nick_receiver    
+    return nick_receiver
 
