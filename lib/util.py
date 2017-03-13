@@ -144,8 +144,8 @@ def extend_conversation_list(nick_sender, nick_receiver, conversation):
     return conversation
 
 def create_connected_nick_list(conn_comp_list):
-    """ A function that converts each individual list member to a list 
-
+    """ 
+    A function that converts each individual list member to a list 
     """
     for i in range(len(conn_comp_list)):
         conn_comp_list[i] = list(conn_comp_list[i])
@@ -158,4 +158,29 @@ def correct_last_char_list(rec_list):
         if(rec_list[i]):
             rec_list[i] = correctLastCharCR(rec_list[i])
 
-    return rec_list        
+    return rec_list
+
+def splice_find(line, search_param1, search_param2, splice_index):
+    """
+    Args:
+            line(str) : a line in the day log
+            search_param1(str): first string to search in line
+            search_param2(str): second string to search in line
+            splice_index(int): index used to splice eg if splice_index = 3 line[3:] will give us the string  from index 3 till the end.
+    """        
+    return correctLastCharCR(line[line.find(search_param1) + 1:line.find(search_param2)][splice_index:])    
+
+def get_nick_sen_rec(iter_range, nick_to_search, conn_comp_list, nick_sen_rec):
+    """
+     Args:
+            iter_range(int) : length of the interval in which nick_sen_rec can be
+            nick_to_search(str):
+            conn_comp_list(list): list of connected nicks
+            nick_sen_rec(str): nick sender/receiver that we wish to find
+
+    """
+    for i in range(iter_range):
+        if((i < len(conn_comp_list)) and (nick_to_search in conn_comp_list[i])):
+            nick_sen_rec = conn_comp_list[i][0]
+            break
+    return nick_sen_rec

@@ -55,8 +55,8 @@ def nick_change_graph(log_dict, DAY_BY_DAY_ANALYSIS = False):
                     current_line_no = current_line_no + 1
                     
                     if(line[0] == '=' and "changed the topic of" not in line):  #excluding the condition when user changes the topic. Search for only nick changes
-                        nick1 = util.correctLastCharCR(line[line.find("=")+1:line.find(" is")][3:])
-                        nick2 = util.correctLastCharCR(line[line.find("wn as")+1:line.find("\n")][5:])
+                        nick1 = util.splice_find(line, "=", " is", 3)
+                        nick2 = util.splice_find(line, "wn as", "\n", 5)                        
                         earlier_line_no = current_line_no
 
                         while earlier_line_no >= 0: #to find the line just before "=="" so as to find time of Nick Change
@@ -201,7 +201,7 @@ def keywords(log_dict, nicks, nick_same_list):
                                 nick_receiver = get_nick_receiver(nick_receiver, rec, nick_to_compare, nick_name, nicks, nick_same_list)                                
 
                         if(flag_comma == 0): #receiver list can be <Dhruv> Rohan, Hi!
-                            rec = util.correctLastCharCR(line[line.find(">")+1:line.find(", ")][1:])
+                            rec = util.splice_find(line, ">", ", ", 1)                            
                             nick_receiver = get_nick_receiver(nick_receiver, rec, nick_to_compare, nick_name, nicks, nick_same_list)                           
                                             
                     

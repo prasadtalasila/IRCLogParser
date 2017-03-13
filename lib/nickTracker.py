@@ -50,8 +50,8 @@ def nick_tracker(log_dict, track_users_on_channels = False):
             ''' Forming list of lists for avoiding nickname duplicacy '''
             for line in day_log:
                 if(line[0] == '=' and "changed the topic of" not in line):
-                    old_nick = util.correctLastCharCR(line[line.find("=") + 1:line.find(" is")][3:])
-                    new_nick = util.correctLastCharCR(line[line.find("wn as") + 1:line.find("\n")][5:])
+                    old_nick = util.splice_find(line, "=", " is", 3)
+                    new_nick = util.splice_find(line, "wn as", "\n", 5)                    
                     if track_users_on_channels and (old_nick not in nicks_today_on_this_channel):
                         nicks_today_on_this_channel.append(old_nick)#not nicks as there are same nicks spread across multiple channels
                         nicks.append(old_nick)

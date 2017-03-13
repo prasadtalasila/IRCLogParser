@@ -35,8 +35,9 @@ def message_number_graph(log_dict, nicks, nick_same_list, DAY_BY_DAY_ANALYSIS = 
     def msg_no_analysis_helper(rec_list, corrected_nick, nick, conn_comp_list,conversations,today_conversation):
         for receiver in rec_list:
             if(receiver == nick):
-                if(corrected_nick != nick):                                    
-                    nick_receiver = nick_same_list_to_conn_comp_list(conn_comp_list, nick)    
+                if(corrected_nick != nick):                                 
+                    nick_receiver = ''
+                    nick_receiver = util.get_nick_sen_rec(config.MAX_EXPECTED_DIFF_NICKS, nick, conn_comp_list, nick_receiver)    
 
                     if DAY_BY_DAY_ANALYSIS:
                         today_conversation = util.extend_conversation_list(nick_sender, nick_receiver, today_conversation)
@@ -56,7 +57,8 @@ def message_number_graph(log_dict, nicks, nick_same_list, DAY_BY_DAY_ANALYSIS = 
                     corrected_nick = util.correctLastCharCR(parsed_nick.group(0)[1:-1])
                     nick_sender = ""
                     nick_receiver = ""
-                    nick_sender = nick_same_list_to_conn_comp_list(conn_comp_list, corrected_nick)        
+                    #nick_sender = nick_same_list_to_conn_comp_list(conn_comp_list, corrected_nick)
+                    nick_sender = util.get_nick_sen_rec(config.MAX_EXPECTED_DIFF_NICKS, corrected_nick, conn_comp_list, nick_sender)        
 
                     for nick in nicks:
                         rec_list = [e.strip() for e in line.split(':')]
@@ -451,8 +453,8 @@ def message_time_graph(log_dict, nicks, nick_same_list, DAY_BY_DAY_ANALYSIS=Fals
                 if(util.check_if_msg_line (line)):
                     m = re.search(r"\<(.*?)\>", line)         
                     spliced_nick = util.correctLastCharCR(m.group(0)[1:-1])
-                    nick_sender = ""        
-                    nick_sender = nick_same_list_to_conn_comp_list(conn_comp_list, spliced_nick)
+                    nick_sender = ""                          
+                    nick_sender = util.get_nick_sen_rec(config.MAX_EXPECTED_DIFF_NICKS, spliced_nick, conn_comp_list, nick_sender)
 
                     for nick_name in nicks:
                         rec_list = [e.strip() for e in line.split(':')]  #receiver list splited about :
@@ -463,8 +465,8 @@ def message_time_graph(log_dict, nicks, nick_same_list, DAY_BY_DAY_ANALYSIS=Fals
                         for nick_to_search in rec_list:
                             if(nick_to_search == nick_name):
                                 if(spliced_nick != nick_name):                                    
-                                    nick_receiver = ""      
-                                    nick_receiver = nick_same_list_to_conn_comp_list(conn_comp_list, nick_name)                                            
+                                    nick_receiver = ""                                         
+                                    nick_receiver = util.get_nick_sen_rec(config.MAX_EXPECTED_DIFF_NICKS, nick_name, conn_comp_list, nick_receiver)                                            
                                     util.build_graphs(nick_sender, nick_receiver, line[1:6], year, month, day, graph_conversation, msg_time_aggr_graph)
 
                         if "," in rec_list[1]:  #receiver list may of the form <Dhruv> Rohan, Ram :
@@ -603,18 +605,6 @@ def degree_node_number_csv(log_dict, nicks, nick_same_list):
     total_degree = format_degree_list(total_degree, max_total_degree, "total_degree")
 
     return out_degree, in_degree, total_degree
-
-
-def nick_same_list_to_conn_comp_list(conn_comp_list, corrected_nick):
-    """
-    changes nick_same_list to conn_comp_list because conn_comp_list is the main list of all users and nicks now
-    it is a helper function used in message_number_graph, create_message_time_graph
-    """
-    for i in range(config.MAX_EXPECTED_DIFF_NICKS):
-        if ((i < len(conn_comp_list)) and (corrected_nick in conn_comp_list[i])):
-            nick_rec = conn_comp_list[i][0]
-            break
-    return nick_rec
 
 def nick_receiver_from_conn_comp(nick, conn_comp_list):
     """
