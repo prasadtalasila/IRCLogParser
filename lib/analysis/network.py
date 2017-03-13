@@ -44,6 +44,13 @@ def message_number_graph(log_dict, nicks, nick_same_list, DAY_BY_DAY_ANALYSIS = 
                     else:
                         conversations = util.extend_conversation_list(nick_sender, nick_receiver, conversations)
 
+    def message_no_add_egde(message_graph, conversation):
+        for index in xrange(config.MAX_EXPECTED_DIFF_NICKS):
+            if(len(conversation[index]) == 3 and conversation[index][0] >= config.THRESHOLD_MESSAGE_NUMBER_GRAPH):
+                if len(conversation[index][1]) >= config.MINIMUM_NICK_LENGTH and len(conversation[index][2]) >= config.MINIMUM_NICK_LENGTH:
+                    message_graph.add_edge(conversation[index][1], conversation[index][2], weight=conversation[index][0])
+        return message_graph
+
 
     for day_content_all_channels in log_dict.values():
         for day_content in day_content_all_channels:
@@ -56,8 +63,7 @@ def message_number_graph(log_dict, nicks, nick_same_list, DAY_BY_DAY_ANALYSIS = 
                     parsed_nick = re.search(r"\<(.*?)\>", line)
                     corrected_nick = util.correctLastCharCR(parsed_nick.group(0)[1:-1])
                     nick_sender = ""
-                    nick_receiver = ""
-                    #nick_sender = nick_same_list_to_conn_comp_list(conn_comp_list, corrected_nick)
+                    nick_receiver = ""                    
                     nick_sender = util.get_nick_sen_rec(config.MAX_EXPECTED_DIFF_NICKS, corrected_nick, conn_comp_list, nick_sender)        
 
                     for nick in nicks:
@@ -86,20 +92,15 @@ def message_number_graph(log_dict, nicks, nick_same_list, DAY_BY_DAY_ANALYSIS = 
 
             if DAY_BY_DAY_ANALYSIS:
                 today_message_number_graph = nx.DiGraph()
-                for index in xrange(config.MAX_EXPECTED_DIFF_NICKS):
-                    if(len(today_conversation[index]) == 3 and today_conversation[index][0] >= config.THRESHOLD_MESSAGE_NUMBER_GRAPH):
-                        if len(today_conversation[index][1]) >= config.MINIMUM_NICK_LENGTH and len(today_conversation[index][2]) >= config.MINIMUM_NICK_LENGTH:
-                            today_message_number_graph.add_edge(today_conversation[index][1], today_conversation[index][2], weight = today_conversation[index][0])
+                today_message_number_graph = message_no_add_egde(today_message_number_graph, today_conversation)                
                 year, month, day = util.get_year_month_day(day_content)
                 message_number_day_list.append([today_message_number_graph, year+'-'+month+'-'+day])
 
     print "\nBuilding graph object with EDGE WEIGHT THRESHOLD:", config.THRESHOLD_MESSAGE_NUMBER_GRAPH
 
     if not DAY_BY_DAY_ANALYSIS:
-        for index in xrange(config.MAX_EXPECTED_DIFF_NICKS):
-            if(len(conversations[index]) == 3 and conversations[index][0] >= config.THRESHOLD_MESSAGE_NUMBER_GRAPH):
-                if len(conversations[index][1]) >= config.MINIMUM_NICK_LENGTH and len(conversations[index][2]) >= config.MINIMUM_NICK_LENGTH:
-                    aggregate_message_number_graph.add_edge(conversations[index][1], conversations[index][2], weight = conversations[index][0])
+        aggregate_message_number_graph = message_no_add_egde(aggregate_message_number_graph, conversations)
+        
 
     if config.DEBUGGER:
         print "========> 30 on " + str(len(conversations)) + " conversations"
@@ -149,6 +150,10 @@ def channel_user_presence_graph_and_csv(nicks, nick_same_list, channels_for_user
     def create_adj_matrix(hashed_list1, hashed_list2):
         adj_matrix = [[0] * len(hashed_list1) for i in range(len(hashed_list2))]
         return adj_matrix
+
+    def add_channel_weighted_edge(graph, adjlist, nicks_hash, channels_hash, channel):
+        graph.add_edge(nicks_hash.index(adjlist['nickname']), (config.STARTING_HASH_CHANNEL + channels_hash.index(channel[0])), weight=channel[1])
+        return graph    
     
     #====================== CHANNEL_USER ============================
     channel_user_graph = nx.Graph()    
@@ -158,13 +163,10 @@ def channel_user_presence_graph_and_csv(nicks, nick_same_list, channels_for_user
             
             if channel[1] > config.FILTER_FOR_CHANNEL_USER_GRAPH:
                 # print str(nicks_hash.index(adjlist['nickname']))+"\t"+str(config.STARTING_HASH_CHANNEL +channels_hash.index(channel[0]))
-                channel_user_graph.add_edge(nicks_hash.index(adjlist['nickname']),
-                    (config.STARTING_HASH_CHANNEL + channels_hash.index(channel[0])),
-                    weight=channel[1])
-                
-                full_presence_graph.add_edge(nicks_hash.index(adjlist['nickname']), 
-                    (config.STARTING_HASH_CHANNEL + channels_hash.index(channel[0])),
-                    weight=channel[1])
+                channel_user_graph = add_channel_weighted_edge(channel_user_graph, adjlist, nicks_hash, channels_hash, channel)
+                full_presence_graph = add_channel_weighted_edge(full_presence_graph, adjlist, nicks_hash, channels_hash, channel)
+                #channel_user_graph.add_edge(nicks_hash.index(adjlist['nickname']), (config.STARTING_HASH_CHANNEL + channels_hash.index(channel[0])), weight=channel[1])                
+                #full_presence_graph.add_edge(nicks_hash.index(adjlist['nickname']), (config.STARTING_HASH_CHANNEL + channels_hash.index(channel[0])), weight=channel[1])
 
             # print nicks_hash.index(adjlist['nickname']),adjlist['nickname'], channels_hash.index(channel[0]),channel[0], channel[1]
             CU_adjacency_matrix[channels_hash.index(channel[0])][nicks_hash.index(adjlist['nickname'])] = channel[1]
@@ -184,6 +186,10 @@ def channel_user_presence_graph_and_csv(nicks, nick_same_list, channels_for_user
     channel_channel_graph = nx.Graph()    
     CC_adjacency_matrix = create_adj_matrix(channels_hash, channels_hash)
 
+    def add_common_users_weighted_edge(graph, index1, index2, common_users):
+        graph.add_edge(str(config.STARTING_HASH_CHANNEL + index1), str(config.STARTING_HASH_CHANNEL + index2), weight=len(common_users))
+        return graph
+
     for i in xrange(0, len(channels_hash)):
         for j in xrange(i+1, len(channels_hash)):
             common_users = list(set(users_on_channel[channels_hash[i]]) & set(users_on_channel[channels_hash[j]]))
@@ -191,13 +197,16 @@ def channel_user_presence_graph_and_csv(nicks, nick_same_list, channels_for_user
             CC_adjacency_matrix[i][j] = len(common_users)
             CC_adjacency_matrix[j][i] = len(common_users)
             if len(common_users) > config.FILTER_FOR_CHANNEL_CHANNEL_GRAPH:
-                full_presence_graph.add_edge(str(config.STARTING_HASH_CHANNEL + i), str(config.STARTING_HASH_CHANNEL + j), weight=len(common_users))
-                full_presence_graph.add_edge(str(config.STARTING_HASH_CHANNEL + j), str(config.STARTING_HASH_CHANNEL + i), weight=len(common_users))
+                full_presence_graph = add_common_users_weighted_edge(full_presence_graph, i, j, common_users)
+                full_presence_graph = add_common_users_weighted_edge(full_presence_graph, j, i, common_users)
+                '''full_presence_graph.add_edge(str(config.STARTING_HASH_CHANNEL + i), str(config.STARTING_HASH_CHANNEL + j), weight=len(common_users))
+                full_presence_graph.add_edge(str(config.STARTING_HASH_CHANNEL + j), str(config.STARTING_HASH_CHANNEL + i), weight=len(common_users))'''
                 # "Uncomment for directed version"
                 # print str(channels_hash.index(users_on_channel.keys()[i]))+"\t"+str(channels_hash.index(users_on_channel.keys()[j]))
                 # print str(channels_hash.index(users_on_channel.keys()[j]))+"\t"+str(channels_hash.index(users_on_channel.keys()[i]))
                 # print channels_hash[i],channels_hash[j]
-                channel_channel_graph.add_edge(str(config.STARTING_HASH_CHANNEL + i), str(config.STARTING_HASH_CHANNEL + j), weight=len(common_users))
+                channel_channel_graph = add_common_users_weighted_edge(channel_channel_graph, i , j, common_users)
+                '''channel_channel_graph.add_edge(str(config.STARTING_HASH_CHANNEL + i), str(config.STARTING_HASH_CHANNEL + j), weight=len(common_users))'''
     
     presence_graph_and_matrix["CC"]["matrix"] = CC_adjacency_matrix
     presence_graph_and_matrix["CC"]["graph"] = channel_channel_graph
@@ -294,9 +303,17 @@ def channel_user_presence_graph_and_csv(nicks, nick_same_list, channels_for_user
     for channel_row in CC_adjacency_matrix:
         sum_for_each_channel.append(sum(channel_row))
 
+    def get_top_indices(sum_list, how_many_vals):        
+        return sorted(range(len(sum_list)), key=lambda i: sum_list[i], reverse=True)[:how_many_vals]
+
+    def get_indices_to_delete(hash_list, top_indices):
+        return list(set([i for i in range(len(hash_list))]) - set(top_indices))
+
     #filter out top <how_many_top_channels> indices
-    top_indices_channels = sorted(range(len(sum_for_each_channel)), key=lambda i: sum_for_each_channel[i], reverse=True)[:how_many_top_channels]
-    indices_to_delete_channels = list(set([i for i in xrange(0, len(channels_hash))]) - set(top_indices_channels))
+    top_indices_channels = get_top_indices(sum_for_each_channel, how_many_top_channels)
+    indices_to_delete_channels = get_indices_to_delete(channels_hash, top_indices_channels)
+    #top_indices_channels = sorted(range(len(sum_for_each_channel)), key=lambda i: sum_for_each_channel[i], reverse=True)[:how_many_top_channels]
+    #indices_to_delete_channels = list(set([i for i in xrange(0, len(channels_hash))]) - set(top_indices_channels))
 
     temp_channels = np.delete(CC_adjacency_matrix, indices_to_delete_channels, 1) #delete columns
     reduced_CC_adjacency_matrix = np.delete(temp_channels, indices_to_delete_channels, 0) #delete rows
@@ -311,8 +328,10 @@ def channel_user_presence_graph_and_csv(nicks, nick_same_list, channels_for_user
         sum_for_each_user.append(sum(user_row))
 
     #filter out top <how_many_top_users> indices
-    top_indices_users = sorted(range(len(sum_for_each_user)), key=lambda i: sum_for_each_user[i], reverse=True)[:how_many_top_users]
-    indices_to_delete_users = list(set([i for i in xrange(0, len(nicks_hash))]) - set(top_indices_users))
+    top_indices_users = get_top_indices(sum_for_each_user, how_many_top_users)
+    indices_to_delete_users = get_indices_to_delete(nicks_hash, top_indices_users)
+    #top_indices_users = sorted(range(len(sum_for_each_user)), key=lambda i: sum_for_each_user[i], reverse=True)[:how_many_top_users]
+    #indices_to_delete_users = list(set([i for i in xrange(0, len(nicks_hash))]) - set(top_indices_users))
 
     # print len(top_indices_users), top_indices_users
     # print len(indices_to_delete_users), indices_to_delete_users

@@ -364,8 +364,7 @@ def keywords_clusters(log_dict, nicks, nick_same_list):
         print("done in %0.3fs" % (time() - t0))
         print("Top terms per cluster:")        
         
-        order_centroids = build_centroid(km)
-            
+        order_centroids = build_centroid(km)            
         np.set_printoptions(threshold=np.nan)
 
         terms = vectorizer.get_feature_names()
@@ -424,5 +423,5 @@ def keywords_clusters(log_dict, nicks, nick_same_list):
         print "NOTE RANDOM OUTPUTS BECAUSE OF RANDOM INITIALISATION"
 
 def extended_stop_words(nicks_for_stop_words, stop_word_without_apostrophe):
-        stop_words_extended = text.ENGLISH_STOP_WORDS.union(common_english_words.words).union(nicks_for_stop_words).union(stop_word_without_apostrophe).union(custom_stop_words.words).union(custom_stop_words.slangs)
-        return stop_words_extended
+    stop_words_extended = text.ENGLISH_STOP_WORDS.union(common_english_words.words).union(nicks_for_stop_words).union(stop_word_without_apostrophe).union(custom_stop_words.words).union(custom_stop_words.slangs)
+    return stop_words_extended

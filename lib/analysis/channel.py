@@ -287,5 +287,4 @@ def response_time(log_dict, nicks, nick_same_list):
 
 #Finally storing the RT values along with their frequencies in a csv file. 
 	rows_rt = zip(graph_x_axis, graph_y_axis)
-
 	return rows_rt	
