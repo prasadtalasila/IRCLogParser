@@ -16,6 +16,9 @@ from scipy import stats
 import plotly.plotly as py
 py.sign_in('rohangoel963', 'vh6le8no26')
 import plotly.graph_objs as go
+from numpy import genfromtxt
+import glob
+
 
 def generate_probability_distribution(data, initial_rows_filter):
     """ 
@@ -211,7 +214,7 @@ def plot_infomap_igraph(nx_graph, membership, output_directory, output_file_name
         print "INFOMAPS visualisation for", output_file_name, "completed"
 
 
-def generate_log_plots(filter_val, plot_data, output_file_name, output_directory):
+def generate_log_plots(filter_val, plot_data, output_directory, output_file_name):
     """
         Generate log plots for given time frame selecting first filter_val number ofan
         elements and plotting log of value on y axis.
@@ -239,7 +242,7 @@ def generate_log_plots(filter_val, plot_data, output_file_name, output_directory
     calc_plot_linear_fit(x_axis_log, y_axis_log, output_file_name, output_directory)
 
 
-def calc_plot_linear_fit(x_in, y_in, output_file_name, output_directory):
+def calc_plot_linear_fit(x_in, y_in, output_directory, output_file_name):
     """
         Calculate and plot linar fit for data
 
@@ -303,3 +306,127 @@ def calc_plot_linear_fit(x_in, y_in, output_file_name, output_directory):
         plt.legend(['Data', 'Fit'], loc='upper right')
         plt.savefig(output_directory+"/" + output_file_name+".png")
         plt.close()
+
+
+def generate_group_bar_charts(y_values, x_values, trace_header, output_directory, output_file_name):
+    """
+        Plots multiple bar graphs on same graph
+
+        example usage:
+        generate_group_bar_charts([
+            [5.10114882,    5.0194652482, 4.9908093076],
+            [4.5824497358,  4.7083614037,   4.3812775722],
+            [2.6839471308,  3.0441476209,   3.6403820447]
+            ], ['#kubuntu-devel', '#ubuntu-devel', '#kubuntu'],
+            ['head1', 'head2', 'head3'], '/home/rohan/Desktop/', 'multi_box'
+        )
+
+    Args:
+        x_in (list of int): x_axis data
+        y_in (list of int): y_axis data
+        output_drectory(str): location to save graph
+        output_file_name(str): name of the image file to be saved
+
+    Returns:
+        null
+    """
+
+    data = [
+        go.Bar(
+            x=x_values,
+            y=y_values[i],
+            name=trace_header[i]
+        ) for i in range(len(y_values))
+    ]
+
+    layout = go.Layout(
+        barmode='group'
+    )
+
+    fig = go.Figure(data=data, layout=layout)
+    py.image.save_as(fig, output_directory + "/" + output_file_name+".png")
+
+
+def csv_heatmap_generator_plotly(in_directory, output_directory, output_file_name):
+    """
+        Plots heatmaps for all the csv files in the given directory
+
+    Args:
+        in_directory (str):  location of input csv files
+        output_drectory(str): location to save graph
+        output_file_name(str): name of the image file to be saved
+
+    Returns:
+        null
+    """
+
+    file_list = glob.glob(in_directory+"*.csv")
+
+    for file in file_list:
+        csv_data = genfromtxt(file, delimiter=',')
+
+        trace = go.Heatmap(
+                z=csv_data,
+                x=list(range(48)),
+                y=list(range(1, 12)),
+                colorscale=[
+                [0, 'rgb(255, 255, 204)'],
+                [0.13, 'rgb(255, 237, 160)'],
+                [0.25, 'rgb(254, 217, 118)'],
+                [0.38, 'rgb(254, 178, 76)'],
+                [0.5, 'rgb(253, 141, 60)'],
+                [0.63, 'rgb(252, 78, 42)'],
+                [0.75, 'rgb(227, 26, 28)'],
+                [0.88, 'rgb(189, 0, 38)'],
+                [1.0, 'rgb(128, 0, 38)']
+            ]
+        )
+
+        data = [trace]
+        layout = go.Layout(title='HeatMap', width=800, height=640)
+        fig = go.Figure(data=data, layout=layout)
+
+        py.image.save_as(fig, filename=in_directory+file[file.rfind("/")+1:-4]+'_heatmap.png')
+
+
+def matplotlob_csv_heatmap_generator(csv_file, output_directory, output_file_name):
+    """
+        Plots heatmaps for all the csv files in the given directory
+        Can be used as a script for generating heatmaps, faster alternative to plotly
+
+    Args:
+        in_directory (str):  location of input csv files
+        output_drectory(str): location to save graph
+        output_file_name(str): name of the image file to be saved
+
+    Returns:
+        null
+    """
+    
+    column_labels = map(str, range(1, 32))
+    row_labels = map(str, range(1, 49))
+    
+    data = genfromtxt(csv_file, delimiter=',')
+    print(data)
+    
+    fig, ax = plt.subplots(figsize=(10, 10))
+    heatmap = ax.pcolor(data, cmap=plt.cm.Reds)
+
+    cbar = plt.colorbar(heatmap)
+
+    def np_arrange_helper(data, disp):
+        return np.arange(data) + disp
+
+    # put the major ticks at the middle of each cell
+    ax.set_xticks(np_arrange_helper(data.shape[0], 0.5), minor=False)
+    ax.set_yticks(np_arrange_helper(data.shape[1], 0.5), minor=False)
+
+    # want a more natural, table-like display
+    ax.invert_yaxis()
+    ax.xaxis.tick_top()
+
+    ax.set_xticklabels(row_labels, minor=False)
+    ax.set_yticklabels(column_labels, minor=False)
+    
+    plt.savefig(output_directory+"/" + output_file_name+".png")
+    plt.close()

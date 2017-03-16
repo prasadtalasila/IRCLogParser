@@ -56,7 +56,7 @@ saver.save_csv(bin_matrix, output_directory, "MessageNumber_binsize_"+str(config
 # resp_time_curve_fit_parameters = vis.exponential_curve_fit_and_plot(resp_time, 20, output_directory, "resp_time")
 # conv_ref_time_curve_fit_parameters = vis.exponential_curve_fit_and_plot_x_shifted(conv_ref_time, 30, output_directory, "conv_ref_time")
 # vis.plot_infomap_igraph(adjCC_graph, adjCC_membership, output_directory, "adjCC_infomaps")
-#vis.generate_log_plots(9, out_degree_node_number, channel_name[0] +"OUT"+ starting_date + ending_date, output_directory)
+#vis.generate_log_plots(9, out_degree_node_number, output_directory, channel_name[0] +"OUT"+ starting_date + ending_date)
 
 # ============== VALIDATION ==============
 # validate.validate_RT_RL_CRT(conv_len_curve_fit_parameters, [[10.5, 10.6], [2.12, 2.32], [0, 0.2], [0, 0.0002]], "conv_len")
