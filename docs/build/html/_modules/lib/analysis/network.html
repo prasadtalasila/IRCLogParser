@@ -1,0 +1,759 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>lib.analysis.network &#8212; IRC Log Parser 0.1 documentation</title>
+    
+    <link rel="stylesheet" href="../../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+   
+  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for lib.analysis.network</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">re</span>
+<span class="kn">import</span> <span class="nn">networkx</span> <span class="k">as</span> <span class="nn">nx</span>
+<span class="kn">from</span> <span class="nn">networkx.algorithms.components.connected</span> <span class="k">import</span> <span class="n">connected_components</span>
+<span class="kn">from</span> <span class="nn">datetime</span> <span class="k">import</span> <span class="n">date</span>
+<span class="kn">import</span> <span class="nn">util</span>
+<span class="kn">import</span> <span class="nn">csv</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">config</span>
+<span class="kn">from</span> <span class="nn">itertools</span> <span class="k">import</span> <span class="n">izip_longest</span> <span class="k">as</span> <span class="n">zip_longest</span>
+<span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;../lib&#39;</span><span class="p">)</span>
+
+<div class="viewcode-block" id="message_number_graph"><a class="viewcode-back" href="../../../doc_for_code.html#lib.analysis.network.message_number_graph">[docs]</a><span class="k">def</span> <span class="nf">message_number_graph</span><span class="p">(</span><span class="n">log_dict</span><span class="p">,</span> <span class="n">nicks</span><span class="p">,</span> <span class="n">nick_same_list</span><span class="p">,</span> <span class="n">DAY_BY_DAY_ANALYSIS</span> <span class="o">=</span> <span class="kc">False</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Creates a directed graph</span>
+<span class="sd">        with each node representing an IRC user</span>
+<span class="sd">        and each directed edge has a weight which </span>
+<span class="sd">        mentions the number messages sent and recieved by that user </span>
+<span class="sd">        in the selected time frame.</span>
+<span class="sd">    Args:</span>
+<span class="sd">        log_dict (dict): with key as dateTime.date object and value as {&quot;data&quot;:datalist,&quot;channel_name&quot;:channels name}</span>
+<span class="sd">        nicks(list): list of all the nicks</span>
+<span class="sd">        nick_same_list(list): list of lists mentioning nicks which belong to same users</span>
+<span class="sd">    Returns:</span>
+<span class="sd">       message_number_graph (nx graph object)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">message_number_day_list</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">conversations</span><span class="o">=</span><span class="p">[[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">MAX_EXPECTED_DIFF_NICKS</span><span class="p">)]</span>
+    <span class="n">aggregate_message_number_graph</span> <span class="o">=</span> <span class="n">nx</span><span class="o">.</span><span class="n">DiGraph</span><span class="p">()</span>  <span class="c1">#graph with multiple directed edges between clients used</span>
+
+    <span class="n">G</span> <span class="o">=</span> <span class="n">util</span><span class="o">.</span><span class="n">to_graph</span><span class="p">(</span><span class="n">nick_same_list</span><span class="p">)</span>
+    <span class="n">conn_comp_list</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">connected_components</span><span class="p">(</span><span class="n">G</span><span class="p">))</span>
+
+    <span class="n">util</span><span class="o">.</span><span class="n">create_connected_nick_list</span><span class="p">(</span><span class="n">conn_comp_list</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">msg_no_analysis_helper</span><span class="p">(</span><span class="n">rec_list</span><span class="p">,</span> <span class="n">corrected_nick</span><span class="p">,</span> <span class="n">nick</span><span class="p">,</span> <span class="n">conn_comp_list</span><span class="p">,</span><span class="n">conversations</span><span class="p">,</span><span class="n">today_conversation</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">receiver</span> <span class="ow">in</span> <span class="n">rec_list</span><span class="p">:</span>
+            <span class="k">if</span><span class="p">(</span><span class="n">receiver</span> <span class="o">==</span> <span class="n">nick</span><span class="p">):</span>
+                <span class="k">if</span><span class="p">(</span><span class="n">corrected_nick</span> <span class="o">!=</span> <span class="n">nick</span><span class="p">):</span>                                    
+                    <span class="n">nick_receiver</span> <span class="o">=</span> <span class="n">nick_same_list_to_conn_comp_list</span><span class="p">(</span><span class="n">conn_comp_list</span><span class="p">,</span> <span class="n">nick</span><span class="p">)</span>    
+
+                    <span class="k">if</span> <span class="n">DAY_BY_DAY_ANALYSIS</span><span class="p">:</span>
+                        <span class="n">today_conversation</span> <span class="o">=</span> <span class="n">util</span><span class="o">.</span><span class="n">extend_conversation_list</span><span class="p">(</span><span class="n">nick_sender</span><span class="p">,</span> <span class="n">nick_receiver</span><span class="p">,</span> <span class="n">today_conversation</span><span class="p">)</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">conversations</span> <span class="o">=</span> <span class="n">util</span><span class="o">.</span><span class="n">extend_conversation_list</span><span class="p">(</span><span class="n">nick_sender</span><span class="p">,</span> <span class="n">nick_receiver</span><span class="p">,</span> <span class="n">conversations</span><span class="p">)</span>
+
+
+    <span class="k">for</span> <span class="n">day_content_all_channels</span> <span class="ow">in</span> <span class="n">log_dict</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+        <span class="k">for</span> <span class="n">day_content</span> <span class="ow">in</span> <span class="n">day_content_all_channels</span><span class="p">:</span>
+            <span class="n">day_log</span> <span class="o">=</span> <span class="n">day_content</span><span class="p">[</span><span class="s2">&quot;log_data&quot;</span><span class="p">]</span>
+            <span class="n">today_conversation</span> <span class="o">=</span> <span class="p">[[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">MAX_EXPECTED_DIFF_NICKS</span><span class="p">)]</span>
+            <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">day_log</span><span class="p">:</span>
+                <span class="n">flag_comma</span> <span class="o">=</span> <span class="mi">0</span>
+
+                <span class="k">if</span><span class="p">(</span><span class="n">util</span><span class="o">.</span><span class="n">check_if_msg_line</span> <span class="p">(</span><span class="n">line</span><span class="p">)):</span>
+                    <span class="n">parsed_nick</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="s2">r&quot;\&lt;(.*?)\&gt;&quot;</span><span class="p">,</span> <span class="n">line</span><span class="p">)</span>
+                    <span class="n">corrected_nick</span> <span class="o">=</span> <span class="n">util</span><span class="o">.</span><span class="n">correctLastCharCR</span><span class="p">(</span><span class="n">parsed_nick</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">0</span><span class="p">)[</span><span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+                    <span class="n">nick_sender</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+                    <span class="n">nick_receiver</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+                    <span class="n">nick_sender</span> <span class="o">=</span> <span class="n">nick_same_list_to_conn_comp_list</span><span class="p">(</span><span class="n">conn_comp_list</span><span class="p">,</span> <span class="n">corrected_nick</span><span class="p">)</span>        
+
+                    <span class="k">for</span> <span class="n">nick</span> <span class="ow">in</span> <span class="n">nicks</span><span class="p">:</span>
+                        <span class="n">rec_list</span> <span class="o">=</span> <span class="p">[</span><span class="n">e</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">line</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;:&#39;</span><span class="p">)]</span>
+                        <span class="n">util</span><span class="o">.</span><span class="n">rec_list_splice</span><span class="p">(</span><span class="n">rec_list</span><span class="p">)</span>
+                        <span class="k">if</span> <span class="ow">not</span> <span class="n">rec_list</span><span class="p">[</span><span class="mi">1</span><span class="p">]:</span>
+                            <span class="k">break</span>                        
+                        <span class="n">rec_list</span> <span class="o">=</span> <span class="n">util</span><span class="o">.</span><span class="n">correct_last_char_list</span><span class="p">(</span><span class="n">rec_list</span><span class="p">)</span>       
+                        <span class="n">msg_no_analysis_helper</span><span class="p">(</span><span class="n">rec_list</span><span class="p">,</span> <span class="n">corrected_nick</span><span class="p">,</span> <span class="n">nick</span><span class="p">,</span> <span class="n">conn_comp_list</span><span class="p">,</span> <span class="n">conversations</span><span class="p">,</span><span class="n">today_conversation</span><span class="p">)</span>
+
+                        <span class="k">if</span> <span class="s2">&quot;,&quot;</span> <span class="ow">in</span> <span class="n">rec_list</span><span class="p">[</span><span class="mi">1</span><span class="p">]:</span>
+                            <span class="n">flag_comma</span> <span class="o">=</span> <span class="mi">1</span>
+                            <span class="n">rec_list_2</span><span class="o">=</span><span class="p">[</span><span class="n">e</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">rec_list</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;,&#39;</span><span class="p">)]</span>
+                            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">xrange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="nb">len</span><span class="p">(</span><span class="n">rec_list_2</span><span class="p">)):</span>
+                                <span class="k">if</span><span class="p">(</span><span class="n">rec_list_2</span><span class="p">[</span><span class="n">i</span><span class="p">]):</span>
+                                    <span class="n">rec_list_2</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">util</span><span class="o">.</span><span class="n">correctLastCharCR</span><span class="p">(</span><span class="n">rec_list_2</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>                            
+                            <span class="n">msg_no_analysis_helper</span><span class="p">(</span><span class="n">rec_list_2</span><span class="p">,</span> <span class="n">corrected_nick</span><span class="p">,</span> <span class="n">nick</span><span class="p">,</span> <span class="n">conn_comp_list</span><span class="p">,</span> <span class="n">conversations</span><span class="p">,</span> <span class="n">today_conversation</span><span class="p">)</span>                
+
+                        <span class="k">if</span><span class="p">(</span><span class="n">flag_comma</span> <span class="o">==</span> <span class="mi">0</span><span class="p">):</span>
+                            <span class="n">rec</span> <span class="o">=</span> <span class="n">line</span><span class="p">[</span><span class="n">line</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s2">&quot;&gt;&quot;</span><span class="p">)</span><span class="o">+</span><span class="mi">1</span><span class="p">:</span><span class="n">line</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s2">&quot;, &quot;</span><span class="p">)]</span>
+                            <span class="n">rec</span> <span class="o">=</span> <span class="n">rec</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
+                            <span class="n">rec</span> <span class="o">=</span> <span class="n">util</span><span class="o">.</span><span class="n">correctLastCharCR</span><span class="p">(</span><span class="n">rec</span><span class="p">)</span>
+                            <span class="k">if</span><span class="p">(</span><span class="n">rec</span> <span class="o">==</span> <span class="n">nick</span><span class="p">):</span>
+                                <span class="k">if</span><span class="p">(</span><span class="n">corrected_nick</span> <span class="o">!=</span> <span class="n">nick</span><span class="p">):</span>                                   
+                                    <span class="n">nick_receiver</span> <span class="o">=</span> <span class="n">nick_receiver_from_conn_comp</span><span class="p">(</span><span class="n">nick</span><span class="p">,</span> <span class="n">conn_comp_list</span><span class="p">)</span>        
+
+            <span class="k">if</span> <span class="n">DAY_BY_DAY_ANALYSIS</span><span class="p">:</span>
+                <span class="n">today_message_number_graph</span> <span class="o">=</span> <span class="n">nx</span><span class="o">.</span><span class="n">DiGraph</span><span class="p">()</span>
+                <span class="k">for</span> <span class="n">index</span> <span class="ow">in</span> <span class="n">xrange</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">MAX_EXPECTED_DIFF_NICKS</span><span class="p">):</span>
+                    <span class="k">if</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">today_conversation</span><span class="p">[</span><span class="n">index</span><span class="p">])</span> <span class="o">==</span> <span class="mi">3</span> <span class="ow">and</span> <span class="n">today_conversation</span><span class="p">[</span><span class="n">index</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="n">config</span><span class="o">.</span><span class="n">THRESHOLD_MESSAGE_NUMBER_GRAPH</span><span class="p">):</span>
+                        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">today_conversation</span><span class="p">[</span><span class="n">index</span><span class="p">][</span><span class="mi">1</span><span class="p">])</span> <span class="o">&gt;=</span> <span class="n">config</span><span class="o">.</span><span class="n">MINIMUM_NICK_LENGTH</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">today_conversation</span><span class="p">[</span><span class="n">index</span><span class="p">][</span><span class="mi">2</span><span class="p">])</span> <span class="o">&gt;=</span> <span class="n">config</span><span class="o">.</span><span class="n">MINIMUM_NICK_LENGTH</span><span class="p">:</span>
+                            <span class="n">today_message_number_graph</span><span class="o">.</span><span class="n">add_edge</span><span class="p">(</span><span class="n">today_conversation</span><span class="p">[</span><span class="n">index</span><span class="p">][</span><span class="mi">1</span><span class="p">],</span> <span class="n">today_conversation</span><span class="p">[</span><span class="n">index</span><span class="p">][</span><span class="mi">2</span><span class="p">],</span> <span class="n">weight</span> <span class="o">=</span> <span class="n">today_conversation</span><span class="p">[</span><span class="n">index</span><span class="p">][</span><span class="mi">0</span><span class="p">])</span>
+                <span class="n">year</span><span class="p">,</span> <span class="n">month</span><span class="p">,</span> <span class="n">day</span> <span class="o">=</span> <span class="n">util</span><span class="o">.</span><span class="n">get_year_month_day</span><span class="p">(</span><span class="n">day_content</span><span class="p">)</span>
+                <span class="n">message_number_day_list</span><span class="o">.</span><span class="n">append</span><span class="p">([</span><span class="n">today_message_number_graph</span><span class="p">,</span> <span class="n">year</span><span class="o">+</span><span class="s1">&#39;-&#39;</span><span class="o">+</span><span class="n">month</span><span class="o">+</span><span class="s1">&#39;-&#39;</span><span class="o">+</span><span class="n">day</span><span class="p">])</span>
+
+    <span class="nb">print</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Building graph object with EDGE WEIGHT THRESHOLD:&quot;</span><span class="p">,</span> <span class="n">config</span><span class="o">.</span><span class="n">THRESHOLD_MESSAGE_NUMBER_GRAPH</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">DAY_BY_DAY_ANALYSIS</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">index</span> <span class="ow">in</span> <span class="n">xrange</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">MAX_EXPECTED_DIFF_NICKS</span><span class="p">):</span>
+            <span class="k">if</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">conversations</span><span class="p">[</span><span class="n">index</span><span class="p">])</span> <span class="o">==</span> <span class="mi">3</span> <span class="ow">and</span> <span class="n">conversations</span><span class="p">[</span><span class="n">index</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="n">config</span><span class="o">.</span><span class="n">THRESHOLD_MESSAGE_NUMBER_GRAPH</span><span class="p">):</span>
+                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">conversations</span><span class="p">[</span><span class="n">index</span><span class="p">][</span><span class="mi">1</span><span class="p">])</span> <span class="o">&gt;=</span> <span class="n">config</span><span class="o">.</span><span class="n">MINIMUM_NICK_LENGTH</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">conversations</span><span class="p">[</span><span class="n">index</span><span class="p">][</span><span class="mi">2</span><span class="p">])</span> <span class="o">&gt;=</span> <span class="n">config</span><span class="o">.</span><span class="n">MINIMUM_NICK_LENGTH</span><span class="p">:</span>
+                    <span class="n">aggregate_message_number_graph</span><span class="o">.</span><span class="n">add_edge</span><span class="p">(</span><span class="n">conversations</span><span class="p">[</span><span class="n">index</span><span class="p">][</span><span class="mi">1</span><span class="p">],</span> <span class="n">conversations</span><span class="p">[</span><span class="n">index</span><span class="p">][</span><span class="mi">2</span><span class="p">],</span> <span class="n">weight</span> <span class="o">=</span> <span class="n">conversations</span><span class="p">[</span><span class="n">index</span><span class="p">][</span><span class="mi">0</span><span class="p">])</span>
+
+    <span class="k">if</span> <span class="n">config</span><span class="o">.</span><span class="n">DEBUGGER</span><span class="p">:</span>
+        <span class="nb">print</span> <span class="s2">&quot;========&gt; 30 on &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">conversations</span><span class="p">))</span> <span class="o">+</span> <span class="s2">&quot; conversations&quot;</span>
+        <span class="nb">print</span> <span class="n">conversations</span><span class="p">[:</span><span class="mi">30</span><span class="p">]</span>
+
+    <span class="k">if</span> <span class="n">DAY_BY_DAY_ANALYSIS</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">message_number_day_list</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">aggregate_message_number_graph</span></div>
+
+
+<div class="viewcode-block" id="channel_user_presence_graph_and_csv"><a class="viewcode-back" href="../../../doc_for_code.html#lib.analysis.network.channel_user_presence_graph_and_csv">[docs]</a><span class="k">def</span> <span class="nf">channel_user_presence_graph_and_csv</span><span class="p">(</span><span class="n">nicks</span><span class="p">,</span> <span class="n">nick_same_list</span><span class="p">,</span> <span class="n">channels_for_user</span><span class="p">,</span> <span class="n">nick_channel_dict</span><span class="p">,</span> <span class="n">nicks_hash</span><span class="p">,</span> <span class="n">channels_hash</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; creates a directed graph for each nick,</span>
+<span class="sd">    each edge from which points to the IRC Channels that nick has participated in.</span>
+<span class="sd">    (Nick changes are tracked here and only the initial nick is shown if a user changed his nick)</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        nicks(list): list of all the nicks</span>
+<span class="sd">        nick_same_list(list): list of lists mentioning nicks which belong to same users</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        presence_graph_and_matrix (dict): contains adjacency matrices and graphs for Acc Auu Acu</span>
+<span class="sd">        full_presence_graph (nx graph object)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">presence_graph_and_matrix</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">&quot;CC&quot;</span><span class="p">:</span> <span class="p">{</span>
+                <span class="s2">&quot;graph&quot;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
+                <span class="s2">&quot;matrix&quot;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
+                <span class="s2">&quot;reducedMatrix&quot;</span><span class="p">:</span> <span class="kc">None</span>
+        <span class="p">},</span>
+        <span class="s2">&quot;CU&quot;</span><span class="p">:</span> <span class="p">{</span>
+                <span class="s2">&quot;graph&quot;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
+                <span class="s2">&quot;matrix&quot;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
+                <span class="s2">&quot;reducedMatrix&quot;</span><span class="p">:</span> <span class="kc">None</span>
+        <span class="p">},</span>
+        <span class="s2">&quot;UU&quot;</span><span class="p">:</span> <span class="p">{</span>
+                <span class="s2">&quot;graph&quot;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
+                <span class="s2">&quot;matrix&quot;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
+                <span class="s2">&quot;reducedMatrix&quot;</span><span class="p">:</span> <span class="kc">None</span>
+        <span class="p">},</span>
+    <span class="p">}</span>
+
+    <span class="n">users_on_channel</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">full_presence_graph</span> <span class="o">=</span> <span class="n">nx</span><span class="o">.</span><span class="n">DiGraph</span><span class="p">()</span>  <span class="c1">#directed</span>
+
+    <span class="k">def</span> <span class="nf">create_adj_matrix</span><span class="p">(</span><span class="n">hashed_list1</span><span class="p">,</span> <span class="n">hashed_list2</span><span class="p">):</span>
+        <span class="n">adj_matrix</span> <span class="o">=</span> <span class="p">[[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">hashed_list1</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">hashed_list2</span><span class="p">))]</span>
+        <span class="k">return</span> <span class="n">adj_matrix</span>
+    
+    <span class="c1">#====================== CHANNEL_USER ============================</span>
+    <span class="n">channel_user_graph</span> <span class="o">=</span> <span class="n">nx</span><span class="o">.</span><span class="n">Graph</span><span class="p">()</span>    
+    <span class="n">CU_adjacency_matrix</span> <span class="o">=</span> <span class="n">create_adj_matrix</span><span class="p">(</span><span class="n">nick_hash</span><span class="p">,</span> <span class="n">channels_hash</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">adjlist</span> <span class="ow">in</span> <span class="n">nick_channel_dict</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">channel</span> <span class="ow">in</span> <span class="n">adjlist</span><span class="p">[</span><span class="s1">&#39;channels&#39;</span><span class="p">]:</span>
+            
+            <span class="k">if</span> <span class="n">channel</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">&gt;</span> <span class="n">config</span><span class="o">.</span><span class="n">FILTER_FOR_CHANNEL_USER_GRAPH</span><span class="p">:</span>
+                <span class="c1"># print str(nicks_hash.index(adjlist[&#39;nickname&#39;]))+&quot;\t&quot;+str(config.STARTING_HASH_CHANNEL +channels_hash.index(channel[0]))</span>
+                <span class="n">channel_user_graph</span><span class="o">.</span><span class="n">add_edge</span><span class="p">(</span><span class="n">nicks_hash</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">adjlist</span><span class="p">[</span><span class="s1">&#39;nickname&#39;</span><span class="p">]),</span>
+                    <span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">STARTING_HASH_CHANNEL</span> <span class="o">+</span> <span class="n">channels_hash</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">channel</span><span class="p">[</span><span class="mi">0</span><span class="p">])),</span>
+                    <span class="n">weight</span><span class="o">=</span><span class="n">channel</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+                
+                <span class="n">full_presence_graph</span><span class="o">.</span><span class="n">add_edge</span><span class="p">(</span><span class="n">nicks_hash</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">adjlist</span><span class="p">[</span><span class="s1">&#39;nickname&#39;</span><span class="p">]),</span> 
+                    <span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">STARTING_HASH_CHANNEL</span> <span class="o">+</span> <span class="n">channels_hash</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">channel</span><span class="p">[</span><span class="mi">0</span><span class="p">])),</span>
+                    <span class="n">weight</span><span class="o">=</span><span class="n">channel</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+
+            <span class="c1"># print nicks_hash.index(adjlist[&#39;nickname&#39;]),adjlist[&#39;nickname&#39;], channels_hash.index(channel[0]),channel[0], channel[1]</span>
+            <span class="n">CU_adjacency_matrix</span><span class="p">[</span><span class="n">channels_hash</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">channel</span><span class="p">[</span><span class="mi">0</span><span class="p">])][</span><span class="n">nicks_hash</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">adjlist</span><span class="p">[</span><span class="s1">&#39;nickname&#39;</span><span class="p">])]</span> <span class="o">=</span> <span class="n">channel</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+            <span class="c1"># print adjlist[&#39;nickname&#39;], channel[0]</span>
+           
+            <span class="k">if</span> <span class="n">users_on_channel</span><span class="o">.</span><span class="n">has_key</span><span class="p">(</span><span class="n">channel</span><span class="p">[</span><span class="mi">0</span><span class="p">]):</span>
+                <span class="k">if</span> <span class="n">adjlist</span><span class="p">[</span><span class="s1">&#39;nickname&#39;</span><span class="p">]</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">users_on_channel</span><span class="p">[</span><span class="n">channel</span><span class="p">[</span><span class="mi">0</span><span class="p">]]:</span>
+                    <span class="n">users_on_channel</span><span class="p">[</span><span class="n">channel</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">adjlist</span><span class="p">[</span><span class="s1">&#39;nickname&#39;</span><span class="p">])</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">users_on_channel</span><span class="p">[</span><span class="n">channel</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[</span><span class="n">adjlist</span><span class="p">[</span><span class="s1">&#39;nickname&#39;</span><span class="p">]]</span>
+    
+    <span class="n">presence_graph_and_matrix</span><span class="p">[</span><span class="s2">&quot;CU&quot;</span><span class="p">][</span><span class="s2">&quot;matrix&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">CU_adjacency_matrix</span>
+    <span class="n">presence_graph_and_matrix</span><span class="p">[</span><span class="s2">&quot;CU&quot;</span><span class="p">][</span><span class="s2">&quot;graph&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">channel_user_graph</span>  
+    <span class="nb">print</span> <span class="s2">&quot;CU Adjacency Matrix Generated&quot;</span>
+
+    <span class="c1">#====================== CHANNEL_CHANNEL ============================</span>
+    <span class="n">channel_channel_graph</span> <span class="o">=</span> <span class="n">nx</span><span class="o">.</span><span class="n">Graph</span><span class="p">()</span>    
+    <span class="n">CC_adjacency_matrix</span> <span class="o">=</span> <span class="n">create_adj_matrix</span><span class="p">(</span><span class="n">channels_hash</span><span class="p">,</span> <span class="n">channels_hash</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">xrange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">channels_hash</span><span class="p">)):</span>
+        <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="n">xrange</span><span class="p">(</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">channels_hash</span><span class="p">)):</span>
+            <span class="n">common_users</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">users_on_channel</span><span class="p">[</span><span class="n">channels_hash</span><span class="p">[</span><span class="n">i</span><span class="p">]])</span> <span class="o">&amp;</span> <span class="nb">set</span><span class="p">(</span><span class="n">users_on_channel</span><span class="p">[</span><span class="n">channels_hash</span><span class="p">[</span><span class="n">j</span><span class="p">]]))</span>
+            <span class="c1"># print users_on_channel.keys()[i], users_on_channel.keys()[j], common_users</span>
+            <span class="n">CC_adjacency_matrix</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">common_users</span><span class="p">)</span>
+            <span class="n">CC_adjacency_matrix</span><span class="p">[</span><span class="n">j</span><span class="p">][</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">common_users</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">common_users</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">config</span><span class="o">.</span><span class="n">FILTER_FOR_CHANNEL_CHANNEL_GRAPH</span><span class="p">:</span>
+                <span class="n">full_presence_graph</span><span class="o">.</span><span class="n">add_edge</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">STARTING_HASH_CHANNEL</span> <span class="o">+</span> <span class="n">i</span><span class="p">),</span> <span class="nb">str</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">STARTING_HASH_CHANNEL</span> <span class="o">+</span> <span class="n">j</span><span class="p">),</span> <span class="n">weight</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">common_users</span><span class="p">))</span>
+                <span class="n">full_presence_graph</span><span class="o">.</span><span class="n">add_edge</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">STARTING_HASH_CHANNEL</span> <span class="o">+</span> <span class="n">j</span><span class="p">),</span> <span class="nb">str</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">STARTING_HASH_CHANNEL</span> <span class="o">+</span> <span class="n">i</span><span class="p">),</span> <span class="n">weight</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">common_users</span><span class="p">))</span>
+                <span class="c1"># &quot;Uncomment for directed version&quot;</span>
+                <span class="c1"># print str(channels_hash.index(users_on_channel.keys()[i]))+&quot;\t&quot;+str(channels_hash.index(users_on_channel.keys()[j]))</span>
+                <span class="c1"># print str(channels_hash.index(users_on_channel.keys()[j]))+&quot;\t&quot;+str(channels_hash.index(users_on_channel.keys()[i]))</span>
+                <span class="c1"># print channels_hash[i],channels_hash[j]</span>
+                <span class="n">channel_channel_graph</span><span class="o">.</span><span class="n">add_edge</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">STARTING_HASH_CHANNEL</span> <span class="o">+</span> <span class="n">i</span><span class="p">),</span> <span class="nb">str</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">STARTING_HASH_CHANNEL</span> <span class="o">+</span> <span class="n">j</span><span class="p">),</span> <span class="n">weight</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">common_users</span><span class="p">))</span>
+    
+    <span class="n">presence_graph_and_matrix</span><span class="p">[</span><span class="s2">&quot;CC&quot;</span><span class="p">][</span><span class="s2">&quot;matrix&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">CC_adjacency_matrix</span>
+    <span class="n">presence_graph_and_matrix</span><span class="p">[</span><span class="s2">&quot;CC&quot;</span><span class="p">][</span><span class="s2">&quot;graph&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">channel_channel_graph</span>
+    <span class="nb">print</span> <span class="s2">&quot;CC Adjacency Matrix Generated&quot;</span>
+    
+    <span class="c1">#====================== USER_USER ============================</span>
+    <span class="n">user_user_graph</span> <span class="o">=</span> <span class="n">nx</span><span class="o">.</span><span class="n">Graph</span><span class="p">()</span>   
+    <span class="n">UU_adjacency_matrix</span> <span class="o">=</span> <span class="n">create_adj_matrix</span><span class="p">(</span><span class="n">nicks_hash</span><span class="p">,</span> <span class="n">nicks_hash</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">user_channel_dict</span> <span class="ow">in</span> <span class="n">channels_for_user</span><span class="p">:</span>
+        <span class="c1"># user_channel_dict format : {nick : [channels on that day], }</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">xrange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">user_channel_dict</span><span class="o">.</span><span class="n">keys</span><span class="p">())):</span>
+            <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="n">xrange</span><span class="p">(</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">user_channel_dict</span><span class="o">.</span><span class="n">keys</span><span class="p">())):</span>
+                <span class="n">common_channels_on_that_day</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">user_channel_dict</span><span class="p">[</span><span class="n">user_channel_dict</span><span class="o">.</span><span class="n">keys</span><span class="p">()[</span><span class="n">i</span><span class="p">]])</span> <span class="o">&amp;</span> <span class="nb">set</span><span class="p">(</span><span class="n">user_channel_dict</span><span class="p">[</span><span class="n">user_channel_dict</span><span class="o">.</span><span class="n">keys</span><span class="p">()[</span><span class="n">j</span><span class="p">]]))</span>
+                <span class="c1"># print user_channel_dict.keys()[i], user_channel_dict.keys()[j], common_channels_on_that_day</span>
+                <span class="n">user1</span> <span class="o">=</span> <span class="n">user_channel_dict</span><span class="o">.</span><span class="n">keys</span><span class="p">()[</span><span class="n">i</span><span class="p">]</span>
+                <span class="n">user2</span> <span class="o">=</span> <span class="n">user_channel_dict</span><span class="o">.</span><span class="n">keys</span><span class="p">()[</span><span class="n">j</span><span class="p">]</span>
+                <span class="n">no_of_common_channels_day</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">common_channels_on_that_day</span><span class="p">)</span>
+                <span class="c1"># print str(nicks_hash.index(user1))+&quot;\t&quot;+str(nicks_hash.index(user2))</span>
+                <span class="c1"># &quot;Uncomment for directed version&quot;</span>
+                <span class="c1"># print str(nicks_hash.index(user2))+&quot;\t&quot;+str(nicks_hash.index(user1))</span>
+                <span class="c1"># print user1, user2</span>
+                <span class="n">UU_adjacency_matrix</span><span class="p">[</span><span class="n">nicks_hash</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">user1</span><span class="p">)][</span><span class="n">nicks_hash</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">user2</span><span class="p">)]</span> <span class="o">+=</span> <span class="n">no_of_common_channels_day</span>
+                <span class="n">UU_adjacency_matrix</span><span class="p">[</span><span class="n">nicks_hash</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">user2</span><span class="p">)][</span><span class="n">nicks_hash</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">user1</span><span class="p">)]</span> <span class="o">+=</span> <span class="n">no_of_common_channels_day</span>
+
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">nicks_hash</span><span class="p">)):</span>
+        <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">i</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">UU_adjacency_matrix</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">j</span><span class="p">]</span> <span class="o">&gt;</span> <span class="n">config</span><span class="o">.</span><span class="n">FILTER_FOR_USER_USER_GRAPH</span><span class="p">:</span>
+                <span class="c1"># print str(i)+&#39;\t&#39;+str(j)</span>
+                <span class="n">user_user_graph</span><span class="o">.</span><span class="n">add_edge</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">,</span> <span class="n">weight</span><span class="o">=</span><span class="n">UU_adjacency_matrix</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">j</span><span class="p">])</span>
+                <span class="n">full_presence_graph</span><span class="o">.</span><span class="n">add_edge</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">,</span> <span class="n">weight</span><span class="o">=</span><span class="n">UU_adjacency_matrix</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">j</span><span class="p">])</span>
+                <span class="n">full_presence_graph</span><span class="o">.</span><span class="n">add_edge</span><span class="p">(</span><span class="n">j</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="n">weight</span><span class="o">=</span><span class="n">UU_adjacency_matrix</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">j</span><span class="p">])</span>
+
+    <span class="n">presence_graph_and_matrix</span><span class="p">[</span><span class="s2">&quot;CU&quot;</span><span class="p">][</span><span class="s2">&quot;matrix&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">UU_adjacency_matrix</span>
+    <span class="n">presence_graph_and_matrix</span><span class="p">[</span><span class="s2">&quot;CU&quot;</span><span class="p">][</span><span class="s2">&quot;graph&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">user_user_graph</span>
+    <span class="nb">print</span> <span class="s2">&quot;UU Adjacency Matrix Generated&quot;</span>
+
+    <span class="k">def</span> <span class="nf">print_node_degree</span><span class="p">(</span><span class="n">nodes</span><span class="p">,</span> <span class="n">max_degree_possible</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">max_degree_possible</span><span class="p">):</span>
+            <span class="nb">print</span> <span class="s2">&quot;deg&quot;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">)</span><span class="o">+</span><span class="s1">&#39;</span><span class="se">\t</span><span class="s1">&#39;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">nodes</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+
+    <span class="c1">#=========================================================================</span>
+    <span class="k">if</span> <span class="n">config</span><span class="o">.</span><span class="n">GENERATE_DEGREE_ANAL</span><span class="p">:</span>
+
+        <span class="n">max_degree_possible</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">CHANNEL_USER_MAX_DEG</span>
+
+        <span class="n">nodes_with_OUT_degree</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">*</span><span class="n">max_degree_possible</span>
+        <span class="n">nodes_with_IN_degree</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">*</span><span class="n">max_degree_possible</span>
+        <span class="n">nodes_with_TOTAL_degree</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">*</span><span class="n">max_degree_possible</span>
+        
+        <span class="c1"># print full_presence_graph.out_degree().values()</span>
+        <span class="k">for</span> <span class="n">degree</span> <span class="ow">in</span> <span class="n">full_presence_graph</span><span class="o">.</span><span class="n">out_degree</span><span class="p">()</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">degree</span> <span class="o">&lt;</span> <span class="n">max_degree_possible</span><span class="p">:</span>
+                <span class="nb">print</span> <span class="s2">&quot;===error&quot;</span><span class="p">,</span> <span class="n">degree</span>
+            <span class="n">nodes_with_OUT_degree</span><span class="p">[</span><span class="n">degree</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+
+        <span class="k">for</span> <span class="n">degree</span> <span class="ow">in</span> <span class="n">full_presence_graph</span><span class="o">.</span><span class="n">in_degree</span><span class="p">()</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">degree</span> <span class="o">&lt;</span> <span class="n">max_degree_possible</span><span class="p">:</span>
+                <span class="nb">print</span> <span class="s2">&quot;===error&quot;</span><span class="p">,</span> <span class="n">degree</span>
+            <span class="n">nodes_with_IN_degree</span><span class="p">[</span><span class="n">degree</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+
+        <span class="k">for</span> <span class="n">degree</span> <span class="ow">in</span> <span class="n">full_presence_graph</span><span class="o">.</span><span class="n">degree</span><span class="p">()</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">degree</span> <span class="o">&lt;</span> <span class="n">max_degree_possible</span><span class="p">:</span>
+                <span class="nb">print</span> <span class="s2">&quot;===error&quot;</span><span class="p">,</span> <span class="n">degree</span>
+            <span class="n">nodes_with_TOTAL_degree</span><span class="p">[</span><span class="n">degree</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+
+        <span class="nb">print</span> <span class="s2">&quot;========= OUT DEGREE =======&quot;</span>        
+        <span class="n">print_node_degree</span><span class="p">(</span><span class="n">nodes_with_OUT_degree</span><span class="p">,</span> <span class="n">max_degree_possible</span><span class="p">)</span> 
+
+        <span class="nb">print</span> <span class="s2">&quot;========= IN DEGREE =======&quot;</span>        
+        <span class="n">print_node_degree</span><span class="p">(</span><span class="n">nodes_with_IN_degree</span><span class="p">,</span> <span class="n">max_degree_possible</span><span class="p">)</span> 
+
+        <span class="nb">print</span> <span class="s2">&quot;========= TOTAL DEGREE =======&quot;</span>        
+        <span class="n">print_node_degree</span><span class="p">(</span><span class="n">nodes_with_TOTAL_degree</span><span class="p">,</span> <span class="n">max_degree_possible</span><span class="p">)</span> 
+
+    <span class="c1">#=========================================================================</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        We have around 20k users and most of them just visit a channel once,</span>
+<span class="sd">        hence we filter out the top 100 users</span>
+<span class="sd">        This inturns reduces the CU and UU matrices</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        calculate top &lt;how_many_top_users&gt; users</span>
+<span class="sd">        this is achieved by taking top users from CU matrix on the basis of the column sum (total number of days active on a channel)</span>
+<span class="sd">    # &#39;&#39;&#39;</span>
+    <span class="n">how_many_top_users</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">FILTER_TOP_USERS</span>
+
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">     we also need to filter the channels and are filtered on the basis of row sum of CC matrix</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="n">how_many_top_channels</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">FILTER_TOP_CHANNELS</span>
+
+    <span class="n">sum_for_each_channel</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">channel_row</span> <span class="ow">in</span> <span class="n">CC_adjacency_matrix</span><span class="p">:</span>
+        <span class="n">sum_for_each_channel</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">sum</span><span class="p">(</span><span class="n">channel_row</span><span class="p">))</span>
+
+    <span class="c1">#filter out top &lt;how_many_top_channels&gt; indices</span>
+    <span class="n">top_indices_channels</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">sum_for_each_channel</span><span class="p">)),</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">i</span><span class="p">:</span> <span class="n">sum_for_each_channel</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">reverse</span><span class="o">=</span><span class="kc">True</span><span class="p">)[:</span><span class="n">how_many_top_channels</span><span class="p">]</span>
+    <span class="n">indices_to_delete_channels</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">([</span><span class="n">i</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">xrange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">channels_hash</span><span class="p">))])</span> <span class="o">-</span> <span class="nb">set</span><span class="p">(</span><span class="n">top_indices_channels</span><span class="p">))</span>
+
+    <span class="n">temp_channels</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="n">CC_adjacency_matrix</span><span class="p">,</span> <span class="n">indices_to_delete_channels</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span> <span class="c1">#delete columns</span>
+    <span class="n">reduced_CC_adjacency_matrix</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="n">temp_channels</span><span class="p">,</span> <span class="n">indices_to_delete_channels</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="c1">#delete rows</span>
+    <span class="n">presence_graph_and_matrix</span><span class="p">[</span><span class="s2">&quot;CC&quot;</span><span class="p">][</span><span class="s2">&quot;reducedMatrix&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">reduced_CC_adjacency_matrix</span>
+    <span class="nb">print</span> <span class="s2">&quot;Generated Reduced CC Adjacency Matrix&quot;</span>
+
+    <span class="c1">#to calculate sum first take the transpose of CU matrix so users in row</span>
+    <span class="n">UC_adjacency_matrix</span> <span class="o">=</span> <span class="nb">zip</span><span class="p">(</span><span class="o">*</span><span class="n">CU_adjacency_matrix</span><span class="p">)</span>
+    <span class="n">sum_for_each_user</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="k">for</span> <span class="n">user_row</span> <span class="ow">in</span> <span class="n">UC_adjacency_matrix</span><span class="p">:</span>
+        <span class="n">sum_for_each_user</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">sum</span><span class="p">(</span><span class="n">user_row</span><span class="p">))</span>
+
+    <span class="c1">#filter out top &lt;how_many_top_users&gt; indices</span>
+    <span class="n">top_indices_users</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">sum_for_each_user</span><span class="p">)),</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">i</span><span class="p">:</span> <span class="n">sum_for_each_user</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">reverse</span><span class="o">=</span><span class="kc">True</span><span class="p">)[:</span><span class="n">how_many_top_users</span><span class="p">]</span>
+    <span class="n">indices_to_delete_users</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">([</span><span class="n">i</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">xrange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">nicks_hash</span><span class="p">))])</span> <span class="o">-</span> <span class="nb">set</span><span class="p">(</span><span class="n">top_indices_users</span><span class="p">))</span>
+
+    <span class="c1"># print len(top_indices_users), top_indices_users</span>
+    <span class="c1"># print len(indices_to_delete_users), indices_to_delete_users</span>
+
+    <span class="c1">#update the nick_hash, channel_hash</span>
+    <span class="n">reduced_nick_hash</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="n">nicks_hash</span><span class="p">,</span> <span class="n">indices_to_delete_users</span><span class="p">)</span>
+    <span class="n">reduced_channel_hash</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="n">channels_hash</span><span class="p">,</span> <span class="n">indices_to_delete_channels</span><span class="p">)</span>
+
+
+    <span class="c1">#update the CU matrix by deleting particular columns, and rows which are not in top_indices_users, channels</span>
+    <span class="n">temp_user_channel</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="n">CU_adjacency_matrix</span><span class="p">,</span> <span class="n">indices_to_delete_users</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span> <span class="c1">#delete columns</span>
+    <span class="n">reduced_CU_adjacency_matrix</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="n">temp_user_channel</span><span class="p">,</span> <span class="n">indices_to_delete_channels</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="c1">#delete rows</span>
+
+    <span class="nb">print</span> <span class="s2">&quot;Generated Reduced CU Adjacency Matrix&quot;</span>
+    <span class="n">presence_graph_and_matrix</span><span class="p">[</span><span class="s2">&quot;CU&quot;</span><span class="p">][</span><span class="s2">&quot;reducedMatrix&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">reduced_CU_adjacency_matrix</span>
+
+    <span class="c1">#update the UU matrix by deleting both columns and rows</span>
+    <span class="n">temp_users</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="n">UU_adjacency_matrix</span><span class="p">,</span> <span class="n">indices_to_delete_users</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span> <span class="c1">#delete columns</span>
+    <span class="n">reduced_UU_adjacency_matrix</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="n">temp_users</span><span class="p">,</span> <span class="n">indices_to_delete_users</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="c1">#delete rows</span>
+    <span class="nb">print</span> <span class="s2">&quot;Generated Reduced UU Adjacency Matrix&quot;</span>
+    <span class="n">presence_graph_and_matrix</span><span class="p">[</span><span class="s2">&quot;UU&quot;</span><span class="p">][</span><span class="s2">&quot;reducedMatrix&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">reduced_UU_adjacency_matrix</span>
+
+    <span class="k">if</span> <span class="n">config</span><span class="o">.</span><span class="n">PRINT_CHANNEL_USER_HASH</span><span class="p">:</span>
+        <span class="nb">print</span> <span class="s2">&quot;==================================================&quot;</span>
+
+        <span class="nb">print</span> <span class="s2">&quot;========= REDUCED NICK HASH =========&quot;</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">reduced_nick_hash</span><span class="p">)):</span>
+            <span class="nb">print</span> <span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">)</span><span class="o">+</span><span class="s2">&quot;</span><span class="se">\t</span><span class="s2">&quot;</span><span class="o">+</span><span class="n">reduced_nick_hash</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+        
+        <span class="nb">print</span> <span class="s2">&quot;========= REDUCED CHANNEL HASH =========&quot;</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">reduced_channel_hash</span><span class="p">)):</span>
+            <span class="nb">print</span> <span class="nb">str</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">STARTING_HASH_CHANNEL</span> <span class="o">+</span> <span class="n">i</span><span class="p">)</span><span class="o">+</span><span class="s2">&quot;</span><span class="se">\t</span><span class="s2">&quot;</span><span class="o">+</span><span class="n">reduced_channel_hash</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+
+    <span class="k">return</span> <span class="n">presence_graph_and_matrix</span><span class="p">,</span> <span class="n">full_presence_graph</span></div>
+
+
+<div class="viewcode-block" id="filter_edge_list"><a class="viewcode-back" href="../../../doc_for_code.html#lib.analysis.network.filter_edge_list">[docs]</a><span class="k">def</span> <span class="nf">filter_edge_list</span><span class="p">(</span><span class="n">edgelist_file_loc</span><span class="p">,</span> <span class="n">max_hash</span><span class="p">,</span> <span class="n">how_many_top</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        reduces the edge list by selecting top nodes through degree analysis</span>
+<span class="sd">    Arguments:</span>
+<span class="sd">        edgelist_file_loc (str): location of the edgelist file</span>
+<span class="sd">        max_hash (int): max possinle value of the node_hash in edgelist</span>
+<span class="sd">        how_many_top (int): how many top nodes to select in the new edgeList</span>
+<span class="sd">    Returns:</span>
+<span class="sd">        null</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">node_list</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">degrees</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="n">max_hash</span>
+
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">edgelist_file_loc</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+        <span class="n">content</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">readlines</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">content</span><span class="p">:</span>
+            <span class="n">a</span><span class="p">,</span> <span class="n">b</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">split</span><span class="p">()</span>
+            <span class="n">node_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">a</span><span class="p">))</span>
+            <span class="n">node_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">b</span><span class="p">))</span>
+            <span class="n">degrees</span><span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">a</span><span class="p">)]</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="n">degrees</span><span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">b</span><span class="p">)]</span> <span class="o">+=</span> <span class="mi">1</span>
+
+    <span class="nb">print</span> <span class="s2">&quot;Done Pre Computation&quot;</span>
+    <span class="nb">print</span> <span class="s2">&quot;Max_hash&quot;</span><span class="p">,</span> <span class="nb">max</span><span class="p">(</span><span class="n">node_list</span><span class="p">)</span>
+
+    <span class="n">max_hash</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">node_list</span><span class="p">)</span>
+    <span class="n">degrees</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">degrees</span><span class="p">)</span>
+
+    <span class="nb">print</span> <span class="s2">&quot;========TOP &quot;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">how_many_top</span><span class="p">)</span><span class="o">+</span><span class="s2">&quot; NODES ON BASIS OF DEGREE ========&quot;</span>
+
+    <span class="n">top_nodes</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">degrees</span><span class="o">.</span><span class="n">argsort</span><span class="p">()[::</span><span class="o">-</span><span class="mi">1</span><span class="p">])[:</span><span class="n">how_many_top</span><span class="p">]</span>
+    <span class="c1"># print top_nodes</span>
+    <span class="nb">print</span> <span class="s2">&quot;======= UPDATED ADJACENY LIST ON THE BASIS OF ABOVE NODES =======&quot;</span>
+
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">edgelist_file_loc</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+        <span class="n">content</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">readlines</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">content</span><span class="p">:</span>
+            <span class="n">a</span><span class="p">,</span> <span class="n">b</span> <span class="o">=</span> <span class="nb">map</span><span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="n">line</span><span class="o">.</span><span class="n">split</span><span class="p">())</span>
+            <span class="k">if</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">top_nodes</span> <span class="ow">and</span> <span class="n">b</span> <span class="ow">in</span> <span class="n">top_nodes</span><span class="p">:</span>
+                <span class="nb">print</span> <span class="nb">str</span><span class="p">(</span><span class="n">a</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\t</span><span class="s2">&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">b</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="degree_analysis_on_graph"><a class="viewcode-back" href="../../../doc_for_code.html#lib.analysis.network.degree_analysis_on_graph">[docs]</a><span class="k">def</span> <span class="nf">degree_analysis_on_graph</span><span class="p">(</span><span class="n">nx_graph</span><span class="p">,</span> <span class="n">date</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        perform degree analysis of input graph object</span>
+<span class="sd">    Arguments:</span>
+<span class="sd">        nx_graph (nx_object): object to perform analysis on</span>
+<span class="sd">    Returns:</span>
+<span class="sd">        null</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    
+    <span class="k">def</span> <span class="nf">nodes_with_degree_populator</span><span class="p">(</span><span class="n">degree_values</span><span class="p">,</span> <span class="n">label</span><span class="p">):</span> 
+        <span class="n">nodes_with_degree</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">degree_values</span><span class="p">):</span>
+            <span class="n">nodes_with_degree</span> <span class="o">=</span> <span class="p">[[</span><span class="n">label</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">),</span> <span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">xrange</span><span class="p">((</span><span class="nb">max</span><span class="p">(</span><span class="n">degree_values</span><span class="p">)</span><span class="o">+</span><span class="mi">1</span><span class="p">))]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">nodes_with_degree</span> <span class="o">=</span> <span class="p">[[</span><span class="s2">&quot;NA&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;NA&quot;</span><span class="p">]]</span>
+
+        <span class="k">for</span> <span class="n">degree</span> <span class="ow">in</span> <span class="n">degree_values</span><span class="p">:</span>
+            <span class="n">nodes_with_degree</span><span class="p">[</span><span class="n">degree</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+
+        <span class="k">return</span> <span class="n">nodes_with_degree</span>
+
+    <span class="n">nodes_with_OUT_degree</span> <span class="o">=</span> <span class="n">nodes_with_degree_populator</span><span class="p">(</span><span class="n">nx_graph</span><span class="o">.</span><span class="n">out_degree</span><span class="p">()</span><span class="o">.</span><span class="n">values</span><span class="p">(),</span> <span class="s2">&quot;nodes_w_out_deg&quot;</span><span class="p">)</span>
+    <span class="n">nodes_with_IN_degree</span> <span class="o">=</span> <span class="n">nodes_with_degree_populator</span><span class="p">(</span><span class="n">nx_graph</span><span class="o">.</span><span class="n">in_degree</span><span class="p">()</span><span class="o">.</span><span class="n">values</span><span class="p">(),</span> <span class="s2">&quot;nodes_w_in_deg&quot;</span><span class="p">)</span>
+    <span class="n">nodes_with_TOTAL_degree</span> <span class="o">=</span> <span class="n">nodes_with_degree_populator</span><span class="p">(</span><span class="n">nx_graph</span><span class="o">.</span><span class="n">degree</span><span class="p">()</span><span class="o">.</span><span class="n">values</span><span class="p">(),</span> <span class="s2">&quot;nodes_w_deg&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">give_userlist_where_degree_helper</span><span class="p">(</span><span class="n">degree_dict</span><span class="p">,</span> <span class="n">degree</span><span class="p">):</span>
+        <span class="n">key_list</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">degree_dict</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">degree_dict</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">==</span> <span class="n">degree</span><span class="p">:</span>
+                <span class="n">key_list</span> <span class="o">+=</span> <span class="p">(</span><span class="n">key</span> <span class="o">+</span> <span class="s2">&quot;, &quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">key_list</span>
+
+    <span class="n">nodes_with_OUT_degree</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="p">[</span><span class="s2">&quot;total_nodes&quot;</span><span class="p">,</span> <span class="nb">sum</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="k">for</span> <span class="n">data</span> <span class="ow">in</span> <span class="n">nodes_with_OUT_degree</span><span class="p">)])</span>
+    <span class="n">nodes_with_IN_degree</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="p">[</span><span class="s2">&quot;total_nodes&quot;</span><span class="p">,</span> <span class="nb">sum</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="k">for</span> <span class="n">data</span> <span class="ow">in</span> <span class="n">nodes_with_IN_degree</span><span class="p">)])</span>
+    <span class="n">nodes_with_TOTAL_degree</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="p">[</span><span class="s2">&quot;total_nodes&quot;</span><span class="p">,</span> <span class="nb">sum</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="k">for</span> <span class="n">data</span> <span class="ow">in</span> <span class="n">nodes_with_TOTAL_degree</span><span class="p">)])</span>
+
+    <span class="n">raw_out</span> <span class="o">=</span> <span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">date</span><span class="p">)]</span>
+    <span class="n">raw_in</span> <span class="o">=</span> <span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">date</span><span class="p">)]</span>
+    <span class="n">raw_total</span> <span class="o">=</span> <span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">date</span><span class="p">)]</span>
+
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">nodes_with_OUT_degree</span><span class="p">)):</span>
+        <span class="n">raw_out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">nodes_with_OUT_degree</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">1</span><span class="p">])</span>
+        <span class="n">nodes_with_OUT_degree</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="n">give_userlist_where_degree_helper</span><span class="p">(</span><span class="n">nx_graph</span><span class="o">.</span><span class="n">out_degree</span><span class="p">(),</span> <span class="n">i</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">nodes_with_IN_degree</span><span class="p">)):</span>
+        <span class="n">raw_in</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">nodes_with_IN_degree</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">1</span><span class="p">])</span>
+        <span class="n">nodes_with_IN_degree</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="n">give_userlist_where_degree_helper</span><span class="p">(</span><span class="n">nx_graph</span><span class="o">.</span><span class="n">in_degree</span><span class="p">(),</span> <span class="n">i</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">nodes_with_TOTAL_degree</span><span class="p">)):</span>
+        <span class="n">raw_total</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">nodes_with_TOTAL_degree</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">1</span><span class="p">])</span>
+        <span class="n">nodes_with_TOTAL_degree</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="n">give_userlist_where_degree_helper</span><span class="p">(</span><span class="n">nx_graph</span><span class="o">.</span><span class="n">degree</span><span class="p">(),</span> <span class="n">i</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="s2">&quot;out_degree&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s2">&quot;formatted_for_csv&quot;</span><span class="p">:</span> <span class="n">nodes_with_OUT_degree</span><span class="p">,</span>
+            <span class="s2">&quot;raw_for_vis&quot;</span><span class="p">:</span> <span class="n">raw_out</span>
+        <span class="p">},</span>
+        <span class="s2">&quot;in_degree&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s2">&quot;formatted_for_csv&quot;</span><span class="p">:</span> <span class="n">nodes_with_IN_degree</span><span class="p">,</span>
+            <span class="s2">&quot;raw_for_vis&quot;</span><span class="p">:</span> <span class="n">raw_in</span>
+        <span class="p">},</span>
+        <span class="s2">&quot;total_degree&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s2">&quot;formatted_for_csv&quot;</span><span class="p">:</span> <span class="n">nodes_with_TOTAL_degree</span><span class="p">,</span>
+            <span class="s2">&quot;raw_for_vis&quot;</span><span class="p">:</span> <span class="n">raw_total</span>
+        <span class="p">}</span>
+    <span class="p">}</span></div>
+
+
+<div class="viewcode-block" id="message_time_graph"><a class="viewcode-back" href="../../../doc_for_code.html#lib.analysis.network.message_time_graph">[docs]</a><span class="k">def</span> <span class="nf">message_time_graph</span><span class="p">(</span><span class="n">log_dict</span><span class="p">,</span> <span class="n">nicks</span><span class="p">,</span> <span class="n">nick_same_list</span><span class="p">,</span> <span class="n">DAY_BY_DAY_ANALYSIS</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; creates a directed graph where each edge denotes a message sent from a user to another user</span>
+<span class="sd">    with the stamp denoting the time at which the message was sent</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        log_dict (dictionary): Dictionary of logs data created using reader.py</span>
+<span class="sd">        nicks(List) : List of nickname created using nickTracker.py</span>
+<span class="sd">        nick_same_list(List) :List of same_nick names created using nickTracker.py</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">       msg_time_graph_list(List): List of message time graphs for different days</span>
+<span class="sd">       msg_time_aggr_graph: aggregate message time graph where edges are date + time when sender sends a message to receiver</span>
+<span class="sd">    &quot;&quot;&quot;</span>  
+    <span class="n">msg_time_graph_list</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">msg_time_aggr_graph</span> <span class="o">=</span> <span class="n">nx</span><span class="o">.</span><span class="n">MultiDiGraph</span><span class="p">()</span>
+    <span class="n">G</span> <span class="o">=</span> <span class="n">util</span><span class="o">.</span><span class="n">to_graph</span><span class="p">(</span><span class="n">nick_same_list</span><span class="p">)</span>
+    <span class="n">conn_comp_list</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">connected_components</span><span class="p">(</span><span class="n">G</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="nf">compare_spliced_nick</span><span class="p">(</span><span class="n">nick_to_compare</span><span class="p">,</span> <span class="n">spliced_nick</span><span class="p">,</span> <span class="n">nick_name</span><span class="p">,</span> <span class="n">line</span><span class="p">):</span>
+        <span class="k">if</span><span class="p">(</span><span class="n">nick_to_compare</span> <span class="o">==</span> <span class="n">nick_name</span><span class="p">):</span>
+            <span class="k">if</span><span class="p">(</span><span class="n">spliced_nick</span> <span class="o">!=</span> <span class="n">nick_name</span><span class="p">):</span>
+                <span class="n">nick_receiver</span> <span class="o">=</span> <span class="n">nick_receiver_from_conn_comp</span><span class="p">(</span><span class="n">nick_name</span><span class="p">,</span> <span class="n">conn_comp_list</span><span class="p">)</span>        
+                <span class="n">util</span><span class="o">.</span><span class="n">build_graphs</span><span class="p">(</span><span class="n">nick_sender</span><span class="p">,</span> <span class="n">nick_receiver</span><span class="p">,</span> <span class="n">line</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="mi">6</span><span class="p">],</span> <span class="n">year</span><span class="p">,</span> <span class="n">month</span><span class="p">,</span> <span class="n">day</span><span class="p">,</span> <span class="n">graph_conversation</span><span class="p">,</span> <span class="n">msg_time_aggr_graph</span><span class="p">)</span>             
+     
+    <span class="n">util</span><span class="o">.</span><span class="n">create_connected_nick_list</span><span class="p">(</span><span class="n">conn_comp_list</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">day_content_all_channels</span> <span class="ow">in</span> <span class="n">log_dict</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+        <span class="k">for</span> <span class="n">day_content</span> <span class="ow">in</span> <span class="n">day_content_all_channels</span><span class="p">:</span>
+            <span class="n">day_log</span> <span class="o">=</span> <span class="n">day_content</span><span class="p">[</span><span class="s2">&quot;log_data&quot;</span><span class="p">]</span>
+            <span class="n">year</span><span class="p">,</span> <span class="n">month</span><span class="p">,</span> <span class="n">day</span> <span class="o">=</span> <span class="n">util</span><span class="o">.</span><span class="n">get_year_month_day</span><span class="p">(</span><span class="n">day_content</span><span class="p">)</span>
+            <span class="n">graph_conversation</span> <span class="o">=</span> <span class="n">nx</span><span class="o">.</span><span class="n">MultiDiGraph</span><span class="p">()</span>  <span class="c1">#graph with multiple directed edges between clients used</span>
+            <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">day_log</span><span class="p">:</span>
+                <span class="n">flag_comma</span> <span class="o">=</span> <span class="mi">0</span>
+                <span class="k">if</span><span class="p">(</span><span class="n">util</span><span class="o">.</span><span class="n">check_if_msg_line</span> <span class="p">(</span><span class="n">line</span><span class="p">)):</span>
+                    <span class="n">m</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="s2">r&quot;\&lt;(.*?)\&gt;&quot;</span><span class="p">,</span> <span class="n">line</span><span class="p">)</span>         
+                    <span class="n">spliced_nick</span> <span class="o">=</span> <span class="n">util</span><span class="o">.</span><span class="n">correctLastCharCR</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">0</span><span class="p">)[</span><span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+                    <span class="n">nick_sender</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>        
+                    <span class="n">nick_sender</span> <span class="o">=</span> <span class="n">nick_same_list_to_conn_comp_list</span><span class="p">(</span><span class="n">conn_comp_list</span><span class="p">,</span> <span class="n">spliced_nick</span><span class="p">)</span>
+
+                    <span class="k">for</span> <span class="n">nick_name</span> <span class="ow">in</span> <span class="n">nicks</span><span class="p">:</span>
+                        <span class="n">rec_list</span> <span class="o">=</span> <span class="p">[</span><span class="n">e</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">line</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;:&#39;</span><span class="p">)]</span>  <span class="c1">#receiver list splited about :</span>
+                        <span class="n">util</span><span class="o">.</span><span class="n">rec_list_splice</span><span class="p">(</span><span class="n">rec_list</span><span class="p">)</span>
+                        <span class="k">if</span> <span class="ow">not</span> <span class="n">rec_list</span><span class="p">[</span><span class="mi">1</span><span class="p">]:</span>  <span class="c1">#index 0 will contain time 14:02</span>
+                            <span class="k">break</span>                        
+                        <span class="n">rec_list</span> <span class="o">=</span> <span class="n">util</span><span class="o">.</span><span class="n">correct_last_char_list</span><span class="p">(</span><span class="n">rec_list</span><span class="p">)</span>        
+                        <span class="k">for</span> <span class="n">nick_to_search</span> <span class="ow">in</span> <span class="n">rec_list</span><span class="p">:</span>
+                            <span class="k">if</span><span class="p">(</span><span class="n">nick_to_search</span> <span class="o">==</span> <span class="n">nick_name</span><span class="p">):</span>
+                                <span class="k">if</span><span class="p">(</span><span class="n">spliced_nick</span> <span class="o">!=</span> <span class="n">nick_name</span><span class="p">):</span>                                    
+                                    <span class="n">nick_receiver</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>      
+                                    <span class="n">nick_receiver</span> <span class="o">=</span> <span class="n">nick_same_list_to_conn_comp_list</span><span class="p">(</span><span class="n">conn_comp_list</span><span class="p">,</span> <span class="n">nick_name</span><span class="p">)</span>                                            
+                                    <span class="n">util</span><span class="o">.</span><span class="n">build_graphs</span><span class="p">(</span><span class="n">nick_sender</span><span class="p">,</span> <span class="n">nick_receiver</span><span class="p">,</span> <span class="n">line</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="mi">6</span><span class="p">],</span> <span class="n">year</span><span class="p">,</span> <span class="n">month</span><span class="p">,</span> <span class="n">day</span><span class="p">,</span> <span class="n">graph_conversation</span><span class="p">,</span> <span class="n">msg_time_aggr_graph</span><span class="p">)</span>
+
+                        <span class="k">if</span> <span class="s2">&quot;,&quot;</span> <span class="ow">in</span> <span class="n">rec_list</span><span class="p">[</span><span class="mi">1</span><span class="p">]:</span>  <span class="c1">#receiver list may of the form &lt;Dhruv&gt; Rohan, Ram :</span>
+                            <span class="n">flag_comma</span> <span class="o">=</span> <span class="mi">1</span>
+                            <span class="n">rec_list_2</span> <span class="o">=</span> <span class="p">[</span><span class="n">e</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">rec_list</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;,&#39;</span><span class="p">)]</span>
+                            <span class="n">rec_list_2</span> <span class="o">=</span> <span class="n">util</span><span class="o">.</span><span class="n">correct_last_char_list</span><span class="p">(</span><span class="n">rec_list_2</span><span class="p">)</span>        
+                            <span class="k">for</span> <span class="n">nick_to_search</span> <span class="ow">in</span> <span class="n">rec_list_2</span><span class="p">:</span>                              
+                                <span class="n">compare_spliced_nick</span><span class="p">(</span><span class="n">nick_to_search</span><span class="p">,</span> <span class="n">spliced_nick</span><span class="p">,</span> <span class="n">nick_name</span><span class="p">,</span> <span class="n">line</span><span class="p">)</span>   
+
+                        <span class="k">if</span><span class="p">(</span><span class="n">flag_comma</span> <span class="o">==</span> <span class="mi">0</span><span class="p">):</span>  <span class="c1">#receiver list can be &lt;Dhruv&gt; Rohan, Hi!</span>
+                            <span class="n">rec</span> <span class="o">=</span> <span class="n">line</span><span class="p">[</span><span class="n">line</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s2">&quot;&gt;&quot;</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">:</span><span class="n">line</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s2">&quot;, &quot;</span><span class="p">)]</span>
+                            <span class="n">rec</span> <span class="o">=</span> <span class="n">util</span><span class="o">.</span><span class="n">correctLastCharCR</span><span class="p">(</span><span class="n">rec</span><span class="p">[</span><span class="mi">1</span><span class="p">:])</span>                           
+                            <span class="n">compare_spliced_nick</span><span class="p">(</span><span class="n">rec</span><span class="p">,</span> <span class="n">spliced_nick</span><span class="p">,</span> <span class="n">nick_name</span><span class="p">,</span> <span class="n">line</span><span class="p">)</span>    
+
+            <span class="n">msg_time_graph_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">graph_conversation</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">DAY_BY_DAY_ANALYSIS</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">msg_time_graph_list</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">msg_time_aggr_graph</span></div>
+
+<div class="viewcode-block" id="message_number_bins_csv"><a class="viewcode-back" href="../../../doc_for_code.html#lib.analysis.network.message_number_bins_csv">[docs]</a><span class="k">def</span> <span class="nf">message_number_bins_csv</span><span class="p">(</span><span class="n">log_dict</span><span class="p">,</span> <span class="n">nicks</span><span class="p">,</span> <span class="n">nick_same_list</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; creates a CSV file which tracks the number of message exchanged in a channel </span>
+<span class="sd">        for 48 bins of half an hour each distributed all over the day </span>
+<span class="sd">        aggragated over the year.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        log_dict (dictionary): Dictionary of logs data created using reader.py</span>
+<span class="sd">        nicks(List) : List of nickname created using nickTracker.py</span>
+<span class="sd">        nick_same_list(List) :List of same_nick names created using nickTracker.p</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">       null </span>
+<span class="sd">    &quot;&quot;&quot;</span>   
+    
+    <span class="n">no_of_bins</span> <span class="o">=</span> <span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">HOURS_PER_DAY</span> <span class="o">*</span> <span class="n">config</span><span class="o">.</span><span class="n">MINS_PER_HOUR</span><span class="p">)</span> <span class="o">/</span> <span class="n">config</span><span class="o">.</span><span class="n">BIN_LENGTH_MINS</span>
+    <span class="n">tot_msgs</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="n">no_of_bins</span>
+    <span class="n">bin_matrix</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="k">def</span> <span class="nf">bin_increment</span><span class="p">(</span><span class="n">nick_name</span><span class="p">,</span> <span class="n">messager</span><span class="p">,</span> <span class="n">nick_spliced</span><span class="p">,</span> <span class="n">bins</span><span class="p">,</span> <span class="n">bin_index</span><span class="p">):</span>
+        <span class="k">if</span><span class="p">(</span><span class="n">nick_name</span> <span class="o">==</span> <span class="n">messager</span><span class="p">):</span>
+            <span class="k">if</span><span class="p">(</span><span class="n">nick_spliced</span> <span class="o">!=</span> <span class="n">messager</span><span class="p">):</span>  
+                <span class="n">bins</span><span class="p">[</span><span class="n">bin_index</span><span class="p">]</span> <span class="o">=</span> <span class="n">bins</span><span class="p">[</span><span class="n">bin_index</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span> 
+            
+    <span class="k">for</span> <span class="n">day_content_all_channels</span> <span class="ow">in</span> <span class="n">log_dict</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+        <span class="k">for</span> <span class="n">day_content</span> <span class="ow">in</span> <span class="n">day_content_all_channels</span><span class="p">:</span>
+            <span class="n">day_log</span> <span class="o">=</span> <span class="n">day_content</span><span class="p">[</span><span class="s2">&quot;log_data&quot;</span><span class="p">]</span>
+            <span class="n">bins</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="n">no_of_bins</span>
+
+            <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">day_log</span><span class="p">:</span>
+                <span class="k">if</span><span class="p">(</span><span class="n">line</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">!=</span> <span class="s1">&#39;=&#39;</span><span class="p">):</span> 
+                    <span class="n">time_in_min</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">line</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="mi">3</span><span class="p">])</span> <span class="o">*</span> <span class="mi">60</span> <span class="o">+</span> <span class="nb">int</span><span class="p">(</span><span class="n">line</span><span class="p">[</span><span class="mi">4</span><span class="p">:</span><span class="mi">6</span><span class="p">])</span>
+
+                    <span class="n">bin_index</span> <span class="o">=</span> <span class="n">time_in_min</span> <span class="o">/</span> <span class="n">config</span><span class="o">.</span><span class="n">BIN_LENGTH_MINS</span> <span class="c1">#gives the index of the bin for eg 01:35 in mins is 95 then 95/30 --&gt; 3 , puts it in bin index 3</span>
+                    
+                    <span class="n">flag_comma</span> <span class="o">=</span> <span class="mi">0</span> <span class="c1"># sometimes messages are sent to users like [22:55] &lt;Rohan&gt; Krishna, i hope we are on track. and sometimes like [22:56] &lt;Krishna&gt; Rohan: Yes it is.  </span>
+
+                    <span class="k">if</span><span class="p">(</span><span class="n">line</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">!=</span> <span class="s1">&#39;=&#39;</span> <span class="ow">and</span> <span class="s2">&quot;] &lt;&quot;</span> <span class="ow">in</span> <span class="n">line</span> <span class="ow">and</span> <span class="s2">&quot;&gt; &quot;</span> <span class="ow">in</span> <span class="n">line</span><span class="p">):</span>
+                        <span class="n">m</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="s2">r&quot;\&lt;(.*?)\&gt;&quot;</span><span class="p">,</span> <span class="n">line</span><span class="p">)</span>
+                        <span class="n">nick_spliced</span> <span class="o">=</span> <span class="n">util</span><span class="o">.</span><span class="n">correctLastCharCR</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">0</span><span class="p">)[</span><span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+                        
+                        <span class="k">for</span> <span class="n">messager</span> <span class="ow">in</span> <span class="n">nicks</span><span class="p">:</span>
+                            <span class="n">rec_list</span> <span class="o">=</span> <span class="p">[</span><span class="n">e</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">line</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;:&#39;</span><span class="p">)]</span>
+                            <span class="n">util</span><span class="o">.</span><span class="n">rec_list_splice</span><span class="p">(</span><span class="n">rec_list</span><span class="p">)</span>
+                            <span class="k">if</span> <span class="ow">not</span> <span class="n">rec_list</span><span class="p">[</span><span class="mi">1</span><span class="p">]:</span>
+                                <span class="k">break</span>                            
+                            <span class="n">rec_list</span> <span class="o">=</span> <span class="n">util</span><span class="o">.</span><span class="n">correct_last_char_list</span><span class="p">(</span><span class="n">rec_list</span><span class="p">)</span>
+                            <span class="k">for</span> <span class="n">nick_name</span> <span class="ow">in</span> <span class="n">rec_list</span><span class="p">:</span>
+                                <span class="n">bin_increment</span><span class="p">(</span><span class="n">nick_name</span><span class="p">,</span> <span class="n">messager</span><span class="p">,</span> <span class="n">nick_spliced</span><span class="p">,</span> <span class="n">bins</span><span class="p">,</span> <span class="n">bin_index</span><span class="p">)</span>                                                                                               
+                                            
+                            <span class="k">if</span> <span class="s2">&quot;,&quot;</span> <span class="ow">in</span> <span class="n">rec_list</span><span class="p">[</span><span class="mi">1</span><span class="p">]:</span> 
+                                <span class="n">flag_comma</span> <span class="o">=</span> <span class="mi">1</span>
+                                <span class="n">rec_list</span> <span class="o">=</span> <span class="p">[</span><span class="n">e</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">rec_list</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;,&#39;</span><span class="p">)]</span>                              
+                                <span class="n">rec_list</span> <span class="o">=</span> <span class="n">util</span><span class="o">.</span><span class="n">correct_last_char_list</span><span class="p">(</span><span class="n">rec_list</span><span class="p">)</span>
+                                <span class="k">for</span> <span class="n">nick_name</span> <span class="ow">in</span> <span class="n">rec_list</span><span class="p">:</span>
+                                    <span class="n">bin_increment</span><span class="p">(</span><span class="n">nick_name</span><span class="p">,</span> <span class="n">messager</span><span class="p">,</span> <span class="n">nick_spliced</span><span class="p">,</span> <span class="n">bins</span><span class="p">,</span> <span class="n">bin_index</span><span class="p">)</span>                                            
+                        
+                            <span class="k">if</span><span class="p">(</span><span class="n">flag_comma</span> <span class="o">==</span> <span class="mi">0</span><span class="p">):</span>
+                                <span class="n">rec</span> <span class="o">=</span> <span class="n">line</span><span class="p">[</span><span class="n">line</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s2">&quot;&gt;&quot;</span><span class="p">)</span><span class="o">+</span><span class="mi">1</span><span class="p">:</span><span class="n">line</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s2">&quot;, &quot;</span><span class="p">)][</span><span class="mi">1</span><span class="p">:]</span>
+                                <span class="n">rec</span> <span class="o">=</span> <span class="n">util</span><span class="o">.</span><span class="n">correctLastCharCR</span><span class="p">(</span><span class="n">rec</span><span class="p">)</span>
+                                <span class="n">bin_increment</span><span class="p">(</span><span class="n">rec</span><span class="p">,</span> <span class="n">messager</span><span class="p">,</span> <span class="n">nick_spliced</span><span class="p">,</span> <span class="n">bins</span><span class="p">,</span> <span class="n">bin_index</span><span class="p">)</span>                               
+                                       
+
+            <span class="n">bin_matrix</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">bins</span><span class="p">)</span>      
+            <span class="n">tot_msgs</span> <span class="o">=</span> <span class="p">[</span><span class="n">tot_msgs</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">+</span> <span class="n">bins</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">bins</span><span class="p">))]</span>
+            
+    <span class="k">return</span> <span class="n">bin_matrix</span><span class="p">,</span> <span class="nb">sum</span><span class="p">(</span><span class="n">tot_msgs</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="degree_node_number_csv"><a class="viewcode-back" href="../../../doc_for_code.html#lib.analysis.network.degree_node_number_csv">[docs]</a><span class="k">def</span> <span class="nf">degree_node_number_csv</span><span class="p">(</span><span class="n">log_dict</span><span class="p">,</span> <span class="n">nicks</span><span class="p">,</span> <span class="n">nick_same_list</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; creates two csv files having no. of nodes with a certain in and out-degree</span>
+<span class="sd">        for number of nodes it interacted with, respectively.</span>
+<span class="sd">        Also gives graphs for log(degree) vs log(no. of nodes)</span>
+<span class="sd">        and tries to find it&#39;s equation by curve fitting</span>
+<span class="sd">    Args:</span>
+<span class="sd">        log_dict (dict): with key as dateTime.date object and value as {&quot;data&quot;:datalist,&quot;channel_name&quot;:channels name}</span>
+<span class="sd">        nicks(list): list of all the nicks</span>
+<span class="sd">        nick_same_list(list): list of lists mentioning nicks which belong to same users</span>
+<span class="sd">    Returns:</span>
+<span class="sd">        out_degree (list)</span>
+<span class="sd">        in_degree (list)</span>
+<span class="sd">        total_degree (list)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">msg_num_graph_day_list</span> <span class="o">=</span> <span class="n">message_number_graph</span><span class="p">(</span><span class="n">log_dict</span><span class="p">,</span> <span class="n">nicks</span><span class="p">,</span> <span class="n">nick_same_list</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
+    <span class="n">degree_analysis_day_list</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="k">for</span> <span class="n">day_graph_list</span> <span class="ow">in</span> <span class="n">msg_num_graph_day_list</span><span class="p">:</span>
+        <span class="n">day_graph</span> <span class="o">=</span> <span class="n">day_graph_list</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">degree_analysis_day_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">degree_analysis_on_graph</span><span class="p">(</span><span class="n">day_graph</span><span class="p">,</span> <span class="n">day_graph_list</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+
+    <span class="n">out_degree</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">in_degree</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">total_degree</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">max_in_degree</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">max_out_degree</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">max_total_degree</span> <span class="o">=</span> <span class="mi">0</span>
+
+    <span class="k">for</span> <span class="n">degree_analysis</span> <span class="ow">in</span> <span class="n">degree_analysis_day_list</span><span class="p">:</span>
+        <span class="n">out_degree</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">degree_analysis</span><span class="p">[</span><span class="s2">&quot;out_degree&quot;</span><span class="p">][</span><span class="s2">&quot;raw_for_vis&quot;</span><span class="p">])</span>
+        <span class="n">in_degree</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">degree_analysis</span><span class="p">[</span><span class="s2">&quot;in_degree&quot;</span><span class="p">][</span><span class="s2">&quot;raw_for_vis&quot;</span><span class="p">])</span>
+        <span class="n">total_degree</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">degree_analysis</span><span class="p">[</span><span class="s2">&quot;total_degree&quot;</span><span class="p">][</span><span class="s2">&quot;raw_for_vis&quot;</span><span class="p">])</span>
+        <span class="n">max_out_degree</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">max_out_degree</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">degree_analysis</span><span class="p">[</span><span class="s2">&quot;out_degree&quot;</span><span class="p">][</span><span class="s2">&quot;raw_for_vis&quot;</span><span class="p">]))</span>
+        <span class="n">max_in_degree</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">max_in_degree</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">degree_analysis</span><span class="p">[</span><span class="s2">&quot;in_degree&quot;</span><span class="p">][</span><span class="s2">&quot;raw_for_vis&quot;</span><span class="p">]))</span>
+        <span class="n">max_total_degree</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">max_total_degree</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">degree_analysis</span><span class="p">[</span><span class="s2">&quot;total_degree&quot;</span><span class="p">][</span><span class="s2">&quot;raw_for_vis&quot;</span><span class="p">]))</span>
+
+    <span class="k">def</span> <span class="nf">format_degree_list</span><span class="p">(</span><span class="n">degree_list</span><span class="p">,</span> <span class="n">max_range</span><span class="p">,</span> <span class="n">degree_type</span><span class="p">):</span>
+        <span class="n">degree_head_row</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;deg&quot;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">max_range</span><span class="p">)]</span>
+        <span class="n">degree_head_row</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">degree_type</span><span class="p">)</span>
+        <span class="n">degree_list</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">degree_head_row</span><span class="p">)</span>
+        <span class="n">degree_list</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">zip_longest</span><span class="p">(</span><span class="o">*</span><span class="n">degree_list</span><span class="p">,</span> <span class="n">fillvalue</span><span class="o">=</span><span class="mi">0</span><span class="p">))</span>
+
+        <span class="k">return</span> <span class="n">degree_list</span>
+
+    <span class="n">out_degree</span> <span class="o">=</span> <span class="n">format_degree_list</span><span class="p">(</span><span class="n">out_degree</span><span class="p">,</span> <span class="n">max_out_degree</span><span class="p">,</span> <span class="s2">&quot;out_degree&quot;</span><span class="p">)</span>
+    <span class="n">in_degree</span> <span class="o">=</span> <span class="n">format_degree_list</span><span class="p">(</span><span class="n">in_degree</span><span class="p">,</span> <span class="n">max_in_degree</span><span class="p">,</span> <span class="s2">&quot;in_degree&quot;</span><span class="p">)</span>
+    <span class="n">total_degree</span> <span class="o">=</span> <span class="n">format_degree_list</span><span class="p">(</span><span class="n">total_degree</span><span class="p">,</span> <span class="n">max_total_degree</span><span class="p">,</span> <span class="s2">&quot;total_degree&quot;</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">out_degree</span><span class="p">,</span> <span class="n">in_degree</span><span class="p">,</span> <span class="n">total_degree</span></div>
+
+
+<div class="viewcode-block" id="nick_same_list_to_conn_comp_list"><a class="viewcode-back" href="../../../doc_for_code.html#lib.analysis.network.nick_same_list_to_conn_comp_list">[docs]</a><span class="k">def</span> <span class="nf">nick_same_list_to_conn_comp_list</span><span class="p">(</span><span class="n">conn_comp_list</span><span class="p">,</span> <span class="n">corrected_nick</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    changes nick_same_list to conn_comp_list because conn_comp_list is the main list of all users and nicks now</span>
+<span class="sd">    it is a helper function used in message_number_graph, create_message_time_graph</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">MAX_EXPECTED_DIFF_NICKS</span><span class="p">):</span>
+        <span class="k">if</span> <span class="p">((</span><span class="n">i</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">conn_comp_list</span><span class="p">))</span> <span class="ow">and</span> <span class="p">(</span><span class="n">corrected_nick</span> <span class="ow">in</span> <span class="n">conn_comp_list</span><span class="p">[</span><span class="n">i</span><span class="p">])):</span>
+            <span class="n">nick_rec</span> <span class="o">=</span> <span class="n">conn_comp_list</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+            <span class="k">break</span>
+    <span class="k">return</span> <span class="n">nick_rec</span></div>
+
+<div class="viewcode-block" id="nick_receiver_from_conn_comp"><a class="viewcode-back" href="../../../doc_for_code.html#lib.analysis.network.nick_receiver_from_conn_comp">[docs]</a><span class="k">def</span> <span class="nf">nick_receiver_from_conn_comp</span><span class="p">(</span><span class="n">nick</span><span class="p">,</span> <span class="n">conn_comp_list</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        creates nick_receiver from conn_comp_list,</span>
+<span class="sd">        it is a helper function used in create_message_time_graph and message_number_graph</span>
+<span class="sd">    &quot;&quot;&quot;</span>    
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">MAX_EXPECTED_DIFF_NICKS</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">nick</span> <span class="ow">in</span> <span class="n">conn_comp_list</span><span class="p">[</span><span class="n">i</span><span class="p">]:</span>
+            <span class="n">nick_receiver</span> <span class="o">=</span> <span class="n">conn_comp_list</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+            <span class="k">break</span>
+    <span class="k">return</span> <span class="n">nick_receiver</span>    </div>
+
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2016, Prasad Talasila, Rohan Goel, Dhruv Shekhawat.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.5.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.9</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>
