@@ -381,6 +381,48 @@ def channel_user_presence_graph_and_csv(nicks, nick_same_list, channels_for_user
     return presence_graph_and_matrix, full_presence_graph
 
 
+def filter_edge_list(edgelist_file_loc, max_hash, how_many_top):
+    """
+        reduces the edge list by selecting top nodes through degree analysis
+    Arguments:
+        edgelist_file_loc (str): location of the edgelist file
+        max_hash (int): max possinle value of the node_hash in edgelist
+        how_many_top (int): how many top nodes to select in the new edgeList
+    Returns:
+        null
+    """
+    node_list = []
+    degrees = [0] * max_hash
+
+    with open(edgelist_file_loc) as f:
+        content = f.readlines()
+        for line in content:
+            a, b = line.split()
+            node_list.append(int(a))
+            node_list.append(int(b))
+            degrees[int(a)] += 1
+            degrees[int(b)] += 1
+
+    print "Done Pre Computation"
+    print "Max_hash", max(node_list)
+
+    max_hash = max(node_list)
+    degrees = np.array(degrees)
+
+    print "========TOP "+str(how_many_top)+" NODES ON BASIS OF DEGREE ========"
+
+    top_nodes = list(degrees.argsort()[::-1])[:how_many_top]
+    # print top_nodes
+    print "======= UPDATED ADJACENY LIST ON THE BASIS OF ABOVE NODES ======="
+
+    with open(edgelist_file_loc) as f:
+        content = f.readlines()
+        for line in content:
+            a, b = map(int, line.split())
+            if a in top_nodes and b in top_nodes:
+                print str(a) + "\t" + str(b)
+
+
 def degree_analysis_on_graph(nx_graph, date=None):
     """
         perform degree analysis of input graph object
