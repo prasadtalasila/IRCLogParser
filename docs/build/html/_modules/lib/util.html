@@ -1,0 +1,249 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>lib.util &#8212; IRC Log Parser 0.1 documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for lib.util</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">networkx</span> <span class="k">as</span> <span class="nn">nx</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">igraph</span>
+<span class="kn">import</span> <span class="nn">config</span>
+
+<div class="viewcode-block" id="correctLastCharCR"><a class="viewcode-back" href="../../doc_for_code.html#lib.util.correctLastCharCR">[docs]</a><span class="k">def</span> <span class="nf">correctLastCharCR</span><span class="p">(</span><span class="n">inText</span><span class="p">):</span><span class="c1">#</span>
+    <span class="sd">&quot;&quot;&quot; if the last letter of the nick is &#39;\\&#39; replace it by &#39;CR&#39;</span>
+<span class="sd">        for example rohan\ becomes rohanCR</span>
+<span class="sd">        to avoid complications in nx because of the special char &#39;\\&#39;</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        inText (str): input nick, checked for &#39;\\&#39; at last position</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        str: updated string with &#39;\\&#39; replaced by CR (if it exists) </span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">inText</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="ow">and</span> <span class="n">inText</span><span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">inText</span><span class="p">)</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">==</span><span class="s1">&#39;</span><span class="se">\\</span><span class="s1">&#39;</span><span class="p">):</span>
+        <span class="n">inText</span> <span class="o">=</span> <span class="n">inText</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">+</span><span class="s1">&#39;CR&#39;</span>
+    <span class="k">return</span> <span class="n">inText</span></div>
+
+<div class="viewcode-block" id="correct_nick_for_"><a class="viewcode-back" href="../../doc_for_code.html#lib.util.correct_nick_for_">[docs]</a><span class="k">def</span> <span class="nf">correct_nick_for_</span><span class="p">(</span><span class="n">inText</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        last letter of nick maybe _ and this produces error in nickmatching</span>
+<span class="sd">    Args:</span>
+<span class="sd">        inText (str): input nick, checked for &#39;_&#39; at last position</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        str: updated string with &#39;_&#39;  removed </span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    
+    <span class="k">if</span><span class="p">(</span><span class="n">inText</span> <span class="ow">and</span> <span class="n">inText</span><span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">inText</span><span class="p">)</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;_&#39;</span><span class="p">):</span>
+        <span class="n">inText</span> <span class="o">=</span> <span class="n">inText</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">inText</span></div>
+
+<span class="k">def</span> <span class="nf">to_graph</span><span class="p">(</span><span class="n">l</span><span class="p">):</span>
+    <span class="n">G</span> <span class="o">=</span> <span class="n">nx</span><span class="o">.</span><span class="n">Graph</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">part</span> <span class="ow">in</span> <span class="n">l</span><span class="p">:</span>
+        <span class="c1"># each sublist is a bunch of nodes</span>
+        <span class="n">G</span><span class="o">.</span><span class="n">add_nodes_from</span><span class="p">(</span><span class="n">part</span><span class="p">)</span>
+        <span class="c1"># it also imlies a number of edges:</span>
+        <span class="n">G</span><span class="o">.</span><span class="n">add_edges_from</span><span class="p">(</span><span class="n">to_edges</span><span class="p">(</span><span class="n">part</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">G</span>
+
+
+<div class="viewcode-block" id="to_edges"><a class="viewcode-back" href="../../doc_for_code.html#lib.util.to_edges">[docs]</a><span class="k">def</span> <span class="nf">to_edges</span><span class="p">(</span><span class="n">l</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; A generator which</span>
+<span class="sd">        takes a graph and returns it&#39;s edges | for</span>
+<span class="sd">        example : to_edges([&#39;a&#39;,&#39;b&#39;,&#39;c&#39;,&#39;d&#39;]) -&gt; [(a,b), (b,c),(c,d)]</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            l (list): graph object to be converted to edge_list</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            str: edge list of the inputted graph object</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">it</span> <span class="o">=</span> <span class="nb">iter</span><span class="p">(</span><span class="n">l</span><span class="p">)</span>
+    <span class="n">last</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="n">it</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">current</span> <span class="ow">in</span> <span class="n">it</span><span class="p">:</span>
+        <span class="k">yield</span> <span class="n">last</span><span class="p">,</span> <span class="n">current</span>
+        <span class="n">last</span> <span class="o">=</span> <span class="n">current</span>  </div>
+
+
+<span class="k">def</span> <span class="nf">exponential_curve_func</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">c</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">a</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">b</span> <span class="o">*</span> <span class="n">x</span><span class="p">)</span> <span class="o">+</span> <span class="n">c</span>
+
+<div class="viewcode-block" id="get_year_month_day"><a class="viewcode-back" href="../../doc_for_code.html#lib.util.get_year_month_day">[docs]</a><span class="k">def</span> <span class="nf">get_year_month_day</span><span class="p">(</span><span class="n">day_content</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; A generator which</span>
+<span class="sd">        takes a day_content and gives the associated year, month and date associated with it       </span>
+
+<span class="sd">        Args:</span>
+<span class="sd">        day_content(dictionary)=</span>
+<span class="sd">                    {</span>
+<span class="sd">                    &quot;log_data&quot;: day_data, </span>
+<span class="sd">                    &quot;auxiliary_data&quot;: {</span>
+<span class="sd">                            &quot;channel&quot;: channel_name,</span>
+<span class="sd">                            &quot;year&quot;: year_iterator,</span>
+<span class="sd">                            &quot;month&quot;: month_iterator,</span>
+<span class="sd">                            &quot;day&quot;: day_iterator</span>
+<span class="sd">                            }</span>
+<span class="sd">                    }</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            str:year, str:month, str:day</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">year</span><span class="p">,</span> <span class="n">month</span><span class="p">,</span> <span class="n">day</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">day_content</span><span class="p">[</span><span class="s2">&quot;auxiliary_data&quot;</span><span class="p">][</span><span class="s2">&quot;year&quot;</span><span class="p">]),</span> <span class="nb">str</span><span class="p">(</span><span class="n">day_content</span><span class="p">[</span><span class="s2">&quot;auxiliary_data&quot;</span><span class="p">][</span><span class="s2">&quot;month&quot;</span><span class="p">]),</span> <span class="nb">str</span><span class="p">(</span><span class="n">day_content</span><span class="p">[</span><span class="s2">&quot;auxiliary_data&quot;</span><span class="p">][</span><span class="s2">&quot;day&quot;</span><span class="p">])</span>
+    <span class="k">return</span> <span class="n">year</span><span class="p">,</span> <span class="n">month</span><span class="p">,</span> <span class="n">day</span></div>
+
+
+<span class="k">def</span> <span class="nf">rec_list_splice</span><span class="p">(</span><span class="n">rec_list</span><span class="p">):</span>
+    <span class="n">rec_list</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">rec_list</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="n">rec_list</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s2">&quot;&gt;&quot;</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">:</span><span class="nb">len</span><span class="p">(</span><span class="n">rec_list</span><span class="p">[</span><span class="mi">1</span><span class="p">])][</span><span class="mi">1</span><span class="p">:]</span>
+
+
+<span class="k">def</span> <span class="nf">check_if_msg_line</span> <span class="p">(</span><span class="n">line</span><span class="p">):</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">line</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">!=</span> <span class="s1">&#39;=&#39;</span> <span class="ow">and</span> <span class="s2">&quot;] &lt;&quot;</span> <span class="ow">in</span> <span class="n">line</span> <span class="ow">and</span> <span class="s2">&quot;&gt; &quot;</span> <span class="ow">in</span> <span class="n">line</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="build_graphs"><a class="viewcode-back" href="../../doc_for_code.html#lib.util.build_graphs">[docs]</a><span class="k">def</span> <span class="nf">build_graphs</span><span class="p">(</span><span class="n">nick_sender</span><span class="p">,</span> <span class="n">nick_receiver</span><span class="p">,</span> <span class="n">time</span><span class="p">,</span> <span class="n">year</span><span class="p">,</span> <span class="n">month</span><span class="p">,</span> <span class="n">day</span><span class="p">,</span> <span class="n">day_graph</span><span class="p">,</span> <span class="n">aggr_graph</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;    </span>
+<span class="sd">        Args:</span>
+<span class="sd">            nick_sender(str): person who has sent the message</span>
+<span class="sd">            nick_receiver(str): person who receives the message</span>
+<span class="sd">            time(str): time when message is sent</span>
+<span class="sd">            year(str): year  when message is sent</span>
+<span class="sd">            month(str): month  when message is sent</span>
+<span class="sd">            day(str): day when message is sent</span>
+<span class="sd">            day_graph(networkx directed graph): a single days graph to which we add edges</span>
+<span class="sd">            aggr_graph(networkx directed graph): a whole time spans aggregate graph to which we add edges</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            None</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">day_graph</span><span class="o">.</span><span class="n">add_edge</span><span class="p">(</span><span class="n">nick_sender</span><span class="p">,</span> <span class="n">nick_receiver</span><span class="p">,</span> <span class="n">weight</span><span class="o">=</span><span class="n">time</span><span class="p">)</span>
+    <span class="n">aggr_graph</span><span class="o">.</span><span class="n">add_edge</span><span class="p">(</span><span class="n">nick_sender</span><span class="p">,</span> <span class="n">nick_receiver</span><span class="p">,</span> <span class="n">weight</span><span class="o">=</span><span class="n">year</span><span class="o">+</span><span class="s2">&quot;/&quot;</span> <span class="o">+</span> <span class="n">month</span> <span class="o">+</span> <span class="s2">&quot;/&quot;</span> <span class="o">+</span> <span class="n">day</span> <span class="o">+</span> <span class="s2">&quot; - &quot;</span> <span class="o">+</span> <span class="n">time</span><span class="p">)</span></div>
+        
+
+<span class="k">def</span> <span class="nf">HACK_convert_nx_igraph</span><span class="p">(</span><span class="n">nx_graph</span><span class="p">):</span>
+    <span class="n">nx</span><span class="o">.</span><span class="n">write_pajek</span><span class="p">(</span><span class="n">nx_graph</span><span class="p">,</span> <span class="s2">&quot;/tmp/rohan.net&quot;</span><span class="p">)</span>
+    <span class="n">ig_graph</span> <span class="o">=</span> <span class="n">igraph</span><span class="o">.</span><span class="n">Graph</span><span class="p">()</span>
+    <span class="n">ig_graph</span> <span class="o">=</span> <span class="n">igraph</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="s2">&quot;/tmp/rohan.net&quot;</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s2">&quot;pajek&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">ig_graph</span>
+
+
+<div class="viewcode-block" id="extend_conversation_list"><a class="viewcode-back" href="../../doc_for_code.html#lib.util.extend_conversation_list">[docs]</a><span class="k">def</span> <span class="nf">extend_conversation_list</span><span class="p">(</span><span class="n">nick_sender</span><span class="p">,</span> <span class="n">nick_receiver</span><span class="p">,</span> <span class="n">conversation</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; A functions that takes the nick_sender and nick_reciver and add them</span>
+<span class="sd">        the conversation list and increase the weight.</span>
+<span class="sd">        Args:</span>
+<span class="sd">            nick_sender : nick of user sending a message</span>
+<span class="sd">            nick_receiver: nick of user to whom message is being send_time</span>
+<span class="sd">            conversation: list of nick_sender&#39;s and nick_reciever along with number of time message shared btw them</span>
+<span class="sd">        Returns:</span>
+<span class="sd">            conversation (list): list containg all the nick between whom messages have been shared</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">xrange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="n">config</span><span class="o">.</span><span class="n">MAX_EXPECTED_DIFF_NICKS</span><span class="p">):</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">nick_sender</span> <span class="ow">in</span> <span class="n">conversation</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="ow">and</span> <span class="n">nick_receiver</span> <span class="ow">in</span> <span class="n">conversation</span><span class="p">[</span><span class="n">i</span><span class="p">]):</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">nick_sender</span> <span class="o">==</span> <span class="n">conversation</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span> <span class="ow">and</span> <span class="n">nick_receiver</span> <span class="o">==</span> <span class="n">conversation</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">2</span><span class="p">]):</span>
+                <span class="n">conversation</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="k">break</span>
+        <span class="k">if</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">conversation</span><span class="p">[</span><span class="n">i</span><span class="p">])</span><span class="o">==</span><span class="mi">1</span><span class="p">):</span>
+            <span class="n">conversation</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">nick_sender</span><span class="p">)</span>
+            <span class="n">conversation</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">nick_receiver</span><span class="p">)</span>
+            <span class="n">conversation</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span><span class="o">=</span><span class="n">conversation</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span><span class="o">+</span> <span class="mi">1</span>
+            <span class="k">break</span>
+    <span class="k">return</span> <span class="n">conversation</span></div>
+
+<div class="viewcode-block" id="create_connected_nick_list"><a class="viewcode-back" href="../../doc_for_code.html#lib.util.create_connected_nick_list">[docs]</a><span class="k">def</span> <span class="nf">create_connected_nick_list</span><span class="p">(</span><span class="n">conn_comp_list</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; A function that converts each individual list member to a list </span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">conn_comp_list</span><span class="p">)):</span>
+        <span class="n">conn_comp_list</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">conn_comp_list</span><span class="p">[</span><span class="n">i</span><span class="p">])</span></div>
+
+<div class="viewcode-block" id="correct_last_char_list"><a class="viewcode-back" href="../../doc_for_code.html#lib.util.correct_last_char_list">[docs]</a><span class="k">def</span> <span class="nf">correct_last_char_list</span><span class="p">(</span><span class="n">rec_list</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    corrects last char for all elements in rec_list</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">rec_list</span><span class="p">)):</span>
+        <span class="k">if</span><span class="p">(</span><span class="n">rec_list</span><span class="p">[</span><span class="n">i</span><span class="p">]):</span>
+            <span class="n">rec_list</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">correctLastCharCR</span><span class="p">(</span><span class="n">rec_list</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+
+    <span class="k">return</span> <span class="n">rec_list</span>        </div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2016, Prasad Talasila, Rohan Goel, Dhruv Shekhawat.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.5.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.9</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>
