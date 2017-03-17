@@ -1,0 +1,241 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>lib.analysis.community &#8212; IRC Log Parser 0.1 documentation</title>
+    
+    <link rel="stylesheet" href="../../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+   
+  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for lib.analysis.community</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">networkx</span> <span class="k">as</span> <span class="nn">nx</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">igraph</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;../lib&#39;</span><span class="p">)</span>
+<span class="kn">import</span> <span class="nn">config</span>
+<span class="kn">import</span> <span class="nn">vis</span>
+
+
+<div class="viewcode-block" id="infomap_igraph"><a class="viewcode-back" href="../../../doc_for_code.html#lib.analysis.community.infomap_igraph">[docs]</a><span class="k">def</span> <span class="nf">infomap_igraph</span><span class="p">(</span><span class="n">ig_graph</span><span class="p">,</span> <span class="n">net_file_location</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">reduce_graph</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; </span>
+<span class="sd">        Performs igraph-infomap analysis on the nx graph</span>
+<span class="sd">    </span>
+<span class="sd">    Args:</span>
+<span class="sd">        ig_graph(object): igraph graph object</span>
+<span class="sd">        net_file_location(str): location to load graph from if not mentioned in ig_graph</span>
+<span class="sd">        reduce_graph(bool): toggle between enable/disable reduction</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        ig_graph: igraph object</span>
+<span class="sd">        community.membership: result of infomap community analyis</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">if</span> <span class="n">ig_graph</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="c1"># give an option of loading a graph from .net file</span>
+        <span class="n">ig_graph</span> <span class="o">=</span> <span class="n">igraph</span><span class="o">.</span><span class="n">Graph</span><span class="p">()</span>
+        <span class="n">ig_graph</span> <span class="o">=</span> <span class="n">igraph</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">net_file_location</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s2">&quot;pajek&quot;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">reduce_graph</span><span class="p">:</span>
+        <span class="n">ig_graph</span> <span class="o">=</span> <span class="n">select_top_vertices</span><span class="p">(</span><span class="n">ig_graph</span><span class="p">,</span> <span class="s2">&quot;UU&quot;</span><span class="p">)</span>
+
+    <span class="n">community</span> <span class="o">=</span> <span class="n">ig_graph</span><span class="o">.</span><span class="n">community_infomap</span><span class="p">(</span><span class="n">edge_weights</span><span class="o">=</span><span class="n">ig_graph</span><span class="o">.</span><span class="n">es</span><span class="p">[</span><span class="s2">&quot;weight&quot;</span><span class="p">])</span>
+    <span class="n">codelength</span> <span class="o">=</span> <span class="n">community</span><span class="o">.</span><span class="n">codelength</span>
+
+    <span class="nb">print</span> <span class="s2">&quot;code-length:&quot;</span><span class="p">,</span> <span class="n">codelength</span>
+    <span class="nb">print</span> <span class="s2">&quot;no. of communities: &quot;</span><span class="p">,</span> <span class="nb">max</span><span class="p">(</span><span class="n">community</span><span class="o">.</span><span class="n">membership</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span>
+    <span class="nb">print</span> <span class="n">community</span>
+
+    <span class="k">if</span> <span class="n">config</span><span class="o">.</span><span class="n">DEBUGGER</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">ig_graph</span><span class="o">.</span><span class="n">vs</span><span class="p">():</span>
+            <span class="nb">print</span> <span class="nb">str</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">index</span><span class="p">)</span><span class="o">+</span><span class="s2">&quot;</span><span class="se">\t</span><span class="s2">&quot;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">ig_graph</span><span class="o">.</span><span class="n">vs</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">][</span><span class="n">node</span><span class="o">.</span><span class="n">index</span><span class="p">])</span>
+            <span class="c1"># print str(node.index)+&quot;\t&quot;+str(id_to_name_map[g.vs[&quot;id&quot;][node.index]])</span>
+
+    <span class="c1"># http://stackoverflow.com/questions/21976889/plotting-communities-with-python-igraph</span>
+    <span class="k">return</span> <span class="n">ig_graph</span><span class="p">,</span> <span class="n">community</span><span class="o">.</span><span class="n">membership</span></div>
+
+
+
+<div class="viewcode-block" id="select_top_vertices"><a class="viewcode-back" href="../../../doc_for_code.html#lib.analysis.community.select_top_vertices">[docs]</a><span class="k">def</span> <span class="nf">select_top_vertices</span><span class="p">(</span><span class="n">ig_graph</span><span class="p">,</span> <span class="n">pajek_type</span><span class="p">,</span> <span class="n">top_channels</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">top_users</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">top_id_for_channels_and_user_graphs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">top_id_for_user_graphs</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; </span>
+<span class="sd">    Reduces the ig_graph to only include top-nodes</span>
+<span class="sd">    </span>
+<span class="sd">    Args:</span>
+<span class="sd">        ig_graph(object): igraph graph object</span>
+<span class="sd">        pajek_type(str): UU/CU/CC</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        ig_graph: updated (reduced) igraph graph object</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># from reduced hashes, use degree analysis on edglelist to select top-nodes?</span>
+    
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    default:</span>
+<span class="sd">    top_channels = [&quot;#ubuntu-devel&quot;, &quot;#ubuntu-bugs&quot;, &quot;#ubuntu&quot;, &quot;#ubuntu-irc&quot;, &quot;#xubuntu-devel&quot;, &quot;#ubuntu-classroom&quot;, &quot;#launchpad&quot;, &quot;#kubuntu-devel&quot;, &quot;#ubuntu-quality&quot;, &quot;#ubuntu+1&quot;, &quot;#ubuntu-release&quot;, &quot;#ubuntu-meeting&quot;, &quot;#kubuntu&quot;, &quot;#ubuntu-locoteams&quot;, &quot;#ubuntu-beginners&quot;, &quot;#lubuntu&quot;, &quot;#ubuntu-motu&quot;, &quot;#ubuntu-discuss&quot;, &quot;#ubuntu-on-air&quot;, &quot;#xubuntu&quot;, &quot;#ubuntu-community-team&quot;, &quot;#ubuntu-uk&quot;, &quot;#ubuntu-server&quot;, &quot;#ubuntu-x&quot;, &quot;#ubuntu-ops&quot;, &quot;#ubuntu-phone&quot;, &quot;#ubuntu-arm&quot;, &quot;#ubuntu-kernel&quot;, &quot;#ubuntu-desktop&quot;, &quot;#ubuntu-unity&quot;]</span>
+<span class="sd">    top_users = [&quot;benonsoftware&quot;, &quot;ubottu&quot;, &quot;jrib&quot;, &quot;OerHeks&quot;, &quot;dr_willis&quot;, &quot;MoL0ToV&quot;, &quot;FloodBot1&quot;, &quot;cfhowlett&quot;, &quot;dkessel&quot;, &quot;DJones&quot;, &quot;BluesKaj&quot;, &quot;iceroot&quot;, &quot;usr13&quot;, &quot;bekks&quot;, &quot;JoseeAntonioR&quot;, &quot;Unit193&quot;, &quot;kubine&quot;, &quot;ubot2&quot;, &quot;micahg&quot;, &quot;sterna&quot;, &quot;zdobersek&quot;, &quot;CrazyLemon&quot;, &quot;lynxlynxlynx&quot;, &quot;czajkowski&quot;, &quot;lifeless&quot;, &quot;mlankhorst&quot;, &quot;penguin42&quot;, &quot;brobostigon&quot;, &quot;AlanBell&quot;, &quot;popey&quot;, &quot;SilverSpace&quot;, &quot;ubot5&quot;, &quot;xiaoy&quot;, &quot;cjohnston&quot;, &quot;stgraber&quot;, &quot;philipballew&quot;, &quot;andol&quot;, &quot;waltman&quot;, &quot;holstein&quot;, &quot;len-1304&quot;, &quot;Wizard&quot;, &quot;ScottK&quot;, &quot;snap-l&quot;, &quot;rick_h_&quot;, &quot;ricotz&quot;, &quot;mhall119&quot;, &quot;bkerensa&quot;, &quot;jcastro&quot;, &quot;pleia2&quot;, &quot;Scrimmer&quot;, &quot;aleksei`&quot;, &quot;[Raiden]&quot;, &quot;artus&quot;, &quot;ubot-it&quot;, &quot;xangua&quot;, &quot;jussi&quot;, &quot;ikonia&quot;, &quot;Pici&quot;, &quot;Myrtti&quot;, &quot;koegs&quot;, &quot;hallyn&quot;, &quot;davmor2&quot;, &quot;roaksoax&quot;, &quot;sarnold&quot;, &quot;infinity&quot;, &quot;mesquka&quot;, &quot;wgrant&quot;, &quot;tjaalton&quot;, &quot;xnox&quot;, &quot;lubotu3&quot;, &quot;shadeslayer&quot;, &quot;Tm_T&quot;, &quot;Riddell&quot;, &quot;SergioMeneses&quot;, &quot;balloons&quot;, &quot;ofan&quot;, &quot;dobey&quot;, &quot;Laney&quot;, &quot;cjwatson&quot;, &quot;jtaylor&quot;, &quot;slangasek&quot;, &quot;bdmurray&quot;, &quot;tsimpson&quot;, &quot;apw&quot;, &quot;hazmat&quot;, &quot;tumbleweed&quot;, &quot;tgm4883&quot;, &quot;gnomefreak&quot;, &quot;cyphermox&quot;, &quot;mgz&quot;, &quot;didrocks&quot;, &quot;hplc&quot;, &quot;lordievader&quot;, &quot;jibel&quot;, &quot;seb128&quot;, &quot;jodh&quot;, &quot;ubot2`&quot;, &quot;escott&quot;, &quot;smartboyhw&quot;, &quot;dholbach&quot;]</span>
+<span class="sd">    top_id_for_channels_and_user_graphs = [&#39;1000001&#39;, &#39;1000003&#39;, &#39;1000005&#39;, &#39;1000006&#39;, &#39;1000007&#39;, &#39;1000008&#39;, &#39;1000011&#39;, &#39;1000012&#39;, &#39;1000014&#39;, &#39;1000015&#39;, &#39;1000017&#39;, &#39;1000018&#39;, &#39;1000020&#39;, &#39;1000021&#39;, &#39;1000023&#39;, &#39;1000026&#39;, &#39;1000027&#39;, &#39;1000028&#39;, &#39;1000030&#39;, &#39;1000031&#39;, &#39;1000032&#39;, &#39;1000033&#39;, &#39;1000034&#39;, &#39;1000035&#39;, &#39;1000036&#39;, &#39;1000044&#39;, &#39;1000047&#39;, &#39;1000049&#39;, &#39;1000050&#39;, &#39;1000059&#39;, &#39;2&#39;, &#39;9&#39;, &#39;31&#39;, &#39;32&#39;, &#39;37&#39;, &#39;62&#39;, &#39;71&#39;, &#39;109&#39;, &#39;168&#39;, &#39;173&#39;, &#39;179&#39;, &#39;188&#39;, &#39;219&#39;, &#39;256&#39;, &#39;381&#39;, &#39;382&#39;, &#39;392&#39;, &#39;415&#39;, &#39;442&#39;, &#39;451&#39;, &#39;453&#39;, &#39;455&#39;, &#39;459&#39;, &#39;471&#39;, &#39;473&#39;, &#39;477&#39;, &#39;478&#39;, &#39;487&#39;, &#39;489&#39;, &#39;493&#39;, &#39;505&#39;, &#39;515&#39;, &#39;571&#39;, &#39;631&#39;, &#39;639&#39;, &#39;653&#39;, &#39;668&#39;, &#39;677&#39;, &#39;680&#39;, &#39;682&#39;, &#39;694&#39;, &#39;749&#39;, &#39;779&#39;, &#39;780&#39;, &#39;788&#39;, &#39;794&#39;, &#39;796&#39;, &#39;797&#39;, &#39;799&#39;, &#39;800&#39;, &#39;805&#39;, &#39;806&#39;, &#39;809&#39;, &#39;823&#39;, &#39;857&#39;, &#39;915&#39;, &#39;940&#39;, &#39;990&#39;, &#39;1273&#39;, &#39;1283&#39;, &#39;1321&#39;, &#39;1324&#39;, &#39;1326&#39;, &#39;1333&#39;, &#39;1343&#39;, &#39;1362&#39;, &#39;1375&#39;, &#39;1386&#39;, &#39;1387&#39;, &#39;1399&#39;, &#39;1418&#39;, &#39;1419&#39;, &#39;1421&#39;, &#39;1425&#39;, &#39;1426&#39;, &#39;1431&#39;, &#39;1531&#39;, &#39;1537&#39;, &#39;1544&#39;, &#39;1546&#39;, &#39;1552&#39;, &#39;1562&#39;, &#39;1564&#39;, &#39;1566&#39;, &#39;1602&#39;, &#39;1681&#39;, &#39;1737&#39;, &#39;2245&#39;, &#39;2334&#39;, &#39;2392&#39;, &#39;3157&#39;, &#39;3186&#39;, &#39;4262&#39;, &#39;4714&#39;, &#39;4774&#39;, &#39;4778&#39;, &#39;5931&#39;, &#39;6286&#39;, &#39;8776&#39;, &#39;9191&#39;]  </span>
+<span class="sd">    top_id_for_user_graphs = [&#39;2&#39;, &#39;9&#39;, &#39;31&#39;, &#39;32&#39;, &#39;37&#39;, &#39;62&#39;, &#39;71&#39;, &#39;109&#39;, &#39;168&#39;, &#39;173&#39;, &#39;179&#39;, &#39;188&#39;, &#39;219&#39;, &#39;256&#39;, &#39;381&#39;, &#39;382&#39;, &#39;392&#39;, &#39;415&#39;, &#39;442&#39;, &#39;451&#39;, &#39;453&#39;, &#39;455&#39;, &#39;459&#39;, &#39;471&#39;, &#39;473&#39;, &#39;477&#39;, &#39;478&#39;, &#39;487&#39;, &#39;489&#39;, &#39;493&#39;, &#39;505&#39;, &#39;515&#39;, &#39;571&#39;, &#39;631&#39;, &#39;639&#39;, &#39;653&#39;, &#39;668&#39;, &#39;677&#39;, &#39;680&#39;, &#39;682&#39;, &#39;694&#39;, &#39;749&#39;, &#39;779&#39;, &#39;780&#39;, &#39;788&#39;, &#39;794&#39;, &#39;796&#39;, &#39;797&#39;, &#39;799&#39;, &#39;800&#39;, &#39;805&#39;, &#39;806&#39;, &#39;809&#39;, &#39;823&#39;, &#39;857&#39;, &#39;915&#39;, &#39;940&#39;, &#39;990&#39;, &#39;1273&#39;, &#39;1283&#39;, &#39;1321&#39;, &#39;1324&#39;, &#39;1326&#39;, &#39;1333&#39;, &#39;1343&#39;, &#39;1362&#39;, &#39;1375&#39;, &#39;1386&#39;, &#39;1387&#39;, &#39;1399&#39;, &#39;1418&#39;, &#39;1419&#39;, &#39;1421&#39;, &#39;1425&#39;, &#39;1426&#39;, &#39;1431&#39;, &#39;1531&#39;, &#39;1537&#39;, &#39;1544&#39;, &#39;1546&#39;, &#39;1552&#39;, &#39;1562&#39;, &#39;1564&#39;, &#39;1566&#39;, &#39;1602&#39;, &#39;1681&#39;, &#39;1737&#39;, &#39;2245&#39;, &#39;2334&#39;, &#39;2392&#39;, &#39;3157&#39;, &#39;3186&#39;, &#39;4262&#39;, &#39;4714&#39;, &#39;4774&#39;, &#39;4778&#39;, &#39;5931&#39;, &#39;6286&#39;, &#39;8776&#39;, &#39;9191&#39;] </span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    
+    <span class="k">def</span> <span class="nf">delete_helper</span><span class="p">(</span><span class="n">top_parameter</span><span class="p">):</span>
+        <span class="n">nodes_to_delete</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">ig_graph</span><span class="o">.</span><span class="n">vs</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">node</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">]</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">top_parameter</span><span class="p">:</span>
+                <span class="n">nodes_to_delete</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">index</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">nodes_to_delete</span>
+
+    <span class="k">if</span> <span class="n">pajek_type</span> <span class="o">==</span> <span class="s2">&quot;CC&quot;</span><span class="p">:</span>
+        <span class="n">nodes_to_delete</span> <span class="o">=</span> <span class="n">delete_helper</span><span class="p">(</span><span class="n">top_channels</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">pajek_type</span> <span class="o">==</span> <span class="s2">&quot;CU&quot;</span><span class="p">:</span>
+        <span class="n">nodes_to_delete</span> <span class="o">=</span> <span class="n">delete_helper</span><span class="p">(</span><span class="n">top_id_for_channels_and_user_graphs</span><span class="p">)</span> 
+    <span class="k">elif</span> <span class="n">pajek_type</span> <span class="o">==</span> <span class="s2">&quot;UU&quot;</span><span class="p">:</span>
+        <span class="n">nodes_to_delete</span> <span class="o">=</span> <span class="n">delete_helper</span><span class="p">(</span><span class="n">top_id_for_user_graphs</span><span class="p">)</span> 
+    <span class="k">else</span><span class="p">:</span>
+        <span class="nb">print</span> <span class="s2">&quot;ERROR&quot;</span>
+
+    <span class="n">ig_graph</span><span class="o">.</span><span class="n">delete_vertices</span><span class="p">(</span><span class="n">nodes_to_delete</span><span class="p">)</span>
+    
+    <span class="k">return</span> <span class="n">ig_graph</span></div>
+
+
+<div class="viewcode-block" id="convert_id_name_community"><a class="viewcode-back" href="../../../doc_for_code.html#lib.analysis.community.convert_id_name_community">[docs]</a><span class="k">def</span> <span class="nf">convert_id_name_community</span><span class="p">(</span><span class="n">max_hash</span><span class="p">,</span> <span class="n">community_txt_file</span><span class="p">,</span> <span class="n">hash_file_txt</span><span class="p">,</span> <span class="n">reduced_hash_txt</span><span class="p">,</span> <span class="n">reduced_community</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; </span>
+<span class="sd">    Converts communites from their ID representation to name for easier understanding</span>
+<span class="sd">    </span>
+<span class="sd">    Args:</span>
+<span class="sd">        max_hash(int): max possible hash value</span>
+<span class="sd">        community_txt_file(str): location fo the file having community analysis</span>
+<span class="sd">        hash_file_txt(str): location fo the file having the non-reduced nick_hash</span>
+<span class="sd">        reduced_hash_txt(str): location fo the file having the reduced nick_hash</span>
+<span class="sd">        reduced_community(bool): switch b/w reduced and non reduced communities</span>
+<span class="sd">    </span>
+<span class="sd">    Returns:</span>
+<span class="sd">        null</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">hash_value</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;&quot;</span><span class="p">]</span><span class="o">*</span><span class="n">max_hash</span>
+
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">hash_file_txt</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+        <span class="n">content</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">readlines</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">content</span><span class="p">:</span>
+            <span class="n">a</span><span class="p">,</span> <span class="n">b</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">split</span><span class="p">()</span>
+            <span class="n">hash_value</span><span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">a</span><span class="p">)]</span> <span class="o">=</span> <span class="n">b</span>
+
+    <span class="sd">&#39;&#39;&#39;CHANGE COMMUNUITES FROM IDS TO NAME&#39;&#39;&#39;</span>
+    <span class="nb">print</span> <span class="s2">&quot;</span><span class="si">{: &gt;20}</span><span class="s2"> </span><span class="si">{: &gt;1}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="s2">&quot;NAME&quot;</span><span class="p">,</span> <span class="s2">&quot;CommunityID&quot;</span><span class="p">)</span>
+    <span class="nb">print</span> <span class="s2">&quot;=================================&quot;</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">reduced_community</span><span class="p">:</span>
+        <span class="n">c</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">community_txt_file</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="n">content</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">readlines</span><span class="p">()</span>
+            <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">content</span><span class="p">:</span>
+                <span class="n">a</span><span class="p">,</span> <span class="n">b</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">split</span><span class="p">()</span>
+                <span class="n">a</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">a</span><span class="p">)</span>
+                <span class="n">b</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">b</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">b</span> <span class="o">!=</span> <span class="n">c</span><span class="p">:</span>
+                    <span class="nb">print</span> <span class="s2">&quot;---------------------------&quot;</span>
+                    <span class="n">c</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="c1"># print  hash_value[a]+&quot;\t&quot;+str(b)</span>
+                <span class="nb">print</span> <span class="s2">&quot;</span><span class="si">{: &gt;20}</span><span class="s2"> </span><span class="si">{: &gt;1}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">hash_value</span><span class="p">[</span><span class="n">a</span><span class="p">],</span> <span class="n">b</span><span class="p">)</span>
+
+    <span class="k">else</span><span class="p">:</span>
+        <span class="sd">&#39;&#39;&#39;USED FOR REDUCED COMMUNITIES&#39;&#39;&#39;</span>
+        <span class="n">top_names</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">reduced_hash_txt</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="n">content</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">readlines</span><span class="p">()</span>
+            <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">content</span><span class="p">:</span>
+                <span class="n">a</span><span class="p">,</span> <span class="n">b</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">split</span><span class="p">()</span>
+                <span class="n">a</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">a</span><span class="p">)</span>
+                <span class="n">top_names</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">b</span><span class="p">)</span>
+
+        <span class="n">c</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">community_txt_file</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="n">content</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">readlines</span><span class="p">()</span>
+            <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">content</span><span class="p">:</span>
+                <span class="n">a</span><span class="p">,</span> <span class="n">b</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">split</span><span class="p">()</span>
+                <span class="n">a</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">a</span><span class="p">)</span>
+                <span class="n">b</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">b</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">b</span> <span class="o">!=</span> <span class="n">c</span><span class="p">:</span>
+                    <span class="nb">print</span> <span class="s2">&quot;---------------------------&quot;</span>
+                    <span class="n">c</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="k">if</span> <span class="n">hash_value</span><span class="p">[</span><span class="n">a</span><span class="p">]</span> <span class="ow">in</span> <span class="n">top_names</span><span class="p">:</span>
+                    <span class="nb">print</span> <span class="s2">&quot;</span><span class="si">{: &gt;20}</span><span class="s2"> </span><span class="si">{: &gt;1}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">hash_value</span><span class="p">[</span><span class="n">a</span><span class="p">],</span> <span class="n">b</span><span class="p">)</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2016, Prasad Talasila, Rohan Goel, Dhruv Shekhawat.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.5.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.9</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

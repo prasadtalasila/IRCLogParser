@@ -4,83 +4,44 @@ Documentation for the Code
 .. automodule:: lib
 
 
-Aggregate Graph
+
+Community Analysis
 ===============
 
-.. automodule:: lib.AggregateGraph
+.. automodule:: lib.analysis.community
    :members:
 
 
-Channels Of Nick Graph
-======================
+Channel Analysis
+===============
 
-.. automodule:: lib.ChannelsOfNickGraph
+.. automodule:: lib.analysis.channel
    :members:
 
 
-Message Number Bins [CSV]
-=========================
+Network Analysis
+===============
 
-.. automodule:: lib.MessageNumberBinsCSV
+.. automodule:: lib.analysis.network
    :members:
 
 
-Message Time Graph
-==================
+User Analysis
+===============
 
-.. automodule:: lib.MessageTimeGraph
-   :members:
-
-
-Nick Change Graph
-=================
-
-.. automodule:: lib.NickChangeGraph
-   :members:
-
-
-Response Time
-=============
-
-.. automodule:: lib.ResponseTime
-   :members:
-
-
-Conversational Length & Refresh Time
-====================================
-
-.. automodule:: lib.ConvL_ConvRT
-   :members:
-
-
-Degree Message Number [CSV]
-===========================
-
-.. automodule:: lib.degreeMessageNumberCSV
-   :members:
-
-
-Degree Node Numbder [CSV]
-=========================
-
-.. automodule:: lib.degreeNodeNumberCSV
-   :members:
-
-
-Key Words Generator
-===================
-.. automodule:: lib.createKeyWords
-   :members:
-
-
-Key Word Clustering
-===================
-.. automodule:: lib.keyWordsCluster_KMeansTFIDF
+.. automodule:: lib.analysis.user
    :members:
 
 
 Utility
 ==============
 
-.. automodule:: ext.util
+.. automodule:: lib.util
+   :members:
+
+
+Visualisation
+==============
+
+.. automodule:: lib.vis
    :members:
