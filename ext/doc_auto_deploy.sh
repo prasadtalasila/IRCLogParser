@@ -9,7 +9,7 @@
 
 set -e # Exit with nonzero exit code if anything fails
 
-SOURCE_BRANCH="new-docs-automation"
+SOURCE_BRANCH="dev"
 TARGET_BRANCH="gh-pages"
 ENCRYPTION_LABEL="fafbdc041e4b"
 COMMIT_AUTHOR_EMAIL="tsrkp@goa.bits-pilani.ac.in"
@@ -57,7 +57,7 @@ fi
 # Commit the "changes", i.e. the new version.
 # The delta will show diffs between new and old versions.
 git add .
-git commit -m "[Travis Commit] Automated Deploy to GitHub Pages| Caused by ${SHA}
+git commit -m "[Travis Commit] Automated Deploy to gh-pages | Caused by ${SHA}
 refer auto_commit_script: https://github.com/prasadtalasila/IRCLogParser/blob/$SOURCE_BRANCH/ext/doc_auto_deploy.sh
 "
 
