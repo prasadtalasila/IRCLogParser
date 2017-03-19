@@ -310,16 +310,16 @@ def calc_plot_linear_fit(x_in, y_in, output_directory, output_file_name):
 
 def generate_group_bar_charts(y_values, x_values, trace_header, output_directory, output_file_name):
     """
-        Plots multiple bar graphs on same graph
+    Plots multiple bar graphs on same graph
 
-        example usage:
-        generate_group_bar_charts([
-            [5.10114882,    5.0194652482, 4.9908093076],
-            [4.5824497358,  4.7083614037,   4.3812775722],
-            [2.6839471308,  3.0441476209,   3.6403820447]
-            ], ['#kubuntu-devel', '#ubuntu-devel', '#kubuntu'],
-            ['head1', 'head2', 'head3'], '/home/rohan/Desktop/', 'multi_box'
-        )
+    example usage:
+    generate_group_bar_charts([
+    [5.10114882,    5.0194652482, 4.9908093076],
+    [4.5824497358,  4.7083614037,   4.3812775722],
+    [2.6839471308,  3.0441476209,   3.6403820447]
+    ], ['#kubuntu-devel', '#ubuntu-devel', '#kubuntu'],
+    ['head1', 'head2', 'head3'], '/home/rohan/Desktop/', 'multi_box'
+    )
 
     Args:
         x_in (list of int): x_axis data

@@ -9,16 +9,14 @@
 
 set -e # Exit with nonzero exit code if anything fails
 
-SOURCE_BRANCH="docs-automation"
+SOURCE_BRANCH="new-docs-automation"
 TARGET_BRANCH="gh-pages"
 ENCRYPTION_LABEL="fafbdc041e4b"
 COMMIT_AUTHOR_EMAIL="tsrkp@goa.bits-pilani.ac.in"
 
 function createDocs {
-  cd docs
-  make html
-  cd ..
-  cp -r docs/build/html/* out/ 
+  cd docs &&  make html
+  cd .. &&  cp -r docs/build/html/* out/ 
 }
 
 # Pull requests and commits to other branches shouldn't try to deploy, just build to verify
@@ -59,7 +57,9 @@ fi
 # Commit the "changes", i.e. the new version.
 # The delta will show diffs between new and old versions.
 git add .
-git commit -m "Deploy to GitHub Pages: ${SHA}"
+git commit -m "[Travis Commit] Automated Deploy to GitHub Pages| Caused by ${SHA}
+refer auto_commit_script: https://github.com/prasadtalasila/IRCLogParser/blob/$SOURCE_BRANCH/ext/doc_auto_deploy.sh
+"
 
 #go to parent directory and perform SSH configuration
 cd ..
@@ -79,8 +79,6 @@ cd out/
 pwd
 echo repo=$SSH_REPO
 echo branch=$TARGET_BRANCH
-echo show all branches
-git branch -a
 echo "===show local gh-pages commit logs==="
 git log --oneline -n 5
 echo "===show remote gh-pages commit logs==="

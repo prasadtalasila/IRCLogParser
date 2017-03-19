@@ -69,16 +69,16 @@ def get_year_month_day(day_content):
         takes a day_content and gives the associated year, month and date associated with it       
 
         Args:
-        day_content(dictionary)=
-                    {
-                    "log_data": day_data, 
-                    "auxiliary_data": {
-                            "channel": channel_name,
-                            "year": year_iterator,
-                            "month": month_iterator,
-                            "day": day_iterator
-                            }
+            day_content(dictionary)=
+            {
+            "log_data": day_data, 
+            "auxiliary_data": {
+                    "channel": channel_name,
+                    "year": year_iterator,
+                    "month": month_iterator,
+                    "day": day_iterator
                     }
+            }
 
         Returns:
             str:year, str:month, str:day

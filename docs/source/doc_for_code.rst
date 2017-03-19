@@ -6,21 +6,21 @@ Documentation for the Code
 
 
 Community Analysis
-===============
+==================
 
 .. automodule:: lib.analysis.community
    :members:
 
 
 Channel Analysis
-===============
+=================
 
 .. automodule:: lib.analysis.channel
    :members:
 
 
 Network Analysis
-===============
+=================
 
 .. automodule:: lib.analysis.network
    :members:
