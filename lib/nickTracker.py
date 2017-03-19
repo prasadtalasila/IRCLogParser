@@ -3,13 +3,6 @@ import config
 import util
 from datetime import date
 
-nicks = []  # list of all the nicknames
-nick_same_list = [[] for i in range(config.MAX_EXPECTED_DIFF_NICKS)]  
-nick_channel_dict = []
-channels_for_user = []
-nicks_hash = []
-channels_hash = []
-
 def nick_tracker(log_dict, track_users_on_channels = False):
     """ 
         Tracks all nicks and the identifies nicks which point to same user
@@ -22,6 +15,12 @@ def nick_tracker(log_dict, track_users_on_channels = False):
        nick_same_list(list): list of lists with each list corresponding to nicks of same user 
 
     """
+    nicks = []  # list of all the nicknames
+    nick_same_list = [[] for i in range(config.MAX_EXPECTED_DIFF_NICKS)]  
+    nick_channel_dict = []
+    channels_for_user = []
+    nicks_hash = []
+    channels_hash = []
 
     #Getting all the nicknames in a list
 

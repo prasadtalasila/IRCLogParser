@@ -52,6 +52,7 @@ setup(
         'sphinxcontrib-slide',
         'sphinxcontrib.youtube',
         'nltk',
-        'plotly'
+        'plotly',
+        'ddt'
     ],
 )

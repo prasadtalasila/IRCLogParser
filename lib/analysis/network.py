@@ -150,7 +150,7 @@ def channel_user_presence_graph_and_csv(nicks, nick_same_list, channels_for_user
     
     #====================== CHANNEL_USER ============================
     channel_user_graph = nx.Graph()    
-    CU_adjacency_matrix = create_adj_matrix(nick_hash, channels_hash)
+    CU_adjacency_matrix = create_adj_matrix(nicks_hash, channels_hash)
     for adjlist in nick_channel_dict:
         for channel in adjlist['channels']:
             
