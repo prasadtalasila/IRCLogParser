@@ -7,7 +7,7 @@ import scipy
 current_path = path.abspath(path.dirname(__file__))
 
 with open(path.join(current_path, 'README.md'), encoding='utf-8') as f:
-	long_description = f.read()
+    long_description = f.read()
 
 setup(
     name='IRCLogParser',
@@ -32,24 +32,27 @@ setup(
     packages=find_packages(exclude=['docs', 'tests']),
 
     install_requires=[
-    		'scipy',
-    		'numpy',
-		'networkx',
-		'matplotlib',
-		'pygraphviz',
-		'scikit-learn',
-		'pandas',
-		'python-igraph',
-		'sphinx',
-		'pyyaml',
-		't3SphinxThemeRtd',
-		't3fieldlisttable',
-		't3tablerows',
-		't3targets',
-		'sphinxcontrib-googlechart',
-		'sphinxcontrib-googlemaps',
-		'sphinxcontrib-httpdomain',
-		'sphinxcontrib-slide',
-		'sphinxcontrib.youtube',
-		'nltk'],
+        'scipy',
+        'numpy',
+        'networkx',
+        'matplotlib',
+        'pygraphviz',
+        'scikit-learn',
+        'pandas',
+        'python-igraph',
+        'sphinx',
+        'pyyaml',
+        't3SphinxThemeRtd',
+        't3fieldlisttable',
+        't3tablerows',
+        't3targets',
+        'sphinxcontrib-googlechart',
+        'sphinxcontrib-googlemaps',
+        'sphinxcontrib-httpdomain',
+        'sphinxcontrib-slide',
+        'sphinxcontrib.youtube',
+        'nltk',
+        'plotly',
+        'ddt'
+    ],
 )

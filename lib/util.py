@@ -69,16 +69,16 @@ def get_year_month_day(day_content):
         takes a day_content and gives the associated year, month and date associated with it       
 
         Args:
-        day_content(dictionary)=
-                    {
-                    "log_data": day_data, 
-                    "auxiliary_data": {
-                            "channel": channel_name,
-                            "year": year_iterator,
-                            "month": month_iterator,
-                            "day": day_iterator
-                            }
+            day_content(dictionary)=
+            {
+            "log_data": day_data, 
+            "auxiliary_data": {
+                    "channel": channel_name,
+                    "year": year_iterator,
+                    "month": month_iterator,
+                    "day": day_iterator
                     }
+            }
 
         Returns:
             str:year, str:month, str:day
@@ -115,6 +115,14 @@ def build_graphs(nick_sender, nick_receiver, time, year, month, day, day_graph, 
         
 
 def HACK_convert_nx_igraph(nx_graph):
+    """ 
+        There exist no current method to convert a nx graph to an igraph.
+        So this is a hack which does sp.
+        Args:
+            nx_graph: input nx_graph to be converted to igraph
+        Returns:
+            ig_graph: converted igraph
+    """
     nx.write_pajek(nx_graph, "/tmp/rohan.net")
     ig_graph = igraph.Graph()
     ig_graph = igraph.read("/tmp/rohan.net", format="pajek")
