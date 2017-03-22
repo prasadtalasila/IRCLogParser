@@ -58,6 +58,8 @@ def linux_input(log_directory, channel_list, starting_date, ending_date):
                                 
                                 day_data = f.readlines()             
                             
+                            f.close()
+
                             date_key = date(year_iterator, month_iterator, day_iterator)
                             value = {
                                 "log_data": day_data, 
