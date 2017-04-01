@@ -45,7 +45,6 @@ def infomap_igraph(ig_graph, net_file_location=None, reduce_graph=False):
     return ig_graph, community.membership
 
 
-
 def select_top_vertices(ig_graph, pajek_type, top_channels=None, top_users=None, top_id_for_channels_and_user_graphs=None, top_id_for_user_graphs=None):
     """ 
     Reduces the ig_graph to only include top-nodes

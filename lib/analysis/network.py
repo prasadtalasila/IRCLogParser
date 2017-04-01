@@ -10,7 +10,8 @@ import config
 from itertools import izip_longest as zip_longest
 sys.path.append('../lib')
 
-def message_number_graph(log_dict, nicks, nick_same_list, DAY_BY_DAY_ANALYSIS = False):
+
+def message_number_graph(log_dict, nicks, nick_same_list, DAY_BY_DAY_ANALYSIS=False):
     """ Creates a directed graph
         with each node representing an IRC user
         and each directed edge has a weight which 
@@ -571,6 +572,7 @@ def message_time_graph(log_dict, nicks, nick_same_list, DAY_BY_DAY_ANALYSIS=Fals
     else:
         return msg_time_aggr_graph
 
+
 def message_number_bins_csv(log_dict, nicks, nick_same_list):
     """ creates a CSV file which tracks the number of message exchanged in a channel 
         for 48 bins of half an hour each distributed all over the day 
@@ -637,6 +639,7 @@ def message_number_bins_csv(log_dict, nicks, nick_same_list):
             tot_msgs = [tot_msgs[i] + bins[i] for i in range(len(bins))]
             
     return bin_matrix, sum(tot_msgs)
+
 
 def degree_node_number_csv(log_dict, nicks, nick_same_list):
     """ creates two csv files having no. of nodes with a certain in and out-degree

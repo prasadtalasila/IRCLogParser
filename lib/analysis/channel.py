@@ -4,6 +4,7 @@ from networkx.algorithms.components.connected import connected_components
 import util
 import config
 
+
 def conv_len_conv_refr_time(log_dict, nicks, nick_same_list):
 
 	""" Calculates the conversation length (CL) that is the length of time for which two users communicate 
@@ -137,12 +138,13 @@ def conv_len_conv_refr_time(log_dict, nicks, nick_same_list):
 	graphx1, graphy1 = build_conv_csv(conv, graphx1, graphy1)
 	graphx2, graphy2 = build_conv_csv(conv_diff, graphx2, graphy2)	
 
-#To plot CDF we store the CL and CRT values and their number of occurences as shown above.
+	#To plot CDF we store the CL and CRT values and their number of occurences as shown above.
 
 	row_cl = zip(graphx1, graphy1)
 	row_crt = zip(graphx2, graphy2)
 	
 	return row_cl, row_crt
+
 
 def response_time(log_dict, nicks, nick_same_list):
 
@@ -285,6 +287,6 @@ def response_time(log_dict, nicks, nick_same_list):
 		graph_y_axis.append(graph_cumulative.count(i))     # problem when ti=0 count is unexpectedly large
 		graph_x_axis.append(i)		
 
-#Finally storing the RT values along with their frequencies in a csv file. 
+	#Finally storing the RT values along with their frequencies in a csv file. 
 	rows_rt = zip(graph_x_axis, graph_y_axis)
 	return rows_rt	
