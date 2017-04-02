@@ -40,6 +40,39 @@ def conv_len_conv_refr_time(log_dict, nicks, nick_same_list):
 	graphy2 =[]
 
 	dateadd = -1 #Variable used for response time calculation. Varies from 0-365.
+
+	def build_conversation(rec_list, nick, send_time, nick_to_search, nick_receiver, nick_sender, dateadd, conversations, conn_comp_list):
+		for names in rec_list:
+			conversations, nick_receiver, send_time = conv_helper(names, nick, send_time, nick_to_search, nick_receiver, nick_sender, dateadd, conversations, conn_comp_list)			
+		return  conversations, nick_receiver, send_time
+
+	def conv_helper(rec, nick, send_time, nick_to_search, nick_receiver, nick_sender, dateadd, conversations, conn_comp_list):
+		if(rec == nick):
+			send_time.append(line[1:6])
+			if(nick_to_search != nick):
+				nick_receiver = util.get_nick_sen_rec(len(nicks), nick, conn_comp_list, nick_receiver)				
+				for i in range(config.MAX_CONVERSATIONS):
+					if (nick_sender in conversations[i] and nick_receiver in conversations[i]):
+						conversations = conv_append(conversations, i, dateadd, line)
+						break
+					if(len(conversations[i]) == 0):
+						conversations[i].append(nick_sender)
+						conversations[i].append(nick_receiver)						
+						conversations = conv_append(conversations, i, dateadd, line)
+						break
+		return  conversations, nick_receiver, send_time
+
+	def conv_mat_diff(i,j,conversations):
+		"""
+		i(int): matrix index for row 
+		j(int): matrix index for column
+		"""
+		return (conversations[i][j]-conversations[i][j-1])	
+
+	def conv_append(conversations, index, dateadd, line):
+		conversations[index].append(config.HOURS_PER_DAY*config.MINS_PER_HOUR*dateadd + int(line[1:6][0:2])*config.MINS_PER_HOUR + int(line[1:6][3:5]))
+		return conversations
+
 	for day_content_all_channels in log_dict.values():
 		for day_content in day_content_all_channels:
 			day_log = day_content["log_data"]
@@ -54,81 +87,25 @@ def conv_len_conv_refr_time(log_dict, nicks, nick_same_list):
 					nick_receiver = ""
 					m = re.search(r"\<(.*?)\>", line)
 					nick_to_search = util.correctLastCharCR(m.group(0)[1:-1])
-					for d in range(len(nicks)):                        #E.g. if names are rohan1,rohan2,rohan3...,then var will store rohan1.
-						if((d < len(conn_comp_list)) and (nick_to_search in conn_comp_list[d])):
-							nick_sender = conn_comp_list[d][0]
-							break
+					nick_sender = util.get_nick_sen_rec(len(nicks), nick_to_search, conn_comp_list, nick_sender)				
 						
 					for nick in nicks:
 						rec_list = [e.strip() for e in line.split(':')]
 						util.rec_list_splice(rec_list)						
 						if not rec_list[1]:
 							break						
-						rec_list = util.correct_last_char_list(rec_list)		
-
-						for names in rec_list:
-							if(names == nick):
-								send_time.append(line[1:6])
-								if(nick_to_search != nick):     
-									for d in range(len(nicks)):
-										if((d < len(conn_comp_list)) and (nick in conn_comp_list[d])):
-											nick_receiver = conn_comp_list[d][0]
-											break
-										
-									for i in range(config.MAX_CONVERSATIONS):
-										if (nick_sender in conversations[i] and nick_receiver in conversations[i]):
-											conversations[i].append(config.HOURS_PER_DAY*config.MINS_PER_HOUR*dateadd + int(line[1:6][0:2])*config.MINS_PER_HOUR+int(line[1:6][3:5]))   # We add response times in conversations for every conversation 
-											break                                                                     #between userA and userB. If they havent already conversed 
-										if(len(conversations[i]) == 0):                                               #before than add time at a new array index and later append to it.
-											conversations[i].append(nick_sender)
-											conversations[i].append(nick_receiver)
-											conversations[i].append(config.HOURS_PER_DAY*config.MINS_PER_HOUR*dateadd + int(line[1:6][0:2])*config.MINS_PER_HOUR+int(line[1:6][3:5]))
-											break
-							
+						rec_list = util.correct_last_char_list(rec_list)							
+						conversations, nick_receiver, send_time = build_conversation(rec_list, nick, send_time, nick_to_search, nick_receiver, nick_sender, dateadd, conversations, conn_comp_list)
+													
 						if "," in rec_list[1]: 
 							flag_comma = 1
 							rec_list_2 = [e.strip() for e in rec_list[1].split(',')]							
-							rec_list_2 = util.correct_last_char_list(rec_list_2)		
-
-							for names in rec_list_2:
-								if(names == nick):
-									send_time.append(line[1:6])
-									if(nick_to_search != nick):
-										for d in range(len(nicks)):
-											if((d < len(conn_comp_list)) and (nick in conn_comp_list[d])):   #Lines 212-255 consider all cases in which messages are addressed such as - nick1:nick2 or nick1,nick2,
-												nick_receiver = conn_comp_list[d][0]                   #or nick1,nick2:
-												break
-										
-										for i in range(config.MAX_CONVERSATIONS):
-											if (nick_sender in conversations[i] and nick_receiver in conversations[i]):
-												conversations[i].append(config.HOURS_PER_DAY*config.MINS_PER_HOUR*dateadd + int(line[1:6][0:2])*config.MINS_PER_HOUR+int(line[1:6][3:5])) 
-												break
-											if(len(conversations[i]) == 0):
-												conversations[i].append(nick_sender)
-												conversations[i].append(nick_receiver)
-												conversations[i].append(config.HOURS_PER_DAY*config.MINS_PER_HOUR*dateadd + int(line[1:6][0:2])*config.MINS_PER_HOUR+int(line[1:6][3:5]))
-												break
-
+							rec_list_2 = util.correct_last_char_list(rec_list_2)
+							conversations, nick_receiver, send_time = build_conversation(rec_list_2, nick, send_time, nick_to_search, nick_receiver, nick_sender, dateadd, conversations, conn_comp_list)		
+							
 						if(flag_comma == 0):
-							rec = util.correctLastCharCR(line[line.find(">") + 1:line.find(", ")][1:])              
-
-							if(rec == nick):
-								send_time.append(line[1:6])
-								if(nick_to_search != nick):
-									for d in range(len(nicks)):
-										if ((d < len(conn_comp_list)) and (nick in conn_comp_list[d])):
-											nick_receiver = conn_comp_list[d][0]
-											break
-									
-									for i in range(config.MAX_CONVERSATIONS):
-										if (nick_sender in conversations[i] and nick_receiver in conversations[i]): 
-											conversations[i].append(config.HOURS_PER_DAY*config.MINS_PER_HOUR*dateadd + int(line[1:6][0:2])*config.MINS_PER_HOUR + int(line[1:6][3:5]))
-											break
-										if(len(conversations[i]) == 0):
-											conversations[i].append(nick_sender)
-											conversations[i].append(nick_receiver)
-											conversations[i].append(config.HOURS_PER_DAY*config.MINS_PER_HOUR*dateadd + int(line[1:6][0:2])*config.MINS_PER_HOUR + int(line[1:6][3:5]))
-											break
+							rec = util.splice_find(line, ">", ", ", 1)							            
+							conversations, nick_receiver, send_time	= conv_helper(rec, nick, send_time, nick_to_search, nick_receiver, nick_sender, dateadd, conversations, conn_comp_list)			
 		
 	#Lines 212-290 consider all cases in which messages are addressed as - (nick1:nick2 or nick1,nick2 or nick1,nick2:) and stores their response times in conversations. conversations[i] contains all the response times between userA and userB throughout an entire year.
 
@@ -140,23 +117,26 @@ def conv_len_conv_refr_time(log_dict, nicks, nick_same_list):
 		if(len(conversations[i]) != 0):
 			first = conversations[i][0]
 			for j in range(1, len(conversations[i])):
-					if(conversations[i][j]-conversations[i][j-1] > 9):
+					if(conv_mat_diff(i, j, conversations) > 9):
 
 						conv.append(conversations[i][j-1] - first)    #We are recording the conversation length in conv and CRT in conv_diff. Here 9 is the average response
-																																										#time we have already found before(see parser-RT.py). For every channel this value differs and would have to be changed in the code.
-						conv_diff.append(conversations[i][j] - conversations[i][j-1])
+																	#time we have already found before(see parser-RT.py). For every channel this value differs and would have to be changed in the code.
+						conv_diff.append(conv_mat_diff(i, j, conversations))
 						first = conversations[i][j]
 					if(j == (len(conversations[i]) - 1)):
 						conv.append(conversations[i][j] - first)                    
-						break
+						break						
 
-	for i in range(max(conv)):
-		graphx1.append(i)
-		graphy1.append(conv.count(i))
+	def build_conv_csv(conv_list, graph_x, graph_y):
 
-	for i in range(max(conv_diff)):
-		graphx2.append(i)
-		graphy2.append(conv_diff.count(i))
+		for i in range(max(conv_list)):
+			graph_x.append(i)
+			graph_y.append(conv_list.count(i))
+
+		return graph_x, graph_y
+
+	graphx1, graphy1 = build_conv_csv(conv, graphx1, graphy1)
+	graphx2, graphy2 = build_conv_csv(conv_diff, graphx2, graphy2)	
 
 	#To plot CDF we store the CL and CRT values and their number of occurences as shown above.
 
@@ -192,6 +172,27 @@ def response_time(log_dict, nicks, nick_same_list):
 	graph_x_axis = []
 	graph_y_axis = []
 
+	def build_mean_list(conversations, index, mean_list):
+		for j in range(2, len(conversations[index])):
+			mean_list.append(conversations[index][j])
+		return mean_list
+
+	def resp_helper(rec, nick, send_time, nick_to_search, nick_receiver, nick_sender, conversations, conn_comp_list):
+		if(rec == nick):
+			send_time.append(line[1:6])
+			if(nick_to_search != nick):
+				nick_receiver = util.get_nick_sen_rec(len(nicks), nick, conn_comp_list, nick_receiver)								
+				for i in range(config.MAX_RESPONSE_CONVERSATIONS):
+					if (nick_sender in conversations[i] and nick_receiver in conversations[i]): 
+						conversations[i].append(line[1:6])
+						break
+					if(len(conversations[i]) == 0):
+						conversations[i].append(nick_sender)
+						conversations[i].append(nick_receiver)
+						conversations[i].append(line[1:6])
+						break		
+		return conversations, nick_receiver, send_time				
+
 	for day_content_all_channels in log_dict.values():
 		for day_content in day_content_all_channels:
 			day_log = day_content["log_data"]
@@ -212,10 +213,7 @@ def response_time(log_dict, nicks, nick_same_list):
 					nick_receiver = ""
 					m = re.search(r"\<(.*?)\>", line)
 					nick_to_search = util.correctLastCharCR(m.group(0)[1:-1])
-					for d in range(len(nicks)):
-						if((d < len(conn_comp_list)) and (nick_to_search in conn_comp_list[d])):
-							nick_sender = conn_comp_list[d][0]
-							break           
+					nick_sender = util.get_nick_sen_rec(len(nicks), nick_to_search, conn_comp_list, nick_sender)					         
 					for nick in nicks:
 						rec_list = [e.strip() for e in line.split(':')]
 						util.rec_list_splice(rec_list)
@@ -223,69 +221,21 @@ def response_time(log_dict, nicks, nick_same_list):
 						if not rec_list[1]:
 							break						
 						rec_list = util.correct_last_char_list(rec_list)		
-
+						
 						for name in rec_list:
-							if(name == nick):
-								send_time.append(line[1:6])
-								if(nick_to_search != nick):  
-									for d in range(len(nicks)):
-										if((d < len(conn_comp_list)) and (nick in conn_comp_list[d])):
-											nick_receiver = conn_comp_list[d][0]
-											break
-										
-									for i in range(config.MAX_RESPONSE_CONVERSATIONS):                                      
-										if (nick_sender in conversations[i] and nick_receiver in conversations[i]):
-											conversations[i].append(line[1:6])
-											break
-										if(len(conversations[i]) == 0):
-											conversations[i].append(nick_sender)
-											conversations[i].append(nick_receiver)
-											conversations[i].append(line[1:6])
-											break
+							conversations, nick_receiver, send_time = resp_helper(name, nick, send_time, nick_to_search, nick_receiver, nick_sender, conversations, conn_comp_list)							
 							
 						if "," in rec_list[1]: 
 							flag_comma = 1
 							rec_list_2 = [e.strip() for e in rec_list[1].split(',')]							
 							rec_list_2 = util.correct_last_char_list(rec_list_2)		
-									
+								
 							for name in rec_list_2:
-								if(name == nick):
-									send_time.append(line[1:6])
-									if(nick_to_search != nick):   
-										for d in range(len(nicks)):
-											if((d < len(conn_comp_list)) and (nick in conn_comp_list[d])):
-												nick_receiver = conn_comp_list[d][0]
-												break
-										
-										for i in range(config.MAX_RESPONSE_CONVERSATIONS):
-											if (nick_sender in conversations[i] and nick_receiver in conversations[i]):
-												conversations[i].append(line[1:6]) 
-												break
-											if(len(conversations[i]) == 0):
-												conversations[i].append(nick_sender)
-												conversations[i].append(nick_receiver)
-												conversations[i].append(line[1:6])
-												break
+								conversations, nick_receiver, send_time = resp_helper(name, nick, send_time, nick_to_search, nick_receiver, nick_sender, conversations, conn_comp_list)								
 
 						if(flag_comma == 0):
-							rec = util.correctLastCharCR(line[line.find(">") + 1:line.find(", ")][1:])                   
-							if(rec == nick):
-								send_time.append(line[1:6])
-								if(nick_to_search != nick):
-									for d in range(len(nicks)):
-										if ((d < len(conn_comp_list)) and (nick in conn_comp_list[d])):
-											nick_receiver = conn_comp_list[d][0]
-											break
-									
-									for i in range(config.MAX_RESPONSE_CONVERSATIONS):
-										if (nick_sender in conversations[i] and nick_receiver in conversations[i]): 
-											conversations[i].append(line[1:6])
-											break
-										if(len(conversations[i]) == 0):
-											conversations[i].append(nick_sender)
-											conversations[i].append(nick_receiver)
-											conversations[i].append(line[1:6])
-											break
+							rec = util.splice_find(line, ">", ", ",1)							
+							conversations, nick_receiver, send_time = resp_helper(rec, nick, send_time, nick_to_search, nick_receiver, nick_sender, conversations, conn_comp_list)						
 			
 			for i in range(config.MAX_RESPONSE_CONVERSATIONS):
 				if(len(conversations[i]) != 0):  
@@ -301,9 +251,8 @@ def response_time(log_dict, nicks, nick_same_list):
 
 		#Explanation provided in parser-CL+CRT.py
 			for i in range(config.MAX_RESPONSE_CONVERSATIONS):
-				if(len(conversations[i]) != 0):
-					for j in range(2, len(conversations[i])):
-						totalmeanstd_list.append(conversations[i][j])
+				if(len(conversations[i]) != 0):					
+					totalmeanstd_list = build_mean_list(conversations, i, totalmeanstd_list)					
 
 			if(len(totalmeanstd_list) != 0):
 				for i in range(max(totalmeanstd_list) + 1):
@@ -326,9 +275,8 @@ def response_time(log_dict, nicks, nick_same_list):
 				totalmeanstd_list.append(numpy.mean(totalmeanstd_list)+2*numpy.std(totalmeanstd_list))
 		
 			for i in range(config.MAX_RESPONSE_CONVERSATIONS):
-				if(len(conversations[i]) != 0):
-					for j in range(2, len(conversations[i])):
-						meanstd_list.append(conversations[i][j])
+				if(len(conversations[i]) != 0):					
+					meanstd_list = build_mean_list(conversations, i, meanstd_list)					
 					conversations[i].append(numpy.mean(meanstd_list))
 					conversations[i].append(numpy.mean(meanstd_list)+(2*numpy.std(meanstd_list)))
 					meanstd_list[:] = []
@@ -337,10 +285,8 @@ def response_time(log_dict, nicks, nick_same_list):
 
 	for i in range(graph_cumulative[len(graph_cumulative)-1] + 1):
 		graph_y_axis.append(graph_cumulative.count(i))     # problem when ti=0 count is unexpectedly large
-		graph_x_axis.append(i)
-	
+		graph_x_axis.append(i)		
 
 	#Finally storing the RT values along with their frequencies in a csv file. 
 	rows_rt = zip(graph_x_axis, graph_y_axis)
-
-	return rows_rt
+	return rows_rt	

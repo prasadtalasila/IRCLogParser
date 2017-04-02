@@ -36,13 +36,21 @@ def message_number_graph(log_dict, nicks, nick_same_list, DAY_BY_DAY_ANALYSIS=Fa
     def msg_no_analysis_helper(rec_list, corrected_nick, nick, conn_comp_list,conversations,today_conversation):
         for receiver in rec_list:
             if(receiver == nick):
-                if(corrected_nick != nick):                                    
-                    nick_receiver = nick_same_list_to_conn_comp_list(conn_comp_list, nick)    
+                if(corrected_nick != nick):                                 
+                    nick_receiver = ''
+                    nick_receiver = util.get_nick_sen_rec(config.MAX_EXPECTED_DIFF_NICKS, nick, conn_comp_list, nick_receiver)    
 
                     if DAY_BY_DAY_ANALYSIS:
                         today_conversation = util.extend_conversation_list(nick_sender, nick_receiver, today_conversation)
                     else:
                         conversations = util.extend_conversation_list(nick_sender, nick_receiver, conversations)
+
+    def message_no_add_egde(message_graph, conversation):
+        for index in xrange(config.MAX_EXPECTED_DIFF_NICKS):
+            if(len(conversation[index]) == 3 and conversation[index][0] >= config.THRESHOLD_MESSAGE_NUMBER_GRAPH):
+                if len(conversation[index][1]) >= config.MINIMUM_NICK_LENGTH and len(conversation[index][2]) >= config.MINIMUM_NICK_LENGTH:
+                    message_graph.add_edge(conversation[index][1], conversation[index][2], weight=conversation[index][0])
+        return message_graph
 
 
     for day_content_all_channels in log_dict.values():
@@ -56,8 +64,8 @@ def message_number_graph(log_dict, nicks, nick_same_list, DAY_BY_DAY_ANALYSIS=Fa
                     parsed_nick = re.search(r"\<(.*?)\>", line)
                     corrected_nick = util.correctLastCharCR(parsed_nick.group(0)[1:-1])
                     nick_sender = ""
-                    nick_receiver = ""
-                    nick_sender = nick_same_list_to_conn_comp_list(conn_comp_list, corrected_nick)        
+                    nick_receiver = ""                    
+                    nick_sender = util.get_nick_sen_rec(config.MAX_EXPECTED_DIFF_NICKS, corrected_nick, conn_comp_list, nick_sender)        
 
                     for nick in nicks:
                         rec_list = [e.strip() for e in line.split(':')]
@@ -85,20 +93,15 @@ def message_number_graph(log_dict, nicks, nick_same_list, DAY_BY_DAY_ANALYSIS=Fa
 
             if DAY_BY_DAY_ANALYSIS:
                 today_message_number_graph = nx.DiGraph()
-                for index in xrange(config.MAX_EXPECTED_DIFF_NICKS):
-                    if(len(today_conversation[index]) == 3 and today_conversation[index][0] >= config.THRESHOLD_MESSAGE_NUMBER_GRAPH):
-                        if len(today_conversation[index][1]) >= config.MINIMUM_NICK_LENGTH and len(today_conversation[index][2]) >= config.MINIMUM_NICK_LENGTH:
-                            today_message_number_graph.add_edge(today_conversation[index][1], today_conversation[index][2], weight = today_conversation[index][0])
+                today_message_number_graph = message_no_add_egde(today_message_number_graph, today_conversation)                
                 year, month, day = util.get_year_month_day(day_content)
                 message_number_day_list.append([today_message_number_graph, year+'-'+month+'-'+day])
 
     print "\nBuilding graph object with EDGE WEIGHT THRESHOLD:", config.THRESHOLD_MESSAGE_NUMBER_GRAPH
 
     if not DAY_BY_DAY_ANALYSIS:
-        for index in xrange(config.MAX_EXPECTED_DIFF_NICKS):
-            if(len(conversations[index]) == 3 and conversations[index][0] >= config.THRESHOLD_MESSAGE_NUMBER_GRAPH):
-                if len(conversations[index][1]) >= config.MINIMUM_NICK_LENGTH and len(conversations[index][2]) >= config.MINIMUM_NICK_LENGTH:
-                    aggregate_message_number_graph.add_edge(conversations[index][1], conversations[index][2], weight = conversations[index][0])
+        aggregate_message_number_graph = message_no_add_egde(aggregate_message_number_graph, conversations)
+        
 
     if config.DEBUGGER:
         print "========> 30 on " + str(len(conversations)) + " conversations"
@@ -148,6 +151,10 @@ def channel_user_presence_graph_and_csv(nicks, nick_same_list, channels_for_user
     def create_adj_matrix(hashed_list1, hashed_list2):
         adj_matrix = [[0] * len(hashed_list1) for i in range(len(hashed_list2))]
         return adj_matrix
+
+    def add_channel_weighted_edge(graph, adjlist, nicks_hash, channels_hash, channel):
+        graph.add_edge(nicks_hash.index(adjlist['nickname']), (config.STARTING_HASH_CHANNEL + channels_hash.index(channel[0])), weight=channel[1])
+        return graph   
     
     #====================== CHANNEL_USER ============================
     channel_user_graph = nx.Graph()    
@@ -157,13 +164,8 @@ def channel_user_presence_graph_and_csv(nicks, nick_same_list, channels_for_user
             
             if channel[1] > config.FILTER_FOR_CHANNEL_USER_GRAPH:
                 # print str(nicks_hash.index(adjlist['nickname']))+"\t"+str(config.STARTING_HASH_CHANNEL +channels_hash.index(channel[0]))
-                channel_user_graph.add_edge(nicks_hash.index(adjlist['nickname']),
-                    (config.STARTING_HASH_CHANNEL + channels_hash.index(channel[0])),
-                    weight=channel[1])
-                
-                full_presence_graph.add_edge(nicks_hash.index(adjlist['nickname']), 
-                    (config.STARTING_HASH_CHANNEL + channels_hash.index(channel[0])),
-                    weight=channel[1])
+                channel_user_graph = add_channel_weighted_edge(channel_user_graph, adjlist, nicks_hash, channels_hash, channel)
+                full_presence_graph = add_channel_weighted_edge(full_presence_graph, adjlist, nicks_hash, channels_hash, channel)                
 
             # print nicks_hash.index(adjlist['nickname']),adjlist['nickname'], channels_hash.index(channel[0]),channel[0], channel[1]
             CU_adjacency_matrix[channels_hash.index(channel[0])][nicks_hash.index(adjlist['nickname'])] = channel[1]
@@ -183,6 +185,10 @@ def channel_user_presence_graph_and_csv(nicks, nick_same_list, channels_for_user
     channel_channel_graph = nx.Graph()    
     CC_adjacency_matrix = create_adj_matrix(channels_hash, channels_hash)
 
+    def add_common_users_weighted_edge(graph, index1, index2, common_users):
+        graph.add_edge(str(config.STARTING_HASH_CHANNEL + index1), str(config.STARTING_HASH_CHANNEL + index2), weight=len(common_users))
+        return graph
+
     for i in xrange(0, len(channels_hash)):
         for j in xrange(i+1, len(channels_hash)):
             common_users = list(set(users_on_channel[channels_hash[i]]) & set(users_on_channel[channels_hash[j]]))
@@ -190,13 +196,16 @@ def channel_user_presence_graph_and_csv(nicks, nick_same_list, channels_for_user
             CC_adjacency_matrix[i][j] = len(common_users)
             CC_adjacency_matrix[j][i] = len(common_users)
             if len(common_users) > config.FILTER_FOR_CHANNEL_CHANNEL_GRAPH:
-                full_presence_graph.add_edge(str(config.STARTING_HASH_CHANNEL + i), str(config.STARTING_HASH_CHANNEL + j), weight=len(common_users))
-                full_presence_graph.add_edge(str(config.STARTING_HASH_CHANNEL + j), str(config.STARTING_HASH_CHANNEL + i), weight=len(common_users))
+                full_presence_graph = add_common_users_weighted_edge(full_presence_graph, i, j, common_users)
+                full_presence_graph = add_common_users_weighted_edge(full_presence_graph, j, i, common_users)
+                '''full_presence_graph.add_edge(str(config.STARTING_HASH_CHANNEL + i), str(config.STARTING_HASH_CHANNEL + j), weight=len(common_users))
+                full_presence_graph.add_edge(str(config.STARTING_HASH_CHANNEL + j), str(config.STARTING_HASH_CHANNEL + i), weight=len(common_users))'''
                 # "Uncomment for directed version"
                 # print str(channels_hash.index(users_on_channel.keys()[i]))+"\t"+str(channels_hash.index(users_on_channel.keys()[j]))
                 # print str(channels_hash.index(users_on_channel.keys()[j]))+"\t"+str(channels_hash.index(users_on_channel.keys()[i]))
                 # print channels_hash[i],channels_hash[j]
-                channel_channel_graph.add_edge(str(config.STARTING_HASH_CHANNEL + i), str(config.STARTING_HASH_CHANNEL + j), weight=len(common_users))
+                channel_channel_graph = add_common_users_weighted_edge(channel_channel_graph, i , j, common_users)
+                '''channel_channel_graph.add_edge(str(config.STARTING_HASH_CHANNEL + i), str(config.STARTING_HASH_CHANNEL + j), weight=len(common_users))'''
     
     presence_graph_and_matrix["CC"]["matrix"] = CC_adjacency_matrix
     presence_graph_and_matrix["CC"]["graph"] = channel_channel_graph
@@ -237,6 +246,15 @@ def channel_user_presence_graph_and_csv(nicks, nick_same_list, channels_for_user
         for i in range(max_degree_possible):
             print "deg"+str(i)+'\t'+str(nodes[i])
 
+    degree_map = {"out": full_presence_graph.out_degree().values(), "in": full_presence_graph.in_degree().values(), "all": full_presence_graph.degree().values()}
+
+    def inc_degree(degree_list, nodes, max_degree_possible):        
+        for degree in degree_list:
+            if not degree < max_degree_possible:
+                print "===error", degree
+            nodes[degree] += 1    
+        return nodes
+
     #=========================================================================
     if config.GENERATE_DEGREE_ANAL:
 
@@ -247,20 +265,10 @@ def channel_user_presence_graph_and_csv(nicks, nick_same_list, channels_for_user
         nodes_with_TOTAL_degree = [0]*max_degree_possible
         
         # print full_presence_graph.out_degree().values()
-        for degree in full_presence_graph.out_degree().values():
-            if not degree < max_degree_possible:
-                print "===error", degree
-            nodes_with_OUT_degree[degree] += 1
 
-        for degree in full_presence_graph.in_degree().values():
-            if not degree < max_degree_possible:
-                print "===error", degree
-            nodes_with_IN_degree[degree] += 1
-
-        for degree in full_presence_graph.degree().values():
-            if not degree < max_degree_possible:
-                print "===error", degree
-            nodes_with_TOTAL_degree[degree] += 1
+        nodes_with_OUT_degree = inc_degree(degree_map["out"], nodes_with_OUT_degree, max_degree_possible)
+        nodes_with_IN_degree = inc_degree(degree_map["in"], nodes_with_IN_degree, max_degree_possible)
+        nodes_with_TOTAL_degree = inc_degree(degree_map["all"], nodes_with_TOTAL_degree, max_degree_possible)        
 
         print "========= OUT DEGREE ======="        
         print_node_degree(nodes_with_OUT_degree, max_degree_possible) 
@@ -293,9 +301,17 @@ def channel_user_presence_graph_and_csv(nicks, nick_same_list, channels_for_user
     for channel_row in CC_adjacency_matrix:
         sum_for_each_channel.append(sum(channel_row))
 
+    def get_top_indices(sum_list, how_many_vals):        
+        return sorted(range(len(sum_list)), key=lambda i: sum_list[i], reverse=True)[:how_many_vals]
+
+    def get_indices_to_delete(hash_list, top_indices):
+        return list(set([i for i in range(len(hash_list))]) - set(top_indices))
+
     #filter out top <how_many_top_channels> indices
-    top_indices_channels = sorted(range(len(sum_for_each_channel)), key=lambda i: sum_for_each_channel[i], reverse=True)[:how_many_top_channels]
-    indices_to_delete_channels = list(set([i for i in xrange(0, len(channels_hash))]) - set(top_indices_channels))
+    top_indices_channels = get_top_indices(sum_for_each_channel, how_many_top_channels)
+    indices_to_delete_channels = get_indices_to_delete(channels_hash, top_indices_channels)
+    #top_indices_channels = sorted(range(len(sum_for_each_channel)), key=lambda i: sum_for_each_channel[i], reverse=True)[:how_many_top_channels]
+    #indices_to_delete_channels = list(set([i for i in xrange(0, len(channels_hash))]) - set(top_indices_channels))
 
     temp_channels = np.delete(CC_adjacency_matrix, indices_to_delete_channels, 1) #delete columns
     reduced_CC_adjacency_matrix = np.delete(temp_channels, indices_to_delete_channels, 0) #delete rows
@@ -310,8 +326,10 @@ def channel_user_presence_graph_and_csv(nicks, nick_same_list, channels_for_user
         sum_for_each_user.append(sum(user_row))
 
     #filter out top <how_many_top_users> indices
-    top_indices_users = sorted(range(len(sum_for_each_user)), key=lambda i: sum_for_each_user[i], reverse=True)[:how_many_top_users]
-    indices_to_delete_users = list(set([i for i in xrange(0, len(nicks_hash))]) - set(top_indices_users))
+    top_indices_users = get_top_indices(sum_for_each_user, how_many_top_users)
+    indices_to_delete_users = get_indices_to_delete(nicks_hash, top_indices_users)
+    #top_indices_users = sorted(range(len(sum_for_each_user)), key=lambda i: sum_for_each_user[i], reverse=True)[:how_many_top_users]
+    #indices_to_delete_users = list(set([i for i in xrange(0, len(nicks_hash))]) - set(top_indices_users))
 
     # print len(top_indices_users), top_indices_users
     # print len(indices_to_delete_users), indices_to_delete_users
@@ -389,7 +407,6 @@ def filter_edge_list(edgelist_file_loc, max_hash, how_many_top):
             if a in top_nodes and b in top_nodes:
                 print str(a) + "\t" + str(b)
 
-
 def degree_analysis_on_graph(nx_graph, date=None):
     """
         perform degree analysis of input graph object
@@ -430,17 +447,26 @@ def degree_analysis_on_graph(nx_graph, date=None):
     raw_in = [str(date)]
     raw_total = [str(date)]
 
-    for i in range(1, len(nodes_with_OUT_degree)):
-        raw_out.append(nodes_with_OUT_degree[i][1])
-        nodes_with_OUT_degree[i][2] = give_userlist_where_degree_helper(nx_graph.out_degree(), i - 1)
+    degree_map = {"out":nx_graph.out_degree(),"in":nx_graph.in_degree(),"all":nx_graph.degree()}
+    
+    def raw_node_append(nodes, raw, degree_type):        
+        """
+        Args:
+            nodes(List) : nodes_with_OUT/IN/TOTAL degree\
+            raw(List) : raw_in/out/total
+            degree_type(str) : "in" "out" or "all" , basically keys of degree_map          
+        Returns:
+            raw(List)
+            nodes(List)
+        """  
+        for i in range(1, len(nodes)):
+            raw.append(nodes[i][1])
+            nodes[i][2] = give_userlist_where_degree_helper(degree_map[degree_type], i - 1)
+        return raw, nodes
 
-    for i in range(1, len(nodes_with_IN_degree)):
-        raw_in.append(nodes_with_IN_degree[i][1])
-        nodes_with_IN_degree[i][2] = give_userlist_where_degree_helper(nx_graph.in_degree(), i - 1)
-
-    for i in range(1, len(nodes_with_TOTAL_degree)):
-        raw_total.append(nodes_with_TOTAL_degree[i][1])
-        nodes_with_TOTAL_degree[i][2] = give_userlist_where_degree_helper(nx_graph.degree(), i - 1)
+    raw_out, nodes_with_OUT_degree = raw_node_append(nodes_with_OUT_degree, raw_out, "out")
+    raw_in, nodes_with_IN_degree = raw_node_append(nodes_with_IN_degree, raw_in, "in")
+    raw_total, nodes_with_TOTAL_degree = raw_node_append(nodes_with_TOTAL_degree, raw_total, "all")   
 
     return {
         "out_degree": {
@@ -456,7 +482,6 @@ def degree_analysis_on_graph(nx_graph, date=None):
             "raw_for_vis": raw_total
         }
     }
-
 
 def message_time_graph(log_dict, nicks, nick_same_list, DAY_BY_DAY_ANALYSIS=False):
     """ creates a directed graph where each edge denotes a message sent from a user to another user
@@ -494,8 +519,8 @@ def message_time_graph(log_dict, nicks, nick_same_list, DAY_BY_DAY_ANALYSIS=Fals
                 if(util.check_if_msg_line (line)):
                     m = re.search(r"\<(.*?)\>", line)         
                     spliced_nick = util.correctLastCharCR(m.group(0)[1:-1])
-                    nick_sender = ""        
-                    nick_sender = nick_same_list_to_conn_comp_list(conn_comp_list, spliced_nick)
+                    nick_sender = ""                          
+                    nick_sender = util.get_nick_sen_rec(config.MAX_EXPECTED_DIFF_NICKS, spliced_nick, conn_comp_list, nick_sender)
 
                     for nick_name in nicks:
                         rec_list = [e.strip() for e in line.split(':')]  #receiver list splited about :
@@ -506,8 +531,8 @@ def message_time_graph(log_dict, nicks, nick_same_list, DAY_BY_DAY_ANALYSIS=Fals
                         for nick_to_search in rec_list:
                             if(nick_to_search == nick_name):
                                 if(spliced_nick != nick_name):                                    
-                                    nick_receiver = ""      
-                                    nick_receiver = nick_same_list_to_conn_comp_list(conn_comp_list, nick_name)                                            
+                                    nick_receiver = ""                                         
+                                    nick_receiver = util.get_nick_sen_rec(config.MAX_EXPECTED_DIFF_NICKS, nick_name, conn_comp_list, nick_receiver)                                            
                                     util.build_graphs(nick_sender, nick_receiver, line[1:6], year, month, day, graph_conversation, msg_time_aggr_graph)
 
                         if "," in rec_list[1]:  #receiver list may of the form <Dhruv> Rohan, Ram :
@@ -597,7 +622,6 @@ def message_number_bins_csv(log_dict, nicks, nick_same_list):
             
     return bin_matrix, sum(tot_msgs)
 
-
 def degree_node_number_csv(log_dict, nicks, nick_same_list):
     """ creates two csv files having no. of nodes with a certain in and out-degree
         for number of nodes it interacted with, respectively.
@@ -649,19 +673,6 @@ def degree_node_number_csv(log_dict, nicks, nick_same_list):
 
     return out_degree, in_degree, total_degree
 
-
-def nick_same_list_to_conn_comp_list(conn_comp_list, corrected_nick):
-    """
-    changes nick_same_list to conn_comp_list because conn_comp_list is the main list of all users and nicks now
-    it is a helper function used in message_number_graph, create_message_time_graph
-    """
-    for i in range(config.MAX_EXPECTED_DIFF_NICKS):
-        if ((i < len(conn_comp_list)) and (corrected_nick in conn_comp_list[i])):
-            nick_rec = conn_comp_list[i][0]
-            break
-    return nick_rec
-
-
 def nick_receiver_from_conn_comp(nick, conn_comp_list):
     """
         creates nick_receiver from conn_comp_list,
@@ -671,5 +682,5 @@ def nick_receiver_from_conn_comp(nick, conn_comp_list):
         if nick in conn_comp_list[i]:
             nick_receiver = conn_comp_list[i][0]
             break
-    return nick_receiver    
+    return nick_receiver
 
