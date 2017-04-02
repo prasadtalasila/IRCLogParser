@@ -65,6 +65,7 @@ class test_methods_returning_networkx_graphs(unittest.TestCase):
     def setUp(self):
         pass
 
+
     @data((log_for_jan, nicks_for_jan, nick_same_list_for_jan), \
           (log_for_aug, nicks_for_aug, nick_same_list_for_aug))
     @unpack

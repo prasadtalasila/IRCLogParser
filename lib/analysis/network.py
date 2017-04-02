@@ -423,7 +423,6 @@ def filter_edge_list(edgelist_file_loc, max_hash, how_many_top):
             if a in top_nodes and b in top_nodes:
                 print str(a) + "\t" + str(b)
 
-
 def degree_analysis_on_graph(nx_graph, date=None):
     """
         perform degree analysis of input graph object
@@ -481,9 +480,9 @@ def degree_analysis_on_graph(nx_graph, date=None):
             nodes[i][2] = give_userlist_where_degree_helper(degree_map[degree_type], i - 1)
         return raw, nodes
 
-    raw_out,nodes_with_OUT_degree = raw_node_append(nodes_with_OUT_degree,raw_out, "out")
-    raw_in,nodes_with_IN_degree = raw_node_append(nodes_with_IN_degree,raw_out, "in")
-    raw_total,nodes_with_TOTAL_degree = raw_node_append(nodes_with_TOTAL_degree,raw_out, "all")   
+    raw_out, nodes_with_OUT_degree = raw_node_append(nodes_with_OUT_degree, raw_out, "out")
+    raw_in, nodes_with_IN_degree = raw_node_append(nodes_with_IN_degree, raw_in, "in")
+    raw_total, nodes_with_TOTAL_degree = raw_node_append(nodes_with_TOTAL_degree, raw_total, "all")   
 
     return {
         "out_degree": {
@@ -499,7 +498,6 @@ def degree_analysis_on_graph(nx_graph, date=None):
             "raw_for_vis": raw_total
         }
     }
-
 
 def message_time_graph(log_dict, nicks, nick_same_list, DAY_BY_DAY_ANALYSIS=False):
     """ creates a directed graph where each edge denotes a message sent from a user to another user
@@ -639,7 +637,6 @@ def message_number_bins_csv(log_dict, nicks, nick_same_list):
             tot_msgs = [tot_msgs[i] + bins[i] for i in range(len(bins))]
             
     return bin_matrix, sum(tot_msgs)
-
 
 def degree_node_number_csv(log_dict, nicks, nick_same_list):
     """ creates two csv files having no. of nodes with a certain in and out-degree
