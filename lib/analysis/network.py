@@ -154,7 +154,7 @@ def channel_user_presence_graph_and_csv(nicks, nick_same_list, channels_for_user
 
     def add_channel_weighted_edge(graph, adjlist, nicks_hash, channels_hash, channel):
         graph.add_edge(nicks_hash.index(adjlist['nickname']), (config.STARTING_HASH_CHANNEL + channels_hash.index(channel[0])), weight=channel[1])
-        return graph    
+        return graph   
     
     #====================== CHANNEL_USER ============================
     channel_user_graph = nx.Graph()    
@@ -248,7 +248,7 @@ def channel_user_presence_graph_and_csv(nicks, nick_same_list, channels_for_user
         for i in range(max_degree_possible):
             print "deg"+str(i)+'\t'+str(nodes[i])
 
-    degree_map = {"out":full_presence_graph.out_degree.values(), "in":full_presence_graph.in_degree.values(), "all":full_presence_graph.degree.values()}
+    degree_map = {"out": full_presence_graph.out_degree().values(), "in": full_presence_graph.in_degree().values(), "all": full_presence_graph.degree().values()}
 
     def inc_degree(degree_list, nodes, max_degree_possible):        
         for degree in degree_list:
