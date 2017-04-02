@@ -165,9 +165,7 @@ def channel_user_presence_graph_and_csv(nicks, nick_same_list, channels_for_user
             if channel[1] > config.FILTER_FOR_CHANNEL_USER_GRAPH:
                 # print str(nicks_hash.index(adjlist['nickname']))+"\t"+str(config.STARTING_HASH_CHANNEL +channels_hash.index(channel[0]))
                 channel_user_graph = add_channel_weighted_edge(channel_user_graph, adjlist, nicks_hash, channels_hash, channel)
-                full_presence_graph = add_channel_weighted_edge(full_presence_graph, adjlist, nicks_hash, channels_hash, channel)
-                #channel_user_graph.add_edge(nicks_hash.index(adjlist['nickname']), (config.STARTING_HASH_CHANNEL + channels_hash.index(channel[0])), weight=channel[1])                
-                #full_presence_graph.add_edge(nicks_hash.index(adjlist['nickname']), (config.STARTING_HASH_CHANNEL + channels_hash.index(channel[0])), weight=channel[1])
+                full_presence_graph = add_channel_weighted_edge(full_presence_graph, adjlist, nicks_hash, channels_hash, channel)                
 
             # print nicks_hash.index(adjlist['nickname']),adjlist['nickname'], channels_hash.index(channel[0]),channel[0], channel[1]
             CU_adjacency_matrix[channels_hash.index(channel[0])][nicks_hash.index(adjlist['nickname'])] = channel[1]
@@ -270,21 +268,7 @@ def channel_user_presence_graph_and_csv(nicks, nick_same_list, channels_for_user
 
         nodes_with_OUT_degree = inc_degree(degree_map["out"], nodes_with_OUT_degree, max_degree_possible)
         nodes_with_IN_degree = inc_degree(degree_map["in"], nodes_with_IN_degree, max_degree_possible)
-        nodes_with_TOTAL_degree = inc_degree(degree_map["all"], nodes_with_TOTAL_degree, max_degree_possible)
-        '''for degree in full_presence_graph.out_degree().values():
-            if not degree < max_degree_possible:
-                print "===error", degree
-            nodes_with_OUT_degree[degree] += 1
-
-        for degree in full_presence_graph.in_degree().values():
-            if not degree < max_degree_possible:
-                print "===error", degree
-            nodes_with_IN_degree[degree] += 1
-
-        for degree in full_presence_graph.degree().values():
-            if not degree < max_degree_possible:
-                print "===error", degree
-            nodes_with_TOTAL_degree[degree] += 1'''
+        nodes_with_TOTAL_degree = inc_degree(degree_map["all"], nodes_with_TOTAL_degree, max_degree_possible)        
 
         print "========= OUT DEGREE ======="        
         print_node_degree(nodes_with_OUT_degree, max_degree_possible) 

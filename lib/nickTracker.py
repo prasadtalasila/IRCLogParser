@@ -50,29 +50,15 @@ def nick_tracker(log_dict, track_users_on_channels = False):
                     m = re.search(r"\<(.*?)\>", i)
                     nick = util.correctLastCharCR(m.group(0)[1:-1])
                     nicks, nicks_today_on_this_channel = nick_append(nick, nicks, nicks_today_on_this_channel, track_users_on_channels)
-                    #if track_users_on_channels and (nick not in nicks_today_on_this_channel):
-                        #nicks_today_on_this_channel.append(nick) #not nicks as there are same nicks spread across multiple channels
-                        #nicks.append(nick)
-                    #elif nick not in nicks:
-                        #nicks.append(nick)
-
+                    
             ''' Forming list of lists for avoiding nickname duplicacy '''
             for line in day_log:
                 if(line[0] == '=' and "changed the topic of" not in line):
                     old_nick = util.splice_find(line, "=", " is", 3)
                     new_nick = util.splice_find(line, "wn as", "\n", 5)
-                    nicks, nicks_today_on_this_channel = nick_append(old_nick, nicks, nicks_today_on_this_channel, track_users_on_channels)                   
-                    #if track_users_on_channels and (old_nick not in nicks_today_on_this_channel):
-                        #nicks_today_on_this_channel.append(old_nick)#not nicks as there are same nicks spread across multiple channels
-                        #nicks.append(old_nick)
-                    #elif old_nick not in nicks:
-                        #nicks.append(old_nick)
-
+                    nicks, nicks_today_on_this_channel = nick_append(old_nick, nicks, nicks_today_on_this_channel, track_users_on_channels)                
                     nicks, nicks_today_on_this_channel = nick_append(new_nick, nicks, nicks_today_on_this_channel, track_users_on_channels)    
-                    #if track_users_on_channels and (new_nick not in nicks_today_on_this_channel):
-                        #nicks_today_on_this_channel.append(new_nick)#not nicks as there are same nicks spread across multiple channels
-                        #nicks.append(new_nick)
-                    #elif new_nick not in nicks:
+                    
                         #nicks.append(new_nick)
                     for i in range(config.MAX_EXPECTED_DIFF_NICKS):
                         if old_nick in nick_same_list[i] or new_nick in nick_same_list[i]:
