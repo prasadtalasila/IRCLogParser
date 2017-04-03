@@ -56,8 +56,8 @@ def nick_change_graph(log_dict, DAY_BY_DAY_ANALYSIS=False):
                     current_line_no = current_line_no + 1
                     
                     if(line[0] == '=' and "changed the topic of" not in line):  #excluding the condition when user changes the topic. Search for only nick changes
-                        nick1 = util.correctLastCharCR(line[line.find("=")+1:line.find(" is")][3:])
-                        nick2 = util.correctLastCharCR(line[line.find("wn as")+1:line.find("\n")][5:])
+                        nick1 = util.splice_find(line, "=", " is", 3)
+                        nick2 = util.splice_find(line, "wn as", "\n", 5)                        
                         earlier_line_no = current_line_no
 
                         while earlier_line_no >= 0: #to find the line just before "=="" so as to find time of Nick Change
@@ -156,64 +156,55 @@ def keywords(log_dict, nicks, nick_same_list):
     user_words_dict = []
     user_keyword_freq_dict = []
     keywords_filtered = []
-    no_messages = 0
+    no_messages = 0    
+
+    def get_nick_receiver(nick_receiver, rec, nick_to_compare, nick_name, nicks, nick_same_list):              
+        if(rec == nick_name):
+            if(nick_to_compare != nick_name):                
+                nick_receiver = iter_nicks(nick_receiver, nicks, nick_same_list, nick_name)        
+        return nick_receiver           
+
+    def iter_nicks(nick_sender_receiver, nicks, nick_same_list, nick_comp):        
+        for i in range(len(nicks)):
+            if nick_comp in nick_same_list[i]:
+                nick_sender_receiver = nick_same_list[i][0]
+                break
+            else:
+                nick_sender_receiver = nick_comp
+        return nick_sender_receiver    
 
     for day_content_all_channels in log_dict.values():
         for day_content in day_content_all_channels:
             day_log = day_content["log_data"]
             for line in day_log:
                 flag_comma = 0
-                if(util.check_if_msg_line (line)):
+                if(util.check_if_msg_line(line)):
                     m = re.search(r"\<(.*?)\>", line)
-                    var = util.correctLastCharCR((m.group(0)[1:-1]))
-                    for d in range(len(nicks)):
-                        if var in nick_same_list[d]:
-                            nick_sender = nick_same_list[d][0]
-                            break
-                        else:
-                            nick_sender = var
+                    nick_to_compare = util.correctLastCharCR((m.group(0)[1:-1]))
+                    nick_sender = ''                    
+                    nick_sender = iter_nicks(nick_sender, nicks, nick_same_list, nick_to_compare)
                     
                     nick_receiver = ''
-                    for i in nicks:
+                    for nick_name in nicks:
                         rec_list = [e.strip() for e in line.split(':')] #receiver list splited about :
                         util.rec_list_splice(rec_list)
                         if not rec_list[1]: #index 0 will contain time 14:02
                             break                        
                         rec_list = util.correct_last_char_list(rec_list)        
-                        for z in rec_list:
-                            if(z == i):
-                                if(var != i):
-                                    for d in range(len(nicks)):
-                                        if i in nick_same_list[d]:
-                                            nick_receiver = nick_same_list[d][0]
-                                            break
-                                        else:
-                                            nick_receiver = i
+                        for rec in rec_list:
+                            nick_receiver = get_nick_receiver(nick_receiver, rec, nick_to_compare, nick_name, nicks, nick_same_list)                            
                 
                         if "," in rec_list[1]:  #receiver list may of the form <Dhruv> Rohan, Ram :
                             flag_comma = 1
                             rec_list_2 = [e.strip() for e in rec_list[1].split(',')]                            
                             rec_list_2 = util.correct_last_char_list(rec_list_2)        
-                            for j in rec_list_2:
-                                if(j == i):
-                                    if(var != i):   
-                                        for d in range(len(nicks)):
-                                            if i in nick_same_list[d]:
-                                                nick_receiver = nick_same_list[d][0]
-                                                break
-                                            else:
-                                                nick_receiver = i  
+                            for rec in rec_list_2:
+                                nick_receiver = get_nick_receiver(nick_receiver, rec, nick_to_compare, nick_name, nicks, nick_same_list)                                
 
                         if(flag_comma == 0): #receiver list can be <Dhruv> Rohan, Hi!
-                            rec = util.correctLastCharCR(line[line.find(">")+1:line.find(", ")][1:])
-                            if(rec==i):
-                                if(var != i):
-                                    for d in range(len(nicks)):
-                                        if i in nick_same_list[d]:
-                                            nick_receiver = nick_same_list[d][0]
-                                            break
-                                        else:
-                                            nick_receiver = i
+                            rec = util.splice_find(line, ">", ", ", 1)                            
+                            nick_receiver = get_nick_receiver(nick_receiver, rec, nick_to_compare, nick_name, nicks, nick_same_list)                           
+                                            
                     
                     #generating the words written by the sender
                     message = rec_list[1:]
@@ -259,9 +250,10 @@ def keywords(log_dict, nicks, nick_same_list):
     nicks_for_stop_words.extend([x.lower() for x in nicks_for_stop_words])
 
     for words in common_english_words.words:
-        stop_word_without_apostrophe.append(words.replace("'",""))
-        
-    stop_words_extended = text.ENGLISH_STOP_WORDS.union(common_english_words.words).union(nicks_for_stop_words).union(stop_word_without_apostrophe).union(custom_stop_words.words).union(custom_stop_words.slangs)
+        stop_word_without_apostrophe.append(words.replace("'",""))        
+    
+    stop_words_extended = extended_stop_words(nicks_for_stop_words, stop_word_without_apostrophe)
+
     count_vect = CountVectorizer(analyzer = 'word', stop_words=stop_words_extended, min_df = 1)
 
     for dictonary in user_words_dict:
@@ -314,6 +306,14 @@ def keywords_clusters(log_dict, nicks, nick_same_list):
 
     corpus = []
 
+    def build_centroid(km):
+        if config.ENABLE_SVD:
+            original_space_centroids = svd.inverse_transform(km.cluster_centers_)
+            order_centroids = original_space_centroids.argsort()[:, ::-1]
+        else:
+            order_centroids = km.cluster_centers_.argsort()[:, ::-1]
+        return order_centroids
+
     for user_words_dict in user_words_dict_list:
         corpus.append(" ".join(map(str,user_words_dict['words'])))
 
@@ -323,8 +323,8 @@ def keywords_clusters(log_dict, nicks, nick_same_list):
     stop_word_without_apostrophe = []
     for words in common_english_words.words:
         stop_word_without_apostrophe.append(words.replace("'",""))
-    
-    stop_words_extended = text.ENGLISH_STOP_WORDS.union(common_english_words.words).union(nicks_for_stop_words).union(stop_word_without_apostrophe).union(custom_stop_words.words).union(custom_stop_words.slangs)
+
+    stop_words_extended = extended_stop_words(nicks_for_stop_words, stop_word_without_apostrophe) 
     
     vectorizer = TfidfVectorizer(max_df=0.5, min_df=2, stop_words=stop_words_extended,
                                                                  use_idf=True)
@@ -363,13 +363,9 @@ def keywords_clusters(log_dict, nicks, nick_same_list):
         t0 = time()
         km.fit(tf_idf)
         print("done in %0.3fs" % (time() - t0))
-        print("Top terms per cluster:")
+        print("Top terms per cluster:")        
         
-        if config.ENABLE_SVD:
-            original_space_centroids = svd.inverse_transform(km.cluster_centers_)
-            order_centroids = original_space_centroids.argsort()[:, ::-1]
-        else:
-            order_centroids = km.cluster_centers_.argsort()[:, ::-1]
+        order_centroids = build_centroid(km)            
         np.set_printoptions(threshold=np.nan)
 
         terms = vectorizer.get_feature_names()
@@ -393,12 +389,8 @@ def keywords_clusters(log_dict, nicks, nick_same_list):
 
             t0 = time()
             km.fit(tf_idf)
-
-            if config.ENABLE_SVD:
-                original_space_centroids = svd.inverse_transform(km.cluster_centers_)
-                order_centroids = original_space_centroids.argsort()[:, ::-1]
-            else:
-                order_centroids = km.cluster_centers_.argsort()[:, ::-1]
+           
+            order_centroids = build_centroid(km)
 
             distance_matrix_all_combination = cdist(tf_idf, km.cluster_centers_, 'euclidean')
             # cIdx = np.argmin(distance_matrix_all_combination,axis=1)
@@ -430,3 +422,7 @@ def keywords_clusters(log_dict, nicks, nick_same_list):
 
         #NOTE RANDOM OUTPUTS BECAUSE OF RANDOM INITIALISATION
         print "NOTE RANDOM OUTPUTS BECAUSE OF RANDOM INITIALISATION"
+
+def extended_stop_words(nicks_for_stop_words, stop_word_without_apostrophe):
+    stop_words_extended = text.ENGLISH_STOP_WORDS.union(common_english_words.words).union(nicks_for_stop_words).union(stop_word_without_apostrophe).union(custom_stop_words.words).union(custom_stop_words.slangs)
+    return stop_words_extended
