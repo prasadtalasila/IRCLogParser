@@ -97,7 +97,7 @@ def message_number_graph(log_dict, nicks, nick_same_list, DAY_BY_DAY_ANALYSIS=Fa
                 year, month, day = util.get_year_month_day(day_content)
                 message_number_day_list.append([today_message_number_graph, year+'-'+month+'-'+day])
 
-    print "\nBuilding graph object with EDGE WEIGHT THRESHOLD:", config.THRESHOLD_MESSAGE_NUMBER_GRAPH
+    print "\nBuilding graph object with EDGE WEIGHT THRESHOLD: {}",format(config.THRESHOLD_MESSAGE_NUMBER_GRAPH)
 
     if not DAY_BY_DAY_ANALYSIS:
         aggregate_message_number_graph = message_no_add_egde(aggregate_message_number_graph, conversations)

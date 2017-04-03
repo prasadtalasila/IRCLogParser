@@ -32,8 +32,8 @@ def infomap_igraph(ig_graph, net_file_location=None, reduce_graph=False):
     community = ig_graph.community_infomap(edge_weights=ig_graph.es["weight"])
     codelength = community.codelength
 
-    print "code-length:", codelength
-    print "no. of communities: ", max(community.membership) + 1
+    print "code-length: {}".format(codelength)
+    print "no. of communities: {}".format(max(community.membership) + 1)
     print community
 
     if config.DEBUGGER:

@@ -124,7 +124,7 @@ def top_keywords_for_nick(user_keyword_freq_dict, nick, threshold, min_words_spo
 
             if len(top_keywords) == 0:
                 if config.DEBUGGER:
-                    print "No word's normalised score crosses the value of", threshold
+                    print "No word's normalised score crosses the value of {}".format(threshold)
                 top_keywords = None
         else:
             if config.DEBUGGER:
