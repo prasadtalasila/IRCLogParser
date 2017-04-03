@@ -20,7 +20,7 @@ setup(
     license='MIT',
 
     classifiers=[
-        'Development Status :: 4 - Beta',
+        'Development Status :: Released v1.0.0',
         'Operating System :: POSIX :: Linux',
         'Intended Audience :: Developers',
         'Topic :: Topic :: Scientific/Engineering :: Information Analysis',
