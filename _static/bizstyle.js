@@ -36,6 +36,6 @@ $(window).resize(function(){
         $("li.nav-item-0 a").text("Top");
     }
     else {
-        $("li.nav-item-0 a").text("IRC Log Parser 0.1 documentation");
+        $("li.nav-item-0 a").text("IRC Log Parser 1.0.0 documentation");
     }
 });
