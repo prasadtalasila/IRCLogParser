@@ -15,6 +15,7 @@ setup(
     description='A Parser for IRC chat Logs',
     long_description=long_description,
     url='https://github.com/prasadtalasila/IRCLogParser',
+    download_url='https://github.com/prasadtalasila/IRCLogParser/archive/v1.0.0.tar.gz',
     author='Prasad Talasila',
     author_email='tsrkp@goa.bits-pilani.ac.in',
     license='MIT',
@@ -29,7 +30,7 @@ setup(
     ],
 
     keywords='IRC parser data-analysis research development',
-    packages=find_packages(exclude=['docs', 'tests']),
+    packages=['IRCLogParser'],
 
     install_requires=[
         'scipy',

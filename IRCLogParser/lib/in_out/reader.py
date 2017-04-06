@@ -1,7 +1,7 @@
 import os
 import sys
 sys.path.append('../lib')
-import config
+import lib.config as config
 from datetime import date
 import collections
 from collections import defaultdict

@@ -4,7 +4,7 @@ import csv
 import errno
 import sys
 sys.path.append('../lib')
-import config
+import lib.config as config
 
 def check_if_dir_exists(output_directory):
     """ 

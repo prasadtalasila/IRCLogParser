@@ -41,5 +41,5 @@ Run `pip -v install -e .` in the root directory to install these dependencies.
 
 ## License
 
-IRCLogParser is available under the [MIT License](./LISENCE.md)
+IRCLogParser is available under the [MIT License](./LISENCE.txt)
 

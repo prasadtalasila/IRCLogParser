@@ -2,11 +2,11 @@ import re
 import networkx as nx
 from networkx.algorithms.components.connected import connected_components
 from datetime import date
-import util
+import lib.util as util
 import csv
 import sys
 import numpy as np
-import config
+import lib.config as config
 from itertools import izip_longest as zip_longest
 sys.path.append('../lib')
 
@@ -679,4 +679,3 @@ def nick_receiver_from_conn_comp(nick, conn_comp_list):
             nick_receiver = conn_comp_list[i][0]
             break
     return nick_receiver
-

@@ -3,8 +3,6 @@ import re
 import sys
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.feature_extraction import text 
-import ext.common_english_words as common_english_words
-import ext.extend_stop_words as custom_stop_words
 from nltk.stem.wordnet import WordNetLemmatizer
 import numpy as np
 from sklearn.feature_extraction.text import TfidfVectorizer
@@ -15,13 +13,10 @@ from sklearn.preprocessing import Normalizer
 from sklearn.pipeline import make_pipeline
 from scipy.spatial.distance import cdist
 import matplotlib.pyplot as plt
-import util
+import lib.util as util
 
 sys.path.append('../lib')
-import config
-import util
-sys.path.append('../..')
-import ext
+import lib.config as config
 import ext.common_english_words as common_english_words
 import ext.extend_stop_words as custom_stop_words
 
