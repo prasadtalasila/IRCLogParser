@@ -11,24 +11,14 @@ with open(path.join(current_path, 'README.md'), encoding='utf-8') as f:
 
 setup(
     name='IRCLogParser',
-    version='1.0.0',
+    version='1.0.1',
     description='A Parser for IRC chat Logs',
     long_description=long_description,
     url='https://github.com/prasadtalasila/IRCLogParser',
-    download_url='https://github.com/prasadtalasila/IRCLogParser/archive/v1.0.0.tar.gz',
+    download_url='https://github.com/prasadtalasila/IRCLogParser/archive/v1.0.1.tar.gz',
     author='Prasad Talasila',
     author_email='tsrkp@goa.bits-pilani.ac.in',
     license='MIT',
-
-    classifiers=[
-        'Development Status :: Released v1.0.0',
-        'Operating System :: POSIX :: Linux',
-        'Intended Audience :: Developers',
-        'Topic :: Topic :: Scientific/Engineering :: Information Analysis',
-        'License :: OSI Approved :: MIT License',
-        'Programming Language :: Python :: 2.7',
-    ],
-
     keywords='IRC parser data-analysis research development',
     packages=['IRCLogParser'],
 
