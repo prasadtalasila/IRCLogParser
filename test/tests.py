@@ -200,3 +200,25 @@ class test_methods_performing_intermediate_analysis(unittest.TestCase):
         self.assertDictEqual(degree_anal_message_number, expected_analysis_msg_number[0], msg=None)
         self.assertDictEqual(degree_anal_message_time, expected_analysis_msg_time[0], msg=None)
         self.assertDictEqual(degree_anal_nick_change, expected_analysis_nick_change[0], msg=None)
+
+    @data((log_for_jan, nicks_for_jan, nick_same_list_for_jan), \
+          (log_for_aug, nicks_for_aug, nick_same_list_for_aug))
+    @unpack
+    def test_keyword_analysis_methods(self, log_data, nicks, nick_same_list):
+        update_expected_output_directory(log_data)
+        keywords_filtered, user_keyword_freq_dict, user_words_dict, nicks_for_stop_words = \
+                           user.keywords(log_data, nicks, nick_same_list);
+        expected_keywords_filtered = []
+        expected_user_keyword_freq_dict = []
+        expected_user_word_dict = []
+        expected_nicks_for_stop_words = []
+
+        unjson('keywords_filtered.json', expected_keywords_filtered)
+        unjson('user_words_dict.json', expected_user_word_dict)
+        unjson('user_keyword_freq_dict.json', expected_user_keyword_freq_dict)
+        unjson('nicks_for_stop_words.json', expected_nicks_for_stop_words)
+
+        self.assertListEqual(user_keyword_freq_dict, expected_user_keyword_freq_dict[0], msg=None)
+        self.assertListEqual(user_words_dict, expected_user_word_dict[0], msg=None)
+        self.assertListEqual(keywords_filtered,expected_keywords_filtered[0])
+        self.assertListEqual(nicks_for_stop_words,expected_nicks_for_stop_words[0])

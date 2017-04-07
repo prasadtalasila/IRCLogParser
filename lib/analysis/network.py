@@ -238,8 +238,8 @@ def channel_user_presence_graph_and_csv(nicks, nick_same_list, channels_for_user
                 full_presence_graph.add_edge(i, j, weight=UU_adjacency_matrix[i][j])
                 full_presence_graph.add_edge(j, i, weight=UU_adjacency_matrix[i][j])
 
-    presence_graph_and_matrix["CU"]["matrix"] = UU_adjacency_matrix
-    presence_graph_and_matrix["CU"]["graph"] = user_user_graph
+    presence_graph_and_matrix["UU"]["matrix"] = UU_adjacency_matrix
+    presence_graph_and_matrix["UU"]["graph"] = user_user_graph
     print "UU Adjacency Matrix Generated"
 
     def print_node_degree(nodes, max_degree_possible):
