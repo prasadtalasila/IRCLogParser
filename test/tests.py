@@ -206,7 +206,7 @@ class test_methods_performing_intermediate_analysis(unittest.TestCase):
     @unpack
     def test_keyword_analysis_methods(self, log_data, nicks, nick_same_list):
         update_expected_output_directory(log_data)
-        keywords_filtered, user_keyword_freq_dict, user_words_dict, nicks_for_stop_words = \
+        keywords_filtered, user_keyword_freq_dict, user_words_dict, nicks_for_stop_words, keywords_for_channels = \
                            user.keywords(log_data, nicks, nick_same_list);
         expected_keywords_filtered = []
         expected_user_keyword_freq_dict = []

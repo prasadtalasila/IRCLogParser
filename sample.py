@@ -15,19 +15,19 @@ log_data = reader.linux_input(log_directory, channel_name, starting_date, ending
 nicks, nick_same_list = nickTracker.nick_tracker(log_data)
 
 # ============== ANALYSIS =============
-#message_number_graph = network.message_number_graph(log_data, nicks, nick_same_list, False)
+# message_number_graph = network.message_number_graph(log_data, nicks, nick_same_list, False)
 #message_number_graph_day_list = network.message_number_graph(log_data, nicks, nick_same_list, True)
 #degree_anal_message_numder = network.degree_analysis_on_graph(message_number_graph)
 #message_time_graph_list = network.message_time_graph(log_data, nicks, nick_same_list, True)
 #message_time_graph = network.message_time_graph(log_data, nicks, nick_same_list, False)
 #out_degree_node_number, in_degree_node_number, total_degree_node_number = network.degree_node_number_csv(log_data, nicks, nick_same_list)
 #nick_change_graph_list =  user.nick_change_graph(log_data, True)
-bin_matrix, total_messages = network.message_number_bins_csv(log_data, nicks, nick_same_list)
+# bin_matrix, total_messages = network.message_number_bins_csv(log_data, nicks, nick_same_list)
 #conv_len, conv_ref_time = channel.conv_len_conv_refr_time(log_data, nicks, nick_same_list)
 #resp_time = channel.response_time(log_data, nicks, nick_same_list)
 
-#user.keywords_clusters(log_data, nicks, nick_same_list)
-#network.degree_analysis_on_message_number(log_data, nicks, nick_same_list)
+# user.keywords_clusters(log_data, nicks, nick_same_list)
+# network.degree_analysis_on_graph(message_number_graph)
 
 # adjCC_graph, adjCC_membership = community.infomap_igraph(ig_graph=None, net_file_location="/home/rohan/Desktop/adjCC.net")
 
@@ -39,7 +39,7 @@ bin_matrix, total_messages = network.message_number_bins_csv(log_data, nicks, ni
 #saver.save_csv(out_degree_node_number, output_directory, "node_out_degree" + starting_date +'-'+ending_date)
 #saver.save_csv(in_degree_node_number, output_directory, "node_in_degree"+ starting_date +'-'+ending_date)
 #saver.save_csv(total_degree_node_number, output_directory, "node_total_degree"+ starting_date +'-'+ending_date)
-saver.save_csv(bin_matrix, output_directory, "MessageNumber_binsize_"+str(config.BIN_LENGTH_MINS))
+# saver.save_csv(bin_matrix, output_directory, "MessageNumber_binsize_"+str(config.BIN_LENGTH_MINS))
 #for i in range(len(message_number_graph_day_list)):
     #saver.draw_nx_graph(message_number_graph_day_list[i][0], output_directory, "mng" + str(i+1))
 #for i in range(len(nick_change_graph_list)):

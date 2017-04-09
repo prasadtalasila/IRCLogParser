@@ -192,3 +192,28 @@ def get_nick_sen_rec(iter_range, nick_to_search, conn_comp_list, nick_sen_rec):
             nick_sen_rec = conn_comp_list[i][0]
             break
     return nick_sen_rec
+
+
+def get_nick_representative(nicks, nick_same_list, nick_to_compare):
+    """
+        Get representative nick for a nick ( from nick same_list)
+    """    
+    for i in range(len(nicks)):
+        if nick_to_compare in nick_same_list[i]:
+            nick_sender_receiver = nick_same_list[i][0]
+            break
+        else:
+            nick_sender_receiver = nick_to_compare
+    return nick_sender_receiver    
+
+
+def find_top_n_element_after_sorting(in_list, index, reverseBool, n):
+    """
+        find top n elements from a list after sorting on the basis on 'index' entry
+        Args:
+            in_list: input list of list
+            index: which index in entries to selectt for sorting
+            reverseBool(bool): reverse order
+            n(int): select top  n
+    """
+    return sorted(in_list, key=lambda x: x[index], reverse=reverseBool)[:n]

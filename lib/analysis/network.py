@@ -8,6 +8,7 @@ import sys
 import numpy as np
 import config
 from itertools import izip_longest as zip_longest
+import user
 sys.path.append('../lib')
 
 
@@ -49,7 +50,7 @@ def message_number_graph(log_dict, nicks, nick_same_list, DAY_BY_DAY_ANALYSIS=Fa
         for index in xrange(config.MAX_EXPECTED_DIFF_NICKS):
             if(len(conversation[index]) == 3 and conversation[index][0] >= config.THRESHOLD_MESSAGE_NUMBER_GRAPH):
                 if len(conversation[index][1]) >= config.MINIMUM_NICK_LENGTH and len(conversation[index][2]) >= config.MINIMUM_NICK_LENGTH:
-                    message_graph.add_edge(conversation[index][1], conversation[index][2], weight=conversation[index][0])
+                    message_graph.add_edge(util.get_nick_representative(nicks, nick_same_list, conversation[index][1]), util.get_nick_representative(nicks, nick_same_list, conversation[index][2]), weight=conversation[index][0])
         return message_graph
 
 
@@ -680,3 +681,63 @@ def nick_receiver_from_conn_comp(nick, conn_comp_list):
             break
     return nick_receiver
 
+
+def identify_hubs_and_experts(log_dict, nicks, nick_same_list):
+    """
+        uses message_number graph to identify hubs and experts in the network
+
+    Args:
+        log_dict (dict): with key as dateTime.date object and value as {"data":datalist,"channel_name":channels name}
+        nicks(list): list of all the nicks
+        nick_same_list(list): list of lists mentioning nicks which belong to same users
+    """
+    message_graph = message_number_graph(log_dict, nicks, nick_same_list)
+    hubs, authority_values = nx.hits(message_graph)
+
+    keyword_dict_list, user_keyword_freq_dict, user_words_dict_list, nicks_for_stop_words, keywords_for_channels = user.keywords(log_dict, nicks, nick_same_list)
+    if config.DEBUGGER:
+        print "========> USERS"
+        print user_keyword_freq_dict
+        print "========> CHANNELS"
+        print keywords_for_channels, len(keywords_for_channels)
+
+    top_keywords_for_channels = []
+    for word_tuple in keywords_for_channels[:config.NUMBER_OF_KEYWORDS_CHANNEL_FOR_OVERLAP]:
+        top_keywords_for_channels.append(word_tuple[0])
+
+    overlap_word_number = []
+    for keyword_tuple in user_keyword_freq_dict:
+        keywords_for_user = keyword_tuple['keywords']
+        username = keyword_tuple['nick']
+        overlapping_keywords = list(set(top_keywords_for_channels).intersection([x[0] for x in keywords_for_user]))
+        if len(overlapping_keywords) > 0:
+            overlap_word_number.append([username, len(overlapping_keywords)])
+
+    top_hubs_with_score = util.find_top_n_element_after_sorting(hubs.items(), 1, True, config.HOW_MANY_TOP_EXPERTS)
+    top_auth_with_score = util.find_top_n_element_after_sorting(authority_values.items(), 1, True, config.HOW_MANY_TOP_EXPERTS)
+    top_keyword_overlap_with_score = util.find_top_n_element_after_sorting(overlap_word_number, 1, True, config.HOW_MANY_TOP_EXPERTS)
+
+    print "TOP " + str(config.HOW_MANY_TOP_EXPERTS) + " HUBS\n", top_hubs_with_score
+    print "TOP " + str(config.HOW_MANY_TOP_EXPERTS) + " AUTH\n", top_auth_with_score
+    print "TOP " + str(config.HOW_MANY_TOP_EXPERTS) + " KEYWORD OVERLAP\n", top_keyword_overlap_with_score
+
+    top_hub = [hub_tuple[0] for hub_tuple in top_hubs_with_score]
+    top_auth = [auth_tuple[0] for auth_tuple in top_auth_with_score]
+    top_keyword_overlap = [key_overlap_tuple[0] for key_overlap_tuple in top_keyword_overlap_with_score]
+
+    for node_name in message_graph:
+        # mark EXPERTS
+        message_graph.node[node_name]['style'] = 'filled'
+        if node_name in top_auth and node_name in top_keyword_overlap:
+            message_graph.node[node_name]['color'] = '#ff000'
+        elif node_name in top_auth:
+            message_graph.node[node_name]['color'] = '#00ff00'
+        elif node_name in top_keyword_overlap:
+            message_graph.node[node_name]['color'] = '#0000ff'
+        else:
+            message_graph.node[node_name]['color'] = '#cccccc'
+        # mark HUBS
+        if node_name in top_hub:
+            message_graph.node[node_name]['shape'] = 'square'
+
+    return message_graph
