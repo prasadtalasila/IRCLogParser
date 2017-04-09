@@ -12,11 +12,11 @@ CHANNEL_NAME = ["#kubuntu-devel"]
 
 # increase if using channel_user_presence
 MAX_EXPECTED_DIFF_NICKS = 5000
-
 # MAX_EXPECTED_DIFF_NICKS = 100000
 
 # message_number_graph
 THRESHOLD_MESSAGE_NUMBER_GRAPH = 0
+HOW_MANY_TOP_EXPERTS = 10
 
 #number of entries in log plot
 NUMBER_OF_ENTRIES_IN_LOG_PLOTS = 20
@@ -51,6 +51,7 @@ MAX_RESPONSE_CONVERSATIONS = 200
 # keyworkds
 KEYWORDS_THRESHOLD = 0.01
 KEYWORDS_MIN_WORDS = 100
+NUMBER_OF_KEYWORDS_CHANNEL_FOR_OVERLAP = 250
 
 # key_word_cluster
 ENABLE_SVD = False

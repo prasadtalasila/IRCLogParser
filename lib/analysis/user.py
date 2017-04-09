@@ -161,17 +161,8 @@ def keywords(log_dict, nicks, nick_same_list):
     def get_nick_receiver(nick_receiver, rec, nick_to_compare, nick_name, nicks, nick_same_list):              
         if(rec == nick_name):
             if(nick_to_compare != nick_name):                
-                nick_receiver = iter_nicks(nick_receiver, nicks, nick_same_list, nick_name)        
+                nick_receiver = util.get_nick_representative(nicks, nick_same_list, nick_name)        
         return nick_receiver           
-
-    def iter_nicks(nick_sender_receiver, nicks, nick_same_list, nick_comp):        
-        for i in range(len(nicks)):
-            if nick_comp in nick_same_list[i]:
-                nick_sender_receiver = nick_same_list[i][0]
-                break
-            else:
-                nick_sender_receiver = nick_comp
-        return nick_sender_receiver    
 
     for day_content_all_channels in log_dict.values():
         for day_content in day_content_all_channels:
@@ -182,7 +173,7 @@ def keywords(log_dict, nicks, nick_same_list):
                     m = re.search(r"\<(.*?)\>", line)
                     nick_to_compare = util.correctLastCharCR((m.group(0)[1:-1]))
                     nick_sender = ''                    
-                    nick_sender = iter_nicks(nick_sender, nicks, nick_same_list, nick_to_compare)
+                    nick_sender = util.get_nick_representative(nicks, nick_same_list, nick_to_compare)
                     
                     nick_receiver = ''
                     for nick_name in nicks:
@@ -255,7 +246,7 @@ def keywords(log_dict, nicks, nick_same_list):
     stop_words_extended = extended_stop_words(nicks_for_stop_words, stop_word_without_apostrophe)
 
     count_vect = CountVectorizer(analyzer = 'word', stop_words=stop_words_extended, min_df = 1)
-
+    keywords_for_channels = []
     for dictonary in user_words_dict:
         try:
             matrix = count_vect.fit_transform(dictonary['words'])
@@ -268,6 +259,7 @@ def keywords(log_dict, nicks, nick_same_list):
             for freq_tuple in keywords:
                 freq_tuple.append(round(freq_tuple[1]/float(total_freq), 5))
             user_keyword_freq_dict.append({'nick':dictonary['sender'], 'keywords': keywords })
+            keywords_for_channels.extend(keywords)
         except ValueError:
                 pass
     for data in user_keyword_freq_dict:
@@ -280,7 +272,7 @@ def keywords(log_dict, nicks, nick_same_list):
         if keywords:
             keywords_filtered.append({'nick': data['nick'], 'keywords': keywords})
     
-    return keywords_filtered, user_keyword_freq_dict, user_words_dict, nicks_for_stop_words
+    return keywords_filtered, user_keyword_freq_dict, user_words_dict, nicks_for_stop_words, sorted(keywords_for_channels, key = lambda x: x[2], reverse=True)
 
 
 def keywords_clusters(log_dict, nicks, nick_same_list):
@@ -302,7 +294,7 @@ def keywords_clusters(log_dict, nicks, nick_same_list):
     #http://scikit-learn.org/stable/auto_examples/text/document_clustering.html
     #BUILDING CORPUS
 
-    keyword_dict_list, user_keyword_freq_dict, user_words_dict_list, nicks_for_stop_words = keywords(log_dict, nicks, nick_same_list)
+    keyword_dict_list, user_keyword_freq_dict, user_words_dict_list, nicks_for_stop_words, keywords_for_channels = keywords(log_dict, nicks, nick_same_list)
 
     corpus = []
 
