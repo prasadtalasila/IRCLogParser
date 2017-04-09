@@ -5,8 +5,6 @@ import csv
 import pickle
 import json
 from os import path
-sys.path.insert(0, '../lib')
-sys.path.insert(0, '../in_out')
 sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
 from lib.analysis import network, user, channel
 from lib.nickTracker import nick_tracker
