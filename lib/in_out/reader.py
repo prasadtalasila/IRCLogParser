@@ -1,7 +1,8 @@
 import os
 import sys
-sys.path.append('../lib')
-import config
+from os import path
+sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
+import lib.config as config
 from datetime import date
 import collections
 from collections import defaultdict

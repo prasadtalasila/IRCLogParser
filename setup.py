@@ -53,6 +53,8 @@ setup(
         'sphinxcontrib.youtube',
         'nltk',
         'plotly',
-        'ddt'
+        'ddt',
+        'codeclimate-test-reporter',
+        'memory_profiler'
     ],
 )
