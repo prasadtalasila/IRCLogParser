@@ -9,11 +9,11 @@ ending_date = config.ENDING_DATE
 output_directory = config.OUTPUT_DIRECTORY
 
 # ============== INPUT==================
-log_data = reader.linux_input(log_directory, channel_name, starting_date, ending_date)
-nicks, nick_same_list = nickTracker.nick_tracker(log_data)
+# log_data = reader.linux_input(log_directory, channel_name, starting_date, ending_date)
+# nicks, nick_same_list = nickTracker.nick_tracker(log_data)
 
 # ============== ANALYSIS =============
-message_number_graph = network.message_number_graph(log_data, nicks, nick_same_list, False)
+# message_number_graph = network.message_number_graph(log_data, nicks, nick_same_list, False)
 # message_number_graph_day_list = network.message_number_graph(log_data, nicks, nick_same_list, True)
 # degree_anal_message_numder = network.degree_analysis_on_graph(message_number_graph)
 # message_time_graph_list = network.message_time_graph(log_data, nicks, nick_same_list, True)
@@ -26,6 +26,7 @@ message_number_graph = network.message_number_graph(log_data, nicks, nick_same_l
 
 # user.keywords_clusters(log_data, nicks, nick_same_list)
 # network.degree_analysis_on_graph(message_number_graph)
+# network.identify_hubs_and_experts(log_data, nicks, nick_same_list)
 
 # adjCC_graph, adjCC_membership = community.infomap_igraph(ig_graph=None, net_file_location="/home/rohan/Desktop/adjCC.net")
 

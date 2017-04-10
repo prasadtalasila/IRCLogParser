@@ -1,7 +1,7 @@
 import networkx as nx
 import numpy as np
 import igraph
-import config
+import lib.config as config
 
 def correctLastCharCR(inText):#
     """ if the last letter of the nick is '\\' replace it by 'CR'
