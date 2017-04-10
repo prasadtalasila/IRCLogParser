@@ -8,15 +8,15 @@
 The objective of this project is to utilize social network analysis techniques to examine the relationships between actors on the Internet Relay Chat(IRC) social networking service. The IRCLogParser is an application that accepts IRC log files from different channels and parses them to analyse the principles of interaction between IRC users. Study of these interactions on different levels helps us in deriving the local and global communication patterns between users on different channels. Therefore, IRCLogParser draws its inspiration from various fields such as data mining, graph theory and inferential modeling in order to form predictive models that help in understanding certain intricate characteristics of a social network. This involves analyzing graphs with IRC users(nodes) and their connections(edges), to study the details about various network graph properties such as density, size, node centrality, degree, connectedness etc.
 
 
-<img src="./ext/sample_out/kubuntu-devel_4_10_2013_conversation.png" width="400px"></img>
-<img src="./ext/sample_out/infomap_CU.png" width="400px"></img>
+<img src="https://raw.githubusercontent.com/wiki/prasadtalasila/IRCLogParser/sample_images/kubuntu-devel_4_10_2013_conversation.png" width="400px"></img>
+<img src="https://raw.githubusercontent.com/wiki/prasadtalasila/IRCLogParser/sample_images/infomap_CU.png" width="400px"></img>
 
 
 ## Usage
 
 The library's working has been modularised into many modules namely input, analysis, output, visualisation and validation. The [sample.py file](./sample.py) very comprehensively presents how one can use IRCLogParser for parsing and analysis.
 
-Some of the visualisable sample outputs can be seen [here](./ext/sample_out/), giving an idea about IRCLogParser's capabilites.
+Some of the visualisable sample outputs can be on the wiki, giving an idea about IRCLogParser's capabilites.
 
 
 ## Documentation
