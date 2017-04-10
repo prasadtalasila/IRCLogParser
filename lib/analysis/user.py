@@ -15,12 +15,8 @@ from sklearn.preprocessing import Normalizer
 from sklearn.pipeline import make_pipeline
 from scipy.spatial.distance import cdist
 import matplotlib.pyplot as plt
-import util
-
-sys.path.append('../lib')
-import config
-import util
-sys.path.append('../..')
+import lib.util as util
+import lib.config as config
 import ext
 import ext.common_english_words as common_english_words
 import ext.extend_stop_words as custom_stop_words

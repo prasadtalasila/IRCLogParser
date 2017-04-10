@@ -1,8 +1,8 @@
 import re
 import numpy
 from networkx.algorithms.components.connected import connected_components
-import util
-import config
+import lib.util as util
+import lib.config as config
 
 
 def conv_len_conv_refr_time(log_dict, nicks, nick_same_list):

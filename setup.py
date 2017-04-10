@@ -1,13 +1,14 @@
 from setuptools import setup, find_packages
 from os import path
 from codecs import open
-import numpy
-import scipy
 
 current_path = path.abspath(path.dirname(__file__))
 
-with open(path.join(current_path, 'README.md'), encoding='utf-8') as f:
-    long_description = f.read()
+try:
+    import pypandoc
+    long_description = pypandoc.convert('README.md', 'rst')
+except(IOError, ImportError):
+    long_description = open('README.md').read()
 
 setup(
     name='IRCLogParser',
@@ -17,17 +18,9 @@ setup(
     url='https://github.com/prasadtalasila/IRCLogParser',
     author='Prasad Talasila',
     author_email='tsrkp@goa.bits-pilani.ac.in',
+    download_url='https://github.com/prasadtalasila/IRCLogParser/archive/v1.0.0.tar.gz',
     license='MIT',
-
-    classifiers=[
-        'Development Status :: Released v1.0.0',
-        'Operating System :: POSIX :: Linux',
-        'Intended Audience :: Developers',
-        'Topic :: Topic :: Scientific/Engineering :: Information Analysis',
-        'License :: OSI Approved :: MIT License',
-        'Programming Language :: Python :: 2.7',
-    ],
-
+    include_package_data=True,
     keywords='IRC parser data-analysis research development',
     packages=find_packages(exclude=['docs', 'tests']),
 
@@ -55,6 +48,7 @@ setup(
         'plotly',
         'ddt',
         'codeclimate-test-reporter',
-        'memory_profiler'
+        'memory_profiler',
+        'snakefood'
     ],
 )

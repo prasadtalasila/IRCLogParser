@@ -10,7 +10,7 @@ from lib.analysis import network, user, channel
 from lib.nickTracker import nick_tracker
 from ddt import ddt, data, unpack
 from lib import config
-from in_out import reader
+from lib.in_out import reader
 import networkx as nx
 current_dir = os.path.dirname(__file__)
 
