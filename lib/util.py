@@ -3,7 +3,7 @@ import numpy as np
 import igraph
 import config
 
-def correctLastCharCR(inText):#
+def correctLastCharCR(inText):
     """ if the last letter of the nick is '\\' replace it by 'CR'
         for example rohan\ becomes rohanCR
         to avoid complications in nx because of the special char '\\'
@@ -33,16 +33,6 @@ def correct_nick_for_(inText):
         inText = inText[:-1]
     return inText
 
-def to_graph(l):
-    G = nx.Graph()
-    for part in l:
-        # each sublist is a bunch of nodes
-        G.add_nodes_from(part)
-        # it also imlies a number of edges:
-        G.add_edges_from(to_edges(part))
-    return G
-
-
 def to_edges(l):
     """ A generator which
         takes a graph and returns it's edges | for
@@ -52,14 +42,30 @@ def to_edges(l):
             l (list): graph object to be converted to edge_list
 
         Returns:
-            str: edge list of the inputted graph object
+            generator: edge list of the inputted graph object, (can be iterated over only once see generator docs)
     """
     it = iter(l)
     last = next(it)
     for current in it:
         yield last, current
-        last = current  
+        last = current      
 
+def to_graph(l):
+    """
+        last letter of nick maybe _ and this produces error in nickmatching
+    Args:
+        l : list of lists of strings, eg - list of list of nicks used in channel.py to create conn_comp_list
+
+    Returns:
+        G: networkx Graph
+    """
+    G = nx.Graph()
+    for part in l:
+        # each sublist is a bunch of nodes
+        G.add_nodes_from(part)
+        # it also imlies a number of edges:
+        G.add_edges_from(to_edges(part))
+    return G
 
 def exponential_curve_func(x, a, b, c):
     return a * np.exp(-b * x) + c
@@ -88,10 +94,31 @@ def get_year_month_day(day_content):
 
 
 def rec_list_splice(rec_list):
-    rec_list[1] = rec_list[1][rec_list[1].find(">") + 1:len(rec_list[1])][1:]
+    """ Changes the contents of rec_list[1] so as to contain the name of the receiver of the message or the whole message sent to the 
+        channel if there is no receiver specified by the sender
+        eg1 : rec_list = ['[10', '48] <Tm_T> shadeslayer', 'ynoanswer?']
+        o/p: ['[10', 'shadeslayer', 'ynoanswer?']
+        eg2 : rec_list = ['[10', '49] <shadeslayer> no answer from where?']
+        o/p : rec_list = ['[10', 'no answer from where?']
+
+        Args:
+            rec_list : list of strings
+
+        Returns: None
+                
+    """
+    rec_list[1] = rec_list[1][rec_list[1].find(">")+1 : len(rec_list[1])][1:]
 
 
-def check_if_msg_line (line):
+def check_if_msg_line(line):
+    """ Checks if the line has a message in it, for eg "[13:56] <BluesKaj> Hi all"
+
+        Args:
+            line(str) : A line in the day log
+
+        Returns:
+            boolean      
+    """
     return (line[0] != '=' and "] <" in line and "> " in line)
 
 
@@ -144,10 +171,10 @@ def extend_conversation_list(nick_sender, nick_receiver, conversation):
             if (nick_sender == conversation[i][1] and nick_receiver == conversation[i][2]):
                 conversation[i][0] += 1
                 break
-        if(len(conversation[i])==1):
+        if(len(conversation[i]) == 1):
             conversation[i].append(nick_sender)
             conversation[i].append(nick_receiver)
-            conversation[i][0]=conversation[i][0]+ 1
+            conversation[i][0] = conversation[i][0] + 1
             break
     return conversation
 
@@ -165,7 +192,6 @@ def correct_last_char_list(rec_list):
     for i in range(len(rec_list)):
         if(rec_list[i]):
             rec_list[i] = correctLastCharCR(rec_list[i])
-
     return rec_list
 
 def splice_find(line, search_param1, search_param2, splice_index):
@@ -176,7 +202,7 @@ def splice_find(line, search_param1, search_param2, splice_index):
             search_param2(str): second string to search in line
             splice_index(int): index used to splice eg if splice_index = 3 line[3:] will give us the string  from index 3 till the end.
     """        
-    return correctLastCharCR(line[line.find(search_param1) + 1:line.find(search_param2)][splice_index:])    
+    return correctLastCharCR(line[line.find(search_param1)+1 : line.find(search_param2)][splice_index:])    
 
 def get_nick_sen_rec(iter_range, nick_to_search, conn_comp_list, nick_sen_rec):
     """
@@ -196,7 +222,7 @@ def get_nick_sen_rec(iter_range, nick_to_search, conn_comp_list, nick_sen_rec):
 
 def get_nick_representative(nicks, nick_same_list, nick_to_compare):
     """
-        Get representative nick for a nick ( from nick same_list)
+        Get representative nick for a nick (from nick same_list)
     """    
     for i in range(len(nicks)):
         if nick_to_compare in nick_same_list[i]:
@@ -212,7 +238,7 @@ def find_top_n_element_after_sorting(in_list, index, reverseBool, n):
         find top n elements from a list after sorting on the basis on 'index' entry
         Args:
             in_list: input list of list
-            index: which index in entries to selectt for sorting
+            index: which index in entries to select for sorting
             reverseBool(bool): reverse order
             n(int): select top  n
     """
