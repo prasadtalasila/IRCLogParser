@@ -1,8 +1,20 @@
 from setuptools import setup, find_packages
+from setuptools.command.build_ext import build_ext as _build_ext
+from setuptools.command import easy_install
 from os import path
 from codecs import open
-import numpy
-import scipy
+import pip
+
+try:
+	import numpy
+except ImportError:
+	pip.main(['install', 'numpy'])
+
+try:
+	import scipy
+except ImportError:
+	pip.main(['install', 'scipy'])
+
 
 current_path = path.abspath(path.dirname(__file__))
 
@@ -31,18 +43,22 @@ setup(
     keywords='IRC parser data-analysis research development',
     packages=find_packages(exclude=['docs', 'tests']),
 
-    install_requires=[
-        'scipy',
-        'numpy',
+    dependency_links = ['https://github.com/rtfd/sphinx_rtd_theme/archive/0.2.4.tar.gz#egg=sphinx_rtd_theme-0.2.4'],
+
+	setup_requires = [
+        'graphviz'],
+
+    install_requires = [
         'networkx',
         'matplotlib',
+        'graphviz',
         'pygraphviz',
         'scikit-learn',
         'pandas',
         'python-igraph',
         'sphinx',
         'pyyaml',
-        't3SphinxThemeRtd',
+        'sphinx_rtd_theme>=0.2.4',
         't3fieldlisttable',
         't3tablerows',
         't3targets',
