@@ -1,15 +1,16 @@
+import sys
+from os import path
+sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
 import re
 import networkx as nx
 from networkx.algorithms.components.connected import connected_components
 from datetime import date
-import util
+import lib.util as util
 import csv
-import sys
 import numpy as np
-import config
+import lib.config as config
 from itertools import izip_longest as zip_longest
-import user
-sys.path.append('../lib')
+import lib.analysis.user as user
 
 
 def message_number_graph(log_dict, nicks, nick_same_list, DAY_BY_DAY_ANALYSIS=False):

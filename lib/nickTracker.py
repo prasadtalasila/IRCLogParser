@@ -1,6 +1,6 @@
 import re
-import config
-import util
+import lib.config as config
+import lib.util as util
 from datetime import date
 
 def nick_tracker(log_dict, track_users_on_channels = False):

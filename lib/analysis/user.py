@@ -15,12 +15,8 @@ from sklearn.preprocessing import Normalizer
 from sklearn.pipeline import make_pipeline
 from scipy.spatial.distance import cdist
 import matplotlib.pyplot as plt
-import util
-
-sys.path.append('../lib')
-import config
-import util
-sys.path.append('../..')
+import lib.util as util
+import lib.config as config
 import ext
 import ext.common_english_words as common_english_words
 import ext.extend_stop_words as custom_stop_words
@@ -123,15 +119,15 @@ def top_keywords_for_nick(user_keyword_freq_dict, nick, threshold, min_words_spo
                         top_keywords_normal_freq.append(keyword[2])
 
             if len(top_keywords) == 0:
-                if config.DEBUGGER:
+                if config.DEBUGGER and config.PRINT_WORDS:
                     print "No word's normalised score crosses the value of", threshold
                 top_keywords = None
         else:
-            if config.DEBUGGER:
+            if config.DEBUGGER and config.PRINT_WORDS:
                 print "No message sent by nick", nick
             pass
     else:
-        if config.DEBUGGER:
+        if config.DEBUGGER and config.PRINT_WORDS:
             print "Not enough words spoken by", nick, "; spoke" ,int(total_freq), "words only, required", min_words_spoken
         pass
 
@@ -264,7 +260,7 @@ def keywords(log_dict, nicks, nick_same_list):
                 pass
     for data in user_keyword_freq_dict:
         keywords, normal_scores = top_keywords_for_nick(user_keyword_freq_dict, data['nick'], config.KEYWORDS_THRESHOLD, config.KEYWORDS_MIN_WORDS)
-        if config.DEBUGGER:    
+        if config.DEBUGGER and config.PRINT_WORDS:    
             print "Nick:", data['nick']
             print "Keywords with normalised score > 0.01\n", keywords
             print "Their Normal scores\n", normal_scores

@@ -2,9 +2,8 @@ import networkx as nx
 import numpy as np
 import igraph
 import sys
-sys.path.append('../lib')
-import config
-import vis
+import lib.config as config
+import lib.vis as vis
 
 
 def infomap_igraph(ig_graph, net_file_location=None, reduce_graph=False):
