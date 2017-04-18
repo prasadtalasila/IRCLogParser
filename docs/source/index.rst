@@ -15,7 +15,8 @@ Contents
    Introduction
    AnalysisTechniques
    Goals
-   doc_for_code
+   DocumentationForCode
+   TypicalUsage
 
 ==================
 Indices and tables

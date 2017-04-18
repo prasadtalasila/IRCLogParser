@@ -21,12 +21,13 @@ def correctLastCharCR(inText):#
 
 def correct_nick_for_(inText):
     """
-        last letter of nick maybe _ and this produces error in nickmatching
+    last letter of nick maybe _ and this produces error in nickmatching
+    
     Args:
         inText (str): input nick, checked for '_' at last position
 
     Returns:
-        str: updated string with '_'  removed 
+        str: updated string with '_'  removed
     """
     
     if(inText and inText[len(inText)-1] == '_'):

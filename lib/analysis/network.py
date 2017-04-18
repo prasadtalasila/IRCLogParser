@@ -14,11 +14,13 @@ import lib.analysis.user as user
 
 
 def message_number_graph(log_dict, nicks, nick_same_list, DAY_BY_DAY_ANALYSIS=False):
-    """ Creates a directed graph
-        with each node representing an IRC user
-        and each directed edge has a weight which 
-        mentions the number messages sent and recieved by that user 
-        in the selected time frame.
+    """ 
+    Creates a directed graph
+    with each node representing an IRC user
+    and each directed edge has a weight which 
+    mentions the number messages sent and recieved by that user 
+    in the selected time frame.
+    
     Args:
         log_dict (dict): with key as dateTime.date object and value as {"data":datalist,"channel_name":channels name}
         nicks(list): list of all the nicks
@@ -366,7 +368,8 @@ def channel_user_presence_graph_and_csv(nicks, nick_same_list, channels_for_user
 
 def filter_edge_list(edgelist_file_loc, max_hash, how_many_top):
     """
-        reduces the edge list by selecting top nodes through degree analysis
+    reduces the edge list by selecting top nodes through degree analysis
+    
     Arguments:
         edgelist_file_loc (str): location of the edgelist file
         max_hash (int): max possinle value of the node_hash in edgelist
@@ -407,7 +410,8 @@ def filter_edge_list(edgelist_file_loc, max_hash, how_many_top):
 
 def degree_analysis_on_graph(nx_graph, date=None):
     """
-        perform degree analysis of input graph object
+    perform degree analysis of input graph object
+    
     Arguments:
         nx_graph (nx_object): object to perform analysis on
     Returns:
@@ -621,10 +625,12 @@ def message_number_bins_csv(log_dict, nicks, nick_same_list):
     return bin_matrix, sum(tot_msgs)
 
 def degree_node_number_csv(log_dict, nicks, nick_same_list):
-    """ creates two csv files having no. of nodes with a certain in and out-degree
-        for number of nodes it interacted with, respectively.
-        Also gives graphs for log(degree) vs log(no. of nodes)
-        and tries to find it's equation by curve fitting
+    """ 
+    creates two csv files having no. of nodes with a certain in and out-degree
+    for number of nodes it interacted with, respectively.
+    Also gives graphs for log(degree) vs log(no. of nodes)
+    and tries to find it's equation by curve fitting
+    
     Args:
         log_dict (dict): with key as dateTime.date object and value as {"data":datalist,"channel_name":channels name}
         nicks(list): list of all the nicks
