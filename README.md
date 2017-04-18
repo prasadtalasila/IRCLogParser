@@ -16,6 +16,8 @@ The objective of this project is to utilize social network analysis techniques t
 
 The library's working has been modularised into many modules namely input, analysis, output, visualisation and validation. The [sample.py file](./sample.py) very comprehensively presents how one can use IRCLogParser for parsing and analysis.
 
+A page on typical workflow for using IRCLogParser also exists on the documentation [here](http://prasadtalasila.github.io/IRCLogParser/TypicalUsage.html).
+
 Some of the visualisable sample outputs can be on the wiki, giving an idea about IRCLogParser's capabilites.
 
 
