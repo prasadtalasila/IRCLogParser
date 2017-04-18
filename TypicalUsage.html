@@ -1,0 +1,241 @@
+
+
+<!doctype html>
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Typical Usage Of IRCLogParser &#8212; IRC Log Parser 1.0.0 documentation</title>
+    
+    <link rel="stylesheet" href="_static/bizstyle.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '1.0.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/javascript" src="_static/bizstyle.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="Documentation for the Code" href="DocumentationForCode.html" />
+    <meta name="viewport" content="width=device-width,initial-scale=1.0">
+    <!--[if lt IE 9]>
+    <script type="text/javascript" src="_static/css3-mediaqueries.js"></script>
+    <![endif]-->
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="DocumentationForCode.html" title="Documentation for the Code"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">IRC Log Parser 1.0.0 documentation</a> &#187;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Typical Usage Of IRCLogParser</a></li>
+<li><a class="reference internal" href="#input">Input</a></li>
+<li><a class="reference internal" href="#analysis-output">Analysis &amp; Output</a></li>
+<li><a class="reference internal" href="#visualisation">Visualisation</a></li>
+<li><a class="reference internal" href="#validation">Validation</a></li>
+<li><a class="reference internal" href="#miscellaneous">Miscellaneous</a></li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="DocumentationForCode.html"
+                        title="previous chapter">Documentation for the Code</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/TypicalUsage.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="typical-usage-of-irclogparser">
+<h1>Typical Usage Of IRCLogParser<a class="headerlink" href="#typical-usage-of-irclogparser" title="Permalink to this headline">¶</a></h1>
+<p>IRCLogParser currently uses a config.py file to configure and tweak the behaviour of functions. The settings in config.py can be found <a class="reference external" href="https://github.com/prasadtalasila/IRCLogParser/blob/v1.0.0/lib/config.py">here</a> which can be changed as per requirements.</p>
+<p>Below we show how one can use functions of IRCLogParser to analyse their logs. The analysis and the code is completely modularised and hence is presented in a modular structure :</p>
+</div>
+<div class="section" id="input">
+<h1>Input<a class="headerlink" href="#input" title="Permalink to this headline">¶</a></h1>
+<p>Reading the logs is typically the first step to analysis logs assuming that the logs aren&#8217;t already stored in a data-structure.</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">irclogparser.in_out</span> <span class="kn">import</span> <span class="n">reader</span>
+<span class="kn">import</span> <span class="nn">irclogparser.nickTracker</span> <span class="kn">as</span> <span class="nn">nickTracker</span>
+
+<span class="c1"># reads the log files from the disk</span>
+<span class="n">log_data</span> <span class="o">=</span> <span class="n">reader</span><span class="o">.</span><span class="n">linux_input</span><span class="p">(</span><span class="n">log_directory</span><span class="p">,</span> <span class="n">channel_name</span><span class="p">,</span> <span class="n">starting_date</span><span class="p">,</span> <span class="n">ending_date</span><span class="p">)</span>
+
+<span class="c1"># identify the all the nicks (nicks), and the nicks which refer to the same user (nick_same_list)</span>
+<span class="n">nicks</span><span class="p">,</span> <span class="n">nick_same_list</span> <span class="o">=</span> <span class="n">nickTracker</span><span class="o">.</span><span class="n">nick_tracker</span><span class="p">(</span><span class="n">log_data</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="analysis-output">
+<h1>Analysis &amp; Output<a class="headerlink" href="#analysis-output" title="Permalink to this headline">¶</a></h1>
+<p>IRCLogParser gives various functions for analysis your logs. A few of which are demonstrated below:</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">irclogparser.analysis</span> <span class="kn">import</span> <span class="n">network</span>
+<span class="kn">from</span> <span class="nn">irclogparser.in_out</span> <span class="kn">import</span> <span class="n">saver</span>
+
+<span class="c1"># analyse logs to generate message_number_graph in which is a network graph object</span>
+<span class="n">message_number_graph</span> <span class="o">=</span> <span class="n">network</span><span class="o">.</span><span class="n">message_number_graph</span><span class="p">(</span><span class="n">log_data</span><span class="p">,</span> <span class="n">nicks</span><span class="p">,</span> <span class="n">nick_same_list</span><span class="p">,</span> <span class="bp">False</span><span class="p">)</span>
+
+<span class="c1"># use saver module to save (draw) the networkx graph returned above at the specified location</span>
+<span class="n">saver</span><span class="o">.</span><span class="n">draw_nx_graph</span><span class="p">(</span><span class="n">message_number_graph</span><span class="p">,</span> <span class="s2">&quot;/home/rohan/Desktop&quot;</span><span class="p">,</span> <span class="s2">&quot;file_name_message_number_graph&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The above code snippet is for bulk analysis. If someone wants to plot the graph on a day by day basis, one could just enable the boolen.</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="c1"># make the boolean to be True for a day by day analysis, the returned object is now a list of graphs (one for each day)</span>
+<span class="n">message_number_graph_day_list</span> <span class="o">=</span> <span class="n">network</span><span class="o">.</span><span class="n">message_number_graph</span><span class="p">(</span><span class="n">log_data</span><span class="p">,</span> <span class="n">nicks</span><span class="p">,</span> <span class="n">nick_same_list</span><span class="p">,</span> <span class="bp">True</span><span class="p">)</span>
+
+<span class="c1"># use saver module to save (draw) the networkx graph returned above at the specified location for every graph in the list</span>
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">message_number_graph_day_list</span><span class="p">)):</span>
+    <span class="n">saver</span><span class="o">.</span><span class="n">draw_nx_graph</span><span class="p">(</span><span class="n">message_number_graph_day_list</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span> <span class="s2">&quot;/home/rohan/Desktop&quot;</span><span class="p">,</span> <span class="s2">&quot;message_number_&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">))</span>
+</pre></div>
+</div>
+<p>Another example could be analysis of response time:</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">irclogparser.analysis</span> <span class="kn">import</span> <span class="n">channel</span>
+
+<span class="c1"># analyse the logs for response time this time</span>
+<span class="n">resp_time</span> <span class="o">=</span> <span class="n">channel</span><span class="o">.</span><span class="n">response_time</span><span class="p">(</span><span class="n">log_data</span><span class="p">,</span> <span class="n">nicks</span><span class="p">,</span> <span class="n">nick_same_list</span><span class="p">)</span>
+
+<span class="c1"># save the generated list of lists as csv for later reference</span>
+<span class="n">saver</span><span class="o">.</span><span class="n">save_csv</span><span class="p">(</span><span class="n">resp_time</span><span class="p">,</span> <span class="s2">&quot;/home/rohan/Desktop&quot;</span><span class="p">,</span> <span class="s2">&quot;csv_file_name_resp_time&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="visualisation">
+<h1>Visualisation<a class="headerlink" href="#visualisation" title="Permalink to this headline">¶</a></h1>
+<p>It is also possible for a researcher to visualise his analysis by using the vis module provided by IRCLogParser. The same module also takes care for fitting the curves during the visualisation process.</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">irclogparser.vis</span> <span class="kn">as</span> <span class="nn">vis</span>
+
+<span class="c1"># let&#39;s curve fit and visualise the analysis for response time generated in the snippet above</span>
+<span class="c1"># this generates and saves the png for the graph generated after fitting at specified location</span>
+<span class="c1"># the function returns the fit parameters generated after fitting the graph to the equation specified # the fit parameters are stored in the variable resp_time_curve_fit_parameters here</span>
+<span class="c1"># which can be used to ascertain the quality of plot (and analysis)</span>
+<span class="n">resp_time_curve_fit_parameters</span> <span class="o">=</span> <span class="n">vis</span><span class="o">.</span><span class="n">exponential_curve_fit_and_plot</span><span class="p">(</span><span class="n">resp_time</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="s2">&quot;/home/rohan/Desktop&quot;</span><span class="p">,</span> <span class="s2">&quot;png_name_resp_time&quot;</span><span class="p">)</span>
+
+<span class="c1">#obviously one can just plot the graph along with the fit without caring about the parameters</span>
+<span class="n">vis</span><span class="o">.</span><span class="n">exponential_curve_fit_and_plot</span><span class="p">(</span><span class="n">resp_time</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="s2">&quot;/home/rohan/Desktop&quot;</span><span class="p">,</span> <span class="s2">&quot;png_name_resp_time&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Note: Since all the modules of IRCLogParser are independant of each other, one could use any module without relying on the analysis from some other module. For example, a user can use the vis module to visualise something which has nothing to do with logs ans parsing:</p>
+<blockquote>
+<div><div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">irclogparser.vis</span> <span class="kn">as</span> <span class="nn">vis</span>
+
+<span class="n">custom_list</span> <span class="o">=</span> <span class="p">[[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">],[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">4</span><span class="p">],[</span><span class="mi">3</span><span class="p">,</span> <span class="mi">6</span><span class="p">],[</span><span class="mi">4</span><span class="p">,</span> <span class="mi">10</span><span class="p">],[</span><span class="mi">5</span><span class="p">,</span> <span class="mi">12</span><span class="p">],[</span><span class="mi">6</span><span class="p">,</span> <span class="mi">14</span><span class="p">]]</span>
+<span class="n">vis</span><span class="o">.</span><span class="n">exponential_curve_fit_and_plot</span><span class="p">(,</span> <span class="mi">2</span><span class="p">,</span> <span class="s2">&quot;/home/rohan/Desktop&quot;</span><span class="p">,</span> <span class="s2">&quot;png_name_custom&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div></blockquote>
+</div>
+<div class="section" id="validation">
+<h1>Validation<a class="headerlink" href="#validation" title="Permalink to this headline">¶</a></h1>
+<p>One can also validate results: ensure that the curve fits are in expected range. Here is an example:</p>
+<blockquote>
+<div><div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">irclogparser.validate</span> <span class="kn">as</span> <span class="nn">validate</span>
+
+<span class="c1"># ensures that the curve fit parameters (here : a, b, c, mse) are in the specified range</span>
+<span class="c1"># throws an error (and logs) otherwise</span>
+<span class="n">validate</span><span class="o">.</span><span class="n">validate_RT_RL_CRT</span><span class="p">(</span><span class="n">resp_time_curve_fit_parameters</span><span class="p">,</span>
+    <span class="p">[[</span><span class="mf">0.3</span><span class="p">,</span> <span class="mf">10.4</span><span class="p">],</span> <span class="p">[</span><span class="mf">10.3</span><span class="p">,</span> <span class="mf">30.4</span><span class="p">],</span> <span class="p">[</span><span class="o">-</span><span class="mf">0.002</span><span class="p">,</span> <span class="mf">0.002</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mf">0.002</span><span class="p">]],</span> <span class="s2">&quot;resp_time&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div></blockquote>
+</div>
+<div class="section" id="miscellaneous">
+<h1>Miscellaneous<a class="headerlink" href="#miscellaneous" title="Permalink to this headline">¶</a></h1>
+<p>An example of community analysis from scratch:</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">irclogparser.in_out</span> <span class="kn">import</span> <span class="n">reader</span><span class="p">,</span> <span class="n">saver</span>
+<span class="kn">import</span> <span class="nn">irclogparser.nickTracker</span> <span class="kn">as</span> <span class="nn">nickTracker</span>
+<span class="kn">from</span> <span class="nn">irclogparser.analysis</span> <span class="kn">import</span> <span class="n">community</span><span class="p">,</span> <span class="n">network</span>
+<span class="kn">import</span> <span class="nn">irclogparser.vis</span> <span class="kn">as</span> <span class="nn">vis</span>
+
+<span class="c1"># firstly change analysis to all channels in config</span>
+
+<span class="c1"># 1. Input and build nicks and nick_same_list</span>
+<span class="n">log_data</span> <span class="o">=</span> <span class="n">reader</span><span class="o">.</span><span class="n">linux_input</span><span class="p">(</span><span class="n">log_directory</span><span class="p">,</span> <span class="n">channel_name</span><span class="p">,</span> <span class="n">starting_date</span><span class="p">,</span> <span class="n">ending_date</span><span class="p">)</span>
+<span class="n">nicks</span><span class="p">,</span> <span class="n">nick_same_list</span><span class="p">,</span> <span class="n">channels_for_user</span><span class="p">,</span> <span class="n">nick_channel_dict</span><span class="p">,</span> <span class="n">nicks_hash</span><span class="p">,</span> <span class="n">channels_hash</span> <span class="o">=</span> <span class="n">nickTracker</span><span class="o">.</span><span class="n">nick_tracker</span><span class="p">(</span><span class="n">log_data</span><span class="p">,</span> <span class="bp">True</span><span class="p">)</span>
+
+<span class="c1"># 2. Analysis</span>
+<span class="n">dict_out</span><span class="p">,</span> <span class="n">graph</span> <span class="o">=</span> <span class="n">network</span><span class="o">.</span><span class="n">channel_user_presence_graph_and_csv</span><span class="p">(</span><span class="n">nicks</span><span class="p">,</span> <span class="n">nick_same_list</span><span class="p">,</span> <span class="n">channels_for_user</span><span class="p">,</span> <span class="n">nick_channel_dict</span><span class="p">,</span> <span class="n">nicks_hash</span><span class="p">,</span> <span class="n">channels_hash</span><span class="p">)</span>
+
+<span class="c1"># 3. Output</span>
+<span class="n">saver</span><span class="o">.</span><span class="n">save_net_nx_graph</span><span class="p">(</span><span class="n">dict_out</span><span class="p">[</span><span class="s2">&quot;UU&quot;</span><span class="p">][</span><span class="s2">&quot;reducedMatrix&quot;</span><span class="p">],</span><span class="s2">&quot;/home/rohan/Desktop&quot;</span><span class="p">,</span> <span class="s2">&quot;adjCC&quot;</span><span class="p">)</span>
+
+<span class="c1"># 3.1 generate the community graph (igraph) and the membership info by using the .net file</span>
+<span class="n">adjCC_graph</span><span class="p">,</span> <span class="n">adjCC_membership</span> <span class="o">=</span> <span class="n">community</span><span class="o">.</span><span class="n">infomap_igraph</span><span class="p">(</span><span class="n">ig_graph</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">net_file_location</span><span class="o">=</span><span class="s2">&quot;/home/rohan/Desktop/adjCC.net&quot;</span><span class="p">)</span>
+
+<span class="c1"># 4. Visualisation</span>
+<span class="n">vis</span><span class="o">.</span><span class="n">plot_infomap_igraph</span><span class="p">(</span><span class="n">adjCC_graph</span><span class="p">,</span> <span class="n">adjCC_membership</span><span class="p">,</span> <span class="n">output_directory</span><span class="p">,</span> <span class="s2">&quot;adjCC_infomaps&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>One could also see <a class="reference external" href="https://github.com/prasadtalasila/IRCLogParser/blob/v1.0.0/sample.py">sample.py</a> which comes along with library for more examples.</p>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="DocumentationForCode.html" title="Documentation for the Code"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">IRC Log Parser 1.0.0 documentation</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016, Prasad Talasila, Rohan Goel, Dhruv Shekhawat.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.5.5.
+    </div>
+  </body>
+</html>
