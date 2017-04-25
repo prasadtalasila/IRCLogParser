@@ -1,8 +1,8 @@
 DEBUGGER = True
-LOG_DIRECTORY = "/home/rohan/parser_files/YearlyLogFiles/"
+LOG_DIRECTORY = "/home/rohan/parser_files/slackware/"
 OUTPUT_DIRECTORY = "/home/rohan/Desktop/"
 STARTING_DATE = "2013-1-1"
-ENDING_DATE = "2013-1-31"
+ENDING_DATE = "2013-1-1"
 MINIMUM_NICK_LENGTH = 3
 
 

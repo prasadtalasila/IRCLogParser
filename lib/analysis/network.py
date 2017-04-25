@@ -37,10 +37,10 @@ def message_number_graph(log_dict, nicks, nick_same_list, DAY_BY_DAY_ANALYSIS=Fa
 
     util.create_connected_nick_list(conn_comp_list)
 
-    def msg_no_analysis_helper(rec_list, corrected_nick, nick, conn_comp_list,conversations,today_conversation):
+    def msg_no_analysis_helper(rec_list, nick_sender, nick, conn_comp_list,conversations,today_conversation):
         for receiver in rec_list:
             if(receiver == nick):
-                if(corrected_nick != nick):                                 
+                if(nick_sender != nick):                                 
                     nick_receiver = ''
                     nick_receiver = util.get_nick_sen_rec(config.MAX_EXPECTED_DIFF_NICKS, nick, conn_comp_list, nick_receiver)    
 
@@ -63,36 +63,32 @@ def message_number_graph(log_dict, nicks, nick_same_list, DAY_BY_DAY_ANALYSIS=Fa
             today_conversation = [[0] for i in range(config.MAX_EXPECTED_DIFF_NICKS)]
             for line in day_log:
                 flag_comma = 0
-
                 if(util.check_if_msg_line (line)):
                     parsed_nick = re.search(r"\<(.*?)\>", line)
-                    corrected_nick = util.correctLastCharCR(parsed_nick.group(0)[1:-1])
-                    nick_sender = ""
-                    nick_receiver = ""                    
-                    nick_sender = util.get_nick_sen_rec(config.MAX_EXPECTED_DIFF_NICKS, corrected_nick, conn_comp_list, nick_sender)        
-
+                    nick_sender = util.correctLastCharCR(parsed_nick.group(0)[1:-1])
+                    nick_receiver = ""
                     for nick in nicks:
                         rec_list = [e.strip() for e in line.split(':')]
                         util.rec_list_splice(rec_list)
-                        if not rec_list[1]:
+                        if not rec_list[2]:
                             break                        
                         rec_list = util.correct_last_char_list(rec_list)       
-                        msg_no_analysis_helper(rec_list, corrected_nick, nick, conn_comp_list, conversations,today_conversation)
+                        msg_no_analysis_helper(rec_list, nick_sender, nick, conn_comp_list, conversations,today_conversation)
 
-                        if "," in rec_list[1]:
+                        if "," in rec_list[2]:
                             flag_comma = 1
-                            rec_list_2=[e.strip() for e in rec_list[1].split(',')]
+                            rec_list_2=[e.strip() for e in rec_list[2].split(',')]
                             for i in xrange(0,len(rec_list_2)):
                                 if(rec_list_2[i]):
                                     rec_list_2[i] = util.correctLastCharCR(rec_list_2[i])                            
-                            msg_no_analysis_helper(rec_list_2, corrected_nick, nick, conn_comp_list, conversations, today_conversation)                
+                            msg_no_analysis_helper(rec_list_2, nick_sender, nick, conn_comp_list, conversations, today_conversation)                
 
                         if(flag_comma == 0):
                             rec = line[line.find(">")+1:line.find(", ")]
                             rec = rec[1:]
                             rec = util.correctLastCharCR(rec)
                             if(rec == nick):
-                                if(corrected_nick != nick):                                   
+                                if(nick_sender != nick):                                   
                                     nick_receiver = nick_receiver_from_conn_comp(nick, conn_comp_list)        
 
             if DAY_BY_DAY_ANALYSIS:
@@ -527,7 +523,7 @@ def message_time_graph(log_dict, nicks, nick_same_list, DAY_BY_DAY_ANALYSIS=Fals
                     for nick_name in nicks:
                         rec_list = [e.strip() for e in line.split(':')]  #receiver list splited about :
                         util.rec_list_splice(rec_list)
-                        if not rec_list[1]:  #index 0 will contain time 14:02
+                        if not rec_list[2]:  #index 0 will contain time 14:02
                             break                        
                         rec_list = util.correct_last_char_list(rec_list)        
                         for nick_to_search in rec_list:
@@ -537,9 +533,9 @@ def message_time_graph(log_dict, nicks, nick_same_list, DAY_BY_DAY_ANALYSIS=Fals
                                     nick_receiver = util.get_nick_sen_rec(config.MAX_EXPECTED_DIFF_NICKS, nick_name, conn_comp_list, nick_receiver)                                            
                                     util.build_graphs(nick_sender, nick_receiver, line[1:6], year, month, day, graph_conversation, msg_time_aggr_graph)
 
-                        if "," in rec_list[1]:  #receiver list may of the form <Dhruv> Rohan, Ram :
+                        if "," in rec_list[2]:  #receiver list may of the form <Dhruv> Rohan, Ram :
                             flag_comma = 1
-                            rec_list_2 = [e.strip() for e in rec_list[1].split(',')]
+                            rec_list_2 = [e.strip() for e in rec_list[2].split(',')]
                             rec_list_2 = util.correct_last_char_list(rec_list_2)        
                             for nick_to_search in rec_list_2:                              
                                 compare_spliced_nick(nick_to_search, spliced_nick, nick_name, line)   
@@ -600,15 +596,15 @@ def message_number_bins_csv(log_dict, nicks, nick_same_list):
                         for messager in nicks:
                             rec_list = [e.strip() for e in line.split(':')]
                             util.rec_list_splice(rec_list)
-                            if not rec_list[1]:
+                            if not rec_list[2]:
                                 break                            
                             rec_list = util.correct_last_char_list(rec_list)
                             for nick_name in rec_list:
                                 bin_increment(nick_name, messager, nick_spliced, bins, bin_index)                                                                                               
                                             
-                            if "," in rec_list[1]: 
+                            if "," in rec_list[2]: 
                                 flag_comma = 1
-                                rec_list = [e.strip() for e in rec_list[1].split(',')]                              
+                                rec_list = [e.strip() for e in rec_list[2].split(',')]                              
                                 rec_list = util.correct_last_char_list(rec_list)
                                 for nick_name in rec_list:
                                     bin_increment(nick_name, messager, nick_spliced, bins, bin_index)                                            

@@ -89,11 +89,11 @@ def get_year_month_day(day_content):
 
 
 def rec_list_splice(rec_list):
-    rec_list[1] = rec_list[1][rec_list[1].find(">") + 1:len(rec_list[1])][1:]
+    rec_list[2] = rec_list[2][rec_list[2].find(">") + 1:len(rec_list[2])][1:]
 
 
 def check_if_msg_line (line):
-    return (line[0] != '=' and "] <" in line and "> " in line)
+    return ("] <" in line and "> " in line)
 
 
 def build_graphs(nick_sender, nick_receiver, time, year, month, day, day_graph, aggr_graph):
