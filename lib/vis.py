@@ -14,12 +14,27 @@ from numpy.random import normal
 from scipy.optimize import curve_fit
 from scipy import stats
 import plotly.plotly as py
-py.sign_in('rohangoel963', 'vh6le8no26')
+py.sign_in('rohangoel963', 'WUqptWKXPareXfFMBtDG')
 import plotly.graph_objs as go
 from numpy import genfromtxt
 import glob
 
 
+def plot_data (data, output_directory, output_file_name):
+    x_data, y_data = (d for d in data)
+
+    x = np.array(x_data)
+    y = np.array(y_data)
+
+    plt.figure()
+    plt.plot(x, y, 'b-', label="Data")
+    
+    plt.legend()
+    # plt.show()
+    saver.check_if_dir_exists(output_directory)
+    plt.savefig(output_directory + "/" + output_file_name + ".png")
+    plt.close()
+    
 def generate_probability_distribution(data, initial_rows_filter):
     """ 
         Normalises y coordinates, dividing it by sum of all entries of y coordiantes
@@ -239,7 +254,7 @@ def generate_log_plots(filter_val, plot_data, output_directory, output_file_name
     x_axis_log = [math.log(i) for i in xrange(1, filter_val)]   # ignore degree 0
     y_axis_log = [math.log(i) if i>0 else 0 for i in sum_each_row[1:filter_val] ]   # ignore degree 01
 
-    calc_plot_linear_fit(x_axis_log, y_axis_log, output_file_name, output_directory)
+    calc_plot_linear_fit(x_axis_log, y_axis_log, output_directory, output_file_name)
 
 
 def calc_plot_linear_fit(x_in, y_in, output_directory, output_file_name):
@@ -411,7 +426,7 @@ def matplotlob_csv_heatmap_generator(csv_file, output_directory, output_file_nam
     
     fig, ax = plt.subplots(figsize=(10, 10))
     heatmap = ax.pcolor(data, cmap=plt.cm.Reds)
-
+    
     cbar = plt.colorbar(heatmap)
 
     def np_arrange_helper(data, disp):
