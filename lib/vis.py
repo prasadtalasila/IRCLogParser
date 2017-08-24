@@ -254,8 +254,9 @@ def generate_log_plots(filter_val, plot_data, output_directory, output_file_name
     x_axis_log = [math.log(i) for i in xrange(1, filter_val)]   # ignore degree 0
     y_axis_log = [math.log(i) if i>0 else 0 for i in sum_each_row[1:filter_val] ]   # ignore degree 01
 
-    calc_plot_linear_fit(x_axis_log, y_axis_log, output_directory, output_file_name)
-
+    slope,intercept,r_square,mean_squared_error = calc_plot_linear_fit(x_axis_log, y_axis_log, output_directory, output_file_name)
+	
+    return slope,intercept,r_square,mean_squared_error
 
 def calc_plot_linear_fit(x_in, y_in, output_directory, output_file_name):
     """
@@ -321,6 +322,8 @@ def calc_plot_linear_fit(x_in, y_in, output_directory, output_file_name):
         plt.legend(['Data', 'Fit'], loc='upper right')
         plt.savefig(output_directory+"/" + output_file_name+".png")
         plt.close()
+        
+    return slope,intercept,r_value**2,mean_squared_error(y, line)
 
 
 def generate_group_bar_charts(y_values, x_values, trace_header, output_directory, output_file_name):
