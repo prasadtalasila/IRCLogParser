@@ -3,7 +3,6 @@ import lib.nickTracker as nickTracker, lib.config as config, lib.vis as vis, lib
 from lib.analysis import network, channel, user, community
 from networkx.readwrite import json_graph
 import json
-from math import log
 
 log_directory = config.LOG_DIRECTORY
 channel_name = config.CHANNEL_NAME
@@ -74,17 +73,9 @@ output_directory = config.OUTPUT_DIRECTORY
 # dict_out, graph = network.channel_user_presence_graph_and_csv(nicks, nick_same_list, channels_for_user, nick_channel_dict, nicks_hash, channels_hash)
 
 ### Note : if json for arc graph is required make CC_graphs_nodes as channel names not hash ###
-# CC_graph = dict_out["CC"]["graph"]
+#CC_graph = dict_out["CC"]["graph"]
+#saver.save_js_arc(CC_graph, "lib/d3viz/", "cc.js") # store it as cc.js only, for index.html to render properly
 
-# jsondict= json_graph.node_link_data(CC_graph)
-# jsondict['links'] = [{'source': link['source'], 'target': link['target'], 'value': log(link['weight'])} for link in jsondict['links']] # log to base e
-# jsondict['nodes'] = [{'nodeName':node['id']} for node in jsondict['nodes']]
-# with open('d3viz/data_all22.json', 'w') as outfile:
-# 	json.dump(jsondict, outfile)
-
-# dat = network.degree_analysis_on_graph(CC_graph, directed = False)
-# print dat['degree']['formatted_for_csv']
-# print dict_out["CC"]["matrix"]
 # saver.save_csv(dict_out["UU"]["reducedMatrix"],output_directory, "rUU")
 # saver.save_csv(dict_out["CC"]["reducedMatrix"],output_directory, "rCC")
 # saver.save_csv(dict_out["CU"]["reducedMatrix"],output_directory, "rCU")

@@ -3,6 +3,8 @@ import os
 import csv
 import errno
 import sys
+from networkx.readwrite import json_graph
+import json
 sys.path.append('../lib')
 import lib.config as config
 
@@ -93,3 +95,24 @@ def save_csv(matrix, output_directory, output_file_name):
         wr = csv.writer(myfile, quoting=csv.QUOTE_ALL)
         for col in matrix:
             wr.writerow(col)
+
+def save_js_arc(nx_graph, output_directory, output_file_name):
+    """
+        Saves the nx_graph as a js file with variable name communities, it is used in index.html to generate the arc graph
+
+    Args:
+        nx_graph: a networkx graph
+        output_drectory(str): location to save graph
+        output_file_name(str): name of the csv file to be saved
+
+    Returns:
+       null
+        
+    """
+    jsondict= json_graph.node_link_data(nx_graph)
+    max_weight_val = max(item['weight'] for item in jsondict['links'])
+    jsondict['links'] = [{'source': link['source'], 'target': link['target'], 'value': int(link['weight'] * config.EXPANSION_PARAMETER / float(max_weight_val))} for link in jsondict['links']]
+    jsondict['nodes'] = [{'nodeName':node['id']} for node in jsondict['nodes']]
+    with open(output_directory + output_file_name, 'w') as f:
+        f.write("var communities =")
+        json.dump(jsondict, f)
