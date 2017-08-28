@@ -256,7 +256,8 @@ def channel_user_presence_graph_and_csv(nicks, nick_same_list, channels_for_user
         for degree in degree_list:
             if not degree < max_degree_possible:
                 print "===error", degree
-            nodes[degree] += 1    
+            else:
+                nodes[degree] += 1    
         return nodes
 
     #=========================================================================
