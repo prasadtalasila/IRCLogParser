@@ -1,6 +1,6 @@
 DEBUGGER = True
-LOG_DIRECTORY = "/home/rohan/parser_files/YearlyLogFiles/"
-OUTPUT_DIRECTORY = "/home/rohan/Desktop/"
+LOG_DIRECTORY = "/media/krishna/Acer/Studies/YearlyLogFiles/"
+OUTPUT_DIRECTORY = "/media/krishna/Acer/Studies/IRC_op"
 STARTING_DATE = "2013-1-1"
 ENDING_DATE = "2013-1-31"
 MINIMUM_NICK_LENGTH = 3
@@ -8,7 +8,7 @@ MINIMUM_NICK_LENGTH = 3
 
 # change to ["ALL"] if want to perform analysis over all channels
 CHANNEL_NAME = ["#kubuntu-devel"]
-# CHANNEL_NAME = ["ALL"]
+#CHANNEL_NAME = ["ALL"]
 
 # increase if using channel_user_presence
 MAX_EXPECTED_DIFF_NICKS = 5000
@@ -38,6 +38,8 @@ FILTER_TOP_CHANNELS = 30
 GENERATE_DEGREE_ANAL = False
 PRINT_CHANNEL_USER_HASH = False
 
+# arc graph parameters
+EXPANSION_PARAMETER = 15 
 
 # ConvL_ConvRT constants
 MAX_CONVERSATIONS = 10000

@@ -9,9 +9,8 @@ ending_date = config.ENDING_DATE
 output_directory = config.OUTPUT_DIRECTORY
 
 # ============== INPUT==================
-# log_data = reader.linux_input(log_directory, channel_name, starting_date, ending_date)
+log_data = reader.linux_input(log_directory, channel_name, starting_date, ending_date)
 # nicks, nick_same_list = nickTracker.nick_tracker(log_data)
-
 # ============== ANALYSIS =============
 # message_number_graph = network.message_number_graph(log_data, nicks, nick_same_list, False)
 # message_number_graph_day_list = network.message_number_graph(log_data, nicks, nick_same_list, True)
@@ -20,7 +19,7 @@ output_directory = config.OUTPUT_DIRECTORY
 # message_time_graph = network.message_time_graph(log_data, nicks, nick_same_list, False)
 # out_degree_node_number, in_degree_node_number, total_degree_node_number = network.degree_node_number_csv(log_data, nicks, nick_same_list)
 # nick_change_graph_list = user.nick_change_graph(log_data, True)
-# bin_matrix, total_messages = network.message_number_bins_csv(log_data, nicks, nick_same_list)
+#bin_matrix, total_messages = network.message_number_bins_csv(log_data, nicks, nick_same_list)
 # conv_len, conv_ref_time = channel.conv_len_conv_refr_time(log_data, nicks, nick_same_list)
 # resp_time = channel.response_time(log_data, nicks, nick_same_list)
 
@@ -67,7 +66,8 @@ output_directory = config.OUTPUT_DIRECTORY
 # Change analysis to all channels in config
 # nicks, nick_same_list, channels_for_user, nick_channel_dict, nicks_hash, channels_hash = nickTracker.nick_tracker(log_data, True)
 # dict_out, graph = network.channel_user_presence_graph_and_csv(nicks, nick_same_list, channels_for_user, nick_channel_dict, nicks_hash, channels_hash)
-
+# reduced_CC_graph = dict_out["CC"]["reduced_graph"]
+# saver.save_js_arc(reduced_CC_graph, channels_hash, "lib/d3viz/", "cc.js") # store it as cc.js only, for index.html to render properly
 # saver.save_csv(dict_out["UU"]["reducedMatrix"],output_directory, "rUU")
 # saver.save_csv(dict_out["CC"]["reducedMatrix"],output_directory, "rCC")
 # saver.save_csv(dict_out["CU"]["reducedMatrix"],output_directory, "rCU")
