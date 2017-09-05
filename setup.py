@@ -41,7 +41,7 @@ setup(
     ],
 
     install_requires=[
-        'networkx',
+        'networkx==1.11',
         'matplotlib',
         'pygraphviz',
         'scikit-learn',
