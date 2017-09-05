@@ -90,6 +90,6 @@ def save_csv(matrix, output_directory, output_file_name):
     check_if_dir_exists(output_directory) #create output directory if doesn't exist
     output_file = output_directory + "/" + output_file_name +".csv"
     with open(output_file, 'wb') as myfile:
-        wr = csv.writer(myfile, quoting=csv.QUOTE_ALL)
+        wr = csv.writer(myfile, quoting=csv.QUOTE_NONNUMERIC)
         for col in matrix:
             wr.writerow(col)
