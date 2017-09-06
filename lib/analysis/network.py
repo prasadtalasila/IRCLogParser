@@ -135,17 +135,20 @@ def channel_user_presence_graph_and_csv(nicks, nick_same_list, channels_for_user
         "CC": {
                 "graph": None,
                 "matrix": None,
-                "reducedMatrix": None
+                "reducedMatrix": None,
+                "reducedGraph": None
         },
         "CU": {
                 "graph": None,
                 "matrix": None,
-                "reducedMatrix": None
+                "reducedMatrix": None,
+                "reducedGraph": None
         },
         "UU": {
                 "graph": None,
                 "matrix": None,
-                "reducedMatrix": None
+                "reducedMatrix": None,
+                "reducedGraph": None
         },
     }
 
@@ -319,6 +322,10 @@ def channel_user_presence_graph_and_csv(nicks, nick_same_list, channels_for_user
     temp_channels = np.delete(CC_adjacency_matrix, indices_to_delete_channels, 1) #delete columns
     reduced_CC_adjacency_matrix = np.delete(temp_channels, indices_to_delete_channels, 0) #delete rows
     presence_graph_and_matrix["CC"]["reducedMatrix"] = reduced_CC_adjacency_matrix
+    
+    reduced_CC_graph = channel_channel_graph.copy()
+    reduced_CC_graph.remove_nodes_from(map(str, np.array(indices_to_delete_channels) + config.STARTING_HASH_CHANNEL)) # say the indices to remove are 1,2 presence_graph_and_matrix["CC"]["reducedGraph"] = reduced_CC_graph 
+    
     print "Generated Reduced CC Adjacency Matrix"
 
     #to calculate sum first take the transpose of CU matrix so users in row
@@ -343,6 +350,11 @@ def channel_user_presence_graph_and_csv(nicks, nick_same_list, channels_for_user
     #update the CU matrix by deleting particular columns, and rows which are not in top_indices_users, channels
     temp_user_channel = np.delete(CU_adjacency_matrix, indices_to_delete_users, 1) #delete columns
     reduced_CU_adjacency_matrix = np.delete(temp_user_channel, indices_to_delete_channels, 0) #delete rows
+    
+    reduced_CU_graph = channel_user_graph.copy()
+    reduced_CU_graph.remove_nodes_from(np.array(indices_to_delete_channels) + config.STARTING_HASH_CHANNEL) #remove non top channels_
+    reduced_CU_graph.remove_nodes_from(np.array(indices_to_delete_users)) #remove users
+    presence_graph_and_matrix["CU"]["reducedGraph"] = reduced_CU_graph
 
     print "Generated Reduced CU Adjacency Matrix"
     presence_graph_and_matrix["CU"]["reducedMatrix"] = reduced_CU_adjacency_matrix
@@ -350,6 +362,11 @@ def channel_user_presence_graph_and_csv(nicks, nick_same_list, channels_for_user
     #update the UU matrix by deleting both columns and rows
     temp_users = np.delete(UU_adjacency_matrix, indices_to_delete_users, 1) #delete columns
     reduced_UU_adjacency_matrix = np.delete(temp_users, indices_to_delete_users, 0) #delete rows
+    
+    reduced_UU_graph = user_user_graph.copy()
+    reduced_UU_graph.remove_nodes_from(np.array(indices_to_delete_users))
+    presence_graph_and_matrix["UU"]["reducedGraph"] = reduced_UU_graph
+    
     print "Generated Reduced UU Adjacency Matrix"
     presence_graph_and_matrix["UU"]["reducedMatrix"] = reduced_UU_adjacency_matrix
 
