@@ -202,17 +202,20 @@
         <span class="s2">&quot;CC&quot;</span><span class="p">:</span> <span class="p">{</span>
                 <span class="s2">&quot;graph&quot;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
                 <span class="s2">&quot;matrix&quot;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
-                <span class="s2">&quot;reducedMatrix&quot;</span><span class="p">:</span> <span class="kc">None</span>
+                <span class="s2">&quot;reducedMatrix&quot;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
+                <span class="s2">&quot;reducedGraph&quot;</span><span class="p">:</span> <span class="kc">None</span>
         <span class="p">},</span>
         <span class="s2">&quot;CU&quot;</span><span class="p">:</span> <span class="p">{</span>
                 <span class="s2">&quot;graph&quot;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
                 <span class="s2">&quot;matrix&quot;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
-                <span class="s2">&quot;reducedMatrix&quot;</span><span class="p">:</span> <span class="kc">None</span>
+                <span class="s2">&quot;reducedMatrix&quot;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
+                <span class="s2">&quot;reducedGraph&quot;</span><span class="p">:</span> <span class="kc">None</span>
         <span class="p">},</span>
         <span class="s2">&quot;UU&quot;</span><span class="p">:</span> <span class="p">{</span>
                 <span class="s2">&quot;graph&quot;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
                 <span class="s2">&quot;matrix&quot;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
-                <span class="s2">&quot;reducedMatrix&quot;</span><span class="p">:</span> <span class="kc">None</span>
+                <span class="s2">&quot;reducedMatrix&quot;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
+                <span class="s2">&quot;reducedGraph&quot;</span><span class="p">:</span> <span class="kc">None</span>
         <span class="p">},</span>
     <span class="p">}</span>
 
@@ -386,6 +389,10 @@
     <span class="n">temp_channels</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="n">CC_adjacency_matrix</span><span class="p">,</span> <span class="n">indices_to_delete_channels</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span> <span class="c1">#delete columns</span>
     <span class="n">reduced_CC_adjacency_matrix</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="n">temp_channels</span><span class="p">,</span> <span class="n">indices_to_delete_channels</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="c1">#delete rows</span>
     <span class="n">presence_graph_and_matrix</span><span class="p">[</span><span class="s2">&quot;CC&quot;</span><span class="p">][</span><span class="s2">&quot;reducedMatrix&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">reduced_CC_adjacency_matrix</span>
+    
+    <span class="n">reduced_CC_graph</span> <span class="o">=</span> <span class="n">channel_channel_graph</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+    <span class="n">reduced_CC_graph</span><span class="o">.</span><span class="n">remove_nodes_from</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">indices_to_delete_channels</span><span class="p">)</span> <span class="o">+</span> <span class="n">config</span><span class="o">.</span><span class="n">STARTING_HASH_CHANNEL</span><span class="p">))</span> <span class="c1"># say the indices to remove are 1,2 presence_graph_and_matrix[&quot;CC&quot;][&quot;reducedGraph&quot;] = reduced_CC_graph </span>
+    
     <span class="nb">print</span> <span class="s2">&quot;Generated Reduced CC Adjacency Matrix&quot;</span>
 
     <span class="c1">#to calculate sum first take the transpose of CU matrix so users in row</span>
@@ -410,6 +417,11 @@
     <span class="c1">#update the CU matrix by deleting particular columns, and rows which are not in top_indices_users, channels</span>
     <span class="n">temp_user_channel</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="n">CU_adjacency_matrix</span><span class="p">,</span> <span class="n">indices_to_delete_users</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span> <span class="c1">#delete columns</span>
     <span class="n">reduced_CU_adjacency_matrix</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="n">temp_user_channel</span><span class="p">,</span> <span class="n">indices_to_delete_channels</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="c1">#delete rows</span>
+    
+    <span class="n">reduced_CU_graph</span> <span class="o">=</span> <span class="n">channel_user_graph</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+    <span class="n">reduced_CU_graph</span><span class="o">.</span><span class="n">remove_nodes_from</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">indices_to_delete_channels</span><span class="p">)</span> <span class="o">+</span> <span class="n">config</span><span class="o">.</span><span class="n">STARTING_HASH_CHANNEL</span><span class="p">)</span> <span class="c1">#remove non top channels_</span>
+    <span class="n">reduced_CU_graph</span><span class="o">.</span><span class="n">remove_nodes_from</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">indices_to_delete_users</span><span class="p">))</span> <span class="c1">#remove users</span>
+    <span class="n">presence_graph_and_matrix</span><span class="p">[</span><span class="s2">&quot;CU&quot;</span><span class="p">][</span><span class="s2">&quot;reducedGraph&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">reduced_CU_graph</span>
 
     <span class="nb">print</span> <span class="s2">&quot;Generated Reduced CU Adjacency Matrix&quot;</span>
     <span class="n">presence_graph_and_matrix</span><span class="p">[</span><span class="s2">&quot;CU&quot;</span><span class="p">][</span><span class="s2">&quot;reducedMatrix&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">reduced_CU_adjacency_matrix</span>
@@ -417,6 +429,11 @@
     <span class="c1">#update the UU matrix by deleting both columns and rows</span>
     <span class="n">temp_users</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="n">UU_adjacency_matrix</span><span class="p">,</span> <span class="n">indices_to_delete_users</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span> <span class="c1">#delete columns</span>
     <span class="n">reduced_UU_adjacency_matrix</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="n">temp_users</span><span class="p">,</span> <span class="n">indices_to_delete_users</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="c1">#delete rows</span>
+    
+    <span class="n">reduced_UU_graph</span> <span class="o">=</span> <span class="n">user_user_graph</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+    <span class="n">reduced_UU_graph</span><span class="o">.</span><span class="n">remove_nodes_from</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">indices_to_delete_users</span><span class="p">))</span>
+    <span class="n">presence_graph_and_matrix</span><span class="p">[</span><span class="s2">&quot;UU&quot;</span><span class="p">][</span><span class="s2">&quot;reducedGraph&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">reduced_UU_graph</span>
+    
     <span class="nb">print</span> <span class="s2">&quot;Generated Reduced UU Adjacency Matrix&quot;</span>
     <span class="n">presence_graph_and_matrix</span><span class="p">[</span><span class="s2">&quot;UU&quot;</span><span class="p">][</span><span class="s2">&quot;reducedMatrix&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">reduced_UU_adjacency_matrix</span>
 
