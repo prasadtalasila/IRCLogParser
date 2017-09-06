@@ -14,10 +14,26 @@ from numpy.random import normal
 from scipy.optimize import curve_fit
 from scipy import stats
 import plotly.plotly as py
-py.sign_in('rohangoel963', 'vh6le8no26')
+py.sign_in('rohangoel963', 'WUqptWKXPareXfFMBtDG')
 import plotly.graph_objs as go
 from numpy import genfromtxt
 import glob
+
+
+def plot_data (data, output_directory, output_file_name):
+    x_data, y_data = (d for d in data)
+
+    x = np.array(x_data)
+    y = np.array(y_data)
+
+    plt.figure()
+    plt.plot(x, y, 'b-', label="Data")
+    
+    plt.legend()
+    # plt.show()
+    saver.check_if_dir_exists(output_directory)
+    plt.savefig(output_directory + "/" + output_file_name + ".png")
+    plt.close()
 
 
 def generate_probability_distribution(data, initial_rows_filter):
@@ -163,8 +179,8 @@ def plot_infomap_igraph(nx_graph, membership, output_directory, output_file_name
         for edge in nx_graph.es():
             if membership[edge.tuple[0]] != membership[edge.tuple[1]]:
                 edges.append(edge)
-                # edges_colors.append("#55555520")
-                edges_colors.append("#00000000")
+                edges_colors.append("#55555520")
+                # edges_colors.append("#00000000")
             else:
                 edges_colors.append("#00000099")
         graph_copy.delete_edges(edges)
@@ -185,7 +201,7 @@ def plot_infomap_igraph(nx_graph, membership, output_directory, output_file_name
     visual_style["layout"] = layout
     visual_style["bbox"] = (1024, 768)
     visual_style["margin"] = 40
-    visual_style["edge_label"] = nx_graph.es["weight"]
+    #visual_style["edge_label"] = nx_graph.es["weight"]
     visual_style["edge_width"] = igraph.rescale(nx_graph.es['weight'], out_range=(1, 10))
     
     for vertex in nx_graph.vs():
@@ -202,8 +218,8 @@ def plot_infomap_igraph(nx_graph, membership, output_directory, output_file_name
             vertex["vertex_shape"] = "circle"
             vertex["color"] = str('#') + colors[membership[vertex.index]]
             # coloring for channels vs users
-            # vertex["vertex_shape"] = "square" if int(vertex["id"]) >= 1000000 else "circle"
-            # vertex["color"] = "red" if int(vertex["id"]) >= 1000000 else "#00ff00"
+            vertex["vertex_shape"] = "square" if (vertex["id"].isdigit() and int(vertex["id"]) >= 1000000) else "circle"
+            # vertex["color"] = "red" if (vertex["id"].isdigit() and int(vertex["id"]) >= 1000000) else "#00ff00"
         visual_style["vertex_color"] = nx_graph.vs["color"]
         visual_style["vertex_shape"] = nx_graph.vs["vertex_shape"]
 
