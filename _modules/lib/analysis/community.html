@@ -1,0 +1,198 @@
+
+
+<!doctype html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>lib.analysis.community &#8212; IRC Log Parser 1.0.0 documentation</title>
+    <link rel="stylesheet" href="../../../_static/bizstyle.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '1.0.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/javascript" src="../../../_static/bizstyle.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+    <meta name="viewport" content="width=device-width,initial-scale=1.0">
+    <!--[if lt IE 9]>
+    <script type="text/javascript" src="_static/css3-mediaqueries.js"></script>
+    <![endif]-->
+  </head>
+  <body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">IRC Log Parser 1.0.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" accesskey="U">Module code</a> &#187;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for lib.analysis.community</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">networkx</span> <span class="k">as</span> <span class="nn">nx</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">igraph</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">import</span> <span class="nn">lib.config</span> <span class="k">as</span> <span class="nn">config</span>
+<span class="kn">import</span> <span class="nn">lib.vis</span> <span class="k">as</span> <span class="nn">vis</span>
+
+
+<div class="viewcode-block" id="infomap_igraph"><a class="viewcode-back" href="../../../DocumentationForCode.html#lib.analysis.community.infomap_igraph">[docs]</a><span class="k">def</span> <span class="nf">infomap_igraph</span><span class="p">(</span><span class="n">ig_graph</span><span class="p">,</span> <span class="n">net_file_location</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; </span>
+<span class="sd">        Performs igraph-infomap analysis on the nx graph</span>
+<span class="sd">    </span>
+<span class="sd">    Args:</span>
+<span class="sd">        ig_graph(object): igraph graph object</span>
+<span class="sd">        net_file_location(str): location to load graph from if not mentioned in ig_graph</span>
+<span class="sd">        reduce_graph(bool): toggle between enable/disable reduction</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        ig_graph: igraph object</span>
+<span class="sd">        community.membership: result of infomap community analyis</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">if</span> <span class="n">ig_graph</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="c1"># give an option of loading a graph from .net file</span>
+        <span class="n">ig_graph</span> <span class="o">=</span> <span class="n">igraph</span><span class="o">.</span><span class="n">Graph</span><span class="p">()</span>
+        <span class="n">ig_graph</span> <span class="o">=</span> <span class="n">igraph</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">net_file_location</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s2">&quot;pajek&quot;</span><span class="p">)</span>
+
+    <span class="n">community</span> <span class="o">=</span> <span class="n">ig_graph</span><span class="o">.</span><span class="n">community_infomap</span><span class="p">(</span><span class="n">edge_weights</span><span class="o">=</span><span class="n">ig_graph</span><span class="o">.</span><span class="n">es</span><span class="p">[</span><span class="s2">&quot;weight&quot;</span><span class="p">])</span>
+    <span class="n">codelength</span> <span class="o">=</span> <span class="n">community</span><span class="o">.</span><span class="n">codelength</span>
+
+    <span class="nb">print</span> <span class="s2">&quot;code-length:&quot;</span><span class="p">,</span> <span class="n">codelength</span>
+    <span class="nb">print</span> <span class="s2">&quot;no. of communities: &quot;</span><span class="p">,</span> <span class="nb">max</span><span class="p">(</span><span class="n">community</span><span class="o">.</span><span class="n">membership</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span>
+    <span class="nb">print</span> <span class="n">community</span>
+
+    <span class="k">if</span> <span class="n">config</span><span class="o">.</span><span class="n">DEBUGGER</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">ig_graph</span><span class="o">.</span><span class="n">vs</span><span class="p">():</span>
+            <span class="nb">print</span> <span class="nb">str</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">index</span><span class="p">)</span><span class="o">+</span><span class="s2">&quot;</span><span class="se">\t</span><span class="s2">&quot;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">ig_graph</span><span class="o">.</span><span class="n">vs</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">][</span><span class="n">node</span><span class="o">.</span><span class="n">index</span><span class="p">])</span>
+            <span class="c1"># print str(node.index)+&quot;\t&quot;+str(id_to_name_map[g.vs[&quot;id&quot;][node.index]])</span>
+
+    <span class="c1"># http://stackoverflow.com/questions/21976889/plotting-communities-with-python-igraph</span>
+    <span class="k">return</span> <span class="n">ig_graph</span><span class="p">,</span> <span class="n">community</span><span class="o">.</span><span class="n">membership</span></div>
+
+
+<div class="viewcode-block" id="convert_id_name_community"><a class="viewcode-back" href="../../../DocumentationForCode.html#lib.analysis.community.convert_id_name_community">[docs]</a><span class="k">def</span> <span class="nf">convert_id_name_community</span><span class="p">(</span><span class="n">max_hash</span><span class="p">,</span> <span class="n">community_txt_file</span><span class="p">,</span> <span class="n">hash_file_txt</span><span class="p">,</span> <span class="n">reduced_hash_txt</span><span class="p">,</span> <span class="n">reduced_community</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; </span>
+<span class="sd">    Converts communites from their ID representation to name for easier understanding</span>
+<span class="sd">    </span>
+<span class="sd">    Args:</span>
+<span class="sd">        max_hash(int): max possible hash value</span>
+<span class="sd">        community_txt_file(str): location fo the file having community analysis</span>
+<span class="sd">        hash_file_txt(str): location fo the file having the non-reduced nick_hash</span>
+<span class="sd">        reduced_hash_txt(str): location fo the file having the reduced nick_hash</span>
+<span class="sd">        reduced_community(bool): switch b/w reduced and non reduced communities</span>
+<span class="sd">    </span>
+<span class="sd">    Returns:</span>
+<span class="sd">        null</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">hash_value</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;&quot;</span><span class="p">]</span><span class="o">*</span><span class="n">max_hash</span>
+
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">hash_file_txt</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+        <span class="n">content</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">readlines</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">content</span><span class="p">:</span>
+            <span class="n">a</span><span class="p">,</span> <span class="n">b</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">split</span><span class="p">()</span>
+            <span class="n">hash_value</span><span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">a</span><span class="p">)]</span> <span class="o">=</span> <span class="n">b</span>
+
+    <span class="sd">&#39;&#39;&#39;CHANGE COMMUNUITES FROM IDS TO NAME&#39;&#39;&#39;</span>
+    <span class="nb">print</span> <span class="s2">&quot;</span><span class="si">{: &gt;20}</span><span class="s2"> </span><span class="si">{: &gt;1}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="s2">&quot;NAME&quot;</span><span class="p">,</span> <span class="s2">&quot;CommunityID&quot;</span><span class="p">)</span>
+    <span class="nb">print</span> <span class="s2">&quot;=================================&quot;</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">reduced_community</span><span class="p">:</span>
+        <span class="n">c</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">community_txt_file</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="n">content</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">readlines</span><span class="p">()</span>
+            <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">content</span><span class="p">:</span>
+                <span class="n">a</span><span class="p">,</span> <span class="n">b</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">split</span><span class="p">()</span>
+                <span class="n">a</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">a</span><span class="p">)</span>
+                <span class="n">b</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">b</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">b</span> <span class="o">!=</span> <span class="n">c</span><span class="p">:</span>
+                    <span class="nb">print</span> <span class="s2">&quot;---------------------------&quot;</span>
+                    <span class="n">c</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="c1"># print  hash_value[a]+&quot;\t&quot;+str(b)</span>
+                <span class="nb">print</span> <span class="s2">&quot;</span><span class="si">{: &gt;20}</span><span class="s2"> </span><span class="si">{: &gt;1}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">hash_value</span><span class="p">[</span><span class="n">a</span><span class="p">],</span> <span class="n">b</span><span class="p">)</span>
+
+    <span class="k">else</span><span class="p">:</span>
+        <span class="sd">&#39;&#39;&#39;USED FOR REDUCED COMMUNITIES&#39;&#39;&#39;</span>
+        <span class="n">top_names</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">reduced_hash_txt</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="n">content</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">readlines</span><span class="p">()</span>
+            <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">content</span><span class="p">:</span>
+                <span class="n">a</span><span class="p">,</span> <span class="n">b</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">split</span><span class="p">()</span>
+                <span class="n">a</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">a</span><span class="p">)</span>
+                <span class="n">top_names</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">b</span><span class="p">)</span>
+
+        <span class="n">c</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">community_txt_file</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="n">content</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">readlines</span><span class="p">()</span>
+            <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">content</span><span class="p">:</span>
+                <span class="n">a</span><span class="p">,</span> <span class="n">b</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">split</span><span class="p">()</span>
+                <span class="n">a</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">a</span><span class="p">)</span>
+                <span class="n">b</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">b</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">b</span> <span class="o">!=</span> <span class="n">c</span><span class="p">:</span>
+                    <span class="nb">print</span> <span class="s2">&quot;---------------------------&quot;</span>
+                    <span class="n">c</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="k">if</span> <span class="n">hash_value</span><span class="p">[</span><span class="n">a</span><span class="p">]</span> <span class="ow">in</span> <span class="n">top_names</span><span class="p">:</span>
+                    <span class="nb">print</span> <span class="s2">&quot;</span><span class="si">{: &gt;20}</span><span class="s2"> </span><span class="si">{: &gt;1}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">hash_value</span><span class="p">[</span><span class="n">a</span><span class="p">],</span> <span class="n">b</span><span class="p">)</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">IRC Log Parser 1.0.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016, Prasad Talasila, Rohan Goel, Dhruv Shekhawat.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.3.
+    </div>
+  </body>
+</html>
