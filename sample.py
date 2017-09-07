@@ -1,6 +1,8 @@
 from lib.in_out import reader, saver
 import lib.nickTracker as nickTracker, lib.config as config, lib.vis as vis, lib.validate as validate
 from lib.analysis import network, channel, user, community
+from networkx.readwrite import json_graph
+import json
 
 log_directory = config.LOG_DIRECTORY
 channel_name = config.CHANNEL_NAME
@@ -14,16 +16,18 @@ output_directory = config.OUTPUT_DIRECTORY
 
 # ============== ANALYSIS =============
 # message_number_graph = network.message_number_graph(log_data, nicks, nick_same_list, False)
+#--print message_number_graph.size('weight')
 # message_number_graph_day_list = network.message_number_graph(log_data, nicks, nick_same_list, True)
 # degree_anal_message_numder = network.degree_analysis_on_graph(message_number_graph)
 # message_time_graph_list = network.message_time_graph(log_data, nicks, nick_same_list, True)
 # message_time_graph = network.message_time_graph(log_data, nicks, nick_same_list, False)
 # out_degree_node_number, in_degree_node_number, total_degree_node_number = network.degree_node_number_csv(log_data, nicks, nick_same_list)
 # nick_change_graph_list = user.nick_change_graph(log_data, True)
-# bin_matrix, total_messages = network.message_number_bins_csv(log_data, nicks, nick_same_list)
+#bin_matrix, total_messages = network.message_number_bins_csv(log_data, nicks, nick_same_list)
+#--print bin_matrix, total_messages
 # conv_len, conv_ref_time = channel.conv_len_conv_refr_time(log_data, nicks, nick_same_list)
 # resp_time = channel.response_time(log_data, nicks, nick_same_list)
-
+	
 # user.keywords_clusters(log_data, nicks, nick_same_list)
 # network.degree_analysis_on_graph(message_number_graph)
 # network.identify_hubs_and_experts(log_data, nicks, nick_same_list)
@@ -67,6 +71,10 @@ output_directory = config.OUTPUT_DIRECTORY
 # Change analysis to all channels in config
 # nicks, nick_same_list, channels_for_user, nick_channel_dict, nicks_hash, channels_hash = nickTracker.nick_tracker(log_data, True)
 # dict_out, graph = network.channel_user_presence_graph_and_csv(nicks, nick_same_list, channels_for_user, nick_channel_dict, nicks_hash, channels_hash)
+
+### Note : if json for arc graph is required make CC_graphs_nodes as channel names not hash ###
+#CC_graph = dict_out["CC"]["graph"]
+#saver.save_js_arc(CC_graph, "lib/d3viz/", "cc.js") # store it as cc.js only, for index.html to render properly
 
 # saver.save_csv(dict_out["UU"]["reducedMatrix"],output_directory, "rUU")
 # saver.save_csv(dict_out["CC"]["reducedMatrix"],output_directory, "rCC")
