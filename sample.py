@@ -67,7 +67,8 @@ output_directory = config.OUTPUT_DIRECTORY
 # Change analysis to all channels in config
 # nicks, nick_same_list, channels_for_user, nick_channel_dict, nicks_hash, channels_hash = nickTracker.nick_tracker(log_data, True)
 # dict_out, graph = network.channel_user_presence_graph_and_csv(nicks, nick_same_list, channels_for_user, nick_channel_dict, nicks_hash, channels_hash)
-
+# reduced_CC_graph = dict_out["CC"]["reducedGraph"]
+# saver.save_js_arc(reduced_CC_graph, channels_hash, "lib/protovis/", "cc.js") # store it as cc.js only, for index.html to render properly
 # saver.save_csv(dict_out["UU"]["reducedMatrix"],output_directory, "rUU")
 # saver.save_csv(dict_out["CC"]["reducedMatrix"],output_directory, "rCC")
 # saver.save_csv(dict_out["CU"]["reducedMatrix"],output_directory, "rCU")
