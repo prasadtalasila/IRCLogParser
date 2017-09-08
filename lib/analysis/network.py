@@ -325,6 +325,7 @@ def channel_user_presence_graph_and_csv(nicks, nick_same_list, channels_for_user
     
     reduced_CC_graph = channel_channel_graph.copy()
     reduced_CC_graph.remove_nodes_from(map(str, np.array(indices_to_delete_channels) + config.STARTING_HASH_CHANNEL)) # say the indices to remove are 1,2 presence_graph_and_matrix["CC"]["reducedGraph"] = reduced_CC_graph 
+    presence_graph_and_matrix["CC"]["reducedGraph"] = reduced_CC_graph
     
     print "Generated Reduced CC Adjacency Matrix"
 
