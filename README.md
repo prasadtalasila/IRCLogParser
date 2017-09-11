@@ -39,7 +39,8 @@ To run the tests locally on your machine, run `python -m unittest -v tests` in t
 ## Installation
 
 IRCLogParser depends on various third-party libraries which are handled by [setup.py](./setup.py). 
-Run `pip -v install -e .` in the root directory to install these dependencies.
+Run the "install.sh" script in the root directory to install these dependencies and other OS level
+dependencies for the third-party libraries.
 
 ## License
 
