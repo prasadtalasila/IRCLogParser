@@ -46,9 +46,9 @@ def draw_nx_graph(nx_graph, output_directory, output_file_name):
     for u, v, d in nx_graph.edges(data=True):
         d['label'] = d.get('weight', '')
 
-    output_file = output_directory + "/" + output_file_name + ".png"
+    output_file = output_directory + "/" + output_file_name + ".svg"
     if config.DEBUGGER:
-        print "Generating", (output_file_name + ".png")
+        print "Generating", (output_file_name + ".svg")
 
     A = nx.nx.drawing.nx_agraph.to_agraph(nx_graph)
     A.layout(prog='dot')
