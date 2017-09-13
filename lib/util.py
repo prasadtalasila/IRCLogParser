@@ -218,3 +218,15 @@ def find_top_n_element_after_sorting(in_list, index, reverseBool, n):
             n(int): select top  n
     """
     return sorted(in_list, key=lambda x: x[index], reverse=reverseBool)[:n]
+
+def count_number_of_users_on_channel(nick_same_list):
+    '''
+        Args: 
+        nick_same_list:list of list of strings, each inner list has the aliases for the same user
+    '''
+    total_users = 0
+    for ele in nick_same_list:
+        if not ele:
+            break
+        total_users += 1
+    return total_users
