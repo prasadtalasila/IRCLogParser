@@ -1,14 +1,14 @@
 DEBUGGER = True
-LOG_DIRECTORY = "/home/rohan/parser_files/slackware/"
-OUTPUT_DIRECTORY = "/home/rohan/Desktop/"
+LOG_DIRECTORY = "/media/krishna/Acer/Studies/slackware/"
+OUTPUT_DIRECTORY = "/media/krishna/Acer/Studies/IRC_op"
 STARTING_DATE = "2013-1-1"
 ENDING_DATE = "2013-1-1"
 MINIMUM_NICK_LENGTH = 3
 
 
 # change to ["ALL"] if want to perform analysis over all channels
-CHANNEL_NAME = ["#kubuntu-devel"]
-# CHANNEL_NAME = ["ALL"]
+# CHANNEL_NAME = ["#kubuntu-devel"]
+CHANNEL_NAME = ["ALL"]
 
 # increase if using channel_user_presence
 MAX_EXPECTED_DIFF_NICKS = 5000

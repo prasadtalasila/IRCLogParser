@@ -48,10 +48,11 @@ message_number_graph = network.message_number_graph(log_data, nicks, nick_same_l
 # saver.save_csv(in_degree_node_number, output_directory, "node_in_degree"+ starting_date +'-'+ending_date)
 # saver.save_csv(total_degree_node_number, output_directory, "node_total_degree"+ starting_date +'-'+ending_date)
 # saver.save_csv(bin_matrix, output_directory, "MessageNumber_binsize_"+str(config.BIN_LENGTH_MINS))
+for i in range(len(message_number_graph_day_list)):
+    saver.draw_nx_graph(message_number_graph_day_list[i][0], output_directory, "mng" + str(i+1))
 # for i in range(len(nick_change_graph_list)):
     # saver.draw_nx_graph(nick_change_graph_list[i], output_directory, "ncg" + str(i+1))
-
-saver.draw_nx_graph(message_number_graph, output_directory, "mnagg")    
+# saver.draw_nx_graph(message_number_graph, output_directory, "mnagg")    
 # saver.draw_nx_graph(message_time_graph, output_directory, "mtgagg")
 # saver.save_csv(conv_len, output_directory, "conv_len")
 # saver.save_csv(resp_time, output_directory, "resp_time")
