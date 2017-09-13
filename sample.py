@@ -1,8 +1,11 @@
 from lib.in_out import reader, saver
-import lib.nickTracker as nickTracker, lib.config as config, lib.vis as vis, lib.validate as validate, lib.util as util
-from lib.analysis import network, channel, user, community
+import lib.nickTracker as nickTracker, lib.config as config, lib.util as util
+from lib.analysis import channel
+import pickle
+#import lib.nickTracker as nickTracker, lib.config as config, lib.vis as vis, lib.validate as validate, lib.util as util
+#from lib.analysis import network, channel, user, community
 import numpy as np
-import networkx as nx
+#import networkx as nx
 log_directory = config.LOG_DIRECTORY
 channel_name = config.CHANNEL_NAME
 starting_date = config.STARTING_DATE
@@ -10,8 +13,14 @@ ending_date = config.ENDING_DATE
 output_directory = config.OUTPUT_DIRECTORY
 
 # ============== INPUT==================
-# log_data = reader.linux_input(log_directory, channel_name, starting_date, ending_date)
-# nicks, nick_same_list = nickTracker.nick_tracker(log_data)
+log_data = reader.linux_input(log_directory, channel_name, starting_date, ending_date)
+nicks, nick_same_list = nickTracker.nick_tracker(log_data)
+fileObject = open("nicks",'wb')
+pickle.dump(nicks,fileObject)
+fileObject.close()
+fileObject = open("nick_same_list",'wb')
+pickle.dump(nick_same_list,fileObject)
+fileObject.close()
 
 # ============== ANALYSIS =============
 # message_number_graph = network.message_number_graph(log_data, nicks, nick_same_list, False)
@@ -28,8 +37,13 @@ output_directory = config.OUTPUT_DIRECTORY
 # data = [[i for i in range(len(bin_matrix[0]))]]
 # data.append([sum(i) for i in zip(*bin_matrix)])
 # conv_len, conv_ref_time = channel.conv_len_conv_refr_time(log_data, nicks, nick_same_list)
-# resp_time = channel.response_time(log_data, nicks, nick_same_list)
+resp_time = channel.response_time(log_data, nicks, nick_same_list)
+fileObject = open("resp_time",'wb')
+pickle.dump(resp_time,fileObject)
+fileObject.close()
 
+# print log_data
+# print resp_time
 # user.keywords_clusters(log_data, nicks, nick_same_list)
 # network.degree_analysis_on_graph(message_number_graph)
 # hits = network.identify_hubs_and_experts(log_data, nicks, nick_same_list)

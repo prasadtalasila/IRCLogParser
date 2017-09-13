@@ -289,4 +289,50 @@ def response_time(log_dict, nicks, nick_same_list):
 
 	#Finally storing the RT values along with their frequencies in a csv file. 
 	rows_rt = zip(graph_x_axis, graph_y_axis)
-	return rows_rt	
+	return rows_rt
+
+
+def truncate_table(table, cutoff_percentile):
+
+	"""
+	The calculations of conversation characteristics, namely RT, CL and CRT, are
+	based on the cutoff values estimated for RT and CL. This generic function takes
+	a two column table and truncates the same to a required percentile value. Usually
+	the RT followed by CL tables are processed through this function.
+
+	Args:
+		table (zip List): List containing 2-tuple elements, ex: [(0,10),(1,5)]
+		cutoff_percentile (float) : Cutoff indicating the statistical significance of
+		observations on conversation characteristics. The value is expressed as a
+		floating point number.
+
+	Returns:
+   		truncated_table (zip List): A truncated version of table provided as input
+   		argument. The table is truncated to the level of statistical significance
+   		mentioned in the cutoff_percentile parameter.
+   		cutoff_time (int): Cutoff time value corresponding to the chosen level of
+   		statistical significance.
+
+	"""
+	times, values = zip(*table)
+	total_value = 0
+	for value in values:
+		total_value = total_value + value
+
+	index = 0
+	cutoff_index = 0
+	cumulative_value = 0
+	while (index < len(values)):
+		if (values[index] != 0):
+			cumulative_value = cumulative_value + values[index]
+			if (cumulative_value <= (1-cutoff_percentile/100.0) * total_value):
+				cutoff_index = index
+			else:
+				break
+		index = index + 1
+
+	#slice counts the number of elements, which will be one greater than the index
+	truncated_table = zip(times[:cutoff_index+1], values[:cutoff_index+1])
+	cutoff_time = times[cutoff_index]
+
+	return truncated_table, cutoff_time
