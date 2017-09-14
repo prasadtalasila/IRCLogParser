@@ -34,11 +34,6 @@ def conv_len_conv_refr_time(log_dict, nicks, nick_same_list):
 
 	conversations=[[] for i in range(config.MAX_CONVERSATIONS)] #This might need to be incremented from 10000 if we have more users. Same logic as the above 7000 one. Applies to all the other codes too.
 											 ## I would advice on using a different data structure which does not have an upper bound like we do in arrays.
-	graphx1 =[]
-	graphy1 =[]
-	graphx2 =[]
-	graphy2 =[]
-
 
 	def build_conversation(rec_list, nick, send_time, nick_to_search,
 						   nick_receiver, nick_sender, dateadd,
@@ -129,7 +124,10 @@ def conv_len_conv_refr_time(log_dict, nicks, nick_same_list):
 
 	conversations, nick_receiver, send_time = parse_log_lines_for_conv(log_dict, nicks, conn_comp_list, conversations)
 
-	#Lines 212-290 consider all cases in which messages are addressed as - (nick1:nick2 or nick1,nick2 or nick1,nick2:) and stores their response times in conversations. conversations[i] contains all the response times between userA and userB throughout an entire year.
+	# Consider all cases in which messages are addressed as - (nick1:nick2 or nick1,nick2
+	# or nick1,nick2:) and stores their response times in conversations.
+	# conversations[i] contains all the response times between userA and userB
+	# throughout a chosen time period.
 
 	for i in range(len(conversations)):
 		#remove the first two elements from every conversations[i]
@@ -154,21 +152,9 @@ def conv_len_conv_refr_time(log_dict, nicks, nick_same_list):
 						conv.append(conversations[i][j] - first)
 						break
 
-	def build_conv_csv(conv_list, graph_x, graph_y):
-
-		for i in range(max(conv_list)):
-			graph_x.append(i)
-			graph_y.append(conv_list.count(i))
-
-		return graph_x, graph_y
-
-	graphx1, graphy1 = build_conv_csv(conv, graphx1, graphy1)
-	graphx2, graphy2 = build_conv_csv(conv_diff, graphx2, graphy2)
-
 	#To plot CDF we store the CL and CRT values and their number of occurences
-	# as shown above.
-	row_cl = zip(graphx1, graphy1)
-	row_crt = zip(graphx2, graphy2)
+	row_cl = build_stat_dist(conv)
+	row_crt = build_stat_dist(conv_diff)
 
 	return row_cl, row_crt
 
@@ -319,6 +305,26 @@ def response_time(log_dict, nicks, nick_same_list):
 	#Finally storing the RT values along with their frequencies in a csv file. 
 	rows_rt = zip(graph_x_axis, graph_y_axis)
 	return rows_rt
+
+
+def build_stat_dist(number_list):
+	"""
+	Summarize a list into a statistical distribution
+
+	Args:
+		number_list (List): List containing positive integers
+
+	Returns:
+	   rows_table(zip List): A tuple with two items in each element,
+	   in the (number, frequency) format
+	"""
+	graph_x = []
+	graph_y = []
+	for i in range(max(number_list)):
+		graph_x.append(i)
+		graph_y.append(number_list.count(i))
+
+	return zip(graph_x, graph_y)
 
 
 def truncate_table(table, cutoff_percentile):

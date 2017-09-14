@@ -32,7 +32,7 @@ nicks, nick_same_list = nickTracker.nick_tracker(log_data)
 # data.append([sum(i) for i in zip(*bin_matrix)])
 conv_len, conv_ref_time = channel.conv_len_conv_refr_time(log_data, nicks, nick_same_list)
 
-resp_time = channel.response_time(log_data, nicks, nick_same_list)
+# resp_time = channel.response_time(log_data, nicks, nick_same_list)
 
 # print log_data
 # print resp_time
