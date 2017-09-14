@@ -5,11 +5,28 @@ import lib.util as util
 class ChannelTest(unittest.TestCase):
 
     @staticmethod
+    def test_conv_len_conv_refr_time():
+        log_data = util.load_from_disk("data/log_data")
+        nicks = util.load_from_disk("data/nicks")
+        nick_same_list = util.load_from_disk("data/nick_same_list")
+        expected_conv_len = util.load_from_disk("data/conv_len")
+        expected_conv_ref_time = util.load_from_disk("data/conv_ref_time")
+
+        conv_len, conv_ref_time = \
+            channel.conv_len_conv_refr_time(log_data, nicks, nick_same_list)
+
+        assert conv_len == expected_conv_len, \
+            "Error in computing conversation length correctly."
+        assert conv_ref_time == expected_conv_ref_time, \
+                "Error in computing conversation refresh time correctly."
+
+
+    @staticmethod
     def test_response_time():
-        log_data = util.load_from_disk("log_data")
-        nicks = util.load_from_disk("nicks")
-        nick_same_list = util.load_from_disk("nick_same_list")
-        expected_resp_time = util.load_from_disk("resp_time")
+        log_data = util.load_from_disk("data/log_data")
+        nicks = util.load_from_disk("data/nicks")
+        nick_same_list = util.load_from_disk("data/nick_same_list")
+        expected_resp_time = util.load_from_disk("data/resp_time")
 
         resp_time = channel.response_time(log_data, nicks, nick_same_list)
 
@@ -35,7 +52,7 @@ class ChannelTest(unittest.TestCase):
 
     @staticmethod
     def test_truncate_table_with_long_table():
-        resp_time = util.load_from_disk("resp_time")
+        resp_time = util.load_from_disk("data/resp_time")
 
         expected_cutoff_time = 989
         cutoff_percentile = 5
