@@ -452,7 +452,7 @@ def degree_analysis_on_graph(nx_graph, date=None, directed = True):
         key_list = ""
         for key in degree_dict:
             if degree_dict[key] == degree:
-                key_list += (key + ", ")
+                key_list += (str(key) + ", ")
         return key_list
 
     degree_map = {} # will map a string(eg "out", "in" , "all") to nx_graph.out_degree() etc
