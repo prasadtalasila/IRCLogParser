@@ -15,9 +15,6 @@ output_directory = config.OUTPUT_DIRECTORY
 # ============== INPUT==================
 log_data = reader.linux_input(log_directory, channel_name, starting_date, ending_date)
 nicks, nick_same_list = nickTracker.nick_tracker(log_data)
-# fileObject = open("nicks",'wb')
-# pickle.dump(nicks,fileObject)
-# fileObject.close()
 
 # ============== ANALYSIS =============
 # message_number_graph = network.message_number_graph(log_data, nicks, nick_same_list, False)
@@ -34,7 +31,6 @@ nicks, nick_same_list = nickTracker.nick_tracker(log_data)
 # data = [[i for i in range(len(bin_matrix[0]))]]
 # data.append([sum(i) for i in zip(*bin_matrix)])
 conv_len, conv_ref_time = channel.conv_len_conv_refr_time(log_data, nicks, nick_same_list)
-util.save_to_disk(conv_len,"conv_len")
 
 resp_time = channel.response_time(log_data, nicks, nick_same_list)
 
