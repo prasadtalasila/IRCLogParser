@@ -249,7 +249,7 @@ def generate_log_plots(filter_val, plot_data, output_directory, output_file_name
     sum_each_row = []
 
     for row in plot_data[2:]:   #ignore degree 0 and text, starting from degree 1
-        sum_each_row.append(sum(row[1:]))
+        sum_each_row.append(row)
 
     # print sum_each_row
     x_axis_log = [math.log(i) for i in xrange(1, filter_val)]   # ignore degree 0
