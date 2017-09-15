@@ -5,7 +5,7 @@ import lib.util as util
 import lib.config as config
 
 
-def conv_len_conv_refr_time(log_dict, nicks, nick_same_list):
+def conv_len_conv_refr_time(log_dict, nicks, nick_same_list, rt_cutoff_time):
 
 	""" Calculates the conversation length (CL) that is the length of time for which two users communicate 
 	i.e. if a message is not replied to within Response Time(RT), 
@@ -15,7 +15,8 @@ def conv_len_conv_refr_time(log_dict, nicks, nick_same_list):
 	Args:   
 		log_dict (str): Dictionary of logs data created using reader.py
 		nicks(List) : list of nickname created using nickTracker.py
-		nick_same_list :List of same_nick names created using nickTracker.py        
+		nick_same_list :List of same_nick names created using nickTracker.py
+		rt_cutoff_time (int) : Response Time (RT) cutoff to be used for CL and CRT calculations
 	Returns:
 		row_cl(zip List): Conversation Length
 		row_crt(zip List) :Conversation Refresh time
@@ -142,8 +143,7 @@ def conv_len_conv_refr_time(log_dict, nicks, nick_same_list):
 			# So now we have all the response times in conversations.
 			for j in range(1, len(conversations[i])):
 					# We are recording the conversation length in conv and CRT in conv_diff.
-					# Here 9 is the average response
-					if(conv_mat_diff(i, j, conversations) > 9):
+					if(conv_mat_diff(i, j, conversations) > rt_cutoff_time):
 						conv.append(conversations[i][j-1] - first)
 
 						conv_diff.append(conv_mat_diff(i, j, conversations))
@@ -161,7 +161,7 @@ def conv_len_conv_refr_time(log_dict, nicks, nick_same_list):
 
 
 
-def response_time(log_dict, nicks, nick_same_list):
+def response_time(log_dict, nicks, nick_same_list, cutoff_percentile):
 
 	""" finds the response time of a message 
 	i.e. the best guess for the time at which one can expect a reply for his/her message.
@@ -170,7 +170,7 @@ def response_time(log_dict, nicks, nick_same_list):
 		log_dict (str): Dictionary of logs data created using reader.py
 		nicks(List) : List of nickname created using nickTracker.py
 		nick_same_list :List of same_nick names created using nickTracker.py
-		output_directory (str): Location of output directory
+		cutoff_percentile (int): Cutoff percentile indicating statistical significance
 		
 	Returns:
 	   rows_RT(zip List): Response Time (This refers to the response
@@ -304,7 +304,8 @@ def response_time(log_dict, nicks, nick_same_list):
 
 	#Finally storing the RT values along with their frequencies in a csv file. 
 	rows_rt = zip(graph_x_axis, graph_y_axis)
-	return rows_rt
+	truncated_rt, rt_cutoff_time = truncate_table(rows_rt, cutoff_percentile)
+	return truncated_rt, rt_cutoff_time
 
 
 def build_stat_dist(number_list):

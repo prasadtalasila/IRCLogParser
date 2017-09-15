@@ -9,11 +9,13 @@ class ChannelTest(unittest.TestCase):
         log_data = util.load_from_disk("data/log_data")
         nicks = util.load_from_disk("data/nicks")
         nick_same_list = util.load_from_disk("data/nick_same_list")
+        rt_cutoff_time = 9
         expected_conv_len = util.load_from_disk("data/conv_len")
         expected_conv_ref_time = util.load_from_disk("data/conv_ref_time")
 
         conv_len, conv_ref_time = \
-            channel.conv_len_conv_refr_time(log_data, nicks, nick_same_list)
+            channel.conv_len_conv_refr_time(log_data, nicks,
+                                            nick_same_list, rt_cutoff_time)
 
         assert conv_len == expected_conv_len, \
             "Error in computing conversation length correctly."
@@ -26,12 +28,47 @@ class ChannelTest(unittest.TestCase):
         log_data = util.load_from_disk("data/log_data")
         nicks = util.load_from_disk("data/nicks")
         nick_same_list = util.load_from_disk("data/nick_same_list")
+
+        cutoff_percentile = 0
         expected_resp_time = util.load_from_disk("data/resp_time")
-
-        resp_time = channel.response_time(log_data, nicks, nick_same_list)
-
+        expected_cutoff_time = 1437
+        resp_time, cutoff_time = channel.response_time(log_data, nicks,
+                                          nick_same_list, cutoff_percentile)
         assert resp_time == expected_resp_time, \
-                "Error in computing response time correctly."
+                "Error in computing response time with 0% cutoff percentile."
+        assert cutoff_time == expected_cutoff_time, \
+                "Error in computing response time 0% cutoff percentile."
+
+        cutoff_percentile = 1
+        expected_resp_time = util.load_from_disk("data/truncated_rt_1percent")
+        expected_cutoff_time = 1436
+        resp_time, cutoff_time = channel.response_time(log_data, nicks,
+                                          nick_same_list, cutoff_percentile)
+        assert resp_time == expected_resp_time, \
+                "Error in computing response time with 1% cutoff percentile."
+        assert cutoff_time == expected_cutoff_time, \
+                "Error in computing response time 1% cutoff percentile."
+
+
+        cutoff_percentile = 5
+        expected_resp_time = util.load_from_disk("data/truncated_rt_5percent")
+        expected_cutoff_time = 989
+        resp_time, cutoff_time = channel.response_time(log_data, nicks,
+                                          nick_same_list, cutoff_percentile)
+        assert resp_time == expected_resp_time, \
+                "Error in computing response time with 5% cutoff percentile."
+        assert cutoff_time == expected_cutoff_time, \
+                "Error in computing response time 5% cutoff percentile."
+
+        cutoff_percentile = 10
+        expected_resp_time = util.load_from_disk("data/truncated_rt_10percent")
+        expected_cutoff_time = 203
+        resp_time, cutoff_time = channel.response_time(log_data, nicks,
+                                          nick_same_list, cutoff_percentile)
+        assert resp_time == expected_resp_time, \
+                "Error in computing response time with 10% cutoff percentile."
+        assert cutoff_time == expected_cutoff_time, \
+                "Error in computing response time 10% cutoff percentile."
 
 
     @staticmethod
