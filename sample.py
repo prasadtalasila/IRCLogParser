@@ -11,6 +11,7 @@ channel_name = config.CHANNEL_NAME
 starting_date = config.STARTING_DATE
 ending_date = config.ENDING_DATE
 output_directory = config.OUTPUT_DIRECTORY
+cutoff_percentile = config.CUTOFF_PERCENTILE
 
 # ============== INPUT==================
 log_data = reader.linux_input(log_directory, channel_name, starting_date, ending_date)
@@ -30,8 +31,8 @@ nicks, nick_same_list = nickTracker.nick_tracker(log_data)
 # bin_matrix, total_messages = network.message_number_bins_csv(log_data, nicks, nick_same_list)
 # data = [[i for i in range(len(bin_matrix[0]))]]
 # data.append([sum(i) for i in zip(*bin_matrix)])
-cutoff_percentile = 1
 truncated_rt, rt_cutoff_time = channel.response_time(log_data, nicks, nick_same_list, cutoff_percentile)
+print truncated_rt
 
 rt_cutoff_time = 9  # ideally, rt_cutoff_time comes from a function call to
                     # channel.response_time()
