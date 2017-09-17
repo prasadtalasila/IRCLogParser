@@ -5,7 +5,7 @@ import lib.util as util
 import lib.config as config
 
 
-def conv_len_conv_refr_time(log_dict, nicks, nick_same_list, rt_cutoff_time):
+def conv_len_conv_refr_time(log_dict, nicks, nick_same_list, rt_cutoff_time, cutoff_percentile):
 
 	""" Calculates the conversation length (CL) that is the length of time for which two users communicate 
 	i.e. if a message is not replied to within Response Time(RT), 
@@ -151,12 +151,13 @@ def conv_len_conv_refr_time(log_dict, nicks, nick_same_list, rt_cutoff_time):
 					if(j == (len(conversations[i]) - 1)):
 						conv.append(conversations[i][j] - first)
 						break
-
 	#To plot CDF we store the CL and CRT values and their number of occurences
 	row_cl = build_stat_dist(conv)
 	row_crt = build_stat_dist(conv_diff)
+	truncated_cl, cl_cutoff_time = truncate_table(row_cl, cutoff_percentile)
+	truncated_crt, crt_cutoff_time = truncate_table(row_crt, cutoff_percentile)
 
-	return row_cl, row_crt
+	return truncated_cl, truncated_crt
 
 
 
@@ -267,7 +268,7 @@ def response_time(log_dict, nicks, nick_same_list, cutoff_percentile):
 		#Explanation provided in parser-CL+CRT.py
 			for i in range(config.MAX_RESPONSE_CONVERSATIONS):
 				if(len(conversations[i]) != 0):					
-					totalmeanstd_list = build_mean_list(conversations, i, totalmeanstd_list)					
+					totalmeanstd_list = build_mean_list(conversations, i, totalmeanstd_list)
 
 			if(len(totalmeanstd_list) != 0):
 				for i in range(max(totalmeanstd_list) + 1):
@@ -302,15 +303,28 @@ def response_time(log_dict, nicks, nick_same_list, cutoff_percentile):
 		graph_y_axis.append(graph_cumulative.count(i))     # problem when ti=0 count is unexpectedly large
 		graph_x_axis.append(i)		
 
-	#Finally storing the RT values along with their frequencies in a csv file. 
+	#Finally storing the RT values along with their frequencies in a csv file; no need to invoke build_stat_dist() function
 	rows_rt = zip(graph_x_axis, graph_y_axis)
 	truncated_rt, rt_cutoff_time = truncate_table(rows_rt, cutoff_percentile)
+
+	if config.CUTOFF_TIME_STRATEGY == "TWO_SIGMA":
+		resp_time, resp_frequency_tuple = zip(*truncated_rt)
+		resp_frequency = list(resp_frequency_tuple)
+		rt_cutoff_time_frac = numpy.mean(resp_frequency) + 2*numpy.std(resp_frequency)
+		rt_cutoff_time = int(numpy.ceil(rt_cutoff_time_frac))
+
+	elif config.CUTOFF_TIME_STRATEGY == "PERCENTILE":
+		# nothing further to do; truncate_table() already gives rt_cutoff_time
+		# based on percentile
+		pass
+
 	return truncated_rt, rt_cutoff_time
 
 
 def build_stat_dist(number_list):
 	"""
-	Summarize a list into a statistical distribution
+	Summarize a list into a statistical distribution.
+	An empty input list generates an empty output list.
 
 	Args:
 		number_list (List): List containing positive integers
@@ -319,12 +333,17 @@ def build_stat_dist(number_list):
 	   rows_table(zip List): A tuple with two items in each element,
 	   in the (number, frequency) format
 	"""
+	# check for an empty input list
+	if not number_list:
+		return []
+
 	graph_x = []
 	graph_y = []
-	for i in range(max(number_list)):
+	for i in range(max(number_list)+1):
 		graph_x.append(i)
 		graph_y.append(number_list.count(i))
 
+	#print zip(graph_x, graph_y)
 	return zip(graph_x, graph_y)
 
 
@@ -335,12 +354,12 @@ def truncate_table(table, cutoff_percentile):
 	based on the cutoff values estimated for RT and CL. This generic function takes
 	a two column table and truncates the same to a required percentile value. Usually
 	the RT followed by CL tables are processed through this function.
+	cutoff_percentile (float) : Cutoff indicating the statistical significance of
+	observations on conversation characteristics. The value is expressed as a
+	floating point number.
 
 	Args:
 		table (zip List): List containing 2-tuple elements, ex: [(0,10),(1,5)]
-		cutoff_percentile (float) : Cutoff indicating the statistical significance of
-		observations on conversation characteristics. The value is expressed as a
-		floating point number.
 
 	Returns:
    		truncated_table (zip List): A truncated version of table provided as input

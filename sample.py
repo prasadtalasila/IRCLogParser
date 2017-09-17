@@ -1,11 +1,8 @@
 from lib.in_out import reader, saver
-import lib.nickTracker as nickTracker, lib.config as config, lib.util as util
-from lib.analysis import channel
-import pickle
-#import lib.nickTracker as nickTracker, lib.config as config, lib.vis as vis, lib.validate as validate, lib.util as util
-#from lib.analysis import network, channel, user, community
+import lib.nickTracker as nickTracker, lib.config as config, lib.vis as vis, lib.validate as validate, lib.util as util
+from lib.analysis import network, channel, user, community
 import numpy as np
-#import networkx as nx
+import networkx as nx
 log_directory = config.LOG_DIRECTORY
 channel_name = config.CHANNEL_NAME
 starting_date = config.STARTING_DATE
@@ -14,8 +11,8 @@ output_directory = config.OUTPUT_DIRECTORY
 cutoff_percentile = config.CUTOFF_PERCENTILE
 
 # ============== INPUT==================
-log_data = reader.linux_input(log_directory, channel_name, starting_date, ending_date)
-nicks, nick_same_list = nickTracker.nick_tracker(log_data)
+# log_data = reader.linux_input(log_directory, channel_name, starting_date, ending_date)
+# nicks, nick_same_list = nickTracker.nick_tracker(log_data)
 
 # ============== ANALYSIS =============
 # message_number_graph = network.message_number_graph(log_data, nicks, nick_same_list, False)
@@ -31,15 +28,11 @@ nicks, nick_same_list = nickTracker.nick_tracker(log_data)
 # bin_matrix, total_messages = network.message_number_bins_csv(log_data, nicks, nick_same_list)
 # data = [[i for i in range(len(bin_matrix[0]))]]
 # data.append([sum(i) for i in zip(*bin_matrix)])
-truncated_rt, rt_cutoff_time = channel.response_time(log_data, nicks, nick_same_list, cutoff_percentile)
-print truncated_rt
+# truncated_rt, rt_cutoff_time = channel.response_time(log_data, nicks, nick_same_list, cutoff_percentile)
 
-rt_cutoff_time = 9  # ideally, rt_cutoff_time comes from a function call to
-                    # channel.response_time()
-conv_len, conv_ref_time = channel.conv_len_conv_refr_time(log_data, nicks, nick_same_list, rt_cutoff_time)
+# conv_len, conv_ref_time = channel.conv_len_conv_refr_time(log_data, nicks, nick_same_list,
+#                                                          rt_cutoff_time, cutoff_percentile)
 
-# print log_data
-# print resp_time
 # user.keywords_clusters(log_data, nicks, nick_same_list)
 # network.degree_analysis_on_graph(message_number_graph)
 # hits = network.identify_hubs_and_experts(log_data, nicks, nick_same_list)
