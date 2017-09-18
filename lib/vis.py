@@ -14,11 +14,11 @@ from numpy.random import normal
 from scipy.optimize import curve_fit
 from scipy import stats
 import plotly.plotly as py
-py.sign_in('rohangoel963', 'WUqptWKXPareXfFMBtDG')
 import plotly.graph_objs as go
 from numpy import genfromtxt
 import glob
 
+py.sign_in(config.USER_NAME, config.TOKEN)
 
 def plot_data (data, output_directory, output_file_name):
     x_data, y_data = (d for d in data)
