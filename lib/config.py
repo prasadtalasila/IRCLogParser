@@ -5,6 +5,9 @@ STARTING_DATE = "2013-1-1"
 ENDING_DATE = "2013-1-31"
 MINIMUM_NICK_LENGTH = 3
 
+# plotly login credentials
+USER_NAME = 'rohangoel963'
+TOKEN = 'WUqptWKXPareXfFMBtDG'
 
 # change to ["ALL"] if want to perform analysis over all channels
 CHANNEL_NAME = ["#kubuntu-devel"]
