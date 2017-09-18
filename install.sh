@@ -19,3 +19,5 @@ pip install cairocffi
 
 # install IRCLogParser
 pip -v install -e .
+# install nltk corpus wordnet
+python -m nltk.downloader wordnet
