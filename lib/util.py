@@ -2,6 +2,7 @@ import networkx as nx
 import numpy as np
 import igraph
 import lib.config as config
+import pickle
 
 def correctLastCharCR(inText):#
     """ if the last letter of the nick is '\\' replace it by 'CR'
@@ -230,3 +231,25 @@ def count_number_of_users_on_channel(nick_same_list):
             break
         total_users += 1
     return total_users
+
+def save_to_disk(data,file_name):
+    """
+    A function to save any data structure to a file using pickle module
+    :param data: data structure that needs to be saved to disk
+    :param file_name: name of the file to be used for saving the data
+    :return: null
+    """
+    fileObject = open(file_name,'wb')
+    pickle.dump(data,fileObject)
+    fileObject.close()
+
+def load_from_disk(file_name):
+    """
+    A function to load any data structure from a file using pickle module
+    :param file_name: name of the file to be used for saving the data
+    :return: data structure that exists in the file
+    """
+    fileObject = open(file_name,'r')
+    data = pickle.load(fileObject)
+    fileObject.close()
+    return data

@@ -8,6 +8,7 @@ channel_name = config.CHANNEL_NAME
 starting_date = config.STARTING_DATE
 ending_date = config.ENDING_DATE
 output_directory = config.OUTPUT_DIRECTORY
+cutoff_percentile = config.CUTOFF_PERCENTILE
 
 # ============== INPUT==================
 # log_data = reader.linux_input(log_directory, channel_name, starting_date, ending_date)
@@ -27,8 +28,10 @@ output_directory = config.OUTPUT_DIRECTORY
 # bin_matrix, total_messages = network.message_number_bins_csv(log_data, nicks, nick_same_list)
 # data = [[i for i in range(len(bin_matrix[0]))]]
 # data.append([sum(i) for i in zip(*bin_matrix)])
-# conv_len, conv_ref_time = channel.conv_len_conv_refr_time(log_data, nicks, nick_same_list)
-# resp_time = channel.response_time(log_data, nicks, nick_same_list)
+# truncated_rt, rt_cutoff_time = channel.response_time(log_data, nicks, nick_same_list, cutoff_percentile)
+
+# conv_len, conv_ref_time = channel.conv_len_conv_refr_time(log_data, nicks, nick_same_list,
+#                                                          rt_cutoff_time, cutoff_percentile)
 
 # user.keywords_clusters(log_data, nicks, nick_same_list)
 # network.degree_analysis_on_graph(message_number_graph)

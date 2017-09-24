@@ -1,8 +1,8 @@
 DEBUGGER = True
-LOG_DIRECTORY = "/home/rohan/parser_files/YearlyLogFiles/"
-OUTPUT_DIRECTORY = "/home/rohan/Desktop/"
+LOG_DIRECTORY = "/home/systemlab03/TSRK/phd/IRCLogParser/parser_files/YearlyLogFiles/"
+OUTPUT_DIRECTORY = "/home/systemlab03/TSRK/phd/IRCLogParser/parser_files/results"
 STARTING_DATE = "2013-1-1"
-ENDING_DATE = "2013-1-31"
+ENDING_DATE = "2013-1-2"
 MINIMUM_NICK_LENGTH = 3
 
 # plotly login credentials
@@ -48,6 +48,8 @@ EXPANSION_PARAMETER = 15.0
 MAX_CONVERSATIONS = 10000
 HOURS_PER_DAY = 24
 MINS_PER_HOUR = 60
+CUTOFF_PERCENTILE = 20.0                # RT cutoff percentage
+CUTOFF_TIME_STRATEGY = "TWO_SIGMA"      # possible values PERCENTILE, TWO_SIGMA
 
 # Response Time constants
 MAX_RESPONSE_CONVERSATIONS = 200
