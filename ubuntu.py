@@ -169,27 +169,20 @@ for date in dates:
 
         vis.plot_infomap_igraph(msg_graph, msg_membership, output_directory, "message-exchange-" + starting_date + "-cutoff-" +str(cutoff))
         
-# ================= Message Exchange Network  Multi Channel =========================
+# ================= Message Exchange Network Multi Channel =========================
 
 for date in dates:
     starting_date = date[0]
     ending_date = date[1]
-    for cutoff in cut_offs:
-        config.THRESHOLD_MESSAGE_NUMBER_GRAPH = cutoff
-        log_data = reader.linux_input(log_directory, ["#kubuntu-devel","#kubuntu","#ubuntu-devel"], starting_date, ending_date)
-        nicks, nick_same_list, channels_for_user, nick_channel_dict, nicks_hash, channels_hash = nickTracker.nick_tracker(log_data, True)
+    log_data = reader.linux_input(log_directory, ["#kubuntu-devel", "#kubuntu", "#ubuntu-devel"], starting_date, ending_date)
+    nicks, nick_same_list, channels_for_user, nick_channel_dict, nicks_hash, channels_hash = nickTracker.nick_tracker(log_data, True)
 
-        dict_out, graph = network.channel_user_presence_graph_and_csv(nicks, nick_same_list, channels_for_user, nick_channel_dict, nicks_hash, channels_hash)
+    dict_out, graph = network.channel_user_presence_graph_and_csv(nicks, nick_same_list, channels_for_user, nick_channel_dict, nicks_hash, channels_hash)
 
-        message_number_graph = network.message_number_graph(log_data, nicks, nick_same_list, False)
-        saver.save_net_nx_graph(message_number_graph, output_directory, "message-" + starting_date + "-multi-cutoff-" + str(cutoff))
+    message_number_graph = network.message_number_graph(log_data, nicks, nick_same_list, False)
+    saver.save_net_nx_graph(message_number_graph, output_directory, "message-" + starting_date + "-multi-cutoff")
 
-        msg_graph, msg_membership = community.infomap_igraph(ig_graph=None, net_file_location= output_directory + "message-" + starting_date + "-multi-cutoff-" + str(cutoff) + ".net")
-        UC_adjacency_matrix = zip(*dict_out["CU"]["matrix"])
+    msg_graph, msg_membership = community.infomap_igraph(ig_graph=None, net_file_location= output_directory + "message-" + starting_date + "-multi-cutoff" + ".net")
+    UC_adjacency_matrix = zip(*dict_out["CU"]["matrix"])
 
-        msg_membership = []
-        for user in UC_adjacency_matrix:
-            ind = user.index(max(user))
-            msg_membership.append(ind)
-
-        vis.plot_infomap_igraph(msg_graph, msg_membership, output_directory, "message-exchange-" + starting_date + "-multi-cutoff-" +str(cutoff))
+    vis.plot_infomap_igraph(msg_graph, msg_membership, output_directory, "message-" + starting_date + "-multi-cutoff", aux_data = {"type": "MULTI_CH", "uc_adj": UC_adjacency_matrix, "user_hash": nicks_hash})
