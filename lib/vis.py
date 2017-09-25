@@ -38,33 +38,31 @@ def plot_data (data, output_directory, output_file_name):
     plt.close()
 
 
-def generate_probability_distribution(data, initial_rows_filter):
+def generate_probability_distribution(data):
     """ 
         Normalises y coordinates, dividing it by sum of all entries of y coordiantes
 
     Args:
         data(list of list): list of list representation csv data (with 2 coordinates)
-        initial_rows_filter(int): analysis on first how many rows
 
     Returns:
         x-coordinate (list)
         freq (list) normalised-y-coordinates
     """
-    topRows = [int(x[1]) for x in data[:initial_rows_filter]]
+    topRows = [int(x[1]) for x in data]
     total = sum(topRows)
     freq = [x/float(total) for x in topRows]
     
-    return range(0, initial_rows_filter), freq
+    return range(0, len(data)), freq
 
 
 # FOR CL and RT anaylysis
-def exponential_curve_fit_and_plot(data, initial_rows_filter, output_directory, output_file_name):
+def exponential_curve_fit_and_plot(data, output_directory, output_file_name):
     """ 
-        Fit to an expontial curve and draw the x-y data after filtering the intial initial_rows_filter rows
+        Fit to an expontial curve and draw the x-y data
 
     Args:
         data(list of list): list of list representation csv data (with 2 coordinates)
-        initial_rows_filter(int): analysis on first how many rows
         output_drectory(str): location to save graph
         output_file_name(str): name of the image file to be saved
 
@@ -76,7 +74,7 @@ def exponential_curve_fit_and_plot(data, initial_rows_filter, output_directory, 
 
     """
 
-    x_pdf, y_pdf = generate_probability_distribution(data, initial_rows_filter)
+    x_pdf, y_pdf = generate_probability_distribution(data)
 
     x = np.array(x_pdf)
     y = np.array(y_pdf)
@@ -104,15 +102,14 @@ def exponential_curve_fit_and_plot(data, initial_rows_filter, output_directory, 
 
 
 # Ignoring Initial Zeros in CRT
-def exponential_curve_fit_and_plot_x_shifted(data, initial_rows_filter, output_directory, output_file_name):
+def exponential_curve_fit_and_plot_x_shifted(data, output_directory, output_file_name):
     """ 
-        Fit to an expontial curve and draw the x-y data after filtering the intial initial_rows_filter rows
+        Fit to an expontial curve and draw the x-y data
         Also ignores the the input untill first non-zero y-coordinate and shifts the graph along
         y axes untill that first non-zero entry
 
     Args:
         data(list of list): list of list representation csv data (with 2 coordinates)
-        initial_rows_filter(int): analysis on first how many rows
         output_drectory(str): location to save graph
         output_file_name(str): name of the image file to be saved
 
@@ -125,13 +122,13 @@ def exponential_curve_fit_and_plot_x_shifted(data, initial_rows_filter, output_d
 
     """
 
-    x_pdf, y_pdf = generate_probability_distribution(data, initial_rows_filter)
+    x_pdf, y_pdf = generate_probability_distribution(data)
 
     first_non_zero_index = -1
     if filter(lambda x: x != 0, y_pdf):
         first_non_zero_index = y_pdf.index(filter(lambda x: x != 0, y_pdf)[0])
 
-    x = np.array(x_pdf[0: initial_rows_filter - first_non_zero_index])
+    x = np.array(x_pdf[0: -1*first_non_zero_index])
     y = np.array(y_pdf[first_non_zero_index:])
 
     popt, pcov = curve_fit(util.exponential_curve_func, x, y)
@@ -147,7 +144,7 @@ def exponential_curve_fit_and_plot_x_shifted(data, initial_rows_filter, output_d
     axes = plt.gca()
     # axes.set_xlim([0 ,20])
     axes.set_ylim([0, 1])
-    plt.xticks(range(0, 20, 5), xrange(first_non_zero_index, initial_rows_filter, 5), size='small')
+    plt.xticks(range(0, 20, 5), xrange(first_non_zero_index, len(x), 5), size='small')
     
     plt.legend()
     # plt.show()
@@ -239,20 +236,20 @@ def plot_infomap_igraph(nx_graph, membership, output_directory, output_file_name
         print "INFOMAPS visualisation for", output_file_name, "completed"
 
 
-def generate_log_plots(filter_val, plot_data, output_directory, output_file_name):
+def generate_log_plots(plot_data, output_directory, output_file_name):
     """
-        Generate log plots for given time frame selecting first filter_val number ofan
-        elements and plotting log of value on y axis.
+        Generate log plots for given time frame
 
 
     Args:
-        filter_val (int): number of values to be used from data for plotting
         plot_data (list of list): data to be plotted
         output_drectory(str): location to save graph
         output_file_name(str): name of the image file to be saved
 
     Returns:
-        null
+        slope : The slope of linear fit for the log plot.
+        r_square :
+        mean_sqaure_error : Mean sqaure error for best fit.
     """
 
     sum_each_row = []
@@ -260,9 +257,8 @@ def generate_log_plots(filter_val, plot_data, output_directory, output_file_name
     for row in plot_data[2:]:   #ignore degree 0 and text, starting from degree 1
         sum_each_row.append(row)
 
-    # print sum_each_row
-    x_axis_log = [math.log(i) for i in xrange(1, filter_val)]   # ignore degree 0
-    y_axis_log = [math.log(i) if i>0 else 0 for i in sum_each_row[1:filter_val] ]   # ignore degree 01
+    x_axis_log = [math.log(i) for i in xrange(1, len(sum_each_row) + 1)]
+    y_axis_log = [math.log(i) if i>0 else 0 for i in sum_each_row[0:] ] 
 
     slope,intercept,r_square,mean_squared_error = calc_plot_linear_fit(x_axis_log, y_axis_log, output_directory, output_file_name)
     

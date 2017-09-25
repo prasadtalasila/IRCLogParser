@@ -69,20 +69,20 @@ vis.plot_data (data, output_directory, "bins")
 #hits_graph, hits_membership = community.infomap_igraph(ig_graph=None, net_file_location= output_directory + 'hits.net')
 #vis.plot_infomap_igraph(hits_graph, hits_membership, output_directory, "hits")
 
-conv_len_curve_fit_parameters = vis.exponential_curve_fit_and_plot(conv_len, 20, output_directory, "conv_len")
-resp_time_curve_fit_parameters = vis.exponential_curve_fit_and_plot(resp_time, 20, output_directory, "resp_time")
-conv_ref_time_curve_fit_parameters = vis.exponential_curve_fit_and_plot_x_shifted(conv_ref_time, 30, output_directory, "conv_ref_time")
+conv_len_curve_fit_parameters = vis.exponential_curve_fit_and_plot(conv_len, output_directory, "conv_len")
+resp_time_curve_fit_parameters = vis.exponential_curve_fit_and_plot(resp_time, output_directory, "resp_time")
+conv_ref_time_curve_fit_parameters = vis.exponential_curve_fit_and_plot_x_shifted(conv_ref_time, output_directory, "conv_ref_time")
 saver.save_csv( [["a","b","c", "MSE"], [conv_len_curve_fit_parameters]], output_directory,"conv_len_curve_fit_parameters")
 saver.save_csv( [["a","b","c", "MSE"], [resp_time_curve_fit_parameters]], output_directory,"resp_time_curve_fit_parameters")
 saver.save_csv( [["a","b","c", "MSE"], [conv_ref_time_curve_fit_parameters]], output_directory,"conv_ref_time_curve_fit_parameters")
 
-slope,intercept,r_square,mse = vis.generate_log_plots(9, degree_anal_message_number["out_degree"]["raw_for_vis"], output_directory, channel_name[0] +"OUT")
+slope,intercept,r_square,mse = vis.generate_log_plots(degree_anal_message_number["out_degree"]["raw_for_vis"], output_directory, channel_name[0] +"OUT")
 saver.save_csv( [["Y","K","R^2", "MSE"], [slope,intercept,r_square,mse]], output_directory,"out-degree-curve-fit")
 
-slope,intercept,r_square,mse = vis.generate_log_plots(9, degree_anal_message_number["in_degree"]["raw_for_vis"], output_directory, channel_name[0] +"IN")
+slope,intercept,r_square,mse = vis.generate_log_plots(degree_anal_message_number["in_degree"]["raw_for_vis"], output_directory, channel_name[0] +"IN")
 saver.save_csv( [["Y","K","R^2", "MSE"], [slope,intercept,r_square,mse]], output_directory,"in-degree-curve-fit")
 
-slope,intercept,r_square,mse = vis.generate_log_plots(9, degree_anal_message_number["total_degree"]["raw_for_vis"], output_directory, channel_name[0] +"TOTAL")
+slope,intercept,r_square,mse = vis.generate_log_plots(degree_anal_message_number["total_degree"]["raw_for_vis"], output_directory, channel_name[0] +"TOTAL")
 saver.save_csv( [["Y","K","R^2", "MSE"], [slope,intercept,r_square,mse]], output_directory,"total-degree-curve-fit")
 
 # ============== VALIDATION ==============
@@ -133,13 +133,13 @@ saver.save_csv(degree_anal_message_number_UU["degree"]["formatted_for_csv"], out
 degree_anal_message_number_CU = network.degree_analysis_on_graph(dict_out["CU"]["graph"], directed=False)
 saver.save_csv(degree_anal_message_number_CU["degree"]["formatted_for_csv"], output_directory, "CU_degree")
 
-slope,intercept,r_square,mse = vis.generate_log_plots(9, degree_anal_message_number_CC["degree"]["raw_for_vis"], output_directory, "CC_degree_curve_fit")
+slope,intercept,r_square,mse = vis.generate_log_plots(degree_anal_message_number_CC["degree"]["raw_for_vis"], output_directory, "CC_degree_curve_fit")
 saver.save_csv( [["Y","K","R^2", "MSE"], [slope,intercept,r_square,mse]], output_directory,"CC-degree-curve-fit")
 
-slope,intercept,r_square,mse = vis.generate_log_plots(9, degree_anal_message_number_CU["degree"]["raw_for_vis"], output_directory, "CU_degre_curve_fit")
+slope,intercept,r_square,mse = vis.generate_log_plots(degree_anal_message_number_CU["degree"]["raw_for_vis"], output_directory, "CU_degre_curve_fit")
 saver.save_csv( [["Y","K","R^2", "MSE"], [slope,intercept,r_square,mse]], output_directory,"CU-degree-curve-fit")
 
-slope,intercept,r_square,mse = vis.generate_log_plots(9, degree_anal_message_number_UU["degree"]["raw_for_vis"], output_directory, "UU_degree_curve_fit")
+slope,intercept,r_square,mse = vis.generate_log_plots(degree_anal_message_number_UU["degree"]["raw_for_vis"], output_directory, "UU_degree_curve_fit")
 saver.save_csv( [["Y","K","R^2", "MSE"], [slope,intercept,r_square,mse]], output_directory,"UU-degree-curve-fit")
 
 # ======================== Heatmap =========================

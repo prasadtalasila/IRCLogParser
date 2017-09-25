@@ -76,16 +76,16 @@ cutoff_percentile = config.CUTOFF_PERCENTILE
 # saver.save_csv( [["a","b","c", "MSE"], [resp_time_curve_fit_parameters]], output_directory,"resp_time_curve_fit_parameters")
 # saver.save_csv( [["a","b","c", "MSE"], [conv_ref_time_curve_fit_parameters]], output_directory,"conv_ref_time_curve_fit_parameters")
 
-# slope,intercept,r_square,mse = vis.generate_log_plots(9, out_degree_node_number, output_directory, channel_name[0] +"OUT"+ starting_date + ending_date)
+# slope,intercept,r_square,mse = vis.generate_log_plots(out_degree_node_number, output_directory, channel_name[0] +"OUT"+ starting_date + ending_date)
 # saver.save_csv( [["Y","K","R^2", "MSE"], [slope,intercept,r_square,mse]], output_directory,"out-degree-curve-fit")
 
-# slope,intercept,r_square,mse = vis.generate_log_plots(9, in_degree_node_number, output_directory, channel_name[0] +"IN"+ starting_date + ending_date)
+# slope,intercept,r_square,mse = vis.generate_log_plots(in_degree_node_number, output_directory, channel_name[0] +"IN"+ starting_date + ending_date)
 # saver.save_csv( [["Y","K","R^2", "MSE"], [slope,intercept,r_square,mse]], output_directory,"in-degree-curve-fit")
 
-# slope,intercept,r_square,mse = vis.generate_log_plots(9, total_degree_node_number, output_directory, channel_name[0] +"TOTAL"+ starting_date + ending_date)
+# slope,intercept,r_square,mse = vis.generate_log_plots(total_degree_node_number, output_directory, channel_name[0] +"TOTAL"+ starting_date + ending_date)
 # saver.save_csv( [["Y","K","R^2", "MSE"], [slope,intercept,r_square,mse]], output_directory,"total-degree-curve-fit")
 
-#slope,intercept,r_square,mse = vis.generate_log_plots(9, degree_anal_message_number["out_degree"]["raw_for_vis"], output_directory, channel_name[0] +"TOTAL")
+#slope,intercept,r_square,mse = vis.generate_log_plots(degree_anal_message_number["out_degree"]["raw_for_vis"], output_directory, channel_name[0] +"TOTAL")
 #saver.save_csv( [["Y","K","R^2", "MSE"], [slope,intercept,r_square,mse]], output_directory,"out-degree-curve-fit-msg")
 
 # ============== VALIDATION ==============
