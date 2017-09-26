@@ -37,7 +37,8 @@ saver.save_net_nx_graph (message_number_graph, output_directory, "message_number
 saver.draw_nx_graph (hits, output_directory, "hits")
 saver.draw_nx_graph(message_number_graph, output_directory, "message_number_graph")
 
-saver.save_csv([["month", "users", "directed_messages"], ["Jan-2013", int(message_number_graph.size('weight')), len(message_number_graph)]], output_directory, "users_messages")
+saver.save_csv([["response_time_cutoff"], [rt_cutoff_time]], output_directory, "rt_cutoff")
+saver.save_csv([["month", "users", "directed_messages"], ["Jan-2013", len(message_number_graph), int(message_number_graph.size('weight'))]], output_directory, "users_messages")
 
 for dtype in degree_type:
     saver.save_csv(degree_anal_message_number[dtype]["formatted_for_csv"], output_directory, dtype)   
@@ -63,7 +64,7 @@ saver.save_csv( [["a","b","c", "MSE"], [resp_time_curve_fit_parameters]], output
 saver.save_csv( [["a","b","c", "MSE"], [conv_ref_time_curve_fit_parameters]], output_directory,"conv_ref_time_curve_fit_parameters")
 
 for dtype in degree_type:
-    slope,intercept,r_square,mse = vis.generate_log_plots(degree_anal_message_number[dtype]["raw_for_vis"], output_directory, channel_name[0] +"OUT")
+    slope,intercept,r_square,mse = vis.generate_log_plots(degree_anal_message_number[dtype]["raw_for_vis"], output_directory, channel_name[0] +dtype)
     saver.save_csv( [["Y","K","R^2", "MSE"], [slope,intercept,r_square,mse]], output_directory, dtype+"-curve-fit")
 
 # ============== PRESENCE ACROSS MULTIPLE CHANNELS ==============
@@ -78,8 +79,10 @@ for ptype in presence_type:
     saver.save_csv(dict_out[ptype]["reducedMatrix"],output_directory, "r"+ptype)
     saver.save_net_nx_graph(dict_out[ptype]["graph"], output_directory, "adj"+ptype)
     saver.save_net_nx_graph(dict_out[ptype]["reducedGraph"], output_directory, "radj"+ptype)
-    adj_graph, adj_membership = community.infomap_igraph(ig_graph=None, net_file_location= output_directory + 'radj'+ptype+'.net')
-    vis.plot_infomap_igraph(adj_graph, adj_membership, output_directory, "adj"+ptype+"_infomaps-reduced")
+    radj_graph, radj_membership = community.infomap_igraph(ig_graph=None, net_file_location= output_directory + 'radj'+ptype+'.net')
+    vis.plot_infomap_igraph(radj_graph, radj_membership, output_directory, "radj"+ptype+"_infomaps-reduced")
+    adj_graph, adj_membership = community.infomap_igraph(ig_graph=None, net_file_location= output_directory + 'adj'+ptype+'.net')
+    vis.plot_infomap_igraph(adj_graph, adj_membership, output_directory, "adj"+ptype+"_infomaps-full")
 
 degree_anal_message_number_CC = network.degree_analysis_on_graph(dict_out["CC"]["graph"], directed=False)
 saver.save_csv(degree_anal_message_number_CC["degree"]["formatted_for_csv"], output_directory, "CC_degree")
@@ -118,9 +121,9 @@ for date in dates:
 
 
         message_number_graph = network.message_number_graph(log_data, nicks, nick_same_list, False)
-        saver.save_net_nx_graph(message_number_graph, output_directory, "message-" + starting_date + "-cutoff-" + str(cutoff))
+        saver.save_net_nx_graph(message_number_graph, output_directory, "message-exchange-" + starting_date + "-cutoff-" + str(cutoff))
 
-        msg_graph, msg_membership = community.infomap_igraph(ig_graph=None, net_file_location= output_directory + '"message-" + starting_date + "-cutoff-" + str(cutoff)' + '.net')
+        msg_graph, msg_membership = community.infomap_igraph(ig_graph=None, net_file_location= output_directory + "message-exchange-" + starting_date + "-cutoff-" + str(cutoff) + '.net')
 
         vis.plot_infomap_igraph(msg_graph, msg_membership, output_directory, "message-exchange-" + starting_date + "-cutoff-" +str(cutoff))
         
@@ -131,13 +134,15 @@ for date in dates:
     ending_date = date[1]
     log_data = reader.linux_input(log_directory, ["#kubuntu-devel", "#kubuntu", "#ubuntu-devel"], starting_date, ending_date)
     nicks, nick_same_list, channels_for_user, nick_channel_dict, nicks_hash, channels_hash = nickTracker.nick_tracker(log_data, True)
+    for cutoff in cut_offs:
+        config.THRESHOLD_MESSAGE_NUMBER_GRAPH = cutoff
 
-    dict_out, graph = network.channel_user_presence_graph_and_csv(nicks, nick_same_list, channels_for_user, nick_channel_dict, nicks_hash, channels_hash)
+        dict_out, graph = network.channel_user_presence_graph_and_csv(nicks, nick_same_list, channels_for_user, nick_channel_dict, nicks_hash, channels_hash)
 
-    message_number_graph = network.message_number_graph(log_data, nicks, nick_same_list, False)
-    saver.save_net_nx_graph(message_number_graph, output_directory, "message-" + starting_date + "-multi-cutoff")
+        message_number_graph = network.message_number_graph(log_data, nicks, nick_same_list, False)
+        saver.save_net_nx_graph(message_number_graph, output_directory, "message-exchange-" + starting_date + "-multi-cutoff-"+str(cutoff))
 
-    msg_graph, msg_membership = community.infomap_igraph(ig_graph=None, net_file_location= output_directory + "message-" + starting_date + "-multi-cutoff" + ".net")
-    UC_adjacency_matrix = zip(*dict_out["CU"]["matrix"])
+        msg_graph, msg_membership = community.infomap_igraph(ig_graph=None, net_file_location= output_directory + "message-exchange-" + starting_date + "-multi-cutoff-" + str(cutoff) +".net")
+        UC_adjacency_matrix = zip(*dict_out["CU"]["matrix"])
 
-    vis.plot_infomap_igraph(msg_graph, msg_membership, output_directory, "message-" + starting_date + "-multi-cutoff", aux_data = {"type": "MULTI_CH", "uc_adj": UC_adjacency_matrix, "user_hash": nicks_hash})
+        vis.plot_infomap_igraph(msg_graph, msg_membership, output_directory, "message-exchange-" + starting_date + "-multi-cutoff-"+str(cutoff), aux_data = {"type": "MULTI_CH", "uc_adj": UC_adjacency_matrix, "user_hash": nicks_hash})
