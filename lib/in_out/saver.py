@@ -7,6 +7,7 @@ from networkx.readwrite import json_graph
 import json
 sys.path.append('../lib')
 import lib.config as config
+from shutil import copy2
 
 def check_if_dir_exists(output_directory):
     """ 
@@ -110,6 +111,10 @@ def save_js_arc(reduced_CC_graph, channels_hash, output_directory, output_file_n
        null
         
     """
+    check_if_dir_exists(output_directory) #create output directory if doesn't exist
+    copy2("../protovis/" + "arc_graph.html", output_directory) #copy required files to output_directory
+    copy2("../protovis/" + "ex.css", output_directory)
+    copy2("../protovis/" + "protovis-r3.2.js", output_directory)
     jsondict = json_graph.node_link_data(reduced_CC_graph)
     max_weight_val = max(item['weight'] for item in jsondict['links'])
     # the key names in the jsondict_top_channels are kept as the following so that index.html can render it
