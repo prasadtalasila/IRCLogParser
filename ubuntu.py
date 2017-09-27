@@ -73,7 +73,7 @@ log_data = reader.linux_input(log_directory, ["ALL"], starting_date, ending_date
 nicks, nick_same_list, channels_for_user, nick_channel_dict, nicks_hash, channels_hash = nickTracker.nick_tracker(log_data, True)
 dict_out, graph = network.channel_user_presence_graph_and_csv(nicks, nick_same_list, channels_for_user, nick_channel_dict, nicks_hash, channels_hash)
 
-saver.save_js_arc(dict_out["CC"]["reducedGraph"], channels_hash, "lib/protovis/", "cc.js")
+saver.save_js_arc(dict_out["CC"]["reducedGraph"], channels_hash, config.OUTPUT_DIRECTORY + "protovis/", "cc.js")
 
 for ptype in presence_type:
     saver.save_csv(dict_out[ptype]["reducedMatrix"],output_directory, "r"+ptype)
@@ -85,6 +85,7 @@ for ptype in presence_type:
     vis.plot_infomap_igraph(adj_graph, adj_membership, output_directory, "adj"+ptype+"_infomaps-full")
 
 degree_anal_message_number_CC = network.degree_analysis_on_graph(dict_out["CC"]["graph"], directed=False)
+
 saver.save_csv(degree_anal_message_number_CC["degree"]["formatted_for_csv"], output_directory, "CC_degree")
 degree_anal_message_number_UU = network.degree_analysis_on_graph(dict_out["UU"]["graph"], directed = False)
 saver.save_csv(degree_anal_message_number_UU["degree"]["formatted_for_csv"], output_directory, "UU_degree")
