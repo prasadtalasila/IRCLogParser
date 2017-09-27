@@ -145,7 +145,7 @@ class test_methods_returning_lists(unittest.TestCase):
         msg_number_bins_csv, total_msg = network.message_number_bins_csv(log_data, nicks, nick_same_list)
 
         expected_output = []
-        csv_to_list(expected_output_directory + 'message_number_binsize_30.csv', expected_output, False)
+        csv_to_list(expected_output_directory + 'message_number_binsize_60.csv', expected_output, False)
         self.assertListEqual(msg_number_bins_csv, expected_output, msg=None)
 
 
