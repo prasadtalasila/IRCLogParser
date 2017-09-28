@@ -49,11 +49,15 @@ def generate_probability_distribution(data):
         x-coordinate (list)
         freq (list) normalised-y-coordinates
     """
-    topRows = [int(x[1]) for x in data]
-    total = sum(topRows)
-    freq = [x/float(total) for x in topRows]
+    if data:
+        topRows = [int(x[1]) for x in data]
+        total = sum(topRows)
+        freq = [x/float(total) for x in topRows]
     
-    return range(0, len(data)), freq
+        return range(0, len(data)), freq
+    else:
+        print "ERROR generate_probability_distribution"
+        return -1, -1
 
 
 # FOR CL and RT anaylysis
@@ -76,29 +80,30 @@ def exponential_curve_fit_and_plot(data, output_directory, output_file_name):
 
     x_pdf, y_pdf = generate_probability_distribution(data)
 
-    x = np.array(x_pdf)
-    y = np.array(y_pdf)
+    if y_pdf != -1:
+        x = np.array(x_pdf)
+        y = np.array(y_pdf)
 
-    popt, pcov = curve_fit(util.exponential_curve_func, x, y)
-    [a, b, c] = popt
-    mse = mean_squared_error(util.exponential_curve_func(x, *popt), y)
-    if config.DEBUGGER:
-        print "CURVE FIT", output_file_name, "|", a, b, c, "MSE =", mse
+        popt, pcov = curve_fit(util.exponential_curve_func, x, y)
+        [a, b, c] = popt
+        mse = mean_squared_error(util.exponential_curve_func(x, *popt), y)
+        if config.DEBUGGER:
+            print "CURVE FIT", output_file_name, "|", a, b, c, "MSE =", mse
 
-    plt.figure()
-    plt.plot(x, y, 'b-', label="Data")
-    plt.plot(x, util.exponential_curve_func(x, *popt), 'r-', label="Fitted Curve")
-    
-    axes = plt.gca()
-    axes.set_xlim([0, 20])
-    axes.set_ylim([0, 1])
-    plt.legend()
-    # plt.show()
-    saver.check_if_dir_exists(output_directory)
-    plt.savefig(output_directory + "/" + output_file_name + ".png")
-    plt.close()
-    
-    return [a, b, c, mse]
+        plt.figure()
+        plt.plot(x, y, 'b-', label="Data")
+        plt.plot(x, util.exponential_curve_func(x, *popt), 'r-', label="Fitted Curve")
+        
+        axes = plt.gca()
+        axes.set_xlim([0, 20])
+        axes.set_ylim([0, 1])
+        plt.legend()
+        # plt.show()
+        saver.check_if_dir_exists(output_directory)
+        plt.savefig(output_directory + "/" + output_file_name + ".png")
+        plt.close()
+        
+        return [a, b, c, mse]
 
 
 # Ignoring Initial Zeros in CRT
@@ -124,35 +129,36 @@ def exponential_curve_fit_and_plot_x_shifted(data, output_directory, output_file
 
     x_pdf, y_pdf = generate_probability_distribution(data)
 
-    first_non_zero_index = -1
-    if filter(lambda x: x != 0, y_pdf):
-        first_non_zero_index = y_pdf.index(filter(lambda x: x != 0, y_pdf)[0])
+    if y_pdf != -1:
+        first_non_zero_index = -1
+        if filter(lambda x: x != 0, y_pdf):
+            first_non_zero_index = y_pdf.index(filter(lambda x: x != 0, y_pdf)[0])
 
-    x = np.array(x_pdf[0: -1*first_non_zero_index])
-    y = np.array(y_pdf[first_non_zero_index:])
+        x = np.array(x_pdf[0: -1*first_non_zero_index])
+        y = np.array(y_pdf[first_non_zero_index:])
 
-    popt, pcov = curve_fit(util.exponential_curve_func, x, y)
-    [a, b, c] = popt
-    mse = mean_squared_error(util.exponential_curve_func(x, *popt), y)
-    if config.DEBUGGER:
-        print "CURVE FIT", output_file_name, "|", a, b, c, "x-shift =", first_non_zero_index, "MSE =", mse
-    
-    plt.figure()
-    plt.plot(x, y, 'b-', label="Data")
-    plt.plot(x, util.exponential_curve_func(x, *popt), 'r-', label="Fitted Curve")
-    
-    axes = plt.gca()
-    # axes.set_xlim([0 ,20])
-    axes.set_ylim([0, 1])
-    plt.xticks(range(0, 20, 5), xrange(first_non_zero_index, len(x), 5), size='small')
-    
-    plt.legend()
-    # plt.show()
-    saver.check_if_dir_exists(output_directory)
-    plt.savefig(output_directory + "/" + output_file_name + ".png")
-    plt.close()
+        popt, pcov = curve_fit(util.exponential_curve_func, x, y)
+        [a, b, c] = popt
+        mse = mean_squared_error(util.exponential_curve_func(x, *popt), y)
+        if config.DEBUGGER:
+            print "CURVE FIT", output_file_name, "|", a, b, c, "x-shift =", first_non_zero_index, "MSE =", mse
+        
+        plt.figure()
+        plt.plot(x, y, 'b-', label="Data")
+        plt.plot(x, util.exponential_curve_func(x, *popt), 'r-', label="Fitted Curve")
+        
+        axes = plt.gca()
+        # axes.set_xlim([0 ,20])
+        axes.set_ylim([0, 1])
+        plt.xticks(range(0, 20, 5), xrange(first_non_zero_index, len(x), 5), size='small')
+        
+        plt.legend()
+        # plt.show()
+        saver.check_if_dir_exists(output_directory)
+        plt.savefig(output_directory + "/" + output_file_name + ".png")
+        plt.close()
 
-    return [a, b, c, mse, first_non_zero_index]
+        return [a, b, c, mse, first_non_zero_index]
 
 
 def plot_infomap_igraph(nx_graph, membership, output_directory, output_file_name, vertex_label_text=False, show_edges=True, aux_data=None):
@@ -201,7 +207,8 @@ def plot_infomap_igraph(nx_graph, membership, output_directory, output_file_name
     visual_style["bbox"] = (1024, 768)
     visual_style["margin"] = 40
     #visual_style["edge_label"] = nx_graph.es["weight"]
-    visual_style["edge_width"] = igraph.rescale(nx_graph.es['weight'], out_range=(1, 10))
+    if nx_graph.es:
+        visual_style["edge_width"] = igraph.rescale(nx_graph.es['weight'], out_range=(1, 10))
     
     for vertex in nx_graph.vs():
         if vertex_label_text:
@@ -229,11 +236,11 @@ def plot_infomap_igraph(nx_graph, membership, output_directory, output_file_name
             visual_style["vertex_color"] = nx_graph.vs["color"]
         visual_style["vertex_shape"] = nx_graph.vs["vertex_shape"]
 
-    saver.check_if_dir_exists(output_directory)
-    igraph.plot(nx_graph, (output_directory + "/" + output_file_name + ".png"), **visual_style)
+        saver.check_if_dir_exists(output_directory)
+        igraph.plot(nx_graph, (output_directory + "/" + output_file_name + ".png"), **visual_style)
 
-    if config.DEBUGGER:
-        print "INFOMAPS visualisation for", output_file_name, "completed"
+        if config.DEBUGGER:
+            print "INFOMAPS visualisation for", output_file_name, "completed"
 
 
 def generate_log_plots(plot_data, output_directory, output_file_name):
@@ -279,57 +286,60 @@ def calc_plot_linear_fit(x_in, y_in, output_directory, output_file_name):
         null
     """
     # get x and y vectors
-    x = np.array(x_in)
-    y = np.array(y_in)
+    if x_in and y_in: 
+        x = np.array(x_in)
+        y = np.array(y_in)
+        slope, intercept, r_value, p_value, std_err = stats.linregress(x_in, y_in)
+        line = [slope*xi+intercept for xi in x_in]
 
-    slope, intercept, r_value, p_value, std_err = stats.linregress(x_in, y_in)
-    line = [slope*xi+intercept for xi in x_in]
+        print str(slope)+"\t"+str(intercept)+"\t"+str(r_value**2)+"\t"+str(mean_squared_error(y, line))
+        saver.check_if_dir_exists(output_directory)
 
-    print str(slope)+"\t"+str(intercept)+"\t"+str(r_value**2)+"\t"+str(mean_squared_error(y, line))
-    saver.check_if_dir_exists(output_directory)
+        if config.USE_PYPLOT:
+            def trace_helper_pyplot(x, y, label, color):
+                return go.Scatter(
+                              x=x,
+                              y=y,
+                              mode='lines',
+                              marker=go.Marker(color=color),
+                              name=label
+                              )
 
-    if config.USE_PYPLOT:
-        def trace_helper_pyplot(x, y, label, color):
-            return go.Scatter(
-                          x=x,
-                          y=y,
-                          mode='lines',
-                          marker=go.Marker(color=color),
-                          name=label
-                          )
+            trace1 = trace_helper_pyplot(x, y, 'Data', 'rgb(255, 127, 14)')
+            trace2 = trace_helper_pyplot(x, line, 'Fit', 'rgb(31, 119, 180)')
 
-        trace1 = trace_helper_pyplot(x, y, 'Data', 'rgb(255, 127, 14)')
-        trace2 = trace_helper_pyplot(x, line, 'Fit', 'rgb(31, 119, 180)')
+            layout = go.Layout(
+                            title='DegreeNode',
+                            xaxis=go.XAxis(zerolinecolor='rgb(255,255,255)', gridcolor='rgb(255,255,255)'),
+                            # yaxis=go.YAxis(zerolinecolor='rgb(255,255,255)', gridcolor='rgb(255,255,255)')
+                            )
 
-        layout = go.Layout(
-                        title='DegreeNode',
-                        xaxis=go.XAxis(zerolinecolor='rgb(255,255,255)', gridcolor='rgb(255,255,255)'),
-                        # yaxis=go.YAxis(zerolinecolor='rgb(255,255,255)', gridcolor='rgb(255,255,255)')
-                        )
+            data = [trace1, trace2]
+            fig = go.Figure(data=data, layout=layout)
 
-        data = [trace1, trace2]
-        fig = go.Figure(data=data, layout=layout)
+            py.image.save_as(fig, output_directory+"/"+output_file_name + ".png")
 
-        py.image.save_as(fig, output_directory+"/"+output_file_name + ".png")
+        else:
+            # graph config
+            axes = plt.gca()
+            axes.set_xlim([0, 3])
+            axes.set_ylim([0, 6])
+            plt.xlabel("log(degree)")
+            plt.ylabel("log(no_of_nodes)")
 
+            # fit with np.polyfit
+            m, b = np.polyfit(x, y, 1)
+
+            plt.plot(x, y, '-')
+            plt.plot(x, m*x + b, '-')
+            plt.legend(['Data', 'Fit'], loc='upper right')
+            plt.savefig(output_directory+"/" + output_file_name+".png")
+            plt.close()
+            
+        return slope,intercept,r_value**2,mean_squared_error(y, line)
     else:
-        # graph config
-        axes = plt.gca()
-        axes.set_xlim([0, 3])
-        axes.set_ylim([0, 6])
-        plt.xlabel("log(degree)")
-        plt.ylabel("log(no_of_nodes)")
-
-        # fit with np.polyfit
-        m, b = np.polyfit(x, y, 1)
-
-        plt.plot(x, y, '-')
-        plt.plot(x, m*x + b, '-')
-        plt.legend(['Data', 'Fit'], loc='upper right')
-        plt.savefig(output_directory+"/" + output_file_name+".png")
-        plt.close()
-        
-    return slope,intercept,r_value**2,mean_squared_error(y, line)
+        print "ERROR calc_plot_linear_fit"
+        return -1, -1, -1, -1
 
 
 def generate_group_bar_charts(y_values, x_values, trace_header, output_directory, output_file_name):
