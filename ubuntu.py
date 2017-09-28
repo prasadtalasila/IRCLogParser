@@ -28,7 +28,7 @@ data.append([sum(i) for i in zip(*bin_matrix)])
 truncated_rt, rt_cutoff_time = channel.response_time(log_data, nicks, nick_same_list, config.CUTOFF_PERCENTILE)
 conv_len, conv_ref_time = channel.conv_len_conv_refr_time(log_data, nicks, nick_same_list, rt_cutoff_time, config.CUTOFF_PERCENTILE)
 
-user.keywords_clusters(log_data, nicks, nick_same_list)
+user.keywords_clusters(log_data, nicks, nick_same_list, output_directory, "keywords")
 network.degree_analysis_on_graph(message_number_graph)
 hits = network.identify_hubs_and_experts(log_data, nicks, nick_same_list)
 
