@@ -299,25 +299,29 @@ def response_time(log_dict, nicks, nick_same_list, cutoff_percentile):
 
 	graph_cumulative.sort()
 
-	for i in range(graph_cumulative[len(graph_cumulative)-1] + 1):
-		graph_y_axis.append(graph_cumulative.count(i))     # problem when ti=0 count is unexpectedly large
-		graph_x_axis.append(i)		
+	truncated_rt = None
+	rt_cutoff_time = None
+	if graph_cumulative:
+		for i in range(graph_cumulative[len(graph_cumulative)-1] + 1):
+			graph_y_axis.append(graph_cumulative.count(i))     # problem when ti=0 count is unexpectedly large
+			graph_x_axis.append(i)		
 
-	#Finally storing the RT values along with their frequencies in a csv file; no need to invoke build_stat_dist() function
-	rows_rt = zip(graph_x_axis, graph_y_axis)
-	truncated_rt, rt_cutoff_time = truncate_table(rows_rt, cutoff_percentile)
+		#Finally storing the RT values along with their frequencies in a csv file; no need to invoke build_stat_dist() function
+		rows_rt = zip(graph_x_axis, graph_y_axis)
+		truncated_rt, rt_cutoff_time = truncate_table(rows_rt, cutoff_percentile)
 
-	if config.CUTOFF_TIME_STRATEGY == "TWO_SIGMA":
-		resp_time, resp_frequency_tuple = zip(*truncated_rt)
-		resp_frequency = list(resp_frequency_tuple)
-		rt_cutoff_time_frac = numpy.mean(resp_frequency) + 2*numpy.std(resp_frequency)
-		rt_cutoff_time = int(numpy.ceil(rt_cutoff_time_frac))
+		if config.CUTOFF_TIME_STRATEGY == "TWO_SIGMA":
+			resp_time, resp_frequency_tuple = zip(*truncated_rt)
+			resp_frequency = list(resp_frequency_tuple)
+			rt_cutoff_time_frac = numpy.mean(resp_frequency) + 2*numpy.std(resp_frequency)
+			rt_cutoff_time = int(numpy.ceil(rt_cutoff_time_frac))
 
-	elif config.CUTOFF_TIME_STRATEGY == "PERCENTILE":
-		# nothing further to do; truncate_table() already gives rt_cutoff_time
-		# based on percentile
-		pass
+		elif config.CUTOFF_TIME_STRATEGY == "PERCENTILE":
+			# nothing further to do; truncate_table() already gives rt_cutoff_time
+			# based on percentile
+			pass
 
+	
 	return truncated_rt, rt_cutoff_time
 
 
@@ -369,25 +373,28 @@ def truncate_table(table, cutoff_percentile):
    		statistical significance.
 
 	"""
-	times, values = zip(*table)
-	total_value = 0
-	for value in values:
-		total_value = total_value + value
+	truncated_table = None
+	cutoff_time = None
+	if table:
+		times, values = zip(*table)
+		total_value = 0
+		for value in values:
+			total_value = total_value + value
 
-	index = 0
-	cutoff_index = 0
-	cumulative_value = 0
-	while (index < len(values)):
-		if (values[index] != 0):
-			cumulative_value = cumulative_value + values[index]
-			if (cumulative_value <= (1-cutoff_percentile/100.0) * total_value):
-				cutoff_index = index
-			else:
-				break
-		index = index + 1
+		index = 0
+		cutoff_index = 0
+		cumulative_value = 0
+		while (index < len(values)):
+			if (values[index] != 0):
+				cumulative_value = cumulative_value + values[index]
+				if (cumulative_value <= (1-cutoff_percentile/100.0) * total_value):
+					cutoff_index = index
+				else:
+					break
+			index = index + 1
 
-	#slice counts the number of elements, which will be one greater than the index
-	truncated_table = zip(times[:cutoff_index+1], values[:cutoff_index+1])
-	cutoff_time = times[cutoff_index]
+		#slice counts the number of elements, which will be one greater than the index
+		truncated_table = zip(times[:cutoff_index+1], values[:cutoff_index+1])
+		cutoff_time = times[cutoff_index]
 
 	return truncated_table, cutoff_time

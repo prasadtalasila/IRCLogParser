@@ -94,8 +94,9 @@ def save_csv(matrix, output_directory, output_file_name):
     output_file = output_directory + "/" + output_file_name +".csv"
     with open(output_file, 'wb') as myfile:
         wr = csv.writer(myfile, quoting=csv.QUOTE_NONNUMERIC)
-        for col in matrix:
-            wr.writerow(col)
+        if matrix is not None:
+            for col in matrix:
+                wr.writerow(col)
 
 def save_js_arc(reduced_CC_graph, channels_hash, output_directory, output_file_name):
     """

@@ -314,7 +314,7 @@ def keywords_clusters(log_dict, nicks, nick_same_list):
 
     stop_words_extended = extended_stop_words(nicks_for_stop_words, stop_word_without_apostrophe) 
     
-    vectorizer = TfidfVectorizer(max_df=0.5, min_df=2, stop_words=stop_words_extended,
+    vectorizer = TfidfVectorizer(max_df=1, min_df=0.5, stop_words=stop_words_extended,
                                                                  use_idf=True)
     print "Extracting features from the training dataset using TF-IDF"
     t0 = time()
@@ -349,20 +349,21 @@ def keywords_clusters(log_dict, nicks, nick_same_list):
 
         print("Clustering sparse data with %s" % km)
         t0 = time()
-        km.fit(tf_idf)
-        print("done in %0.3fs" % (time() - t0))
-        print("Top terms per cluster:")        
-        
-        order_centroids = build_centroid(km)            
-        np.set_printoptions(threshold=np.nan)
+        try:
+            km.fit(tf_idf)
+            print("done in %0.3fs" % (time() - t0))
+            print("Top terms per cluster:")
+            order_centroids = build_centroid(km)            
+            np.set_printoptions(threshold=np.nan)
 
-        terms = vectorizer.get_feature_names()
-        for i in range(config.NUMBER_OF_CLUSTERS):
-                print("Cluster %d:" % i)
-                for ind in order_centroids[i, :config.SHOW_N_WORDS_PER_CLUSTER]:
-                        print terms[ind]+"\t"+str(round(km.cluster_centers_[i][ind], 2))
-                print ""
-
+            terms = vectorizer.get_feature_names()
+            for i in range(config.NUMBER_OF_CLUSTERS):
+                    print("Cluster %d:" % i)
+                    for ind in order_centroids[i, :config.SHOW_N_WORDS_PER_CLUSTER]:
+                            print terms[ind]+"\t"+str(round(km.cluster_centers_[i][ind], 2))
+                    print ""   
+        except:
+            print "ERROR in FITTING USER.py KEYWORD CLUSTER. CHECK SETTINGS"    
     else:
         print "============ELBOW METHOD ============="
 
