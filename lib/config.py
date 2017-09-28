@@ -1,8 +1,8 @@
 DEBUGGER = True
-LOG_DIRECTORY = "/home/systemlab03/TSRK/phd/IRCLogParser/parser_files/YearlyLogFiles/"
-OUTPUT_DIRECTORY = "/home/systemlab03/TSRK/phd/IRCLogParser/parser_files/results"
+LOG_DIRECTORY = "/home/rohan/parser_files/YearlyLogFiles/"
+OUTPUT_DIRECTORY = "/home/rohan/Desktop/temp"
 STARTING_DATE = "2013-1-1"
-ENDING_DATE = "2013-1-2"
+ENDING_DATE = "2013-1-10"
 MINIMUM_NICK_LENGTH = 3
 
 # plotly login credentials

@@ -271,7 +271,7 @@ def keywords(log_dict, nicks, nick_same_list):
     return keywords_filtered, user_keyword_freq_dict, user_words_dict, nicks_for_stop_words, sorted(keywords_for_channels, key = lambda x: x[2], reverse=True)
 
 
-def keywords_clusters(log_dict, nicks, nick_same_list):
+def keywords_clusters(log_dict, nicks, nick_same_list, output_directory, out_file_name):
     """ 
         Uses `keywords` to form clusters of words post TF IDF (optional).
 
@@ -279,6 +279,8 @@ def keywords_clusters(log_dict, nicks, nick_same_list):
         log_dict (str): Dictionary of logs data created using reader.py
         nicks(List) : list of nickname created using nickTracker.py
         nick_same_list :List of same_nick names created using nickTracker.py
+        output_directory : output directory
+        out_file_name: name of output file
 
     Returns
         null
@@ -314,7 +316,7 @@ def keywords_clusters(log_dict, nicks, nick_same_list):
 
     stop_words_extended = extended_stop_words(nicks_for_stop_words, stop_word_without_apostrophe) 
     
-    vectorizer = TfidfVectorizer(max_df=1, min_df=0.5, stop_words=stop_words_extended,
+    vectorizer = TfidfVectorizer(max_df=0.5, min_df=2, stop_words=stop_words_extended,
                                                                  use_idf=True)
     print "Extracting features from the training dataset using TF-IDF"
     t0 = time()
@@ -350,18 +352,24 @@ def keywords_clusters(log_dict, nicks, nick_same_list):
         print("Clustering sparse data with %s" % km)
         t0 = time()
         try:
-            km.fit(tf_idf)
-            print("done in %0.3fs" % (time() - t0))
-            print("Top terms per cluster:")
-            order_centroids = build_centroid(km)            
-            np.set_printoptions(threshold=np.nan)
+            with open(output_directory + "/" + out_file_name + '.txt', "w+") as outfile:
+                km.fit(tf_idf)
+                print("done in %0.3fs" % (time() - t0))
+                outfile.write("Top terms per cluster:\n")
+                order_centroids = build_centroid(km)            
+                np.set_printoptions(threshold=np.nan)
 
-            terms = vectorizer.get_feature_names()
-            for i in range(config.NUMBER_OF_CLUSTERS):
-                    print("Cluster %d:" % i)
-                    for ind in order_centroids[i, :config.SHOW_N_WORDS_PER_CLUSTER]:
-                            print terms[ind]+"\t"+str(round(km.cluster_centers_[i][ind], 2))
-                    print ""   
+                terms = vectorizer.get_feature_names()
+                for i in range(config.NUMBER_OF_CLUSTERS):
+                        outfile.write("Cluster %d:\n" % i)
+                        for ind in order_centroids[i, :config.SHOW_N_WORDS_PER_CLUSTER]:
+                            outfile.write(terms[ind]+"\t"+str(round(km.cluster_centers_[i][ind], 2)))
+                            outfile.write("\n")
+                        outfile.write("\n")
+
+                #NOTE RANDOM OUTPUTS BECAUSE OF RANDOM INITIALISATION
+                outfile.write("NOTE: RANDOM OUTPUTS MIGHT BECAUSE OF RANDOM INITIALISATION")
+            outfile.close()
         except:
             print "ERROR in FITTING USER.py KEYWORD CLUSTER. CHECK SETTINGS"    
     else:
@@ -392,13 +400,15 @@ def keywords_clusters(log_dict, nicks, nick_same_list):
 
             sum_squared_errors_list.append(sum_squared_errors)
             avg_sum_squared_errors_list.append(avg_sum_squared_errors)
-            print("Top terms per cluster:")
-            terms = vectorizer.get_feature_names()
-            for i in range(i):
-                    print("Cluster %d:" % i)
-                    for ind in order_centroids[i, :config.SHOW_N_WORDS_PER_CLUSTER]:
-                            print(' %s' % terms[ind])
-                    print()
+            with open(output_directory + "/" + out_file_name + '.txt', "w+") as outfile:
+                outfile.write("Top terms per cluster:\n")
+                terms = vectorizer.get_feature_names()
+                for i in range(i):
+                        outfile.write("Cluster %d:\n" % i)
+                        for ind in order_centroids[i, :config.SHOW_N_WORDS_PER_CLUSTER]:
+                                outfile.write(' %s\n' % terms[ind])
+                        outfile.write("\n")
+            outfile.close()
 
         plt.plot(range(1, config.CHECK_K_TILL+1), sum_squared_errors_list, 'b*-')
         # ax.plot(K[kIdx], avgWithinSS[kIdx], marker='o', markersize=12, 
@@ -409,8 +419,6 @@ def keywords_clusters(log_dict, nicks, nick_same_list):
         plt.title('Elbow for KMeans clustering')
         plt.show()
 
-        #NOTE RANDOM OUTPUTS BECAUSE OF RANDOM INITIALISATION
-        print "NOTE RANDOM OUTPUTS BECAUSE OF RANDOM INITIALISATION"
 
 def extended_stop_words(nicks_for_stop_words, stop_word_without_apostrophe):
     stop_words_extended = text.ENGLISH_STOP_WORDS.union(common_english_words.words).union(nicks_for_stop_words).union(stop_word_without_apostrophe).union(custom_stop_words.words).union(custom_stop_words.slangs)
