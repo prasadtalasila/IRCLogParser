@@ -30,11 +30,19 @@ conv_len, conv_ref_time = channel.conv_len_conv_refr_time(log_data, nicks, nick_
 
 user.keywords_clusters(log_data, nicks, nick_same_list)
 network.degree_analysis_on_graph(message_number_graph)
-hits = network.identify_hubs_and_experts(log_data, nicks, nick_same_list)
+
+threshold = config.THRESHOLD_MESSAGE_NUMBER_GRAPH #store original default config
+cutoffs = [0, 10, 20]
+
+for cutoff in cutoffs:
+    config.THRESHOLD_MESSAGE_NUMBER_GRAPH = cutoff
+    hits = network.identify_hubs_and_experts(log_data, nicks, nick_same_list)
+    saver.draw_nx_graph (hits, output_directory, "hits-cutoff-"+str(cutoff))
+
+config.THRESHOLD_MESSAGE_NUMBER_GRAPH = threshold #revert to default config
 
 # ============== OUTPUT ================
 saver.save_net_nx_graph (message_number_graph, output_directory, "message_number_graph")
-saver.draw_nx_graph (hits, output_directory, "hits")
 saver.draw_nx_graph(message_number_graph, output_directory, "message_number_graph")
 
 saver.save_csv([["response_time_cutoff"], [rt_cutoff_time]], output_directory, "rt_cutoff")
