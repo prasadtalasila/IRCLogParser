@@ -381,7 +381,7 @@
 
     <span class="n">stop_words_extended</span> <span class="o">=</span> <span class="n">extended_stop_words</span><span class="p">(</span><span class="n">nicks_for_stop_words</span><span class="p">,</span> <span class="n">stop_word_without_apostrophe</span><span class="p">)</span> 
     
-    <span class="n">vectorizer</span> <span class="o">=</span> <span class="n">TfidfVectorizer</span><span class="p">(</span><span class="n">max_df</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">min_df</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">stop_words</span><span class="o">=</span><span class="n">stop_words_extended</span><span class="p">,</span>
+    <span class="n">vectorizer</span> <span class="o">=</span> <span class="n">TfidfVectorizer</span><span class="p">(</span><span class="n">max_df</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">min_df</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">stop_words</span><span class="o">=</span><span class="n">stop_words_extended</span><span class="p">,</span>
                                                                  <span class="n">use_idf</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="nb">print</span> <span class="s2">&quot;Extracting features from the training dataset using TF-IDF&quot;</span>
     <span class="n">t0</span> <span class="o">=</span> <span class="n">time</span><span class="p">()</span>
@@ -416,20 +416,21 @@
 
         <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Clustering sparse data with </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">km</span><span class="p">)</span>
         <span class="n">t0</span> <span class="o">=</span> <span class="n">time</span><span class="p">()</span>
-        <span class="n">km</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">tf_idf</span><span class="p">)</span>
-        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;done in </span><span class="si">%0.3f</span><span class="s2">s&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">t0</span><span class="p">))</span>
-        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Top terms per cluster:&quot;</span><span class="p">)</span>        
-        
-        <span class="n">order_centroids</span> <span class="o">=</span> <span class="n">build_centroid</span><span class="p">(</span><span class="n">km</span><span class="p">)</span>            
-        <span class="n">np</span><span class="o">.</span><span class="n">set_printoptions</span><span class="p">(</span><span class="n">threshold</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">km</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">tf_idf</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;done in </span><span class="si">%0.3f</span><span class="s2">s&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">t0</span><span class="p">))</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Top terms per cluster:&quot;</span><span class="p">)</span>
+            <span class="n">order_centroids</span> <span class="o">=</span> <span class="n">build_centroid</span><span class="p">(</span><span class="n">km</span><span class="p">)</span>            
+            <span class="n">np</span><span class="o">.</span><span class="n">set_printoptions</span><span class="p">(</span><span class="n">threshold</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>
 
-        <span class="n">terms</span> <span class="o">=</span> <span class="n">vectorizer</span><span class="o">.</span><span class="n">get_feature_names</span><span class="p">()</span>
-        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">NUMBER_OF_CLUSTERS</span><span class="p">):</span>
-                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Cluster </span><span class="si">%d</span><span class="s2">:&quot;</span> <span class="o">%</span> <span class="n">i</span><span class="p">)</span>
-                <span class="k">for</span> <span class="n">ind</span> <span class="ow">in</span> <span class="n">order_centroids</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="p">:</span><span class="n">config</span><span class="o">.</span><span class="n">SHOW_N_WORDS_PER_CLUSTER</span><span class="p">]:</span>
-                        <span class="nb">print</span> <span class="n">terms</span><span class="p">[</span><span class="n">ind</span><span class="p">]</span><span class="o">+</span><span class="s2">&quot;</span><span class="se">\t</span><span class="s2">&quot;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="n">km</span><span class="o">.</span><span class="n">cluster_centers_</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">ind</span><span class="p">],</span> <span class="mi">2</span><span class="p">))</span>
-                <span class="nb">print</span> <span class="s2">&quot;&quot;</span>
-
+            <span class="n">terms</span> <span class="o">=</span> <span class="n">vectorizer</span><span class="o">.</span><span class="n">get_feature_names</span><span class="p">()</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">NUMBER_OF_CLUSTERS</span><span class="p">):</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Cluster </span><span class="si">%d</span><span class="s2">:&quot;</span> <span class="o">%</span> <span class="n">i</span><span class="p">)</span>
+                    <span class="k">for</span> <span class="n">ind</span> <span class="ow">in</span> <span class="n">order_centroids</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="p">:</span><span class="n">config</span><span class="o">.</span><span class="n">SHOW_N_WORDS_PER_CLUSTER</span><span class="p">]:</span>
+                            <span class="nb">print</span> <span class="n">terms</span><span class="p">[</span><span class="n">ind</span><span class="p">]</span><span class="o">+</span><span class="s2">&quot;</span><span class="se">\t</span><span class="s2">&quot;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="n">km</span><span class="o">.</span><span class="n">cluster_centers_</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">ind</span><span class="p">],</span> <span class="mi">2</span><span class="p">))</span>
+                    <span class="nb">print</span> <span class="s2">&quot;&quot;</span>   
+        <span class="k">except</span><span class="p">:</span>
+            <span class="nb">print</span> <span class="s2">&quot;ERROR in FITTING USER.py KEYWORD CLUSTER. CHECK SETTINGS&quot;</span>    
     <span class="k">else</span><span class="p">:</span>
         <span class="nb">print</span> <span class="s2">&quot;============ELBOW METHOD =============&quot;</span>
 

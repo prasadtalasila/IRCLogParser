@@ -366,25 +366,29 @@
 
 	<span class="n">graph_cumulative</span><span class="o">.</span><span class="n">sort</span><span class="p">()</span>
 
-	<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">graph_cumulative</span><span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">graph_cumulative</span><span class="p">)</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
-		<span class="n">graph_y_axis</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">graph_cumulative</span><span class="o">.</span><span class="n">count</span><span class="p">(</span><span class="n">i</span><span class="p">))</span>     <span class="c1"># problem when ti=0 count is unexpectedly large</span>
-		<span class="n">graph_x_axis</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>		
+	<span class="n">truncated_rt</span> <span class="o">=</span> <span class="kc">None</span>
+	<span class="n">rt_cutoff_time</span> <span class="o">=</span> <span class="kc">None</span>
+	<span class="k">if</span> <span class="n">graph_cumulative</span><span class="p">:</span>
+		<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">graph_cumulative</span><span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">graph_cumulative</span><span class="p">)</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
+			<span class="n">graph_y_axis</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">graph_cumulative</span><span class="o">.</span><span class="n">count</span><span class="p">(</span><span class="n">i</span><span class="p">))</span>     <span class="c1"># problem when ti=0 count is unexpectedly large</span>
+			<span class="n">graph_x_axis</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>		
 
-	<span class="c1">#Finally storing the RT values along with their frequencies in a csv file; no need to invoke build_stat_dist() function</span>
-	<span class="n">rows_rt</span> <span class="o">=</span> <span class="nb">zip</span><span class="p">(</span><span class="n">graph_x_axis</span><span class="p">,</span> <span class="n">graph_y_axis</span><span class="p">)</span>
-	<span class="n">truncated_rt</span><span class="p">,</span> <span class="n">rt_cutoff_time</span> <span class="o">=</span> <span class="n">truncate_table</span><span class="p">(</span><span class="n">rows_rt</span><span class="p">,</span> <span class="n">cutoff_percentile</span><span class="p">)</span>
+		<span class="c1">#Finally storing the RT values along with their frequencies in a csv file; no need to invoke build_stat_dist() function</span>
+		<span class="n">rows_rt</span> <span class="o">=</span> <span class="nb">zip</span><span class="p">(</span><span class="n">graph_x_axis</span><span class="p">,</span> <span class="n">graph_y_axis</span><span class="p">)</span>
+		<span class="n">truncated_rt</span><span class="p">,</span> <span class="n">rt_cutoff_time</span> <span class="o">=</span> <span class="n">truncate_table</span><span class="p">(</span><span class="n">rows_rt</span><span class="p">,</span> <span class="n">cutoff_percentile</span><span class="p">)</span>
 
-	<span class="k">if</span> <span class="n">config</span><span class="o">.</span><span class="n">CUTOFF_TIME_STRATEGY</span> <span class="o">==</span> <span class="s2">&quot;TWO_SIGMA&quot;</span><span class="p">:</span>
-		<span class="n">resp_time</span><span class="p">,</span> <span class="n">resp_frequency_tuple</span> <span class="o">=</span> <span class="nb">zip</span><span class="p">(</span><span class="o">*</span><span class="n">truncated_rt</span><span class="p">)</span>
-		<span class="n">resp_frequency</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">resp_frequency_tuple</span><span class="p">)</span>
-		<span class="n">rt_cutoff_time_frac</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">resp_frequency</span><span class="p">)</span> <span class="o">+</span> <span class="mi">2</span><span class="o">*</span><span class="n">numpy</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">resp_frequency</span><span class="p">)</span>
-		<span class="n">rt_cutoff_time</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">numpy</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="n">rt_cutoff_time_frac</span><span class="p">))</span>
+		<span class="k">if</span> <span class="n">config</span><span class="o">.</span><span class="n">CUTOFF_TIME_STRATEGY</span> <span class="o">==</span> <span class="s2">&quot;TWO_SIGMA&quot;</span><span class="p">:</span>
+			<span class="n">resp_time</span><span class="p">,</span> <span class="n">resp_frequency_tuple</span> <span class="o">=</span> <span class="nb">zip</span><span class="p">(</span><span class="o">*</span><span class="n">truncated_rt</span><span class="p">)</span>
+			<span class="n">resp_frequency</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">resp_frequency_tuple</span><span class="p">)</span>
+			<span class="n">rt_cutoff_time_frac</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">resp_frequency</span><span class="p">)</span> <span class="o">+</span> <span class="mi">2</span><span class="o">*</span><span class="n">numpy</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">resp_frequency</span><span class="p">)</span>
+			<span class="n">rt_cutoff_time</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">numpy</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="n">rt_cutoff_time_frac</span><span class="p">))</span>
 
-	<span class="k">elif</span> <span class="n">config</span><span class="o">.</span><span class="n">CUTOFF_TIME_STRATEGY</span> <span class="o">==</span> <span class="s2">&quot;PERCENTILE&quot;</span><span class="p">:</span>
-		<span class="c1"># nothing further to do; truncate_table() already gives rt_cutoff_time</span>
-		<span class="c1"># based on percentile</span>
-		<span class="k">pass</span>
+		<span class="k">elif</span> <span class="n">config</span><span class="o">.</span><span class="n">CUTOFF_TIME_STRATEGY</span> <span class="o">==</span> <span class="s2">&quot;PERCENTILE&quot;</span><span class="p">:</span>
+			<span class="c1"># nothing further to do; truncate_table() already gives rt_cutoff_time</span>
+			<span class="c1"># based on percentile</span>
+			<span class="k">pass</span>
 
+	
 	<span class="k">return</span> <span class="n">truncated_rt</span><span class="p">,</span> <span class="n">rt_cutoff_time</span></div>
 
 
@@ -436,26 +440,29 @@
 <span class="sd">   		statistical significance.</span>
 
 <span class="sd">	&quot;&quot;&quot;</span>
-	<span class="n">times</span><span class="p">,</span> <span class="n">values</span> <span class="o">=</span> <span class="nb">zip</span><span class="p">(</span><span class="o">*</span><span class="n">table</span><span class="p">)</span>
-	<span class="n">total_value</span> <span class="o">=</span> <span class="mi">0</span>
-	<span class="k">for</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">values</span><span class="p">:</span>
-		<span class="n">total_value</span> <span class="o">=</span> <span class="n">total_value</span> <span class="o">+</span> <span class="n">value</span>
+	<span class="n">truncated_table</span> <span class="o">=</span> <span class="kc">None</span>
+	<span class="n">cutoff_time</span> <span class="o">=</span> <span class="kc">None</span>
+	<span class="k">if</span> <span class="n">table</span><span class="p">:</span>
+		<span class="n">times</span><span class="p">,</span> <span class="n">values</span> <span class="o">=</span> <span class="nb">zip</span><span class="p">(</span><span class="o">*</span><span class="n">table</span><span class="p">)</span>
+		<span class="n">total_value</span> <span class="o">=</span> <span class="mi">0</span>
+		<span class="k">for</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">values</span><span class="p">:</span>
+			<span class="n">total_value</span> <span class="o">=</span> <span class="n">total_value</span> <span class="o">+</span> <span class="n">value</span>
 
-	<span class="n">index</span> <span class="o">=</span> <span class="mi">0</span>
-	<span class="n">cutoff_index</span> <span class="o">=</span> <span class="mi">0</span>
-	<span class="n">cumulative_value</span> <span class="o">=</span> <span class="mi">0</span>
-	<span class="k">while</span> <span class="p">(</span><span class="n">index</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">values</span><span class="p">)):</span>
-		<span class="k">if</span> <span class="p">(</span><span class="n">values</span><span class="p">[</span><span class="n">index</span><span class="p">]</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">):</span>
-			<span class="n">cumulative_value</span> <span class="o">=</span> <span class="n">cumulative_value</span> <span class="o">+</span> <span class="n">values</span><span class="p">[</span><span class="n">index</span><span class="p">]</span>
-			<span class="k">if</span> <span class="p">(</span><span class="n">cumulative_value</span> <span class="o">&lt;=</span> <span class="p">(</span><span class="mi">1</span><span class="o">-</span><span class="n">cutoff_percentile</span><span class="o">/</span><span class="mf">100.0</span><span class="p">)</span> <span class="o">*</span> <span class="n">total_value</span><span class="p">):</span>
-				<span class="n">cutoff_index</span> <span class="o">=</span> <span class="n">index</span>
-			<span class="k">else</span><span class="p">:</span>
-				<span class="k">break</span>
-		<span class="n">index</span> <span class="o">=</span> <span class="n">index</span> <span class="o">+</span> <span class="mi">1</span>
+		<span class="n">index</span> <span class="o">=</span> <span class="mi">0</span>
+		<span class="n">cutoff_index</span> <span class="o">=</span> <span class="mi">0</span>
+		<span class="n">cumulative_value</span> <span class="o">=</span> <span class="mi">0</span>
+		<span class="k">while</span> <span class="p">(</span><span class="n">index</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">values</span><span class="p">)):</span>
+			<span class="k">if</span> <span class="p">(</span><span class="n">values</span><span class="p">[</span><span class="n">index</span><span class="p">]</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">):</span>
+				<span class="n">cumulative_value</span> <span class="o">=</span> <span class="n">cumulative_value</span> <span class="o">+</span> <span class="n">values</span><span class="p">[</span><span class="n">index</span><span class="p">]</span>
+				<span class="k">if</span> <span class="p">(</span><span class="n">cumulative_value</span> <span class="o">&lt;=</span> <span class="p">(</span><span class="mi">1</span><span class="o">-</span><span class="n">cutoff_percentile</span><span class="o">/</span><span class="mf">100.0</span><span class="p">)</span> <span class="o">*</span> <span class="n">total_value</span><span class="p">):</span>
+					<span class="n">cutoff_index</span> <span class="o">=</span> <span class="n">index</span>
+				<span class="k">else</span><span class="p">:</span>
+					<span class="k">break</span>
+			<span class="n">index</span> <span class="o">=</span> <span class="n">index</span> <span class="o">+</span> <span class="mi">1</span>
 
-	<span class="c1">#slice counts the number of elements, which will be one greater than the index</span>
-	<span class="n">truncated_table</span> <span class="o">=</span> <span class="nb">zip</span><span class="p">(</span><span class="n">times</span><span class="p">[:</span><span class="n">cutoff_index</span><span class="o">+</span><span class="mi">1</span><span class="p">],</span> <span class="n">values</span><span class="p">[:</span><span class="n">cutoff_index</span><span class="o">+</span><span class="mi">1</span><span class="p">])</span>
-	<span class="n">cutoff_time</span> <span class="o">=</span> <span class="n">times</span><span class="p">[</span><span class="n">cutoff_index</span><span class="p">]</span>
+		<span class="c1">#slice counts the number of elements, which will be one greater than the index</span>
+		<span class="n">truncated_table</span> <span class="o">=</span> <span class="nb">zip</span><span class="p">(</span><span class="n">times</span><span class="p">[:</span><span class="n">cutoff_index</span><span class="o">+</span><span class="mi">1</span><span class="p">],</span> <span class="n">values</span><span class="p">[:</span><span class="n">cutoff_index</span><span class="o">+</span><span class="mi">1</span><span class="p">])</span>
+		<span class="n">cutoff_time</span> <span class="o">=</span> <span class="n">times</span><span class="p">[</span><span class="n">cutoff_index</span><span class="p">]</span>
 
 	<span class="k">return</span> <span class="n">truncated_table</span><span class="p">,</span> <span class="n">cutoff_time</span></div>
 </pre></div>
