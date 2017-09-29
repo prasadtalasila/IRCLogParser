@@ -103,7 +103,13 @@ saver.save_csv(degree_anal_message_number_CU["degree"]["formatted_for_csv"], out
 slope,intercept,r_square,mse = vis.generate_log_plots(degree_anal_message_number_CC["degree"]["raw_for_vis"], output_directory, "CC_degree_curve_fit")
 saver.save_csv( [["Y","K","R^2", "MSE"], [slope,intercept,r_square,mse]], output_directory,"CC-degree-curve-fit")
 
-slope,intercept,r_square,mse = vis.generate_log_plots(degree_anal_message_number_CU["degree"]["raw_for_vis"], output_directory, "CU_degre_curve_fit")
+Y = degree_anal_message_number_CU["degree"]["raw_for_vis"][1:]
+data = [(i, Y[i]) for i in range(len(Y))]
+
+CU_truncated, cutoff = channel.truncate_table(data, 0.5)
+CU_T = [ data[1] for data in list(CU_truncated)]
+
+slope,intercept,r_square,mse = vis.generate_log_plots(CU_T, output_directory, "CU_degre_curve_fit")
 saver.save_csv( [["Y","K","R^2", "MSE"], [slope,intercept,r_square,mse]], output_directory,"CU-degree-curve-fit")
 
 slope,intercept,r_square,mse = vis.generate_log_plots(degree_anal_message_number_UU["degree"]["raw_for_vis"], output_directory, "UU_degree_curve_fit")
