@@ -25,8 +25,24 @@ bin_matrix, total_messages = network.message_number_bins_csv(log_data, nicks, ni
 data = [[i for i in range(len(bin_matrix[0]))]]
 data.append([sum(i) for i in zip(*bin_matrix)])
 
-truncated_rt, rt_cutoff_time = channel.response_time(log_data, nicks, nick_same_list, config.CUTOFF_PERCENTILE)
-conv_len, conv_ref_time = channel.conv_len_conv_refr_time(log_data, nicks, nick_same_list, rt_cutoff_time, config.CUTOFF_PERCENTILE)
+default_cutoff = config.CUTOFF_PERCENTILE
+percentiles = [0, 1, 5, 10, 20]
+
+for cutoff in percentiles:
+    config.CUTOFF_PERCENTILE = cutoff
+    truncated_rt, rt_cutoff_time = channel.response_time(log_data, nicks, nick_same_list, config.CUTOFF_PERCENTILE)
+    conv_len, conv_ref_time = channel.conv_len_conv_refr_time(log_data, nicks, nick_same_list, rt_cutoff_time, config.CUTOFF_PERCENTILE)
+    saver.save_csv(conv_len, output_directory, "conv_len-cutoff-" + str(cutoff))
+    saver.save_csv(truncated_rt, output_directory, "resp_time-cutoff-" + str(cutoff))
+    saver.save_csv(conv_ref_time, output_directory, "conv_ref_time-cutoff-" + str(cutoff))
+    conv_len_curve_fit_parameters = vis.exponential_curve_fit_and_plot(conv_len, output_directory, "conv_len_cutoff" + str(cutoff))
+    resp_time_curve_fit_parameters = vis.exponential_curve_fit_and_plot(truncated_rt, output_directory, "resp_time_cutoff" + str(cutoff))
+    conv_ref_time_curve_fit_parameters = vis.exponential_curve_fit_and_plot_x_shifted(conv_ref_time, output_directory, "conv_ref_time_cutoff" + str(cutoff))
+    saver.save_csv( [["a","b","c", "MSE"], [conv_len_curve_fit_parameters]], output_directory,"conv_len_curve_fit_parameters-cutoff-" + str(cutoff))
+    saver.save_csv( [["a","b","c", "MSE"], [resp_time_curve_fit_parameters]], output_directory,"resp_time_curve_fit_parameters-cutoff-" + strc(cutoff))
+    saver.save_csv( [["a","b","c", "MSE"], [conv_ref_time_curve_fit_parameters]], output_directory,"conv_ref_time_curve_fit_parameters-cutoff-"+str(cutoff))
+
+config.CUTOFF_PERCENTILE = default_cutoff #revert back to default
 
 user.keywords_clusters(log_data, nicks, nick_same_list, output_directory, "keywords")
 network.degree_analysis_on_graph(message_number_graph)
@@ -51,25 +67,12 @@ saver.save_csv([["month", "users", "directed_messages"], ["Jan-2013", len(messag
 for dtype in degree_type:
     saver.save_csv(degree_anal_message_number[dtype]["formatted_for_csv"], output_directory, dtype)   
 
-saver.save_csv(bin_matrix, output_directory, "MessageNumber_binsize_"+str(config.BIN_LENGTH_MINS))
-
-saver.draw_nx_graph(message_number_graph, output_directory, "mnagg")    
-
-saver.save_csv(conv_len, output_directory, "conv_len")
-saver.save_csv(truncated_rt, output_directory, "resp_time")
-saver.save_csv(conv_ref_time, output_directory, "conv_ref_time")
+saver.save_csv(bin_matrix, output_directory, "MessageNumber_binsize_"+str(config.BIN_LENGTH_MINS)) 
 
 # =============== VIZ ===================
 message_graph, message_membership = community.infomap_igraph(ig_graph=None, net_file_location= output_directory + 'message_number_graph.net')
 vis.plot_infomap_igraph(message_graph, message_membership, output_directory, "message")
 vis.plot_data (data, output_directory, "bins")
-
-conv_len_curve_fit_parameters = vis.exponential_curve_fit_and_plot(conv_len, output_directory, "conv_len")
-resp_time_curve_fit_parameters = vis.exponential_curve_fit_and_plot(truncated_rt, output_directory, "resp_time")
-conv_ref_time_curve_fit_parameters = vis.exponential_curve_fit_and_plot_x_shifted(conv_ref_time, output_directory, "conv_ref_time")
-saver.save_csv( [["a","b","c", "MSE"], [conv_len_curve_fit_parameters]], output_directory,"conv_len_curve_fit_parameters")
-saver.save_csv( [["a","b","c", "MSE"], [resp_time_curve_fit_parameters]], output_directory,"resp_time_curve_fit_parameters")
-saver.save_csv( [["a","b","c", "MSE"], [conv_ref_time_curve_fit_parameters]], output_directory,"conv_ref_time_curve_fit_parameters")
 
 for dtype in degree_type:
     slope,intercept,r_square,mse = vis.generate_log_plots(degree_anal_message_number[dtype]["raw_for_vis"], output_directory, channel_name[0] +dtype)
@@ -93,7 +96,6 @@ for ptype in presence_type:
     vis.plot_infomap_igraph(adj_graph, adj_membership, output_directory, "adj"+ptype+"_infomaps-full")
 
 degree_anal_message_number_CC = network.degree_analysis_on_graph(dict_out["CC"]["graph"], directed=False)
-
 saver.save_csv(degree_anal_message_number_CC["degree"]["formatted_for_csv"], output_directory, "CC_degree")
 degree_anal_message_number_UU = network.degree_analysis_on_graph(dict_out["UU"]["graph"], directed = False)
 saver.save_csv(degree_anal_message_number_UU["degree"]["formatted_for_csv"], output_directory, "UU_degree")
@@ -129,11 +131,10 @@ cut_offs = [ 0, 10, 20]
 for date in dates:
     starting_date = date[0]
     ending_date = date[1]
+    log_data = reader.linux_input(log_directory, ["#kubuntu-devel"], starting_date, ending_date)
+    nicks, nick_same_list = nickTracker.nick_tracker(log_data, False)
     for cutoff in cut_offs:
         config.THRESHOLD_MESSAGE_NUMBER_GRAPH = cutoff
-        log_data = reader.linux_input(log_directory, ["#kubuntu-devel"], starting_date, ending_date)
-        nicks, nick_same_list = nickTracker.nick_tracker(log_data, False)
-
 
         message_number_graph = network.message_number_graph(log_data, nicks, nick_same_list, False)
         saver.save_net_nx_graph(message_number_graph, output_directory, "message-exchange-" + starting_date + "-cutoff-" + str(cutoff))
