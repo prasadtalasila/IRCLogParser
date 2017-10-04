@@ -464,3 +464,24 @@ def matplotlob_csv_heatmap_generator(csv_file, output_directory, output_file_nam
     
     plt.savefig(output_directory+"/" + output_file_name+".png")
     plt.close()
+
+
+def box_plot(data, output_directory, output_file_name):
+    """
+        Plots Box Plots
+
+    Args:
+        data (list):  data
+        output_drectory(str): location to save graph
+        output_file_name(str): name of the image file to be saved
+
+    Returns:
+        null
+    """
+    plt.figure()
+    plt.boxplot(data)
+    
+    plt.legend()
+    saver.check_if_dir_exists(output_directory)
+    plt.savefig(output_directory + "/" + output_file_name + ".png")
+    plt.close()

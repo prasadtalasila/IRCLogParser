@@ -39,7 +39,7 @@ for cutoff in percentiles:
     resp_time_curve_fit_parameters = vis.exponential_curve_fit_and_plot(truncated_rt, output_directory, "resp_time_cutoff" + str(cutoff))
     conv_ref_time_curve_fit_parameters = vis.exponential_curve_fit_and_plot_x_shifted(conv_ref_time, output_directory, "conv_ref_time_cutoff" + str(cutoff))
     saver.save_csv( [["a","b","c", "MSE"], [conv_len_curve_fit_parameters]], output_directory,"conv_len_curve_fit_parameters-cutoff-" + str(cutoff))
-    saver.save_csv( [["a","b","c", "MSE"], [resp_time_curve_fit_parameters]], output_directory,"resp_time_curve_fit_parameters-cutoff-" + strc(cutoff))
+    saver.save_csv( [["a","b","c", "MSE"], [resp_time_curve_fit_parameters]], output_directory,"resp_time_curve_fit_parameters-cutoff-" + str(cutoff))
     saver.save_csv( [["a","b","c", "MSE"], [conv_ref_time_curve_fit_parameters]], output_directory,"conv_ref_time_curve_fit_parameters-cutoff-"+str(cutoff))
 
 config.CUTOFF_PERCENTILE = default_cutoff #revert back to default
@@ -162,3 +162,60 @@ for date in dates:
         UC_adjacency_matrix = zip(*dict_out["CU"]["matrix"])
 
         vis.plot_infomap_igraph(msg_graph, msg_membership, output_directory, "message-exchange-" + starting_date + "-multi-cutoff-"+str(cutoff), aux_data = {"type": "MULTI_CH", "uc_adj": UC_adjacency_matrix, "user_hash": nicks_hash})
+
+
+percentiles = [0, 1, 5, 10, 20]
+for channel_name_iter in [["#kubuntu-devel"], ["#ubuntu-devel"], ["#kubuntu"]]:
+    for cutoff in percentiles:
+        conv_len_curve_fit_parameters = np.zeros((12, 4))
+        resp_time_curve_fit_parameters = np.zeros((12, 4))
+        conv_ref_time_curve_fit_parameters = np.zeros((12, 5))
+        for month in range(1, 13):
+            log_data = reader.linux_input(log_directory, channel_name_iter, "2013-"+str(month)+"-1", "2013-"+str(month)+"-31")
+            nicks, nick_same_list = nickTracker.nick_tracker(log_data)
+            default_cutoff = config.CUTOFF_PERCENTILE
+
+            config.CUTOFF_PERCENTILE = cutoff
+            truncated_rt, rt_cutoff_time = channel.response_time(log_data, nicks, nick_same_list, config.CUTOFF_PERCENTILE)
+            conv_len, conv_ref_time = channel.conv_len_conv_refr_time(log_data, nicks, nick_same_list, rt_cutoff_time, config.CUTOFF_PERCENTILE)
+            conv_len_curve_fit_parameters[month-1] = vis.exponential_curve_fit_and_plot(conv_len, output_directory, "conv_len_cutoff" + str(cutoff))
+            resp_time_curve_fit_parameters[month-1] = vis.exponential_curve_fit_and_plot(truncated_rt, output_directory, "resp_time_cutoff" + str(cutoff))
+            conv_ref_time_curve_fit_parameters[month-1] = vis.exponential_curve_fit_and_plot_x_shifted(conv_ref_time, output_directory, "conv_ref_time_cutoff" + str(cutoff))
+
+        parameters = ['a', 'b', 'c']
+        for para_ind in range(len(parameters)):
+            vis.box_plot(conv_len_curve_fit_parameters[:, para_ind], output_directory, "conv_len_"+str(parameters[para_ind])+"_2013_"+channel_name_iter[0]+"_cut_"+str(cutoff))
+            vis.box_plot(resp_time_curve_fit_parameters[:, para_ind], output_directory, "resp_time_"+str(parameters[para_ind])+"_2013_"+channel_name_iter[0]+"_cut_"+str(cutoff))
+            vis.box_plot(conv_ref_time_curve_fit_parameters[:, para_ind], output_directory, "conv_refr_"+str(parameters[para_ind])+"_2013_"+channel_name_iter[0]+"_cut_"+str(cutoff))
+
+            saver.save_csv([conv_len_curve_fit_parameters[:, para_ind].tolist()], output_directory, "conv_len_"+str(parameters[para_ind])+"_2013_"+channel_name_iter[0]+"_cut_"+str(cutoff))
+            saver.save_csv([resp_time_curve_fit_parameters[:, para_ind].tolist()], output_directory, "resp_time_"+str(parameters[para_ind])+"_2013_"+channel_name_iter[0]+"_cut_"+str(cutoff))
+            saver.save_csv([conv_ref_time_curve_fit_parameters[:, para_ind].tolist()], output_directory, "conv_refr_"+str(parameters[para_ind])+"_2013_"+channel_name_iter[0]+"_cut_"+str(cutoff))
+
+config.CUTOFF_PERCENTILE = default_cutoff 
+
+cutoff = 0
+for channel_name_iter in [["#kubuntu-devel"], ["#ubuntu-devel"], ["#kubuntu"]]:
+    out_degree_fit_parameters = np.zeros((12, 4))
+    in_degree_fit_parameters = np.zeros((12, 4))
+    total_degree_fit_parameters = np.zeros((12, 4))
+    for month in range(1, 13):
+        log_data = reader.linux_input(log_directory, channel_name_iter, "2013-"+str(month)+"-1", "2013-"+str(month)+"-31")
+        nicks, nick_same_list = nickTracker.nick_tracker(log_data)
+
+        message_number_graph = network.message_number_graph(log_data, nicks, nick_same_list, False)
+        degree_anal_message_number = network.degree_analysis_on_graph(message_number_graph)
+
+        out_degree_fit_parameters[month-1] = vis.generate_log_plots(degree_anal_message_number["out_degree"]["raw_for_vis"], output_directory, channel_name[0])
+        in_degree_fit_parameters[month-1] = vis.generate_log_plots(degree_anal_message_number["in_degree"]["raw_for_vis"], output_directory, channel_name[0])
+        total_degree_fit_parameters[month-1] = vis.generate_log_plots(degree_anal_message_number["total_degree"]["raw_for_vis"], output_directory, channel_name[0])
+
+    parameters = ['slope', 'intercept', 'r_square']
+    for para_ind in range(len(parameters)):
+        vis.box_plot(out_degree_fit_parameters[:, para_ind], output_directory, "out_degree_"+str(parameters[para_ind])+"_2013_"+channel_name_iter[0]+"_cut_"+str(cutoff))
+        vis.box_plot(in_degree_fit_parameters[:, para_ind], output_directory, "in_degree_"+str(parameters[para_ind])+"_2013_"+channel_name_iter[0]+"_cut_"+str(cutoff))
+        vis.box_plot(total_degree_fit_parameters[:, para_ind], output_directory, "total_degree_"+str(parameters[para_ind])+"_2013_"+channel_name_iter[0]+"_cut_"+str(cutoff))
+
+        saver.save_csv([out_degree_fit_parameters[:, para_ind].tolist()], output_directory, "out_degree_"+str(parameters[para_ind])+"_2013_"+channel_name_iter[0]+"_cut_"+str(cutoff))
+        saver.save_csv([in_degree_fit_parameters[:, para_ind].tolist()], output_directory, "in_degree_"+str(parameters[para_ind])+"_2013_"+channel_name_iter[0]+"_cut_"+str(cutoff))
+        saver.save_csv([total_degree_fit_parameters[:, para_ind].tolist()], output_directory, "total_degree_"+str(parameters[para_ind])+"_2013_"+channel_name_iter[0]+"_cut_"+str(cutoff))
