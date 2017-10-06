@@ -786,4 +786,4 @@ def identify_hubs_and_experts(log_dict, nicks, nick_same_list):
         if node_name in top_hub:
             message_graph.node[node_name]['shape'] = 'square'
 
-    return message_graph
+    return message_graph, top_hub, top_keyword_overlap, top_auth

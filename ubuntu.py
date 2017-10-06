@@ -52,8 +52,8 @@ cutoffs = [0, 10, 20]
 
 for cutoff in cutoffs:
     config.THRESHOLD_MESSAGE_NUMBER_GRAPH = cutoff
-    hits = network.identify_hubs_and_experts(log_data, nicks, nick_same_list)
-    saver.draw_nx_graph (hits, output_directory, "hits-cutoff-"+str(cutoff))
+    msg_graph_experts, top_hub, top_keyword_overlap, top_auth = network.identify_hubs_and_experts(log_data, nicks, nick_same_list)
+    saver.draw_nx_graph (msg_graph_experts, output_directory, "hits-cutoff-"+str(cutoff))
 
 config.THRESHOLD_MESSAGE_NUMBER_GRAPH = threshold #revert to default config
 
@@ -163,7 +163,7 @@ for date in dates:
 
         vis.plot_infomap_igraph(msg_graph, msg_membership, output_directory, "message-exchange-" + starting_date + "-multi-cutoff-"+str(cutoff), aux_data = {"type": "MULTI_CH", "uc_adj": UC_adjacency_matrix, "user_hash": nicks_hash})
 
-
+# Correlational : statistical distribution as illustrated by box plot for RT, CL, CRT parameters
 percentiles = [0, 1, 5, 10, 20]
 for channel_name_iter in [["#kubuntu-devel"], ["#ubuntu-devel"], ["#kubuntu"]]:
     for cutoff in percentiles:
@@ -193,7 +193,7 @@ for channel_name_iter in [["#kubuntu-devel"], ["#ubuntu-devel"], ["#kubuntu"]]:
             saver.save_csv([conv_ref_time_curve_fit_parameters[:, para_ind].tolist()], output_directory, "conv_refr_"+str(parameters[para_ind])+"_2013_"+channel_name_iter[0]+"_cut_"+str(cutoff))
 
 config.CUTOFF_PERCENTILE = default_cutoff 
-
+# Correlational : statistical distribution as illustrated by box plot for degree
 cutoff = 0
 for channel_name_iter in [["#kubuntu-devel"], ["#ubuntu-devel"], ["#kubuntu"]]:
     out_degree_fit_parameters = np.zeros((12, 4))
@@ -219,3 +219,31 @@ for channel_name_iter in [["#kubuntu-devel"], ["#ubuntu-devel"], ["#kubuntu"]]:
         saver.save_csv([out_degree_fit_parameters[:, para_ind].tolist()], output_directory, "out_degree_"+str(parameters[para_ind])+"_2013_"+channel_name_iter[0]+"_cut_"+str(cutoff))
         saver.save_csv([in_degree_fit_parameters[:, para_ind].tolist()], output_directory, "in_degree_"+str(parameters[para_ind])+"_2013_"+channel_name_iter[0]+"_cut_"+str(cutoff))
         saver.save_csv([total_degree_fit_parameters[:, para_ind].tolist()], output_directory, "total_degree_"+str(parameters[para_ind])+"_2013_"+channel_name_iter[0]+"_cut_"+str(cutoff))
+
+# Correlational: overlap for keyword digest and HITS
+for month in xrange(1, 13):
+    log_data_m1 = reader.linux_input(log_directory, channel_name, "2013-"+str(month)+"-1", "2013-"+str(month)+"-31")
+    nicks_m1, nick_same_list_m1 = nickTracker.nick_tracker(log_data_m1)
+    message_graph_m1, top_hubs_m1, top_keyword_overlap_m1, top_auth_m1 = network.identify_hubs_and_experts(log_data_m1, nicks_m1, nick_same_list_m1)
+    saver.draw_nx_graph(message_graph_m1, output_directory, "expert-month-"+str(month))
+
+    log_data_m2 = reader.linux_input(log_directory, channel_name, "2013-"+str(month+1)+"-1", "2013-"+str(month+1)+"-31")
+    nicks_m2, nick_same_list_m2 = nickTracker.nick_tracker(log_data_m1)
+    message_graph_m2, top_hubs_m2, top_keyword_overlap_with_score_m2, top_auth_m2 = network.identify_hubs_and_experts(log_data_m2, nicks_m2, nick_same_list_m2)
+
+    print "Top 10 HUBS for Month [HITS]", month, ":", top_hubs_m1
+    print "Top 10 HUBS for Month [HITS]", month + 1, ":", top_hubs_m2
+    print "Number of common HUBS (from 10) between above 2 months:", len(list(set(top_hubs_m1).intersection(top_hubs_m2)))
+
+    print "Top 10 Experts by keywords for Months", month, ":", top_keyword_overlap_m1
+    print "Top 10 Experts by keywords for Months", month + 1, ":", top_keyword_overlap_with_score_m2
+    print "Number of common Experts by keywords (from 10) between above 2 months:", len(list(set(top_keyword_overlap_m1).intersection(top_keyword_overlap_with_score_m2)))
+
+    print "Top 10 AUTH for Month [HITS]", month, ":", top_auth_m1
+    print "Top 10 AUTH for Month [HITS]", month + 1, ":", top_auth_m2
+    print "Number of common AUTH (from 10) between above 2 months:", len(list(set(top_auth_m1).intersection(top_auth_m2)))
+    
+    print "Number of users common btw HUBS from HITS and Experts by Keywords (from 10) for month", month, ":",  len(list(set(top_keyword_overlap_m1).intersection(top_hubs_m1))) 
+    print "Number of users common btw AUTH from HITS and Experts by Keywords (from 10) for month", month, ":",  len(list(set(top_keyword_overlap_m1).intersection(top_auth_m1)))
+    print "Number of users common btw HUBS from HITS and AUTH from HITS (from 10) for month", month, ":",  len(list(set(top_hubs_m1).intersection(top_auth_m1)))
+    print "Number of users common btw HUBS, HITS and KEYWORDS", month, ":", len(set(list(set(top_keyword_overlap_m1).intersection(top_hubs_m1))).intersection(top_auth_m1))
