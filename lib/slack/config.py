@@ -1,8 +1,8 @@
 DEBUGGER = True
-LOG_DIRECTORY = "/home/rohit/parser_files/YearlyLogFiles/slackware/"
-OUTPUT_DIRECTORY = "/home/rohit/results-slack/"
+LOG_DIRECTORY = "/home/irclogparser/slackware/"
+OUTPUT_DIRECTORY = "/home/irclogparser/results-slack/"
 STARTING_DATE = "2013-1-1"
-ENDING_DATE = "2013-1-30"
+ENDING_DATE = "2013-1-31"
 MINIMUM_NICK_LENGTH = 3
 
 # plotly login credentials
