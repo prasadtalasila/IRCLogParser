@@ -70,8 +70,8 @@ for dtype in degree_type:
 saver.save_csv(bin_matrix, output_directory, "MessageNumber_binsize_"+str(config.BIN_LENGTH_MINS)) 
 
 # =============== VIZ ===================
-message_graph, message_membership = community.infomap_igraph(ig_graph=None, net_file_location= output_directory + 'message_number_graph.net')
-vis.plot_infomap_igraph(message_graph, message_membership, output_directory, "message")
+message_graph, message_comm = community.infomap_igraph(ig_graph=None, net_file_location= output_directory + 'message_number_graph.net')
+vis.plot_infomap_igraph(message_graph, message_comm.membership, output_directory, "message")
 vis.plot_data (data, output_directory, "bins")
 
 for dtype in degree_type:
@@ -90,10 +90,10 @@ for ptype in presence_type:
     saver.save_csv(dict_out[ptype]["reducedMatrix"],output_directory, "r"+ptype)
     saver.save_net_nx_graph(dict_out[ptype]["graph"], output_directory, "adj"+ptype)
     saver.save_net_nx_graph(dict_out[ptype]["reducedGraph"], output_directory, "radj"+ptype)
-    radj_graph, radj_membership = community.infomap_igraph(ig_graph=None, net_file_location= output_directory + 'radj'+ptype+'.net')
-    vis.plot_infomap_igraph(radj_graph, radj_membership, output_directory, "radj"+ptype+"_infomaps-reduced")
-    adj_graph, adj_membership = community.infomap_igraph(ig_graph=None, net_file_location= output_directory + 'adj'+ptype+'.net')
-    vis.plot_infomap_igraph(adj_graph, adj_membership, output_directory, "adj"+ptype+"_infomaps-full")
+    radj_graph, radj_comm = community.infomap_igraph(ig_graph=None, net_file_location= output_directory + 'radj'+ptype+'.net')
+    vis.plot_infomap_igraph(radj_graph, radj_comm.membership, output_directory, "radj"+ptype+"_infomaps-reduced")
+    adj_graph, adj_comm = community.infomap_igraph(ig_graph=None, net_file_location= output_directory + 'adj'+ptype+'.net')
+    vis.plot_infomap_igraph(adj_graph, adj_comm.membership, output_directory, "adj"+ptype+"_infomaps-full")
 
 degree_anal_message_number_CC = network.degree_analysis_on_graph(dict_out["CC"]["graph"], directed=False)
 saver.save_csv(degree_anal_message_number_CC["degree"]["formatted_for_csv"], output_directory, "CC_degree")
@@ -139,9 +139,9 @@ for date in dates:
         message_number_graph = network.message_number_graph(log_data, nicks, nick_same_list, False)
         saver.save_net_nx_graph(message_number_graph, output_directory, "message-exchange-" + starting_date + "-cutoff-" + str(cutoff))
 
-        msg_graph, msg_membership = community.infomap_igraph(ig_graph=None, net_file_location= output_directory + "message-exchange-" + starting_date + "-cutoff-" + str(cutoff) + '.net')
+        msg_graph, msg_comm = community.infomap_igraph(ig_graph=None, net_file_location= output_directory + "message-exchange-" + starting_date + "-cutoff-" + str(cutoff) + '.net')
 
-        vis.plot_infomap_igraph(msg_graph, msg_membership, output_directory, "message-exchange-" + starting_date + "-cutoff-" +str(cutoff))
+        vis.plot_infomap_igraph(msg_graph, msg_comm.membership, output_directory, "message-exchange-" + starting_date + "-cutoff-" +str(cutoff))
         
 # ================= Message Exchange Network Multi Channel =========================
 
@@ -158,10 +158,10 @@ for date in dates:
         message_number_graph = network.message_number_graph(log_data, nicks, nick_same_list, False)
         saver.save_net_nx_graph(message_number_graph, output_directory, "message-exchange-" + starting_date + "-multi-cutoff-"+str(cutoff))
 
-        msg_graph, msg_membership = community.infomap_igraph(ig_graph=None, net_file_location= output_directory + "message-exchange-" + starting_date + "-multi-cutoff-" + str(cutoff) +".net")
+        msg_graph, msg_comm = community.infomap_igraph(ig_graph=None, net_file_location= output_directory + "message-exchange-" + starting_date + "-multi-cutoff-" + str(cutoff) +".net")
         UC_adjacency_matrix = zip(*dict_out["CU"]["matrix"])
 
-        vis.plot_infomap_igraph(msg_graph, msg_membership, output_directory, "message-exchange-" + starting_date + "-multi-cutoff-"+str(cutoff), aux_data = {"type": "MULTI_CH", "uc_adj": UC_adjacency_matrix, "user_hash": nicks_hash})
+        vis.plot_infomap_igraph(msg_graph, msg_comm.membership, output_directory, "message-exchange-" + starting_date + "-multi-cutoff-"+str(cutoff), aux_data = {"type": "MULTI_CH", "uc_adj": UC_adjacency_matrix, "user_hash": nicks_hash})
 
 # Correlational : statistical distribution as illustrated by box plot for RT, CL, CRT parameters
 percentiles = [0, 1, 5, 10, 20]
@@ -247,3 +247,33 @@ for month in xrange(1, 13):
     print "Number of users common btw AUTH from HITS and Experts by Keywords (from 10) for month", month, ":",  len(list(set(top_keyword_overlap_m1).intersection(top_auth_m1)))
     print "Number of users common btw HUBS from HITS and AUTH from HITS (from 10) for month", month, ":",  len(list(set(top_hubs_m1).intersection(top_auth_m1)))
     print "Number of users common btw HUBS, HITS and KEYWORDS", month, ":", len(set(list(set(top_keyword_overlap_m1).intersection(top_hubs_m1))).intersection(top_auth_m1))
+
+#Correlational Code-Length
+codelengths = []
+for month in xrange(1, 13):
+    log_data_m1 = reader.linux_input(log_directory, channel_name, "2013-"+str(month)+"-1", "2013-"+str(month)+"-31")
+    nicks_m1, nick_same_list_m1 = nickTracker.nick_tracker(log_data_m1)
+    message_number_graph_m1 = network.message_number_graph(log_data_m1, nicks_m1, nick_same_list_m1, False)
+    try:
+        #FOS is a reserved word in igraph and if 'fos' is a username in the nx graph, it generates an error
+        saver.save_net_nx_graph(message_number_graph_m1, output_directory, "message-exchange-" + str(month))
+        msg_igraph, msg_community = community.infomap_igraph(ig_graph=None, net_file_location= output_directory + "message-exchange-" + str(month) + '.net')
+        codelengths.append(msg_community.codelength)
+    except:
+        node_labels = message_number_graph_m1.nodes()
+        labels = {}
+        for label in node_labels:
+            if label == "fos":
+                labels[label] = "fos_"
+            else:
+                labels[label] = label
+
+        message_number_graph_m1 = nx.relabel_nodes(message_number_graph_m1, labels)
+        saver.save_net_nx_graph(message_number_graph_m1, output_directory, "message-exchange-" + str(month))
+        print "error in", month
+
+    msg_igraph, msg_community = community.infomap_igraph(ig_graph=None, net_file_location= output_directory + "message-exchange-" + str(month) + '.net')
+    codelengths.append(msg_community.codelength)
+
+vis.box_plot(codelengths, output_directory, "codelengths2013")
+saver.save_csv([codelengths], output_directory, "codelengths2013")      
