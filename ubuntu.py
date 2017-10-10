@@ -277,3 +277,27 @@ for month in xrange(1, 13):
 
 vis.box_plot(codelengths, output_directory, "codelengths2013")
 saver.save_csv([codelengths], output_directory, "codelengths2013")      
+
+#Correlational Activity
+pearson = []
+for month in xrange(1, 12):
+    log_data_m1 = reader.linux_input(log_directory, channel_name, "2013-"+str(month)+"-1", "2013-"+str(month)+"-31")
+    nicks_m1, nick_same_list_m1 = nickTracker.nick_tracker(log_data_m1)
+    bin_matrix_m1, total_messages_m1 = network.message_number_bins_csv(log_data_m1, nicks_m1, nick_same_list_m1)
+    monthly_sum_bins_m1 = [sum(i) for i in zip(*bin_matrix_m1)]
+
+    log_data_m2 = reader.linux_input(log_directory, channel_name, "2013-"+str(month+1)+"-1", "2013-"+str(month+1)+"-31")
+    nicks_m2, nick_same_list_m2 = nickTracker.nick_tracker(log_data_m2)
+    bin_matrix_m2, total_messages_m2 = network.message_number_bins_csv(log_data_m2, nicks_m2, nick_same_list_m2)
+    monthly_sum_bins_m2 = [sum(i) for i in zip(*bin_matrix_m2)]
+    corr = np.corrcoef(monthly_sum_bins_m1, monthly_sum_bins_m2)[0, 1]
+
+    print "\n----------------------------------"
+    print "For months", month, "and", month+1
+    print "Bins for M1:", monthly_sum_bins_m1
+    print "Bins for M2:", monthly_sum_bins_m2
+    print "Pearson correlation:", corr
+    pearson.append(corr)
+
+vis.box_plot(pearson, output_directory, "pearson2013")
+saver.save_csv([pearson], output_directory, "pearson2013")      
