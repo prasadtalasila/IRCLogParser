@@ -1,9 +1,7 @@
 from __future__ import print_function
-from lib.slack.in_out import reader
-from lib.in_out import saver
-import lib.slack.nickTracker as nickTracker, lib.slack.config as config, lib.vis as vis, lib.validate as validate, lib.slack.util as util
-from lib.analysis import user, community
-from lib.slack.analysis import network, channel
+from lib.in_out import reader, saver
+import lib.scummvm.nickTracker as nickTracker, lib.scummvm.config as config, lib.vis as vis, lib.validate as validate, lib.util as util
+from lib.analysis import network, channel, user, community
 import numpy as np
 import networkx as nx
 import gc
@@ -14,7 +12,6 @@ channel_name = config.CHANNEL_NAME
 starting_date = config.STARTING_DATE
 ending_date = config.ENDING_DATE
 output_directory = config.OUTPUT_DIRECTORY
-
 exec_times_file = open(output_directory + "execution_times.txt", 'w')
 
 degree_type = ["out_degree", "in_degree", "total_degree"]
@@ -24,7 +21,7 @@ exec_times_file.flush()
 
 
 # ============== INPUT==================
-log_data = reader.linux_input_slack(log_directory, starting_date, ending_date)
+log_data = reader.linux_input(log_directory, channel_name, starting_date, ending_date)
 nicks, nick_same_list = nickTracker.nick_tracker(log_data)
 print("reading log files completed at: ", datetime.datetime.now(), file=exec_times_file)
 exec_times_file.flush()
@@ -84,7 +81,7 @@ message_number_graph = network.message_number_graph(log_data, nicks, nick_same_l
 print("msg exchange graph with cutoff=0 generated at: ", datetime.datetime.now(), file=exec_times_file)
 exec_times_file.flush()
 
-saver.save_csv([["month", "users", "directed_messages"], ["Jan-2013", len(message_number_graph), int(message_number_graph.size('weight'))]], output_directory, "users_messages")
+saver.save_csv([["month", "users", "directed_messages"], ["Jan-2016", len(message_number_graph), int(message_number_graph.size('weight'))]], output_directory, "users_messages")
 
 degree_anal_message_number = network.degree_analysis_on_graph(message_number_graph)
 print("msg exchange graph node degree analysis completed at: ", datetime.datetime.now(), file=exec_times_file)
@@ -175,7 +172,7 @@ exec_times_file.flush()
 
 
 # ============== ANALYSIS OF DYNAMIC COMMUNITIES  =============
-dates = [ ['2013-1-1','2013-1-31'],['2013-6-1','2013-6-30'] ]
+dates = [ ['2016-1-1','2016-1-31'],['2016-6-1','2016-6-30'] ]
 cut_offs = [ 0, 10, 20]
 
 for date in dates:
@@ -183,7 +180,7 @@ for date in dates:
     exec_times_file.flush()
     starting_date = date[0]
     ending_date = date[1]
-    log_data = reader.linux_input_slack(log_directory, starting_date, ending_date)
+    log_data = reader.linux_input(log_directory, channel_name, starting_date, ending_date)
     nicks, nick_same_list = nickTracker.nick_tracker(log_data, False)
     for cutoff in cut_offs:
         print("dynamic community analysis for", starting_date, "with cutoff=", cutoff, 
@@ -194,7 +191,7 @@ for date in dates:
 
         message_number_graph = network.message_number_graph(log_data, nicks, nick_same_list, False)
         saver.save_net_nx_graph(message_number_graph, output_directory, "message-exchange-" + starting_date + "-cutoff-" + str(cutoff))
-        saver.save_csv([["month", "users", "directed_messages"], ["Jan-2013", len(message_number_graph),
+        saver.save_csv([["month", "users", "directed_messages"], ["Jan-2016", len(message_number_graph),
                         int(message_number_graph.size('weight'))]], output_directory, "users_messages-" + starting_date + "-cutoff_"
                         + str(cutoff))
         del message_number_graph

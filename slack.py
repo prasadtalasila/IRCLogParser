@@ -53,8 +53,8 @@ cutoffs = [0, 10, 20]
 
 for cutoff in cutoffs:
     config.THRESHOLD_MESSAGE_NUMBER_GRAPH = cutoff
-    hits = network.identify_hubs_and_experts(log_data, nicks, nick_same_list)
-    saver.draw_nx_graph (hits, output_directory, "hits-cutoff-"+str(cutoff))
+    msg_graph_experts, top_hub, top_keyword_overlap, top_auth = network.identify_hubs_and_experts(log_data, nicks, nick_same_list)
+    saver.draw_nx_graph (msg_graph_experts, output_directory, "hits-cutoff-"+str(cutoff))
 
 config.THRESHOLD_MESSAGE_NUMBER_GRAPH = threshold #revert to default config
 
