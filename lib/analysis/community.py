@@ -39,7 +39,7 @@ def infomap_igraph(ig_graph, net_file_location=None):
                 # print str(node.index)+"\t"+str(id_to_name_map[g.vs["id"][node.index]])
 
         # http://stackoverflow.com/questions/21976889/plotting-communities-with-python-igraph
-        return ig_graph, community.membership
+        return ig_graph, community
 
     return ig_graph, None
 
