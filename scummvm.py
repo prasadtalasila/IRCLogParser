@@ -157,11 +157,11 @@ exec_times_file.flush()
 
 # ============== INFOMAPS COMMUNITY DETECTION ON MESSAGE EXCHANGE GRAPH  =============
 # the net file is for message exchange graph with cutoff= 0
-# message_graph, message_membership = community.infomap_igraph(ig_graph=None, net_file_location= output_directory + 'message_number_graph.net')
+# message_graph, message_community = community.infomap_igraph(ig_graph=None, net_file_location= output_directory + 'message_number_graph.net')
 # print("Infomaps CD on message exchange graph completed at: ", datetime.datetime.now(), file=exec_times_file)
 # exec_times_file.flush()
 
-# vis.plot_infomap_igraph(message_graph, message_membership, output_directory, "msg_infomap")
+# vis.plot_infomap_igraph(message_graph, message_community.membership, output_directory, "msg_infomap")
 # print("plot of clusters given by Infomaps CD completed at: ", datetime.datetime.now(), file=exec_times_file)
 # exec_times_file.flush()
 
@@ -198,20 +198,20 @@ for date in dates:
         del message_number_graph
         gc.collect()
 
-        msg_graph, msg_membership = community.infomap_igraph(ig_graph=None, net_file_location= output_directory + "message-exchange-" + starting_date + "-cutoff-" + str(cutoff) + '.net')
+        msg_graph, message_community = community.infomap_igraph(ig_graph=None, net_file_location= output_directory + "message-exchange-" + starting_date + "-cutoff-" + str(cutoff) + '.net')
 
         if cutoff != 0:
             # be careful; vis.plot_infomap_igraph() takes a long time to complete on large graphs
             print("vis.plot_infomap_igraph() starts for", starting_date, "with cutoff=", cutoff,
                     "at: ", datetime.datetime.now(), file=exec_times_file)
             exec_times_file.flush()
-            vis.plot_infomap_igraph(msg_graph, msg_membership, output_directory, "message-exchange-" + starting_date + 
+            vis.plot_infomap_igraph(msg_graph, message_community.membership, output_directory, "message-exchange-" + starting_date + 
 					"-cutoff-" +str(cutoff))
             print("vis.plot_infomap_igraph() ends for", starting_date, "with cutoff=", cutoff,
                     "at: ", datetime.datetime.now(), file=exec_times_file)
             exec_times_file.flush()
 
-        del msg_graph, msg_membership
+        del msg_graph, message_community
         gc.collect()
         print("dynamic community analysis for", starting_date, "with cutoff=", cutoff, 
 		"completed at: ", datetime.datetime.now(), file=exec_times_file)

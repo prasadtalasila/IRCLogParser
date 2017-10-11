@@ -71,8 +71,8 @@ for dtype in degree_type:
 saver.save_csv(bin_matrix, output_directory, "MessageNumber_binsize_"+str(config.BIN_LENGTH_MINS)) 
 
 # =============== VIZ ===================
-message_graph, message_membership = community.infomap_igraph(ig_graph=None, net_file_location= output_directory + 'message_number_graph.net')
-vis.plot_infomap_igraph(message_graph, message_membership, output_directory, "message")
+message_graph, message_community = community.infomap_igraph(ig_graph=None, net_file_location= output_directory + 'message_number_graph.net')
+vis.plot_infomap_igraph(message_graph, message_community.membership, output_directory, "message")
 vis.plot_data (data, output_directory, "bins")
 
 for dtype in degree_type:
@@ -103,6 +103,6 @@ for date in dates:
         message_number_graph = network.message_number_graph(log_data, nicks, nick_same_list, False)
         saver.save_net_nx_graph(message_number_graph, output_directory, "message-exchange-" + starting_date + "-cutoff-" + str(cutoff))
 
-        msg_graph, msg_membership = community.infomap_igraph(ig_graph=None, net_file_location= output_directory + "message-exchange-" + starting_date + "-cutoff-" + str(cutoff) + '.net')
+        msg_graph, message_community = community.infomap_igraph(ig_graph=None, net_file_location= output_directory + "message-exchange-" + starting_date + "-cutoff-" + str(cutoff) + '.net')
 
-        vis.plot_infomap_igraph(msg_graph, msg_membership, output_directory, "message-exchange-" + starting_date + "-cutoff-" +str(cutoff))
+        vis.plot_infomap_igraph(msg_graph, message_community.membership, output_directory, "message-exchange-" + starting_date + "-cutoff-" +str(cutoff))
