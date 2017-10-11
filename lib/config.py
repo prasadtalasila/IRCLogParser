@@ -2,7 +2,7 @@ DEBUGGER = True
 LOG_DIRECTORY = "/home/rohan/parser_files/YearlyLogFiles/"
 OUTPUT_DIRECTORY = "/home/rohan/Desktop/temp"
 STARTING_DATE = "2013-1-1"
-ENDING_DATE = "2013-1-30"
+ENDING_DATE = "2013-1-31"
 MINIMUM_NICK_LENGTH = 3
 
 # plotly login credentials
