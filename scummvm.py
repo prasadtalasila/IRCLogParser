@@ -106,6 +106,7 @@ exec_times_file.flush()
 # create a smaller message exchange graph for visualization
 config.THRESHOLD_MESSAGE_NUMBER_GRAPH = 20
 message_number_graph = network.message_number_graph(log_data, nicks, nick_same_list, False)
+saver.save_net_nx_graph (message_number_graph, output_directory, "message_number_graph")
 print("msg exchange graph with cutoff=20 generated at: ", datetime.datetime.now(), file=exec_times_file)
 exec_times_file.flush()
 
@@ -221,6 +222,5 @@ for date in dates:
     print("dynamic community analysis for", starting_date, "completed at: ", datetime.datetime.now(), file=exec_times_file)
     exec_times_file.flush()
     
-
 
 exec_times_file.close()
