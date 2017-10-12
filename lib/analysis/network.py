@@ -625,7 +625,7 @@ def message_number_bins_csv(log_dict, nicks, nick_same_list):
             bins = [0] * no_of_bins
 
             for line in day_log:
-                if(line[0] != '='): 
+                if(line[0] == '['):
                     time_in_min = int(line[1:3]) * 60 + int(line[4:6])
 
                     bin_index = time_in_min / config.BIN_LENGTH_MINS #gives the index of the bin for eg 01:35 in mins is 95 then 95/30 --> 3 , puts it in bin index 3
