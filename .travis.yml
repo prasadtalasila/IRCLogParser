@@ -16,6 +16,7 @@ python:
 install:
   - pip install -U pip wheel
   - pip install sphinx
+  - pip install coverage
   - python setup.py install
   - python -m nltk.downloader wordnet
 
@@ -23,7 +24,7 @@ script:
   - cd test/lib && python -m unittest -v UtilTest
   - python -m unittest -v VisTest
   - cd analysis && python -m unittest -v ChannelTest
-  - cd ../.. && python -m unittest -v unit_tests && python -m unittest -v tests
+  - cd ../.. && python -m unittest -v tests
   - cd slack && python -m unittest -v unit_tests
   - cd lib && python -m unittest -v UtilTest
   - cd analysis && python -m unittest -v ChannelTest
@@ -31,7 +32,7 @@ script:
   - cd .. &&  bash ext/doc_auto_deploy.sh
 
 after_success:
-  # - coverage run test/tests.py && codeclimate-test-reporter --file .coverage --token $CODECLIMATE_REPO_TOKEN
+  - bash script/test
   - cd test
   - mprof clean && mprof run python -m unittest -v tests && cd ../profiler && python memory_profiler.py && echo "FOR UPDATED MEMORY CONSUMPTION, see image:" && curl -F "clbin=@memory_consumption.png" https://clbin.com
   - sfood ../lib/analysis ../lib/analysis/* ../ext ../lib/in_out/* ../lib/config.py ../lib/nickTracker.py ../lib/util.py ../lib/vis.py ../sample.py | sfood-graph | dot -Tpng -Gsize=9,15\! -Gdpi=300 -o call-graph-dependency.png && echo "FOR UPDATED DEPENDENCY, see image:" && curl -F "clbin=@call-graph-dependency.png" https://clbin.com
