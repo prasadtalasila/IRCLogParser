@@ -1,9 +1,12 @@
 import unittest
 import sys
+import os
 sys.path.insert(0,"../../../")
 import lib.slack.util as util
 import commands
 import subprocess
+
+current_directory = os.path.dirname(os.path.realpath(__file__))
 
 class UtilTest(unittest.TestCase):
 
@@ -16,14 +19,14 @@ class UtilTest(unittest.TestCase):
         self.expected_nicks = None
 
     def test_save_to_disk(self):
-        util.save_to_disk(self.nicks,"data/nicksTest")
-        status, output = commands.getstatusoutput('cmp data/nicks data/nicksTest')
-        subprocess.Popen(['rm', 'data/nicksTest'])
+        util.save_to_disk(self.nicks, current_directory + "/data/nicksTest")
+        status, output = commands.getstatusoutput('cmp '+ current_directory +'/data/nicks '+ current_directory+ '/data/nicksTest')
+        subprocess.Popen(['rm', current_directory + '/data/nicksTest'])
         assert status == 0, "Failure to load from disk."
 
 
     def test_load_from_disk(self):
-        nicks = util.load_from_disk("data/nicks")
+        nicks = util.load_from_disk(current_directory + '/data/nicks')
         assert nicks == self.expected_nicks, "Failure to load from disk."
 
 

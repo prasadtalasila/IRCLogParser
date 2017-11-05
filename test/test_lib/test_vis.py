@@ -21,7 +21,7 @@ class VisTest(unittest.TestCase):
         y_in = [0,1,2,3,4,5]
         
         slope, intercept, r_value, mse = vis.calc_plot_linear_fit(x_in, y_in, current_dir, "linear_plot_test")
-        os.remove('linear_plot_test.png')
+        os.remove(current_dir + '/linear_plot_test.png')
         assert slope == 1 and intercept == 0 and mse == 0
         
     def test_generate_probability_distribution(self):
