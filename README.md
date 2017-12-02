@@ -1,7 +1,8 @@
 # IRCLogParser
 
 [![Build Status](https://travis-ci.org/prasadtalasila/IRCLogParser.svg?branch=dev)](https://travis-ci.org/prasadtalasila/IRCLogParser) 
-[![Code Climate](https://codeclimate.com/github/prasadtalasila/IRCLogParser/badges/gpa.svg)](https://codeclimate.com/github/prasadtalasila/IRCLogParser) 
+[![Maintainability](https://api.codeclimate.com/v1/badges/211e8675682e2d345d8b/maintainability)](https://codeclimate.com/github/prasadtalasila/IRCLogParser/maintainability)
+[![Test Coverage](https://api.codeclimate.com/v1/badges/211e8675682e2d345d8b/test_coverage)](https://codeclimate.com/github/prasadtalasila/IRCLogParser/test_coverage) 
 [![Requirements Status](https://requires.io/github/prasadtalasila/IRCLogParser/requirements.svg?branch=dev)](https://requires.io/github/prasadtalasila/IRCLogParser/requirements/?branch=dev)    
 
 
