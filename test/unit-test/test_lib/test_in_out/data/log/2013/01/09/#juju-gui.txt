@@ -1,0 +1,218 @@
+=== Makyo is now known as Makyo|out
+[07:27] <danialjose> What is the password to access Juju Web UI demo?
+[07:27] <danialjose> http://uistage.jujucharms.com:8080/
+[07:29] <danialjose> i found it "admin"
+=== _mup__ is now known as _mup_
+=== frankban_ is now known as frankban
+[10:09] <frankban> .ide
+[13:00] <hazmat> nice article on css3 transitions http://blog.alexmaccaw.com/css-transitions
+[13:04] <gary_poster> teknico, did my branch work for you?
+[13:04] <teknico> gary_poster, working on it with frankban
+[13:04] <teknico> gary_poster, impressive work, thanks, needed only a few tweaks
+[13:05] <gary_poster> great thanks teknico 
+[13:05] <teknico> gary_poster, we're now struggling with erratic tests
+[13:05] <gary_poster> teknico, gotcha :-/
+[13:05] <teknico> gary_poster, will finish fixing them after lunch
+[13:05] <teknico> gary_poster, and write a few new ones
+[13:05] <gary_poster> teknico, cool.  Maybe bcsaller will get his branch landed in that time which includes hazmat's fixes for some of the erratic tests
+[13:06] <frankban> gary_poster: cool
+[13:06] <teknico> gary_poster, where can we see those fixes?
+[13:06] <bcsaller> gary_poster: I hope so, when I did the merge things started dying all over the place, but only in the tests. pre-merge both branches worked fine. I tried to track it down last night again and am working on it now
+[13:07] <gary_poster> teknico, frankban. in isolation here: https://code.launchpad.net/~hazmat/juju-gui/reliable-test/+merge/141197
+[13:07] <teknico> gary_poster, thanks
+[13:07] <gary_poster> Ben has additional test fixes as he outlines in review comments in his viewport branch https://code.launchpad.net/~bcsaller/juju-gui/viewport/+merge/142138
+[13:07] <teknico> and now yoga :-)
+[13:07] <gary_poster> :-) enjoy
+[13:07] <frankban> gary_poster: do you have time for a quick hangout before my lunch on my current slack task?
+[13:08] <gary_poster> sure frankban 
+[13:08] <frankban> juju-ui?
+[13:08] <gary_poster> yeah, cool
+[13:26] <benji> teknico: we were discussing ways to keep unused EC2 instances in their place, Amazon just anounced this: http://docs.amazonwebservices.com/AmazonCloudWatch/latest/DeveloperGuide/UsingAlarmActions.html
+[13:27] <gary_poster> cool benji.  frankban and teknico just went to lunch.
+[13:27] <gary_poster> frankban, I added the cards we discussed to the slack lane
+[13:27] <gary_poster> they could probably go in the main project lane tbh
+[13:58] <gary_poster> bac, approved with mostly trivial comments
+[13:58] <bac> gary_poster: thanks
+[13:58] <gary_poster> welcome
+[14:02] <gary_poster> bcsaller, do you have anyone helping you with the test failures?  If not, would you like someone to help?  If so, do you already have someone in mind (e.g. Matt) or should bac or I try to help?
+[14:05] <bcsaller> gary_poster: another pair of eyes would be great, I can
+[14:06] <bcsaller> I can't tell whats happening yet, but it looks like login view isn't loaded for some portion of them making fail, but that doesn't appear to be all
+[14:06] <bcsaller> I'll push what I have
+[14:07] <bac> gary_poster: good idea on providing example entity names.  i'm unsure how environments are named, though.
+[14:08] <gary_poster> bcsaller, ok.  I wonder if the changes that I made and teknico and frankban are polishing (esp. tests) will make things better or worse
+[14:08] <gary_poster> bac, ok. do what you can.  If you can figure it out it will make upcoming branches that much simpler
+[14:10] <bcsaller> gary_poster: trunk runs fine today, as did mine before the merge, so I can't tell offhand. The errors coming out are not clear to me though, things are undefined that shouldn't be but its often not clear what and seldom clear why
+[14:10] <gary_poster> :-/ yeah, ok
+[14:11] <gary_poster> bac, I suspect a quick question to Kapil will set you on the right path quickly.  Probably worth bothering him.
+[14:16] <bac> hazmat: the annotation commands (get, update, remove) take an entity name which may be the environment.  i suspect that is the name in your environments.yaml used when bootstrapping.  correct?
+[14:18] <hazmat> bac no its.. a magic  value.. 'environment' i believe
+[14:19] <bac> hazmat: ah, ok
+[14:19] <goodspud> Awesome that we have authentication on the demo site.
+[14:19] <goodspud> Well done
+[14:20] <goodspud> Can anybody share the password for it though? :)
+[14:20] <gary_poster> bcsaller, make test-debug fails very very quickly while make test-prod is a bit more gradual.
+[14:20] <hazmat> bac, magic key is 'env'
+[14:20] <hazmat> goodspud, admin
+[14:20] <gary_poster> goodspud, pretty version is being coded now.  password is "admin"
+[14:20] <goodspud> Cheers chaps
+[14:20] <gary_poster> goodspud, pretty version includes help text telling demo users what the password is :-)
+[14:21] <goodspud> Very secure :)
+[14:21] <teknico> benji, thanks, got the email from AWS with the timely new feature :-)
+[14:24] <hazmat> bac, there maybe a caveat in how it comes back in the delta stream.. since there isn't an environment object/representation there
+[14:39] <bac> hazmat: i just pushed changes to my branch.  would you mind doing a review to see if i missed something?  https://codereview.appspot.com/7064060
+[14:42] <hazmat> bac, added comment re doc string on update_annotations
+[14:42] <hazmat> lgtm
+[14:43] <bac> thanks hazmat
+[14:47] <gary_poster> bcsaller, I have hack workaround that you probably also have.  I don't understand what is going wrong with the loader. :-/ simply explicitly saying that app.js requires juju-view-login makes it work (line 8 of http://pastebin.ubuntu.com/1513203/).  I also need line 45 in order to get the tests to pass in "make test-debug".  This should not be necessary either. :-( changes to test/index.html are unncessary but nice c
+[14:47] <gary_poster> leanup.  change to test_login makes linter happy
+[14:47] <gary_poster> bcsaller, with that diff I then have seven or eight test failures, all of which seem more specific to the viewport changes
+[14:48] <bcsaller> gary_poster: thanks, I'd seen something similar, but it still seemed intermittent for me, I'll try what you have and track down the rest.
+[14:50] <gary_poster> bcsaller, five of the remaining failures are in pan zoom module tests; charm normalization looks like another loader weirdness; and juju environment view has two.
+=== Makyo|out is now known as Makyo
+[14:52] <gary_poster> bcsaller, this fixes charm normalization problem for me: http://pastebin.ubuntu.com/1513237/
+[14:52] <gary_poster> bcsaller, if you would like details on the other failures in environment and pan/zoom, let me know
+[14:53] <gary_poster> I will leave them otherwise
+[14:55] <gary_poster> nice changes bac, thank you
+[14:55] <gary_poster> bac typo
+[14:56] <gary_poster> If no keys are passed, all annoations
+[14:56] <gary_poster> -> annotations
+[14:56] <bac> gah
+[14:58] <bcsaller> gary_poster: I think we are on the same page now, took a while before the merge even worked for me. Tracking down the real issues now, thanks again 
+[15:00] <gary_poster> cool, welcome
+[15:11] <gary_poster> bac it would be trivial-ish to do bug 1096273 now, I think.  and for bug 1096270...hazmat, what's your timeline for making the delta stream annotation changes?
+[15:11] <_mup_> Bug #1096273: on drag end set annotation <juju-gui:Triaged> < https://launchpad.net/bugs/1096273 >
+[15:11] <_mup_> Bug #1096270: propagate delta stream annotation changes as events <juju-gui:Triaged> < https://launchpad.net/bugs/1096270 >
+[15:12]  * bac looks
+[15:15] <bac> gary_poster: agreed.  grabbed card.
+[15:15] <gary_poster> cool
+[15:20] <hazmat> gary_poster, i can turn that around today
+[15:20] <gary_poster> cool thanks hazmat
+[15:21] <hazmat> bac was there a use case for the env annotation? looking over the delta stream code that's not currently coming back there, but i can add it as part of the other change under a fake object/parent key 'env'
+[15:22] <hazmat> landscape has uses for it though
+[15:22] <hazmat> enough of a reason to add it
+[15:22] <bac> hazmat: no, i was just trying to make clear the function documentation i saw in context.py
+[15:25] <hazmat> gary_poster, bac so w/ the change annotations in the delta stream will now be under a sub object/dict 'annotations'
+[15:26] <gary_poster> sounds good hazmat
+[15:27] <hazmat> gary_poster,  except the environment annotations which will be under a dict under the key ... 'env' ? there isn't a corresponding object to place them under
+[15:27] <hazmat> alternatively 'annotations' as a top level key
+[15:27] <gary_poster> mm
+[15:27] <gary_poster> hazmat, don't have a strong feeling about it.  Lean towards annotations top level key
+[15:28] <hazmat> gary_poster, cool, works for me
+[15:28] <gary_poster> cool
+[15:29] <gary_poster> bac bcsaller benji frankban goodspud hazmat Makyo teknico call in 1
+[15:33] <hazmat> bcsaller, i had an unpushed rev on that reliable-test branch.. just pushed might help
+[15:34] <bcsaller> hazmat: I think things are mostly resolved wrt that, but I'll check
+[15:34] <benji> bcsaller: my headphones reproduce the bass notes in your typing with high fidelity ;)
+[15:35] <bcsaller> benji: I think I'm muted now, maybe before
+[15:35] <benji> bcsaller: I muted you.  That was my note softening the blow. 
+[15:57] <bcsaller> has anyone seen the test runner show all checks but still list a failure count?
+[15:58] <gary_poster> no, that sounds like an exciting new failure mode :-P
+[15:58] <bcsaller> gary_poster: its pushed if you want to see, you can click on 'failures' to filter the results and nothing appears
+[15:58] <bcsaller> but still has a count 
+[15:59] <gary_poster> :-/
+[15:59] <gary_poster> ok will take a look
+[15:59] <bcsaller> I'll put more coffee on, brb
+[15:59] <gary_poster> I am about to be on call also
+[16:01] <gary_poster> duped bcsaller 
+[16:02] <bcsaller> gary_poster: that helps, know I not totally insane
+[16:02] <gary_poster> I didn't say that bcsaller ;-)
+[16:02] <bcsaller> putting .only on some of the tests, something in the pan zoom triggers this
+[16:02] <bcsaller> ha ha 
+[16:02] <gary_poster> huh
+[16:18] <therve> hey there!
+[16:18] <gary_poster> hey therve :-)
+[16:18] <therve> hi gary_poster!
+[16:18] <therve> I'm having an issue trying to deploy the charm
+[16:18] <therve> it fails with "Unable to locate package python-charmhelpers" 
+[16:18] <therve> any idea where that comes from?
+[16:20] <gary_poster> therve, yes.  is this on precise?  Juju PPA should have it, and ppa:charmers/charm-helpers .  That said, concerned that we don't see that problem and would love to know why
+[16:21] <therve> gary_poster, it is on precise
+[16:21] <gary_poster> weird :-(
+[16:21] <gary_poster> frankban, you seen anything like that lately? ^^^
+[16:21] <therve> the ppa is not on the deployed image
+[16:22] <therve> maybe my lxc image is out of date or something?
+[16:22] <gary_poster> therve, oh.  lxc juju doesn't work well in our experience I'm afraid.  We test with ec2
+[16:22] <gary_poster> haven't seen that failure mode though
+[16:23] <therve> lxc is so fast and easy :/
+[16:23] <gary_poster> I know
+[16:23] <therve> but I'll look on ec2 :)
+[16:33] <gary_poster> bac benji frankban teknico, big news: we are no longer responsible for LP at all, and OCR is over.  OCR may return in some new different form with different goals (knowledge sharing across cloud engineering).  But anyway, don't do LP OCR, and take it off your calendar.
+[16:34]  * benji wipes a single tear from his eye.
+[16:34]  * teknico does not try to contain exultation *at all* :-D
+[16:36] <teknico> (sorry guys :-) )
+[16:36] <gary_poster> :-)
+[16:42] <bac> :(
+[16:43] <bcsaller> gary_poster: its all fixed and pushed. When you have a sec can you confirm that for me
+[16:49] <gary_poster> bcsaller, confirmed, yay!
+[16:49] <bcsaller> thank you :)
+[16:50] <bcsaller> its really odd, an async test failure in afterEach can stop other tests from running, so an error can silently cut the total number of tests short and that can be easy to miss, also there is no stack trace, just that failure count 
+[16:51] <gary_poster> ugh, weird
+[16:52] <bcsaller> gary_poster: its working now though
+[16:52] <gary_poster> understood bcsaller :-) just an unpleasant failure state
+[16:53] <bcsaller> gary_poster:  should I repropose or submit
+[16:54] <gary_poster> submit unless you actuvely want a re-review bcsaller.  your call
+[16:55] <bcsaller> gary_poster: if anything comes up at this point its another branch/bug, going to submit
+[16:55] <gary_poster> +1 bcsaller 
+[16:57] <therve> gary_poster, I'm seeing the same thing on ec2...
+[16:58] <therve> doing "juju deploy cs:~juju-gui/precise/juju-gui"
+[16:58] <gary_poster> teknico, I'm going to go have some lunch.  shoot me a mail with details if you want me to run with the branch after your EoD.  Would be great to get it landed, and I'd be happy to help it happen.  Ben's branch is about to land, which should be the last blocker
+[16:58] <gary_poster> therve, ok will investigate now
+[16:58] <teknico> gary_poster, will do
+[16:59] <Makyo> Back in a few, something's wrong with Unity.
+[17:10] <gary_poster> therve, I have a hypothesis.  I think we have "juju-origin: ppa" in our environments.yaml, and you don't.  Can you confirm that you do not?
+[17:10] <therve> gary_poster, that's correct. Let me try that
+[17:11] <gary_poster> therve, that's still something we want to fix very soon, but if that unblocks you for now, that would be great
+[17:14] <therve> gary_poster, seems to work, thank you!
+[17:14] <gary_poster> therve, great.  Thanks for bringing this to our attention.  Looks like it will be mildly annoying to address, but important. :-)
+[18:06] <benji> we should move lib/views/stylesheet.less to a saner loction; it just took me three or four minutes to find it
+[18:14] <benji> I am seeing a couple of different odd behaviours around adding relations in the environment view (trunk), is that a known issue?
+[18:14] <Makyo> benji, Specifics?
+[18:15] <benji> Makyo: When I click "Build Relation" I see an orange line drawn horizontally off to the left.  The line does not follow the cursor.
+[18:16] <Makyo> benji, okay.  Mind filing a bug?  Will get to it after this recess thing.
+[18:16] <Makyo> (which sounds more fun than it is)
+[18:16] <gary_poster> bcsaller, when I go to https://codereview.appspot.com/7062056/diff/1/app/views/topology/service.js?column_width=80 to try and review your most recent branch I see "Upload in progress."
+[18:16] <benji> Makyo: will do.
+[18:16] <gary_poster> Is that what you see?
+[18:16] <Makyo> benji, thanks.
+[18:20] <bcsaller> gary_poster: I do, I'll re-propose
+[18:21] <gary_poster> thanks bcsaller 
+[18:21] <benji> Makyo: https://bugs.launchpad.net/juju-gui/+bug/1097871
+[18:21] <_mup_> Bug #1097871: Pending relation line does not follow cursor. <juju-gui:Triaged> < https://launchpad.net/bugs/1097871 >
+[18:22] <gary_poster> Charm review available for problem encountered above: https://codereview.appspot.com/7073051.
+[18:23] <gary_poster> Filing a bug now
+[18:23] <bcsaller> gary_poster: oddly, clicking on the 'D' services entry shows the diff, its an issue with a delete/move
+[18:24] <gary_poster> ah, ok bcsaller.  I can try to work around
+[18:24] <bcsaller> Rietveld bug of the day
+[18:31] <gary_poster> bcsaller approved to land as is
+[18:31] <bcsaller> gary_poster: skip the second review cause its simple?
+[18:32] <gary_poster> bcsaller, fine by me.
+[18:53]  * Makyo skips out of Linter Londerland and grabs lunch.
+[19:42] <hazmat> gary_poster, nice catch re ppa
+[19:42] <gary_poster> thanks hazmat 
+[20:07] <benji> do charm URLs from the local repo have this form?  "local:foo"?
+[20:07] <benji> do they have version numbers too, like the charm store URLs?
+[20:07] <benji> i.e., local:foo-7
+[21:39] <gary_poster> I'm not sure benji, sorry--but yes, I think so.
+[21:39] <gary_poster> benji, please make sure you hand off before you depart
+[21:39] <benji> gary_poster: good; I ran with the assumption
+[21:40] <gary_poster> cool
+[21:40] <benji> gary_poster: will do; hmm I guess that is now
+[21:40] <gary_poster> yeah :-)
+[21:40] <benji> the only thing I have left are some integration tests, which are prooving very tricky
+[21:40] <benji> I'll write it up and send it to the list
+[21:40] <gary_poster> thanks
+[21:41] <gary_poster> Makyo, if you are up for it could you review https://codereview.appspot.com/7060066/ and possibly also https://codereview.appspot.com/7073051?
+[21:41] <Makyo> gary_poster, yep.
+[21:41] <gary_poster> I'll look at the linter londerland branch
+[21:41] <gary_poster> thank you
+[21:42] <benji> Ever since I followed on twitter the pro gamer I met on the plane ride back from Copenhagen Twitter has been suggesting exclusively Danish tweets to me.
+[21:42]  * benji notices the tortured structure of that sentence.
+[21:47] <gary_poster> :-)
+[21:59] <benji> gary_poster: see you Monday
+[21:59] <gary_poster> see you Monday benji
+[22:11] <gary_poster> Makyo, approved with changes.  Thank you for that branch.  Will be cool to have.
+[22:11] <gary_poster> I like the changes you want to make in the future too--turning on more options
+[22:11] <Makyo> gary_poster, cool,. thanks!  Gotta walk the dog quick,but will do so when I get back.
+[22:12] <gary_poster> cool Makyo.  ttyl
+[22:13] <hazmat> benji, take care
+[23:24] <benji> thanks hazmat 

@@ -1,0 +1,235 @@
+=== smb` is now known as smb
+=== yofel_ is now known as yofel
+[09:06] <ppisati> moin
+[09:11] <apw> moin
+[09:14] <smb> apw, morning
+[09:14] <cking> morning + yawning
+[09:15] <smb> apw, and if you could not hear anything yet, your mumble is broken
+[09:22] <apw> my entire machine is broken at the moment, with root offlione
+[09:24] <smb> apw, Sounds rather annoying...
+[09:26] <apw> its the issue cking (i think) mentioned with intel ssds in quantal, with them being gone on resume
+[09:27] <cking> that one bitten you again?  my box seems to be ok nowadays
+[09:28] <ppisati> i experienced corruption with my intel + ssd in Q, but it was long ago
+[09:29] <cking> not seen the issue yet with 3.8
+[09:29] <apw> cking, that one is my one holdout on quantal, i should upgrade it
+[09:38]  * apw gets hit box back in one piece, may as well update at least while it is working
+[09:38] <smb> apw, My "fun" this morning was that I found that wl wasn't seeing my AP at home at all (though a bunch of the other ones around)
+[09:39] <apw> smb, heh, nice, did a reboot fix it ?
+[09:39] <apw> smb, remember it ended up in .TW after being at cking's place
+[09:39] <smb> apw, Nah, but I found out that it will find it when I change the AP to be only b+g and not b+g+n
+[09:39] <apw> perhaps its channels were turned off
+[09:39]  * cking blames his dodgy .tw AP
+[09:40] <apw> smb, hmmm, something you got during updates while here then
+[09:40] <apw> we did get a new wl relativly recently, in r anyhow
+[09:40] <smb> apw, something == replace b43 with wl because b43 tends to loose its mind too often
+[09:40] <apw> ahh
+[09:41] <apw> b43 is ... not great ... bcmsmac is better if it supports your h/w
+[09:41] <ohsix> i think it's heat related! :p
+[09:41] <apw> well it is now anyhow with sforshee's fix
+[09:41] <apw> a whole day without issues, a first for this month
+[09:41] <smb> apw, Naturally bcmsmac isn't usable for this
+[09:42] <apw> sigh
+[09:42] <ohsix> i've used b43 quite a lot; when it fails it has a time component to it
+[09:42] <apw> ohsix, joy ... heat, or leaks or something then
+[09:43] <ohsix> if i remove b43 for two minutes, i got another 15 or so out of it, pretty repeatable
+=== henrix_ is now known as henrix
+[09:45] <ohsix> theres separate thermal tables for ssb and the mac, i just figure they're incorrect on my particular thing
+[09:55]  * apw reboots again
+[10:18] <ashwini> Is there any way, I can make my char driver to exit gracefully if it tries to write or access unallocated pointer, right now it is crashing ??
+[10:22] <apw> ashwini, as in a kernel driver, not really 
+[10:22] <apw> ashwini, a common approach though would be to use your own wrapper function to pre-validate pointer writes where you are having trouble
+[10:22] <ashwini> apw : no way to handle this type seg faults ???
+[10:22] <apw> ashwini, and preventing the writes occuring
+[10:27] <ashwini> apw: thanks for the info. 
+[10:33] <apw> np
+[10:50] <wookey> apw: OK. I've fixed the tools build so it works for the random linaro kernel I was asked to fix (quantal linux-linaro-origen-3.7). Which kernel would you like raring patches against?
+[10:50] <apw> wookey, raring master is our 'gold standard'
+[10:51] <wookey> I had to leave out C++ demnagling feature in perf because cross libiberty-static is not availble (we can sort that in due course).
+[10:52] <apw> wookey, i have been wondering if we should be doing perf in the main kernel anyhow, one of the things i note the kernel source can do is produce a perf source 'output'
+[10:52] <wookey> debian has moved kernel tools to a separate source package, apparently
+[10:52] <wookey> that seems a lot more sensible to me
+[10:52] <apw> wookey, one advantage of pulling it out, would be to allow it to fall into universe so it doesn't have to pull the libraries in
+[10:52] <wookey> as all the cross-cvomlexity (and hla fthe build-deps) are in the tools bit
+[10:53] <apw> wookey, perhaps i should poke that first before you do the work
+[10:53] <wookey> fine by me. Any idea when you might get to that (as I currently have this 'mental set' loaded)
+[10:54] <wookey> in fact better than fine - I think it's  good plan.
+[10:54] <apw> i'll have a quick look now and see how easy it looks
+[10:54] <wookey> perfect answer :-)
+[11:04] <apw> wookey, any idea what the debian package name for the pulled out perf actually is
+[11:05] <wookey> erm no. linux-tools?
+[11:05] <apw> wookey, i am interested in whether they have kept it locked to kernel version or not
+[11:06] <wookey> there is a linux-tools source package
+[11:07] <apw> yeah, and the orig there looks like the tarball the kernel source makes too
+[11:07] <brendand> henrix, there is no change on the kernels being held for a few weeks, right?
+[11:07] <apw> wookey, i'll poke this some this morning, as this may well make more sense, as it can be shared between flavours
+[11:07] <henrix> brendand: actually, i'm currently respining Q and P kernels due to regressions
+[11:08] <apw> wookey, as i would love it to drop this into universe
+[11:08] <wookey> righty-ho
+[11:08] <brendand> henrix, you mean the ones that were just tested?
+[11:08] <henrix> brendand: yes. he need to revert a few patches to fix a regression, and add a new fix for another regression
+[11:09] <henrix> s/he/we
+[11:09] <brendand> henrix, hmm. what will happen after that - do we and qa need to retest?
+[11:11] <henrix> brendand: i'm not sure we'll need a full re-run in all the kernels. but at least the kernel that will go into .2 release should be tested, i believe
+[11:12] <brendand> henrix, do you have any info on the regressions? i want to do a test gap analysis to see if we could have caught it earlier
+[11:12] <henrix> brendand: sure, give me 1 sec and i'll point you to the bugs
+[11:13] <henrix> brendand: bug #1101666 and #1103320
+[11:13] <ubot2> Launchpad bug 1101666 in linux (Ubuntu Quantal) "inotify fd leak" [Medium,In progress] https://launchpad.net/bugs/1101666
+[11:13] <ubot2> Launchpad bug 1103320 in linux (Ubuntu Quantal) "Ubuntu 13.04 and 12.04.2: Login screen does not appear after installing OS on SL4545 G7" [Medium,Fix committed] https://launchpad.net/bugs/1103320
+[11:13] <henrix> brendand: the first one has a script that allows to reproduce the issue easily
+[11:14] <brendand> henrix, that's on a vm though it seems
+[11:14] <brendand> henrix, which doesn't concern us
+[11:15] <henrix> brendand: correct
+[11:16] <henrix> brendand: anyway, i'll ping bjf later and ask him about the QA and cert testing for these kernels.
+[11:18] <brendand> henrix, not sure if we have the other system affected by the lightdm problem. if it's down to the graphics hardware maybe we can find something with the same though
+[11:19] <brendand> henrix, huh - i thought that HW was a server
+[11:20] <brendand> henrix, we only run ubuntu-server on servers, so headless
+[11:21] <brendand> henrix, or by 'login screen' does it just mean the text prompt?
+=== K is now known as Guest11170
+[13:00] <Guest11170> #ask
+[13:20]  * henrix -> food
+[13:29] <apw> henrix, where are we with respinning quantal ?
+[13:44] <gema> can anyone tell me how many mounts are needed for a fsck to be done with ext4?
+[13:45]  * gema is trying to figure out how many reboots go by before a check is done on the drives, how often to expect it
+[13:45] <ohsix> it depends on the volume header, you can use tune2fs to either set it or display it
+[13:46] <ohsix> you can also drop a file in / to fsck all the drives at boot, but i don't know the name of the file or if it even works anymore
+[13:46] <gema> ohsix: I am rather trying to determine whether a problem we are seeing with bootspeed, which sometimes fails at the 17th/18th boot, can be related to a fsck of the drives
+[13:47] <gema> ohsix: I am going to try tune2fs
+[13:47] <ohsix> ah, then yea; tune2fs should be able to give you something
+[13:48] <gema> ack, thanks
+[13:49] <henrix> apw: currently building
+[13:50] <ohsix> i guess this is it, and also the value here; but the filesystem was created a looong time ago Maximum mount count:      23
+[13:53] <gema> ohsix: I have -1 as a maximum mount count
+[13:54] <gema> I wonder what the machines on the lab will have
+[13:54] <ohsix> interesting
+[13:54] <gema> ohsix: thanks a lot, you put me on the right track :)
+[13:54] <ohsix> that has to be set explicitly afaik
+[13:55] <cking> indeed it does
+[14:00] <apw> herton, are you asking panda|x201 to submit his patch to you :)
+[14:02] <herton> apw, yes :), but I also would like to see it on stable ML, for any other feedback regarding it
+[14:18] <sg20002> Hello. Can somebody help me with kenrel panic? I'm getting '/sbin/init: Accessing a corrupted shared library. And it's not telling me the library.
+[14:18] <ohsix> you'll need to find some way to run ldd on it ... but if you're getting that message there's probably a lot more wrong than just that one library, heh
+[14:21] <sg20002> ohsix: I can boot from live dvd. Can I then run ldd from it?
+[14:22]  * henrix wonders if we now have new (and faster) ppc builders.  quantal took 40 mins!
+[14:22] <BenC> sg20002: From my quick searching, it sounds like you've got some bogus and/or corrupt libraries, which means you may have to reinstall some things (or remove bad libraries that are in the way)
+[14:22] <BenC> henrix: we do
+[14:22] <henrix> \o/
+[14:23] <BenC> sg20002: what were you doing before this occurred, is probably the best question
+[14:23] <ohsix> sg20002: yes, but doing that and reinstalling the packages is easy enough; don't have time to walk someone through it tho
+[14:23] <BenC> sg20002: and this is not technically a kernel question, so you may have to move along to #ubuntu for more help
+[14:23] <ohsix> yea that
+[14:24] <sg20002> BenC: Asked in ubuntu already. Don't really know what happened before - the person who saw what happened is saying that he was just moving a large file and then it just died.
+[14:26] <BenC> sg20002: Of course, no one wants to admit they messed up :)
+[14:27] <BenC> sg20002: It's very likely that reinstalling libc6 package could fix this, but if you need help on how to do that, ask in #ubuntu
+[14:29] <sg20002> BenC: Yes, read somewhere that libc6 may be connected.
+[14:30] <BenC> sg20002: What I can say with almost certainty is that this is user error. Unless you have a bad hard drive, or experienced a kernel crash that someone corrupted on-disk structures.
+[14:31] <BenC> sg20002: every search I've seen about this error has been because someone did something dumb
+[14:31] <BenC> s/someone/somehow/
+[14:32] <sg20002> BenC: Ok, thanks. One more quesiton - I've got the kernel log, and it's full of weird messagess like this: Dec  4 13:03:32 lxc-host kernel: o0n_#C0n_#CCeD0ohlI"rCeD"rCeD0ohlI"rhlM:rn0M en0M en0M 0eI:ren0M en0M ea#M:rn0M CeD0oCeD0oh#MCtn_0r0eI:e0eI:eClM ca0#oenD"r0eI:eClMCtn_0rdn_#Ccn0M 0n#I0Che_M:Cn0I#0ae0I#CnlDM0n#I0Che_M:Cn0M"Cn0M"0n#I0CalD# he_M:ralD# Cn0M"Cn0M"oae_M:0n#I0Che_M:Cn0M"oalD# he_M:ralD# alD# Cn#I0CalD# alD# he
+[14:33] <sg20002> BenC: Does this look like a normal kernel log message?
+[14:33] <BenC> sg20002: Can you post that full kernel log on pastebin?
+[14:40] <sg20002> BenC: Sure. Though log is huge, here's a chunk of it: http://pastebin.com/q46jNMPn
+[14:40] <BenC> sg20002: specifically I'd like to see the chunk where the kernel messages go from sane to insane
+[14:40] <sg20002> Though it seems somewhat old and maybe the problem with it was fixed already.
+[14:41] <sg20002> Hmmm.
+[14:41] <BenC> about 100 lines +- that point
+[14:41] <sg20002> BenC: Seems that it started insane.
+[14:42] <BenC> sg20002: Can you check the older log (kern.log.1?)
+[14:42] <sg20002> BenC: That's the only one I found on that machine.
+[14:43] <BenC> sg20002: It's started to look like you've just been running a ticking time bomb for some time, but I'd like to see what started the whole thing
+[14:43] <BenC> sg20002: Then sadly, you will just have to reinstall libc6 and go from there
+[14:43] <BenC> If you do get it running again, I'd keep an eye on the kernel logs for awhile
+[14:48] <panda|x201> herton, yeah, I will send the patch to Stable list for you or other ppl like bwh to review, so do you have any time estimation for how long for the regular review process?
+[14:48] <sg20002> BenC: Hmm. How do you think, maybe I should just do a release upgrade since that machine is ubuntu 11?
+[14:49] <BenC> sg20002: sure, wouldn't hurt
+[14:50] <herton> panda|x201, not sure, it depends, probably on how much free time and availability people have to look at them, but it's a good idea to post there, also for any other stable maintainer to include in his maintained series if applicable
+[15:39]  * ogasawara back in 20
+[15:48] <wookey> apt-get --only-source source linux gets me linux_3.8.0-1.5.dsc, but apt-cache policy linux is 3.8.0.1.14. is that right?
+[15:48] <wookey> they don't look like matching source and binary...
+[15:49] <wookey> (in raring)
+[15:50] <smb> Version of .dsc looks right. Policy for linux returns the version number of the meta package (usually).
+[15:51] <wookey> ah yes - that's from meta. 
+[15:52] <apw> wookey, yeah its the silly "am i reporting binary or source package" where the two come from different sources
+[15:54] <wookey> yeah apt-cache policy doesn't seem to have a --only-source equivalent. this has irritated me before
+=== chiluk is now known as chiluk_away
+[16:25] <marrusl> hi folks...  is it possible to disable memory banks at the kernel level?  I'm guessing not but...
+=== ricotz_ is now known as ricotz
+[16:35] <BenC> marrusl: depends on what you mean by banks. You can limit how much memory the kernel exposes by using mem=X on the kernel command line (accepts things like 128M or 2G as argument)
+[16:36] <BenC> If you mean physically limiting it to a certain DIMM…I don't think so
+=== chiluk_away is now known as chiluk
+[17:12] <marrusl> BenC, yeah it's a situation where we'd like to avoid pulling DIMMs physically from a thousand servers, but that looks like the only option.  :)
+[17:12] <marrusl> not just to limit the RAM, but actually to power down the bank.
+=== henrix is now known as henrix_
+=== henrix_ is now known as henrix
+[18:21]  * ppisati -> gym
+[18:31] <wookey> apw: kernel tools detection of optional tool library features now working with MA paths. So we get unwind, and audit and dwarf and newt 
+[18:31] <wookey> Will inlcude in patch.
+[18:31] <apw> wookey, sounds good
+[18:32] <wookey> trivial when you find the right spot :-)
+[18:32] <wookey> it's all quite sensibly designed, it turns out
+[18:32] <apw> heh
+[18:44] <infinity> apw: What's the deal with these revert SRUs?  Are they 12.04.2-critical, do you know?
+[18:45] <apw> infinity, i'd say they probabally are, i hear that inotify is not working well as things are
+[18:45] <bjf> infinity, yes
+[18:45] <infinity> bjf: Alright, good to know.
+[18:45] <bjf> infinity, that's why we are doing them
+[18:46] <infinity> Looks like this was a forked branch that didn't include the ppc config and tg3 changes?
+[18:46] <bjf> infinity, are those recent changes that went into the tree(s)?
+[18:48] <infinity> bjf: At least the tg3 pulls landed before the fsnotify reverts hit the list, hence the curiority.
+[18:48] <infinity> curiosity, too.
+[18:49] <apw> infinity, for a revert like this it would be based off the master branch not master-next
+[18:49] <apw> infinity, as we are doing the utter minimum to the thing once tested
+[18:50] <infinity> apw: Check.
+[18:50] <infinity> Was mostly just curious if those changes could end up in the 12.04.2 d-i build, but I'd already counted on them not.
+[18:51] <bjf> infinity, this covers both Q and P, which are you talking about? i'm looking at the trees now
+[18:51] <infinity> bjf: Andy answered my question with the master versus master-next thing, I believe.
+[18:52] <bjf> infinity, i'm concerned about your "forked branch" comment
+[18:53] <infinity> bjf: That was me just not quite understanding your workflow that there are two heads, not one.
+=== chiluk is now known as chiluk_away
+[18:53] <bjf> infinity, ok, i think i'll have to discuss the master-next branches with henrix though, they don't look right to me
+[18:54] <henrix> bjf: which serie doesn't look right?
+[18:54] <bjf> henrix, quantal master-next
+[18:54] <henrix> bjf: note that i've picked what's on master-next and applied on master, and i haven't rebased master-next *yet*
+[18:55] <bjf> henrix, ah! ok, youre on it and i'll just shut up
+[18:55] <henrix> bjf: :)
+[18:55] <bjf> henrix, it was the rebase of master-next that i was going to discuss
+[18:56] <henrix> bjf: i'll probably do that tomorrow only, once everything is built and in ready for -proposed
+[18:57] <bjf> henrix, ack, makes sense
+[19:03] <jsalisbury> cking, bug 1098697 is interesting.  It seems like it could be due to wake on lan.  Still gathering additional data.  When wake on lan is enabled, does the OS stay running in some way?  Or is it controlled by the BIOS?
+[19:03] <ubot2> Launchpad bug 1098697 in linux (Ubuntu) "High Battery discharge rate when Laptop is off." [Medium,Incomplete] https://launchpad.net/bugs/1098697
+[19:04] <jsalisbury> cking, it meaning is wake on lan controlled by the BIOS
+[19:07] <cking> jsalisbury, WoL also keeps the network card active, even when the computer is powered off. 
+[19:08] <jsalisbury> cking, where does WoL run when the computer is powered off?  Is it running in the network card firmware?  
+[19:09] <cking> jsalisbury, I refer you to http://en.wikipedia.org/wiki/Wake-on-LAN
+[19:09] <jsalisbury> cking, thanks ;-)
+[19:15] <cking> jsalisbury, we have a test for this: "sudo fwts s3power" 
+[19:15] <cking> but it's only for laptops :-(
+[19:16] <cking> jsalisbury, https://lesswatts.org/tips/ethernet.php
+[19:17] <jsalisbury> cking, thanks!
+[19:54] <trijntje> ping jsalisbury
+[19:55] <trijntje> I noticed your comment on the bug report about grub-probe missing /
+[19:55] <trijntje> https://bugs.launchpad.net/ubuntu/quantal/+source/ubuntu-defaults-builder/+bug/1075876
+[19:55] <ubot2> Ubuntu bug 1075876 in ubuntu-defaults-builder (Ubuntu Quantal) "ubuntu-defaults-builder: only quantal 64bit does not build" [Undecided,Confirmed]
+[19:55] <trijntje> However, I've checked the log of a build on raring that was succesfull and the same line appears there, so it looks like that is not fatal
+[20:00] <jsalisbury> trijntje, looking
+[20:02] <jsalisbury> trijntje, do you also see this: "run-parts: /etc/kernel/postinst.d/zz-update-grub exited with return code 1"
+[20:03] <trijntje> jsalisbury: no
+[20:05] <trijntje> http://pastebin.com/spSp1ncM
+[20:05] <trijntje> those are the lines with run-parts from the succesfull log
+[20:06] <jsalisbury> trijntje, so maybe the grub-probe error is a red herring or it could also be that zz-update-grub doesn't handle that return code for Quantal, which is why I added the grub task.
+[20:07]  * cking - EOD
+[20:07] <jsalisbury> trijntje, hmm, I don't see zz-update-grub at all in those logs, even a non-fail message.
+[20:09] <trijntje> jsalisbury: I noticed that as well, maybe it has to do with the fact that the succesfull build was on raring
+[20:09] <trijntje> I'll try building for Quantal 32 bit to see what the logs say, but it will take a while on this netbook
+[20:09] <jsalisbury> trijntje, that would be great.  thanks
+[20:11] <trijntje> jsalisbury: sure, I'm the one asking for help ;) I'll ping you again when I have the log
+[20:12] <jsalisbury> trijntje, thanks.  it would be good if you can attach the log to the bug as well.
+[20:13] <trijntje> jsalisbury: will do, I'll also add a comment that the grub-probe error shows up in succesfull builds
+[20:14] <jsalisbury> trijntje, thanks
+=== ayan_ is now known as ayan
+=== henrix is now known as henrix_
+=== chiluk_away is now known as chiluk
+[22:19] <trijntje> ping jsalisbury, Quantal 32 bit build succeeds and does not contain the zz-update-grub line in the log
+[22:25] <trijntje> I've also added the information to the bug report, thanks for your time again, I'm off for today
+=== zequence_ is now known as zequence
+=== zequence_ is now known as zequence
+=== chiluk is now known as chiluk_away

@@ -1,0 +1,635 @@
+[00:20] <RAOF> smoser: To show verification-done on multiple releases (or anywhere where the SRU isn't a simple one-package, one-release affair) you can just comment like you did there.
+[00:21] <RAOF> smoser: Indeed, in general it's nicer for us if you make some sort of comment when setting verification-done. It makes it easier to trust :)
+[00:24] <smoser> RAOF, well, i had put comments on them on the first upload to -proposed. better comments. then i  just re-played the.
+[00:28] <smoser> !regression-alert
+[00:28] <ubottu> cjwatson, jdong, pitti, skaet, ScottK, kees, Daviey, pgraner: reporting regression in a stable release update; investigate severity, start an incident report, perhaps have the package blacklisted from the archive
+[00:28] <smoser> bug 1100491
+[00:28] <ubottu> bug 1100491 in cloud-init (Ubuntu) "[SRU] cloud-init 0.6.3-0ubuntu1.3 failing to process juju-generated userdata" [Critical,In progress] https://launchpad.net/bugs/1100491
+[00:28] <smoser> cloud-init update in precise caused a regression.
+[00:29] <smoser> regressions suck.  the good news here is that the presense in -updates isn't as bad as it is for other packages.  this is because we have not (will not) release a new cloud-image with cloud-init inside it until this fix is applied.
+[00:30] <smoser> i've uploaded the fix to -proposed.
+[00:32] <smoser> RAOF, if you're around, i'd appreciate https://launchpad.net/ubuntu/precise/+queue?queue_state=1&queue_text=cloud-init as mentioned above.
+[00:40] <RAOF> smoser: Processing.
+[00:44] <RAOF> smoser: Done.
+[00:45] <smoser> RAOF, thank you.
+[00:45] <RAOF> smoser: Is this something which should have been caught while testing the proposed update?
+[00:45] <smoser> well, clearly yes.
+[00:45] <smoser> but it was collateral damage
+[00:45] <smoser> ie, not somethign that was directly trying to be fixed.
+[00:50] <RAOF> Was it something that should have been identified as a regression risk?
+[00:51] <smoser> its something that ideally would have been found in automated testing of -proposed.
+=== cpg|away is now known as cpg
+[01:08] <smoser> RAOF, does the regression fix in -proposed still bake for 7 days ?
+[01:10] <RAOF> smoser: Not necessarily; but we do want some testing.
+[01:12] <RAOF> If you can provide some thorough testing then we can let it through much earlier. What we don't want to do is let it through but find it breaks something else ☺
+[01:13] <smoser> well, this particiular change is clear to not make anything worse than the previous one.
+[01:15] <smoser> anyone have thoughts on how to choose the size 'read' ?
+[01:16] <smoser> i'm not terribly concerned about the memory used by the buffer. i'm looking for insite on how to choose one , or a reasonable default.
+[01:16] <smoser> (when reading possibly large MB of data but not wanting to just do 'read()')
+[01:23]  * RAOF would also be intellectually interested in the answer.
+[01:24] <RAOF> I guess the context needed would be: how much data do you need before you can start processing? That's clearly the minimum buffer size.
+[01:31] <smoser> RAOF, yeah, i'm basically copying
+[01:31] <smoser> so 1 byte :)
+[01:31] <smoser> i stuck it at 1MB
+[01:31] <RAOF> Some multiple of the CPU page size would seem a reasonable default.
+[01:35] <sarnold> smoser: just a little birdie from the sidelines, but cloud-image update could probably also wait on this bug: 1060404
+[01:35] <ubottu> bug 1060404 in lxc (Ubuntu Precise) "update-grub runs and fails in containers" [High,Triaged] https://launchpad.net/bugs/1060404
+[01:36] <sarnold> smoser: juju in lxc containers on precise has been useless for a few weeks due to that one...
+[01:36] <sarnold> or, rather, juju in lxc containers with precise ...
+[01:37] <smoser> sarnold, i'd love to have that fixed also, but is there actually a fix for it?
+[01:37] <sarnold> smoser: as I understand, cjwatson re-pushed the package again today
+[01:37] <smoser> precise is just "triaged"
+[01:38] <smoser> oh. wait. no
+[01:38] <smoser> oh. its still just "triaged" in lxc
+=== jono is now known as Guest3379
+[01:38] <sarnold> .. and the lxc fix was a bad idea anyhow, soo..
+[01:40] <sarnold> since reproducing this specific problem is so easy, I'd happily do the verification for the juju folks :) but I haven't got a clue how to shove the fixed package into the image that it puts together. getting a fixed cloud-image seems to me like the far easier way to test it, but that's also way outside of my experience.
+[01:40] <sarnold> (afterall, if there were an easy way to shove commands into early juju instance creation, one could just throw in a pin package command..)
+[01:41] <sarnold> anyway, I feel better knowing it's also on your radar :)
+[01:49] <smoser> sarnold, well, actually your problem magically goes away if you get a new released build
+[01:49] <smoser> because lxc pulls the newer build
+[01:50] <smoser> which wont have the grub or linux image inside when 'apt-get update' is applied.
+[01:51] <sarnold> smoser: hrm, we're running into my lack of experience with juju :)
+[01:51] <sarnold> or lack of experience with lxc :)
+[01:51] <smoser> which is understandable. this stuff shoudl "just work"
+[01:51] <smoser> :)
+[01:51] <sarnold> hehe
+[01:52] <sarnold> smoser: is there an easy way to get the -proposed repository added before the .. charms? juju? cloud-init? .. runs apt-get upgrade?
+[01:53] <smoser> hm..
+[01:53] <smoser> you might be able to just hold grub and linux-image
+[06:11] <pitti> Good morning
+[06:23] <infinity> pitti: Hey, are you still involved in langpack-o-madness?
+[06:23] <pitti> infinity: yeah, together with dpm
+[06:24] <infinity> pitti: langpacks are the biggest offender for https://bugs.launchpad.net/launchpad/+bug/1078697
+[06:24] <ubottu> Ubuntu bug 1078697 in Launchpad itself "Ubuntu archive is missing SHA-1/SHA-256 hashes for some packages" [Low,Triaged]
+[06:24] <infinity> pitti: Are they still being generated on a hardy host/chroot?
+[06:24] <infinity> pitti: And is there any way that could be moved to >= lucid?
+[06:27]  * pitti checks
+[06:28] <pitti> infinity: urgh, indeed, hardy
+[06:28] <infinity> pitti: Kay.  And, since we're not doing point releases for << precise, there's no reason that couldn't be precise, right?
+[06:28] <pitti> infinity: sure, I can file an RT to upgrade it to precise, or just install a new one
+[06:28] <infinity> pitti: But at least lucid.
+[06:28] <pitti> I don't see why we couldn't build a hoary langpack on raring
+[06:28] <infinity> pitti: Getting it fixed before we land the final langpacks for precise.2 would be nice.
+[06:29] <pitti> the source.changes will have the extra checksums, but that doesn't appear anywhere
+[06:29] <pitti> infinity: well, I'm not root in that dchroot, so I can only RT; doing that now
+[06:30] <infinity> pitti: Ahh, if it's a chroot, at least it's probably simple to upgrade (or, indeed, just rebuild it as precise).
+[06:37] <pitti> infinity: RT sent
+[06:37] <pitti> with you CCed
+[06:51] <infinity> pitti: Danke.
+[07:26] <dholbach> good morning
+[07:35] <pitti> hey dholbach
+[07:35] <dholbach> hey pitti
+[07:42] <geser> cjwatson: Hi, could you check what the migration script did to your copy of libimobiledevice from a few days ago? LP says that it got removed from from -proposed as it moved to release but there is no publishing entry for raring for it (raring has still the old version).
+[08:43] <tsdgeos> tkamppeter: is cups forward-port-cups-1-5-x-cups-browsing.patch planned to get upstream?
+=== Sweetsha1k is now known as Sweetshark
+[08:53] <pitti> tsdgeos: I think that already has been dropped, and replaced by cups-browsed
+[08:54] <tsdgeos> pitti: in raring you mean?
+[08:54] <pitti> yes
+[08:54] <tsdgeos> ah, tx
+[08:54] <tjaalton> cups-browsed is crashing constantly here
+[08:54] <tjaalton> every 25s
+[08:55] <tjaalton> bug 1098756
+[08:55] <ubottu> bug 1098756 in cups-filters (Ubuntu) "cups-browsed keeps respawning" [Undecided,New] https://launchpad.net/bugs/1098756
+[08:56] <pitti> tsdgeos: http://anonscm.debian.org/gitweb/?p=pkg-cups/cups.git;a=tree;f=debian/patches -> gone
+[09:00] <Daviey> cjwatson: Super, you did the grub2 .d support! Thank you!
+[09:07] <xnox> stgraber: infinity: so with su, it's not a bug it's a feature?!
+[09:11] <tkamppeter> tsdgeos, no, the patch is not intended to get forwarded upstream, as upstream has dropped the old CUPS-specific broadcasting/browsing protocol in favor the standardized Bonjour protocol, standardized by the Printing Working Group (www.pwg.org) for printing and standard for many other network services, like wireless screen forwarding from a mobile phone to a TV. The forward-port is also already removed from Raring. Raring does the comple
+[09:11] <tkamppeter> te broadcasting and browsing via Bonjour. For the browsing part I have written cups-browsed (part of the cups-filters upstream package), but print dialogs will also Bonjour-browse by themselves soon.
+[09:12] <tsdgeos> ok, people seems to wrongly be using the CUPS_SERVER_REMOTE_PRINTER in adminutil.h to create new code
+[09:13] <tsdgeos> devels that run ubuntu most probably :D
+[09:17] <pitti> tkamppeter: ah, so cups-browsed will also disappear eventually?
+[09:18] <infinity> xnox: It's potentially both a bug and a feature.
+[09:25] <tkamppeter> pitti, cups-browsed will probably not disappear so quickly. One must see how well print dialogs will do the job by themselves and when, and how many legacy apps will be around which are not able to broadcast by themselves.
+[09:25] <tkamppeter> pitti s/broadcast/browse/
+[09:26] <pitti> tkamppeter: I thought that mainly affects broadcasting printers to clients from cups servers to cups clients?
+[09:26] <pitti> tkamppeter: if that changes to bonjour, clients shouldn't even notice?
+[09:26] <pitti> tkamppeter: or is that for spooler-less operation, i. e. just with cups-client?
+[09:27] <tkamppeter> pitti, yes. Now CUPS servers broadcast printers via Bonjour, but CUPS daemons on clients do not browse for remote Bonjour printers.
+[09:27] <tkamppeter> pitti, cups-browsed does the browsing job for CUPS currently.
+[09:28] <pitti> tkamppeter: right, but why woudl applications be concerned about which protocol cups uses for discovery?
+[09:28] <tkamppeter> pitti, if print dialogs are able to browse by themselves, they would send these jobs directly to the remote CUPS daemon eliminating the need of a local CUPS daemon.
+[09:28] <pitti> tkamppeter: ah, so this is for spooler-less operation then
+[09:29] <tkamppeter> pitti, yes.
+[09:29] <pitti> but cups-browsed depends on cups
+[09:29] <pitti> which wouldn't be spooler-less any more then
+[09:29] <tkamppeter> pitti, cups-browsed needs cupsd as it creates local raw queues pointing to the discovered remote printers.
+[09:30] <pitti> tkamppeter: but if you are going to have cupsd installed anyway, that could just as well use bonjour for discovery?
+[09:30] <tkamppeter> pitti, this I do as current print dialogs only ask the local cupsd for available printers.
+[09:30] <pitti> right; and as long as the local cupsd says "that printer over --> there", it shouldn't matter much whether it was discovered through the old browsing protocol or DNSSD?
+[09:32] <tkamppeter> pitti, I do not patch the cupsd itself to do the Bonjour browsing as upstream would not accept it. Upstream expects print dialogs to browse, requiring us to wait for the inertia of big desktop projects and leaving us with a lot of legacy apps using old libs or individual dialogs and also not seeing the printers when using the command line.
+[09:34] <pitti> tkamppeter: ah, ok; I understand
+[09:34] <pitti> tkamppeter: FWIW, having print _dialogs_ do the browsing is absolutely the wrong thing
+[09:34] <OdyX> yes (I'm following the interesting discussion :p )
+[09:35] <infinity> tkamppeter: Are there plans to fix the constant crash/respawn cycles people are seeing?
+[09:35] <pitti> tkamppeter: oh, wait, I guess for "browse themselves" you just mean "ask avahi"
+[09:35] <infinity> tkamppeter: "upstart will restart it" is not a fix. :P
+[09:35] <pitti> not actually "send out a request to the network"
+[09:36] <cjwatson> Daviey: it was about time :)
+[09:36] <tkamppeter> pitti, yes for the end user it does not matter whether the printer info is conveyed via Bonjour or the old protocol. The Bonjour is even better as printers appear and disappear immediately and not only within 30 sec.
+[09:36] <cjwatson> geser: looks like it failed with
+[09:36] <cjwatson> 2013-01-14 11:25:15 INFO    Job:
+[09:36] <cjwatson> <PlainPackageCopyJob to copy package libimobiledevice from ubuntu/primary, PROPOSED pocket, in ubuntu raring to ubuntu/primary, RELEASE pocket, in ubuntu raring, including binaries>
+[09:36] <cjwatson> raised CannotCopy:
+[09:36] <cjwatson> libimobiledevice 1.1.4-1ubuntu3 in raring (binaries conflicting with the existing ones)
+[09:36] <cjwatson> geser: this is a known bug when copying from series with more architectures than raring - I should've known better than to copy that
+[09:36] <pitti> tkamppeter: right, so a new printer woudl send out a DNSSD message, avahi picks it up, and dialogs only ask avahi
+[09:36] <pitti> tkamppeter: that makes sense indeed
+[09:37] <cjwatson> geser: I'm going to do a no-change rebuild as the simplest fix for the time being
+[09:37] <tkamppeter> infinity, which crash/respawn cycles do you mean?
+=== henrix_ is now known as henrix
+[09:37] <cjwatson> geser: thanks for th report
+[09:37] <infinity> cjwatson: We're long past the point where we shouldn't be copying from previous releases anyway, aren't we?  In the name of building with current toolchains, etc.
+[09:37] <infinity> tkamppeter: https://bugs.launchpad.net/ubuntu/+source/cups-filters/+bug/1098756 for example.
+[09:37] <ubottu> Ubuntu bug 1098756 in cups-filters (Ubuntu) "cups-browsed keeps respawning" [Undecided,New]
+[09:39] <infinity> tkamppeter: Also, possibly unrelated, but the upload to quantal-proposed that adds an apport blacklist for cupsd crashing instead of fixing the crash?
+[09:39] <infinity> tkamppeter: That's just wrong on so many levels.
+[09:39] <infinity> tkamppeter: The claim that daemons crashing is "harmless" because upstart respawns them is... Wrong.
+[09:41] <cjwatson> infinity: arguably, I suppos
+[09:41] <cjwatson> e
+[09:41] <cjwatson> Though that's never scared me because it generally isn't a regression from the previous binaries also copied from the previous release ...
+[09:41] <infinity> cjwatson: (I realise the irony here, as I'm violating that on every single armadaxp and ti-omap4 kernel release right now)
+[09:42] <infinity> And even worse, I suspect the ones I'm copying absolutely would FTBFS in raring.
+[09:42] <infinity> But I'm told there's a 3.8 omap4 kernel coming soon.
+[09:44] <infinity> cjwatson: Anyhow, it's less about regression (though that sucks too), and more about new toolchain shiny.  Like, for instance, the binutils in raring has better ABI tagging for armhf that, once the whole world is rebuilt with it (you know, by 2016 or so), we can drop our awful ld.so hacks.
+[09:45] <cjwatson> Yeah
+[09:51] <tkamppeter> infinity, OdyX, pitti, the upstart script for cups-browsed needs to be modified that cups-browsed starts after avahi-daemon. Did someone of you already do this?
+[09:51] <pitti> start on (filesystem
+[09:51] <pitti>           and started avahi-daemon
+[09:51] <pitti>           and (started cups or runlevel [2345]))
+[09:51] <pitti> looks fine tome
+[09:52] <pitti> (space saving Thursday!)
+[09:52] <OdyX> tkamppeter: not me.
+[09:56] <tkamppeter> pitti, OdyX, I will do it today.
+[09:56] <tkamppeter> infinity, ^^
+[09:56] <pitti> tkamppeter: do what?
+[09:56] <pitti> tkamppeter: it already depends on avahi
+[09:59] <tkamppeter> infinity, about the cups package in quantal-proposed. I know that it is not the best solution to simply suppress the crash messages of cupsd, but the crashes are caused by the temporary forward-port patch for CUPS browsing. This patch is already removed in Raring.
+[10:00] <tkamppeter> pitti, add "and started avahi-daemon" to the cups-browsed startup script.
+[10:00] <infinity> tkamppeter: Yes, I read the changelog.  But if you know the cause, surely you can also fix it, rather than ignoring it.
+[10:01] <tkamppeter> infinity, unfortunately, I do not know the cause within the patch. The crash goes away when turning off browsing.
+[10:01] <tkamppeter> infinity, one thing I already observed is that the crash does not happen when printing but it happens during logrotate.
+[10:02] <tkamppeter> infinity, I could stabilize the logrotate by actually shutting down CUPS before, doing the logrotate, and afterwards starting it again. Currently, the logs get rotated under the running CUPS and after that CUPS gets HUPed.
+[10:03] <OdyX> tkamppeter: the depends on avahi-daemon is there already, in -1ubuntu2, I commented on the bug.
+[10:04] <tkamppeter> OdyX, OK, now I see, this one is not in Debian's BZR repo, so I did not see it.
+[10:04] <pitti> tkamppeter: I thought we moved to the git repo now?
+[10:05] <OdyX> pitti: cups, not cups-filters
+[10:05] <tkamppeter> pitti, got cups-filters also moved? I know that cups got moved.
+[10:05] <pitti> oh, sorry
+[10:05] <OdyX> I'd be more than happy to move cups-filters too. :)
+[10:06] <OdyX> every time I try to use bzr, I have to relearn it from scratch.
+[10:06] <pitti> I really miss bzr bd-do from git-buildpackage, otherwise it's working fairly nicely
+[10:06] <OdyX> what does that do ?
+[10:07] <OdyX> nah, found it.
+[10:07] <pitti> OdyX: it fetches the orig.tar.gz (from pristine-tar, the archive, uscan, or get-orig-source), and puts you into a temporary build tree with the orig unpacked, the debian/ bits copied, and patches applied
+[10:07] <pitti> you can hack in it, then exit, and the debian/ changes get copied back
+[10:07] <pitti> I also use it to build Debian packages
+[10:07] <pitti> bzr bd-do, dchroot, dpkg-buildpackge, exit 1
+[10:07] <OdyX> well, with git, quilt push -a gives you that. :)
+[10:08] <pitti> with git I do git-buildpackage -S -us -uc, cd ../build-area, dpkg-source -x, dchroot, build
+[10:08] <pitti> so that's not so bad; I miss it more for doing experimental changes, and testing them in the temp dir without cluttering my checkout; but again, no biggie
+[10:11] <pitti> oh, we are again down to two ppc builders?
+[10:11] <pitti> poor yellow
+=== Quintasan_ is now known as Quintasan
+[10:14] <tkamppeter> pitti, are PPC processors still produced? Can you buy any device new with a PPC processor in it?
+[10:15] <cjwatson> tkamppeter: yes, and we just did - infinity is working on getting it up and running as a builder at the moment
+[10:15] <pitti> nice!
+[10:15] <tkamppeter> cjwatson, which device?
+[10:15] <cjwatson> I don't know, some big beast :)
+[10:15] <cjwatson> pitti: yellow was amd64, iirc ...
+[10:16] <cjwatson> itym sulfur?
+[10:16] <pitti> oh right, which one am I thinking of -- the old live image builder
+[10:16] <pitti> right, that was it
+[10:16] <pitti> cjwatson: well, it's also kind of yellow :)
+[10:18]  * pitti wonders where in the periodic table of elements we are, and what we do after nobelium
+[10:18] <pitti> oh, it already exists
+[10:18] <infinity> cjwatson: For the record, linux-ppc built on sagari in 51m.
+[10:18] <infinity> cjwatson: (That takes 13.5h on ross)
+[10:18] <pitti> even ununoctium.canonical.com exists already
+[10:19] <cjwatson> infinity: nice
+[10:19] <cjwatson> pitti: we stopped using elements some time ago
+[10:19] <pitti> oh, even duranium and trilithium exist :)
+[10:19] <infinity> pitti: I'm working on hunting a tg3 bug with the adapter in this machine (not PPC-specific, just specific to this silicon revision of tg3, I suspect), but otherwise it''ll be good to go soon.
+[10:20] <infinity> pitti: If I can't sort the tg3 bug $soon, I may just toss an e1000e in there and let 'er rip.
+[10:20] <pitti> cjwatson: yeah, seems we clearly need more Star Trek episodes that introduce new elements
+[10:21] <cjwatson> pitti: Since elements, we've done Arabic star names and we're now on legendary creatures
+[10:21] <cjwatson> pitti: https://wiki.canonical.com/InformationInfrastructure/SA/MachineNames
+[10:21] <infinity> (I do wonder why every single tg3 silicon revision seems to quirk the crap out of he driver and require two years of bugfixing to work correctly)
+[10:22] <infinity> cjwatson: Didn't you miss fruit in there somewhere?
+[10:33] <cjwatson> infinity: oh yes
+[11:07] <cousteau> ok, so the nvidia-96 package is finally installable in Precise?
+[11:09] <cousteau> tjaalton, you were the one uploading it to precise-updates, right?
+[11:20] <tjaalton> cousteau: yes+
+[11:20] <tjaalton> ?
+[11:20] <tkamppeter> OdyX, infinity, pitti, seems that upstart does not do what it is asked for, see bug 1098756, last comment.
+[11:20] <ubottu> bug 1098756 in cups-filters (Ubuntu) "cups-browsed keeps respawning" [Undecided,New] https://launchpad.net/bugs/1098756
+[11:20] <cousteau> just wanted to thank you  :)  ok, now nothing stops me from definitely upgrading to precise
+[11:21] <cousteau> by the way, can that driver be ported to quantal?  I don't think the nvidia-173 supports some legacy cards
+[11:21] <tjaalton> cousteau: no
+[11:21] <pitti> tkamppeter: perhaps avahi-daemon is crashing?
+[11:22] <tjaalton> avahi-daemon starts and runs fine if I start it manually
+[11:24] <tjaalton> but yeah, boot.log shows that it's started during boot too, but isn't running by the time I'm logged in to check
+[11:25] <cousteau> tjaalton, does that mean I won't be able to use my card on ubuntu versions quantal and newer with the drivers on repos?
+[11:25] <cousteau> (...well, maybe with nouveau)
+[11:25] <tjaalton> cousteau: only with nouveau
+[11:27] <cousteau> I'm seriously considering switching to nouveau...  wonder if there's a big performance difference
+[11:28] <tjaalton> I'd suggest you seriously consider a hw upgrade ;)
+[11:28] <cousteau> (I noticed some Firefox 3D things being faster with Nouveau than the Nvidia drivers)
+=== _salem is now known as salem_
+[11:28] <cousteau> tjaalton, no PCIe, only AGP.  The range of available cards is small.
+[11:30] <tjaalton> can'ẗ find any cards for agp that you can buy as new..
+[11:30] <tjaalton> the second hand market should have plenty
+[11:33] <cousteau> well, I found an Nvidia AGP for about 50€
+[11:34] <cjwatson> Anyone know Cython and fancy fixing the libimobiledevice build?  I have http://paste.ubuntu.com/1541130/ to deal with the multiarch Python failure, but then I run into a huge pile of Cython garbage.
+[11:35] <cjwatson> Seems not to be fixed upstream.
+[11:36] <geser> cjwatson: I just saw that libimobiledevice FTBFS due to multi-arched Python :( I will try to fix it over the weekend.
+[11:36] <cousteau> actually, both NVidia and Radeon for about the same price, 47€
+[11:37] <cjwatson> geser: Lovely, thanks
+[11:37] <cjwatson> The Cython failure seems to be unrelated to multiarching
+[11:38] <geser> I hope I have more success than you
+[11:39] <bdrung> infinity: re bug #633109, it can be seen as regression when going from a ftp to a sftp upload.
+[11:39] <ubottu> bug 633109 in dput (Ubuntu Precise) "No progress bar for sftp uploads" [Undecided,New] https://launchpad.net/bugs/633109
+[11:53] <cjwatson> geser: Looks rather like http://libiphone.lighthouseapp.com/projects/27916/tickets/285-cant-compile-cython-bindings FWIW
+[12:38] <ogra_> cjwatson, ogra@anubis:~/Desktop$ apt-file search types.h|grep /types.h|grep manpages
+[12:38] <ogra_> manpages-posix-dev: /usr/share/man/man7/types.h.7posix.gz
+[12:38] <cjwatson> hah :)
+[12:38] <cjwatson> follow up then
+[12:38] <ogra_> ;)
+[12:38] <cjwatson> looks like I don't have manpages-posix-dev installed here
+[12:39] <cjwatson> mostly if I want posix I use the website
+[12:39] <ogra_> i didnt either, but it seeems to be what he wants now that i looked at it
+[12:39] <cjwatson> well, it will document what POSIX guarantees you get from <sys/types.h>, rather than what Ubuntu gives you
+[12:39] <cjwatson> Which is not quite the same - sometimes people want the extensions
+[12:40] <cjwatson> For example it won't document the LFS/file-offset-bits=64 mess
+[12:40] <ogra_> oh, right
+[12:44] <tkamppeter> pitti, so I should perhaps move the bug on to avahi-damon, as it seems to not stay stably running?
+[12:44] <pitti> tkamppeter: that shoudl be verified first, though
+[12:45] <OdyX> also, cups-browsed must not crash if avahi disappears, but handle the situation gracefully IMHO.
+=== MacSlow is now known as MacSlow|lunch
+[12:51] <tkamppeter> OdyX, AFAIR it does not crash, it does "exit 1". Perhaps I should add a wait loop, so that it stays running but starts working when avahi-daemon appears.
+[13:14] <mlankhorst> @pilot in
+=== udevbot changed the topic of #ubuntu-devel to: Ubuntu 12.10 released | Archive: Open | Dev' of Ubuntu (not support or app devel) | build failures -> http://qa.ubuntuwire.com/ftbfs/ | #ubuntu for support and dicussion of hardy -> quantal | #ubuntu-app-devel for app development on Ubuntu http://wiki.ubuntu.com/UbuntuDevelopment | See #ubuntu-bugs for http://bit.ly/lv8soi | Patch Pilots: mlankhorst
+=== cpg is now known as cpg|away
+=== henrix is now known as henrix_
+[13:39] <ev> pitti: shall I give you a ring?
+=== henrix_ is now known as henrix
+[13:46] <ev> :
+[13:46] <ev> whoops
+[13:46] <pitti> ev: hangout?
+[13:46] <ev> sure
+[13:46] <pitti> or mumble, etc.
+[13:46] <pitti> ev: first time I try hangout with didrocks' sound fix, let's see whether it works
+[13:50] <ev> pitti: you should have an invite
+[13:50] <pitti> ev: I do, just firefox says the connection has been interrupted
+[13:50] <pitti> argh
+[13:51] <pitti> ev: *hrmpf*
+[13:52] <ev> I've got a desk phone right here, POTS is pretty stable tech
+[13:52] <ev> shall I just give you a ring?
+[13:52] <pitti> ev: it has an abysmally low audio quality, but I guess everything is better than total silence :)
+=== MacSlow|lunch is now known as MacSlow
+[13:55] <davmor2> pitti, ev: you should try the canonical sip service it tends to work pretty well in sofiasip from quantal on in empathy
+[13:57] <smb> slangasek, After I had a masochistic moment I tried my luck a bit on some multi-arch conversion, I am now at a point where I think I could be ok with one of the created binary sub-packages. But some others seem hard since I struggle with multiple layers of autoconfig'ish things. Would it be acceptable to go with that stage and do the rest later?
+[14:00] <mpt> pitti, ev: So far in the "worth showing" box we had evolution-data-server and compiz-gnome, and in the "not worth showing" box we had lsb-release and update-notifier.
+[14:01] <pitti> mpt: lsb-release on its own is not really meaningful indeed, but it seemed to have caused a problem in firefox
+[14:01] <pitti> (by not working as intended)
+[14:01] <pitti> mpt: but still, in terms of reporting I agree to "batch mode" for it
+[14:02] <mpt> pitti, the question is, can we expect Firefox to explain the error itself (or to crash and produce an application crash error).
+[14:02] <mpt> If so, there's no point showing it separately.
+[14:04] <pitti> mpt: even if not, I doubt telling the user about lsb_release will be useful to explain what happend in firefox
+[14:04] <mpt> fair enough
+[14:23] <mitya57> barry, ScottK, doko_: I've just filed a python3-defaults MP (just letting you know so that you don't duplicate my work, but I'll be happy if someone reviewed it)
+[14:23] <mitya57> https://code.launchpad.net/~mitya57/ubuntu/raring/python3-defaults/resync/+merge/143697
+=== slank_away is now known as slank
+[14:30] <ScottK> mitya57: You could use sbuild or pbuilder to run the tests in a chroot.   A full VM is not needed.
+[14:31] <mitya57> ScottK: I've no idea how to do that, is there a script somewhere?
+[14:31] <ScottK> mitya57: pbuilder-dist in ubuntu-dev tools is probably the easiest.  pbuilder-dist raring create then pbuilder-dist raring login
+[14:33] <mitya57> ScottK: I'll try, thanks
+=== rye_ is now known as rye
+[14:51] <achiang> mlankhorst: hi, this merge of mine has been sitting since before xmas break, can you please take a look at it? (pinging you since you're marked as pilot, not because i think you know about remmina ;) https://bugs.launchpad.net/ubuntu/+source/remmina/+bug/1093511
+[14:51] <ubottu> Ubuntu bug 1093511 in remmina (Ubuntu) "please merge remmina 1.0.0-4 (main) from Debian testing" [Wishlist,Confirmed]
+[14:52] <mlankhorst> sure, I'll take a look :)
+[14:53] <mlankhorst> the revu page in that bug report seems to be dead, 403 forbidden
+=== rsalveti_ is now known as rsalveti
+=== Ursinha_ is now known as Ursinha
+[14:56] <barry> mitya57, ScottK i'll take a look in a little while
+[14:58] <achiang> mlankhorst: damn, let me check
+[14:58] <achiang> mlankhorst: all of revu is down
+[14:58] <mlankhorst> achiang: are those diffs available from version control somewhere, or just those diffs?
+[15:00] <bluefoxxx> Gentlemen
+[15:00] <bluefoxxx> The installer is capable of utilizing LVM.
+[15:01] <bluefoxxx> Would it be outrageous to modify the installer such that it automatically partitions 0.25% of the LVM physical volume free, and recommends such if a user manually partitions with LVM?
+[15:01] <achiang> mlankhorst: just have the diffs, sorry
+[15:01] <bluefoxxx> sorry
+[15:02] <bluefoxxx> somethnig I am doing wrong.  10TB should give 250GB... 1TB should give 25GB or 0.025TB ... .1TB is 10%... .01TB ... so 2.5%
+[15:02] <mlankhorst> ah no worries, it's usually easier with version control, debian maintains it in git afaict, not sure about ubuntu
+[15:02] <bluefoxxx> I do not think that is unreasonable.
+[15:03] <bluefoxxx> in any case
+[15:03] <bluefoxxx> All partitions formatted in the LVM would be configured to be fscked once per 180 days
+[15:03] <achiang> mlankhorst: i can upload the *.dsc, etc. somewhere else
+[15:03] <bluefoxxx> once per week, each drive would be snapshotted onto the free space in the LVM PV
+[15:03] <bluefoxxx> the snapshot would be fscked
+[15:04] <bluefoxxx> if clean, then the volume would be marked as recently fscked
+[15:04] <bluefoxxx> i.e. tune2fs -T 0
+[15:04] <mlankhorst> achiang: no those are available, I'm just looking into the source repository atm :)
+[15:04] <bluefoxxx> otherwise an alert would be set and the drive scheduled for fsck.  The administrator could request read-only remount, online fsck.
+[15:04] <bluefoxxx> in this way, periodic fsck of clean file system could be accomplished without associated down time
+=== Sp4rKy_ is now known as Sp4rKy
+[15:05] <bluefoxxx> tune2fs -T now rather
+[15:11] <mlankhorst> achiang: overall looks ok to me, but I don't have any familiarity with remmina
+[15:16] <mlankhorst> achiang: also I don't have upload rights, so I can't actually sponsor the upload for you :(
+[15:17] <Laney> I'll take a look at remmina
+[15:17] <Laney> the two diffs are fine (infact, preferred) to sponsor it
+[15:18] <mlankhorst> thanks Laney
+[15:22] <achiang> Laney: mlankhorst thanks!
+[15:28] <dobey> can someone take a poke at my patch in bug #859600 ? i think it's better than the previously attached patches, but would be nice to get it reviewed/included
+[15:28] <ubottu> bug 859600 in gnome-keyring (Ubuntu Precise) "Please convert gnome-keyring to multiarch" [High,In progress] https://launchpad.net/bugs/859600
+[15:29] <dobey> (and pushed into debian if anyone could do so)
+=== schmidtm_ is now known as schmidtm
+=== doko_ is now known as doko
+[15:54] <hallyn> is it ever 'done' to have a 'README.Ubuntu' under debian/ ?  Or do we, if no README.Debian exists, create that?
+[15:57] <Laney> achiang: I think you need a Breaks/Replaces for remmina-common that used to contain the desktop file
+[15:57] <hallyn> i'll make README.Debian.  will need to suggest they ship it too, anyway
+[15:58] <slangasek> smb: if the binary package you have converted to multiarch is usefully installable by itself, then sure
+[15:59] <achiang> Laney: ah, interesting. ok, thanks
+[16:00] <Laney> perhaps just Breaks (to help the upgrade order)
+[16:02] <Laney> achiang: No need for you to update it - I'll do that before uploading
+[16:06] <achiang> Laney: great, thanks!
+[16:08] <highvoltage> where could I get an ubuntu phone image?
+[16:10] <Laney> http://www.ubuntu.com/static/u/img/devices/phone-home-industry-269x192.jpg
+[16:10] <Laney> </troll> - they aren't available yet but I heard late Feb (also #ubuntu-phone)
+[16:11] <highvoltage> Laney: ah ok
+[16:14] <xnox> highvoltage: pick your fancy from all of them http://www.ubuntu.com/static/u/img/devices/
+[16:14]  * xnox likes 
+[16:14] <xnox> http://www.ubuntu.com/static/u/img/devices/phone-app-hero-420x338.jpg
+[16:15] <arges> : )
+[16:18] <highvoltage> on a slightly related note. I reflashed my Atrix with Cyanogenmod and lost the default Ubuntu 9.04 installation that it came with. Where could I get Ubuntu for Android?
+[16:20] <xnox> highvoltage: there is no download yet.
+[16:20] <highvoltage> xnox: but it's been existing for so long!
+[16:21] <highvoltage> xnox: who's actually working on it? could I ask someone for an image?
+[16:21]  * xnox didn't know highvoltage is a phone manufacturer =)
+[16:22]  * highvoltage didn't know that you had to be in order to get ubuntu
+[16:23] <dobey> xnox: i've actually been pondering just making my own phone actually. :)
+[16:29] <stgraber> highvoltage: I can give you a tarball of the osh partition (the default 0.94 system) on my Atrix, mine didn't get wiped with the reflash
+[16:30] <highvoltage> stgraber: I'm going to try to follow http://fooprotected.wordpress.com/2012/04/02/debian-on-androidatrix-with-debootstrap/ to get a more recent version than 9.04 running. then at least I can share it for others who'd like to do the same
+[16:33] <stgraber> highvoltage: you won't be able to get a terribly recent userspace on the atrix because of the kernel version
+[16:34] <stgraber> highvoltage: 10.04 chroot/containers work pretty well here, but anything more recent was met with a lot of crashes because of missing/broken syscalls in the android kernel
+[16:45] <highvoltage> stgraber: ah right :-/
+[16:47] <smoser> slangasek, around ?
+[16:48] <smoser> who do i need to talk to to get bug 1100491 into -updates
+[16:48] <ubottu> bug 1100491 in cloud-init (Ubuntu) "[SRU] apt_sources broken in 0.6.3-0ubuntu1.3 [regression]" [Critical,Fix committed] https://launchpad.net/bugs/1100491
+[16:48] <smoser> its not sat for 7 days in -proposed, but we have a broken update in -updates and this fixes that.
+[16:50]  * cjwatson double-reviews
+[16:51] <cjwatson> smoser: I've waived the waiting period; it's on its way into -updates now.
+[16:52] <jamespage> \o/
+[16:52] <smoser> thank you.
+[16:52] <smoser> sorry for suck.
+[16:55] <smoser> utlemming, can you spin a precise-daily build once cloud-init 0.6.3-0ubuntu1.4 is in -updates ? the latest daily has the broken version and want to stop people from getting that even if they're using dailies.
+[17:18] <roaksoax> cjwatson: howdy!! I was wondering if you could take a look to: bug #1092265
+[17:18] <ubottu> bug 1092265 in MAAS "Nodes fail to boot from local disk on raring" [Critical,Triaged] https://launchpad.net/bugs/1092265
+[17:18] <roaksoax> thihs is really an issue with syslinux
+[17:20] <cjwatson> roaksoax: sorry, pretty overloaded
+[17:20] <cjwatson> roaksoax: as you can see we've got back in sync with Debian so I haven't actually touched syslinux in some time anyway
+[17:21] <roaksoax> cjwatson: ack! thanks though :)
+[17:21] <cjwatson> I'd probably suggest starting by looking through changes to chain.c32's source in upstream git
+[17:22] <roaksoax> cjwatson: will do! thanks! :)
+[17:22] <cjwatson> though chain has hardly changed in quite a whwile
+[17:23] <smb> slangasek, I guess, though I would need to throw it over the fence to someone else who has an environment for using that. Though basically it is only one subpackage that only provides libraries (and has done before). Its less clear with some language interface package which then have a perl/ruby/python binding plus an .so part. So following thatis it enough to not have any multi-arch keywords on the other packages in the control file to say tho
+[17:23] <smb> se aren't ready (yet)
+[17:24] <roaksoax> yeah /win 13
+[17:24] <roaksoax> err
+=== yofel_ is now known as yofel
+[17:32] <mlankhorst> @pilot out
+=== udevbot changed the topic of #ubuntu-devel to: Ubuntu 12.10 released | Archive: Open | Dev' of Ubuntu (not support or app devel) | build failures -> http://qa.ubuntuwire.com/ftbfs/ | #ubuntu for support and dicussion of hardy -> quantal | #ubuntu-app-devel for app development on Ubuntu http://wiki.ubuntu.com/UbuntuDevelopment | See #ubuntu-bugs for http://bit.ly/lv8soi | Patch Pilots:
+[17:39] <infinity> @pilot in
+=== udevbot changed the topic of #ubuntu-devel to: Ubuntu 12.10 released | Archive: Open | Dev' of Ubuntu (not support or app devel) | build failures -> http://qa.ubuntuwire.com/ftbfs/ | #ubuntu for support and dicussion of hardy -> quantal | #ubuntu-app-devel for app development on Ubuntu http://wiki.ubuntu.com/UbuntuDevelopment | See #ubuntu-bugs for http://bit.ly/lv8soi | Patch Pilots: infinity
+[17:44] <mcclurmc> hi infinity. i submitted a but report and a patch this morning for indicator-weather: https://bugs.launchpad.net/indicator-weather/+bug/1100680
+[17:44] <ubottu> Ubuntu bug 1100680 in Indicator-weather "indicator-weather on Quantal throws exception when adding location" [Undecided,New]
+[17:44] <mcclurmc> any chance this could get looked at?
+[17:46] <slangasek> smb: can you point me at specifics?
+[17:49] <smb> slangasek, I can. Though I think it also makes sense to take this into email where I can add a bit more info. But I think I won't get to that till tomorrow.
+[17:51] <slangasek> smb: ok :)
+[18:06] <bjf> slangasek, i had the following line in my /etc/default/grub: GRUB_CMDLINE_LINUX_DEFAULT=initcall_debug quiet printk.time=1
+[18:06] <bjf> slangasek, because of that, i was getting failures in /usr/sbin/grub-mkconfig:  /etc/default/grub: quiet: not found
+[18:07] <bjf> slangasek, this was preventing an update of the kernel package. i changed it to just "GRUB_CMDLINE_LINUX_DEFAULT= quiet"
+[18:08] <bjf> slangasek, that fixed my issue
+[18:08] <cjwatson> bjf: You need to quote that
+[18:08] <cjwatson> GRUB_CMDLINE_LINUX_DEFAULT="initcall_debug quiet printk.time=1"
+[18:08] <bjf> cjwatson, ah!
+[18:08] <bjf> cjwatson, thanks
+[18:08] <cjwatson> de nada
+[18:09] <infinity> mcclurmc: I can have a poke.
+[18:10] <mcclurmc> thanks infinity. it's nothing critical, but it'd be good to get it merged
+=== mthaddon` is now known as mthaddon
+=== negronjl` is now known as negronjl
+[18:31] <bdmurray> tkamppeter_: the cups upload in the quantal -proposed queue will prevent all apport crash reports regarding cups which seems rather heavy handed
+[18:34] <BenC> cjwatson: I'm not sure where it needs to go, but msdos is the default filesystem for the e500* systems (right now, it claims ignorance)
+[18:34] <BenC> s/filesystem/partition-map/
+[18:35] <infinity> BenC: That's true for IBM machines too.  Is there some broken assumption somewhere?
+[18:35] <BenC> infinity: the installer just says "we don't know what to do, so you guess and if it's wrong, well then, it's not my fault"
+[18:36] <BenC> It's not that I can't select it on my own, just wondering where to stick in a default for reasons
+[18:36] <BenC> e500* doesn't match powermac/pseries, which I believe are the only two sub-archs it knows about partition-wise
+[18:37] <BenC> and of course ps3, but that's not really in existence anymore
+[18:39] <infinity> BenC: Does archdetect already know about your machine?
+[18:39] <BenC> Yeah, it selects the correct kernel
+[18:39] <infinity> BenC: So, it's just a question of partman-$whatever getting smarter?
+[18:39] <BenC> Right, whatever udeb devices on the default partition map
+[18:39] <BenC> *decides
+[18:40] <infinity> BenC: Any idea what the exact string is? :P
+[18:40] <infinity> (The error string)
+[18:41] <BenC> One moment while I look that up for you sir...
+[18:41] <BenC> My fiancé's customer service job is rubbing off on my online etiquette
+[18:42] <infinity> Oh, think I may have found it.
+[18:42] <infinity> BenC: What does archdetect return on your two platforms?
+[18:43] <BenC> One other bug I have is that the cdrom-detect isn't detecting things too well in qemu with a media=cdrom virtio-blk device
+[18:43] <BenC> infinity: e500mc and e500 as subarch
+[18:43] <infinity> Did you really need two, you greedy, greedy man? :P
+[18:43] <BenC> infinity: Actually, nm, it's not
+[18:44] <BenC> Showing powerpc/unknown
+[18:44] <infinity> Oh.  Right, then fix archdetect first.
+[18:44] <infinity> Since everything else keys off that.
+[18:45] <BenC> infinity: I might just make it powerpc/sgy
+[18:45] <BenC> Since a lot of stuff is specific to our system (grub, partition map)
+[18:46] <infinity> BenC: Once archdetect does something sane (FSVO sane), your partition map type fix would be in lib/disk-label.sh in partman-partitioning
+[18:46] <BenC> infinity: Thanks
+[18:46] <infinity> BenC: Feel free to fix yourself, but ping someone (like me, Colin, or xnox) perhaps for a quickie review, and see about getting it committed upstream too (which at least two of us can do, maybe all three of us)
+[18:47] <xnox> all three =)
+[18:50] <infinity> BenC: On a side note, MSDOS, really?  On a brand new platform, why not go GPT from the start and future-proof for larger disks?
+[18:50] <infinity> (Or would that have required adding GPT support to u-boot?)
+[18:50] <BenC> infinity: It will work with GPT…doesn't bother me any at all
+[18:51] <BenC> No, just enabling it in our firmware linux-kernel
+[18:51] <infinity> BenC: Just a suggestion, since sticking some future developer (or yourself) with remembering all the places where msdos is hardcoded the day you decide to ship systems with >2TB drives could be irksome. :)
+[18:51] <BenC> infinity: I don't see GPT in linux's partition map selection
+[18:52] <BenC> LDM, OSF, KARMA?
+[18:52] <infinity> BenC: Given that it's default on ia64 and EFI systems, I can only assume the kernel supports it a little bit...
+[18:53] <infinity> Though, no idea what CONFIG_ twiddle makes it happen.
+=== deryck is now known as deryck[lunch]
+[18:55] <infinity> Oh, actually, partman just silently forces gpt over msdos on large disks anyway.
+[18:55] <infinity> I guess we assume all OUR kernels and bootloaders can deal with that.
+[18:55] <infinity> (Which I'm betting not all of them can... I know the openfirmware on one of my machines sure can't)
+[18:56] <BenC> infinity: it's EFI, supports GUID GPT partitions
+=== henrix is now known as henrix_
+[18:56] <BenC> I already have that enabled in our firmware kernel, so I'll use that as default on installer
+[19:01] <infinity> BenC: You may want to double-check that all works with a manual install/reboot cycle on GPT before committing, but it just makes sense to me to future-proof the platform now rather than panic later when someone ships a big disk/array/whatever.
+[19:01] <BenC> Makes more sense to me too
+[19:16] <BenC> infinity: I just added two lines to the map_platform[] array to produce powerpc/fsl which will work on bare metal and qemu on this platform
+[19:16] <BenC> Ok to upload that?
+[19:17] <infinity> BenC: debdiff *dsc | pastebinit -f diff
+[19:18] <infinity> BenC: Just to have a quick look for myself.  Also, "fsl" makes it sound freescale-generic, which is probably a lie, no?
+[19:18] <BenC> http://paste.ubuntu.com/1542331/
+[19:19] <infinity> (Given that PegasOS and others are also freescale)
+[19:19] <BenC> infinity: They won't match at this point though
+[19:19] <BenC> I just can't make it servergy specific, because it works in qemu, and that has a generic /proc/cpuinfo
+[19:20] <infinity> Yeah, fair enough.  Go nuts.
+[19:20] <BenC> I'm going on making it generic and if some freescale based platform needs something more specific, they will need to add the extra bits
+=== chiluk is now known as chiluk_away
+=== chiluk_away is now known as chiluk
+[19:24] <infinity> BenC: Well, I assume that first one is your hardware specifically, and the second is generic, right?
+[19:24] <BenC> Right
+[19:24] <BenC> Actually, no
+[19:25] <infinity> BenC: You could follow the chrp/chrp_ibm example and have fsl/fsl_sgy and just make them both do the same thing for now.
+[19:25] <BenC> P4080 DS is generic fsl platform
+[19:25] <infinity> Oh, they're both generic?  Kay.
+[19:25] <BenC> I'd have to detect also the model to get down to something servergy specific
+[19:25] <infinity> I guess if you're the only ones that match this for now, that works.
+[19:25] <BenC> platform	: P4080 DS
+[19:25] <BenC> model		: servergy,jade-rev3
+[19:25] <infinity> Just might need some re-engineering if someone else bases a wildly different platform on the same chip later, I guess.
+[19:26] <BenC> Which at this point is an unknown, so I'll hope that we set the standard for anyone else coming along :)
+[19:27] <BenC> infinity: http://paste.ubuntu.com/1542349/
+[19:28] <BenC> Now to figure out why cdrom-detect chokes on virtio-blk cdroms
+[19:31] <infinity> BenC: Both those diffs look fine, then.  Assuming you've done a manual test and your platform actually boots. ;)
+[19:32] <BenC> infinity: It does…even if I broke it to high-hell, no one would notice but me at this point :)
+[19:33] <infinity> Heh.
+[19:47] <jbicha_> cjwatson: can we drop the pcsc-lite diff now? http://bugs.debian.org/531592 has been marked fixed for a while
+[19:47] <ubottu> Debian bug 531592 in libpcsclite1 "libpcsclite1: move to /lib" [Normal,Fixed]
+[19:48] <cjwatson> jbicha_: I disagree with their solution
+[19:49] <cjwatson> jbicha_: It means that if you have /usr as a separate partition then you get random behaviour depending on whether wpa_supplicant happens to try to start before or after /usr
+[19:49] <Logan_> Laney: Gah, so sorry. I'm running a test build of the ghc from Experimental right now, as, after attempting a merge, I found that the only delta (an Ubuntu patch) was applied upstream. If it builds successfully (and installs successfully, of course!), I'll file a sync request and link to it in the haskell-devscripts merge.
+[19:50] <cjwatson> jbicha_: Once https://blueprints.launchpad.net/ubuntu/+spec/foundations-r-usr-merge is implemented then it can be dropped; I don't think it should be dropped before then
+[19:50] <Logan_> micahg: and my apologies to you as well
+[19:53] <jbicha_> I didn't think we supported /usr on a separate partition, thanks for looking at it though
+[19:53] <cjwatson> We always hav
+[19:53] <cjwatson> e
+[19:53] <cjwatson> Or at least have tried to
+[19:54] <cjwatson> usr-merge will certainly make life simpler but I don't think we should knowingly break stuff in advance of it landing
+[19:58] <infinity> cjwatson: I suppose that whole spec doesn't need implementing for people to stop caring, just the initramfs early-usr-mounting bit.  I should review a bunch of the competing bits in the BTS for that and commit something sane to Debian git and raring.
+[19:58] <cjwatson> Indeed
+[19:59] <cjwatson> The symlink farm stuff is rather riskier
+[19:59] <cjwatson> (And I think a bit scary, actually)
+[19:59] <micahg> Logan_: well, we try to do the ghc merge/world rebuild just once per cycle if we can get away with, so, you probably want to coordinate with Laney on that
+[20:01] <cjwatson> infinity: doesn't bug 1065827 need a precise task?
+[20:01] <ubottu> bug 1065827 in casper (Ubuntu Quantal) "Kubuntu 12.10 bcmwl install failure" [Critical,Fix released] https://launchpad.net/bugs/1065827
+[20:02] <cjwatson> infinity: (just for bcmwl, not for casper)
+[20:08] <infinity> cjwatson: Oh, indeed.
+[20:11] <infinity> cjwatson: I was so excited that the package otherwise passed my review on this round, I forgot to check all the bug tasks.  Fixed now.
+=== salem_` is now known as _salem
+=== deryck[lunch] is now known as deryck
+[20:35] <tion> will new xorg and nvidia-current updates break opengl on my box? i have nvidia FX5200 card. Currently I'm using the 173 driver and opengl is working fine
+[20:40] <xnox> mlankhorst: tjaalton: see tion ^
+[20:40] <xnox> not sure who does nvidia though.
+[20:41] <tion> i installed the current driver before. opengl was broken so i reinstalled the 173 driver should i skip the updates?
+[20:44] <mlankhorst> not that I'm aware of?
+=== Ursinha is now known as Ursinha-afk
+[21:01] <tjaalton> tion: on what? the update adds support for xserver 1.13, so unless you're on precise you haven't actually used the driver AIUI
+[21:18] <dkessel> hey guys. i'm having graphics flickering in the dash since today on raring. i have this card: Intel Corporation Mobile 945GM/GMS/GME, 943/940GML
+[21:23] <dkessel> can i do anything to help debug?
+[21:26] <tjaalton> dkessel:
+[21:26] <tjaalton> http://wiki.ubuntu.com/X/Testing/IntelSNA
+[21:27] <tjaalton> check if you see it with sna
+[21:29] <dkessel> tjaalton: ok, will do :) thanks
+=== kenvandine is now known as ken[torture]
+[21:32] <tjaalton> dkessel: actually, check your xorg logfile
+[21:33] <tjaalton> nevermind
+[21:33] <dkessel> tjaalton, shall i try the xorg.conf from the wiki or not?
+[21:34] <tjaalton> yes
+[21:37] <infinity> Ooo, new xserver-xorg-video-intel?  I wonder how this can break my laptop today. :)
+[21:37] <tjaalton> probably does nothing much :)
+[21:38] <bdmurray> hallyn: I think the testcase in bug 1096771 is not for that bug
+[21:38] <ubottu> bug 1096771 in libcgroup (Ubuntu Quantal) "cgroup-bin (deleted) init scripts stick around" [High,Triaged] https://launchpad.net/bugs/1096771
+[21:38] <infinity> tjaalton: So, won't fix my hang?  Sadface.
+[21:38] <infinity> BenC: Oh, BTW.  Too lazy to commit to git for a minor fix.  You're missing a build-dep on openssl in linux-ppc.
+=== zequence_ is now known as zequence
+[21:39] <infinity> BenC: This'll become painfully obvious when I remove openssl from the buildd chroots, since it's not meant to be there. :P
+[21:39] <infinity> BenC: (You might want to compare your build-dep line with master, didn't bother to see if you're otherwise in sync)
+[21:40] <hallyn> bdmurray: why?
+[21:40] <dkessel> tjaalton, still flickering. xorg.log says: (II) intel(0): SNA initialized with gen3 backend
+=== Ursinha-afk is now known as Ursinha
+[21:40] <tjaalton> infinity: I doubt it, but it has ~90 sna related commits
+[21:41] <tjaalton> dkessel: and you're on raring?
+[21:41] <hallyn> bdmurray: the bug is that when libcgroup gets updated, its initscripts are not properly removed.
+[21:41] <dkessel> yup, raring
+[21:41] <hallyn> so the test is to reinstall the version with initscripts, upgrade to the testing version, and check whether they were removed
+[21:41] <tjaalton> dkessel: ok, so please file a bug with 'ubuntu-bug xorg'
+[21:41] <tjaalton> dkessel: first verify you have xdiagnose installed
+[21:41] <dkessel> tjaalton: ok thanks
+[21:41] <hallyn> though i'd believe that i was saying or doing something stupid...
+[21:44] <tjaalton> dkessel: you ran raring before today too?
+[21:45] <tjaalton> dkessel: if you happen to have the old version of xserver-xorg-video-intel in /var/cache/apt/archives, mind giving it a go?
+[21:45] <dkessel> well, ony this machine only a few days. could be that i missed the flickering due to using terminal to install stuff and so..
+[21:45] <dkessel> tjaalton, sure, i can do... finishing the initial bug report first
+[21:46] <tjaalton> thanks
+[21:49] <dkessel> bug 1100970
+[21:49] <ubottu> bug 1100970 in xorg (Ubuntu) "transparent dash background flickers on intel graphics" [Undecided,New] https://launchpad.net/bugs/1100970
+[21:50] <dkessel> tjaalton, no old version there... bad luck
+[21:51] <tjaalton> dkessel: ok, and running i386 so none here either
+[21:52] <infinity> https://launchpad.net/ubuntu/+source/xserver-xorg-video-intel/2:2.20.16-0ubuntu1
+[21:52] <infinity> https://launchpad.net/ubuntu/+source/xserver-xorg-video-intel/2:2.20.17-0ubuntu1
+[21:52] <tjaalton> heh, thanks
+[21:52] <infinity> Poke one of those for a previous version to try.
+=== chiluk is now known as chiluk_away
+[21:54]  * xnox is puzzeled at https://launchpad.net/ubuntu/+source/openvswitch/1.9.0~git20130115.ca71f5b-0ubuntu2 FTBFS on powerpc, when it's no-code change upload.
+[21:56] <dkessel> hm, do i just dpkg -i one of those?
+=== chiluk_away is now known as chiluk
+[21:57] <dkessel> nevermind, i did :)
+=== ken[torture] is now known as kenvandine
+[22:04] <dkessel> tjaalton, i tried .17, .16 and .9. nothing changes
+=== StevenK_ is now known as StevenK
+[22:06] <tjaalton> dkessel: ok, thanks
+[22:07] <infinity> xnox: Random bogons, or a build-dep broke?
+[22:08] <xnox> infinity: 1 test suite failure, and very cryptic. I could retry... to see what happens, but maybe when the build queue is smaller.
+[22:08] <infinity> xnox: The queue is only an hour.  Just give it a whack.
+[22:11] <dkessel> tjaalton, i'll leave it for today and turn off the machine. if there will be any more instructions added in the bug report, i will try it if i can. thanks so far
+[22:11] <tjaalton> dkessel: one more thing, did you have the xorg.conf there when testing the older versions?
+[22:12] <dkessel> oh... yes i still have it
+[22:13] <tjaalton> might try without it and post the results
+[22:13] <xnox> infinity: can you let me in on a secret of app-install-data-partner package?
+[22:13] <bdmurray> cyphermox: is bug 1055497 fixed in raring?
+[22:14] <ubottu> bug 1055497 in evolution (Ubuntu) "Signature inserted twice when replying or forwarding" [High,In progress] https://launchpad.net/bugs/1055497
+[22:14] <infinity> xnox: Which secret would that be?
+[22:16] <xnox> infinity: how to regenerate it. There is currently a UDD merge proposal for it.
+[22:16] <xnox> https://code.launchpad.net/~baltix/ubuntu/precise/app-install-data-partner/fix-for-missing-applications-flashplugin-skype/+merge/134402
+[22:16] <xnox> yet it removed ~ubuntu-core-dev/app-install-data-commercial/trunk from the vcs-bzr field.
+[22:19] <infinity> xnox: Ahh, hrm.  To be fair, I'm not hugely familiar with the inner workings.  mvo might be a better person to review that.
+[22:21] <BenC> infinity: Ok
+[22:22] <BenC> infinity: What is it that detects the kernel flavor to use in the installer? I need to make sure it wasn't expecting powerpc/unknown
+[22:22] <xnox> well pitti did some work on it as well.
+[22:23] <xnox> pitti: how does one work with app-install-data-partner?
+[22:23] <infinity> BenC: base-installer.
+[22:23] <BenC> Thanks
+[22:23] <infinity> BenC: But it does it based on cpuinfo.
+[22:23] <BenC> I seem to remember it calling archdetect
+[22:23] <BenC> But I could be misremembering
+[22:24] <infinity> Err.  Not cpuinfo as in /proc/cpuinfo, though...
+[22:24] <BenC> You're correct though, it uses /proc/cpuinfo
+[22:25] <BenC> SUBARCH="$(archdetect)"
+[22:25] <BenC> SUBARCH="${SUBARCH#*/}"
+[22:25] <infinity> Oh, yeah, it's /proc/cpuinfo.
+[22:25] <BenC> Well, sort of
+[22:25] <infinity> archdetect for subarch, yeah.
+[22:25] <infinity> But you're ignoring that right now.
+[22:25] <BenC> For kernel selection, it needs to use /proc/cpuinfo regardless
+[22:25] <BenC> Right
+[22:30] <jackyalcine> Where do I go to diagonise problems with Launchpad and PPAs?
+[22:30]  * jackyalcine checks #launchpad in the meanwhile
+[22:30] <Laney> #launchpad
+[22:35] <cyphermox> bdmurray: yeah, bug 1055497 is fixed in raring
+[22:35] <ubottu> bug 1055497 in evolution (Ubuntu) "Signature inserted twice when replying or forwarding" [High,In progress] https://launchpad.net/bugs/1055497
+[22:37] <jackyalcine> Thanks Laney, but you know of a mailing list I can use?
+[22:38] <cjwatson> BenC: kernel selection should at least *involve* the output of archdetect, even if sometimes refined by cpuinfo
+[22:38] <BenC> cjwatson: it uses the powerpc part, but not the /* part
+[22:39] <BenC> It's completely irrelevant…if the CPU is e500 or e500mc, it has to use those kernels
+[22:39] <cjwatson> oh, e500/e500mc is irregular there
+[22:39] <cjwatson> anyway, I should've noticed the lack of support in libdebian-installer
+[22:40] <cjwatson> it would've been clearer to do things in terms of subarch and have *that* detected from cpuinfo, but no matter
+=== cnd` is now known as cnd
+=== cpg|away is now known as cpg

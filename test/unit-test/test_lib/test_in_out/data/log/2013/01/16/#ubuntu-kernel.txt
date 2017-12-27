@@ -1,0 +1,84 @@
+=== hggdh_AFK is now known as hggdh
+[02:49] <hallyn> woohoo, nvidia-current worked this time
+[02:55] <hallyn> apw: say, i'm hoping to do a lxc irc meeting in a few weeks to discuss direction with userns.  The first 20 minutes would be an overview.  Would you or anyone from kernel team want to listen in on that part?
+[07:39] <ppisati> moin
+[08:50]  * ppisati hopes my UK kernel mates are ok...
+=== henrix_ is now known as henrix
+=== henrix is now known as henrix_
+=== henrix_ is now known as henrix
+[11:35] <ppisati> flag@linaro-ubuntu-desktop:~$ grep "^Hardware" /proc/cpuinfo | sed 's/Hardware\s*:\s*//'
+[11:35] <ppisati> Freescale i.MX6 Quad (Device Tree)
+[11:35] <ppisati> it works :)
+[11:35] <ppisati> flag@linaro-ubuntu-desktop:~$ uname -a
+[11:35] <ppisati> Linux linaro-ubuntu-desktop 3.8.0-0-omap #2~multi8 SMP Wed Jan 16 11:21:38 UTC 2013 armv7l armv7l armv7l GNU/Linux
+[11:36] <ppisati> brb
+[11:57] <jodh> FYI - I raised an apport bug today that stops users from raising bugs on the current kernel: https://bugs.launchpad.net/ubuntu/+source/apport/+bug/1100198
+[11:57] <ubot2`> Launchpad bug 1100198 in apport (Ubuntu) "source_linux.py logic fails to detect 3.8.0-0-generic as an Ubuntu kernel" [Undecided,New]
+[12:52]  * henrix -> lunch
+=== yofel_ is now known as yofel
+[14:03] <ppisati> brb
+=== dannf` is now known as dannf
+[14:40] <arges> found an interesting kernel bug. plugging and unplugging a usb headset causes a panic on 3.2
+[14:44] <jsalisbury> arges, can you reproduce it easily?
+[14:45] <arges> jsalisbury: yea i'm doing that now... getting a backtrace and if we are really lucky ill have a vmcore as well
+[14:46] <jsalisbury> arges, cool.  I recall a similar bug reported in the past few days.  I don't remember off had if it was for Precise.  I'll go an look
+[14:48] <jsalisbury> arges, it could be bug 1097396 that you are hitting.  
+[14:48] <ubot2`> Launchpad bug 1097396 in linux (Ubuntu) "Unplugging USB Headset causes Kernel Panic" [High,Incomplete] https://launchpad.net/bugs/1097396
+[14:48] <arges> jsalisbury: easily reproducible at this point.. tempted to try my raring laptop. but don't want to loose IRC
+[14:49] <arges> jsalisbury: cool looks like this is also precise
+[14:49] <jsalisbury> arges, yeah, I started a bisect, but waiting for testing feedback.  
+[14:49] <jsalisbury> arges, can you try the latest 3.2 kernel?  It's 3.2.37 now
+[14:49] <arges> jsalisbury: let me compare notes
+[14:50] <arges> jsalisbury: to see if i'm hitting the same thing
+[14:50] <jsalisbury> arges, that bug is fixed in mainline
+[14:50] <jsalisbury> arges, and raring
+[14:52] <arges> jsalisbury: we have a winner snd_complete_urb
+[14:52] <arges> jsalisbury: same backtrace here
+[14:52] <jsalisbury> arges, cool
+[14:52] <arges> downloading and testing 
+[14:53] <jsalisbury> arges, yeah, it could be fixed in .37 since it's fixed in the 3.7 and 3.8 kernels.
+[15:00] <arges> jsalisbury: ok tried that kernel still paniced
+[15:01] <jsalisbury> arges, ok.  Maybe a reverse bisect is needed
+[15:01] <arges> hmm now kdump wants to work :)
+[15:02] <jsalisbury> heh
+[15:02] <sforshee> cking, does the firmware on your x230 have an object named BRTW in the EC namespace that is returned by _BCL?
+[15:03] <jsalisbury> arges, i haven't done any research upstream on that bug yet.  That's another approach in addition to a reverse bisect
+[15:04] <arges> jsalisbury: if you want to start the bisect, i could look at the backtrace a bit and see if  I can get anything by looking and blaming
+[15:04] <jsalisbury> arges, I believe v3.7 final did not have the bug.  Maybe try v3.6 final?
+[15:04] <arges> jsalisbury: ok that's a bit easier... machine is still taking a dump
+[15:04] <arges> that sounds bad
+[15:05] <jsalisbury> arges, sure.  I can't reproduce the bug here, but I'll update bug 1097396 and work with Tony
+[15:05] <ubot2`> Launchpad bug 1097396 in linux (Ubuntu Precise) "Unplugging USB Headset causes Kernel Panic" [High,Triaged] https://launchpad.net/bugs/1097396
+[15:07] <arges> jsalisbury:well i'lll test 3.6 first 
+[15:07] <jsalisbury> arges, cool
+[15:07] <arges> jsalisbury: and i can do the bisect
+[15:07] <jsalisbury> arges, great.  can you also update that bug as you go?
+[15:08] <arges> jsalisbury: yup
+[15:08] <jsalisbury> arges, thanks!
+=== henrix is now known as henrix_
+=== henrix_ is now known as henrix
+=== ehw_ is now known as ehw
+[16:28] <apw> hallyn, sounds interesting indeed
+[16:29] <ppisati> time for some pain...
+[16:29]  * ppisati -> gym
+=== henrix is now known as henrix_
+=== henrix_ is now known as henrix
+=== zequence_ is now known as zequence
+[18:43] <hallyn> say, I'm getting a build error in libvirt due to include/linux/if_bridge.h using struct in6_addr without it being defined.  
+[18:43] <hallyn> can that be considered a bug in the header?
+[18:43] <hallyn> or is it reasonable to say all userspace using that now has to #include <netinet/in.h> ?
+[18:43] <doc___> Kernel question: I'm trying to write an app that talks to USB cameras. Should I use /dev, /proc or sysfs?
+[18:45] <hallyn> it was added on dec 6 as part of commit "bridge: export multicast database via netlink"
+[19:55] <apw> hallyn, well if in4_addr is defined without additional headers and in6_addr not, that sounds like a bug
+[19:56]  * rtg -> EOD
+[19:56] <hallyn> apw: i suspect in4_addr is also not defined
+[19:56] <hallyn> apw: but that isn't used in if_bridge itself
+[19:56] <apw> oh hmmm, i wonder why in6_addr is used
+[19:57] <hallyn> apw: see https://www.redhat.com/archives/libvir-list/2013-January/msg00957.html.  it was used as of a commit on dec 7
+[19:58] <hallyn> oh, i see.  i thought the thread on netdev had died, but i guess it's more recent than i thought, so still on-going
+[20:01] <apw> hallyn, well that doesn't really resolve ... but hopfully will
+[20:03] <hallyn> apw: right.  hopefully.  meanwhile i'll work around it in libvirt (using the upstream patch) but i expect more build breakages in raring
+=== henrix is now known as henrix_
+[20:56] <noisepub2> <noisepub2> quantal kernels in precise are not packaged correctly for multiarch
+[20:56] <noisepub2> <noisepub2> linux-headers-`uname -r` needs to be Multi-arch: foreign
+=== adam_g_ is now known as adam_g

@@ -1,0 +1,252 @@
+[00:02] <mramm> bar/cafe in 15 min?
+=== slank is now known as slank_away
+[00:30] <wallyworld> davecheney: there's no easy way for me to call unexported functions on a struct from a test in different package is there? i want to be able to poke the internal state of something to set it up for a test but not have to use the public api which is insufficient
+[00:35] <davecheney> wallyworld: var F = f()
+[00:35] <davecheney> put that in export_test.go
+[00:35] <davecheney> if they are methods then you can extend the struct in export_test.go and forward the methods
+[00:35] <davecheney> hang on, i'll find you a good example
+[00:36] <davecheney> wallyworld: juju-core/environs/export_test.go is a good example of the former
+[00:36] <davecheney> juju-core/environs/ec2/export_test.go is an example of the latter
+[00:37] <wallyworld> davecheney: but what about if the test code is in a different package to the unexported stuff
+[00:37] <davecheney> unpossible
+[00:37] <wallyworld> :-(
+[00:37] <wallyworld> that's quite a limiation
+[00:38] <davecheney> it is the way it is
+[00:38] <davecheney> stuffs either exported or not
+[00:38] <wallyworld> so now we have to go and make a whole bunch of stuff public sadly
+[00:38] <davecheney> yup, Go has no concept of Protected or Friend
+[00:38] <wallyworld> np, thanks for clarifying
+[00:39] <wallyworld> I keep running into such limitations with Go
+[00:39] <davecheney> there is a long and boring explanation that justifies it
+[00:39] <davecheney> but the short version is, it is what it is
+[00:40] <wallyworld> fair enough
+[00:43] <davecheney> wallyworld: one possibility
+[00:44] <davecheney> add exported methods to your type
+[00:44] <davecheney> but return an interface to 'filter' those methods
+[00:44] <davecheney> then ou can type assert back to the original type
+[00:44] <davecheney> that may or may not be applicable
+[00:45] <wallyworld> davecheney: thanks, will look into that. the use case is that we have service doubles for nova etc, and want tests to be able to poke the internal state
+[07:47] <rogpeppe1> davecheney: mornin'
+[08:30] <rogpeppe1> wallyworld, jam: review of a trivial environs/openstack change? https://codereview.appspot.com/7196054
+[09:28] <TheMue> Morning
+[09:58] <rogpeppe1> TheMue: hiya
+[09:58] <rogpeppe1> TheMue: good conference?
+[10:09] <TheMue> rogpeppe1: Yes, many interesting talks there (typically mostly not about our business but still good).
+[10:10] <TheMue> rogpeppe1: And my own talk has been good, the people have been very interested (many questions).
+[10:10] <rogpeppe1> TheMue: what did you talk about?
+[10:10] <TheMue> rogpeppe1: Additionally my publisher and I had a possible idea for my next book. ;)
+[10:11] <TheMue> rogpeppe1: I talked about world-wide distributed development of open-source software. Guess why. :D
+[10:11] <rogpeppe1> :-)
+[10:11] <rogpeppe1> TheMue: and your book idea?
+[10:13] <TheMue> rogpeppe1: It's this time not technological, but about how to present or give talks from very small groups like in a pre-sales presentation over stuff like trainings or lightning talks in the own company up to talks on conferences.
+[10:13] <rogpeppe1> TheMue: interesting.
+[10:15] <TheMue> rogpeppe1: I like this topic since a longer time and we found, that many IT people have problems in present their ideas or products.
+[10:17] <TheMue> rogpeppe1: Many are introverted, but after they visited a training they shall present it to the rest of the team. Or they shall support the sales team. Those are the people we wonna address.
+[10:18] <rogpeppe1> TheMue: yeah.
+[10:21] <TheMue> rogpeppe1: Yesterday I had to write my first obituary, Andreas Raab, a Smalltalk developer died. Has been a hard job.
+[10:21] <rogpeppe1> TheMue: yeah, very hard to get right
+[10:22] <TheMue> rogpeppe1: And how has the Juju week been?
+[10:22] <rogpeppe1> TheMue: pretty quiet with william and yourself away
+[10:23] <TheMue> rogpeppe1: OK, right now Daves timezone is really bad. So you only have been three.
+[10:23] <rogpeppe1> TheMue: yeah
+[10:23] <rogpeppe1> TheMue: i did manage to have a chat with dave for the first time this year a couple of days ago :-)
+[10:23] <rogpeppe1> TheMue: 10pm for me, 9am for him...
+[10:24] <TheMue> rogpeppe1: Hehe, yes, sometimes when I'm still in the net I see him starting his day.
+[10:33] <mgz> dimitern: these bootstrap tests taking this long isn't normal, right? <http://paste.ubuntu.com/1569225/>
+[10:34] <mgz> ...no dimitern
+[10:35] <mgz> oh, and rogpeppe has a branch up that looks pertinent
+[10:38] <mgz> rogpeppe1: taking 12 seconds on that test still seems unreasonable, but your branch is an improvement
+[10:39] <rogpeppe1> mgz: it was the first immediate cause that i could see
+[10:39] <rogpeppe1> mgz: starting and stopping mongo is fairly slow and often accounts for quite a bit of time
+[10:42] <rogpeppe1> mgz: 6s is spent compiling the juju source
+[10:45] <rogpeppe1> mgz: that will probably drop when we move to using a single binary (linking is the slowest part of go compilation)
+[10:45] <rogpeppe1> mgz: please respond to the review if you approve of it.
+[10:45] <mgz> rogpeppe1: I'm on it.
+[10:45] <rogpeppe1> mgz: ta
+[10:54] <mgz> ...I hate having to spend 5 minutes just to understand the imports when doing review... why is this in export_test.go but that is package openstack and imported from that name... ;_;
+[10:54] <mgz> shall just trust it makes some kind of sense.
+[11:03] <rogpeppe1> mgz: yeah too many "openstack" identifiers
+[11:04] <rogpeppe1> mgz: openstack := openstack.New() :-)
+[11:05] <rogpeppe1> mgz: things are easier when you have a tool that can reliably show you the definition of any identifier you find.
+[11:05] <rogpeppe1> mgz: i could give you one, but you'd have to tool it into whatever editor you use
+[11:07] <rogpeppe1> jam: second opinion on https://codereview.appspot.com/7196054/ ? it's pretty trivial.
+[11:09] <mgz> rogpeppe1: Fridays aren't work days in UAE, dimitern should be around though?
+[11:09] <rogpeppe1> mgz: doesn't appear to be
+[11:09] <rogpeppe1> mgz: trivial enough to submit anyway?
+[11:10] <mgz> yeah, I would.
+=== TheRealMue is now known as TheMue
+[13:12] <TheMue> rogpeppe1: I've got SMTP problems today with our server (IMAP is OK). Do you have the same troubles?
+[13:21] <rogpeppe1> TheMue: looks ok. last message came in for me an hour ago. i'll try to see if i can send myself a message.
+[13:23] <TheMue> rogpeppe1: Receiving is fine here too, only sending doesn't work due to an SSL error.
+[13:24] <rogpeppe1> TheMue: yes, i'm getting email fine
+[13:24] <rogpeppe1> TheMue: ah, ok, i'll try sending you an email
+[13:24] <rogpeppe1> TheMue: ok, i've sent you an email.
+=== rogpeppe1 is now known as rogpeppe
+[13:27] <TheMue> rogpeppe: Has worked, hmm, have to look deeper. Thanks.
+[14:01] <TheMue> rogpeppe: Ha, found it. It has been a change in my network configuration due to the conference rooms and the hotel. Now it is working again.
+[14:12] <rogpeppe> TheMue: cool
+[14:12] <rogpeppe> TheMue: are you back home?
+[14:13] <TheMue> rogpeppe: Yep
+[14:42] <rogpeppe> fwereade: ping
+[14:42] <fwereade> rogpeppe, pong
+[14:42] <fwereade> rogpeppe, how's it going?
+[14:43] <rogpeppe> fwereade: not bad. i've just made a list of state entry points and the entities that currently use/need to use them
+[14:43] <rogpeppe> fwereade: http://paste.ubuntu.com/1569931/
+[14:43] <fwereade> rogpeppe, excellent
+[14:43] <rogpeppe> fwereade: the fuzzy bits are around uniter
+[14:44] <rogpeppe> fwereade: (every time i say "restrictions?" it means i don't know what restrictions there should be
+[14:44] <rogpeppe> )
+[14:44] <rogpeppe> fwereade: i'd appreciate it if you could go over it and have a check for sanity/omitted bits
+[14:44] <rogpeppe> fwereade: in fact, maybe i'll make it a google doc
+[14:44] <fwereade> rogpeppe, +1
+[14:45] <fwereade> rogpeppe, one thing that leaps out is State.EnvironConfig, which the uniter uses but shouldn't
+[14:45] <rogpeppe> fwereade: https://docs.google.com/a/canonical.com/document/d/16irceDbjcOuQElcRT1pjL2cCbSF_-YSXg7Yte9Qf3RI/edit
+[14:46] <rogpeppe> fwereade: yes, i've got my eye on that
+[14:46] <fwereade> rogpeppe, it just needs State.EnvironType
+[14:46] <rogpeppe> fwereade: indeed
+[14:46] <fwereade> rogpeppe, and it's not clear why machines need charms or relations
+[14:47] <fwereade> rogpeppe, re AssignUnit, would you take a look at https://bugs.launchpad.net/juju-core/+bug/1101139 and let me know your thoughts?
+[14:47] <_mup_> Bug #1101139: units are not assigned transactionally <juju-core:New> < https://launchpad.net/bugs/1101139 >
+[14:48] <rogpeppe> fwereade: ah yes, those were from early in my list making, and i got it wrong.
+[14:48] <fwereade> rogpeppe, cool
+[14:49] <rogpeppe> fwereade: fixed in the google doc
+[14:49] <fwereade> rogpeppe, I seem to be view only on the doc
+[14:50] <rogpeppe> fwereade: are you as your canonical address?
+[14:50] <fwereade> rogpeppe, it seems to think I am
+[14:50] <rogpeppe> fwereade: ah, sorry, i misinterpreted a message. changed.
+[14:51] <rogpeppe> fwereade: you should be able to edit now
+[14:51] <fwereade> rogpeppe, cheers
+[14:52] <rogpeppe> fwereade: we're going to have to think carefully about permissions checking, and how to make so we don't incur an extra round trip (api server <-> mongo) on many operations just to check permissions.
+[14:52] <rogpeppe> fwereade: i'm just off to lunch. catch you in a little bit, i hope.
+[14:53] <fwereade> rogpeppe, enjoy, please consider that bug I linked
+[14:53] <fwereade> rogpeppe, it impacts that doc quite hard if I'm not on crack
+=== slank_away is now known as slank
+[14:58] <fwereade> aram, ping
+[15:04] <dimitern> fwereade: hey, aram said yesterday he wasn't feeling well
+[15:05] <fwereade> dimitern, heh, ok, I wish he'd mail us about this sort of thing
+[15:05] <dimitern> fwereade: dunno
+[15:05] <dimitern> fwereade: how's it going there?
+[15:05] <fwereade> dimitern, np, thanks for letting us know
+[15:05] <fwereade> dimitern, pretty good actually, I feel like we know what we're doing
+[15:06] <fwereade> dimitern, how's the rock?
+[15:06] <dimitern> fwereade: that's good! :)
+[15:06] <dimitern> fwereade: raining pretty much every day lately.. but sometimes sunshine
+[15:07] <fwereade> dimitern, cool, looking forward to coming back
+[15:07] <dimitern> fwereade: it's seems the weather in the morning is plotting against my idea to go for a run - it  always pours early
+[15:07] <fwereade> dimitern, haha
+[15:07] <dimitern> fwereade: yeah, I realized I forgot to give you something from back home
+[15:08] <fwereade> dimitern, yay, bulgarian deliciousness
+[15:08] <fwereade> dimitern, looking forward to it :)
+[15:08] <dimitern> fwereade: not really, this is more to look at :) one of my mother's pastels
+[15:08] <fwereade> dimitern, oh wow!
+[15:09] <dimitern> fwereade: I'll get it next time
+[15:09] <fwereade> dimitern, excellent
+[15:10] <fwereade> dimitern, I'll be back sunday lunchtime, flights permitting, and will probably be trying to stay up until night time, so I'll probably be around a bit
+[15:10] <dimitern> fwereade: great
+[15:10] <fwereade> bbiab
+[15:11] <dimitern> fwereade: btw, if you happen to pass a book store which has Iain M Bank's The Hydrogen Sonata - it's worth getting one ;) excellent
+[15:50] <rogpeppe> dimitern, fwereade: i've almost finished Gone Away World, which is brilliant too
+[15:50] <dimitern> rogpeppe: who's the author?
+[15:51] <rogpeppe> dimitern: nick harkaway.
+[15:51] <rogpeppe> dimitern: its his first novel
+[15:52] <fwereade> rogpeppe, oh yes? cool
+[15:52] <fwereade> rogpeppe, dimitern: I enjoyed Blue Remembered Earth (alastar reynolds)
+[15:52] <dimitern> rogpeppe: i'll check it out, 10x
+[15:53] <rogpeppe> fwereade: i'll bring it to the sprint if you haven't got it first
+[15:53]  * TheMue just started Porterhouse Blue by Tom Sharpe. Not easy for a non-native speaker.
+[15:53] <dimitern> fwereade: more reynolds stuff, good
+[15:53] <rogpeppe> fwereade: brilliant twists
+[15:53] <fwereade> rogpeppe, cool, I might be up to date on your books by then :)
+[15:53] <rogpeppe> fwereade: :-)
+[15:54] <fwereade> rogpeppe, excellent, it is always nice to be surprised -- the things in BRE that were, I think, meant to be surprises were... less so
+[15:54] <rogpeppe> fwereade: it's also extremely funny
+[15:54] <fwereade> rogpeppe, and I've got a mental option on a surprise for the next book
+[15:54] <fwereade> rogpeppe, excellent
+[15:55] <rogpeppe> fwereade: BTW are we always guaranteed that there's only one provisioner?
+[15:55] <rogpeppe> fwereade: how does that fit with HA?
+[15:56] <rogpeppe> fwereade: (looking at your description of the bug you mentioned)
+[15:56] <fwereade> rogpeppe, IMO, no we are not, because we will require that the provisioner be HA as well
+[15:56] <rogpeppe> fwereade: so this is spurious, right?
+[15:56] <rogpeppe> we could trust the Provisioner (which also has Environ access) to do exactly the same things... but without races (because there's only one provisioner).
+[15:56] <fwereade> rogpeppe, I think I address that a bit further down, I'm talking about Right Now at that point
+[15:56] <rogpeppe> fwereade: ok
+[15:57] <rogpeppe> fwereade: ha, i thought i'd got to the end
+[15:57] <fwereade> rogpeppe, ie we'll need some sort of magic locking for the provisioner and I'm comfortable handwaing that for now
+[15:58] <rogpeppe> fwereade: yeah. taking a lease on a unit might work for locking.
+[15:59] <fwereade> rogpeppe, I'm partly wondering whether ultra-coarse-grained locking might be acceptable for the forseeable future
+[15:59] <fwereade> rogpeppe, only one provisioner active at once
+[15:59] <rogpeppe> fwereade: doesn't it have to be some kind of lease? otherwise a hung-up provisioner will stop other provisioners from running.
+[16:00] <rogpeppe> fwereade: but coarse-grained is probably fine, yeah
+[16:00] <fwereade> rogpeppe, sure, I'm just talking about the graininess
+[16:00] <rogpeppe> fwereade: big +1 on the suggestion in the bug
+[16:01] <fwereade> rogpeppe, excellent, ty
+[16:01] <rogpeppe> fwereade: i don't think it loses generality, as we can always provide the means for a client to *specify* a machine when adding the unit, even if it doesn't allocate it itself.
+[16:02] <fwereade> rogpeppe, yeah, indeed
+[16:02] <rogpeppe> fwereade: in that case, the unit may remain unassigned, but i think that's ok
+[16:02] <fwereade> rogpeppe, hmm, we will need to be careful about that
+[16:02] <rogpeppe> fwereade: we could treat it as a broken unit
+[16:03] <fwereade> rogpeppe, yeah, but we still need to write new code to handle it anyway
+[16:03] <rogpeppe> fwereade: it's really the responsibility of whoever is adding units, if they're specifying machines that clash.
+[16:04] <fwereade> rogpeppe, a direct assignment from the CLI is not necessarily too horrible txn-wise
+[16:04] <rogpeppe> fwereade: but, yeah, it would be nice to be able to say "this machine should not be taken by a random addunit; save it for explicit assignment instead"
+[16:04] <rogpeppe> fwereade: ah that's true!
+[16:04] <rogpeppe> fwereade: the problem is in searching for an unassigned machine
+[16:04] <fwereade> rogpeppe, it's just the assignment dance that gives me night terrors ;)
+[16:05] <fwereade> yeah
+[16:05] <rogpeppe> fwereade: yeah, it's not great, and there's no recovery.
+[16:06] <rogpeppe> fwereade: and this change would pave the way for set-unit-count too, if we wanted that
+[16:06] <fwereade> rogpeppe, +1
+[16:06] <fwereade> rogpeppe, (I think we do, but there's no time for that this cycle ;))
+[16:06]  * fwereade slopes off for another ciggie
+[16:06] <rogpeppe> fwereade: indeed
+[16:16] <rogpeppe> fwereade: "(not deploy: relations added in AddService)"
+[16:16] <rogpeppe> fwereade: Conn.AddService calls State.AddRelation
+[16:17] <rogpeppe> fwereade: so i still think we have to say State.AddRelation is currently called by juju deploy.
+[16:17] <rogpeppe> fwereade: we may well wish to factor the juju.Conn calls into their own rpc calls though
+[16:18] <rogpeppe> fwereade: or... perhaps Conn.AddService no longer needs to add peer relations?
+[16:19] <fwereade> rogpeppe, I'm about to propose that change
+[16:19] <rogpeppe> fwereade: ah!
+[16:20] <fwereade> rogpeppe, I've actually dropped Conn.AddService -- the only thing it did was to choose a name for the service if empty
+[16:20] <fwereade> rogpeppe, (apart from the relations, that is)
+[16:20] <rogpeppe> fwereade: +1
+[16:22] <fwereade> rogpeppe, actually, can I ask you to take a quick look at the reviews I have up? there are a couple with 1 LGTM
+[16:23] <rogpeppe> fwereade: ok, will do
+[16:24] <rogpeppe> fwereade: which one first?
+[16:25] <fwereade> rogpeppe, cli-destroy-service is easiest
+[16:25] <fwereade> rogpeppe, other ones in order
+[16:29] <fwereade> rogpeppe, I ballsed up the prereqs a little, https://codereview.appspot.com/7205058 doesn't strictly require it, but I'm not changing it now... and the followup does require all the prereqs
+[16:29] <rogpeppe> fwereade: i'm getting "chunk mismatch" on https://codereview.appspot.com/7138062/
+[16:30] <fwereade> rogpeppe, ah balls
+[16:30] <rogpeppe> fwereade: i can review the raw diffs though
+[16:30] <rogpeppe> fwereade: assuming they're not too involved
+[16:31] <fwereade> rogpeppe, it's trivial frankly
+[16:36] <rogpeppe> fwereade: LGTM with a couple of trivial comments
+=== fss is now known as fsouza
+[16:39] <fwereade> rogpeppe, cheers
+=== fsouza is now known as fss
+[16:58] <rogpeppe> fwereade: have you run all the tests on https://codereview.appspot.com/7205058/ ?
+[16:58] <fwereade> rogpeppe, yes
+[16:59] <fwereade> rogpeppe, is something obviously screwed?
+[16:59] <rogpeppe> fwereade: ah ha! i believe you haven't run the live tests.
+[16:59] <fwereade> rogpeppe, ah!
+[16:59] <rogpeppe> fwereade: in livetests.go:
+[16:59] <rogpeppe> svc, err := conn.State.AddService("", sch)
+[16:59] <fwereade> rogpeppe, good catch, thank you
+[16:59]  * fwereade hangs head in shame
+[17:00] <rogpeppe> fwereade: it will probably work once you've fixed that, but worth running live tests anyway :-)
+[17:00] <fwereade> rogpeppe, will do
+[17:08] <rogpeppe> fwereade: i think you've got reviews on everything now
+[17:08] <fwereade> rogpeppe, <3
+[17:08] <TheMue> yip
+[17:08] <fwereade> TheMue, <3 also :)
+[17:24] <fwereade> TheMue, would you take a very quick look at https://codereview.appspot.com/7198051/ please?
+[17:37] <TheMue> fwereade: Oh, missed it. Sure. *click*
+[17:41] <TheMue> fwereade: You've got a +1 on it. ;)
+[17:46] <fwereade> TheMue, cheers
+[17:47] <TheMue> fwereade: yw
+[18:24] <rogpeppe> fwereade: if you have some moments, it'd be great to fill out the rest of that api doc. particularly the uniter parts. i'm not sure what restrictions are appropriate for a uniter on accessing other units.
+[18:24] <fwereade> rogpeppe, good point, ty
+[18:24] <rogpeppe> fwereade: have a safe trip back
+[18:24] <fwereade> rogpeppe, cheers, have a good weekend :)
+[18:25] <rogpeppe> and great weekends to all
+[18:25] <rogpeppe> g'night

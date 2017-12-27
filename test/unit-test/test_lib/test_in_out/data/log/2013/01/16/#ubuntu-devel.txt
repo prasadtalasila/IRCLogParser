@@ -1,0 +1,387 @@
+[00:02] <xnox> tkamppeter_: you can't. You can boot from sdcard or you can boot via OTG mini-usb port.
+[00:02] <xnox> tkamppeter_: google for ogra_ blog posts about booting via mini-usb.
+[00:04] <mwhudson> you can have uboot on the sd card but the rootfs on usb stick
+=== slank is now known as slank_away
+=== _salem is now known as salem_
+=== hggdh_AFK is now known as hggdh
+[00:17] <TheMuso> You may as well use an SD card if you are thinking of using a USB stick. IMO a rotery USB disk is better.
+[00:17] <tkamppeter> xnox, thanks.
+[00:17] <TheMuso> For the root F sanyway.
+[01:05] <xnox> Laney: ;-) here be dragons
+=== cpg|away is now known as cpg
+=== imbrando1 is now known as nodnaebmi
+=== salem_ is now known as _salem
+=== V is now known as SATAN
+=== SATAN is now known as Guest24219
+=== Guest24219 is now known as V
+[06:07] <pitti> Good morning
+[07:17] <dholbach> good morning
+[08:52] <diwic> dholbach, congratulations :-)
+[08:52] <dholbach> thanks diwic :)
+[09:01] <Laney> xnox: hoho
+[09:04] <rye> Hi, is this a place one can draw attention to a bug report for raring?
+[09:05] <rye> bug #1085342 FWIW
+[09:05] <ubottu> bug 1085342 in totem (Ubuntu) "Pulseaudio applications hang (Totem, GNOME Shell etc.)" [Undecided,Confirmed] https://launchpad.net/bugs/1085342
+[09:06] <diwic> rye, could you check if it is resolved in PA 3.0? We have packages incoming for PA 3.0, let me give you the link
+[09:07] <diwic> rye, *reading* hmm, maybe it's more of a threading error than PA error?
+[09:08] <rye> diwic: that's glibc error as far as I understand
+[09:08] <rye> in NPTL
+[09:09] <diwic> rye, ok, then I'm not the right person to answer. PA 3.0 is available for testing at https://launchpad.net/~ubuntu-audio-dev/+archive/ppa btw.
+[09:10] <rye> diwic: will test that too
+[09:11] <rye> diwic: basically the bug can be triggered very easily - totem videofile -> seek back and forth a bit. Sometimes totem does not even start playing so in case PA 3.0 has a workaround for this glibc bug then it should stop manifesting. Otherwise all aps will still fail and pulseaudio will look like the one to blame
+[09:11]  * rye has not yet rebuilt libc locally
+[09:23] <rye> diwic: ok, just a heads up, PA 3.0 also hangs under these conditions
+[09:23] <diwic> rye, ack, thanks for testing
+[09:40] <infinity> diwic: If that's the bug I'm thinking of, it's fixed in glibc 2.17, which I'm bouncing to the archive soonish.
+[09:40] <diwic> rye, ^
+[09:40] <diwic> infinity, sounds good. Does it affect any stable releases?
+[09:42] <infinity> diwic: I'm a bit less clear on that.
+[09:43] <diwic> ok
+[09:43] <diwic> infinity, probably not as I haven't heard any riots about it
+[09:43] <infinity> diwic: Always happy to have more datapoints on the topic, if you can easily reproduce with a backported package or something.
+[09:44] <diwic> infinity, ok
+[09:44] <Laney> I'm seeing (something which sounds like) this which correlates with my recent dist-upgrade to raring.
+=== henrix_ is now known as henrix
+[09:45] <Laney> diwic: For me it happens with Spotify too; don't know if that gives you any more data (this uses libasound2)
+[09:46] <infinity> Laney: If I give you a glibc 2.17 to test, can you tell me if it goes away?
+[09:46] <Laney> ok
+[09:46] <infinity> Hrm, I'll have to find a build that isn't scary broken.  I trust my source, but none of my binaries...
+[09:48] <rye> infinity: please subscribe me too to glibc 2.17 testing
+[09:49] <rye> infinity: also this can be easily reproduced in VM so if it is broken that's not the end of the world :)
+=== Quintasan_ is now known as Quintasan
+[09:52] <rye> infinity: for tracking purposes - bug #1085342
+[09:52] <ubottu> bug 1085342 in totem (Ubuntu) "Pulseaudio applications hang (Totem, GNOME Shell etc.)" [Undecided,Confirmed] https://launchpad.net/bugs/1085342
+[09:53] <infinity> rye: Same as Debian #694962?
+[09:53] <ubottu> Debian bug 694962 in libc6 "libc6:amd64: pulseaudio hangs in pthread_cond_wait" [Important,Open] http://bugs.debian.org/694962
+[09:54] <rye> infinity: yes
+[09:55] <rye> infinity: linked it there
+[10:01] <Laney> indeed, my traces have pthread_cond_wait at the top too
+[10:02] <infinity> Right, let me just lob this at a PPA, then.  People can have a hammer at it.
+[10:07] <infinity> rye, diwic, Laney: Uploaded to https://launchpad.net/~adconrad/+archive/ppa for testing fun.
+[10:07] <Laney> cheers
+[10:07] <Laney> pitti: I suspect this is what you reported in #-desktop too ^^^
+[10:08] <cjwatson> ev: I've been looking at the LP implementation of phased updates.  Do you have any thoughts/requirements/etc. on how frequently the phase value for a given package version should be changed?
+[10:08] <infinity> rye, diwic, Laney: There's one test failure in there that still scares the crap out of me, plus a few more things I need to land, so I don't recommend this for "production". :P
+[10:08] <pitti> Laney: sounds right indeed
+[10:08] <diwic> infinity, okay
+[10:08] <cjwatson> ev: I assume it isn't worth smoothing it out *too* much
+[10:18] <ev> cjwatson: I think we can cope with changes up to "fairly frequently", given the proposed design: https://wiki.ubuntu.com/ErrorTracker/PhasedUpdates
+[10:19] <cjwatson> Yeah, I was just hoping for actual numbers on that :-)  Is once a day "fairly frequently"?  Twice a day?
+[10:19] <ev> hah, sorry. Frequently would be several times a day. I think this is something we're going to have to tune once we start getting real world data in. So perhaps start at twice a day?
+[10:20] <ev> and then we can adjust from there
+[10:20] <cjwatson> The reason I'm asking is that it looks like the easiest way to do this in LP is to treat phase as an override, and use changeOverride for it; this should be very simple but involves creating new publications each time
+[10:20] <ev> ah
+[10:20] <cjwatson> Which I think is essentially required anyway since we're changing something in the Packages stanza
+[10:20] <ev> so not something you want to do that often
+[10:21] <cjwatson> It's not horrible since there's only so much in -updates that hasn't been phased up to 100% yet, but I wouldn't want to be doing it every half-hour, no
+[10:22] <cjwatson> ev: Also, what granularity do you need?  Would a 0-100 int be fine, or does it need to be a floating-point type for some reason?
+[10:22] <cjwatson> (Will need to get the database column created more or less first)
+[10:22] <ev> I think an int would be fine
+[10:22] <cjwatson> OK, good
+[10:22] <ev> cjwatson: we should involve bdmurray in these chats, by the way, as he's taking care of a lot of the implementation
+[10:22] <cjwatson> Yeah, I was talking to him a bit last night
+[10:22] <ev> ah, excellent
+[10:23] <cjwatson> Mostly I want to get the LP side done and then get out of the way ;-)
+=== Sweetsha1k is now known as Sweetshark
+[10:33] <ev> pitti: do you have any strong opinions on whether silent reports should be implemented as a new filename suffix (.silentcrash) or as a key off the report itself? I'm inclined the say the former, even though it requires changes to whoopsie as well, as it keeps us from having to read through every report file in /var/crash to find the silent ones.
+[10:33] <ev> context: https://wiki.ubuntu.com/ErrorTracker#error
+[10:33] <ev> that bulleted list will grow
+[10:33] <ev> to include most types of system-internal reports
+[10:34] <ev> which we can only make the distinction on by reading .desktop files. Bum.
+[10:34] <pitti> ev: where would we actually save effort by introducing another extension? I'm rather wary of doing that, it requires more changes
+[10:34] <pitti> e. g. in GNOME's mime handler to open them, etc.
+[10:35] <pitti> ev: and no, we can by no means send an error automatically if it appears during logout
+[10:35] <ev> pitti: in what would become "def get_all_silent_reports"
+[10:35] <pitti> if that is for "[ ] Report internal errors, too", we need to reprocess and load those reports anyway
+[10:35] <ev> they're not being sent automatically unless the user has explicitly asked for them to be sent automaticlly
+[10:36] <ev> automatically*
+[10:36] <pitti> also, I don't think we can decide about silence in the core pipe handler in all cases, can we/
+[10:36] <pitti> ?
+[10:36] <ev> in the vast majority of cases, they appear with the next regular application crash
+[10:36] <ev> but if the user has checked the box in system settings for "just send the things", then it will be sent automatically
+[10:36] <pitti> for detecting .desktop files etc. it needs to happen in the apport-gtk post-processing stage, not in the core pipe handler
+[10:36] <ev> yeah, that's what I was wondering
+[10:37] <ev> right, it sounds like this just needs to be a key in the report
+[10:37] <pitti> ev: right, but wouldn't that be implemented by creating teh .upload files at the time of the crash, not by some GUI having to go through and create them for you?
+[10:37] <ev> and getting all of the silent reports to show with the current application crash involves reading all the report files in /var/crash
+[10:37] <ev> or I guess we could drop another 0-byte hint file
+[10:37] <pitti> I thought whoopsie would only consider those with an .upload (and without .uploaded) stamp
+[10:38] <ev> pitti: this is for showing them in the UI at all
+[10:38] <ev> so as an example
+=== henrix is now known as henrix_
+[10:38] <ev> lets say colord crashes
+[10:38] <ev> that should not pop up a dialog
+[10:38] <ev> later, the gimp crashes
+[10:38] <ev> now a dialog appears saying that gimp crashed and an internal application crashed
+[10:38] <ev> asking you to report both at once
+[10:39] <pitti> okay
+[10:39] <pitti> but we need to call apport (post-processing) to find out whether or not a report file is system-internal in the first place
+=== henrix_ is now known as henrix
+[10:40] <pitti> I thought we decide this based on whether it has a .desktop file, don't we?
+[10:40] <ev> indeed, my brain just hadn't gotten that far :)
+[10:40] <ev> we do
+[10:40] <pitti> we probalby have more, such as having a $DISPLAY in env
+[10:40] <pitti> (which we can detect in the core pipe handler already)
+[10:40] <ev> we still need to note that the crash file we've just processed is a silent error, to be picked up later though
+[10:41] <ev> so do you prefer a 0-byte .silent file alongside the .crash file, or a key in the report?
+[10:41] <ev> I'm just still thinking of the implementation of "get_all_silent_reports"
+[10:41] <pitti> ev: update-notifier calls apport-checkreport; in principle this could go through and do the "is system internal" decision, create .stamp files for the "silent uplaod" ones, and add the desktop information to the .crash; and then report in its exit status whether there are "interactive" ones left
+[10:42] <ev> okay
+[10:42] <pitti> ev: I don't like yet another stamp file TBH, it starts being confusing
+[10:42] <pitti> I think apport-checkreports could just "do" it, without having lots of other async components in between
+[10:42] <pitti> that's my gut feeling, anyway
+[10:42] <ev> it does, but we need some way of quickly getting the entire set of silent reports that still need to be presented to the user
+[10:43] <ev> they're only silent in the sense that they don't get their own dialog
+[10:43] <ev> perhaps silent is a poor term for this
+[10:43] <ev> grouped might be better
+[10:43] <ev> it does get confusing, that is - I agree
+[10:43] <pitti> ev: so all that update-notifier does is to call "apport-gtk" without arguments
+[10:44] <pitti> if we define "grouped" in terms of "system vs. app", then we already have API to decide that for a particualr report, don't we?
+[10:44] <ev> we might want to show dialogs for some system internal reports, as mpt pointed out yesterday
+[10:44] <ev> for instance, if pulseaudio crashes
+[10:45] <ev> the user probably wants to know why their sound stopped working
+[10:45] <pitti> so ui.py's run_crashes() already iterates through all of them; it coudl then do the decision which ones to show interactively and which ones to batch?
+[10:45] <pitti> i. e. that wouldn't need rewriting the .crash files yet another time, or adding more stamps; or am I missing someting?
+[10:45] <ev> pitti: there might be some time between colord crashing and the gimp crashing
+[10:45] <ev> I don't think this can happen in one run
+[10:46] <ev> oh
+[10:46] <pitti> why, apport-gtk would see the old colord crash when it is being called for the gimp crash?
+[10:46] <ev> right
+[10:46] <pitti> isn't that how it was supposed to be?
+[10:46] <ev> I just caught that
+[10:46] <ev> but
+[10:46] <ev> what happens when we have all system internal crashes and no regular application crashes?
+[10:46] <ev> oh, the same thing, I guess
+[10:46] <ev> I see your point
+[10:46] <pitti> yeah, that's the problem with that model in general; they would never be sent
+[10:47] <pitti> if the user configured "send them automatically", then apport-checkreports could create the .upload files
+[10:47] <ev> would we not just leave them unprocessed for the next run of run_crashes?
+[10:47] <pitti> but if not, then we need the UI to ack the reports
+[10:47] <pitti> (apport-checkreports is being called at desktop startup and each crash)
+[10:50] <ev> pitti: I think I've got enough to take a stab at the algorithm here. Thank you so much for the chat.
+[10:50] <ev> I'll put an MP up for us to discuss more in depth
+[10:50] <pitti> ev: no worries; we can also have a mumble if you want to discuss in more detail
+[10:50] <pitti> or that :)
+[10:50] <ev> :)
+[10:51] <pitti> thanks for working on this! looking forward to it
+[10:51] <ev> ps. my kingdom for code-inline merge proposal comments
+[10:51] <ev> cheers
+[10:51] <pitti> I think for now we can identify the "batched" ones with "system crash", right?
+[10:51] <ev> correct
+[10:51] <ev> mpt and I are going to refine that on Thursday
+[10:52] <ev> you're welcome to join us via mumble or gtalk
+[10:52] <pitti> for the pulseaudio case, we might actually change it so that it appears as an application carsh
+[10:52] <ev> hm, that's an interesting angle
+[10:52] <pitti> ev: please
+[10:52] <ev> noted
+[10:52] <ev> mpt: what time on Thursday?
+[10:52] <pitti> so that it appears immediately, with some appropriate verbiage
+[10:52] <ev> right
+[10:52] <mpt> ev, 1.30?
+[10:52] <ev> pitti: does that work for you?
+[10:53] <pitti> ev: yes, both UTC and CET
+[10:53] <dholbach> looks like we need to do a bit more sponsoring again
+[10:53] <ev> great
+[10:54] <dholbach> would anyone be available to demo a small bug fix or two? we have one 30m slot left: https://wiki.ubuntu.com/UbuntuDeveloperWeek/Timetable
+[11:12] <tjaalton> @pilot in
+=== udevbot changed the topic of #ubuntu-devel to: Ubuntu 12.10 released | Archive: Open | Dev' of Ubuntu (not support or app devel) | build failures -> http://qa.ubuntuwire.com/ftbfs/ | #ubuntu for support and dicussion of hardy -> quantal | #ubuntu-app-devel for app development on Ubuntu http://wiki.ubuntu.com/UbuntuDevelopment | See #ubuntu-bugs for http://bit.ly/lv8soi | Patch Pilots: tjaalton
+=== _salem is now known as salem_
+[11:40] <cjwatson> ev,bdmurray: Also, do you think it's a problem not to support different phases on different architectures?  Supporting that with the apt-ftparchive-based override handling turns out to be a right pain
+[11:40]  * dholbach hugs tjaalton
+[11:41] <cjwatson> Although I still think putting the phase on BPPH is the right place - it'd just be a limitation of the override handling that if the phases were different across architectures it would effectively just pick one
+[11:43] <ev> cjwatson: I think that's entirely okay, mostly because we hadn't considered it ourselves ;)
+[11:44] <ev> second pass if we really need it
+[11:47] <cjwatson> ev: Yeah, not that I'm sure how to do it even in a second pass :-)
+[11:47] <cjwatson> ev: Looking something along the general lines of http://paste.ubuntu.com/1537437/ so far
+[11:55] <cjwatson> Hmm, that's not quite right, need to be able to set the phase to None ...
+[11:55] <cjwatson> Half-tempting to invert the phase value in the database so that I can have the default be 0 :-P
+[11:56] <dz0ny> hi
+[11:56] <dz0ny> is this te right room for questions about ubuntu-defaults-image?
+[11:57] <dz0ny> the*
+[11:58] <tjaalton> dholbach: thanks for adding me to the sponsors & review teams :)
+[11:58] <dholbach> tjaalton, anytime :)
+[12:00] <dz0ny> I'am trying to build 32bit iso on 64bit host, and according to logs it builds 64bit every time. I'am using --arch i386 switch
+[12:00] <dz0ny> here is build script https://github.com/dz0ny/ubuntu-si/blob/12.04/Makefile
+[12:02] <cjwatson> --arch didn't work right until quantal
+[12:02] <tjaalton> dholbach: already forgot that it was TheMuso who added me to -sponsors, whoops :)
+[12:02] <tjaalton> anyway..
+[12:03] <cjwatson> bug 1016121
+[12:03] <ubottu> bug 1016121 in ubuntu-defaults-builder (Ubuntu Precise) "wrong architecture (i386,amd64) packages downloading" [Undecided,Fix released] https://launchpad.net/bugs/1016121
+[12:03] <dholbach> tjaalton, ain't anything stopping you now ;-)
+[12:03] <cjwatson> though that indicates that you should be able to upgrade to ubuntu-defaults-builder 0.31.1 to fix it
+[12:09] <dz0ny> cjwatson: thx
+=== zyga is now known as zyga-afk
+[12:33] <Laney> infinity: It certainly seems to be stable again with 2.17
+[12:33] <Laney> Aphex Twin are helping me to confirm this
+=== MacSlow is now known as MacSlow|lunch
+[12:54] <rye> infinity: are there any other bugs that should have been resolved by 2.17 upgrade i could verify - pulseaudio no longer wants to hang
+[12:56]  * Laney is relieved that it's not gstreamer's fault :P
+[13:06] <caribou> Q:when files that are not part of the upstream tarball needs to be added to a package, how should it be done ? quilt patch even for new files ?
+[13:07] <caribou> for instance, I wrote a script that uses binaries from the tarball and I want to create a new pkg; should that new script be a quilt patch ?
+[13:08] <ricotz> Laney, hi, are there are eglibc 2.17 packages available for raring somewhere?
+[13:09] <Laney> ricotz: infinity provided a PPA of his unfinished packages (still some test failures). ppa:adconrad/ppa
+[13:09] <ricotz> ah i see :)
+[13:09] <ricotz> (and he didnt told me)
+[13:10] <Laney> we were testing a specific bug fix
+[13:10] <OdyX> caribou: patch or under debian/
+[13:10] <Laney> plus you weren't online to be pung
+[13:11] <ricotz> Laney, alright ;)
+[13:11] <caribou> OdyX: thanks
+[13:11] <ricotz> i will test it
+=== yofel_ is now known as yofel
+=== cpg is now known as cpg|away
+[13:25] <tjaalton> what to do with a merge request that is marked "needs fixing" for a month now and polluting the sponsor queue?
+[13:25] <Laney> change the status to 'work in progress' at the top
+[13:25] <tjaalton> ah, thanks
+[13:25] <hrw> ~curse usb-creator-{gtk,kde} badly
+[13:28] <xnox> hrw: why?! =)
+[13:29] <hrw> xnox: took me a while to find out that it expects lot of things to be done by user before using tool.
+[13:30] <hrw> xnox: such as formatting usbstick as vfat, mounting it etc
+=== zyga-afk is now known as zyga
+[13:30] <xnox> hrw: it can format by itself, but one needs to download the img/cd.
+[13:30] <xnox> "erase disk button"
+[13:31] <hrw> xnox: did that once. UI frozen, no progress
+[13:32] <hrw> and it remounts stick as 'sync'
+[13:36] <hrw> so it takes 467 minutes according to progressbar instead of copying in 1-2 minutes, doing all needed and then syncing
+[13:36] <xnox> hrw: in raring? yeah i reverted sync, need to reupload.
+[13:36] <hrw> xnox: yes, in raring
+[13:59] <hrw> nice set of languages in xubuntu install when booted to live: English, Spanish, Polish, Portugese, xhosa, Chinese.
+[14:00] <smoser> RAOF, it looked like you were looking at my cloud-init -proposed, i'd *really* appreciate it if you could push those through. (per comment on bug 1073077, i'm not sure how you're "supposed" to show 'verfication-done' for two different releases)
+[14:01] <ubottu> bug 1073077 in zsh (Ubuntu) "zsh complains about locale_warn on launch" [Undecided,New] https://launchpad.net/bugs/1073077
+[14:17] <cjwatson> smoser: I'll do it shortly
+[14:21] <smoser> cjwatson, thanks.
+[14:21] <cjwatson> smoser: done
+=== MacSlow|lunch is now known as MacSlow
+[14:26] <hallyn> cyphermox: have you had a chance to take a look at bug 1099155 ?
+[14:26] <ubottu> bug 1099155 in network-manager (Ubuntu) "[raring] No ip assigned to bridge and no routes added for routed network" [Critical,Confirmed] https://launchpad.net/bugs/1099155
+[14:28] <ev> mpt: is it correct that only third-party non-packaged applications still have a "ignore future errors of this type" checkbox? https://wiki.ubuntu.com/ErrorTracker#non-app-crash
+[14:29] <mpt> ev, no, those three kinds should
+[14:29] <mpt> app thread, 3rd-party non-packaged, and OS package
+[14:29] <ev> okay, thanks
+[14:30] <ev> potentially three checkboxes
+[14:30] <mpt> No
+[14:30] <ev> oh
+[14:30] <ev> right
+[14:30] <ev> because that would be regular applications
+[14:30] <mpt> No, not because of that
+[14:31] <mpt> Because of "*and* there is no “Report previous internal errors too” checkbox (so that we don’t show more than two checkboxes at once)."
+[14:31] <mpt> Is that too fiddly? :-)
+[14:31] <ev> ahhh
+[14:31] <ev> sorry, I sped through that initially
+[14:31] <ev> no, I think that makes sense
+[14:32] <ev> I was worried about the interaction between those two checkboxes
+[14:32] <mpt> yeah
+[14:32] <mpt> I guess "of this type" would be ambiguous if the "previous internal errors" checkbox preceded it, so we avoid that problem too
+[14:33] <ev> right
+=== dannf` is now known as dannf
+=== slank_away is now known as slank
+[15:03] <cyphermox> hallyn: I have, and upstream is working on it
+[15:05] <hallyn> cyphermox: cool, thanks
+=== henrix is now known as henrix_
+=== henrix_ is now known as henrix
+[15:19] <mpt> ev, I just realized why that part of the spec was unclear: In the default wiki theme, table cell borders are invisible. I use the "modernized_cms" theme, where they're visible.
+[15:20] <ev> ah
+[15:20] <ev> well, thanks to moinmoin, you can add them in, cell by cell ;)
+[15:21] <mpt> yeah
+[15:33] <mpt> reported bug 1100325
+[15:33] <ubottu> bug 1100325 in ubuntu-website-content "Table cell borders are invisible in default wiki theme" [Undecided,New] https://launchpad.net/bugs/1100325
+[16:02] <xnox> =)
+[16:08] <tjaalton> @pilot out
+=== udevbot changed the topic of #ubuntu-devel to: Ubuntu 12.10 released | Archive: Open | Dev' of Ubuntu (not support or app devel) | build failures -> http://qa.ubuntuwire.com/ftbfs/ | #ubuntu for support and dicussion of hardy -> quantal | #ubuntu-app-devel for app development on Ubuntu http://wiki.ubuntu.com/UbuntuDevelopment | See #ubuntu-bugs for http://bit.ly/lv8soi | Patch Pilots:
+=== henrix is now known as henrix_
+=== henrix_ is now known as henrix
+[17:11] <doko> cjwatson, but it would be something like gcc-4.6-$HOST_TRIPLET [cross]
+=== deryck is now known as deryck[lunch]
+[17:16] <cjwatson> doko: do you mean "cross profile"?
+[17:16] <cjwatson> which I think is currently spelled <cross>?
+[17:17] <cjwatson> doko: I don't think it's necessary since this would be something sbuild/dpkg-checkbuilddeps would synthesise when they already know they're cross-building; though you can think of it that way if you like
+[17:18] <doko> cjwatson, hmm how? this is about the additional b-d for gcc-4.7 when cross built
+[17:19] <cjwatson> doko: That's a different issue
+[17:20] <cjwatson> doko: *That* will have to be solved using profiles
+[17:20] <cjwatson> doko: I'm talking about packages that build-depend *on* gcc-4.6 or whatever, and that it would be useful to automatically translate that build-dep into gcc-4.6:native, gcc-4.6-HOST on the fly
+[17:20] <cjwatson> doko: This does not prevent using profiles for build-dependencies of the toolchain itself
+[17:21] <cjwatson> Entirely orthogonal
+[17:21] <cjwatson> doko: But the reason I was asking you was that it would be helpful to have some way to detect that there's a -HOST version available that doesn't involve going and looking in the apt cache, because it'd be a layering violation for dpkg-checkbuilddeps to do that
+[17:23] <cjwatson> doko: I do see that the problem you describe isn't quite simple enough that profiles will magically solve it; but it's not the same as the one I was describing and I was hoping to be able to solve problems one at a time :-)
+[17:24] <doko> ok
+[17:25] <cjwatson> when you said "target-triplet" in that sbuild bug - we're not building a cross-compiler in this case, so is target == build or == host here?
+[17:26] <doko> cross building a native compiler, so host == target
+[17:37] <cjwatson> doko: OK, so my proposal isn't actually wrong for you, it just doesn't solve the entire problem
+=== zequence_ is now known as zequence
+=== deryck[lunch] is now known as deryck
+=== slank is now known as slank_away
+[19:04] <jcastro> cjwatson: anything I can do to help a precise fix for bug #1060404 ? Most of our juju handouts/website's documentation runs into this.
+[19:04] <ubottu> bug 1060404 in grub2 (Ubuntu Precise) "update-grub runs and fails in containers" [High,In progress] https://launchpad.net/bugs/1060404
+[19:10] <cjwatson> jcastro: fairly sure I already uploaded it, at least the grub-install side (which is as much as is in raring)
+[19:10] <cjwatson> jcastro: it's probably waiting for queue review or something
+[19:10] <cjwatson> (can't check right now)
+[19:10] <jcastro> SpamapS: ^^
+[19:11] <SpamapS> there's no grub in the precise-proposed queue
+[19:12] <cjwatson> SpamapS: I'll recheck when I'm not ircing from a phone
+[19:13] <SpamapS> cjwatson: ACK
+[19:17] <cjwatson> SpamapS: also I need clarity on whether this is affecting grub-install or also update-grub
+[19:17] <cjwatson> because when I looked at this last I'd only changed the postinst (grub-install) and apparently that was making people happy
+[19:18] <cjwatson> if it's also causing people problems on kernel upgrades as well as grub-pc upgrades, then I think there's been some relevant fix somewhere else
+[19:19] <SpamapS> cjwatson: I'm not familiar enough with the mechanics to know for sure. The reports are coming from people installing new grub's, not new kernels.
+[19:19] <cjwatson> SpamapS: ok, good, so that suggests that the fix I have is sufficient and I only need to look into where it went
+[19:25] <cjwatson> hmm, I think perhaps infinity asked for an unrelated change and I forgot to make that - it's in rejected
+[19:25] <cjwatson> SpamapS: I can sort that out later this evening
+[19:27] <jcastro> cjwatson: thanks for the timely response! \o/
+[19:27] <SpamapS> cjwatson: cool, ping me on upload and I'll review it
+=== henrix is now known as henrix_
+[20:50] <noisepub2> quantal kernels in precise are not packaged correctly for multiarch
+[20:50] <noisepub2> linux-header-`uname -r` needs to be Multi-arch: foreign
+[20:51] <cjwatson> #ubuntu-kernel - but might be better to file a bug on linux-lts-quantal
+=== salem_ is now known as _salem
+[22:24] <stgraber> xnox: hey, why did you break su? :)
+[22:25] <mlankhorst> why not!
+[22:25] <stgraber> xnox: http://paste.ubuntu.com/1539328/
+[22:26] <stgraber> xnox: I'm suspecting the new upstream version to be the problem as cjwatson's no change rebuild is fairly unlikely to have caused this (and I can't find old binaries for -1ubuntu1 to check)
+[22:27] <stgraber> hmm, well, not no change rebuild, but no code change rebuild :)
+[22:48] <infinity> stgraber: That's disconcerting.
+=== V is now known as heHATEme
+[22:53] <infinity> stgraber: $(tty) works, I wonder what's breaking with /dev/tty
+[22:54] <stgraber> infinity: yeah, not too sure, but I have a few scripts that spawn a shell at some point through su and were rather unhappy about the /dev/tty situation ;)
+=== heHATEme is now known as Obama
+[23:01] <infinity> stgraber: Possibly due to the fix for http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=628843
+[23:01] <ubottu> Debian bug 628843 in login "login: tty hijacking possible in "su" via TIOCSTI ioctl" [Critical,Fixed]
+[23:02] <infinity> stgraber: In fact, almost certainly due to that fix.
+[23:04] <stgraber> infinity: yep, that looks like it, not sure if there's a way around it for cases where you specifically want access to the tty (such as when you're starting a shell and don't want it to be close to impossible to use)
+[23:04] <infinity> stgraber: If you're starting an interactive shell, don't use su -c?
+[23:05] <stgraber> infinity: sure, but I have that small problem that I use su in arkose and that the actual command is passed by the user, so I have no clue as to what they'll be running and quite a lot of them (well, it's the default) happen to call /bin/bash :)
+[23:06] <infinity> stgraber: If this is a shell script that's expecting to output to a tty, try $(tty)?
+[23:07] <infinity> stgraber: I guess I'm not sure what the specific use case is that's leading to this failure, since "echo foo > /dev/tty" seems like an artificial reproducer.
+[23:07] <infinity> stgraber: And if that's actual representating code, the fix is s,/dev/tty,$(tty),
+[23:08] <stgraber> infinity: "arkose -h" was the original source of the bug, it'd create an LXC container, then spawn a shell inside it, which would be as root (as lxc requires root privilege), then use su to drop back to user privileges inside that shell and then run a user provided command from there. That user provided command defaults to /bin/bash
+=== Obama is now known as vorian
+[23:08] <infinity> http://paste.ubuntu.com/1539530/
+[23:10] <infinity> stgraber: Yeah, I guess I'm still failing to see how/where that fails.
+[23:10] <sarnold> stgraber: perhaps have it spawn su -l for the special case of /bin/bash?
+[23:10] <infinity> Sure, but even this works fine here:
+[23:10] <infinity> su root -c "/bin/sh -c '/bin/bash'"
+[23:10] <infinity> So, I'm still a bit confused what the actual failure is in arkose.
+[23:12] <stgraber> infinity: try doing ctrl+c in that shell, you'll see the problem :)
+[23:12] <infinity> Session terminated, terminating shell... ...killed.
+[23:12] <infinity> Cute.
+[23:13] <stgraber> infinity: with a simple su, it's not a big problem as it'll get you out of your shell and just mess a bit with your console, with arkose as it's wrapped in python, that means that the container won't get killed and you end up with a stack trace and a dozen extra mount points (as arkose can't catch the fact that the user exits and call the cleanup function)
+[23:15] <infinity> stgraber: Yeah, that's vaguely unpleasant.
+[23:15] <stgraber> sarnold: that's because you're assuming that this patch doesn't apply to -l ;) it does
+[23:16] <sarnold> stgraber: oh :)
+[23:16] <infinity> stgraber: Well, but when you detect that the command-line is simple /bin/sh or /bin/bash, you can skip the -c entirely.
+[23:17] <infinity> stgraber: And "su root" or "su - root" (or similar) doesn't have this problem.
+[23:17] <stgraber> infinity: yep, which gets me back, to shipping a list of all known shell in the package... fun...
+[23:17] <infinity> stgraber: It goes haywire on the nested shells.
+[23:17] <infinity> stgraber: /etc/shells
+[23:18] <infinity> stgraber: Read from the container, of course, not the host.
+[23:18] <infinity> stgraber: (Since that file is dynamically updated when shells are installed/removed)
+[23:18] <stgraber> infinity: oh, right, forgot about that one ;) and I'll also need a list of all X terminal emulator as unfortunately arkose supports X application, so xterm will also be affected
+[23:22] <stgraber> so yeah, seems like I'll have to spend way more time on arkose this cycle than I had first planned... Porting to python3-lxc should avoid some of the su-related issues and the rest I can re-implement the rest of the privilege dropping directly in python so that it's less likely to break than su (and will work the same way across distro)
+[23:25] <infinity> stgraber: Some more discussion of the problem in http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=659878
+[23:25] <ubottu> Debian bug 659878 in login "cannot set terminal process group (-1): Inappropriate ioctl for device" [Normal,Open]
+[23:26] <ricotz> infinity, hi, eglibc 2.17 works nicely here so far, deadlocks are gone
+[23:26] <infinity> stgraber: The suggestion to not drop the terminal when suing to root could be a bit of a workaround for your case, maybe.  Still leaves it weird for others.
+[23:26] <infinity> ricotz: Good to hear.
+[23:27] <stgraber> infinity: nope, I drop from root to user, so it's specifically the case the patch is meant to prevent
+[23:27] <infinity> stgraber: Oh, but the initial su (or, at least, the one you gave as an example) is root.
+[23:30] <stgraber> infinity: yeah, my example was so that nobody could tell me it was some kind of weird permission issue ;)
+=== adam_g_ is now known as adam_g

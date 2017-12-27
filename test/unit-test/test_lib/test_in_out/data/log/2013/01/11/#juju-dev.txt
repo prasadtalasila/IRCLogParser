@@ -1,0 +1,252 @@
+[00:04] <bigjools> why is the only place to get the required version of Mongo in an ec2 bucket?  Even worse, a binary coming over an unencrypted connection.
+[00:05] <davecheney> bigjools: we're open to suggestions
+[00:05] <bigjools> davecheney: I need to understand why it's there before I can make a meaningful suggestion, but PPAs spring to mind
+[00:06] <davecheney> i can't answer the PPA question
+[00:06] <davecheney> the reason we user our own version of mongo is we need 2.2.0
+[00:07] <davecheney> which isn't in LTS
+[00:07] <davecheney> and we also need TLS enabled, which isn't in any published version that we could find
+[00:09] <bigjools> davecheney: where is the source?  I am happy to get it in a PPA
+[00:09] <bigjools> (assuming you meant there's a diff for TLS?)
+[00:10] <davecheney> not, just a compile option
+[00:10] <bigjools> ok
+[00:10] <davecheney> bigjools: lets take this to the juju-dev / canonical-juju mailing list
+[00:10] <davecheney> gustavo needs to be involved, but is not online in this timezone
+[00:10] <bigjools> I had better join them :)
+[00:11] <bigjools> I will stick it in a PPA for my own use anyway, and it can be re-used if people see fit
+=== slank_away is now known as slank
+[00:41] <davecheney> any juju devs in the house
+[00:41] <davecheney> trunk is super broken
+[00:41] <davecheney> i am trying to confirm it isn't a local problem
+=== slank is now known as slank_away
+[05:59] <davecheney> never mind, it was a problem with my machine
+[08:08] <TheMue> *: morning
+[08:12] <rogpeppe1> davecheney, fwereade_, TheMue: morning!
+[08:12] <TheMue> rogpeppe1: hiya
+[08:12] <fwereade_> rogpeppe1, davecheney, TheMue: heyhey
+[08:12] <TheMue> fwereade_: hiya 2
+[08:12] <fwereade_> actually just popping out for a croissant
+[08:12] <fwereade_> bbiab
+[08:12]  * rogpeppe1 learned how to make croissants over new year
+[08:12] <fwereade_> ooh, nice
+[08:19] <TheMue> rogpeppe1: so we know what we'll get during the next meeting?
+[08:19] <rogpeppe1> TheMue: only if there's an oven and lots of butter!
+[08:20] <TheMue> rogpeppe1: i'll try to organize it :)
+[08:20] <TheMue> rogpeppe1: butter should be no problem, but the oven ...
+[08:27] <aram> hello.
+[08:27] <rogpeppe1> aram: hiya
+[08:29] <TheMue> aram: hi
+[09:21] <jam> bigjools: one reason to use a binary rather than a ppa, is because installing mongod starts the service running, rather than just having a binary that gets started and stopped by the test suite.
+[09:22] <jam> (though I imagine the *real* reason is just people not being familiar with PPAs)
+[09:25] <bigjools> jam: and configuration
+[09:29] <bigjools> anyway I have one in a PPA that does the trick
+[10:21] <bigjools> I didn't say where, but it's here: ppa:julian-edwards/mongodb
+[11:01] <fwereade_> rogpeppe1, TheMue: https://codereview.appspot.com/7091043/ is trivial and important; https://codereview.appspot.com/7092044/ is slightly more involved and slightly less likely to break the average user's deployment but still good to have for 1.9.6
+[11:02] <fwereade_> rogpeppe1, TheMue: https://codereview.appspot.com/7058073/ is strictly less important but still a nice-to-have-agreement-on so I feel ok about progressing with the AUST removal
+[11:02] <rogpeppe1> fwereade_: so, did you decide that the charm you found using JUJU_REMOTE_UNIT in a relation-broken hook isn't crackful after all?
+[11:02] <TheMue> fwereade_: *click*
+[11:02] <fwereade_> rogpeppe1, it's crack IMO
+[11:02] <rogpeppe1> fwereade_: or is this just a backward-compatibility sop?
+[11:02] <fwereade_> rogpeppe1, but python sets it to "" rather than leaving it unset
+[11:03] <fwereade_> rogpeppe1, exactly
+[11:03] <rogpeppe1> fwereade_: ah, i see, so that charm would've failed to get the svc name anyway
+[11:03] <fwereade_> rogpeppe1, and it doesn't actually use it anyway
+[11:03] <rogpeppe1> fwereade_: but at least the env var test would succeed
+[11:03] <fwereade_> rogpeppe1, yeah
+[11:03] <fwereade_> rogpeppe1, both suggested ones verified against actual charms on actual instances
+[11:04] <rogpeppe1> fwereade_: LGTM for that one
+[11:04] <fwereade_> rogpeppe1, cheers
+[11:27] <TheMue> lunchtime
+[11:27] <TheMue> fwereade_: first lgtm is in, second one looks good so far too, but i have to continue after lunch
+[11:27] <fwereade_> TheMue, cool, thanks
+[11:29] <fwereade_> rogpeppe1, I think https://codereview.appspot.com/7094043 is trivial
+[11:30] <rogpeppe1> fwereade_: i'm still trying to absorb 7092044...
+[11:30] <fwereade_> rogpeppe1, no worries -- sorry, I seem to be channelling a firehose this week :/
+[11:30] <rogpeppe1> fwereade_: i think you've got two LGTMs for 7094043 already, no?
+[11:31] <fwereade_> rogpeppe1, that's 1043
+[11:31] <rogpeppe1> fwereade_: oh yeah. too darn similar, thouse numbers
+[11:31] <fwereade_> rogpeppe1, yeah, most unhelpful :)
+[11:49] <rogpeppe1> fwereade_: all but  https://codereview.appspot.com/7058073/ reviewed
+[11:49] <fwereade_> rogpeppe1, awesome, thanks
+[11:50] <rogpeppe1> fwereade_: i'm gonna leave that for a little bit if you don't mind, i'm not quite up to it currently, and i'm wanting to push the agent stuff forward
+[11:50] <fwereade_> rogpeppe1, yeah, np, it's definitely lower priority
+[12:00] <rogpeppe1> bloody hell, cmd/jujud tests pass with flags removed. that took a while.
+[12:05] <fwereade_> me cheers at rogpeppe1
+[12:05]  * fwereade_ cheers at rogpeppe1
+[12:06] <rogpeppe1> fwereade_: i'm afraid the CL might be a bit of a monster though. there's so much circularity, it's difficult to break up.
+[12:06]  * fwereade_ braces himself ;)
+[12:06] <rogpeppe1> fwereade_: i'm fairly happy with the way it's turning out though. definitely feels like an improvement
+[12:07] <fwereade_> rogpeppe1, awesome
+[12:07] <rogpeppe1> fwereade_: then again, i've though that before and... :-|
+[12:07] <dimitern> fwereade_, rogpeppe1 - can you have a look https://codereview.appspot.com/7073060/
+[12:07] <fwereade_> rogpeppe1, heh, yeah
+[12:07] <fwereade_> dimitern, *click*
+[12:12] <rogpeppe1> dimitern: looking
+[12:51] <rogpeppe1> dimitern: reviewed
+[12:51] <dimitern> rogpeppe1: tyvm
+[12:51] <dimitern> fwereade_: I saw yours as well - thanks
+[12:51] <fwereade_> dimitern, np, yw
+[12:54] <rogpeppe1> fwereade_: ping
+[12:55] <fwereade_> rogpeppe1, pong
+[12:55] <rogpeppe1> fwereade_: just want to confirm something that i think is wrong currently
+[12:55] <rogpeppe1> fwereade_: in deployer/simple.go, DeployUnit doesn't seem to pass the --data-dir argument to the unit agent
+[12:56] <rogpeppe1> fwereade_: am i missing something, or is it only working by luck
+[12:56] <rogpeppe1> ?
+[12:56] <fwereade_> rogpeppe1, ha, does it not? it probably should, let me check
+[12:57] <fwereade_> rogpeppe1, yeah, it's crack, fix please :)
+[12:57] <rogpeppe1> fwereade_: will be fixed with all the other changes
+[12:57] <fwereade_> rogpeppe1, <3
+[13:03] <fwereade_> rogpeppe1,  have comments on https://codereview.appspot.com/7094043/ and https://codereview.appspot.com/7092044/ -- but finish your branch first ;)
+[13:06] <rogpeppe1> fwereade_: replied to one
+=== rogpeppe1 is now known as rogpeppe
+[13:08] <fwereade_> rogpeppe, replied to that :)
+[13:11] <rogpeppe> fwereade_: LGTM
+[13:12] <fwereade_> rogpeppe, do you think it qualifies as trivial?
+[13:12] <rogpeppe> fwereade_: not quite. after all, i had to think about it quite carefully. better wait for another pair of eyes.
+[13:13] <fwereade_> rogpeppe, true enough -- thanks :)
+[13:13] <rogpeppe> fwereade_: another question around deployer/simple.go: we pass the --log-file flag in, but we set upstart.Conf.Out to the same file - is there any point in doing the former when we've got the latter?
+[13:14] <fwereade_> rogpeppe, meh, probably not
+[13:14] <fwereade_> rogpeppe, dropping it will make life simpler, won't it
+[13:14] <rogpeppe> fwereade_: i'd like to lose as many flags as possible
+[13:14] <fwereade_> rogpeppe, +1
+[13:15] <rogpeppe> fwereade_: the only dubious one left is --debug
+[13:15] <fwereade_> rogpeppe, hmm
+[13:15] <fwereade_> rogpeppe, I think I'd like to leave it in, but turn off the state subpackage debug spam
+[13:16] <rogpeppe> fwereade_: at some point in the future it would be nice to be able to enable/disable it dynamically.
+[13:16] <fwereade_> rogpeppe, was just composing that message ;p
+[13:16] <rogpeppe> fwereade_: at which point we don't really want it as a flag
+[13:16] <rogpeppe> fwereade_: or maybe we do, for the initial debug state
+[13:17] <fwereade_> rogpeppe, I think starting in that mode and then dropping to a quieter level once that's detected is saner
+[13:17] <rogpeppe> fwereade_: yeah, probably
+[13:24] <fwereade_> TheMue, thanks for the review -- did you see the followup with only a single delaying hook check? I think it strikes a decent balance.
+[13:25] <TheMue> fwereade_: will take a look
+[13:26] <TheMue> fwereade_: ah, ok, see the change. like it.
+[13:34] <fwereade_> TheMue, cool, thanks
+[13:34] <TheMue> fwereade_: but now i'm fighting through the larger one. ;)
+[13:46] <rogpeppe> lunching
+=== slank_away is now known as slank
+=== slank is now known as slank_away
+=== slank_away is now known as slank
+[14:03] <dimitern> rogpeppe, fwereade_- when you have time, please - https://codereview.appspot.com/7073060
+[14:03] <dimitern> i fixed suggestions & answered questions
+[14:12] <rogpeppe> back
+[14:12] <rogpeppe> dimitern: looking
+[14:13] <dimitern> rogpeppe: 10x
+=== TheMue_ is now known as TheMue
+[14:33] <fwereade_> rogpeppe, how long do you think it's reasonable to wait for a dying subordinate to be removed?
+[14:33] <rogpeppe> fwereade_: indefinitely?
+[14:33] <fwereade_> rogpeppe, I guess...
+[14:33] <rogpeppe> fwereade_: then it can be force-removed if necessary
+[14:33] <fwereade_> rogpeppe, it's not like complaining is going to make the situation any better, I suppose ;p
+[14:33] <rogpeppe> fwereade_: indeed
+[14:33] <fwereade_> rogpeppe, yeah, sgtm
+[14:35] <rogpeppe> dimitern: reviewed
+[14:36] <dimitern> rogpeppe: thank you!
+[14:39] <dimitern> fwereade_: would you take a look please - https://codereview.appspot.com/7073060 - I tried to answer your questions
+[14:40] <fwereade_> dimitern, I asked a followup just above
+[14:40] <fwereade_>  dimitern, I'm not following https://codereview.appspot.com/7073060/diff/1/testservices/novaservice/service_http.go#newcode523
+[14:40] <fwereade_>  dimitern, you got the group name right out of the request
+[14:40] <fwereade_>  dimitern, surely it could be handled at any stage?
+[14:40] <dimitern> fwereade_: you mean I should check for it in advance?
+[14:41] <fwereade_> dimitern, it seems strange to me to create the server and *then* fail when checking the security groups
+[14:42] <dimitern> fwereade_: yeah, put like this it's indeed strange (even though OS does it similarly), I'll rearrange it
+[14:42] <fwereade_> dimitern, well, if OS creates the server, we should copy that
+[14:43] <fwereade_> dimitern, does it really though? I thought SGs were set at instance create time and unchangeable after that -- it that OS or just EC2?
+[14:43] <dimitern> fwereade_: looking at both responses and nova source things are not clear, but I'll do it as it makes sense
+[14:45] <fwereade_> dimitern, cheers
+[14:53] <dimitern> fwereade_: take a look now is it better https://codereview.appspot.com/7073060
+[14:55] <dimitern> rogpeppe: as well ^^ (just in case I misunderstood something)
+[14:57] <rogpeppe> dimitern: LGTM
+[14:57] <TheMue> so, telephone support for my brother done, he wants to install ubuntu ;)
+[14:58] <dimitern> rogpeppe: cheers!
+[15:03] <fwereade_> dimitern, LGTM modulo one set of comments, let me know what you think
+[15:03] <dimitern> fwereade_: thanks, looking
+[15:04] <dimitern> fwereade_: yeah, the duplication is ugly, but wasn't sure how to fix it best
+[15:09] <dimitern> fwereade_: I think I did it better now - https://codereview.appspot.com/7073060
+[15:11] <fwereade_> dimitern, LGTM
+[15:11] <dimitern> fwereade_: sweet! 10x
+[15:11] <fwereade_> dimitern, yw :)
+[15:11] <fwereade_> dimitern, https://codereview.appspot.com/7094043/ is pretty small if you have a mo after merging
+[15:12] <dimitern> fwereade_: sure - just 2 mins and I'm on it
+[15:15] <aram> I'm going to get my batch of rasberry pi's.
+[15:15] <aram> back in an hour or so.
+[15:16] <dimitern> aram: cool, happy hacking :)
+[15:17] <dimitern> fwereade_: LGTM
+[15:17] <fwereade_> aram, nice, enjoy
+[15:17] <fwereade_> dimitern, awesome, tyvm
+[16:21] <rogpeppe> all live tests pass, phew
+[16:22] <rogpeppe> not all at once though - we need to sort out our reliability
+[16:38] <rogpeppe> i've just discovered this old CL that i never got another review on
+[16:38] <rogpeppe> https://codereview.appspot.com/6963050/
+[16:38] <rogpeppe> please could someone other than william give me another review
+[16:39] <rogpeppe> aram, TheMue, jam, mgz: ^
+[16:39] <TheMue> rogpeppe: *click*
+[16:39] <rogpeppe> TheMue: thanks
+[16:47] <TheMue> rogpeppe: +1
+[16:48] <rogpeppe> TheMue: thank you!
+[16:48] <TheMue> rogpeppe: yw, the whole script generation and testing isn't simple.
+[16:49] <rogpeppe> TheMue: yeah. i prefer being able to see the generated script in the tests now. at least i can eyeball it for problems, even if we can't run it in the tests.
+[16:51] <TheMue> rogpeppe: absolutely. i needed some time to understand the generation. now i atleast can see the expected result immediatelly.
+[16:56] <rogpeppe> fwereade_, TheMue: here's the beast: https://codereview.appspot.com/7102043
+[16:57] <TheMue> rogpeppe: uuuh
+[16:58] <rogpeppe> TheMue: sorry for the size - i have no idea how i can break it down
+[16:59] <TheMue> rogpeppe: no problem, but i'll review it over the weekend. our younger daughter and i will drive to the cinema to watch "life of pi in a few moments.
+[17:00] <rogpeppe> TheMue: ah, enjoy. i've heard at least one good report.
+[17:00] <rogpeppe> dimitern: if you fancy a challenging review: https://codereview.appspot.com/7102043 :-)
+[17:00] <TheMue> rogpeppe: yes, and what i've seen so far looked also good.
+[17:00] <rogpeppe> TheMue: i enjoyed the book
+[17:00] <dimitern> rogpeppe: i'm on it\
+[17:01] <rogpeppe> dimitern: thanks!
+[17:01] <TheMue> so everyone have a nice weekend.
+[17:01] <rogpeppe> TheMue: and you.
+[17:27] <dimitern> rogpeppe: reviewed
+[17:27] <rogpeppe> dimitern: you're a lovely man
+[17:28] <dimitern> rogpeppe: I keep forgetting to use 'm' to reply when there are comments, rather than reply and then publish :)
+[17:28] <rogpeppe> dimitern: :-)
+[17:33] <fwereade_> rogpeppe, thanks, I'll take a look
+[17:34] <rogpeppe> fwereade_: that would be great.
+[17:34] <rogpeppe> fwereade_: it would make my week if i could get it submitted this evening :-)
+[17:50] <fwereade_> rogpeppe, LGTM :)
+[17:50] <rogpeppe> fwereade_: really, wa hay!
+[17:50] <fwereade_> rogpeppe, assuming you;ve run it live ;p
+[17:51] <rogpeppe> fwereade_: i have
+[17:51] <fwereade_> rogpeppe, then I'm happy :)
+[17:51] <rogpeppe> fwereade_: i get no more failures than the ones we're regularly getting in trunk anyway
+[17:52] <fwereade_> rogpeppe, heh
+[17:52] <rogpeppe> fwereade_: TestBootstrapWithDefaultSeries is failing every time for me in trunk, live.
+[17:52] <rogpeppe> fwereade_: but not if i run it on its own
+[17:52] <fwereade_> rogpeppe, hum, that is bad
+[17:57] <dimitern> fwereade_: I didn't get that - you replied to my review on https://codereview.appspot.com/7102043/ - are you saying +1 on all my comments?
+[17:59] <fwereade_> dimitern, I was only feeling strongly +1 about the one I badged, the others I guess I'm +0 on but I don't feel strongly enough to actually chime in
+[18:00] <fwereade_> rogpeppe, dimitern: if either of you fancies https://codereview.appspot.com/7094045 it would be cool, but it is getting pretty EODy
+[18:00] <rogpeppe> fwereade_: you didn't publish your comments BTW
+[18:01] <dimitern> fwereade_: I'll take a look at yours
+[18:01] <fwereade_> rogpeppe, dimitern: ah, sorry, I am clearly codereview-impaired today
+[18:02] <fwereade_> but rogpeppe, ignore that one in favour of checking my response to https://codereview.appspot.com/7092044/
+[18:07] <dimitern> fwereade_: LGTM - nice and short
+[18:09] <dimitern> fwereade_: btw I managed to fix my machine finally (I hope) - it needed a good dusting and cleaning - that brought the temp -30 deg. down :) and no longer lags terribly
+[18:11] <fwereade_> dimitern, ha
+[18:11] <fwereade_> dimitern, excellent news anyway :)
+[18:12] <dimitern> :) yeah
+[18:13] <mgz> bringing the temp to -30 deg would be impressive
+[18:13] <mgz> though perhaps would make using the laptop a little hard...
+[18:14] <dimitern> mgz: well, according to sensors - it was running most of the time +80 on both cores, which is high (90 is critical), now it's down to 40-50!
+[18:15] <mgz> erk. sounds similar to the issues jamespage had, which also required som pretty heavy dust busting
+[18:15] <mgz> graphics card getting used more in newer version probably contributed something to general overheating.
+[18:16] <dimitern> mgz: it's strange it needed that, because I dusted it like 5-6 months ago
+[18:16] <dimitern> but i guess even the small amount of gruel accumulated on the fins of the heat sink was enough
+[18:17] <dimitern> mgz: how's public URLs going? I've run out of things to do - good it's EOD :)
+[18:20] <mgz> going to land shortly
+[18:23] <dimitern> mgz: it seems I missed the daily standup somehow - I was there on time (12 UTC), john and mark were there, but nobody talked to me and after staying there an hour, I left :)
+[18:23] <mgz> basically Ian's branches are fine I think, so have just tweaked slightly and will land the two together and send note
+[18:24] <rogpeppe> i'm done for the day. have a great weekend, all!
+[18:24] <rogpeppe> fwereade_: thanks in particular for that timely review!
+[18:24] <dimitern> rogpeppe: g'nite and happy weekend
+[18:26] <dimitern> mgz: cool, so any progress on the versioning discussion/doc?
+[18:27] <mgz> jam wrote up a few things
+[18:28] <mgz> ^on the standup, we generally don't do fri as it's not a UAE work day, but I should have got on mumble and said hi to you this morning probably as we've generally done that
+[18:28] <mgz> was just having 'fun' trying to get canonistack to behave at the time...
+[18:28] <dimitern> mgz: but we're still not applying anything to the workflow
+[18:28] <dimitern> mgz: I see
+[18:28] <mgz> not yet
+[18:29] <mgz> apart from simultanious landing and note to mailing list, which is my plan
+[18:30] <dimitern> ok

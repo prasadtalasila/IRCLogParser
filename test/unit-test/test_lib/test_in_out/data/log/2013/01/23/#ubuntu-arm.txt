@@ -1,0 +1,166 @@
+=== solarcloud_AFK is now known as solarcloud_3scrn
+=== yofel_ is now known as yofel
+=== XorA is now known as XorA|gone
+=== zz_chihchun is now known as chihchun
+[08:30] <dholbach> good morning
+=== doko__ is now known as doko
+=== jkridner_ is now known as jkridner
+=== yofel_ is now known as yofel
+=== JeffWBro1ktree is now known as JeffWBrooktree
+[11:45] <czajkowski> ogra_: I hate to be apain but - http://ubuntuone.com/3Hmktiws4Z1qhaXs35B5PL
+[11:45] <czajkowski> have rebooted it 4 times still stuck here any ideas?
+[11:46] <ogra_> czajkowski, have you checked the a11y settings ?
+[11:46] <czajkowski> ogra_: I cant get the dash up
+[11:46] <ogra_> use the ceg
+[11:47] <czajkowski> when I click on the big ubuntu bittn it just gives the icon text dash home so cant change any settings
+[11:47] <czajkowski> ceg?
+[11:47] <ogra_> use the menu on the top right :)
+[11:47] <ogra_> the gear
+[11:47] <czajkowski> all frozen :(
+[11:47] <czajkowski> each reboot still leaves it on the page to enter in my wifi code
+[11:47] <ogra_> try to cancel the wlan dialog, could be that it grabs the focus
+[11:48] <czajkowski> narp :(
+[11:48] <ogra_> you mean it doesnt take any input there either ?
+[11:48] <ogra_> (for the cancel button)
+[11:48] <czajkowski> nope wont cancel it
+[11:48] <czajkowski> nothing seems to want to close for me
+[11:49] <ogra_> that sounds like a completely frozen xserver
+[11:50] <czajkowski> indeed
+[11:50] <czajkowski> bit of a pita :(
+[11:50] <ogra_> when was that installed ?
+[11:50] <ogra_> recent images have a serial console running on the usb port
+[11:50] <czajkowski> few months back
+[11:50] <czajkowski> before xmas
+[11:50] <ogra_> hmm, not sure when i added that
+[11:52] <ogra_> you could try to plug it into a PC and check demsg for creation of something like /dev/ttyUSB0
+[11:52] <czajkowski> ok cheers will do when I get a lull in work
+[11:52] <czajkowski> thanks ogra_
+[11:53] <czajkowski> need to fix it by fosdem times as dont wnat to lug laptop
+[11:53] <ogra_> with the working rotation and todays xorg fix its nearly usable
+[12:08] <janimo> FYI the Tegra3 Technical Reference Manual seems to be available in the nvidia dev zone/tegra dev programme. I just noticed today, it may be old news
+[12:09] <janimo>  the realtek sound codec on the nexus7 has no public datasheet though
+[12:10] <czajkowski> something hates me :( http://ubuntuone.com/0S97eFdCGOGC1Dk6mEeFlZ
+[12:24] <ogra_> janimo, well, there must be something in pm-suspend that makes it work, i wonder if some sub modules are unloaded and re-loaded ...
+[12:25] <ogra_> havent found the time to inspect what the scripts do
+[12:25]  * ogra_ just uploaded onboard changes ... we now have proper docking in place
+[12:25] <ogra_> and the power button will suspend by default
+[12:26] <ogra_> janimo, did you upgrade to latest xorg already ? it makes input work in portrait
+[12:48] <janimo> ogra_, did not upgrade yet today, looking forward to test the new x stuff though
+[12:49] <ogra_> the "button 1 gets stuck" issue is still there
+[12:49] <ogra_> but portrait works the same way as landscape now
+[12:49] <janimo> I have been looking at the sound/suspend issue yesterday, no progess though, just seeing the different register values, comparing to android and staring at the code
+[12:50] <janimo> ogra_, the button stuck issue is our showstopper
+[12:51] <ogra_> well, i'm busy adding the preseeding stuff to the installer ... once i'm done with that i'll take the time to look into what pm-utils does
+[12:51] <ogra_> i think it unloads many of the snd_ modules
+[12:51] <ogra_> if we could mimic that behavior on first boot it might or might not work :)
+[12:52] <ogra_> eeek, MS buys dell !
+[12:58] <lilstevie> hm
+[12:58] <lilstevie> ogra_: nasty
+[12:58] <RaYmAn> isn't it only rumors still? And probably only a relatively small part
+[12:59] <ogra_> i just read news that it was a done deal
+[12:59] <RaYmAn> got a link?
+[12:59] <ogra_> only german
+[12:59] <Rjs> I noticed some touchscreen&grab-related patches in the xorg-devel list a few days ago, I wonder if they would be enough to fix the "button gets stuck" issue? (I don't know enough of the details to know...) http://thread.gmane.org/gmane.comp.freedesktop.xorg.devel/34653
+[13:01] <ogra_> RaYmAn, happy google translate :P http://www.golem.de/news/windows-lizenzen-microsoft-will-milliardenanteil-an-dell-kaufen-1301-97090.html
+[13:04] <marvin24> " ... licenses for future tablets" ?
+[13:05] <marvin24> I though Dell announces to quit tablet and smartphone business
+[13:05] <marvin24> *thought
+[13:05] <lilstevie> marvin24: android tablet
+[13:05] <marvin24> ah, we failed in a booming market - let's try some dead end one?
+[13:06] <marvin24> janimo: I started to package a 3.8 kernel for tegras
+[13:06] <marvin24> how do I add modules to the ABI ?
+[13:06] <janimo> ogra_, our sound is not modular, so unlikely it is due to module reloading
+[13:07] <janimo> marvin24, adding modules? Does it error on build?
+[13:07] <marvin24> (sorry for the dumb question)
+[13:07] <marvin24> janimo: yes,
+[13:07] <marvin24> it compares module file from old abi
+[13:07] <marvin24> and fails, because new abi has different modules
+[13:07] <janimo> marvin24, you should just add an ignore.modules or modules.ignore (I always forget) file
+[13:07] <janimo> let me check
+[13:08] <marvin24> I think this is defined already, but I'll also check again
+[13:08] <janimo> I wish there was a global 'Never check ABI GTFO' option on kernel builds
+[13:08] <marvin24> there is a ignore.abi
+[13:08] <janimo> and always just bump ABI by default, as it is the case almost always in my experience
+[13:09] <janimo> touch abi/3.5.0-17.27/armhf/ignore.module
+[13:09] <janimo> but use the actual current ABI dir
+[13:09] <marvin24> janimo: ok, thanks - will give it a try
+[13:10] <janimo> I am here if you have further questions and glad you work on this. It would be great to have a 3.8 tegra kernel in the archives
+[13:10] <janimo> and switch ac100 to it
+[13:10] <marvin24> well, it should run on any tegra2 or tegra3 device
+[13:10] <marvin24> if you tell u-boot the correct device tree
+[13:10] <janimo> right, but test on ac100 first as we have the device and the developer :)
+[13:10] <marvin24> sure ;-)
+[13:11] <marvin24> janimo: btw, is it possible to build a kernel package on launchpad - I read something about a 4 hours limit ...
+[13:11] <janimo> marvin24, it should be possible but I don't know if there are public armhf builders
+[13:12] <janimo> I know I used to test on an internal PPA
+[13:12] <janimo> ogra_, ^ ?
+[13:12] <marvin24> well, I already build some packages for arm ...
+[13:12] <ogra_> czajkowski, ^^^
+[13:12] <marvin24> he he, that's done already
+[13:12] <janimo> ah ok then. I did not know about time limit, although 4 hours usually was enough for panda and ac100 kernels AFAIK
+[13:12] <marvin24> https://launchpad.net/~ac100/+archive/ppa
+[13:13] <czajkowski> ogra_: you pinged
+[13:13] <marvin24> I just don't want to fall from grace
+[13:13] <janimo> nice.
+[13:13] <marvin24> czajkowski: all ok
+[13:13] <czajkowski> grand
+[13:14] <marvin24> czajkowski: is it ok to build a kernel package on armhf
+[13:14] <janimo> marvin24, neh just try and if there's a limit we should bump it up instead of penalizing the uploader
+[13:14] <janimo> there may be limits so the ppa is not hogged but a kernel build is a desirable use-case
+[13:14] <marvin24> I was told not to upload package which run more than 4 hours, that's why I ask
+[13:14] <czajkowski> marvin24: it's not on my list of not to enable - but as long as it's not more than 10 builds and greater than 4 hours
+[13:15] <janimo> marvin24, https://launchpad.net/ubuntu/+source/linux-ac100/3.1.10-6.10/+build/3962084
+[13:15] <janimo> slightly over 2 hours
+[13:15] <czajkowski> https://dev.launchpad.net/CommunityARMBuilds
+[13:15] <marvin24> janimo: that's not a complete kernel I think
+[13:16] <janimo> you mean not completely configured ubuntu kernel?
+[13:16] <marvin24> yes, maybe many modules missing
+[13:16] <janimo> right, ac100 does not have full ubuntu configs
+[13:16] <marvin24> it takes one hour on my dual core 2.6 GHz machine
+[13:16] <marvin24> I just used the omap config ...
+[13:16] <janimo> maybe a ti-omap4 build is more relevant
+[13:17] <marvin24> and also enabled PCI (which omap doesn't have as it seems)
+[13:17] <janimo> czajkowski, does that mean the ARM builds are not automatic based on a dput but need to be manually requested for each upload?
+[13:18]  * marvin24 still doesn't get why we need to enable all possible modules instead of all useful ones
+[13:18] <janimo> https://launchpad.net/~canonical-kernel-team/+archive/ppa/+build/4046784
+[13:18] <janimo> yes over 4h
+[13:19] <janimo> the PPA builder you linked to currently builds an origen kernel and it is past the 3 h mark. So building kernels should be doable there
+[13:19] <marvin24> janimo: AFAIK, the ppa needs to be enabled one time
+[13:20] <janimo> marvin24, if a module is really unlikely to get used on the ac100 feel free to disable
+[13:20] <marvin24> I meant in general
+[13:20] <janimo> we started with minimal but a lot of USB and network options are required for various people's corner cases
+[13:20] <marvin24> e.g. you don't need all the regulators and mfd which are specific for each soc
+[13:20] <janimo> and since it is a module it does not affect those who do not used them, just build time
+[13:21] <janimo> right, if some options do not make sense they should not be there indeed
+[13:21] <janimo> hw support for impossible setups
+[13:23]  * marvin24 didn't count how many kWh he wasted already for building useless modules where the packaging failed in the end
+=== rsalveti_ is now known as rsalveti
+=== solarcloud_3scrn is now known as solarcloud_AFK
+[15:26] <xnox> ogra_: do we have serial number patters or device models ids for nexus-ses to destinguish 8/16/3g models?
+[15:27] <ogra_> xnox, yeah, ask vanhoof or mfisch, i think they figured them out for the zenity installer
+[15:27] <xnox> ogra_: ok. I'll just poke the source then ;-)
+[15:27] <ogra_> you can request info via fastboot
+[15:28] <mfisch> xnox: vanhoof did all that magic, but I think he used the partition info
+[15:29] <xnox> mfisch: sounds about right.
+[15:29] <xnox> http://paste.ubuntu.com/1563337/
+[15:30] <xnox> ogra_: mfisch: fastboot getvar all output for my nexus7
+[15:30] <ogra_> right, just grab the userdata partition and de-hex the size
+[15:31] <mfisch> yep
+=== chihchun is now known as zz_chihchun
+=== solarcloud_AFK is now known as solarcloud_3srcn
+=== XorA|gone is now known as XorA
+[17:07] <ptl> hello :)
+[18:08] <Wing_Z> Hi all
+[18:08] <Wing_Z> eny body could please lend me a hand obout pinmuxing on omap4?
+[19:01] <thoomaas> hello
+[19:02] <vhadil> hello
+[19:02] <thoomaas> i have problem with playing mp3 in raspbian
+[19:03] <thoomaas> omxplayer work but nothing else
+[19:03] <XorA> raspbian is not ubuntu
+[19:04] <thoomaas> i know but no body answer to me in another rooms
+[19:04] <XorA> I dont know the answer, dont have a Pi
+[19:09] <Noskcaj> are there install instructions for ubuntu on nexus somewhere?
+[19:10] <Tassadar> Noskcaj: https://wiki.ubuntu.com/Nexus7/Installation
+[19:10] <Noskcaj> thanks
+=== jsalisbury_ is now known as jsalisbury
+=== Noskcaj is now known as Noskcaj_afk

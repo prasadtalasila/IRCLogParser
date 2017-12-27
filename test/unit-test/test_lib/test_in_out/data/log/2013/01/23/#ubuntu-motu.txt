@@ -1,0 +1,83 @@
+=== yofel_ is now known as yofel
+=== bschaefer_ is now known as bschaefer
+[04:11] <micahg> jtaylor: imagemagick uploaded, please let me know if that worked
+[08:30] <dholbach> good morning
+=== almaisan-away is now known as al-maisan
+[09:41] <spyzer> hey everyone, I was making a program which uses libwebkitgtk-3.0, but when I compile the program i get this error http://paste.ubuntu.com/1562127/
+[09:41] <spyzer> i  have installed all dependencies through apt-get
+[09:41] <spyzer> and am using pkg-config
+[09:41] <spyzer> then why do i get this error
+[09:41] <spyzer> please tell
+[09:49] <geser> spyzer: move all those call to "pkgconfig --libs" to the end of the line (after the bridge.o)
+[09:51] <spyzer> geser, I am using autotools so what do i do there?
+[09:51] <spyzer> in Makefile.am
+[09:53] <geser> can you pastebin you Makefile.am
+[09:54] <spyzer> http://paste.ubuntu.com/1562158/
+[09:59] <geser> rename "bridge_LDFLAGS" to "bridge_LDADD" and autoconf should to the right thing
+[10:00] <spyzer> geser, it says linker flags such as `--libs' belong in `bridge_LDFLAGS
+[10:03] <geser> http://www.gnu.org/software/automake/manual/html_node/Linking.html
+[10:04] <geser> LDFLAGS puts those libs before the object file which doesn't work with "ld --as-needed". They have to be listed after the object file which uses them
+[10:09] <spyzer> geser, but then i loose the ability to use pkg-config auto lib generation
+[10:09] <spyzer> ?
+[10:14] <dholbach> geser, do you think you could join bdrung for a developer roundtable at Ubuntu developer Week and answer development questions from the audience? (Thu 31st Jan 19 UTC)
+[10:16] <geser> dholbach: should work
+[10:17] <geser> spyzer: why? you still call `pkg-config --libs ...` but put into bridge_LDADD instead of bridge_LDFLAGS
+[10:18] <dholbach> geser, you are a hero!
+[10:18] <dholbach> bdrung, ^ :)
+[10:19] <spyzer> geser, it throws this error inker flags such as `--libs' belong in `bridge_LDFLAGS when I replace bridge_LDFLAGS with bridge_LDADD
+[10:20] <spyzer> geser, but another doubt, why does this same code compile on fedora and not on this ubuntu machine?
+[10:23] <geser> because Ubuntu's ld has "--as-needed" as default flag while Fedora's most likely not (and with --as-needed the link order matters)
+[10:24] <spyzer> geser, so how do i change that? in my configure.ac?
+[10:35] <spyzer> geser, I tried ./configure LDFLAGS="-Wl,--no-as-needed"
+[10:35] <spyzer> but still didn;t work
+[10:35] <spyzer> :(
+[10:43] <spyzer> geser, GOT the solution it was to add LIBS in the Makefile.am, check this out http://wiki.debian.org/ToolChain/DSOLinking#Only_link_with_needed_libraries
+[10:43] <spyzer> thanks for the help man
+[10:43] <spyzer> u rock
+=== yofel_ is now known as yofel
+[12:25] <geser> is Ubuntu considering a switch to rolling releases between LTS?
+[12:26] <Laney> what makes you think that?
+[12:27] <tumbleweed> yeah, apparently it was in the news today
+[12:27] <tumbleweed> people asking me at work
+[12:27] <geser> http://www.golem.de/news/linux-distribution-ubuntu-erwaegt-umstieg-auf-rolling-releases-1301-97086.html (sorry only in German)
+[12:27]  * Laney watches
+[12:27] <geser> is the discussion about it somewhere public?
+[12:41] <tumbleweed> http://arstechnica.com/information-technology/2013/01/ubuntu-considers-huge-change-that-would-end-traditional-release-cycle/ is in english
+[12:41] <tumbleweed> (now that arstechnica has finished being broken and showing moon sharks)
+[12:43] <Laney> perhaps we could call it 'unstable' ;-)
+[12:44] <tumbleweed> :P
+[12:44] <tumbleweed> wasn't it supposed to be grumpy groundhog?
+[12:44] <Laney> that was going to be a parallel branch wasn't it?
+[12:45] <tumbleweed> yeah, like fedora's thing
+[12:45] <Laney> dholbach: you're really quiet compared to ogasawara in that youtube video
+[12:46] <dholbach> Laney, yeah, I know - I tried a couple of times to fix the mic levels, but had to keep going at the same time
+[12:46] <dholbach> I don't know what happened
+[12:46] <Laney> fair enough
+[12:46] <Laney> good to see you're causing waves :P
+[12:47] <geser> I wonder how large-scale changes like updating gcc will work with rolling releases with all the FTBFS such changes cause
+[12:58] <ajmitch> geser: that might depend on whether such things can be caught by tests prior to migrating from -proposed
+[12:59] <tumbleweed> that sounds hard
+[12:59] <ajmitch> it does
+[13:01] <geser> and we expect to see such FTBFS with major gcc updates (or the multi-arched python) and do archive rebuild for testing, but that would block such updates probably till the next LTS given the amount of time need to fix most of them
+[13:02] <geser> and as we can see in archive rebuilds some packages stopped building (unnoticed) due to some other changes too
+[13:03] <ajmitch> unless they could migrate when all seeded packages work with them, rather than all packages
+[13:03]  * ajmitch hand-waves
+[13:03] <tumbleweed> rebuild-testing the archive for migrations seems expensive
+[13:03] <ajmitch> that's what's been proposed already, afaik
+[13:04] <tumbleweed> I only know of the plan to DEP-8 test
+[13:04] <ajmitch> I thought that also included rebuilding prior to testing in the case of library migrations, I'm likely wrong though :)
+[13:10] <geser> I hope there will be a public discussion about this change too (don't have the time to watch the hang out right now)
+[13:51] <bdrung> geser: thanks for joining the table :)
+=== al-maisan is now known as almaisan-away
+=== dk is now known as Guest25499
+[16:25] <xnox> geser: i love how jurnalists picked up on that. if you watch the hangout you will notice that in the context of kernel development they are thinking how to provide stability, quality and QA on ongoing basis. since even considering rolling releases that problem first needs to be solved.
+[17:26] <tumbleweed> xnox: but that's not a story in itself
+[17:29] <xnox> tumbleweed: SQUIRREL!
+[17:33] <jtaylor> micahg: thx for imagemagick, next time please replace the fftw3-dev dependency with libfftw3-dev
+[17:35] <jtaylor> oO debian depends in fftw-dev?
+[17:39] <jtaylor> that will give a big dip in fftw3's popcon when wheezy is release :), imagemagick probably makes out 95% of all its installs
+[20:33] <micahg> jtaylor: I doubt Debian will switch from fftw2 to fftw3 before jessie in imagemagick
+[20:33] <jtaylor> yes
+[20:33] <jtaylor> btw its nofftw to fftw3
+[20:34] <jtaylor> imagemagick does not detect fftw2
+[20:34] <jtaylor> which is long obsolete

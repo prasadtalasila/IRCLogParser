@@ -1,0 +1,203 @@
+[00:00] <StevenK> wgrant: Did you want a review, or you're still fighting tests?
+[00:00] <StevenK> (Like I am.)
+[00:02] <wgrant> I'm fighting a branch scan timeout
+[00:04] <StevenK> Glad to hear it's not just me.
+[00:04] <StevenK> Er, I mean, that's terrible.
+[00:08] <wgrant> StevenK: https://code.launchpad.net/~wgrant/launchpad/bug-1098170/+merge/142816
+[00:14] <StevenK> wgrant: Looks good, r=me
+[00:14] <wgrant> Thanks
+[00:29] <StevenK> wgrant: https://code.launchpad.net/~stevenk/launchpad/no-count-distribution-ppas/+merge/142818
+=== slank_away is now known as slank
+[00:32] <wgrant> StevenK: r=me
+[00:33] <StevenK> wgrant: Oh, so IDistribution.getAllPPAs().is_empty() is fine?
+[00:34] <wgrant> StevenK: If it works, why wouldn't it be?
+[00:34] <StevenK> wgrant: It works, I'm concerned it's going to perform terribly.
+[00:35] <wgrant> is_empty() is very different from count() == 0
+[00:35] <wgrant> Because is_empty will stop as soon as it finds a row
+[00:35] <wgrant> So an index on archive(distribution, purpose) will have it satisfied in microseconds
+[00:36] <StevenK>     "archive__distribution__purpose__key" UNIQUE, btree (distribution, purpose) WHERE purpose = ANY (ARRAY[1, 4])
+[00:36] <wgrant> Note that that's not actually useful
+[00:37] <StevenK> That index, or the property?
+[00:37] <wgrant> The index
+[00:37] <wgrant> It's partial over (PRIMARY, PARTNER)
+[00:37] <wgrant> You may want to create a new index
+[00:37] <StevenK> Mmmm
+[00:37] <wgrant> But this will be strictly faster than what was there before, and trivially fast for Ubuntu
+[00:37] <wgrant> For other distros it will be slower
+[00:39] <wgrant> (simply because for ubuntu/+ppas it has to find any one row matching distribution=1 AND purpose=2, for which it has to search at most 67 rows, because there's only 66 archive rows that *aren't* Ubuntu PPAs)
+[00:40] <wgrant> StevenK: Oh
+[00:41] <wgrant> I missed something in that review :(
+[00:45] <StevenK> Oh?
+[00:50] <StevenK> Hah, test failure
+[00:50] <StevenK> assertContentEqual ?
+[00:52] <wgrant> Oh, I only sorted one end
+[00:52] <wgrant> Oops
+[00:52] <wgrant> StevenK: But the thing I missed was that you ended your commit message in a preposition.
+[00:53] <StevenK> wgrant: The description, rather than the commit text?
+[00:53] <lifeless> assertThat(... MatchesSetwise) might be your friend
+[00:54] <wgrant> lifeless: assertContentEqual is shorthand for that
+[00:54] <lifeless> wgrant: then sorting shouldn't be needed
+[00:54] <lifeless> wgrant: isn't it shorthand for MatchesListwise ?
+[00:54] <wgrant> Yes, but I didn't use assertContentEqual :)
+[00:54] <wgrant> Because I copied it from another test
+[00:55] <wgrant>     def assertContentEqual(self, iter1, iter2):
+[00:55] <wgrant>         """Assert that 'iter1' has the same content as 'iter2'."""
+[00:55] <wgrant>         self.assertThat(iter1, MatchesSetwise(*(map(Equals, iter2))))
+[00:55] <StevenK> Bad wgrant, no cookie.
+[00:55] <lifeless> wgrant: well then :)
+[01:00] <StevenK> wgrant: Are you landing a testfix, or shall I?
+[01:01] <wgrant> I am
+[02:08] <wgrant> StevenK: No +queue timeouts yesterday
+[02:08] <wgrant> And only three soft
+[02:09] <wgrant> The remaining slow queries are because of partner and the COUNT(*), but they're only 700-900ms each
+[02:15] <bigjools> nice
+[02:26] <StevenK> More problems solved by the destruction of PARTNER
+[02:33] <wgrant> All problems are solved by the destruction of PARTNER
+=== slank is now known as slank_away
+[03:22]  * StevenK stabs this branch, gives up and casts a wide net for anything that wants IEmailAddressSet.
+[03:23] <StevenK> Or I just call into traceback from IEmailAddressSet.new and toss a ValueError if the call trace doesn't contain LoginToken
+[03:27] <StevenK> wgrant: So, due to ripping it out of getOrCreateOpenIDIdentifier, it looks like the person browser code only create a LoginToken
+[03:27] <StevenK> The LoginToken code will cope if the EmailAddress exists or doesn't.
+[03:34] <wgrant> Hmm
+[03:36] <wgrant> StevenK: Ah, so it does
+[03:37] <StevenK> Which would explain why I couldn't find it.
+[03:37] <StevenK> wgrant: So I can put up this +10/-17 branch, but it's all tidy-up
+[03:40] <wgrant> Oh
+[03:40] <wgrant> Person.unvalidatedemails is actually calculated from the logintokens
+[03:40] <wgrant> Intriguing
+[03:40] <wgrant> So you're right, it's already all good
+[03:40] <wgrant> StevenK: Might as well put it up
+[03:41] <StevenK> And I can't see any errant calls to IEmailAddressSet.new, either
+[03:42] <StevenK> wgrant: So two bits of QA and we should deploy?
+[03:43] <wgrant> I'm testing the OpenID thing atm
+[03:52] <StevenK> wgrant: https://code.launchpad.net/~stevenk/launchpad/random-logintoken-cleanup/+merge/142827
+[03:53] <wgrant> StevenK: That looks like an ideal candidate for a self review
+[03:54] <StevenK> Pfft
+[07:03] <StevenK> wgrant: Did you not close bugs from the NDT?
+[07:03] <StevenK> wgrant: And do we want to find the '' OpenID identifier in the DB and shoot it?
+[07:06] <wgrant> Ah, no, got distracted
+[07:06]  * wgrant closes
+[07:06] <wgrant> And no, we don't want to dispose of that yet
+[07:06] <wgrant> There's a lot more cleanup we need to do next week
+[07:07] <StevenK> wgrant: I just did the closing
+[07:07] <wgrant> StevenK: Um
+[07:07] <wgrant> You reset the mailing list one to Confirmed
+[07:07] <StevenK> Oh, whoops
+[07:07] <StevenK> I think that was a miss-click :-(
+[08:51] <adeuring> good morning
+=== yofel_ is now known as yofel
+=== almaisan-away is now known as al-maisan
+[09:55] <wgrant> StevenK: https://code.launchpad.net/~wgrant/launchpad/expire-some-p3as/+merge/142857
+[10:03] <StevenK> wgrant: That is pretty hideous, yes.
+[10:03] <StevenK> wgrant: Your Brilliant Plan[tm] is replace that horridness with Archive.expirable which defaults to True, I guess?
+[10:05] <wgrant> I'd say so
+[10:05] <wgrant> Somewhere on +admin, I suppose
+[10:05] <StevenK> wgrant: r=me, hopefully it's short-lived.
+[10:06] <wgrant> Thanks
+[10:06] <wgrant> Indeed
+[10:06] <wgrant> It won't be :)
+[10:20] <StevenK> wgrant: :-(
+=== al-maisan is now known as almaisan-away
+=== almaisan-away is now known as al-maisan
+=== slank_away is now known as slank
+=== slank is now known as slank_away
+=== slank_away is now known as slank
+=== salgado is now known as salgado-lunch
+=== salgado-lunch is now known as salgado
+=== al-maisan is now known as almaisan-away
+[19:24] <dobey> is anyone around?
+=== Ursinha_ is now known as Ursinha
+[19:49] <czajkowski> dobey: yup
+[19:50] <dobey> https://launchpadlibrarian.net/128211802/buildlog.txt.gz :(
+[19:50] <dobey> (yes still getting this, and still no idea why)
+[19:51] <czajkowski> dobey: it's never simple with you is it :p
+[19:52] <czajkowski> dobey: when was the last time you got this ?
+[19:52] <dobey> today; that build was from a few hours ago
+[19:53] <dobey> it happens whenever i try to rebuild lp:ubuntu/ubuntuone-client via a source package recipe
+[19:53] <dobey> but building the same recipe locally works fine (creates the source package)
+[19:55] <czajkowski> deryck: any ideas?
+[19:55] <deryck> looking up.....
+[19:55] <czajkowski> deryck: thanks
+[19:58] <deryck> so I'm not very knowledgeable about builds. The "Most recent Ubuntu Raring version: MISSING" repeated looks suspect to me.
+[19:59] <deryck> but maybe that's normal noise.
+[19:59] <deryck> dobey, is it trying to pull in some dep that isn't available in Raring perhaps? (just guessing, really.)
+[19:59] <deryck> Other than my guessing, I'd say file a bug and get wgrant or StevenK to take a look when they're online.
+[20:00] <dobey> deryck: no; that's just a normal message from bzr bd
+[20:00] <dobey> deryck: the main issue is the pristine-tar failing
+[20:00] <dobey> the traceback and those MISSING messages are just noise really
+[20:00] <czajkowski> mgz: you gone>
+[20:00] <deryck> yeah, it's not a very helpful Traceback.
+[20:01] <dobey> deryck: right, the traceback is just restating that pristine-tar failed
+[20:01] <deryck> I'd guess we'll need someone to look through builder logs to get more info.
+[20:02] <deryck> I'm assuming we have something more detailed than this, but maybe not.
+[20:04] <dobey> yeah, i don't have any more info really. it's been happening since i set this recipe up; all my other recipes that just re-build lp:ubuntu/$something are working fine though
+[20:05] <dobey> it's only this one for ubuntuone-client that's failing
+[20:05] <deryck> hmmmm
+[20:06] <deryck> dobey, I'd say file a bug or question, and let czajkowski poke wgrant or StevenK about it.
+[20:06] <dobey> and i've tried to build the recipe on quantal and raring at various points over the past couple months, and it's worked fine locally both times
+[20:06] <dobey> ok
+[20:06] <deryck> sorry, wish I could be more help.
+[20:07] <dobey> can you poke at the logs now and see if anything is there?
+[20:07] <dobey> or do i need to find someone in ops to do that?
+[20:14] <deryck> dobey, ask someone in ops. I don't know where the logs are, so they can probably help you quicker.
+[20:15] <dobey> ok
+=== Ursinha is now known as Ursinha-afk
+=== Ursinha-afk is now known as Ursinha
+[21:10] <mgz> czajkowski: mostly/nearly
+[21:16] <czajkowski> mgz: dobey was having some issues above but I think he's gonna report a bug and get it looked at
+[21:17] <mgz> and I don't have any particular clever ideas about dobey's recipe problem, though I wonder if his successfuly local build used a newer/bugfreer version of bzr-builddeb than the builders do
+[21:18] <mgz> reporting a bug is the right thing, as I think the buildlog is basically the same as his failure from the other week
+[21:18] <dobey> mgz: it's dailydeb, though pristine-tar is actually what's failing
+[21:18] <czajkowski> mgz: would that relate to the RT that we mentioned earlier on
+[21:18] <dobey> mgz: it is exactly the same as the previous failure, yeah
+[21:19] <mgz> right, I guess my best bet would be on either pristine-tar or builddeb being too ancient on the builder
+[21:19] <dobey> mgz: what version of pristine-tar and dailydeb do the builders have, where the recipes get built?
+[21:20] <dobey> actually, pristine-tar
+[21:21] <dobey> the older version makes some sense, if it's not using the ustar format for the tars it builds
+[21:21] <dobey> and newer version might
+[21:22] <mgz> dobey: log says "builder 0.7.2dev" and my guess is pristine-tar would be the one from the archive
+[21:23] <mgz> ah, this version line is useful:
+[21:23] <mgz> Buildd toolchain package versions: launchpad-buildd_113~0.IS.08.04 python-lpbuildd_113~0.IS.08.04 bzr-builder_0.7.2+bzr156-0ubuntu1~1.IS.8.04 bzr_2.4.0-0ubuntu2~11.IS.8.04.
+[21:24] <dobey> mgz: right, but which version of Ubuntu is it running on? i'm guessing there's a big difference between what's in raring, precise, or lucid
+[21:25] <mgz> right, lucid I think, but that's not actually mentioned
+[21:25] <mgz> oh, no, precise
+[21:25] <mgz> that's actually reasonable.
+[21:26] <mgz> (well, the environment is precise, the underlying machine may me more ancient)
+[21:27] <dobey> ok, let me try the recipe on precise then
+[21:29] <dobey> i just realized that u1-client does have some "too long" filenames, and we have to use tar-ustar with automake to get a proper tarball. older pristine-tar might fail there
+[21:38] <dobey> hmm
+[21:38] <dobey> ok, this is weird
+[21:38] <dobey> on precise it's not even doing the "Reconstructing pristine tarball" bit for some reason
+[21:42] <dobey> hrmm, but it runs ok on quantal and raring for me, but on lp it fails on quantal. so i wonder if the dailydeb command is actually being run while chrooted, or what
+=== gary_poster is now known as gary_poster|away
+[23:05] <wgrant> dobey: The builds run on hardy
+[23:05] <wgrant> dobey: With various newer packages
+[23:08] <dobey> wgrant: is pristine-tar one of those "newer packages?" i suspect not?
+[23:09] <cjwatson> It's certainly been backported in the past
+[23:10] <cjwatson> pristine-tar | 1.11ubuntu1~0.IS.8.04 | hardy-cat-buildd | source, amd64, i386
+[23:10] <cjwatson> Probably that
+[23:10] <cjwatson> 1.20~0.IS.10.04 is in lucid-cat
+[23:11] <cjwatson> hardy itself had 0.8, and 1.00~hardy1 in -backports
+[23:11] <wgrant> Yeah
+[23:11] <wgrant> There have been changes relatively recent
+[23:11] <wgrant> eg. to cope with a bz2 change, IIRC
+[23:11] <dobey> could we get a newer version in?
+[23:11] <wgrant> Hahaha
+[23:11] <wgrant> We have an old old RT about upgrading the builders
+[23:11] <wgrant> It's been idle for maybe 18 months now
+[23:12] <dobey> or just upgrade them to precise
+[23:12] <dobey> :)
+[23:14] <dobey> how does dailydeb create the tarball exactly? would be nice to see what command line it's using to do that, but it's not in the build log :-/
+[23:17] <wgrant> I have no idea.
+[23:17] <wgrant> You could check the source.
+[23:29] <dobey> wgrant: is there some way i can test this on one of the builders more easily than just watching my build fail again and again? or get access to the buildd ppa so i can set up a vm/chroot to test in?
+[23:31] <cjwatson> dobey: It's not a PPA, but you can get at hardy-cat-buildd from the DC (e.g. chinstrap) - archive.admin.canonical.com
+[23:31] <cjwatson> dobey: So you can just download the relevant bits by hand or whatever
+[23:32] <cjwatson> (The output I posted earlier was from a madison-lite instance on chinstrap configured to look at a.a.c.c, without using any special privileges beyond having a chinstrap account)
+[23:33] <dobey> ok
+[23:33] <cjwatson> I expect that in general IS would prefer details of what's in CAT not to be shared around
+[23:33] <dobey> of course
+[23:33] <cjwatson> Not that I know the details, just seems like a safe assumptin
+[23:34] <cjwatson> +o
+[23:34] <cjwatson> But handy for debugging this kind of thing
+[23:36] <dobey> thanks

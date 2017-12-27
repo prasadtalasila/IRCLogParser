@@ -1,0 +1,360 @@
+[08:14] <fwereade_> TheMue, heyhey
+[08:14] <fwereade_> TheMue, happy new year :)
+[08:18] <TheMue> fwereade_: Heyhey, good morning and a happy new year too :D
+[08:25] <rogpeppe> morning all
+[08:26] <fwereade_> rogpeppe, heyhey
+[08:26] <rogpeppe> fwereade_: yo!
+[08:26] <rogpeppe> fwereade_: how's tricks?
+[08:26] <fwereade_> rogpeppe, good thanks, and you? nice hols?
+[08:27] <rogpeppe> fwereade_: lovely thanks.
+[08:27] <rogpeppe> fwereade_: had a nice time playing with new camera...
+[08:27] <fwereade_> rogpeppe, I saw some of your photos, very nice indeed
+[08:28] <rogpeppe> fwereade_: they're even nicer in full resolution
+[08:28] <fwereade_> rogpeppe, I bet :)
+[08:30] <TheMue> rogpeppe: Heya
+[08:30] <rogpeppe> TheMue: hiya!
+[08:30] <rogpeppe> TheMue: good hols?
+[08:30] <TheMue> rogpeppe: The camera may be nice, but the distilleries on Skye would have interested me more. :D
+[08:31] <TheMue> rogpeppe: Yep, but too short. So 52 weeks per year would be fine. ;)
+[08:31] <rogpeppe> TheMue: there's only one distillery, and it's not so interesting after you've been around it a couple of times
+[08:31] <TheMue> rogpeppe: Only Talisker, thought there are more. Hmm, ok, good to know.
+[08:34] <TheMue> rogpeppe: I bought a new camera too, but a smaller one. The Panasonic LX7. It's fast and the lens is very light intense (do you say so?).
+[08:34] <rogpeppe> TheMue: i think we'd probably say the lens was fast.
+[08:37] <fwereade_> jam, thanks for the reviews :)
+[08:37] <jam> fwereade_: happy to. Sorry they didn't come through before the break.
+[08:37] <fwereade_> jam, np at all :)
+[08:37] <fwereade_> jam, some nice easy merges are a great way to start the week
+[08:39] <rogpeppe> fwereade_: i'm just having a look at some of your CLs. you must've had a lot of spare time over xmas!
+[08:40] <fwereade_> rogpeppe, most of them are really tiny trivial ones I did in the first day or so to get my mind off the lifecycle/subordinate bits :)
+[08:40] <fwereade_> rogpeppe, since then I've had several days of actual work :)
+[08:59] <fwereade_> rogpeppe, ah, sorry, totally missed your suggestion in deploy
+[09:00] <rogpeppe> fwereade_: i've only just made it :-)
+[09:01] <rogpeppe> fwereade_: although i think i might have made it before actually
+[09:03] <fwereade_> rogpeppe, I'll probably propose a trivial for that later today then
+[09:46] <fwereade_> rogpeppe, tyvm for all the reviews
+[09:47] <rogpeppe> fwereade_: more on their way :-)
+[09:47] <fwereade_> rogpeppe, awesome :D
+[09:47] <fwereade_> rogpeppe, just about to repropose machine-death-restrictions, but the main change is in the comments
+[09:48] <rogpeppe> fwereade_: am just about to publish some comments on that
+[09:48] <fwereade_> rogpeppe, I'll wait for you then
+[09:48] <rogpeppe> fwereade_: done
+[09:51] <fwereade_> rogpeppe, without the JobManageEnviron restriction, how do you suggest we avoid killing that machine? I'm stronly -1 on special-casing machine 0
+[09:51] <fwereade_> rogpeppe, if and when we add a mechanism by which machines can change their jobs, this may need some gentle tweaking, I agree
+[09:51] <rogpeppe> fwereade_: we could leave the restriction in for the time being, i suppose
+[09:52] <rogpeppe> fwereade_: i'm not really thinking about machines changing their jobs
+[09:52] <rogpeppe> fwereade_: but about being able to add new machines that also manage the environment
+[09:52] <rogpeppe> fwereade_: if you do that, you'll never be able to remove them currently
+[09:53] <fwereade_> rogpeppe, agreed -- I think my attitude applies just the same though
+[09:53] <fwereade_> rogpeppe, at the moment there's no way to do that; when there is, we may need to tweak it
+[09:53] <rogpeppe> fwereade_: that sounds reasonable. how about adding a comment to that effect?
+[09:53] <fwereade_> rogpeppe, sgtm
+[09:53] <fwereade_> rogpeppe, now, re retries
+[09:54] <jam> mgz: poke
+[09:54] <fwereade_> rogpeppe, I don't think it's very nice to tell the user that a machine's in use when we know it isn't
+[09:54] <rogpeppe> fwereade_: well, it was in use when they tried to remove it...
+[09:54] <fwereade_> rogpeppe, we don't know that
+[09:54] <fwereade_> rogpeppe, we could easily have screwed something up ;p
+[09:55] <rogpeppe> fwereade_: yeah we do, because that's the only way the transaction can fail, no?
+[09:55] <fwereade_> rogpeppe, at the moment it is
+[09:55] <fwereade_> rogpeppe, that's my point :)
+[09:55] <rogpeppe> fwereade_: i don't think it's worth optimising error messages for "will probably never happen" cases
+[09:56] <fwereade_> rogpeppe, there's precedent
+[09:56] <rogpeppe> fwereade_: when we're giving a bad error message for a "might well happen" case
+[09:56] <fwereade_> rogpeppe, machine assignments flipping N times with perfectly evil timing?
+[09:56] <fwereade_> rogpeppe, I think it's already a probably-never-happen case
+[09:57] <rogpeppe> fwereade_: i don't like the precedent set by the retry
+[09:57] <rogpeppe> fwereade_: if something has failed, let it fail.
+[09:57] <fwereade_> rogpeppe, hm, I'd seen it as a standard and necessary technique
+[09:58] <rogpeppe> fwereade_: as you've pointed out, it's not sufficient. and i don't think it's necessary either.
+[09:59] <rogpeppe> fwereade_: if something else is tweaking machine assignment concurrently, then there's every likelihood that the machine destroy should fail
+[09:59] <fwereade_> rogpeppe, the technique is already used in Relation.Destroy and RelationUnit.LeaveScope
+[09:59] <rogpeppe> fwereade_: and it seems perfectly reasonable that it should
+[09:59] <fwereade_> rogpeppe, IMO if we can't tell why it failed we should treat it somewhat seriously instead of making something up
+[10:00] <rogpeppe> fwereade_: we know that it must fail because of one of the two asserts
+[10:00] <rogpeppe> fwereade_: we rely on our transaction system working like that
+[10:01] <fwereade_> rogpeppe, right, so if it must have failed for one of two reasons -- neither of which apply -- we should just pretend that one of them did?
+[10:01] <rogpeppe> fwereade_: we know that one of them *did* apply
+[10:01] <rogpeppe> fwereade_: we just don't know which one any more
+[10:02] <fwereade_> rogpeppe, alternative perspective then -- if we know that neither applies now, why should we make the user retry the command instead of just doing it ourselves?
+[10:02] <rogpeppe> fwereade_: because the user must be prepared to retry the command anyway
+[10:03] <fwereade_> rogpeppe, why do we have attemptStrategy then?
+[10:03] <rogpeppe> fwereade_: that's a totally different thing
+[10:03]  * fwereade_ raises an eyebrow
+[10:03] <rogpeppe> fwereade_: that's about eventual consistency
+[10:03] <rogpeppe> fwereade_: and network availability
+[10:03] <fwereade_> rogpeppe, why don't we just make the user keep trying the same command?
+[10:04] <rogpeppe> fwereade_: because in those cases, it's *normal* for the some attempts to fail.
+[10:04] <rogpeppe> s/the some/some/
+[10:05] <fwereade_> rogpeppe, this is exactly the sort of race for which we built a great big pile of infrastructure -- aren't these conditions also "normal"?
+[10:06] <rogpeppe> fwereade_: i don't think so. what we're talking about in this CL is a genuine race condition
+[10:06] <fwereade_> rogpeppe, I've got an old verity stob quote playing back in my mind...
+[10:06] <rogpeppe> fwereade_: whereas what we're guarding against with attemptStrategy is just slow propagation and dodgy networks
+[10:07] <fwereade_> The primary duty of an exception handler is to get the error out of the lap of the programmer and into the surprised face of the user.
+[10:08] <rogpeppe> fwereade_: meant ironically, presumably?
+[10:08] <fwereade_> rogpeppe, indeed so
+[10:08] <rogpeppe> fwereade_: see also: fail fast :-)
+[10:09] <fwereade_> rogpeppe, we do fail fast
+[10:09] <rogpeppe> fwereade_: this retry stuff is not failing fast
+[10:09] <fwereade_> rogpeppe, this is just for handling rare, but perfectly normal and predictable, cases
+[10:09] <fwereade_> rogpeppe, er, yes it is
+[10:09] <fwereade_> rogpeppe, we only retry when we don't know what went wrong and we have a reasonable expectation that a second attempt will work
+[10:10] <rogpeppe> fwereade_: i think we're adding unnecessary complexity to give the user a good error message in a very rare case
+[10:12] <fwereade_> rogpeppe, the "complexity" I see is, er, a for loop
+[10:12] <fwereade_> rogpeppe, that doesn't seem like such a great cost to pay for a bit of user-friendliness...
+[10:13] <rogpeppe> fwereade_: it's one (well, three, if you include Relation.Destroy and RelationUnit.LeaveScope) more moving part and an arbitrary heuristic.
+[10:13] <rogpeppe> fwereade_: i'd prefer to leave as many "probably"s out of the code as possible
+[10:14] <rogpeppe> fwereade_: in this case, we have a genuine race conflict, and it seems reasonable that we should tell the user about it as soon as possible (they might not *want* to destroy the machine if someone else is jiggling with it)
+[10:16] <rogpeppe> fwereade_: and the error message that happens if the improbable happens is not right. the state is not inconsistent, just something unlikely happened.
+[10:17] <fwereade_> rogpeppe, the error message is "machine <id> cannot become <state>: please contact..."
+[10:17] <rogpeppe> fwereade_: oh sorry, i was looking at RelationUnit.LeaveScope
+[10:18] <rogpeppe> fwereade_: i think the error message should be "machine is in use"
+[10:18] <rogpeppe> fwereade_: because it was.
+[10:18] <fwereade_> rogpeppe, that error message in that place is a lie
+[10:18] <fwereade_> rogpeppe, and we know it's a lie
+[10:18] <rogpeppe> fwereade_: "machine was in use" :-)
+[10:18] <fwereade_> rogpeppe, otherwise we would not rech that place
+[10:19] <rogpeppe> fwereade_: it wasn't a lie a millisecond ago
+[10:19] <fwereade_> rogpeppe, we have exactly as much information indicating that it's a lie as we have indicating it's the truth
+[10:19] <fwereade_> rogpeppe, we actually *do not know*
+[10:20] <rogpeppe> fwereade_: that's because it's in an indeterminate state. but the reason we're *failing* is because the machine is in use
+[10:20] <rogpeppe> fwereade_: we're just trying to add a little more information to help the user in the most common case.
+[10:20] <fwereade_> rogpeppe, what?
+[10:20] <fwereade_> rogpeppe, this is already a vanishingly rare case
+[10:21] <fwereade_> rogpeppe, to trigger it the machine has to have a unit removed/added/removed, with very specific timing
+[10:21] <rogpeppe> fwereade_: i don't really mind about the error message in the highly unlikely case that someone adds a machine in the ms between executing the transaction and checking afterwards.
+[10:21] <rogpeppe> fwereade_: agreed
+[10:21] <fwereade_> rogpeppe, we already get sensible error messages in the common cases
+[10:21] <rogpeppe> fwereade_: so why bother iterating, if it's already so rare?
+[10:22] <fwereade_> rogpeppe, because the basic case, in which the unit removal races with the machine change, is perfectly reasonable and expected
+[10:22] <fwereade_> rogpeppe, not retrying at all is just rude
+[10:23] <fwereade_> rogpeppe, refusing to tell the user why, or making up a reason why, is IMO bad
+[10:23] <fwereade_> rogpeppe, hence we should try to diagnose the failure
+[10:23] <rogpeppe> fwereade_: i don't think someone should be destroying a machine if they haven't removed its units first
+[10:24] <fwereade_> rogpeppe, if it seems that the expected race condition is in play, retrying is again the friendly thing to do
+[10:25] <fwereade_> rogpeppe, right, and if they do that we tell them why it didn't work...
+[10:25] <rogpeppe> fwereade_: sure, and that will happen even if we don't retry.
+[10:26] <rogpeppe> fwereade_: the only time the retry will happen is if someone removes the last unit, then adds another one immediately.
+[10:26] <fwereade_> rogpeppe, no
+[10:26] <rogpeppe> fwereade_: hmm, rather
+[10:26] <rogpeppe> fwereade_: adds a unit, then removes it immediately
+[10:26] <fwereade_> rogpeppe, there will be multiple admins at some stage, right?
+[10:27] <rogpeppe> fwereade_: sure. but if they're stepping on one another's toes, i think the (*very* occasional) not-so-informative error message is fine.
+[10:27] <rogpeppe> fwereade_: "machine in use" still tells them something useful
+[10:29] <rogpeppe> fwereade_: and given that the jobs for a machine can't change currently, we may as well say "machine has assigned units", because that's the only way a race can happen
+[10:30] <rogpeppe> fwereade_: and i know it wasn't true the last time we looked, but it's still the reason why we're failing
+[10:32] <fwereade_> rogpeppe, it's one of two reasons we currently know about
+[10:33] <fwereade_> rogpeppe, and you're arguing awfully hard against, again a fricking for loop
+[10:33] <fwereade_> rogpeppe, is it actually unclear?
+[10:33] <fwereade_> rogpeppe, are you saying that I'm guarding against something that can't happen?
+[10:34] <rogpeppe> fwereade_: i think "machine %s cannot become dead: please contact juju-dev@..." is unclear.
+[10:34] <rogpeppe> fwereade_: i'm saying you're guarding against something that is already extremely unlikely.
+[10:35] <rogpeppe> fwereade_: and that doesn't add much value even then
+[10:35] <fwereade_> rogpeppe, let me be clear -- it is that retrying adds no value?
+[10:35] <rogpeppe> fwereade_: yeah
+[10:36] <fwereade_> rogpeppe, so every juju client needs to implement their own retry logic?
+[10:36] <rogpeppe> fwereade_: no, i imagine that if you try to destroy a machine that someone else is meddling with, the juju client would fail and that would be fine.
+[10:37] <TheMue> fwereade_: Do you have some more informations about the test failure Dave detected? I checked it and get the same failing UnitSuite.TestChangePasswordChanging in cmd/jujud/ w/ and w/o the rejected firewaller change (and that should also have no influence).
+[10:37] <fwereade_> rogpeppe, IMO it's not fine to fail to do something valid and lie about the reason
+[10:37] <fwereade_> TheMue, huh, weird -- I'm afraid I don't though :(
+[10:37] <rogpeppe> fwereade_: we don't have to lie about the reason. we can just make the reason less specific
+[10:38] <TheMue> fwereade_: OK, have to talk to Dave then.
+[10:38] <fwereade_> rogpeppe, "can't be bothered, maybe try again?"
+[10:38] <rogpeppe> fwereade_: "someone else is meddling. give 'em a kick!"
+[10:39] <rogpeppe> fwereade_: i think we're trying too hard to give a perfect error message in extreme corner cases.
+[10:39] <fwereade_> rogpeppe, look, you are simultaneously arguing that my error message is bad and that I'm trying too hard to give a good one
+[10:40] <rogpeppe> fwereade_: the "machine %s cannot become dead: " message is bad because it doesn't say what the reason was (we know it must be one of two reasons, otherwise we wouldn't have got ErrAborted)
+[10:41] <fwereade_> rogpeppe, the reason is because in that case we do not know the reason
+[10:41] <rogpeppe> fwereade_: in fact currently, we *do* know the reason
+[10:41] <rogpeppe> fwereade_: because the jobs assigned to a machine cannot change after it's created
+[10:42] <rogpeppe> fwereade_: so we know that it can only have failed because a unit was there but has now been removed.
+[10:42] <fwereade_> rogpeppe, no... if we hit that case the only explanation is so vanishingly unlikely that we should be treating "we analyzed this wrong" with as much weight
+[10:43] <fwereade_> rogpeppe, hence the suggestion to escalate
+[10:43] <fwereade_> rogpeppe, if I bumped the retries to 3, would that make the tradeoff clearer?
+[10:45] <rogpeppe> fwereade_: no, i think 2 is more than enough.
+[10:46] <rogpeppe> fwereade_: ok, i won't argue this further. i think it's unnecessary code, but it doesn't actively harm anything. i would avoid the "please contact" error message though.
+[10:47] <fwereade_> rogpeppe, if it bothers you that much, can I ask you to take it up with niemeyer? I don't want to do something arbitrarily different from what we agreed in the Relation.Destroy case
+[10:48] <rogpeppe> fwereade_: i suppose Relation.Destroy gives precedent. i missed that at the time.
+[10:48] <rogpeppe> fwereade_: (i think the error message in that case is similarly dubious)
+[10:49] <fwereade_> rogpeppe, I definitely had a big "gaah wtf this is horrible" moment when I first did that, but I've come to terms with it -- we *think* that neither case should ever happen, but if it does we want to know about it
+[10:49] <rogpeppe> fwereade_: what do you think "corrupt state" might mean, BTW, in this context?
+[10:49] <fwereade_> rogpeppe, I'm at least partly inclined to prefer something like "excessive contention" but that doesn't really feel so helpful either
+[10:50] <rogpeppe> fwereade_: excessive contention is much better
+[10:50] <fwereade_> rogpeppe, well, either the code doesn't match the data or that data doesn't match the code
+[10:50] <fwereade_> rogpeppe, the actual style of contention itself is so pathological, though, that I don't think it covers the situation adequately
+[10:51] <rogpeppe> fwereade_: i dunno. if someone is really thrashing the state (probably deliberately), then it may happen
+[10:51] <fwereade_> rogpeppe, which is why I'm starting to feel that I should go from 2 to 3 :)
+[10:51] <rogpeppe> fwereade_: and in that case, it's nice for the error message to reflect what we really believe is happening
+[10:51] <rogpeppe> fwereade_: honestly, 2 is just fine. contention in that case could already be deemed to be excessive.
+[10:52] <fwereade_> rogpeppe, suggestion -- I'll open a bug saying "contact juju-dev@ is unhelpful", or something, and assign it to niemeyer
+[10:53] <fwereade_> rogpeppe, it's not that I don't appreciate your perspective, it's just that it's his form of words that broke us out of a similar discussion a while ago :)
+[10:53] <rogpeppe> fwereade_: if someone removes, adds and removes a unit in quick succession, at the same time someone is removing a machine, i think that could be judged as excessive.
+[10:53] <rogpeppe> fwereade_: fair enough.
+[10:53] <fwereade_> rogpeppe, cool, thanks
+[10:54] <fwereade_> rogpeppe, the thing about turning 2 into 3 is that it makes the ugly error less likely to come up
+[10:54] <rogpeppe> fwereade_: i just don't like "shouldn't happen" - because it's perfectly ok for it to happen, just somewhat unlikely.
+[10:54] <rogpeppe> fwereade_: i'll bet you 50 quid it will never ever come up for real.
+[10:54] <rogpeppe> fwereade_: even with 2.
+[10:55] <fwereade_> rogpeppe, that's why it was 2 to begin with -- I actually don't expect it to happen
+[10:57] <fwereade_> rogpeppe, but I have rarely been poorly served by upgrading my paranoia ;p
+[10:58] <fwereade_> rogpeppe, and I guess I'm iffy about the mismatch between 5 for Relation.Destroy and 2 for Machine.EnsureDying
+[10:59] <fwereade_> rogpeppe, although, that said, the expected number of contending clients is very different
+[11:00] <rogpeppe> fwereade_: that seems like a reasonable reason for the difference
+[11:07] <fwereade_> rogpeppe, and finally... maybe "has unit %q assigned"? the suggested "to it" feels a touch inelegant
+[11:07] <rogpeppe> fwereade_: though i do think that the loop in Relation.Destroy is qualititatively different from the loop in Machine.EnsureDying
+[11:08] <rogpeppe> "machine 2 cannot become Dying: unit wordpress/0 is assigned to it" seemed like it might read ok to me
+[11:08] <fwereade_> rogpeppe, ok, fair enough
+[11:08] <fwereade_> rogpeppe, I'd be interested in your thoughts re differences, above, though
+[11:09] <rogpeppe> fwereade_: the loop in Relation.Destroy is because we can't remove the relation in one transaction
+[11:09] <rogpeppe> fwereade_: so we're forced to iterate
+[11:09] <rogpeppe> fwereade_: the loop in Machine.EnsureDying is just to give a nicer error message
+[11:09] <rogpeppe> fwereade_: in a relatively unlikely case
+[11:10] <fwereade_> rogpeppe, I disagree with your statement re Relation.Destroy (unless you're talking about the cleanup ops, in which case I don't understand the relevance)
+[11:12] <rogpeppe> fwereade_: unless i've misunderstood the code, we can't run the removeOps in the same txn as setting the relation to dying
+[11:12] <rogpeppe> fwereade_: and that's the reason for the loop AFAICS
+[11:12] <fwereade_> rogpeppe, we either run removeOps or we set to Dying
+[11:12] <fwereade_> rogpeppe, we loop because the conditions that determine which we should do can change underneath us
+[11:13] <rogpeppe> fwereade_: we run removeOps, *then* set to Dying, no?
+[11:13] <fwereade_> rogpeppe, no
+[11:13] <fwereade_> we set to dying if we can't remove it
+[11:13] <rogpeppe> fwereade_: ah, i see, i'd missed that.
+[11:14] <fwereade_> rogpeppe, we need to do something similar with services, but I haven't got to that yet
+[11:14] <rogpeppe> fwereade_: in which case, i'm not sure i see the reason for the loop at all
+[11:14] <fwereade_> rogpeppe, because you think we should just tell the user we couldn't do it?
+[11:15] <rogpeppe> fwereade_: ah, i do see. it's because you can't decide which set of operations to do without looking at the state first.
+[11:15] <fwereade_> rogpeppe, yeah, sorry I wasn't clear
+[11:16] <rogpeppe> fwereade_: so my original statement is true - we can't remove the relation in one transaction
+[11:16] <rogpeppe> fwereade_: we have to find the number of units, then apply an operation.
+[11:18] <rogpeppe> fwereade_: so i still think that makes for a qualititive difference between Relation.Destroy and Machine.EnsureDying
+[11:27] <fwereade_> rogpeppe, ok, I agree there, I'm just not sure that affects my views :)
+[11:28] <rogpeppe> fwereade_: for me, it leaves the loop in Relation.Destroy as necessary, but doesn't necessarily make the loop in EnsureDying necessary, as it's only about changing an error message in an unlikely situation. but i've said that already :-)
+[11:29] <mgz> to go install the current juju-core I need to cp exp/cookiejar from upstream go, for code.google.com/p/go.net - is that expected?
+[11:29] <mgz> I'm not sure what requires that, is there an easy way of chasing the import chain backwards?
+[11:32] <mgz> hm, seems juju-core only wants the websocket package, and nothing actually uses publicsuffix which has the import, but maybe install just wants to do the lot?
+[11:36] <mgz> and the test suite hangs at the same point for me every time...
+[11:37] <mgz> http://paste.ubuntu.com/1506413/
+[11:37] <mgz> probably a dep change or something, will check
+[11:40] <mgz> ...nothing obvious
+[11:46] <Aram> hello everybody.
+[11:47] <TheMue> Hi Aram
+[11:51] <rogpeppe> Aram: hiya
+[11:58] <fwereade_> Aram, heyhey
+[12:00] <fwereade_> rogpeppe, reproposed https://codereview.appspot.com/7005047
+[12:14] <Aram> how do I see this new kanban new age thing?
+[12:14] <Aram> ok, found it.
+[12:15] <Aram> meh
+[12:52] <rogpeppe> fwereade_: ping
+[12:52] <fwereade_> rogpeppe, pong
+[12:52] <rogpeppe> fwereade_: was just looking at https://codereview.appspot.com/7035060/diff/7001/worker/uniter/modes.go?column_width=90
+[12:53] <fwereade_> rogpeppe, ok
+[12:53] <rogpeppe> fwereade_: and wondering about the way that ModeTerminating waits to be able to call EnsureDead
+[12:54] <fwereade_> rogpeppe, it was the only way that crossed my mind -- if you have a better one, I'm all ears
+[12:54] <rogpeppe> fwereade_: is there anything in the state docs that says that a unit watcher gets a change when the number of subordinates changes?
+[12:54] <fwereade_> rogpeppe, heh, probably not
+[12:54] <rogpeppe> fwereade_: i can see that it *does*, but it seems a little... dubious
+[12:55] <rogpeppe> fwereade_: if there was a method on Unit that returned the subordinate names (or the subordinate count), it might be more understandable
+[12:55] <fwereade_> rogpeppe, hmm, maybe the count is the way to go
+[12:56] <rogpeppe> fwereade_: alternatively (and possibly in addition) perhaps the watcher should enumerate all the things that can cause a change.
+[12:56] <fwereade_> rogpeppe, yeah, changing the first without the second still doesn't address your point
+=== flaviamissi is now known as flaviamissi_
+[12:57] <fwereade_> tricky
+[12:57] <rogpeppe> fwereade_: yeah, though if you have the second without the first, it does seem odd that you can watch something and not be able to query for it directly.
+[12:58] <fwereade_> rogpeppe, yeah -- and my issue with the second is that it seems a bit odd to exhaustively list them -- seems like the sort of doc that'll go out of date really quickly and thus cause more confusion than it solves
+[12:59] <rogpeppe> fwereade_: but there are some things you can't watch for, i think, and it's not obvious which ones
+[12:59] <fwereade_> rogpeppe, Unit.WaitAffairsInOrder() ;p
+[12:59] <rogpeppe> fwereade_: i'm happy with SubordinateCount
+[13:00] <rogpeppe> fwereade_: or even Subordinates() []string
+[13:01] <rogpeppe> fwereade_: it might be something that will go out of date quickly, but it's also important information that you need to know if you want to use the API
+[13:01] <fwereade_> rogpeppe, yeah
+[13:01] <rogpeppe> fwereade_: perhaps we could document it in the individual methods themselves.
+[13:01] <fwereade_> rogpeppe, hmm, that's a nice idea
+[13:02] <rogpeppe> fwereade_: "calling this method may trigger a unit watcher change"
+[13:02] <fwereade_> rogpeppe, I've just got one more to merge, then I was about to eat lunch -- I'll ponder while I wait
+[13:02] <rogpeppe> fwereade_: k
+[13:02] <fwereade_> rogpeppe, ah, I was thinking the other way round
+[13:02] <rogpeppe> fwereade_: well, me too
+[13:03] <rogpeppe> fwereade_: and perhaps it's better on the getter
+[13:03] <fwereade_> rogpeppe, needs a clear forms of words either way, and describing it's easier on the setter
+[13:04] <fwereade_> rogpeppe, I will cogitate
+[13:04] <rogpeppe> fwereade_: the problem with my above suggestion is there isn't necessarily a clear relationship between mutating method and the thing that changes
+[13:05] <rogpeppe> fwereade_: "This result of this method may be watched for" ? or something like that.
+[13:05] <fwereade_> rogpeppe, maybe it's easier to exhaustively describe the things that *don't* interact with watches
+[13:05]  * fwereade_ is not actually sure what those are
+[13:06] <rogpeppe> fwereade_: some things are immutable
+[13:06] <rogpeppe> fwereade_: e.g. IsPrincipal
+[13:06] <fwereade_> rogpeppe, yeah
+[13:07] <rogpeppe> fwereade_: and IsAlive requires a different watcher
+[13:08] <fwereade_> rogpeppe, the Agent one? yeah, that should be made clear
+[13:08] <fwereade_> bah
+[13:09] <fwereade_> rogpeppe, ok, really having lunch now, bbiab
+[13:09] <rogpeppe> fwereade_: enjoy!
+=== flaviamissi_ is now known as flaviamissi
+[13:09] <fwereade_> cheers
+=== TheMue_ is now known as TheMue
+[14:22] <rogpeppe> fwereade_: ping
+[14:22] <fwereade_> rogpeppe, pong
+[14:22] <rogpeppe> fwereade_: i'm looking at TestSubordinateDying in https://codereview.appspot.com/7030061/diff/1/worker/uniter/uniter_test.go
+[14:23] <fwereade_> rogpeppe, go on
+[14:23] <fwereade_> rogpeppe, (horrid, ain;t it)
+[14:23] <rogpeppe> fwereade_: the test code looks somewhat intricate. why can't you just use AddTestingCharm?
+[14:24] <fwereade_> rogpeppe, because AddTestingCharm doesn't add something you can actually download, does it?
+[14:24] <rogpeppe> fwereade_: hmm. maybe it should.
+[14:25] <fwereade_> rogpeppe, seems like a bit of a heavyweight solution to me
+[14:25] <rogpeppe> fwereade_: at the least, i think the code to make a charm available for download could be factored into a different function.
+[14:26] <rogpeppe> fwereade_: it wasn't clear to me that that was the sole purpose of that block of code
+[14:26] <fwereade_> rogpeppe, IIRC it's more different to the other code that does that than it looks
+[14:28] <fwereade_> rogpeppe, 3 or 4 params to save 15 lines just once feels a bit borderlin
+[14:29] <rogpeppe> fwereade_: what are the params?
+[14:31] <rogpeppe> fwereade_: one other thing: why ClonedDir and not just Dir?
+[14:31] <fwereade_> rogpeppe, hmm, charm, base charm url, and revision, I think -- with additional subtle unclarity re revision, based on the other use, I think... but, hmm, maybe I could drop that
+[14:31] <fwereade_> rogpeppe, because I don't believe it's ever actually valid to use Dir -- I'd rather copy a few files to a tmpfs than run the risk of accidentally overwriting something in the source tree
+[14:32] <rogpeppe> fwereade_: you're worried that Bundle might overwrite something?
+[14:33] <rogpeppe> fwereade_: i think this kind of usage is exactly why we have Dir
+[14:33] <fwereade_> rogpeppe, I guess it is only used there, but my habit is never to use it -- not really defensible I guess
+[14:35] <rogpeppe> fwereade_: AFAICS there's only a need for a single parameter - the *charm.Dir
+[14:35] <fwereade_> rogpeppe, that is because I imagine you're not looking at the createCharm type elsewhere in that file
+[14:35] <fwereade_> rogpeppe, which was the original source of that block
+[14:36] <fwereade_> rogpeppe, it certainly doesn't seem sensible to factor that block out of this test only for the use of this test
+[14:37] <rogpeppe> fwereade_: to me, it's a big block of code that is only tangientally related to the main function of the test. and it has an easily defined name and purpose, so putting it in its own function seems to make sense.
+[14:37] <rogpeppe> fwereade_: i have to look very hard to see what stuff defined in that block is used outside it
+[14:38] <rogpeppe> fwereade_: whereas a simple "serveCharm" function would make both the purpose of the block and its side effects obvious
+[14:39] <fwereade_> rogpeppe, and collide with the serveCharm type used both in that test and elsewhere -- similarly if we call it createCharm
+[14:39] <fwereade_> rogpeppe, if we make it a step called createSubordinateCharm then people will start assuming it's safe to use it in other tests
+[14:39] <fwereade_> rogpeppe, which it is most decidedly not
+[14:40] <fwereade_> rogpeppe, that's the primary reason I have a separate test case in the first place
+[14:40] <fwereade_> rogpeppe, because the assumption that the charm is not subordinate is baked into basically everything else in that file
+[14:43] <fwereade_> rogpeppe, I agree we'll have to factor it out if and when a subordinate uniter develops any other behaviour differences
+[14:43] <fwereade_> rogpeppe, but for now segregating it all neatly in a single scope seems best to me
+[14:43] <rogpeppe> fwereade_: i'm just saying that i found that test quite hard to read, and i'm trying to find a way to make it easier.
+[14:44] <fwereade_> rogpeppe, I'm not actually trying to contradict you, sorry if I'm being short with you -- I'm just condensing my own frustrating experiences with it into a few minutes of IRC
+[14:44] <fwereade_> rogpeppe, I was actually over the moon when I got that behaviour tested in "only" 150 lines of new code
+[14:45] <fwereade_> rogpeppe, I was expecting to have to gut the whole thing and reassemble it with fewer assumptions :)
+[14:51] <rogpeppe> fwereade_: the code in createCharm.step looks almost identical to the code in TestSubordinateCharmDying to me
+[14:51] <rogpeppe> fwereade_: surely there's a function you can factor out there?
+[14:51] <fwereade_> rogpeppe, yes, it's quite similar
+[14:52] <rogpeppe> fwereade_: i don't see any significant difference
+[14:52] <fwereade_> rogpeppe, maybe the bundle/hash step, I guess
+[14:53] <rogpeppe> fwereade_: AFAICS they both do the same bundling and hashing. i'm probably missing something though.
+[14:54] <rogpeppe> fwereade_: the only difference i can see is that createCharm does a SetDiskRevision
+[14:56] <rogpeppe> fwereade_: i'd be much happier if that reasonably intricate code existed in one function only.
+[14:58] <fwereade_> rogpeppe, so, 10 lines of code with no branches or actual complexity... this is, it is true, exactly the sort of thing I would once have factored out without a second thought
+[14:58] <fwereade_> rogpeppe, however I have learned, painfully, that if I do things like that on this team I have to justify my decisions in tedious detail
+[14:59] <rogpeppe> fwereade_: for me, in this case, it's a no-brainer
+[14:59] <fwereade_> rogpeppe, and I have history of being told not to factor out bundling/hashing functionality
+[14:59] <rogpeppe> fwereade_: it's not adding to any public API
+[15:00] <rogpeppe> fwereade_: and the code is almost identical in both cases (and it's 9 steps that are hard to remember and easy to get wrong)
+[15:01] <rogpeppe> fwereade_: i think it's non-controversial
+[15:02] <mramm> rogpeppe: fwereade_: Aram: TheMue: you guys up for the kanban review meeting?
+[15:02] <rogpeppe> fwereade_: also, this code isn't strongly related to the tests - it's more closely tied to the charm server requirements.
+[15:02] <TheMue> mramm: I'm ready
+[15:02] <rogpeppe> mramm: i am
+[15:02] <mramm> the google hangout is in the calendar invite
+[15:02] <fwereade_> rogpeppe, it's 8 lines AFAICT
+[15:03] <fwereade_> rogpeppe, can we please not bring the charm serving into it? the bundling/hashing really is of a part, the url we happen to serve from is IMO not
+[15:04] <rogpeppe> fwereade_: so it's just coincidence both those chunks of code do almost exactly the same thing?
+[15:05] <Aram> if only G+ worked
+[15:06] <Aram> can't hear a damn thing
+[15:23] <Aram> I wish hangouts didn't peg my CPUs.
+[15:31] <fwereade_> rogpeppe, on reflection, fwiw, I think I'm ok with an uploadCharm func that includes bundle/hash/add-to-ctx.charms, only needs a small tweak
+[18:34] <rogpeppe> right, that's me for the day
+[18:34] <rogpeppe> g'night all!
+[18:43] <mramm>  https://juju.ubuntu.com/ <--- Check out the new fancy juju video

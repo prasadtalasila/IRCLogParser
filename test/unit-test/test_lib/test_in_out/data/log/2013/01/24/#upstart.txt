@@ -1,0 +1,49 @@
+[02:23] <eloist> Hello
+[02:23] <eloist> I have trouble with an upstart script (on ubuntu 12.04lts) that I've been banging my head against and can't seem to figure out
+[02:24] <eloist> all I am trying to do is have a script export some env vars before running the actual process, for this i have the following in the script block: ". /root/env.sh"
+[02:25] <eloist> trying to start the service, I get the following in my log file: /proc/self/fd/9: 4: .: Can't open /root/env.sh
+[02:25] <eloist> file is definitely there though and the permission seem to be right :(
+[03:18] <eloist> i believe I found the reason and it's perforce changing the line feeds to windows line feeds
+[08:29] <munderwo-work> Hi all. I have a process that is being handled by upstart. I've got it handling SIGTERM signals, and I understand that this is what upstart emits when doing a stop <service>.the problem is that upstart doesnt seem to be waiting for my process to handle the signal and shutdown gracefully. Is there an extra timeout that I need to give upstart to make it wait longer?
+[08:31] <munderwo-work> AM I misunderstanding what SIGTERM is supposed to do?
+[08:35] <jodh> munderwo-work: upstart will indeed send SIGTERM by default (you can change that using the 'kill signal' stanza). It will then wait for up to 5 seconds by default for the job to end. If it doesn't end, upstart will send SIGKILL. If your job needs longer, specify 'kill timeout'. See init(5) for details of both kill options.
+[08:39] <SpamapS> jodh: well, good morning. Been watching the commits to upstart. Lots of weird new stuff .. still no fix for "my pid is stuck"
+[08:39] <SpamapS> doh
+[14:12] <mangoman> Hello, Upstart noob here. I created a new job but when I try to run it I get "Unknown job".  When I run `initctl list` it doesn't show up there, but it does show up in the /etc/init/ folder.
+[14:15] <mangoman> How can I get it to recognize it? Using this script: http://wiki.nginx.org/Upstart
+[14:24] <xnox> mangoman: try $ sudo initctl start nginx
+[14:27] <mangoman> xnox: still "unknown job"
+[14:28] <xnox> mangoman: $ initctl check-config nginx
+[14:28] <afournier> hi there !
+[14:29] <xnox> mangoman: $ initctl status nginx
+[14:29] <xnox> if that all fails, try $ initctl reload-configuration
+[14:29] <afournier> is it possible to start a task at the end, ie. the login prompt ? 
+[14:30] <afournier> i know the question is a bit stupid as upstart is based on events
+[14:31] <afournier> but it's not like the prompt login has too much depencies, at the same time when it spawns, upstart is still starting other task, and the prompt is hidden by the output
+[14:31] <mangoman> xnox: thank you
+[14:32] <afournier> maybe the best solution would be to turn upstart silent, so only the prompt appears, and other tasks can continue to be started, what do you think ?
+[14:33] <xnox> afournier: what do you want to achieve?
+[14:33] <xnox> afournier: during boot plymouth usually owns the consolse so one should talk to plymouth to display/ask user questions.
+[14:34] <afournier> i just want a clean terminal when the machine is starting :)
+[14:34] <afournier> plymouth ?
+[14:34] <afournier> i dont have plymouth
+[14:34] <xnox> =/ then i think your machine is broken horibbly.
+[14:34] <afournier> it's a headless device with a serial for interface
+[14:34] <xnox> i think you do have plymouth, and maybe not know about it.
+[14:34] <xnox> yeah, that's fine.
+[14:35] <afournier> is plymouth embedded in upstart ?
+[14:35] <xnox> no.
+[14:35] <xnox> no, that would be silly.
+[14:35] <afournier> then my distro is broken...
+[14:35] <xnox> afournier: i guess you should configure upstart to log to files only and not to the console / output.
+[14:35] <xnox> afournier: see cookbook linked from the topic.
+[14:35] <afournier> xnox: i'll do that, but i am not gonna add plymouth :)
+[14:36] <xnox> afournier: =) sure, do what you like ;-)
+[14:37] <afournier> until my distro is not horibbly broken :)
+[16:49] <xnox> I'm not entirely happy with upstart-udev-bridge =/
+[16:49]  * xnox hoped for some better way to encode matching variables
+[16:55] <xnox> hmm... i must "exit 0" from pre-start script?
+[17:06] <xnox> jodh: in the usb-creator branch, there is a scary upstart job for you to review =))))
+[17:07] <xnox> it's a poor-man's user session job.
+[20:41] <JanC> afournier: you don't need plymouth to use upstart, but it might still be interesting to look at Ubuntu's default upstart job configs to see how it handles that sort of things
+[20:42] <JanC> (oh, and plymouth can do text-mode boot, it's not necessarily graphical...)

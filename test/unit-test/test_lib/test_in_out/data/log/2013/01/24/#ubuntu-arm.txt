@@ -1,0 +1,310 @@
+=== XorA is now known as XorA|gone
+=== zz_chihchun is now known as chihchun
+[07:17] <dholbach> good morning
+=== albert is now known as Guest19957
+=== Guest19957 is now known as Phryq
+=== yofel_ is now known as yofel
+[09:51] <ogra_> janimo, heh, i have what i think is the worst workaround i ever found ... for the sound init
+[09:52] <ogra_> an upstart job with: rtcwake -u -s 1 -m mem
+[09:52] <janimo> I am also looking into it
+[09:52] <ogra_> costs 1sec boot time and makes the screen flash once during boot
+[09:52] <janimo> and it works if I enable HDA_INTEL
+[09:52] <ogra_> (its a 1sec suspend)
+[09:52] <janimo> but volume if off on start
+[09:53] <janimo> I need to see how to turn that on by default on boot,
+[09:53] <ogra_> that should be solvable by a ucm setup
+[09:53] <janimo> I tried amixer calls and to no avail
+[09:53] <janimo> only from control center
+[09:53] <janimo> but it looks like INTEL_HDA should be on (it is in Android) even if the hw does not seem to have HDMI connectors
+[09:53] <ogra_> you need to unmute the left and right channel of the speaker control separately i think
+[09:54] <ogra_> why did we switch it off again ?
+[09:54] <ogra_> i remember diwic asked for it to be off
+[09:54] <janimo> right, I tried sudo amixer -c 1 cset numid=1,iface=MIXER,name='Speaker Playback Switch' 1,1
+[09:54] <janimo> no idea, the whole ALSA stack confuses me
+[09:54] <janimo> what are controls and simple controls, are they both neede, is controls a superset?
+[09:55] <janimo> so many ways to set alsa (alsactl restore, amixer, alsamixer, control-center)
+[09:55] <janimo> the fact there are 140+ controls is of great help as well :)
+[09:56] <ogra_> yeah, thats awesome, isnt it ? i bet you could turn the nx7 into a recording studio if you could attach the right peripherials :P
+[09:56] <janimo> no idea what those things do, or why are they all exposed.
+[09:57] <janimo> and I thought the ac100's sound options were complicated
+[09:57] <ogra_> haha
+[09:57] <janimo> I'll send a config patch to kernel devel and then see how to debug further but should hopefully only be some alsa config file tweaking
+[09:57] <janimo> and the card becomes the second, as hda will be card0
+[09:57] <janimo> as in Android
+[09:58] <janimo> never heard of rtcwake before, good to know
+[09:58] <ogra_> check the chanelog first, there was a reason why diwic wanted it off
+[09:58] <janimo> yes, he just said it is useless as we do not have HDMI
+[09:58] <ogra_> hmm, k
+[09:58] <janimo> but it is on in Android and seems to be needed for suspend
+[09:58] <ogra_> as long as it doesnt cause mad wakeups etc
+[09:58] <janimo> it was just pruned as poart of simplifying config
+[09:59] <ogra_> yeah, then switch it on again
+[09:59] <ogra_> oh, btw i uploaded an ambient light script as well yesterday
+[09:59] <janimo> it is probably just a tegra hw bit that needs to be poked for proper audio suspend even if not connected to anything
+[09:59] <janimo> great
+[09:59] <ogra_> only GPS and camera missing :)
+[09:59] <ogra_> oh, and BT needs another deep look
+[10:00] <janimo> yes, camera is looked at by nvidia (not sure of the status but I am talking to the dev - our own Bryan Wu)
+[10:00] <janimo> is cyphermox on BT and GPS? (and NFC) ?
+[10:00] <ogra_> hehe
+[10:00] <ogra_> do we have NFC ?
+[10:00]  * ogra_ wasnt aware
+[10:01] <janimo> yes the device has it, fw in the blob collection
+[10:01] <ogra_> and no idea about cyphermox, but we will have some -desktop attendance on friday
+[10:01] <janimo> not too important I'd say, webcam is the real important one
+[10:01] <ogra_> right and the xinput bug
+[10:02] <janimo> yes, the webcam sensorwise, xinput overall showstopper
+[10:02] <ogra_> its not that bad, if you make sure to actually leave time between taps
+[10:03] <ogra_> i get through for a whole evening if i tap really carefully
+[10:03] <ogra_> i wonder if we could somehow just turn down the sensitivity to work around it
+[10:04] <sveinse> How is the update-initramfs triggers supposed to work? When installing precise on my armel target, I see a few packages that "update-initramfs: deferring update (trigger activated)" like it should. But after the kernel has been setup, all packages installed which triggers update-initramfs all makes update-initramfs run. Many times. Is this how it should be?
+[10:04] <ogra_> depends, packages can force a trigger execution
+[10:04] <sveinse> What can I do to debug this thing?
+[10:05] <ogra_> well, read about triggers i'd say :)
+[10:05] <sveinse> Well I don't see any difference in the triggers in the packages that run and defers and those which runs it immediately
+[10:08] <sveinse> If I do remember correctly, the kernel runs /etc/kernel/(pre|post)(rm|inst).d/ and thus forces update-initramfs to run. Could this be altering the behaviour of the triggers somehow?
+[10:20] <sveinse> I'm not enlightened by the dpkg-trigger documentation.. But you haven't seen that update-initramfs is run multiple times during installation on your systems?
+[10:24] <infinity> sveinse: I generally only see it run multiple times when an apt run gets split into several dpkg runs to break loops or satisfy pre-depends, etc.
+[10:24] <infinity> sveinse: A good indicator of that is often seeing the "Reading dpkg database... " stuff in your terminal backscroll.
+[10:25] <infinity> sveinse: Triggers can't carry between dpkg invocations (for, I hope, obvious reasons), so you'll sometimes get more than one trigger from the same package in an apt run.
+[10:26] <sveinse> infinity: No, I dont think my runs are between dpkg invocations. It's all in the "Setting up ..." section
+[10:27] <infinity> If it's a big long string of postinsts, yeah, I'd probably have to see it to debug what's happening.
+[10:27] <infinity> It could be a dpkg bug, or it could be initramfs-tools' trigger is goofy.
+[10:27] <infinity> Or it could be postinsts of certain packages calling it wrong.
+[10:27] <sveinse> How does dpkg decide when to run a trigger?
+[10:27] <infinity> (The kernel forces it to run triggerless, but that's a different story)
+[10:28] <infinity> Normally, it runs them at the end of a dpkg invocation, based on registered interest or delayed triggers (the latter, in the initramfs-tools case).
+[10:29] <infinity> Anyhow, not going to get into this at 3:30am.  But if you have some terminal logs that show the offending behaviour in action, feel free to reference them in backscroll, or file a bug and reference that or some such.
+[10:30] <infinity> Just don't be offended if I decide to close it as invalid after looking into it. ;)
+[10:30] <sveinse> What it seems in my case is that a few packages triggers it, then dpkg runs the trigger. One more or sometimes two triggers it, dpkg runs the trigger once more.
+[10:30]  * janimo just managed to get something that sounds like a drunk and angry R2D2 out of the nexus7 by randomly toggling things in alsamixer
+[10:30] <janimo> need a way to turn it off, it persists across reboot
+[10:31] <sveinse> infinity: Well, I'm more like grateful. I've been struggling with this for a while now
+[10:50] <dmart> janimo: you want to be careful with that ... I know someone who literally melted his chromebook by toggling alsamixer switches...
+[10:50] <janimo> dmart, yes, I had read hrw's account
+[10:51] <janimo> for a moment I had feared I may damage the speakers too
+[10:51] <hrw> janimo: ucm profiles for chromebook are present in raring and in sru queue for precise/quantal
+[10:51] <janimo> but it's back again now
+[10:51] <janimo> hrw, I have no chromebook, it is the nexus7 that I was toggling alsa settings on
+[10:52] <hrw> ah
+[10:52] <dmart> hrw: Are the ucm profiles purely a userspace thing?
+[10:53] <hrw> yes
+[10:54] <dmart> janimo: really, it feels like the kernel should police any settings which can actually damage the hardware...  but I don't know enough about alsa to know how to do that.
+[10:54] <dmart> hrw: ^
+[10:54] <hrw> I need to update kernel as some fixes went to kernel
+[10:55] <janimo> dmart, I agree, but maybe some hw can be broken in so many ways the kernel cannot catch all cases. No idea really
+[10:55] <janimo> this may have been a simple bug/oversight, hrw?
+[10:55] <dmart> It's possible I am missing some fixes ... I haven't updated for a bit
+[10:55] <janimo> just like one could fry monitors with VGA poking, there may be root-only things that can damage modern hw
+[10:56] <hrw> janimo: they fucked up "ASoC machine" source
+[10:56] <dmart> janimo: sure, but that's still a bug in my view.  I thought the ucm profiles were more about presenting the mixer settings in a more intelligible way, since the hardware-specific mixer config can be pretty complex
+[10:56] <janimo> I know little about ALSA too, learned some the past two days but am still bewildered by the large number of concepts and config options
+[10:56] <hrw> so you can connect wrong parts of audio chip to output
+[10:57] <dmart> hrw: My guess was that the likely problem is that the hardware mixer allows you to connect two SoC outputs to the same analog sink
+[10:57] <hrw> dmart: and one of them is digital iirc
+[10:58] <dmart> hrw: oh!
+[10:58] <dmart> hrw: I wondered if bad things could be made to happen by, say, connecting the left and right DAC1 channels to a single channel of the speaker.  But I didn't really want to try that...
+[10:59] <hrw> dmart: check my blog for exact steps
+[10:59] <hrw> dmart: now my left speaker can only generate heat cause it is unable to generate sound anymore
+[11:00] <dmart> hrw: on the plus side, you can now use /dev/heat to make a novel user interface...
+[11:00] <hrw> dmart: but /dev/heat is symlink to /dev/stinkysmall
+[11:00] <hrw> dmart: but /dev/heat is symlink to /dev/stinkysmell
+[11:22] <sveinse> I have a custom deb package which installs a hook into initramfs. This hook relies on a file from /etc. Now when I install this package the hook is put into the filesystem early (when unpacking), yet the /etc file is put in late (when setting up I guess). However, update-initramfs is run by other packages in between these two steps and that makes update-initramfs bork since its missing the...
+[11:22] <sveinse> ...file from /etc. How should I deal with that?
+=== chihchun is now known as zz_chihchun
+[12:59]  * xnox has just flashed nexus7 using... usb-creator
+[13:54] <pfui> what's the state of ubuntu on the samsung chromebook?
+[13:54] <pfui> any chance we'll have working video acceleration anytime soon?
+[14:23] <xnox> pfui: hrw does samsung chromebook stuff.
+[14:28] <pfui> xnox: hmm... seems to have a few relevant posts on his blog. thanks!
+[16:00] <reisei> hi, all! I need connect nexus 7 with ubuntu under Windows via terminal, but the system asks for driver... Which one  I need?
+[16:03] <Rjs> reisei: i'm quite ignorant about windows so not sure if this is up-to-date, but the linux kernel source has documentation at http://kernel.org/doc/Documentation/usb/gadget_serial.txt (search for "Windows")
+[16:04]  * ogra_ has no idea 
+[16:04] <ogra_> on ubuntu you can just run screen with the right args in a terminal ... or minicom, surprising that win needs actual drivers for a serial USB port
+[16:05] <Tassadar> you'll probably need to write your own, since nexus 7 has it's own vid and pid
+[16:05] <Tassadar> (meaning you'll have to write definiton file, which tells windows to use it's generic driver)
+[16:05] <ogra_> there is no generic usb serial drive in windows ?
+[16:05] <ogra_> *driver
+[16:06] <Tassadar> yes, but you'll have to tell windows to use it on that vid/pid - that's what windows calls "driver"
+[16:07] <Tassadar> it is in that doc Rjs linked
+[16:07] <Rjs> (I'm still ignorant but guessing:) the windows inf file that the documentation talks about is at http://kernel.org/doc/Documentation/usb/linux-cdc-acm.inf and seems to contain vendor and product IDs, so I guess you could change them there
+[16:07] <ogra_> ah
+[16:08] <Tassadar> yeah, should be as easy as that, had to do that for one ACM USB thingy already
+[16:08] <Tassadar> funny how that is "driver" for windows)
+[16:09] <Rjs> that file talks about something called usbser.sys, so I guess that inf file is really a configuration file for the generic driver named usbser.sys (I presume that's included in windows, since the doc doesn't speak about having to download it)
+[16:14] <Rjs> hmm, does the ubuntu nexus7 really have its own vendor/product IDs? as far as I can tell from my syslog, the vendor and product IDs in the inf file I linked to appear to be correct: vid 0x0525 and pid 0xa4a7 so I'm guessing that inf file should work as it is
+[16:14] <Rjs> my syslog has "New USB device found, idVendor=0525, idProduct=a4a7" from the time I still used the standard ubuntu kernel (I have later switched to the combined ethernet+serial gadget which has a different product id)
+[16:16] <Tassadar> maybe it doesn't, that vid is "0525  Netchip Technology, Inc." and pid is "a4a7  Linux-USB Serial Gadget (CDC ACM mode)"
+[16:17]  * Tassadar goes to look at that driver's source
+[16:20] <reisei> That's so opposite to linux simpicity...
+[16:23] <Tassadar> I don't get why they don't just use USB device class to find driver like Linux does
+[16:26] <Tassadar> yeah, the vid/pid is hardcoded
+[16:27] <Tassadar> apparently they donated some pids, "Thanks to NetChip Technologies for donating this product ID."
+[16:27] <Tassadar> then you can just use the driver as is :)
+[16:47] <wooy> Hi, I was recently thinking about getting an ARM device as my home server (irc, ftp, bittorrent, small http, etc). Cubieboard and some ODROID boards looks promising, but I even got as wild as thinking about Nexus 7.
+=== XorA|gone is now known as XorA
+[17:07] <xnox> Rjs: those look different to mine.
+[17:08] <xnox> 484	+    'ID_VENDOR_ID': ('18d1',),
+[17:08] <xnox> 485	+    'ID_MODEL_ID': ('4e40', 'd001',),
+[17:08] <xnox> Rjs: ^^^^ for nexus7's i saw around.
+[17:09] <xnox> and that's just standard google / nexus7 id's.
+[17:09] <ogra_> dont mix up kernel and bootloader though ....
+[17:09] <xnox> ah!
+[17:09] <ogra_> the nexus reports different things in the different bootloader modes
+[17:09] <XorA> how dumb is that :-(
+[17:09] <ogra_> and kernel wise it matters what is actually bound to the gadget setup
+[17:10] <Tassadar> the pid is also different if you turn on/off the debug mode (adb)
+[17:11] <ogra_> XorA, not dumb, that whay the other end knows if it is in flash mode, media player mode recovery (with adb) etc etc
+[17:12] <ogra_> indeed under the assumption that you have a udev rule (or windows driver) that can handle that state
+[17:13] <Tassadar> and the g_serial driver has the pid/vid hardcoded in drivers/usb/gadget/serial.c, if you wanna take a look
+[17:15] <XorA> ogra_: there has to be a better way, making that sort of mess has no real justification
+[17:15] <XorA> ogra_: other devices work fine with constant ids
+[17:15] <ogra_> tell that to android
+[17:15] <ogra_> i dont think thats actually nexus7 specific
+[17:15] <ogra_> at least for the bootloader side
+[17:15] <XorA> its probably more a function of which lazy engineer did the integration
+[17:17] <ogra_> wooy, go with a board, the nexus7 would be a waste in such context
+[17:23] <ogra_> xnox, hrm, that upstart job is quite uglz
+[17:23] <ogra_> *ugly
+[17:25] <ogra_> xnox, and it will be executed for every USB device you ever plug in
+[17:26] <xnox> ogra_: well, very soon now we will have upstart user session.
+[17:26] <xnox> ogra_: then the job will move and run in the user session, if usb devices are plugged in.
+[17:26] <ogra_> yeah, still
+[17:26] <xnox> ogra_: the alternative I had was: udev-rules with RUN+=
+[17:26] <ogra_> i think having a udev rule that triggers something in the user session would be better
+[17:27] <xnox> apart from that cannot "spawn", if usb-creator is started the udev rules processing is blocked until usb-creator exits.
+[17:27] <xnox> another option is to have: udev rules which does "start usb-creator" to launch the upstart job.
+[17:27] <xnox> ....
+[17:27] <xnox> but that's like two hacks instead of one.
+[17:27] <ogra_> yeah, no, well ...
+[17:28] <xnox> ogra_: the trouble is that, udev runs at system level. And the hops to get DISPLAY & $uid are ugly =/
+[17:28] <xnox> ogra_: by the way upstart job is quicker to launch usb-creator than udev rule + shell wrapper
+[17:28]  * xnox has no idea why.
+[17:30] <ogra_> less subshell calls probably
+[17:30] <ogra_> still, i dont like to idea to fire off that job every time you insert a usb device
+[17:31] <ogra_> there must be a more elegant way
+[17:33] <ogra_> i wonder if there isnt a more fine grained way to use the event .... i.e. some kind of filtering
+[17:37] <xnox> =/ yeah that would be nice
+[17:37] <xnox> ogra_: anyway, I did ask james hunt to review it and see if he can offer something better.
+[17:38] <xnox> Note the bottom on upstart-udev-bridge manpage "This is a temporary tool until init(8) itself gains the functionality to read them directly; you should not rely on its behaviour."
+[17:38] <ogra_> yeah, well, we could have a udev rule that emits an event
+[17:39] <ogra_> so you filter on the lower level, and the upstart job just reacts to "nexus7-added" events
+[17:41] <ogra_> a udev rule with ... RUN+="initctl emit --no-wait nexus7-added"
+[17:42] <ogra_> we have that rule file already anyway
+[17:43] <ogra_> (or at least we should, for setting the udev-acl stuff to not need root access)
+[19:21] <janimo> marvin24_, is your 3.8 ac100 kernel working well?
+[19:37] <infinity> janimo: Thinking of updating raring to something modern?
+[19:38] <janimo> infinity, sure, if it works. marvin24_ said he's working on a 3.8 port
+[19:53] <marvin24_> janimo: yes, 3.8 works fine
+[19:53] <marvin24_> but building a kernel package takes weeks ...
+[19:54] <marvin24_> I hope I can upload something on the weekend or so
+[19:54] <janimo> marvin24_, great. Same gitorious repo?
+[19:54] <janimo> weeks really?
+[19:55] <janimo> do you have errors building it?
+[19:56] <marvin24_> janimo: it's still the kernel in my old repo
+[19:56] <marvin24_> https://www.gitorious.org/~marvin24/ac100/marvin24s-kernel/
+[19:57] <marvin24_> some modules failed, yes
+[19:57] <marvin24_> so I need to disabled them
+[19:57] <marvin24_> then I got abi errors
+[19:57] <marvin24_> turned out I need to specify "-eskipmodules"
+[19:57] <marvin24_> after several tries
+[19:58] <marvin24_> and each one is two hours and I'm doing it in my free time ...
+[20:18] <janimo> marvin24_, I used debuild with -nc
+[20:18] <janimo> so it does not clean the tree
+[20:18] <janimo> before rebuilding
+[20:22] <marvin24_> well, I use ccache (with --prepend-path=/usr/lib/ccache)
+[20:22] <janimo> marvin24_, do you know if nvidia keep some sort of wiki or updates on what is mainlined and what is pending for tegra2 and tegra3? An overview of sorts
+[20:23] <marvin24_> janimo: not that I know of
+[20:23] <marvin24_> I think they have an internal list
+[20:23] <marvin24_> but what's getting done, is mostly in a random order
+[20:24] <marvin24_> in fact, the most painful stuff missing is suspend/resume
+[20:24] <marvin24_> and more powermanagement stuff
+[20:25] <marvin24_> also some simple stuff just takes very long
+[20:25] <marvin24_> e.g. backlight support
+[20:25] <janimo> did graphics support land already?
+[20:25] <janimo> DRM
+[20:25] <marvin24_> yes, it's included in 3.8
+[20:25] <marvin24_> but without backlight, only hdmi works
+[20:25] <janimo> funny
+[20:25] <marvin24_> I think the backlight code is discusses for nearly one year now
+[20:26] <marvin24_> and still no conclusion
+[20:26] <janimo> do you know whether tegra2 or tegra3 is more completely supported in mainline?
+[20:26] <janimo> so you carry the backlight code in your ac100 branch?
+[20:26] <marvin24_> I think they are pretty inline
+[20:26] <marvin24_> yes, I just one of the discussed implementations
+[20:27] <marvin24_> but that's already outdated
+[20:27] <marvin24_> in fact, now they wait for some generic framework
+[20:28] <janimo> they have working 3.8 code for all things just not mainlined though?
+[20:29] <marvin24_> yes
+[20:29] <marvin24_> the way it needs to be integrated into kernel is, well, complicated
+[20:30] <janimo> ok, thanks. Checking your branch out now
+[20:30] <marvin24_> in fact, you just need to program some gpios
+[20:30] <marvin24_> but there is no generic interface for this yet
+[20:30] <marvin24_> and upstream does not like soc specific backlight ...
+[20:31] <marvin24_> very long, sad story
+[20:43] <janimo> marvin24_, does the 3.8 kernel require uboot or is the defautl ac100 bootloader enough?
+[20:59] <marvin24_> janimo: both should work, but need different configs
+[21:00] <marvin24_> fastboot needs cmdline from kernel and u-boot needs kernel command line from u-boot
+[21:00] <marvin24_> but I don't plan to support 3.8 kernels with fastboot
+[21:01] <marvin24_> 3.1 supports both
+[21:05] <marvin24_> janimo: http://tinyurl.com/b55syst
+[21:05] <marvin24_> this is what I have for now
+[21:05] <marvin24_> against raring 3.8 kernel
+[21:06] <marvin24_> ac100 specific patches are still missing
+[21:06] <marvin24_> but compiles at least
+[21:08] <janimo> marvin24_, nice. How many ac100 pacthes are there?
+[21:10] <marvin24_> well, my linux-ac100-3.8 branch contains 25 patches, mostly nvec specific
+[21:10] <marvin24_> but in fact, mainline also boots without any patch, but you will get no backlight ...
+[21:10] <janimo> this patch changes a few other arm flavour's config files, probably a side effect of using the config updater scripts
+[21:11] <marvin24_> yes, kernelconfig editconfig ...
+[21:11] <janimo> I think it would be cleaner as a first step to have a dedicated tree, not based on the current kernel source
+[21:11] <janimo> as it is unlikely they will take patches for this
+[21:11] <marvin24_> I don't expect ubuntu to take patches for tegra
+[21:11] <janimo> so a new linux-tegra package without any other flavours
+[21:11] <marvin24_> because they cannot support it
+[21:12] <janimo> right, just mentioning the resulting kernel would be cleaner than this patch suggests
+[21:12] <janimo> if we had this kernel in raring would we need to use uboot on the ac100 then?
+[21:12] <marvin24_> yes
+[21:13] <marvin24_> I need to patch the debian dir anyway
+[21:13] <janimo> isn;t that complicating the installer besides adding one other package to maintain?
+[21:13] <marvin24_> and most is because of the abi stuff
+[21:13] <janimo> I understand preferring to work with uboot but is fastboot support complicated?
+[21:14] <marvin24_> yes, because I don't have the source ...
+[21:14] <janimo> I'd like us to use this in raring but will need to speak to ogra to see whether it is a lot of effort to adapt to uboot
+[21:15] <janimo> cannot whatever 3.1 does be emulated in 3.8 without knowing what fastboot does?
+[21:15] <marvin24_> https://launchpad.net/~ac100/+archive/ppa/+packages has u-boot package already
+[21:16] <marvin24_> janimo: well, I prefer minimal patches
+[21:17] <marvin24_> why do you want fastboot?
+[21:17] <janimo> marvin24_, oh just so 3,8 is a drop-in replacement for 3.1
+[21:17] <janimo> so we do not need any extra testing or image work
+[21:17] <janimo> and not introduce a new uboot flavour for the ac100 only
+[21:18] <marvin24_> it also causes extra work to support fastboot
+[21:18] <janimo> nothing against uboot per se, just keeping changes minimal as you say :)
+[21:18] <marvin24_> I'm not sure how to adapt 3.8 to make it woking with fastboot
+[21:19] <janimo> and to make installation similar to previous cycles
+[21:19] <janimo> would this also be nvflash of a bootimg and boot it?
+[21:19] <marvin24_> (except chaning the krnel config)
+[21:20] <marvin24_> no need to flash, as we planed to use tegrarcm
+[21:20] <marvin24_> in fact, once ogra said that he won't put more work on the ac100 port
+[21:21] <marvin24_> we decided to restart from something clean
+[21:21] <marvin24_> I know this causes more pain for users, but less for us
+[21:26] <marvin24_> also u-boot needs a new partition table because otherwise it cannot load the kernel
+[21:26] <marvin24_> and this disables nvflash
+[21:28] <marvin24_> because fastboot expects some proprietary partition table
+[21:54] <AmEv> Now, to get Ubuntu on the Toshiba A*T*100.. haha
+[21:54] <AmEv> I've got a fully-functional FS. No working kernel...
+[21:56] <AmEv> Do know how to kill the Android GUI stuff to get X working, via ADB shell, but a pure native way would sure be nice...
+[21:59] <AmEv> Wait, do I need U-boot to boot Ubuntu? Or is a Fastboot-based system OK?
+[22:06] <questionguy> hey, yo, where do i find like a this thing: http://packages.ubuntu.com/ but exclusive to arm
+[22:10] <questionguy> anyone?
+[22:13] <questionguy> is there even an apt repository for arm devices?
+[22:18] <achiang> questionguy: http://ports.ubuntu.com/
+[22:23] <questionguy> thanks a ton!
+[22:26] <infinity> questionguy: It's a longstanding bug/misfeature that packages.u.c doesn't list ports, but you can see that the same packages exist on all arches by going to, say, launchpad.net/ubuntu/+source/<package>
+[22:38] <questionguy> infinity: yeah i literally thought that i would just find it by clicking around, and its completely inexcellent that it's so well hidden
+[22:38] <questionguy> but it's simple enough to remember, having seen it
+[22:42] <AmEv> Heh, should've known that....
+[22:44] <infinity> questionguy: Of course, if you have an Ubuntu armhf system installed, 'apt-cache search' is your friend.
+[22:45] <questionguy> yeah, i'm of course aware of that functionality, but i don't have one setup, and trying to see if this is a suitable distro, and indeed, it is
+[22:47] <mjrosenb> hey all, I've been told that 13.04 is supposed to work nicely on the arm-based chromebook.  Is there a better way of installing 13.04 than installing the hacked-shell-script-12.04, and upgrading? (I've tried to upgrade before, that went poorly to say the least)
+[23:09] <AmEv> So, where's the best place to get kernel help?

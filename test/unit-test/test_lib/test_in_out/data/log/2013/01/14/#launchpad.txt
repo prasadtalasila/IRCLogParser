@@ -1,0 +1,207 @@
+[00:40] <mwhudson> is there some way to get a ppa that builds on armhf yet?
+[00:42] <wgrant> mwhudson: https://dev.launchpad.net/CommunityARMBuilds
+[00:45] <mwhudson> wgrant: https://answers.launchpad.net/launchpad/+question/219111
+[00:46] <wgrant> mwhudson: Just armhf, or do you need armel too?
+[00:46] <mwhudson> wgrant: armel would be nice
+[00:46] <mwhudson> ... maybe
+[00:46] <mwhudson> wgrant: is it a problem to get both?  armhf is definitely more important
+[00:47] <wgrant> I've enabled both
+[00:47] <mwhudson> thanks!
+[00:47] <wgrant> np
+[00:56] <mwhudson> huh https://lpstats.canonical.com/graphs/CodeImports/20120116/20130115/ is kinda interesting
+=== bigjools_ is now known as bigjools
+[01:16] <mwhudson> b*****
+[01:16] <mwhudson> wgrant: can i cancel a build?
+[01:16] <mwhudson> i just did a recipe build into the wrong ppa
+[01:16] <bigjools> there's a cancel link
+[01:17] <StevenK> I'm not certain if recipe builds can be cancelled, but ppa package builds can be.
+[01:17] <bigjools> on the build page
+[01:17] <mwhudson> i don't see anything on +recipebuild
+[01:17] <bigjools> what steve said
+[01:17] <mwhudson> i could delete the recipe maybe?
+[01:18] <StevenK> That won't rip it off the builder
+[01:18] <mwhudson> although this is launchpad
+[01:18] <mwhudson> it's pending
+[01:18] <mwhudson> ah no it's not
+[01:18] <mwhudson> ah well hopefully it will fail :)
+[01:25]  * mwhudson cleaned up all the builds with a lot of clicking
+[01:30] <mwhudson> a LOT of clicking
+[01:37] <wgrant> Deleting a recipe while its build is pending or building should prevent it from being uploaded, I believe
+[01:44] <mwhudson> baaaah my package doesn't build anyway of course
+[01:44] <wgrant> Heh
+[01:55] <mwhudson> hnngh
+[01:56] <mwhudson> can i reupload a source package to be built for a different series?
+[01:56] <StevenK> You can copy it
+[01:56] <mwhudson> but you have to copy binaries then?
+[01:56] <mwhudson> i uploaded for oneiric so i'm not getting armhf built
+[01:56] <StevenK> Hah
+[01:56] <StevenK> Change the version, re-upload?
+[01:57] <mwhudson> yeah i guess
+[01:57] <mwhudson> see if it builds on armel first i gues
+[01:57] <mwhudson> s
+[01:59] <wgrant> mwhudson: If you copy binaries up it'll rebuild any that are missing (eg. because armhf is new), but that tends to not be a good thing to rely on
+[01:59] <wgrant> Because then you have different sets of binaries depending on which series you look at
+[01:59] <mwhudson> oh?
+[01:59] <mwhudson> that'll do for this case
+[01:59] <mwhudson> but i'll remember that in future
+[01:59] <wgrant> If you're careful it's fine
+[02:00] <wgrant> And as long as you're not touching hardy it should be safe
+[02:00] <mwhudson> i do not plan to touch hardy, even with an exceedingly long barge pole
+[02:01] <wgrant> Actually, you can get yourself into the same situation now, I guess
+[02:01] <wgrant> Since we've dropped armel
+[02:08] <mwhudson> oh what the heck, this doesn't work with oneiric's autoconf?
+[03:19] <mwhudson> wgrant: the error you get when you copy oneiric to precise and quantal and so get two attempts to build the same source for precise is a lot nicer than i expected it to be
+[03:19] <mwhudson> er
+[03:19] <mwhudson> s/for precise/for armhf/
+[03:20] <wgrant> Hm, the second copy should not complete
+[03:20] <wgrant> What's the error?
+[03:20] <mwhudson> i got a nice notification saying there was an error because there was already a build for armhf
+[03:20] <mwhudson> and an email saying the same thing
+[03:20] <wgrant> Ah
+[03:20] <wgrant> Yes
+[03:20] <wgrant> So the copy failed, as expected :)
+[03:21] <mwhudson> i expected to just fall over in a heap somehow
+[03:22] <mwhudson> home time
+=== Logan_ is now known as k
+=== stub1 is now known as stub
+[08:10] <RichardGv> Huh, sorry but is this the correct channel to ask a question about issues in using Launchpad PPAs?
+[08:12] <wgrant> RichardGv: It depends, but probably. What's the issue?
+[08:13] <RichardGv> wgrant: Oh, I'm working on setting up a PPA for compton, and I'm not sure how to let Launchpad provide a package for each Ubuntu version/.
+[08:14] <RichardGv> wgrant: (Copying binary over Ubuntu versions could not work, because of soname changes.)
+[08:14] <wgrant> RichardGv: You'll need to upload a separate source package with a different version for each series.
+[08:14] <wgrant> (in some cases you can use a bzr-builder recipe to do this automatically within Launchpad)
+[08:15] <RichardGv> wgrant: I would like to use the recipe feature but my source code is on GitHub and I would prefer not to move the code to Launchpad.
+[08:16] <StevenK> Launchpad will import the branch for you
+[08:16] <wgrant> Yeah, that branch is importable
+[08:16] <RichardGv> wgrant: Okay, so I have to upload many packages with different versions. Is there's a particular standard naming convention when doing this? Like ~jaunty?
+[08:16] <wgrant> Create the project at https://launchpad.net/projects/+new, then you can import the branch from GitHub and use a recipe
+[08:16] <wgrant> It'll automatically import new changes as they appear on GitHub
+[08:16] <wgrant> Or you can upload manually
+[08:17] <RichardGv> Yes, but by importing the code to Launchpad will it force me to use bzr instead of git?
+[08:17] <wgrant> The preferred suffix style nowadays is ~12.10
+[08:17] <StevenK> RichardGv: Any changes you make to the git branch will be mirrored by Launchpad automatically.
+[08:17] <wgrant> RichardGv: It'll create a continuous import of your git repository into a bzr branch, which you don't have to touch except for referencing it in the recipe
+[08:17] <wgrant> Launchpad will automatically mirror new changes from GitHub every few hours
+[08:17] <RichardGv> wgrant: Oh, I see. Thanks.
+[08:18] <RichardGv> Ah, that looks pretty good. But it mirrors one branch only, right?
+[08:20] <wgrant> RichardGv: You can ask it to mirror others, though it's not exposed easily in the UI yet
+[08:20] <wgrant> append ",branch=WHATEVER" to the URL
+[08:22] <RichardGv> wgrant: Oh, I see. As I would prefer more control over when a new snapshot will be packaged, I guess I would prefer handling this manually. Thanks. :-)
+[08:22] <StevenK> RichardGv: You can create the recipe with 'build on demand', rather than daily, and then you tell it when to do so.
+[08:23] <RichardGv> StevenK: Ah, that's pretty cool! I will look into the feature. Thank you.
+=== Mission-Critical is now known as MissionCritical
+=== Mission-Critical is now known as MissionCritical
+[12:52] <ricotz> hello, could some take a look at this recipe build-log https://launchpadlibrarian.net/128440827/buildlog_ubuntu-quantal-i386.libav_6%3A10~~git20130114.r1.60a42ef-1~quantal1_FAILEDTOBUILD.txt.gz
+[12:53] <ricotz> only happens on the i386 build, amd64 worked
+[12:53] <ricotz> same with raring and precise
+=== soren_ is now known as soren
+[12:55] <wgrant> ricotz: Yeah, that builder's filesystem is corrupt
+[12:55] <wgrant> I've prevented builds from being dispatched to it, so you can safely retry the builds now
+[12:56] <ricotz> wgrant, alright, thanks
+[13:23] <ricotz> wgrant, do you have an idea what is going wrong here? https://launchpadlibrarian.net/128299014/buildlog.txt.gz
+[13:37] <wgrant> ripps: You need to use recipe format 0.3, not 0.4
+[13:37] <wgrant> Launchpad doesn't support 0.4 yet
+=== Ursinha is now known as Ursinha-afk
+=== Ursinha-afk is now known as Ursinha
+=== Ursinha is now known as Ursinha-afk
+=== Ursinha-afk is now known as Ursinha
+=== yofel_ is now known as yofel
+=== slank_away is now known as slank
+[16:14] <jam> deryck: poke
+[16:14] <deryck> jam, hi there!
+[16:15] <deryck> jam, I can chat now or next hour. I had a call drop off today.
+[16:15] <deryck> if either works for you.
+[16:15] <jam> deryck: hey, we didn't quite work out when we were doing it, and my son took a bit more to put to sleep, but I think it would be good to get in the habit of now.
+[16:17] <deryck> jam, sure. Let me fire up a hangout.
+=== deryck is now known as deryck[lunch]
+[18:00] <freee> hi, I create a src package that builts many binary packages, these have each one a different version that I define in debian/rules with dpkg-deb command.
+[18:01] <freee> if I make some changes and reupload the src have this error:
+[18:01] <freee> DEBUG Considering changefile 40564/ubuntu/bluediving_0.9-0backbox0.3_amd64.changes
+[18:01] <freee> DEBUG Finding fresh policy
+[18:01] <freee> INFO Processing upload bluediving_0.9-0backbox0.3_amd64.changes
+[18:01] <freee> INFO Rejection during accept. Aborting partial accept.
+[18:01] <freee> INFO Upload was rejected:
+[18:01] <freee> INFO 	The following files are already published in Backbox:
+[18:01] <freee> hstest_1.1_amd64.deb
+[18:01] <freee> INFO Committing the transaction and any mails associated with this upload.
+[18:03] <freee> so how can I define the binary packages that launchpad have to upload on repository after building? thanks
+[18:03] <dobey> you can't upload the same version again. you must increment the version in debian/changelog, and probably should add a new entry describing what you changed
+[18:04] <dobey> you also don't upload binary packages. you upload source packages
+[18:04] <dobey> binary packages shouldn't have different versions when built from the same source package though
+[18:06] <freee> it's my experiment, the upload that virtualmachine done after building, not my upload of source package.
+[18:06] <dobey> why not just paste the link to the buildlog or uploadlog then?
+[18:07] <freee> https://launchpad.net/~alessio.pascolini/+archive/bb-ppa/+build/4206470/+files/buildlog_ubuntu-precise-amd64.bluediving_0.9-0backbox0.3_BUILDING.txt.gz
+[18:07] <freee> https://launchpad.net/~alessio.pascolini/+archive/bb-ppa/+build/4206470/+files/upload_4618418_log.txt
+[18:09] <dobey> why are you building them with different versions like that, in the first place?
+[18:10] <freee> where can I define version?
+[18:10] <dobey> and the problem is that your hstest doesn't have the 0backbox0 appended to the version in the built package i guess
+[18:11] <dobey> the package versions should match the upstream source version
+[18:11] <freee> I know it is an old version of package
+[18:11] <dobey> if you want different things to have different versions then they should be released as different upstream sources with different versions
+[18:13] <freee> can launchpad accept partial upload of deb...it's possibile?
+[18:16] <freee> no I believe :(
+[18:17] <freee> @dobey ok thanks for you time
+=== deryck[lunch] is now known as deryck
+=== Ursinha is now known as Ursinha-afk
+=== Ursinha-afk is now known as Ursinha
+[20:46] <shadeslayer> any ideas if Launchpad produces ddebs for PPA's?
+[20:47] <shadeslayer> oh
+[20:47] <shadeslayer> wgrant: it seems you might have the powah to do this :D
+[20:48] <shadeslayer> though I'm still evaluating if it's worth it
+[20:48] <dobey> it does if enabled for the PPA :)
+[20:48] <shadeslayer> right :)
+[22:25] <wgrant> shadeslayer: yes, we can enable that. Be warned that you can't then copy binaries from that PPA into the primary archive, though
+[22:25] <shadeslayer> we can copy binaries from PPA's into the archive ? :O
+[22:29] <wgrant> Only in some situations, so not really.
+[22:31] <shadeslayer> ah :)
+[22:38] <shadeslayer> wgrant: oh since you're here, I see that some teams have access to armhf builders as well
+[22:38] <shadeslayer> like the Elementary OS team
+[22:39] <shadeslayer> would it be possible for the Kubuntu team to get a PPA with armhf access as well?
+[22:39] <wgrant> shadeslayer: https://dev.launchpad.net/CommunityARMBuilds
+[22:39] <shadeslayer> this is the first time I'm seeing this, thx
+[22:39] <wgrant> It's only a couple of weeks old
+[22:39] <shadeslayer> :D
+[22:40] <shadeslayer> I was told at UDS R that it's impossible to get ARM builders
+[22:40] <shadeslayer> so was a bit surprised to see that the elementary team had access for one of their PPA's ;)
+[22:41] <wgrant> It was true then :)
+[22:41] <shadeslayer> hehe
+[22:41] <czajkowski> as long as it's no more than 10 builds a week
+[22:41] <czajkowski> it's fine
+[22:45] <lifeless> czajkowski: thats all ARM can do, right ? :>
+[22:46] <czajkowski> eh?
+[22:49] <lifeless> czajkowski: teasnig
+[22:49] <lifeless> czajkowski: about arm performance
+[22:49] <czajkowski> lifeless: ahhh
+[22:49] <czajkowski> it's been a very long day
+[22:49] <czajkowski> sorry
+[22:49]  * lifeless is rarely serious
+[22:49] <lifeless> czajkowski: go sleep!
+[22:49] <czajkowski> except when I triage bugs :p
+[22:50] <czajkowski> lifeless: there is a sleeping walrus upstairs
+[22:50] <czajkowski> am waiting to not strangle him in the hopes he starts sleeping more normally
+[22:50] <lifeless> czajkowski: walrus!
+[22:50] <shadeslayer> wgrant: I was also told that the arm builders run the build as root, is that still true?
+[22:50] <wgrant> shadeslayer: Hm, who told you that?
+[22:50] <wgrant> That's never been accurate AFAIK
+[22:50] <shadeslayer> I don't recall who
+[22:51] <czajkowski> lifeless: other half has a cold so making noises. may in fact strangle him, so work is a distraction
+[22:51] <shadeslayer> oh, so it's in a VM like everything else
+[22:51] <wgrant> VMness and rootness are unrelated :)
+[22:52] <shadeslayer> :D
+[22:52] <wgrant> Builds have never run as root
+[22:52] <wgrant> But until recently the ARM PPA builders were real hardware
+[22:52] <mwhudson> builds don
+[22:53] <mwhudson> builds don't run as root, but as you get to specify build depends and where to install them from, getting root in the build environment has always been trivial
+[22:53] <wgrant> Certainly
+[22:53] <wgrant> But that's the same on every builder
+[22:53] <mwhudson> yeah
+[22:53] <shadeslayer> from what I recall the reason was given as "The builds are run as root on real hardware, so it's entirely possible for people to exploit stuff which is why we can't enable arm builders for ppa's"
+[22:53] <mwhudson> shadeslayer: so that's nearly right :)
+[22:54] <wgrant> Right
+[22:54] <wgrant> The key is "real hardware"
+[22:54] <shadeslayer> I see, and now the arm builders are just VM's running ontop of x86 hardware?
+[22:55] <shadeslayer> or something more magical?
+[22:55] <czajkowski> https://twitter.com/launchpad_net/status/278160578474803200  changed in december
+[22:55] <wgrant> Right, it's using qemu-user on x86
+[22:56] <shadeslayer> cool, was just curious about the setup because I tried setting up qemu + pbuilder about a year ago
+[22:56] <shadeslayer> managed to do it, but it's fiddly to setup

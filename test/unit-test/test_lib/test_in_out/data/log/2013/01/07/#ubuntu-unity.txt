@@ -1,0 +1,244 @@
+[09:47] <smspillaz> duflu: howdy, when do you want to cut 0.9.0 ?
+[09:47] <smspillaz> erm
+[09:47] <smspillaz> 0.9.9
+[09:47] <smspillaz> 0.9.0 was a long time ago ;-)
+[09:47] <duflu> smspillaz: Not sure now. Needs time to settle again :P
+[09:48] <smspillaz> duflu: I have some large-ish fixes in the pipeline, so I'm wondering when I should hold them to
+[09:48] <duflu> smspillaz: Yeah large stuff after 0.9.9.0
+[09:48] <smspillaz> duflu: right, I just kinda wanna know /when/ as in dates, so I can plan my week :)
+[09:49] <duflu> smspillaz: I really don't know now. Probably safe to assume we don't want to land anything large this week
+[09:49] <smspillaz> duflu: sure, I'm wondering when a good time to start reviewing large things is :)
+[09:50] <duflu> smspillaz: Don't know. I half expect to have time when I'm away next week. But maybe not
+[09:50] <smspillaz> well, next week will probably be bad for both of us
+[09:50] <smspillaz> I'm at uni for a week and you'll be away
+[09:50] <smspillaz> so the week after that ?
+[09:51] <smspillaz> I'm just mindful that it would kinda suck if we delayed until right before freezes start happening
+[09:51]  * duflu checks schedule
+[09:53] <duflu> smspillaz: Freeze is not an issue (March 7). If things have not landed by then, there must be other greater reasons why not
+[09:53] <smspillaz> welllllllllllllllllllllllllllll
+[09:53] <smspillaz> there's like 4 or 5 big ones
+[09:53] <smspillaz> I'm allowing a week for each
+[09:54] <smspillaz> duflu: anyways, maybe what I'd suggest doing is testing my ppa and checking for regressions and filing bugs ?
+[09:54] <smspillaz> that will allow us to get the manual-testing process mostly out of the way
+[09:54] <duflu> smspillaz: We will do as much as possible with the resources available. I don't know how that will pan out over the coming months
+[09:55] <smspillaz> duflu: fair enough I guess
+[09:55] <duflu> I think the point of 0.9.9.0 is to show "any release" from this point onward could be released. Just do as much as possible
+[09:55] <smspillaz> duflu: +1
+[09:56] <smspillaz> duflu: anyways, I'd suggesting running the ppa. Been running it for about a month now and I'm fixing things as they come up
+=== _salem is now known as salem_
+[12:30] <wnm> hey guys. i've got a question, maybe someone can help. I just created an desktop entry with chrome's "create application shortcut" feature. I downloaded icons in different sizes and put them in ~/.local/share/icons/hicolor each size in each directory. the new icon is showing when i search for the application with dash. but when I switch applications with [alt]+[tab] its showing the chrome icon and it says "untiteled". does someone know a guide on how to pro
+=== MacSlow is now known as MacSlow|lunch
+=== mmrazik is now known as mmrazik|afk
+[13:54] <conscioususer> Cimi: overlay scrollbars discussions belong in this channel?
+[13:55] <Cimi> conscioususer, maybe
+[13:55] <Cimi> conscioususer, I have no plans to work on them this cycle though
+[13:56] <conscioususer> Cimi: actually, I wanted to discuss a possible bug before reporting
+=== me4oslav is now known as me4oslav-working
+[13:56] <Cimi> conscioususer, shoot
+[13:57] <conscioususer> Cimi: hold on, I'll pastebin a code
+[13:58] <conscioususer> Cimi: here, this is for Python3: http://www.pasteshare.co.uk/p/5ir/
+[13:59] <conscioususer> Cimi: this is a textview overlayed over a scrolledwindow
+[13:59] <conscioususer> Cimi: did it run?
+[14:00] <Cimi> no
+[14:00] <Cimi> tell me the issue, maybe is a known one
+[14:00] <conscioususer> Cimi: the overlay is not being rendered
+[14:01] <conscioususer> Cimi: this only happens if overlay scrollbars are active
+[14:02] <Cimi> they both use a child window
+[14:02] <Cimi> not sure what overlay does though
+=== mmrazik|afk is now known as mmrazik
+[14:03] <conscioususer> Cimi: specifically, this happens if the widget below the overlay is a scrolledwindow inside a gtklayout
+[14:04] <conscioususer> Cimi: and, very weirdly, the bug does not happening in Ambiance/Radiance, only with Adwaita and High Contrast, for example
+[14:04] <conscioususer> Cimi: (I didn't mention this until now because you said the code is not running anyway)
+[14:05] <conscioususer> Cimi: btw, *why* is it not running, which error did you get?
+[14:05] <Cimi> I didn't run it :)
+[14:05] <conscioususer> oh, ok
+[14:07] <conscioususer> Cimi: as you can see, you need a rare combination of widgets to trigger it... but it's one I'm needing now :-/
+[14:10] <conscioususer> Cimi: what I found particularly weird is happening for some themes but not for others
+[14:11] <Cimi> try seeing what triggers the issue
+[14:11] <Cimi> editing the theme
+=== MacSlow|lunch is now known as MacSlow
+[14:16] <conscioususer> Cimi: that will take a while cuz Adwaita etc. compile everything including css'es into a binary .gresource file
+[14:16] <conscioususer> Cimi: need to get the source
+[14:16] <conscioususer> Cimi: will contact you later
+[14:18] <Cimi> gnome-themes-standard git
+[14:25] <conscioususer> Cimi: none of the themes seem to do anything specific with GtkLayout
+[14:25] <conscioususer> Cimi: however, I'm seeing something interesting
+[14:26] <conscioususer> Cimi: Adwaita sets a background color for GtkScrolledWindow, and HighContrast sets a background color for GtkViewport (which is used by GtkScrolledWindow)
+[14:26] <conscioususer> Cimi: the light-themes do not set a background color for either
+[14:28] <Cimi> so it's an issue of rendering
+[14:30] <Cimi> those two themes render the scrolledwindow/viewport
+[14:30] <Cimi> ambiance doesn't
+[14:32] <conscioususer> Cimi: but would is this triggered only when the ov-scrollbars are active?
+[14:32] <Cimi> because it's a bug in overlay scrollbar
+=== me4oslav-working is now known as me4oslav
+[14:35] <conscioususer> Cimi: hmm... and one last question before reporting: does it make sense to you that it happens only when the scrolledwindow is inside a gtklayout?
+[14:35] <Cimi> I don't know...
+[14:36] <conscioususer> Cimi: well, anyway, will report... should it be directly against the overlay-scrollbar LP project?
+[14:37] <Cimi> ayatana-scrollbar
+[14:37] <Cimi> I suggest you to pick up os-bar.c code and play with it
+[14:37] <Cimi> I don't think I will ever fix this in next months
+[14:38] <conscioususer> Cimi: might try, thanks for the help
+[14:55] <didrocks> hey mterry! saw that you are around :) how was the week-end?
+[14:55] <mterry> didrocks, meh.  Spent a lot of it looking at a data corruption issue in duplicity
+[14:55] <didrocks> doesn't sound fun
+[14:56] <mterry> didrocks, eh, it's fine.  When I'm weekend hacking, I can drink during, so not so bad  :)
+[14:56] <didrocks> heh ;)
+[14:56] <mterry> didrocks, what's up?
+[14:56] <didrocks> mterry: I was thinking switching some -dev from arch: all to arch: any
+[14:56] <didrocks> like nux as a first target
+[14:57] <mterry> didrocks, what's in the -dev that needs it?
+[14:57] <didrocks> nothing but:
+[14:57] <didrocks> because when unity is build-dep on latest nux
+[14:57] <didrocks> nux i386 is built and published
+[14:57] <didrocks> then unity on all arch starts to build
+[14:57] <didrocks> and the -dev can't install libnux amd64 for instance
+[14:57] <didrocks> so FTBFS
+[14:58] <mterry> right, just saw that one go by
+[14:58] <didrocks> this was fine in the distro, I relaunched the build normally
+[14:58] <didrocks> but if we want to go to our daily process
+[14:58] <didrocks> don't seem something we should get bothered why, thoughts?
+[14:59] <mterry> didrocks, I mean, arch: any is a fine workaround (just takes up archive space right?  I assume no policy problems), but isn't that really a builder bug?  That it only looks one level deep in dependencies before trying a build?
+[14:59] <didrocks> mterry: yeah, it's a builder bug that we have for ages, I think it's not a priority to get it fixed though
+[14:59] <didrocks> the space -> just a couple of .h files + symlinks
+[14:59] <didrocks> so I think it's not that an issue
+[15:00] <mterry> Just feels dirty  :)
+[15:00] <mterry> But sure
+[15:00] <didrocks> ok, proposing some dirts in a few :)
+[15:00] <mterry> I would normally volunteer for the work, and will do so, but I first want to prepare duplicity SRUs for this bug
+[15:00] <didrocks> sure sure, just feel free to approve the MP then
+[15:00] <didrocks> it's easy and quick enough :)
+[15:00] <mterry> So if you were looking for fast action, I might not get to it until tomorrow
+[15:01] <mterry> OK
+[15:01] <didrocks> doing nux, bamf, libunity, dee
+[15:02] <didrocks> ah nux is already any, so bamf should have been the guilty
+[15:03]  * didrocks starts to be puzzled, bamf was any as well
+[15:03] <didrocks> which one failed the chroot then?
+[15:03] <didrocks> mterry: ok, will try digging next time (probably tomorrow, after a rebuild)
+[15:04] <didrocks> mterry: seb128: btw, https://launchpad.net/~ubuntu-unity/+archive/daily-build contains latest and greatest (untested)
+[15:04] <seb128> didrocks, need/want testing?
+[15:04] <didrocks> mterry: seb128: as I think we are close to enable daily build (at one UTAH issue closed), would be good to test
+[15:04] <didrocks> yeah ;)
+[15:04] <seb128> ok
+[15:05]  * didrocks upgrades at the same time
+[15:05]  * mterry switches from staging to daily
+[15:06] <mterry> Oh, apparently I'm already using daily.  Odd
+[15:08] <didrocks> :)
+[15:08] <didrocks> upgrade upgrade, there is fresh new things! :)
+[15:10] <seb128> hum
+[15:10] <seb128> didrocks,
+[15:10] <seb128> Les paquets suivants seront ENLEVÉS :
+[15:10] <seb128>   indicator-appmenu indicator-appmenu-tools libbamf3-0
+[15:10] <seb128> Les NOUVEAUX paquets suivants seront installés :
+[15:10] <seb128>   libbamf3-1
+[15:10] <seb128> didrocks, is indicator-appmenu deprecated?
+[15:11] <didrocks> really? I don't have that on amd64
+[15:11] <seb128> i386 here
+[15:11] <didrocks> interesting… and the new hud package isn't installed I guess as it's not built
+[15:11] <didrocks> cyphermox: you followed the merged, nothing linked to that in your opinion?
+[15:11] <didrocks> oh, does indicator-appmenu deps on bamf now?
+[15:12]  * didrocks checks
+[15:12] <seb128> didrocks, that's not new, it needs bamf to know what app is focussed iirc
+[15:12] <didrocks> yep
+[15:12] <didrocks> so I need to move bamf in the indicator pocket
+[15:12] <seb128> didrocks, the issue is that libbamf3-1 breaks libbamf3-0
+[15:12] <seb128> and indicator-appmenu didn't get rebuild with the new bamf soname
+[15:12] <didrocks> to have things built in the correct order
+[15:12] <cyphermox> wasn't that recently changed in the indicator-appmenu vs. hud code?
+[15:12] <didrocks> yep yep
+[15:13] <seb128> didrocks, how come you don't get the issue on amd64?
+[15:13] <didrocks> cyphermox: no, this was rolled back
+[15:13] <didrocks> seb128: I wonder if I get the latest state or if everything is published yet
+=== me4oslav is now known as me4oslav-working
+[15:15] <seb128> didrocks, I'm away for some exercice, will retry in  ~45min but my reading is that indicator-appmenu needs a rebuild with the new bamf soname
+[15:15] <didrocks> seb128: I agree, I'm triggering another one
+[15:15] <seb128> thanks
+[15:15] <didrocks> and will move bamf between package set
+[15:17] <ricotz> mterry, hi
+[15:19] <mterry> ricotz, heyo
+[15:19] <ricotz> mterry, you are argumenting as ABI and API were the same, and i am suggesting to use 0.4 after the several API removals not simply taking the version number
+[15:19] <ricotz> if there is a need to bump the soname (e.g. ABI changes) there is no need to change the GIR name
+[15:20] <ricotz> the typelib will reference the right library as "backend"
+[15:20] <mterry> ricotz, right.  3 is not the SONAME
+[15:20] <mterry> ricotz, libbamf3 currently has a SONAME of 0 I think
+[15:20] <ricotz> right
+[15:20] <mterry> ricotz, much as libgtk-3 has a SONAME of 0
+[15:21] <mterry> ricotz, so sorry.  Maybe I'm just misunderstanding your position.  What's wrong with using 3?
+[15:21] <ricotz> but there is no libbamf anymore, so actually this would mean Bamf3-0.4.gir/typelib
+[15:22] <mterry> ricotz, no other package does that.  They all do Secret-1 or Gtk-3 or similar
+[15:22] <ricotz> imo it is needed to have girs parallel installable on API changes but not on ABI changes/soname bump
+[15:22] <mterry> ricotz, right.  That's what the 3 is.
+[15:22] <ricotz> gtk preserves abi compat so the api 3.0 will stay
+[15:23] <ricotz> take tp-logger for example
+[15:23] <mterry> ricotz, that is a separate thing, eh?  Their ABI compat promise just means they will always have SONAME 0, right?
+[15:24] <ricotz> right, and so will be the api
+[15:24] <ricotz> which is why Gdk-3.0.gir and so on
+[15:24] <mterry> ricotz, their API changes throught the 3.x series.  They add things all the time.  But the parallel installable thing is the 3.0
+[15:25] <mterry> ricotz, just as the parallel installable marker for libbamf is the 3 (like when we had libbamf and libbamf3)
+[15:25] <ricotz> yes, but the api is compatible and isnt broken in regards to backwards compat
+[15:26] <mterry> ricotz, right.  And when it is, they bump to 4.x
+[15:26] <mterry> ricotz, just as libbamf would bump to 4
+[15:26] <ricotz> so if you can promise bamf wont break api exept in major release
+[15:26] <mterry> if it did the same thing
+[15:26] <ricotz> you can all it bamf-1.0
+[15:26] <ricotz> *call
+[15:27] <mterry> ricotz, every other gir/library uses the library version (secret 1, gtk 3) as the gir name.  That library name, to my knowledge, is the same thing as what you are calling the API version.
+[15:27] <mterry> ricotz, why is bamf different?
+[15:30] <ricotz> what i am saying is that changing the gir name on soname bumps is not necessary if the api compat is preserved, which would be not the case with your naming scheme
+[15:30] <ricotz> but do as you like
+=== dandrader is now known as dandrader|afk
+[15:30] <mterry> ricotz, that's not true at all
+[15:30] <mterry> ricotz, if bamf bumps SONAME, what happens is we get libbamf-3-1.  gir1.2-bamf-3 and libbamf3-dev would stay the same
+[15:31] <mterry> i.e. exactly the same as secret and gtk
+[15:31] <ricotz> ok, what are you doing on api removals as between 0.3 and 0.4?
+[15:33] <mterry> ricotz, API removals *should* only happen when we bump from 3 to 4.  I believe we had a removal that did not?  Because we were lax and felt the only consumer was unity.  I'd have to go back and look at the merge proposal
+[15:33] <mterry> (^ when we bump from libbamf3 to libbamf4)
+[15:33] <mterry> Really, we shouldn't bother removing API.  I think I noted at the time, we should just make it a no-op
+[15:34] <ricotz> alright, considering 3 as api while preserving abi/api compat for future 0.x releases works
+[15:34] <mterry> ricotz, but whether or not we did the right thing there, that's a separate issue from the naming scheme
+[15:35] <mterry> Because the shared library shares the same problems we created then too, it's not just a gir thing
+[15:35] <ricotz> ok, my problem wer the latest API removals leading this discussion and how to handle that
+[15:36] <ricotz> so if this won't happen after adding the offical introspection data it seems fine
+[15:36] <mterry> ricotz, yar, that was handled incorrectly.  I think we were just lazy about it
+[15:37] <ricotz> ok
+[15:39] <ricotz> mterry, you probably want to take a look at gir1.2-unity-5.0 and its content, i filed a bug about it ;)
+[15:39] <ricotz> https://bugs.launchpad.net/bugs/1096545
+[15:39] <ubot5> Launchpad bug 1096545 in unity (Ubuntu) "gir1.2-unity-5.0 package named wrong while containing Unity-6.0.typelib" [Undecided,New]
+[15:39] <mterry> ricotz, :(
+[15:40] <didrocks> bregma: see my answer, I can't parse how you link daily build with something that has nothing to deal with daily builds
+[15:40] <ricotz> mterry, better to use a fully qualified line in the install file to catch that
+[15:40] <mterry> ricotz, true
+[15:41] <ricotz> uploading daily builds can be tricky
+[15:42] <ricotz> i guess it will be 7.0 soon
+=== dandrader|afk is now known as dandrader
+[15:48] <didrocks> hey sil2100! how are you?
+[16:01] <didrocks> seb128: i386 published, still waiting on amd64
+=== mmrazik is now known as mmrazik|otp
+=== mmrazik|otp is now known as mmrazik
+[16:09] <sil2100> didrocks: hello! One moment ;)
+[16:20] <didrocks> seb128: mterry: after a one minute of basic testing, the new unity stack seems to work here
+[16:23] <seb128> didrocks, ok, trying in a min
+[16:33] <mterry> didrocks, hasn't crashed on me yet  :)
+[16:34] <didrocks> mterry: neither for me, that's a start :)
+=== gatox is now known as gatox_lunch
+[17:07] <sil2100> didrocks: re-ping!
+[17:07] <didrocks> sil2100: hey!
+[17:08] <didrocks> sil2100: I just wanted to know if you were successful in the bug hunt we discussed on Friday
+[17:08] <sil2100> didrocks: yes, I fixed it, a merge request is submitted - but I'm waiting for a re-comment from Trevinho
+[17:09] <Trevinho> sil2100: ah, looking again
+[17:10] <didrocks> sil2100: that was the branch I saw? You're freaking awesome \o/
+[17:10]  * didrocks stares at Trevinho :)
+[17:10] <didrocks> hey Trevinho, happy new year btw!
+[17:11] <sil2100> Well, it's a rather ugly way of fixing it, but at least the way I did it seemed safe in my broken mind ;)
+[17:11] <didrocks> :)
+[17:11] <didrocks> sil2100: I'm running a newer test with latest unity from today
+[17:11] <didrocks> sil2100: with some luck, we only have those 4 failures!
+[17:11] <Trevinho> sil2100: commented
+[17:12] <Trevinho> didrocks: thanks... happy new year to you too! (including sil2100 here too :))
+=== dandrader is now known as dandrader|lunch
+=== gatox_lunch is now known as gatox
+=== dandrader|lunch is now known as dandrader
+=== rsalveti_ is now known as rsalveti
+=== salem_ is now known as _salem
+=== dandrader is now known as dandrader|afk
+=== dandrader|afk is now known as dandrader
+=== chrisccoulson_ is now known as chrisccoulson

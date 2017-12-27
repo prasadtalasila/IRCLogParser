@@ -1,0 +1,126 @@
+=== slank is now known as slank_away
+[07:56] <didrocks> hey mmrazik, do you have some logs about the issues we are currently having in corrupted checkouts?
+[07:56] <didrocks> (knowing that we just started fresh from trunk)
+[07:57] <mmrazik> pretty much just the output of "bzr branch lp:~mrazik/libdbusmenu/xvfb-run-a"
+[07:57] <mmrazik> let me pastebing that
+[07:57] <mmrazik> err.. sorry.. output of " bzr checkout lp:~mrazik/libdbusmenu/xvfb-run-a
+[07:57] <mmrazik> "
+[07:57] <mmrazik> bzr branch works fine
+[07:58] <mmrazik> http://pastebin.ubuntu.com/1512096/
+[07:58] <didrocks> vila: jelmer: hey! would you have any idea of what can be the cause of this? ^
+[07:58] <mmrazik> the steps to reproduce are: 1. bzr branch lp:libdbusmenu
+[07:58] <mmrazik> 2. make your changes + commit
+[07:59] <mmrazik> 3. bzr push
+[07:59] <mmrazik> 4. bzr checkout (from the same location where you just pushed)
+[08:00] <didrocks> mmrazik: easier, bzr checkout lp:libdbusmenu has the same issue
+[08:00] <didrocks> so something not correct in the launchpad repo?
+[08:03] <vila> didrocks, mmrazik : weird, when tried locally I got an additional hint in the error message: "Run 'bzr reconcile --canonicalize-chks' on the affected repository."
+[08:04] <vila> which doesn't appear in your paste...
+[08:04] <mmrazik> vila: I tried that on my xvfb-run-a repo (locally) and then pushed to xvfb-run-a2 but it didn't help
+[08:04] <didrocks> vila: I don't see this hint as well
+[08:05] <vila> mmrazik: well, if the lp repo has the issue, fixing your local one won't help (and you may be additionally tricked if the offended repo is stacked on on lp)
+[08:06] <didrocks> vila: so bzr reconcile --canonicalize-chks :parent?
+[08:07] <vila> hmm, "bzr info -v lp:libdbusmenu" erroring is suspicious, is the lp branch properly configured ?
+[08:07] <didrocks> ah interesting, indeed
+[08:07] <vila> bzr config -d lp:libdbusmenu
+[08:07] <vila> branch:
+[08:07] <vila>   stacked_on_location = /+branch-id/590782
+[08:07] <vila>   parent_location = ../../../+branch/dbusmenu/
+[08:08] <didrocks> the project was renamed
+[08:08] <vila> that parent_location is really weird...
+[08:08] <didrocks> from dbusmenu to libdbusmenu
+[08:08] <didrocks> and I guess when renaming a project, trunk branch naming follows but not the configuration
+[08:08] <vila> but shouldn't really matter in fact
+[08:08] <didrocks> vila: there should be no parent location for lp:libdbusmenu, it's the real trunk
+[08:09] <mmrazik> I start to recall an issue with the rename. Trying to recall what additional bzr command we were running
+[08:09] <vila> yeah, I don't think it's ever used
+[08:09] <vila> anyway, can you run reconcile on that lp branch ?
+[08:10] <vila> if :parent doesn't work, use the lp url instead
+[08:10] <mmrazik> will do
+[08:12] <mmrazik> vila: bzr: ERROR: RemoteRepository(bzr+ssh://bazaar.launchpad.net/%2Bbranch/libdbusmenu/.bzr/) cannot canonicalize CHKs.
+[08:13] <mmrazik> btw. what we have done in CPH had something to do with unstacking but I can't figure out the exact command
+[08:14] <vila> CPH ?
+[08:14] <mmrazik> vila: copenhagen
+[08:14] <mmrazik> I believe we did the renaming there
+[08:15] <mmrazik> but then checkout of the trunk didn't work due to some stacking errors
+[08:15] <mmrazik> and somebody (I believe from the launchpad team) helped us with that
+[08:15] <vila> right, I was about to say that lp guys may have better access...
+[08:16] <mgrandi> that error seems really vague..
+[08:16] <didrocks> bzr reconfigure --unstacked
+[08:16] <didrocks> ?
+[08:16] <mgrandi> is there no more descriptive error?
+[08:16] <mmrazik> didrocks: yep... thats the one we were using
+[08:16] <didrocks> mmrazik: maybe try this on lp:libdbusmenu ?
+[08:16] <mmrazik> didrocks: thats what we did
+[08:17] <didrocks> mgrandi: I guess that's what bzr is giving :/
+[08:17] <mgrandi> is there a stack trace?
+[08:17] <mgrandi> either in the output or in bzrlog
+[08:17] <mmrazik> mgrandi: http://pastebin.ubuntu.com/1512096/
+[08:18] <mgrandi> i meant for one that says "cannot canonicalize chks"
+[08:18] <vila> so lp:libdbusmenu is stacked on lp:libdbusmenu/12.10 indeed so the error may be there for all we know
+[08:19] <vila> bah and that one is stacked on lp:dbusmenu/0.6 ...
+[08:19] <vila> and finally stacked on 0.5
+[08:20] <mgrandi> russian dolls, bzr style
+[08:20] <mgrandi> well having a stack trace
+[08:20] <mgrandi> for that 'cannot canonicalize' would help...
+[08:20] <mmrazik> btw. I just did the reconfigure and I can checkout lp:libdbusmenu now
+[08:20] <mmrazik> but bzr info -v still gives errors
+[08:20] <vila> mgrandi: grep shows only one call site
+[08:21] <vila> bzr checkout lp:libdbusmenu/12.10 succeeds
+[08:21] <didrocks> mmrazik: confirms about checkouting working now
+[08:22] <vila> having trunk stacked on another branch... is kind of wrong, you generally want trunk's repo to contain most of the history
+[08:22] <didrocks> vila: I think that the indicator team is normally doing at the end of a release, something like:
+[08:23] <didrocks> bzr branch lp:libdbusmenu
+[08:23] <didrocks> bzr push lp:~…/libdbusmenu/13.10
+[08:23] <didrocks> and then, set lp:libdbusmenu to …/libdbusmenu/13.10
+[08:23] <didrocks> so that's why we have branches stacked an previous releases I guess
+[08:24] <vila> I probably miss why you need such a workflow...
+[08:24] <didrocks> vila: I don't know why they are doing that, but it seems to be there one :)
+[08:25] <vila> but that's not the best way to use stacked branches
+[08:25] <didrocks> I think they don't know (and arguagly, they shouldn't have to know) about stacking
+[08:25] <didrocks> arguably*
+[08:25] <vila> anyway, you're unblocked right ?
+[08:25] <mmrazik> vila, didrocks: yes
+[08:26] <didrocks> vila: I think, yeah :)
+[08:26] <vila> ok, cool
+[08:26] <didrocks> thanks vila, mgrandi!
+[08:26] <didrocks> I'll try to have them changing their workflow :)
+[08:26] <didrocks> mmrazik: btw, it's part of the things we should write on a wiki, like process to create a new release
+[08:26] <vila> didrocks: sounds like a good idea
+[08:26] <didrocks> mmrazik: because the unity team is doing one way, the indicator team is doing another…
+[08:27] <mgrandi> haha, not sure i did anything but ok
+[08:27] <vila> but that "canoot canonicalize" error is worth a bug report, it sounds like something really weird is going on there
+[08:28] <didrocks> vila: ok, we'll open one with those info, hoping that we can recreate it :)
+[08:28] <vila> mgrandi: well, you pointed out that the error message was weird and that's often the way to detect bugs ;)
+[08:28] <mgrandi> yeah
+[08:28] <mgrandi> why i try to always give as much info in error messages, vague stuff hurts to look at =(
+[08:29] <mgrandi> almost worse then microsoft saying "error code 21124124XABB"
+[08:31] <vila> here, the message is triggered by an attribute check on the repo object, so probably something jelmer did for foreign repos except we are dealing with a bzr repo here... so I'm a bit lost
+[08:31] <mgrandi> i noticed that it was saying osmething about sha1:blahblah
+[08:31] <mgrandi> those are for git right?
+[08:32] <jelmer> vila: it's not necessarily something to do with foreign repos
+[08:32] <jelmer> vila: just that we happened to have a known bug in bzr-svn that was related to this
+[08:33] <vila> jelmer: that was just a feeling ;) A bzr repo object missing a bzr method...
+[08:33] <vila> some borked inheritance path ?
+[08:38] <jelmer> vila: possibly
+=== yofel_ is now known as yofel
+=== mmrazik is now known as mmrazik|afk
+=== mmrazik|afk is now known as mmrazik
+=== mmrazik is now known as mmrazik|afk
+=== mmrazik|afk is now known as mmrazik
+=== mmrazik is now known as mmrazik|afk
+=== mmrazik|afk is now known as mmrazik
+=== mmrazik is now known as mmrazik|otp
+=== mmrazik|otp is now known as mmrazik
+=== slank_away is now known as slank
+=== mmrazik is now known as mmrazik|otp
+[16:51] <xnox> Can somebody push https://code.launchpad.net/~xnox/bzr-dbus/pygi/+merge/137173 ?
+=== deryck is now known as deryck[lunch]
+[17:47] <mgz> xnox: done
+[17:48] <xnox> mgz: thanks
+=== deryck[lunch] is now known as deryck
+=== slank is now known as slank_away
+=== slank_away is now known as slank
+=== gthorslund is now known as gthorslund__
+=== gthorslund__ is now known as gthorslund
+=== gthorslund___ is now known as gthorslund_

@@ -1,0 +1,117 @@
+[01:00] <aquarius__> er, help. My laptop is working, but something is very wrong with the disk. i can't write any files because the filesystem has been remounted as read-only
+[01:01] <aquarius__> and dmesg shows a bunch of "journal commit I/O error"
+[01:01] <aquarius__> and I am scared of, say, rebooting in case it's dead forever.
+[01:02] <aquarius__> I have no idea what I should do at this point other than, y'know, panic :)
+[01:02] <aquarius__> (it's running 12.10, and I haven't done anything exciting like install new kernels or anything)
+[01:05] <aquarius__> dmesg output is at http://paste.ubuntu.com/1497806/ which shows many disc errors :(
+[01:38] <bryce> aquarius__, funny, I just started having hdd I/O errors on my laptop myself last night
+[01:39] <bryce> aquarius__, back up all your data ;-)
+[01:39] <aquarius__> bryce: yeah. This is most worrying. The disc is an SSD and it's only a year old :)
+[01:39] <aquarius__> should not be dying!
+[01:39] <aquarius__> bryce: almost all of it already *is* backed up, which is the first time ever that I've felt semi-secure in this situation
+[01:40] <aquarius__> hooray for deja-dup, u1, and launchpad, I say
+[01:40] <bryce> aquarius__, huh, coincidentally mine too is a SSD I got within the last year.  Crucial 256G ssd to be specific.
+[01:40] <aquarius__> what I don't know right now is: what should I do at this point? I mean: remount the disc read-write and see if it's OK? reboot? shut the machine down, touch nothing, and immediately buy a new disc?
+[01:41] <bryce> aquarius__, I ran the SMART tools, but it didn't show any errors
+[01:42] <aquarius__> bryce: ah. Is running them a good idea in my situation? I mean, I know very little about how to react when this sort of thing happens...
+[01:42] <aquarius__> I assume I'll just get diagnostic info that I don't really understand how to interpret...
+[01:43] <bryce> aquarius__, well, would help in identifying if the HW is faulty so you know to RMA it, vs. it being a software error I guess.
+[01:44] <aquarius__> yeah. I am not looking forward to RMAing it, since it means I don't have a laptop for an indefinitely long period of time. Sigh.
+[01:44] <bryce> aquarius__, well if the drive is bad, you're not going to be able to trust it with your data anyway
+[01:45] <aquarius__> and just the process of wandering into pcworld (!) to report a problem means that they'll bang windows on the disc and lose everything on it even if it *is* just a software problem
+[01:45] <aquarius__> although tbh I'll basically never trust the disc again, as you note
+[01:45] <aquarius__> I think I am mostly annoyed at the universe for screwing me after a mere 12 months, and less than a month after the guarantee ran out, but hey ho.
+[01:47] <aquarius__> of course, I don't have the smart tools installed, and can't install them because the fs is readonly, and booting a live image means rebooting, which might make things worse. Heh.
+[01:48] <bryce> aquarius__, hmm, googling on your initial error message "ata1.00: exception Emask 0x0)" turns up some interesting results
+[01:49] <aquarius__> ooh, good catch. reading now
+[01:50] <aquarius__> I mean, I would be extremely pleased to learn that it was a software issue rather than a bad disc, for example :)
+[01:50] <bryce> yeah me too
+[01:51] <bryce> although I think my hw failure might be unrelated to yours since our symptoms differ; you're not seeing freezes, and mine didn't mount RO.
+[01:52] <aquarius__> *nod*
+[01:52] <aquarius__> no freeze here. 
+[01:52] <bryce> I'm swapping in a different ssd and going to see if it repro's with that.
+[01:53] <aquarius__> heh. this is where I get punished for buying a not-very-user-serviceable ultrabook, I suspect.
+[01:55] <aquarius__> the "SMART Data" in the Disks utility says everything's OK, heh.
+[01:55] <bryce> aquarius__, yeah I got the same; no errors
+[01:56] <aquarius__> but I have no idea whether this means that the disk is broken and doesn't know it, or the disk is fine and the kernel's had abit of a wobble, hence dropping in here to find someone who knows about disks :)
+[01:56] <aquarius__> it being 2am utc on a Friday probably doesn't help with that, mind :)
+[01:57] <bryce> aquarius__, looking at several different bug reports with theseEmask 0x0 failed command messages, common thread sounds to be that ssd drives run too fast and trip into one kernel issue or another
+[01:58] <aquarius__> ah, that's a useful summary.
+[01:58] <bryce> aquarius__, well I'm an X guy not a FS type so I ain't giving any advice on that count!  But I would think if the smart tools say everything's ok, then the drive might not be faulty.  If it were me, I'd reboot and see if it still comes up.
+[01:58]  * aquarius__ grins
+[01:58] <bryce> if bios fails to recognize the drive, at least you'd know and can plan the shopping trip ;-)
+[01:58] <aquarius__> X is still quite a lot closer to the kernel than what I do, so I appreciate your thoughts ;)
+[01:58]  * aquarius__ laughs
+[01:59] <aquarius__> that'll cheer my daughter up when I smash tomorrow's plans and go drive shopping :)
+[01:59] <bryce> ooh, check this out:
+[01:59] <bryce> https://github.com/linux-sunxi/linux-sunxi/issues/24
+[01:59] <bryce> exact same set of error messages that are in your log
+[01:59] <aquarius__> so, in your self-avowedly not-as-well-informed-as-could-be opinion, rebooting is not likely to do anything permanently dreadful to the drive?
+[02:00] <aquarius__> (I promise to not shout at you if you're wrong)
+[02:00] <aquarius__> oooh, reading now
+[02:00] <bryce> they're claiming it's a bad power cable issue
+[02:01] <aquarius__> conclusion: bad power cables
+[02:01] <aquarius__> which a fair few other people have said in other pages mentioning this: unplugging things and reseating the cables has helped
+[02:01] <aquarius__> or maybe getting new cables
+[02:02] <bryce> you mentioned the HD was new but how old is the machine itself?
+[02:02] <aquarius__> same age
+[02:02] <aquarius__> I bought the whole laptop 13 months ago
+[02:02] <aquarius__> brand new
+[02:02] <bryce> ah, well unlikely to be power supply old age
+[02:02] <aquarius__> yeah
+[02:03] <aquarius__> if it's a part which has gone faulty one month after the guarantee runs out, I will find someone from lenovo and then punch them
+[02:03] <bryce> in my case though, the laptop is pretty long in the tooth so the PS could be bad.  guess I'll know soon enough.
+[02:03] <bryce> aquarius__, heh, well you know they design it that way ;-)
+[02:03]  * aquarius__ pastes the log of this chat into a text file on the server so it doesn't get lost ;)
+[02:04] <aquarius__> ok. I think I might try rebooting
+[02:04] <aquarius__> and then crying if the bios explodes :)
+[02:04]  * bryce nods
+[02:04] <aquarius__> thank you for the thoughts, pal
+[02:04] <aquarius__> I owe you a pint
+[02:04] <bryce> sure thing, and good luck
+[02:04] <aquarius__> or possibly only half a pint if it dies ;-)
+[02:05]  * aquarius__ crosses fingers. :)
+[02:13] <aquarius> well. that's encouraging.
+[02:13] <aquarius> bryce, seems to have come back up OK :)
+[02:13] <aquarius> can I actually check the disk to see if it's broken? I don't think you can fsck a mounted drive, can you?
+[02:16] <aquarius> ah, Disks has aSMART self-test thing.
+[02:18] <bryce> yeah fsck should be done unmounted
+[02:18] <aquarius> which i can't do 'cos I've only got one partition. I could do it from a live image, I suppose.
+[02:18] <aquarius> ah, I can touch /forcefsck and reboot.
+[02:19] <aquarius> cheers. This all seems semi-OK now; I think I shall go to bed and continue to investigate in the morning :)
+[02:19] <aquarius> thanks, pal.
+[02:19] <bryce> aquarius, good to hear
+[02:20] <aquarius> fingers crossed. :)
+[02:28] <infinity> bjf: Around?
+[02:28] <infinity> bjf: I find it odd that all the Prepare tasks on 1095815 are Fix Released, but Promote isn't Confirmed.
+[02:28] <infinity> bjf: Did your earlier argument with shankbot leave it limping?
+[02:30] <infinity> bjf: (Or is promote-to-proposed incorrectly caught in the "not on weekends" check that should only be used for promote-to-{security,updates}?)
+[02:30] <infinity> henrix_: ^
+[04:04] <infinity> bjf / henrix_` : Oh, the bot seems to have caught up with reality.
+[07:07] <bjf> infinity, i'm going to have to slap the bot around a little next week. i saw it doing some thing i didn't like.
+[07:39] <infinity> bjf: Oh, thanks for the nick hilight, you reminded me to update that tracking bug. :P
+[15:23] <spacejammin> hi
+=== yofel_ is now known as yofel
+=== chiluk is now known as chiluk_away
+=== chiluk_away is now known as chiluk
+=== chiluk is now known as chiluk_away
+[19:02] <rmk> Hi all.  Noticed the quantal kernel is provided for precise.  Is it always the case that newer kernels are provided for an LTS release?
+[19:02] <rmk> And how far forward does that generally go?  In other words, will there also be a raring kernel for precise at some point?
+=== rsalveti_ is now known as rsalveti
+[20:12] <rmk> Does anyone know if passing panic=N on the kernel command line is any different than setting the panic value in /proc?
+[20:15] <geofft> rmk: They're different. panic=N is used by initramfs-tools, if there's a userspace error condition in the initramfs 
+[20:16] <geofft> if it's set, it will sleep N seconds and reboot; if not it will spawn a shell. 
+[20:16] <geofft> This has nothing to do with kernel panics. 
+[20:16] <rmk> We're getting kernel panics and have set the the panic value in proc to 1.  However, it never reboots.
+[20:16] <rmk> It says "rebooting in 1 second" and just sits there
+[20:17] <geofft> It is possible that your kernel is bad at rebooting your hardware? 
+[20:18] <geofft> Or at least, is bad at rebooting your hardware, once a panic has happened? 
+[20:20] <rmk> It's certainly possible
+[20:20] <rmk> This was using precise kernel 3.2.0-34
+[20:21] <rmk> geofft: Don't suppose you know the answer to my previous question about kernel backports?
+[20:24] <geofft> http://article.gmane.org/gmane.linux.ubuntu.devel/35695 is the extent of what I know. 
+[20:35] <rmk> geofft: perfect thanks
+[20:48] <rmk> https://wiki.ubuntu.com/Kernel/Release/Rolling
+[22:00] <penguin42> bug 1093572 seems to be a bug quite a few people are hitting in samba related stuff - I don't seem to be able to persuade any of them to actually post a full set of logs though; we have got 3 sets of oops though
+[22:00] <ubot2> Launchpad bug 1093572 in linux (Ubuntu) "Kernel Oops - BUG: unable to handle kernel paging request at register_ftrace_event+0xa9/0x2b0 " [Medium,Incomplete] https://launchpad.net/bugs/1093572
+[22:03] <penguin42> and comment #7 seems to be from a 3.7.0-7 as well - so it's not just old stuff

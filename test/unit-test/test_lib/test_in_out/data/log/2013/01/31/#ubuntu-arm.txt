@@ -1,0 +1,346 @@
+[01:05] <tripelb> Can I root with no PC? just the N7 Alon?
+[01:05] <tripelb> Can I root with no PC? just the N7 alone.
+=== Jack87 is now known as Jack87|Away
+=== Jack87|Away is now known as Jack87
+[01:50] <scientes> tripelb...not here
+[01:50] <scientes> i have the answer...
+=== chihchun is now known as zz_chihchun
+=== zz_chihchun is now known as chihchun
+=== Quintasan_ is now known as Quintasan
+[07:23] <dholbach> good morning
+=== yofel_ is now known as yofel
+=== chihchun is now known as zz_chihchun
+=== zz_chihchun is now known as chihchun
+[08:38] <janimo> ogra_, do we still have freezes and image respins occasionally? Why are there .1 and .2 updates to yesterday's image?
+[08:47] <infinity> janimo: Because some people (I was one of them) spun nexus7 by hand.
+[08:48] <janimo> infinity, I was more intrigued by the reason actually :) Is this Thursday some sort of alpha or why the urgency?
+[08:48] <infinity> janimo: Because the image builder was down for 6 days, and I was testing things when it came back.
+[08:48] <janimo> just fixing image build bugs is a good reason
+[08:48] <infinity> janimo: Nothing release-related at all.
+[08:48] <janimo> infinity, ok
+[09:33] <ogra_> janimo, hmm, i dist-upgraded yesterday and have all your changes installed, butu seems acceld is still running and if i stop it i have no rotation
+[09:34] <janimo> ogra_, so you have u-d-n-0.49 and gsd -ubuntu3 ?
+[09:34] <ogra_> janimo, do we need to do anything for the device permissions perhaps ?
+[09:35] <janimo> ogra_, sudo udevadm info --query=property --name=iio:device
+[09:35] <janimo> does this show ID_INPUT_ACCELEROMETER=1 among others?
+[09:35] <ogra_> i have both packages, yeah
+[09:36] <janimo> acceld is started in the X session hook (which I thought I had deleted)
+[09:39] <janimo> I planned on installing a fresh image but will wait the first image with these packages in it - yesterday's last does not yet
+[09:41] <ogra_> didnt you remove the upstart job for acceld ? the Xsession script checks if it is enabled iirc
+[09:41]  * ogra_ checks his code
+[09:42] <ogra_> yeah
+[09:42] <ogra_> it looks for /sys/bus/iio/devices/iio:device0/buffer/enable
+[09:42] <ogra_> janimo, if you are actually sure it works, just wipe acceld completely, it wasnt meant to stay :)
+[09:43] <janimo> ogra_, I thought it is only started from the X session hook
+[09:43] <janimo> kept the upstart bits as they initialize sysfs attributes with root privileges
+[09:45] <ogra_> ah, indeed, you use them too
+[09:45] <ogra_> err, no
+[09:46] <ogra_> you at least dont read them dircetly, do they affect the /dev behavior ?
+[09:51] <janimo> we do not read anything from /dev actually, just from sysfs
+[09:53] <janimo> I thought I'd keep acceld along if someone wants to still debug rotation in the near future if g-s-d has issues
+[09:57] <ogra_> janimo, you pointed out binary firmware for the accelerometer, where is that ?
+[09:57] <ogra_> (or how is it called)
+[09:57] <janimo> there exists on android (inside executables) not as a separate file
+[09:57] <ogra_> ah, k
+[09:57] <apw> ogra_, the driver claims to provide polled interfaces when it has firmware loaded
+[09:57] <ogra_> apw, ^^^
+[09:57] <janimo> it's a few Kb of microcode only
+[09:58] <janimo> apw, it does, but the firmware is not only not free but it is unavailable
+[09:58] <janimo> seems to have been partially (?) reverse engineered by the libi2cdev project
+[09:58] <apw> well that sucks
+[09:58] <pitti> janimo, ogra_: hello
+[09:58] <janimo> apw, the dirver indeed even provides orientation as a sysfs attribute when enabled
+[09:58] <janimo> pitti, hello
+[09:59] <ogra_> hey pitti
+[09:59] <apw> janimo, it was the 'poll' able interface i was interested in, but that doesn't work without
+[09:59] <janimo> apw, right, my understanding also
+[09:59] <apw> so we don't have to poll, sigh
+[09:59] <janimo> we may get it to work but it seemed nonobvious techinically and murky license-wise
+[09:59] <apw> yeah
+[10:00] <janimo> still I plan on looking into it, as this particular sensor is going to be in many other devices
+[10:00] <pitti> janimo: do you happen to know if we can use the triggers feature instead of having to poll all the time?
+[10:00] <janimo> it is in the galaxy nexus and the transformer at least
+[10:00] <janimo> variations of the MPU
+[10:00] <ogra_> pitti, i guess only with binary firmware
+[10:00] <janimo> pitti, no idea, but I plan on looking at the kernel side to check this
+[10:00] <janimo> to see if we can without firmware that is
+[10:01] <ogra_> though it shouldnt be to hard to move the acceld logic into the driver, would it ?
+[10:01] <janimo> btw android on the nexus7 seems to read the raw data from sysfs, and has no fw loaded
+[10:01] <apw> janimo, i've just been reading the driver and all the event driven stuff is dependant on dmp being enabled, and that is dependant on the firmware
+[10:01] <janimo> maybe it uses some cleverer approach that eluded me as I did not look much into the kernel
+[10:01] <apw> ogra_, to make the kernel poll for you ?
+[10:01] <janimo> waking up every 1 s is suboptimal I agree
+[10:02] <ogra_> apw, well, the kernel processes these numbers anyway at some point, no ?
+[10:02] <apw> ogra_, only on read
+[10:02] <janimo> apw, a middle road would be to have a kernel timer, have it do the calculations and only fire a kevent if it detects orientation chaneg
+[10:02] <ogra_> hmpf, ok, i thought you could just run them through a filter that sends a trigger
+[10:02] <apw> janimo, and that would be better how
+[10:02] <janimo> so less process wakeups but policy and hacks in the kernel driver
+[10:03] <apw> how would there be less process wakeups, a kernel thread is a process too
+[10:03] <janimo> apw, ok, I plead ignorance then. I thought kernel timeouts would be more lightweight somewhat
+[10:04] <apw> not really, it would look pretty much the same as a userspace process doing it
+[10:04] <apw> the most efficient way would be to find something which is already polling
+[10:04] <apw> and poll in that same process
+[10:04] <janimo> and piggyback on that?
+[10:04] <apw> so you have one wakeup
+[10:05]  * pitti cannot think of something else on the desktop which is polling regularly
+[10:05] <janimo> I was hoping g-s-d already does that and our poll would just tail on an existing one, but other timeouts in g-s-d are usually largert
+[10:05] <pitti> no, g-s-d's orientation/media keys plugins mostly listens to XF86Rotate input events and similar, they don't poll
+[10:06] <pitti> so I guess we could at least put luxd and acceld into one C process which does the polling for both
+[10:06] <janimo> pitti, I mean other plugins, if they are in the same process (g-s-d) couldn't glibs timeout code wake them up at the same time?
+[10:06] <janimo> I was hoping g_timeout_add_second wakes up at second boundaries for this reason
+[10:06] <pitti> janimo: that's what I said, there are no polling plugins right now
+[10:07] <apw> pitti, cirtainly wherever they go, we should poll them based on one timeout
+[10:07] <pitti> we need to introduce one
+[10:07] <janimo> pitti, ok. I grepped the source for g_timeout_add and there were a few, but they may not be enabled then
+[10:07] <janimo> screensaver and powermanager come to mind
+[10:07] <apw> ogra_, when you read those values from sysfs the kernel gets the value 'now' from the actual h/w registers by the looks of it
+[10:07] <pitti> janimo: yeah, those use long timeouts, not subsecond polling
+[10:07] <apw> so it isn't polling internally
+[10:07] <janimo> we'll need similar polling for the light sensor (but I need to check, that may provide some trigger)
+[10:08] <janimo> apw, from the buffer which we set the length to 200 at the moment
+[10:08] <pitti> janimo: I profiled g-s-d in a running desktop session, it got about 20 wakeups a minute; i. e. it doesn't currently poll devices, but it's as good a place as any to do that
+[10:08] <pitti> janimo: e. g. g-s-d's orientation plugin would be ideal in the sense that you can immediately hook into the "action" parts
+[10:08] <janimo> we can still tweak the accel to only use low power mode, and use 1.25HZ frequency
+[10:08] <janimo> but that only helps with its internal power savings, not the process wakeups
+[10:09] <ogra_> pitti, btw, do you know if we already have a list of g-s-d modules we want to disable ?
+[10:09] <ogra_> (or who is reviewing it)
+[10:09] <pitti> ogra_: yes, http://pad.ubuntu.com/nexus7-desktop-profiling
+[10:10] <pitti> ogra_: I came up with three which are definitively "out", and a handful which I'm uncertain about whether we need these features; but as they only add a negligible overhead my feeling is that we should leave them on for now
+[10:10] <janimo> pitti, 20 wakeups a minute sound ok. Does the desktop still have frequent waker-uppers? (1/s or more frequent) ?
+[10:10] <pitti> janimo: actually, compiz does
+[10:11] <pitti> janimo: that wakes up 60 times a second for vsync wakeup etc.
+[10:11] <pitti> janimo: (or the unity plugin)
+[10:11] <ogra_> pitti, oh, right, i even commented already
+[10:11] <pitti> janimo: that's pretty much the only process which wakes up that often
+[10:12] <pitti> janimo: it might not actually be bad to put that polling into the unity plugin? it's "our" code anyway so we don't need to maintain huge patches against g-s-d, and can piggyback on the wakeups?
+[10:12] <pitti> janimo: oh, the second is firefox when you have JS pages open; but I guess we can safely discard that :)
+[10:12] <janimo> pitti, g-s-d was the most straightforward place as it dealt with accel and rotation already
+[10:12] <ogra_> janimo, oh, btw, i was wondering if we couldnt "DPMS blank" and unblank the screen before and after rotating ... to hide the screen corruption
+[10:13] <janimo> no idea about how it would fit in unity but I am open to the idea
+[10:13] <janimo> pitti, or a g-s-d unity plugin?
+[10:13]  * janimo has no idea whether such a thing even exists
+[10:13] <pitti> janimo: I think g-s-d's orientation plugin is the most obvious one, but will require hard-to-maintain patches and additional wakeups; unity's is the most efficient in terms of wakeups, but might be harder to change
+[10:14] <janimo> pitti, this particular patch is small btw, not sure what else we may need in term of orientation
+[10:14] <pitti> janimo: g-s-d unity plugin> not right now
+[10:16] <janimo> I mostly considered this code as a stop-gap proof of concept until we figure out a better way possibly post 13.04 when we run into more types of accel sensors and have a better idea what may work across them
+=== sv is now known as discopig
+[10:17] <janimo> pitti, is the etherpad above only about nexus7 g-s-d modules, will we have nexus specific module blacklist?
+[10:22] <ogra_> well, i would call it tablet specific
+[10:23] <pitti> janimo: no, these three plugins are not really n7 specific; I think we should disable them for all mobile devices
+[10:24] <pitti> wacom and color apply even less to phones than to tablets
+[10:24] <janimo> pitti, great, I hope we have as little divergence between n7 and the rest as possible
+[10:24] <ogra_> actually i think the unity formfactor gsetting needs to be enhanced ... and g-s-d should enable/disable them based on this
+[10:24] <pitti> janimo: we can disable those in the -defaults package
+[10:25] <ogra_> (it currenly only has "netbook", "desktop" and "automatic" options)
+[10:25] <ogra_> pitti, but thats very nexus7 specific, long term g-s-d should detect the right thing
+[10:26] <ogra_> (for 13.04 the settings package will surely do though)
+[10:26] <pitti> ogra_: we can disable the updates plugin globally even; that's the one which is really useless on ubuntu
+[10:27] <pitti> as for color and wacom, that's more like a matter of choice; wacom is actually quite harmless (again, only triggered when you actually have such a device), but color is quite costly because of activating colord
+[10:30] <ogra_> which doesnt even work on our LCD
+[10:44] <Rjs> ogra_: dpms blank and unblank at rotation sounds like it is working around a bug in the X.org driver (i.e., if the nvidia driver was free software, you'd probably try to fix the screen corruption there?)
+[10:44] <Rjs> ... so maybe the right place for a workaround would be in the X server, as some sort of wrapper for rotate requests before they get passed to the nvidia driver? or would that be too intrusive?
+[10:44] <Rjs> hmm, or actually, does it use kms or something similar to rotate? if it does, you could possibly work around or even fix the corruption in the kernel driver, which is free software? (also, I've seen lots of display-related patches lately while browsing the linux-tegra list, but I don't know enough of the hardware to know if they have any relevance to the nexus7...)
+[10:45] <ogra_> i fear that might be to intrusive since it would also affect sanely working drivers
+[10:45] <ogra_> effectively nvidia needs to fix it
+[10:46] <ogra_> but there is also compiz or nux that is redrawing really slow, i havent tested on lxde, but i bet the corruption will be a lot less there
+[10:55] <janimo> hrw, have you considered uploading a chromebook kernel to ubuntu?
+[10:55] <janimo> or some sort of exynos kernel
+[10:55] <ogra_> ++
+[11:04] <ogra_> janimo, btw udevadm info --query=property --name=iio:device doesnt exist iio:device0 and 1 do though, 0 has the ID_INPUT_ACCELEROMETER=1 property but also 0600 permissions and is root owned (no udev-acl in place)
+[11:04] <janimo> ah yes the 0 dropped off in the paste
+[11:05] <janimo> ogra_, I don't remember doing anything with udev-acl or permissions
+[11:05] <janimo> root owned is ok as we do not read from it
+[11:05] <ogra_> well, doesnt the user need read access at least ?
+[11:05] <janimo> sysfs is user readable
+[11:05] <ogra_> ah, k
+[11:05] <ogra_> i thought you read from the device
+[11:05] <janimo> no, we coudl read from there too but sysfs seemed simpler
+[11:06] <janimo> well doing exactly as the go/dash scripts did, read form sysfs files
+[11:06] <janimo> no idea why acceld is still running there though
+[11:06] <janimo> and why g-s-d does nothing
+[11:07] <janimo> ogra_, ah you mentioned screen blanking above. I guess we could do something to cover the ugly rotation effects
+[11:07] <janimo> not sure how blanking would look
+[11:07] <janimo> unfortunately we cannot do animated rotation as android does :)
+[11:07] <ogra_> hopefully just like "flash to black and back"
+[11:08] <ogra_> (WW) TEGRA(0): LVDS-1: Error querying display modes: No such device.
+[11:08] <ogra_> i'd really like to know which device it talks about :/
+[11:10] <janimo> right, weird xorg.log spa,
+[11:10] <janimo> spam
+[11:11] <ogra_> well, xrandr prints that too
+[11:11] <janimo> you can strace and see what it checks for
+[11:11] <janimo> maybe we have some etc permissions wrong?
+[11:11] <janimo> I mean /dev permissions
+[11:14] <ogra_> i dont think so
+[11:15] <ogra_> all tegra* devices are handled by ACLs
+[11:15] <ogra_> all nv* devices too
+[11:16] <ogra_> oh !
+[11:16] <ogra_> i never noticed /dev/lightsensor before
+[11:17] <ogra_>  /dev/fb0 and 1 are ACL handled as well
+[11:17] <janimo> ogra_, lightsensor is only used for debugging from what I saw
+[11:17] <ogra_> ah, k +
+[11:17] <ogra_> how sad
+[11:17] <janimo> to ioctl on it and toggle printks
+[11:17] <ogra_> hmm there is a knvmap
+[11:18] <ogra_> nvmap is ACL'ed but not knvmap ... i wonder what that does
+[11:19] <ogra_> oh, i tried gpsd for laughs ... seems it connects and initialized the device fine (according to xgps) but it never starts connecting
+[11:33] <janimo> ogra_, when are the daily nexus7 images built?
+[11:37] <ogra_> 14:something UTC
+[11:43] <hrw> janimo: after fosdem I will have kernel which I consider uploadable
+[11:46] <suihkulokki> hrw, janimo, I think it should be quite possible to have a single exynos5 kernel supporting arndale/chromebook/nexus10
+[11:46] <hrw> suihkulokki: arndale uses 3.8, nexus10 uses 3.4(?), chromebook uses 3.4
+[11:48] <hrw> suihkulokki: if someone wants to work on 3.8 for chromebook then I can test from time to time. But prefer something "stable" for each day use
+=== chihchun is now known as zz_chihchun
+[12:14] <janimo> suihkulokki, that would be great indeed
+[12:15] <janimo> hrw, do you know about these? I was pointed to by fabo http://www.chromium.org/chromium-os/how-tos-and-troubleshooting/using-an-upstream-kernel-on-snow
+[12:15]  * janimo has no chromebook or any exynos btw, just thinks that having the kernel in 13.04 is a good idea
+[12:17] <hrw> janimo: I know
+[12:17] <hrw> janimo: note that it also says "text console only for now"
+[12:17] <hrw> no x11, no usb, no keyboard, no charging
+[12:18] <janimo> hrw, ok I wasn't aware of the status of that effort
+[12:18] <janimo> or the uptodatedness of the page
+[12:19] <hrw> works: serial (if you have debugboard == work for google), i2c (except one with keyboard and pmic), power button/lid switch, emmc/sd
+[12:19] <hrw> not work: x11, usb, i2c4 (keyboard, pmic), display, hdmi, wifi, rtc, trackpad, audio
+[12:19] <hrw> but it is good that they list status
+[12:20] <hrw> and its 2 months old now so maybe got better
+[12:21] <cjwatson> ogra_: bug 1110408 - I may have been a bit confused, as I didn't realise that we'd deliberately switched to portrait mode by default, so it was mostly just an upgrade surprise.  I guess the main bug was that touch was miscalibrated, then, and that no longer seems to be true.  Should I just close it?
+[12:21] <ubot2> Launchpad bug 1110408 in ubuntu-defaults-nexus7 (Ubuntu) "Log out → lightdm comes back in portrait mode" [Undecided,New] https://launchpad.net/bugs/1110408
+[12:22] <cjwatson> I probably
+[12:23] <cjwatson> just hadn't rebooted since some relevant bit of the upgrade, or something
+[12:23] <hrw> janimo: new chromebook kernel requires also new opengles driver for which I need to write new packaging with license stuff etc
+[12:24] <janimo> cjwatson, that lightdm does not rotate is a bug though, it has some overlap with your experience
+[12:24] <janimo> seb128 knows about that too so it's targeted
+[12:25] <janimo> hrw, is that package that you needed the license stuff for yesterday?
+[12:25] <hrw> yes
+[12:25] <cjwatson> janimo: well, ok, but lightdm does now seem to work properly in portrait mode for me ...
+[12:25] <cjwatson> as in I can actually touch "Log In"
+[12:25] <hrw> I have first version but it complains about debconf not being interactive even when debconf is dialog or readline
+[12:26] <janimo> right, so that bug as you said is not valid. It's just that it would show up in portrait when you log out of an otherwise landscape session
+[12:26] <janimo> I found this out only yesterday after seeing your report
+[12:39] <hrw> janimo: btw - what do I have to check before pushing chromebook kernel to archive?
+[12:40] <janimo> hrw, if the packaging (naming, structure) is more or less like other kernels' and there are no ambiguously licensed bits in it it should be ok
+[12:41] <hrw> janimo: I used linaro kernel packaging which is based on ubuntu one
+[12:41] <janimo> it won't go into the archive unless an archive admin reviews it (infinity most likely) anyway
+[12:41] <hrw> sure
+[12:41] <janimo> the ac100 and nexus7 kernels are based on linaro packaging too
+[12:42] <janimo> and infinity thinks having exynos in archive is a good idea - I asked you because I remembered him saying it :)
+[12:42] <hrw> ;)
+[12:43] <cjwatson> janimo: OK, so, do you want my bug open or closed?
+[12:43] <janimo> hrw, do you know if the SoC on chromebook and nexus10 is the same?
+[12:43] <hrw> janimo: iirc same
+[12:43] <janimo> cjwatson, closed or renamed to 'no rotation in lightdm' I'd say
+[12:43] <hrw> exynos5250
+[12:43] <janimo> hrw, great, but likely much different peripherals
+[12:44] <hrw> janimo: indeed
+[12:44] <janimo> hrw, btw are there inertial sensors on the chromebook?
+[12:44] <janimo> accel/gyro/compass like on a mobile
+[12:44] <hrw> janimo: no idea really
+[12:46] <hrw> git-buildpackage sometimes is nasty but in general roxx
+[12:46] <janimo> hrw, doesn't look like from a quick search. Probably not much value in them
+[12:46] <jibel> Xorg on my Nexus 7 died with the error http://paste.ubuntu.com/1593004/ while running these tests https://wiki.ubuntu.com/Nexus7/BrowsingSimulation , is it a known issue?
+[12:46] <hrw> I need to buy usb3 hub and usb3 case for 3.5" hdd
+[12:47] <janimo> jibel, not that  I know of. Do you know if it fails on other similarly specced ARM hw?
+[12:47] <hrw> my 320GB hdd is wasting bandwith of exynos5 usb...
+[12:47] <ogra_> cjwatson, right close it ... (sorry was afk)
+[12:48] <jibel> janimo, no idea, I just have tested on this device
+[12:48] <jibel> and didn't find anything interesting on the web yet
+[12:49] <janimo> jibel, feel free to file it under the ubuntu-nexus7 project then
+[12:49] <jibel> janimo, k
+[12:49] <janimo> it will get reproduced and kept track of. thanks
+[12:49] <cjwatson> ok, closing, thanks
+[12:55] <apw> ogra_, -9.25 in the can and building
+[12:55] <ogra_> apw, yep, saw it, thanks
+[13:11] <hrw> E: linux-chromebook-3.4 source: build-depends-indep-without-arch-indep
+[13:11] <hrw> thats only what left from lintian ;)
+[13:16] <janimo> hrw, so your package probably is the cleanest ubuntu kernel package then :)
+=== doko_ is now known as doko
+[13:16]  * janimo wishes we had an uptodate git kernel-package repo which all kernel package sync up with from time to time
+[13:17] <hrw> janimo: https://github.com/hrw/chromebook-linux
+[13:17] <janimo> it's too much gratuitous divergence in packaging
+[13:17] <hrw> janimo: we have such one at Linaro
+[13:18] <janimo> hrw, I'd name the package linux-exynos5 or something. There may be a new chromebook or two in the future
+[13:18] <hrw> same with exynos5 hardware
+[13:19] <hrw> but I understand
+[13:19] <hrw> x86 chromebooks for example should be ~fine with default ubuntu kernel
+[13:21] <ogra_> janimo, i noticed that my desktop now comes up in portrait by default and you need to rotate it once to activate rotation at all ... did you set the default orientation to "right" in g-s-d ?
+[13:21] <ogra_> (should be "normal" in protrait)
+[13:24] <ogra_> jibel, hmm, that uses chromium ... afaik out package is pretty outdated and it crashes for me after a while when using it
+[13:25] <ogra_> (it breaks all font rendering here, likely due to an incompatible cairo version thats shipped in the chromium package)
+[13:25] <janimo> ogra_, yes I noticed that too, I need to see what the issue is :) Maybe the same bug as I ad in acceld
+[13:25] <ogra_> yeah
+[13:27] <janimo> ogra_, I wonder if we should test all X related bugs in lubuntu as well to rule out compiz/unity/3d
+[13:28] <ogra_> would make some sense i guess
+[13:28] <ogra_> not that i'm eager to install lxde though :P
+[13:28] <jibel> ogra_, it shouldn't make X crash, does it?
+[13:28] <ogra_> chromium ? no it just breaks font rendering
+[13:29] <ogra_> but the testsuite might break sue to it, no idea
+[13:29] <ogra_> *due
+=== smartboyhw_ is now known as smartboyhw
+=== hrww is now known as hrw
+[13:57] <janimo> hrw, for the final upload the skipabi and skipmodule bits need to be removed, so these tests get performed
+[13:57] <janimo> annoying as they are
+[13:59] <hrw> ok, thanks
+[13:59] <hrw> did some tweaks and sent package to pbuilder now
+=== bdrung_ is now known as bdrung
+[14:17] <ogra_> bug 951827
+[14:17] <ubot2> Launchpad bug 951827 in gnome-power-manager (Ubuntu) "Power Statistics window blank" [High,Fix released] https://launchpad.net/bugs/951827
+[15:36] <angs> I need to compile wpa_supplicant for a ubuntu-server image for beagleboard. Linux ubuntu2 3.2.0-23-omap #36-Ubuntu Tue Apr 10 20:24:21 UTC 2012 armv7l armv7l armv7l GNU/Linux. can anyone tell me how I can do it?
+[15:36] <ogra_> geez, my N4 was just sent ! i only ordered today !
+[15:37] <ogra_> angs, whats wrong with the wpa-supplicant package we have in ubuntu ?
+[15:39] <angs> I am trying to predefine the cell ID for an ad-hoc wlan and using " bssid=92:4B:23:9D:30:DA " on wpa_Supplicant for it. however it never gets that cell id. on #linux-wireless I am told that the current wpa_supplicant that I am using is too old (0.7.3) and I need a newest one
+[15:40] <angs> the latest one is 2.0
+[15:41] <angs> is there any instruction how I can compile a package for ubuntu-arm?
+[15:49] <ogra_> just compiling it on the board is the easiest
+[15:50] <angs> what do I need to do after I download the package on the board? Is there any instruction for that?
+[15:50] <ogra_> are you sure about 1.0 ?
+[15:50] <ogra_> the latest releas in debian and ubuntu is 1.0
+[15:50] <ogra_> err about 2.0 indeed
+[15:51] <angs> yeah it is 2.0
+[15:52] <ogra_> well, the general triplet of commands should do (configre/make/make install) if you use an upstream source
+[15:52] <ogra_> you probably might need some build dependencies installed, i would look at the build deps from the ubuntu package and just make sure you have these
+[15:53] <angs> thanks for your help ogra_
+[16:30] <cj5> I'm having trouble booting Ubuntu 12.04. After a few tweak to the boot.scr I got to get to the UI, once to the language selection window, otherwise I get the Ubuntu background for a while then it reboots.
+[16:30] <cj5> Pandaboard ES
+[16:31] <cj5> Wondering what logs files I can look to to diagnose the problem
+[16:40] <cj5> actually just found this in the syslog right before reboot - Unable to determine the model from DMI
+[17:19] <hrw> janimo: ok, source package renamed to linux-exynos5-3.4 but is binary package linux-image-VER-ABI-chromebook fine?
+[17:19] <janimo> hrw, a moment
+[17:19] <hrw> ok
+[17:21] <ogra_> hrw, thats what we use for ac100 and nexus7, should be good
+[17:21] <hrw> cool
+[17:22] <hrw> they should give devices some names ;)
+[17:23] <Laney> I've got some pretty bad graphical corruption after flashing the current N7 daily. The background isn't rendered properly and half the screen is shifted over (and oem-config is off the side and is unusable). Anyone seen this?
+[17:26] <janimo> hrw, should 3.4 be in the source package name? I don't think we have that elsewhere
+[17:27] <hrw> can kill
+[17:28] <Jef91> Has anyone gotten hardware accelerated video decoding working on the Nexus 7 under Ubuntu?
+[17:30] <Laney> https://picasaweb.google.com/lh/photo/25VNEPdfiynNV9ZIrFj15dMTjNZETYmyPJy0liipFm0?feat=directlink
+[17:30] <Laney> like that
+[17:31] <Jef91> looks painful Laney
+[17:32] <janimo> hrw, I'd also say the binary package image should be the same as the source's. I'd suggest using the same scheme as ac100 and nexus
+[17:32] <janimo> as they are in the archive and noone complained about their naming :)
+[17:32] <janimo> although they are named after the product not the soc
+[17:32] <hrw> janimo: they had product names
+[17:33] <janimo> I was just thinking the exynos kernel may be used by other devices using that SoC
+=== ogra_ is now known as ogra
+[17:33] <hrw> if I make linux-daisy or linux-snow + linux-image-3.4.0-5-daisy or linux-image-3.4.0-5-snow who will know what it is?
+[17:33] <janimo> hrw, I'd consult infinity on this issue as well
+[17:34] <hrw> next week then
+[17:34] <janimo> maybe exynos indeed would be too generous if it only worked with chromebook and contained chromebook specific code
+[17:34] <hrw> I plan to go to sleep in ~2h
+[17:34] <hrw> 04:00 trip to fosdem starts
+[17:34] <janimo> hrw, have a good trip and conference!
+[17:35] <hrw> thanks
+[17:35] <mosasaur> Can I install a version of ubuntu on a galaxy note GT-N7000? I mean native.
+[17:42] <mosasaur> https://wiki.ubuntu.com/ARM/DeviceSupport
+[17:42] <mosasaur> I suppose that it's not easy
+=== Jef91 is now known as Jef91|AFK
+=== wendar is now known as allisonrandal
+=== ubuntu-nathan is now known as nathanpc
+[20:02] <gmulak1> I went to Ubuntu site but cannot find the ARM version to download - help please
+=== Jef91|AFK is now known as Jef91
+=== mhaberler__ is now known as mhaberler
+[20:14] <Jef91> gmulak1 installing on ARM devices is very different than installing on X86
+[20:14] <Jef91> it isn't "one download fits all"
+[20:14] <Jef91> Generally installing is different on every device.
+=== mrcan_ is now known as mrcan
+=== k1l_ is now known as k1l

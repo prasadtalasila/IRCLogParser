@@ -1,0 +1,183 @@
+[07:47] <infinity> ppisati: Can you make sure someone uploads your ti-omap4 SRUs to the PPA today?  The earlier, the better, so I can promote them when I get up in the morning. :)
+[07:50] <ppisati> infinity: the person who usually deal with omap4 kernels is in Brasil, should be up&running in ~7hrs
+=== smb` is now known as smb
+[08:21] <smb> morning
+=== henrix_ is now known as henrix
+[10:00] <ppisati> building another kernl
+[10:00] <ppisati> back in a bit
+[10:18]  * apw whines about broken internets
+[10:23] <smb> apw, Mine works
+[10:23] <apw> smb, well thats nice for you
+[10:23] <apw> mine works a bit right now
+[10:23] <smb> apw, :) I know it doesn't help you much
+[10:24] <apw> well you could bring some internet pixy dust with you i suppose
+[10:24] <smb> apw, More hw going to die ?
+[10:24] <apw> smb, no this is a tunnel issue
+[10:25] <smb> apw, Ah, still not using one of those but I suppose this years resolution should be to start sharing a bit of your pain
+[10:26] <apw> smb, not sure how much you can bear, as it is ip address changes which trigger my pain most often
+[10:26] <apw> and you have a high level of those
+[10:26] <apw> if weechat wasn't so bust i'd probabally not notice
+[10:26] <smb> Ah yeah, got those, but with ipv4 that kind of thing was more "normal"
+[10:27] <smb> (not that irc really copes with it)
+[10:31] <apw> finally ... all back and working
+[10:31] <apw> stoopid thing
+[11:00] <tjaalton> apw: hey, do you have ideas about what bug 982889 is missing? we have a ton of dupes, and looks like precise will get some of them with the backport stack
+[11:00] <ubot2`> Launchpad bug 982889 in xorg-server (Ubuntu) "X trying to start before plymouth has finished using the drm driver" [Undecided,Confirmed] https://launchpad.net/bugs/982889
+[11:01] <tjaalton> well, it's become more common with quantal, this one was reported on precise already
+[11:09] <apw> tjaalton, the bug seems to imply it is a plymouth X handoff issue, that plymouth has not yet released DRM when X starts
+[11:10] <apw> tjaalton, which seems like it would be an issue with the way we handle plymouth from the upstart scripting
+[11:10] <apw> or, plymouth says its exited before it has i suppose
+[11:12] <apw> tjaalton, could it be as simple as needing to make the /etc/plymouth quit have a --wait ?
+[11:18] <apw> tjaalton, no probabally not as that is done out of a parallel job plymouth-stop, which is triggered on 'starting lightdm'
+[11:19] <apw> jodh, if an upstart job is triggered on 'starting', will that have to complete before the 'starting' completes or in parallel with the start
+[11:19] <tjaalton> yeah this is hairy..
+[11:20] <jodh> apw: job completes before the starting event does. This is documented in upstart-events(7) - table 1 shows 'starting' event is of type 'Hook' which blocks.
+[11:20] <tjaalton> also, plymouth in both precise and quantal is quite old
+[11:20] <apw> no actually that one isn't doing it, cause its not triggered for lightdm ... bah
+[11:20] <apw> jodh, thanks :)
+[11:24] <apw> tjaalton, actually lightdm does the plymouth quit itself, and _that_ version may need --wait
+[11:25] <tjaalton> that's for su-mode?
+[11:25] <tjaalton> ah no
+[11:26] <tjaalton> well, for text and su-mode?
+[11:37] <apw> tjaalton, no whne handing over to X i think
+[11:38] <tjaalton> if [ "$ARG" = "text" ]; then, if [ "$RUNLEVEL" = S -o "$RUNLEVEL" = 1 ]
+[11:38] <apw> tjaalton, no not in the upstart jobs, in the normal case, builtin to the binary
+[11:38] <tjaalton> huh?
+[11:38] <tjaalton> ok
+[11:39] <apw> tjaalton, there seems to be some 'start X' and wait for it to send us a SIGUSR1
+[11:39] <apw> when we then (in lightdm) do a plymouth quite --retain-splash
+[11:39] <xnox> apw: "starting" == in parallel, e.g. just as the other is ready to be started. "started" the other one must finish starting.
+[11:40] <tjaalton> apw: oh, nice..
+[11:41] <apw> tjaalton, and it is not clear to me that that quit incantion should not have a --wait on it
+[11:41] <tjaalton> "Wait for boot daemon to quit"
+[11:42] <tjaalton> what does that mean
+[11:49] <apw> its hard to be 100% sure from the description and plymouth is obtuse in the extreme to read
+[12:05] <apw> tjaalton, ahh ok, yeah --wait would make the client side wait for the daemon to actually exit, else it is just sending it a message and then assuming it is done
+[12:05] <apw> this seems a clear rate without --wait
+[12:07] <tjaalton> weird that lightdm does this inside the daemon.. I'd have thought it's upstarts job
+[12:07] <apw> it is doing some complex dance with the Xserver
+[12:08] <apw> allowing it to start but not open drm, stopping plymouth and then letting the xserver grab it
+[12:08] <apw> so that the framebuffer contents can be copied to the root window
+[12:08] <apw> and us not get that flicker
+[12:09] <tjaalton> probably why I can get my hsw in a state where the mouse cursor is shown on a perfectly functional getty..
+[12:09] <apw> heh yeah
+[12:10] <tjaalton> plymouth never has a chance of actually showing any splash, since X is up and running <2s into the boot
+[12:13] <apw> tjaalton, nice i am sure,
+[12:44]  * henrix -> lunch
+=== soren_ is now known as soren
+[13:19]  * henrix reboots...
+=== henrix is now known as henrix_
+=== henrix_ is now known as henrix
+=== chiluk_away is now known as chiluk
+=== yofel_ is now known as yofel
+[14:35] <sforshee> stgraber, can you give me the output of 'dmidecode -s system-manufacturer' and 'dmidecode -s system-version' for your x230?
+[14:37] <stgraber> root@castiana:~# dmidecode -s system-manufacturer
+[14:37] <stgraber> LENOVO
+[14:37] <stgraber> root@castiana:~# dmidecode -s system-version
+[14:37] <stgraber> ThinkPad X230
+[14:38] <sforshee> stgraber, ta
+[15:51]  * ogasawara back in 20
+[16:07] <sforshee> stgraber, I have a patch for your backlight issue. Do you want me to make a build for you or just give you the patch?
+[16:08] <stgraber> sforshee: if you have something more powerful than a quadcore i7 to build that kernel, go ahead, otherwise I'll build it here
+[16:09] <sforshee> stgraber, I've definitely got something more powerful than that at my disposal ;-)
+[16:09] <sforshee> I'll post to the bug when I've got a build for you then
+[16:09] <stgraber> cool, thanks ;)
+=== henrix is now known as henrix_
+=== henrix_ is now known as henrix
+[16:35] <wookey> the linux package build-deps on libelf-dev, libunwind8-dev, libdw-dev, libnewt-dev.
+[16:36] <wookey> which are those are for build arch and which for host arch?
+[16:36] <wookey> or both
+[16:36] <wookey> lobunwind looks to be for host arch for perf. maybe libelf too.
+[16:37] <wookey> oh and libaudit. And there is a flex dependency - should that actually be libfl-dev now?
+[16:37] <wookey> who knows about this stuff?
+[16:38] <apw> they are for perf mostly indeed 
+[16:39] <apw> obviously for the lib* ones those are for the 'arch we are making packages for'
+[16:39] <apw> flex would be used for the 'arch we are building the package on'
+[16:41] <apw> flex and bison are both used in perf, and both 'arch we are building on'
+[16:42] <apw> wookey, any others you care about ?
+[16:45] <apw> wookey, not that cross compiling the upstream kernel works so very well of course
+[16:46] <apw> as the headers assemblages have some of the tools in them, and in a cross environment that makes them usless
+[16:51] <wookey> what about libnewt - isn;t that for make menuconfig curses stuff, and thus for build arch? Or are we actually makiing a tool to run on the host arch later still?
+[16:52] <wookey> Yes I see that the kernel tools stuff is not multiarch -ready. You can specify a dir for libunwind for example, but it assume that inlcude and lib dangle from that, which is wrong for multiarch.
+[16:53] <wookey> my understanding is that the kernel crossbuild works OK. it's the tools stuff which is a problem. Am I wrong about that?
+[16:54] <wookey> apw: what exactly do you mean by "as the headers assemblages have some of the tools in them, and in a cross environment that makes them usless"?
+[16:55] <wookey> The kernel seems to understnad that it has a build arch (called 'ARCH@ it seems) and a host arch (called 'CROSS-COMPILE'). And that host-arch libs might be in funny directories
+[16:55] <wookey> Which should be suffient to make it all cross properly without major surgery
+[16:56] <wookey> And people cross-build their kernels all the time so one can reasonably expect thing to be set up sensibly
+[16:59] <apw> it builds ok, using BUILD binaries, the problem is you also need those same binaries for the target as well to allow extern .ko's to b
+[16:59] <apw> be built, and there is no concept of building them both ways in there
+[17:00] <wookey> OK, so there are some things that we need to build for both build and host arch. ONe for use during the build and one for packaging?
+[17:00]  * ppisati -> gym
+[17:00] <wookey> s/for packaging/to get put in packages/
+[17:01] <apw> wookey, yeah things like the config binary and related things which are used during the build, and from the headers package when installed
+[17:02] <wookey> could we fix this by making the kernel build depend on the kernel-tools package so one of the correct (build) arch is installed, and then it makes them for the host arch in the build for packaging, presumably as now?
+[17:03] <wookey> the config binary ends up in the headers package? Is that what you said?
+[17:04] <wookey> I guess I should look at what's in which packages...
+[17:14] <cking> bjf, can you pull in the latest ecryptfs into the autotest tests to pick up the latest fixes and goodness?
+[17:14] <bjf> cking, will do
+[17:15] <cking> thanks!
+=== tyhicks` is now known as tyhicks
+[17:19] <wookey> there are about a billion packages ther kernel makes - which one(s) do the tools end up in?
+=== chiluk is now known as chiluk_away
+[17:38] <arges> wookey: do you mean linux-tools?
+=== chiluk_away is now known as chiluk
+[17:43] <wookey> arges: probably, but the control file I have in front of me doesn;t contain that, which is why I didn't find it.
+[17:44] <wookey> right I see it in the distro. and linux-tools-common and linux-tools-<board> 
+[17:44] <wookey> will investigatte
+[17:49] <apw> wookey, yeah kernel-wedge is a menace, you get a more comprehensive control when you clean the package
+[17:50] <apw> but even then it is arch specific
+=== henrix is now known as henrix_
+[17:51] <wookey> currently haveing fun decoding the logic in debian/rules.d/0-common-vars.mk which is full of Make double-negatives
+[17:52] <wookey> this is confusing: 
+[17:52] <wookey> # linux-libc-dev may not be needed, default to building it.
+[17:52] <wookey> do_libc_dev_package=false
+[17:53] <wookey> does setting do_foo to false really mean its gets built or is that comment out of date?
+=== henrix_ is now known as henrix
+[17:56] <rtg> wookey, what branch or repository do you have ? do_libc_dev_package in only true for the master kernel branch.
+[17:56] <rtg> s/in/is/
+[17:56] <wookey> I'm looking at linux-linaro-origen-3.7
+[17:56] <apw> wookey, i suspect that the comment is crook, this is probabally a derivative with the opposite default to the master default
+[17:56] <wookey> which is simply the one someone complained didn't corss-build
+[17:56] <apw> yeah then it ouwld be 
+[17:57] <apw> so that comment is from master, where it is =true
+[17:57] <apw> but the only place it is true
+[17:57] <wookey> aha. OK. just checking I wasn;t too confused
+[18:05] <wookey> Is there a blessed way to set env vars for the build - e.g if I wanted to set do_tools=false or the V=1 verbose builds.
+[18:05] <apw> wookey, i tend to just set those by hand in the environment or directly on my debian/rules incantation
+[18:05] <wookey> I tried do_tools=false dpkg-buildpackage -aarmhf -d -nc  and export do_tools=false but no joy. I think dpkg-buildpackage clears anything not starting with DEB_ IIRC
+[18:06] <wookey> Ah call rules diretyl, not via dpkg-buildpackage. OK
+[18:06] <apw> yeah i tend to do that kind of thing for my messy builds
+[18:10] <wookey> cheers. sorry for all the dumb questions. I have a vague idea how it works now - will have a poke. 
+[18:11] <apw>   HOSTCC  scripts/mod/modpost.o
+[18:11] <apw> wookey, i think that is one of the ones which ends up wrong in teh final pacakges
+[18:11] <apw> in a cross environment
+[18:12] <apw> and we are of course interested in any insight you have to making it not broke :)
+[18:15] <wookey> OK, great. I'll try and serve up some insight this week :-)
+[18:16] <apw> wookey, as we do cross compile routinly for the main package to confirm they build, which works
+[18:16] <apw> but they arn't quite the same, this issue for one
+[18:17] <wookey> nobbling with do_tools=false gets me to a wrong-arch objcopy in " Add .gnu_debuglink sections to each stripped .ko"
+[18:18] <wookey> I guess there are both issues in the main package and the question of why variants don't built (which is what linaro cares about right now)
+[18:19] <wookey> I'll look at both. 
+[18:22] <ogra_> linaro uses /debian.$subarch dirs which override the /debian stuff
+[18:22] <ogra_> (at least i always have to do the do_tools disabling in /debian.$subarch when using linaro based kernels)
+[18:26]  * rtg -> lunch
+[18:31]  * smb walks away
+[18:52]  * cking shuffles off
+[19:43] <stgraber> sforshee: new kernel doesn't seem to work here
+[19:44] <stgraber> sforshee: or I didn't boot the right one, stupid secureboot... will be back in a sec :)
+[19:45] <sforshee> stgraber, yeah my build obviously won't boot with secureboot enabled
+[19:46] <sforshee> unless you allow grub to boot unsigned kernels I guess
+[19:46] <stgraber> sforshee: alright, works fine now ;)
+[19:47] <sforshee> stgraber, good :)
+[19:47] <stgraber> sforshee: yeah, an archive kernel wouldn't boot on my laptop either as I have a custom secureboot PKI in that machine (to test experimental self-signed shim)
+[19:47] <stgraber> so I need to remember to manually sign vmlinuz before I can actually boot it :)
+[19:47] <sforshee> sounds like fun
+[19:48] <stgraber> it's easy once you have that whole mess setup, it's just that you need to remember that installing a kernel isn't actually enough to make it bootable :)
+[19:48] <sforshee> stgraber, I'm hoping to get some testing with the T430s too on the upstream bug, so I'm gonna sit on the patch a day or two to see if anyone tries it
+[19:49] <stgraber> k
+=== henrix is now known as henrix_
+[20:39]  * rtg -> EOD
+[23:41] <hggdh> herton: there?
+[23:46] <hggdh> bjf: I was working on bug 1097914 -- it states the kernel should be 3.5.0.1607-9, but the kernel installed is 3.5.0-1607-11. Which version is the target here?
+[23:46] <ubot2`> Launchpad bug 1097914 in linux-armadaxp (Ubuntu) "linux-armadaxp: 3.5.0-1607.9 -proposed tracker" [Medium,In progress] https://launchpad.net/bugs/1097914
+[23:54] <hggdh> bjf: bah, forget

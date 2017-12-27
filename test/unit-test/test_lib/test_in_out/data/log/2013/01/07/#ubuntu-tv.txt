@@ -1,0 +1,169 @@
+[00:22] <tgm4883> mhall119, is it just me, or does sharedmodel not support append using python 3 on 12.04?
+[00:24] <mhall119> tgm4883: what is sharedmodel?
+[00:24] <tgm4883> when adding results from a scope
+[00:25] <tgm4883> looks like its part of deemodel
+[00:25] <tgm4883> or deesharedmodel
+[00:25] <mhall119> oh
+[00:26] <tgm4883> it's the only thing I can think of here, the same code works fine on 12.10 using python 3, and that part of the code didn't actually change between my python 2 and 3 port
+[00:26] <tgm4883> so it seems to be an issue only with sharedmodel with python 3 on 12.04
+[00:28] <tgm4883> model = search.props.results_model
+[00:28] <tgm4883> it comes from that
+[00:28] <mhall119> it could be, I think there may have been some hacks in the python2-gir code that may have been removed in the python3 version
+[00:28] <bobweaver> Oo
+[00:28] <mhall119> tgm4883: try .append_row
+[00:29] <tgm4883> mhall119, yea I tried that, it only accepts 2 things
+[00:29] <mhall119> that's in Dee.Model
+[00:29] <tgm4883> not 8
+[00:29] <tgm4883> IDK what it's looking for though
+[00:29] <mhall119> tgm4883: maybe pass it a list or tuple of the values?
+[00:29] <bobweaver> mhall119,  can scopes listen to other dbus things ?
+[00:30] <bobweaver> like com.canonical.whatever.gsshema.xml
+[00:30] <mhall119> bobweaver: yeah, they can listed to anything
+[00:30] <mhall119> listen
+[00:31] <tgm4883> hmm, not so much
+[00:31] <tgm4883> Expected GLib.Variant
+[00:31] <mhall119> :/
+[00:32] <mhall119> the C API shows both, so something's going wrong in the GIR translation
+[00:32] <mhall119> http://developer.ubuntu.com/api/ubuntu-12.10/c/dee/dee-1.0-DeeModel.html
+[00:32] <bobweaver> if you like have on com.canonical.Unity2d.Dash mythip-backend  it can listent to that and you can put that in python so there is no need to read extrenal files ?
+[00:33] <tgm4883> mhall119, bug report?
+[00:33] <mhall119> bobweaver: I'm not following
+[00:33] <tgm4883> mhall119, this sounds like something that isn't going to be fixed :/
+[00:33] <tgm4883> if it is in fact a bug
+[00:33] <mhall119> tgm4883: yeah, against libdee
+[00:33] <mhall119> tgm4883: it might be, something was done to make it work in python3
+[00:34] <tgm4883> ok, i'll file a bug report
+[00:34] <bobweaver> mhall119,  say I have on the path  com.canonical.Unity2d.Dash a Key that is  "mythip-backend"  can I use that somehow as a var in python in a lens or scope.  so like instead of hardcoding in a 192.168.whatever I can use that or instead of making a local file I can use that. :)
+[00:34] <bobweaver> key is set to string
+[00:35] <mhall119> bobweaver: oh, a dconf key? yeah you can read that
+[00:35] <bobweaver> mhall119,  I think that that would make things more intergrated with Unity
+[00:35] <mhall119> bobweaver: see the code example here: http://mhall119.com/2012/12/adding-privacy-setting-support-to-your-unity-lens/
+[00:35] <bobweaver> because then one can just pass the  com.canonical.Unity2d.Dash previews
+[00:36] <bobweaver> or other things like having the vars in the py set dconf stuff
+[00:36] <bobweaver> then user can also change this things or add things like say com.canonical.Unity2d.Dash add.video.source
+[00:37] <bobweaver> I will look at that example thanks
+[00:37] <bobweaver> << py noob
+[00:37] <mhall119> bobweaver: currently yes, in the future sandboxing might prevent it from being able to set those keys
+[00:39] <bobweaver> sweet
+[00:40] <tgm4883> mhall119, would I expect to be able to resolve it by installing the libdee version from 12.10?  because that doesn't fix it
+[00:41] <bobweaver> tgm4883,  you are tying to get the scope going on virtual thingy ?  and it is libdee ?
+[00:41] <tgm4883> yea
+[00:41] <tgm4883> new scope in 12.04
+[00:41] <mhall119> tgm4883: I wouldn't think so, it's probably in python3-gi, but filing the bug against libdee should get the right people looking into it
+[00:41] <tgm4883> ok
+[00:42] <mhall119> since both python2 and python3 are just using gir1.2-dee-1.0
+[00:43] <bobweaver> so I had this Great Idea that if I make a glib path and key for effects in qml. Then users could change all the ways that things are loading ect by using the dash config thingy that I made. but after spending 2 hours getting that going I found out that you can not set easing.type: <var here> waste of time lol
+[00:45] <bobweaver> making all these "effects" so that user can set it would be cool
+[00:45] <bobweaver> http://doc.qt.digia.com/qt/qml-propertyanimation.html#easing.type-prop
+[00:46] <bobweaver> I am just going to have to make a custon element I think
+[00:49] <tgm4883> mhall119, yep, gir1.2-dee-1.0. Installing the 12.10 version of that fixed it. Opened up https://bugs.launchpad.net/ubuntu/+source/dee/+bug/1096708
+[00:50] <mhall119> oh really? what version did you have?
+[00:51] <tgm4883> it was a fresh 12.04.1 vm install,  so probably 1.0.10
+[00:51] <tgm4883> 1.0.14 is in 12.10
+[00:53] <tgm4883> bobweaver, ^^
+[00:54] <tgm4883> mhall119, I'll do another clean install and verify
+[00:55] <bobweaver> tgm4883,  let me look at what I got
+[00:56] <bobweaver> libdee-1.0-4
+[00:57] <bobweaver> apt-cache policy libdee-dev
+[00:57] <bobweaver> libdee-dev:
+[00:57] <bobweaver>   Installed: 1.0.10-0ubuntu1
+[00:57] <bobweaver> maybe I should try to push unity up to that ?
+[00:57] <tgm4883> bobweaver, i'm installing again to verify it's just the one package and that a full update doesn't fix it
+[00:58] <tgm4883> since I forgot this was a fresh 12.04.1 VM install without updates
+[00:58] <bobweaver> ahh
+[00:58] <bobweaver> tgm4883,  what are deps on package ?
+[00:58] <tgm4883> should be a quick reinstall
+[00:58] <bobweaver> when you get a chance
+[00:59] <tgm4883> I didn't have to install any new deps
+[00:59] <tgm4883> just the one package I think
+[00:59] <tgm4883> I installed 2, but i think it's just the one
+[01:54] <tgm4883> bobweaver, mhall119 confirmed that the issue exists on a fully updated 12.04 vm, and that both packages need to be upgraded
+[01:54] <tgm4883> updated https://bugs.launchpad.net/ubuntu/+source/dee/+bug/1096708
+[01:57] <bobweaver> you know what thi is going to be a paing in the rear but I am going to try and upgrade all this to 12.10
+[01:57] <mhall119> tgm4883: nice, hopefully that'll make it easy for them to backport a fix
+[01:57] <bobweaver> or 13.04
+[01:58] <bobweaver> this is going to be hard to do but it is worth a shot
+[01:58] <mhall119> why will it be hard?
+[01:59] <bobweaver> because there where many changes to unity that made it so 2d would not build
+[01:59] <bobweaver> that is only reason that I am still on 12.04
+[01:59] <bobweaver> brb booting into new version
+[16:08] <dcope> are you all installing tv over 12.04 or 12.10?
+[16:35] <tgm4883> dcope, currently bobweaver has alpha code on 12.04
+[16:36] <dcope> tgm4883: ah, nice
+[16:36] <dcope> is there any timeframe for releases?
+[16:37] <tgm4883> dcope, IDK, you'd have to ask bobweaver ;)
+[16:37] <dcope> i'd like to contribute and test... finally bought parts for my htpc yesterday, just waiting for them to arrive
+[16:37] <bobweaver> yes dcope  it is just a messaround ppa nothing that is set in stone just personal
+[16:37] <dcope> ok
+[16:37] <bobweaver> dcope,  the ppa is u2t/bleedingedge
+[16:38] <dcope> yeah, still have it bookmarked
+[16:38] <dcope> don't think i'm going to be able to try the tuner stuff, i'm planning on cancelling directv once all my parts get in
+[16:38] <bobweaver> but again it just Ubuntu Tv Mock up that I used to make into something so that I could use it at home
+[16:38] <dcope> maybe tuner for digital if i can find a good antenna that is small
+[16:40] <bobweaver> dcope,  my antenna is made out of 2X4's and copper wire and solder it is 4 foot tall and ugly
+[16:40] <dcope> haha
+[16:40] <bobweaver> << can afford cable atm
+[16:40] <dcope> i can afford it but it's a useless expense. plus, directv is increasing their prices this year.
+[16:40] <dcope> i would like to get some sort of sabnzb integration with ubuntu tv
+[18:07] <A329> g'day you all
+[18:07] <A329> I think that this is a pretty nice project
+[18:08] <A329> I wanna participate it, and try it
+[18:09] <A329> I have a question regarding the hardware stuff needed:  can be used any kind of ARM / android devices ?
+[18:10] <A329> for isntanace I have an woxter tv 200 android set box
+[18:10] <A329> a woxter tv 200 android set box
+[18:12] <A329> if anyone have a bit experience with the ubuntu tv ecosystem I will appreciate his experience to talk me about the project just only to have a good start point
+[18:21] <A329> g'day anyone alive
+[18:21] <A329> ?
+[18:22] <A329> hi sjesek
+[18:22] <A329> hi shesek
+[18:28] <shesek> hey
+[18:29] <shesek> do I know you?
+[18:31] <A329> i am fine
+[18:32] <A329> nop I am new
+[18:32] <A329> I wanna gather experiences with people that works with ubuntu tv
+[18:34] <A329> hardware platform supported:  any ARM device with HDMI connector can be useed
+[18:34] <shesek> I'm afraid I'm just lurking around, I don't have much to do with ubuntu tv development
+[18:35] <shesek> or with ubuntu tv at all, really
+[18:35] <A329> thanks
+[18:36] <A329> sounds a nea project
+[18:36] <A329> neat
+[18:37] <A329> the problem are around the media sources
+[18:37] <A329> the ecosystem of services
+[18:38] <A329> he main problem that the whole manufacturing tv sets are trying to move people to a specific media content
+[18:38] <A329> and are different among platforms
+[18:41] <A329> is a war of "smart tv" solutions but it the media content does not converge in a standarization   will got a frustated solution
+[18:42] <A329> technically:  google tv,  android tv,    apple tv are pretty clouse technically  with different GUI
+[18:43] <A329> and I will don't buy the whole brands products in order to access all medias
+[18:51] <tgm4883> A329, I've got to go switch out a few power strips in 2 of our server cabinets at work, but I can probably answer most of your questions later
+[18:52] <A329> thks tgm4883
+=== rsalveti_ is now known as rsalveti
+[19:34] <mhall119> A329: TV is a tough business to crack, certainly
+[19:35] <mhall119> it's certainly going to take more than just a pretty UI
+[19:47] <A39> sorry
+[19:47] <A39> I lost the connection
+[19:48] <A39> I am A329
+[19:49] <A39> the main problem of smart tv is not the application implementation for itself
+[19:50] <A39> the huge problem that i see that the whole television set should have a standarization of source media to broadcast
+[19:51] <A39> smart tv solutions does not go to win if sony, LG, set top boxes, does not have the capabilities to share the same content
+[19:52] <A39> I am not talking about private  content
+[19:52] <A39> located at home
+[19:54] <A39> for instance should exist an amgnostic provider that serve  the medias
+[19:55] <A39> to all boxes like in radio internet approach we have vTuner pr skeezebox
+[19:55] <A39> or*
+[20:14] <tgm4883> A39, that is far more dependent on content providers than on manufacturers
+[20:25] <A329> sorry again here
+[20:26] <A329> the mini mac enter into suspense mode and I lost the connection
+[20:26] <A329> yep I am agree with you
+[20:27] <A329> this is a provider problem
+[20:33] <A329> but regarding the user
+[20:33] <A329> is a stoper of smart tech
+[20:36] <tgm4883> A329, not sure I follow what you are saying about the user
+[20:38] <A329> user = the customer that bought a tv set with smart tv
+[20:38] <A329> the content differ among tv brands
+[20:39] <A329> sony on its brand brodcast sony films
+[20:39] <A329> that LG does not have the chance to watch it
+[20:41] <A329> if we have a provider entity out of tv brands that sells access to source content
+[20:42] <A329> the customer chance to access it without depending tv set brand
+[20:42] <A329> something close to vtuner on radio
+[20:42] <A329> vnter are spread out sony, yamaha, denon....... what ever
+[20:43] <A329> and vtner will charge for the connection service to all brands

@@ -1,0 +1,163 @@
+=== LordOfTime is now known as TheLordOfTime
+=== slank is now known as slank_away
+=== cpg|away is now known as cpg
+=== rsalveti_ is now known as rsalveti
+=== cpg is now known as cpg|away
+=== cpg|away is now known as cpg
+=== cpg is now known as cpg|away
+=== cpg|away is now known as cpg
+=== cpg is now known as cpg|away
+=== superbot is now known as nerd
+=== nerd is now known as superbot
+=== cpg|away is now known as cpg
+=== benonsoftware is now known as Benny
+=== Benny is now known as Guest43293
+=== tkamppeter__ is now known as tkamppeter
+=== cpg is now known as cpg|away
+[13:58] <melodie> hello
+[15:00] <Bluefoxicy> echo "always" | sudo tee /sys/kernel/mm/transparent_hugepage/enabled
+[15:01] <Bluefoxicy> ^^^ anyone experimented with this?
+[15:01] <Bluefoxicy> also transparent_hugepage=always on the kernel command line does the same thing
+[15:05] <penguin42> I've read of it but not tried - what are your experiences - I'm guessing somethings work well and some things go nuts?
+[15:07] <Bluefoxicy> it's called 'transparent' for a reason.
+[15:07] <Bluefoxicy> Redhat says their worst-case benchmark is 2.5% faster with THP enabled
+[15:07] <Bluefoxicy> http://www.linux-kvm.org/wiki/images/9/9e/2010-forum-thp.pdf
+[15:08] <Bluefoxicy> penguin42: this is from 2.6.28 btw
+[15:08] <Bluefoxicy> it's had time to mature.  :)  There were bugs in 2.6.28-rc1 that needed ironing out before release
+[15:09] <Bluefoxicy> haha what
+[15:10] <Bluefoxicy> THP makes KVM 2.6x faster
+[15:11] <Bluefoxicy> oh no, 20% faster ... it's 25% slower without THP in guest or host, but with EPT on (which is a different thing entirely) ... typical of RH, these graphs are deceptive and they are benching unrelated things.  (Embedded pagetables are AMD-V and VT-x)
+[15:19] <blami> which package contains keyboard layout indicator?
+[15:24] <melodie> blami, several packages do contain it : http://packages.ubuntu.com/search?keywords=keyboard+layout+indicator&searchon=all&suite=all&section=all
+[15:24] <melodie> choose your's ? :)
+[15:28] <melodie> how can I get zram to be loaded and zram-config started in a customized live cd ?
+[15:28] <penguin42> Bluefoxicy: Well I guess to some level they are attacking a similar problem; I think EPT makes pagetable wrangling cheaper/free, and THP just ends up using less of them
+[15:29] <melodie> knowing that /etc/init.d/zram-config is a symlink to /lib/init/upstart-job ?
+[15:29] <melodie> but that it is not managed in the jobs-admin program, nor is is taken in account with a "systemctl start zram-config" launched in the chroot ?
+[16:43] <Bluefoxicy> penguin42: i may be confusing NPT with EPT
+[16:43] <Bluefoxicy> melodie:  i'm still confused as to why zram isn't the swap device on ubuntu
+[16:48] <Bluefoxicy> melodie: https://github.com/bluefoxicy/zram-init
+[16:48] <Bluefoxicy> I don't have/didn't know about zram-config D:
+[16:53] <melodie> Bluefoxicy, I thank you I look
+[16:53] <Bluefoxicy> where did you get zram-config?
+[16:54] <melodie> in Synaptic
+[16:54] <melodie> I have a few questions : would your's replace zram-config ?
+[16:55] <melodie> would it be possible here: https://github.com/bluefoxicy/zram-init/blob/master/debian/etc/default/zswap to have 1/4 instead of 1/2 of the ram available for the block device ?
+[16:55] <melodie> this is the value I used to have, and which is better
+[16:55] <Bluefoxicy> yeah
+[16:56] <Bluefoxicy> https://github.com/bluefoxicy/zram-init/blob/master/debian/etc/init.d/zswap
+[16:56] <Bluefoxicy> i have good luck with fairly large values
+[16:56] <Bluefoxicy> KiB Mem:  15747100 total, 15238172 used,   508928 free,   155688 buffers
+[16:56] <Bluefoxicy> KiB Swap:  7873520 total,   122220 used,  7751300 free,  7294676 cached
+[16:56] <Bluefoxicy> granted i wrote this when I had 4096MB real RAM
+[16:56] <melodie> then in Archlinux which I also use, the script provided by the distro creates more than one block device when there are more than on cpu : I think it is a good idea, what do you think ?
+[16:56] <Bluefoxicy> that one multithrads
+[16:57] <Bluefoxicy> see line 99-116
+[16:57] <Bluefoxicy> linux will spread swapouts across devices; zram takes 1 thread per device, so you get parallel compression
+[16:57] <Bluefoxicy> where did you get zram-config, what package?
+[16:58] <Bluefoxicy> It's probably upstart-capable (mine isn't) and a better basis to start from for Ubuntu, adding any features it doesn't have (like cpu multi-thread awareness)
+[16:58] <melodie> zram-config is from Universe
+[16:58] <melodie> it is version 0.1
+[16:59] <Bluefoxicy> ah ok
+[16:59] <Bluefoxicy> that was simple
+[17:00] <melodie> what I don't understand yet is how come I can't have it working in the live : for it to work in live, when booting to live I first need to load the zram module (modprobe) then I need to start zram-config : either with service start or with initctl start zram-config
+[17:00] <Bluefoxicy> melodie: do you have zswap running right now?
+[17:01] <melodie> however I had changed the two scripts which I found and contained indications about it (I did a large grep to find out that) : the files are :
+[17:01] <Bluefoxicy> https://github.com/bluefoxicy/zram-init/blob/master/tools/zram_stat.sh this will show you how big compressed RAM is versus original size
+[17:01] <melodie> wait a sec, I explain at once
+[17:01] <Bluefoxicy> except it's buggy somehow
+[17:01] <melodie> I think in the installed version it is ok, just I can't get it to work in the live
+[17:01] <Bluefoxicy> still.  Seems to get down to about 25%-30% of original size on average (I've seen as high as 40%)
+[17:02] <melodie> the files I modified are this ones:
+[17:02] <Bluefoxicy> which is why I use a swap value of half as default
+[17:02] <melodie> http://meets.free.fr/debian/configurations/OBUbuntu-Zram-live.tar.xz
+[17:02] <Bluefoxicy> 2G takes up like 500-800MB of RAM tops, so you wind up with a 4G system that has 5.5G available
+[17:04] <melodie> I think zram being created for low resource machines and embedded systems, low should be better, in order perhaps not to take too much on the cpu for compressing and uncompressing. then it is possible to create up to 4 block devices according to the case : and a good idea would be to have a zram.conf file in /etc, where the people can adapt the size for the block device and number block devices
+[17:04] <Bluefoxicy> it only takes CPU for what's being compressed
+[17:04] <melodie> I wonder if there is not one working like that in a debian spin...
+[17:04] <Bluefoxicy> i.e. you can't really make the situation worse :P
+[17:05] <melodie> Bluefoxicy, I said perhaps, I was not sure
+[17:05] <Bluefoxicy> like high-resource systems benefit a lot more from zswap than low-resource systems
+[17:05] <melodie> according to the experience I have had with it, both is equally true
+[17:06] <melodie> in the paste times I had created a spin with openbox and a few light programs of another distro, with less programms in it, just minimal, and one guy decided to try install it on a machine with 128 MB ram:
+[17:07] <melodie> next thing, when we added zram, he was able to install it to the low ram machine without creating a swap file prior (the installer is a gui) whereas before he couldn't go without creating a swap file
+[17:07] <Bluefoxicy> yeah
+[17:07] <Bluefoxicy> I've been arguing this should be a default configuration for a decade
+[17:09] <melodie> I do agree
+[17:11] <melodie> I have sent a mail to nitin gupta once, on his mailing list and one was why is it still in the staging directory of the kernel tree, when it has been used for many years now and didn't find any trouble with it ? he said that it was mainly due to... his lazyness and lack of time !
+[17:12] <melodie> he also said something about a fellow module related to memory which was going to be replaced by another one on which zram would rely, but after looking for it in the new kernel versions, I never found this new version of the memory cache module
+[17:19] <melodie> Bluefoxicy, the problem I met with the zram-config from the repos might well be that it is an upstart job
+[17:19] <melodie> in antix I had used a classic init script, this one:
+[17:19] <melodie> http://pastebin.com/FALaHEXU
+[17:20] <melodie> presented and tested formerly here : http://antix.freeforums.org/post25708.html#p25708
+[17:20] <melodie> and that one was ok in the Live Antix when booted.
+[17:20] <melodie> I am interested to know what you think about it ?
+[17:21] <Bluefoxicy> on ubuntu, upstart jobs are superior
+[17:21] <Bluefoxicy> fedora/rhel7 systemd, debian undecided but currently seems to use a dependency-based sysvinit?
+[17:22] <Bluefoxicy> gentoo is still ahead of its time even over a decade later, with named runlevels and dependency-based init.
+[17:23] <melodie> debian I am not sure, I think it might depend on which debian version and latest antix use Debian testing as repos but their own made core with added scripts in /usr/local/bin
+[17:23] <melodie> gentoo leaves it's users free to use either or systemd or sysvinit
+[17:25] <melodie> and Ubuntu precise still has both if I understand things : I can see in the /etc/init.d some scripts, and also some symlinks to upstart-jobs
+[17:25] <Bluefoxicy> systemd is honestly a fantastic piece of software, but Canonical is the second coming of Redhat and will never get over their NIH
+[17:26] <melodie> what is NIH ?
+[17:26] <melodie> my mother tongue is not English. :)
+[17:26] <Bluefoxicy> (granted, bzr is fantastic and the whole world rushed to git because the first iteration of bzr was crap and the impression stuck)
+[17:26] <Bluefoxicy> Not Invented Here
+[17:26] <melodie> oh, ok
+[17:27] <Bluefoxicy> it's when a person or team makes their own stuff despite all alternatives and regardless of any merit or demand patterns.
+[17:27] <melodie> well whatever method, as long as we can get things going the way we would like them to...
+[17:28] <melodie> it seems to me that Upstart was implemented before systemd came out ? or did I miss something ?
+[17:28] <Bluefoxicy> the most blatant example is Redhat, especially in the case of Ulrich Drepper and the PT_GNU_HASH feature of gcc and glibc
+[17:29] <melodie> ?
+[17:29] <Bluefoxicy> in which case, unable to actually come up with something better or just-as-good, after a discussion on a public mailing list Drepper re-posted Michael Meeks' patch with a few bits moved around, and claimed he wrote it from scratch, and that there was some discussion with Meeks but nothing came of that
+[17:29] <Bluefoxicy> (Meeks posted a completely working patch with benchmarks and test examples; the whole thing was his idea and he wrote all the gcc and glibc code)
+[17:30] <melodie> so he robbed the guy idea, but that is a "person" problem, ego and such ?
+[17:30] <Bluefoxicy> Yeah I don't like redhat or their developers.
+[17:30] <penguin42> well, eglibc/glibc has merged and I assume solved that problem
+[17:31] <penguin42> Bluefoxicy: Most of them are OK
+[17:31] <melodie> Bluefoxicy, I think in all communities some people are better than others, I would not blame a community in particular
+[17:32] <melodie> better techs as well as better persons as human beings caring for others
+[17:33] <Bluefoxicy> penguin42: http://sourceware.org/ml/libc-alpha/2006-06/msg00095.html this is 'that problem'
+[17:33] <ubottu> sourceware.org bug 2006 in kprobes "Incorrect nmissed count for multiprobes" [Normal,Resolved: fixed]
+[17:34] <Bluefoxicy> lol
+[17:34] <Bluefoxicy> anyway
+[17:36] <melodie> Bluefoxicy, about zram-config, I am still interested to find how to start it in live. have u had the time to look at the  files I pointed to a bit earlier ?
+[17:36] <Bluefoxicy> nah I've never built a live cd
+[17:37] <melodie> and who would have knowledge about the way Casper works, and could help me ?
+[17:38] <melodie> hi gilir
+[17:39] <melodie> I am struggling with a few things in the project...
+[17:39] <gilir> hi melodie
+[17:39] <melodie> :)
+[17:40] <melodie> are you very busy now ?
+[19:06] <melodie> Bluefoxicy, ?
+[19:06] <melodie> I just found out what caused zram not to be started in the Live in spite of the configurations I had done : do you want to know ? :)
+[19:07] <Bluefoxicy> sure
+[19:07] <melodie> a file in the initramfs-tools : initrd/scripts/init-top/compcache
+[19:08] <melodie> it contains an instruction TO NOT load zram in Live CD's if the machine has 512 MB and above
+[19:08] <Bluefoxicy> well that's silly.
+[19:08] <melodie> the comment says:
+[19:09] <Bluefoxicy> zram doesn't do anything until something's swapped onto it.  It's a no-op until performance would start lagging out.
+[19:09] <melodie> yes, it's strange... the maintainer of this package is the Ubuntu Kernel Team
+[19:09] <melodie> while original maintainer used to be Debian kernel team
+[19:10] <melodie> Bluefoxicy, I agree with you.
+[19:11] <melodie> I think I will comment this part out for the next test version I will do. by any hazard, is it likely that you might be interested in a spin easy to use with Openbox as main "desktop" ?
+[19:11] <Bluefoxicy> gnome-shell
+[19:11] <melodie> ok
+[19:11] <Bluefoxicy> don't need a new livecd here.  The only thing interesting to me in practice is automated install and slipstreaming updates.
+[19:13] <melodie> what is slipstreaming ?
+[19:17] <Bluefoxicy> building a release with all the updates run
+[19:17] <Bluefoxicy> so it's up to date on install
+[19:17] <Bluefoxicy> the install-then-patch cycle is silly
+[19:18] <melodie> are you saying that you would update versions and republish updated versions ? Or do you mean something else ?
+[19:26] <Bluefoxicy> rather have a script that regenerates the current ubuntu-desktop release CD with all packages from updates
+[19:26] <Bluefoxicy> that way I can just pop out a CD ISO at will all up-to-date
+[19:28] <Bluefoxicy> (honestly, I'd rather just have *the* build system the developers use to produce the release CDs, complete with example release file that produces the original release CD, with a configuration that can be modified to change packages and install them from other repos--particularly updates for up-to-date install media.  Also, preseed)
+[19:28] <Bluefoxicy> which is probably in the repo somewhere
+[19:28] <Bluefoxicy> i just haven't found it yet.
+[20:32] <melodie> Bluefoxicy, if it is just to have an up to date version, a build script fit to customize an iso should be enough ?
+=== cpg|away is now known as cpg
+=== cpg is now known as cpg|away
+[21:46] <micahg> is python-config --includes an upstreamable way of fixing the various python can't find headers issues or is there a better way?
+=== cpg|away is now known as cpg
+=== Zilvador_ is now known as Zilvador
+=== jasoncwarner_ is now known as jasoncwarner

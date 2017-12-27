@@ -1,0 +1,149 @@
+=== cpg|away is now known as cpg
+[02:10] <Botanic> I created a package and uploaded it to the ppa, I want to test it locally however to make sure I did everything correctly, how can I do that?
+[02:18] <sarnold> Botanic: you could add the ppa using apt-add-repository
+[02:18] <Botanic> its not built yet
+[02:19] <Botanic> itl take like 8-10 hours to be processed
+[02:19] <Botanic> id like to test it a bit sooner then that :)
+[02:19] <sarnold> oh!
+[02:19] <Botanic> as if there is an issue it limits the time I can work on it
+[02:19] <sarnold> very much so :) hehe
+[02:20] <sarnold> look into 'sbuild' or 'pbuild'; they help recreate the build environment on your machine. neither are perfect, but they do give you some confidence that a build didn't succeed because of some local packages that just happened to be installed.
+[02:20] <Botanic> well i know the code is fine, im more concerned with it creating shortcuts properly etc
+[02:20] <infinity> hallyn: Well, looks like I mangled enough of the archive to get qemu to migrate to raring.  Next step, removal of qemu-kvm source (which should be simple, now that the only binary it produces is obsolete)
+[02:21] <infinity> hallyn: But you definitely need to do something about spice, so we can drop the now un-uploadable qemu-linaro.
+=== doko_ is now known as doko
+[02:57] <hallyn> infinity: yup.  do you object to a duplicated source of qemu, called qemu-spice, producing the (universe) qemu-kvm-spice package?
+[02:58] <hallyn> That would be until either main-universe split is done away with, or spice gets MIR'd
+[02:58] <hallyn> infinity: what do you mean by 'get qemu to migrate' to raring?
+[02:59] <hallyn> ithought that would happen automativally
+[03:00] <infinity> hallyn: Well, I needed to fix some packages with deps on kvm.  And then forcefully whack the kvm binary package.
+[03:00] <infinity> hallyn: Also, there are file overlaps in qemu.
+[03:00] <infinity> hallyn: (Unrelated, just noticing this now)
+[03:00] <infinity> hallyn: Looks like this is inherited from Debian, so not your fault.  But should fix.
+[03:01] <infinity> (base)adconrad@cthulhu:~/qemu/qemu-1.3.0+dfsg$ grep doc/qemu/ debian/qemu-system.install
+[03:01] <infinity> debian/tmp/usr/share/doc/qemu/qemu-tech.html
+[03:01] <infinity> debian/tmp/usr/share/doc/qemu/qemu-doc.html
+[03:01] <infinity> debian/tmp/usr/share/doc/qemu/qmp-commands.txt
+[03:01] <infinity> ^-- Those three end up in both qemu and qemu-system, which seems silly, since all the other docs in doc/qemu are in qemu, but not system.
+[03:02] <infinity> I'm grabbing all the binaries right now to make sure those are the only overlaps.
+[03:03] <infinity> hallyn: I was going to JFDI a fix for the file overlaps, but it might be nice to know what the people who wrote that .install file were thinking (ie: is there a reason at all to have those files in the qemu-system package?)
+[03:10] <infinity> hallyn: Okay, those are the only overlaps I see (and, actually, only two of those are overlaps, but all three seem silly, given that all the other docs live in qemu.deb)
+[03:10] <infinity> hallyn: The quick-and-simple fix would just be to move those to qemu.install instead.  Opinions?  Can you get that into Debian too, so we don't diverge?
+[03:11] <infinity> hallyn: Oh, wait.  Then there's also the two overlaps listed explicitle in qemu.docs.  Fail.
+[03:12] <infinity> hallyn: So, this could go either way.  I can't tell what people really wanted. :P
+[03:12] <infinity> Given that qemu depends on qemu-system anyway, maybe it's easier to remove those from qemu.
+[03:12]  * infinity does that.
+[03:13] <hallyn> infinity: oops, sorry, yeah, I can push it into Debian.
+[03:14] <infinity> Let me test spin this and make sure it gives the result I'm assuming it will.
+[03:14]  * infinity sets his laptop on fire with the awful build of awful.
+[03:16] <infinity> hallyn: Assuming this test build produces plausibly-populated binaries, you probably want to push both these revisions to experimental: http://paste.ubuntu.com/1550856/
+[03:17] <infinity> hallyn: (With an appropriate Closes: in the changelog for the CVE one, the Debian bug is mentioned in the patch header)
+[03:19]  * hallyn curses the request for 2factor auth to d/l as text
+[03:21] <hallyn> infinity: i'll push it to my github tree and pass it along to the debian team
+[03:22] <hallyn> infinity: thanks
+[03:24] <infinity> hallyn: And before you ask, there's no need for a Replaces, since dpkg would have never let him install qemu anyway, so it can't own the files.
+[03:24] <infinity> hallyn: Anyhow.  Testbuid running just to make sure it DTRT.
+[03:24] <infinity> hallyn: The I'll upload.
+[03:27] <hallyn> infinity: odd, the patch author is the guy mainly doing the debian qemu tree.
+[03:28] <hallyn> oh, no, but the bug submitter
+[03:28] <hallyn> oh well
+[03:29] <infinity> I do wonder if maybe I have this backward, given that all the other docs are in qemu, not qemu-system.
+[03:30] <infinity> Do you have an opinion on where these 3 files should ship?
+[03:30] <hallyn> seems to me qemu is just meant to be a meta-package, not ship the docs, so i'd say qemu-system
+[03:31] <hallyn> although, what, they apply to qemu-user too?
+[03:31] <infinity> Well, that's not currently true.  qemu has a ton of docs.
+[03:31] <hallyn> a new qemu-docs pkg? :)
+[03:32] <infinity> http://paste.ubuntu.com/1550873/
+[03:32] <hallyn> i guess qemu makes sense as you certainly can use qemu-user without qemu-system
+[03:32] <infinity> A docs package may not be an awful idea, but I'm thinking for now, I should reverse this patch, and ship those three files in qemu, but not -system, based on the above paste.
+[03:33]  * infinity does that.
+[03:33] <hallyn> nod
+[03:36] <infinity> hallyn: New and improved -- http://paste.ubuntu.com/1550888/
+[03:37]  * infinity rebuilds again.
+[03:39] <infinity> Only takes 20m to build.  I thought it was worse...
+[03:39] <infinity> Maybe someone fixed some parallelisation at some point.
+[03:41] <hallyn> the old old qemu-kvm packages didn't parallelize the build at all.  those were painful.
+[03:41] <infinity> hallyn: As for the spice thing, I object slightly to a qemu-universe that only generates the spice package, but it's no worse than the situation we've had up until now with qemu-kvm and qemu-linaro.
+[03:42] <hallyn> infinity: is there anything else we can do?  how close are we to getting rid of main+universe split?
+[03:42] <infinity> hallyn: If you keep them in sync until such a time as it's not needed, it's probably not a big deal.
+[03:42] <hallyn> right, i'd take the source from our qemu with the relevant part of the old qemu-linaro packaging, i guess
+[03:42] <infinity> hallyn: ArchiveReorg probably won't be done this cycle, so we need a solution for now, whether it's spice in main or a qemu-universe source.
+[03:42] <hallyn> (keep it in a separate branch of the same github tree)
+[03:42] <infinity> hallyn: Duplicate sources aren't world-ending if they're kept completely in sync, so they're trivial to patch for security and SRU.
+[03:43] <infinity> (See, eg: boost and boost-mpi)
+[03:49] <hallyn> infinity: (your debdiff pushed to git://github.com/hallyn/qemu)
+[03:50]  * hallyn takes a quick looka t spice deps 
+[03:52] <infinity> hallyn: Do you keep a Debian branch as well, or just ask people to pull, mangle, and merge?
+[03:54] <hallyn> well shoot
+[03:54] <hallyn> infinity: i've only just started, so so far i just have asked ppl to look and comment and cherrypick if appropriate
+[03:54] <infinity> How/where is it maintained in Debian?
+[03:55] <hallyn> spice deps are looking clean !  i may ahve to re-ask for MIR
+[03:55] <infinity> Ahh, git://git.debian.org/git/pkg-qemu/qemu.git
+[03:55] <hallyn> well, git://anonscm.debian.org/pkg-qemu/qemu.git is what i use, not sure if that's the same
+[03:55] <hallyn> assume so
+[03:55] <infinity> You should probably just ask to be added to the Alioth group and merge appropriate distro-agnostic changes back yourself.
+[03:55] <infinity> Really helps keep the deltas down.
+[03:56] <hallyn> infinity: yeah, that'll be best long term, but i'm happy to spend some time slow-tracking to prove myself
+[03:56] <infinity> My life got a bazillion times easier when I just sucked it up and started maintaining all our glibc stuff in Debian first.
+[03:57] <hallyn> In the meantime we have som ethings we're hashing out in the debian qemu list,
+[03:57] <infinity> (Of course, this also led to accidentally being a Debian/glibc maintainer, but I suppose that's not a bad thing)
+[03:58]  * hallyn looks up what the heck the alioth group is
+[03:58] <infinity> Alright, confirmed that that diff did what I wanted.  Uploading.
+[03:59] <infinity> hallyn: pkg-qemu, according to the UNIX perms on git.d.o
+[04:00] <hallyn> gotcha
+[04:06] <hallyn> all right i'll re-file the MIR for spice, hope for the best
+[04:08] <infinity> hallyn: Well, all its build-deps are in main now, that's a good start.
+[04:09] <infinity> hallyn: If you can get security to sign off on it, I have no issues with it, personally.
+[04:09] <infinity> hallyn: Might want to offer jdstrand or mdeslaur a beer to review it for you.
+[04:10] <hallyn> infinity: luckily they won't be horribly overprised copenhagen beers
+[04:11] <hallyn> priced even
+[04:23] <hallyn> filed bug 1101978
+[04:23] <ubottu> bug 1101978 in spice (Ubuntu) "[MIR] spice" [Undecided,New] https://launchpad.net/bugs/1101978
+[04:24] <infinity> jdstrand / mdeslaur: Can I get one of you to do a quick security audit for bug 1101978?
+[04:24] <ubottu> bug 1101978 in spice (Ubuntu) "[MIR] spice" [Undecided,New] https://launchpad.net/bugs/1101978
+[04:25] <infinity> jdstrand / mdeslaur: Thanks in advance, you're stellar people, hallyn is buying you a pint.
+[04:26] <hallyn> ^ :)  and you as well
+[04:26] <hallyn> all right, with that i'm off to do my part in the war on the common cold.  gnight.
+[04:26] <infinity> Good luck.  Bring reinforcements.
+=== cmagina_away is now known as cmagina
+=== cmagina is now known as cmagina_away
+=== Quintasan_ is now known as Quintasan
+[09:13] <Kano> hi, what is used to create the current iso images with shim?
+[09:14] <Kano> livecd-rootfs does not contain the work shim
+=== Ivanka_ is now known as Ivanka
+=== cpg is now known as cpg|away
+=== nigelb is now known as Lord_Nigelb
+=== ximion is now known as ximion-afk
+=== ximion-afk is now known as ximion
+=== Lord_Nigelb is now known as nigelb
+[19:11] <mlankhorst> cjwatson: hm with just that shared libgallium patch applied (no idea if it runs, only tested building)
+[19:11] <mlankhorst> $ ls -ahl /tmp/static-gallium.tar.gz /tmp/shared-gallium.tar.gz
+[19:11] <mlankhorst> -rw-rw-r-- 1 mlankhorst mlankhorst 9,1M jan 20 20:02 /tmp/shared-gallium.tar.gz
+[19:11] <mlankhorst> -rw-rw-r-- 1 mlankhorst mlankhorst  11M jan 20 20:10 /tmp/static-gallium.tar.gz
+[19:12] <mlankhorst> still seems the object files for mesa are kind of big, but it looks like it might be possible to shrink it down slightly more, would have to investigate on monday
+=== cpg|away is now known as cpg
+[19:45] <cjwatson> mlankhorst: good start, thanks
+[19:48] <mlankhorst> cjwatson: how much space do you need?
+[19:52] <mlankhorst> I'm probably going to compare against the old mesa, and just prevent an increase in size only
+[19:56] <cjwatson> mlankhorst: I think we're something like 15MB over target
+=== cpg is now known as cpg|away
+[19:56] <cjwatson> (vs. 12.04.1, which was just about crowbarred into space)
+[19:56] <cjwatson> I haven't checked absolutely current image sizes though
+[19:56] <cjwatson> obv. it's not all going to come from mesa, but as much as feasible ...
+[19:57] <mlankhorst> yeah but can't get more than 5 mb off probably, unless you want to drop some drivers from the renamed stack
+[19:58] <mlankhorst> but most of those are small :/
+=== ximion is now known as ximion-afk
+=== ximion-afk is now known as ximion
+[20:37] <israeldahl> QML question: Anyone know if the default ItemStyle.class: "new-tabs" colour can be changed to something else?
+[20:39] <israeldahl> There is no documentation I have found that gives any reasonable descriptions for the Flickable tabs...
+=== ximion is now known as ximion-afk
+=== ximion-afk is now known as ximion
+[20:55] <sladen> israeldahl: is it Ubuntu specific?  Or a generic QML question?  If the latter, try one of the QML channels
+[20:56] <israeldahl> Ubuntu specific... I am using the "new-tabs" implemented for the Phone Os, and I want to change the background colour... possible on certain events as well  if that is possible.
+[20:56] <israeldahl> sladen: thanks for your reply
+[21:01] <israeldahl> sladen: does a specific Phone app development irc channel exist?
+[21:05] <sladen> israeldahl: #ubuntu-phone
+[21:05] <israeldahl> slade: thanks.. I'll ask there
+=== cpg|away is now known as cpg
+=== RzR is now known as rZr
+=== chiluk is now known as chiluk_away

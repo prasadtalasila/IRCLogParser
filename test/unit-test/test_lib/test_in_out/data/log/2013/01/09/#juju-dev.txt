@@ -1,0 +1,443 @@
+=== amithkk is now known as Guest39143
+[08:15] <fwereade> TheMue, rogpeppe1, mornings
+[08:15] <TheMue> fwereade: Hiya
+[08:16] <fwereade> TheMue, rogpeppe1: I have a philosophical uncertainty, perhaps one of you can explain why we distinguish between dead and not found
+[08:17] <TheMue> fwereade: In a fresh pulled trunk, is go test in .../cmd/jujud working for you?
+[08:18] <TheMue> fwereade: Dead IMHO already has existed while not found may not be yet there.
+[08:18] <fwereade> TheMue, it was last night, let me doublt check
+[08:18] <TheMue> fwereade: Thx
+[08:19] <TheMue> fwereade: I pulled a fresh one too due to remaining errors and have those errors with the password changing there too.
+[08:19] <fwereade> TheMue, but I don't see what the justification *is* for distinguishing those cases
+[08:19] <fwereade> TheMue, still works for me :(
+[08:20] <fwereade> TheMue, take remove-unit
+[08:20] <fwereade> TheMue, if a unit is Dying/Dead it's fine to "remove" it again
+[08:20] <TheMue> fwereade: Hmm, strange. Standard mongo or a special one?
+[08:20] <fwereade> TheMue, but there's a specific point at which that becomes invalid
+[08:20] <rogpeppe1> fwereade: morning
+[08:21] <fwereade> TheMue, I think I'm using the usual special mongo -- is there maybe a more-recently built one that you have but I don't?
+[08:21] <TheMue> rogpeppe1: Heyhey
+[08:21] <fwereade> rogpeppe1, heyhey
+[08:21] <rogpeppe1> fwereade: do you think we should return not found when something's dead?
+[08:21] <TheMue> fwereade: That may be the reason.
+[08:22] <TheMue> fwereade: *gnarf* I can't remember where to get the special one.
+[08:22] <rogpeppe1> TheMue: the URL is in environs/cloudinit/cloudinit.go :-)
+[08:22] <fwereade> rogpeppe1, heh... the trouble is, not *always*... but the number of cases in which we do want to return dead enitities is vanishingly small
+[08:22] <TheMue> rogpeppe1: Well hidden documentation. ;)
+[08:22] <rogpeppe1> fwereade: when *do* we want to return dead entities?
+[08:23] <fwereade> rogpeppe1, deployers are responsible for removing dead units; provisioners are responsible for removing dead machines
+[08:23] <fwereade> rogpeppe1, I *think* that's an exhaustive list
+[08:24] <rogpeppe1> fwereade: well, those are two reasons we *do* need to distinguish between dead and not found...
+[08:25] <fwereade> rogpeppe1, they seem to me to be very special cases
+[08:26] <rogpeppe1> fwereade: what do you think we should do in the other cases?
+[08:28] <fwereade> rogpeppe1, the trouble is that I don't know
+[08:28] <fwereade> rogpeppe1, but remove-unit is making me a bit suspicious
+[08:28] <fwereade> rogpeppe1, why is it ok to remove a Dying or Dead unit, but not one that doesn't exist?
+[08:29] <rogpeppe1> fwereade: i'd be happy if we did the same thing for a dead unit as we do for a unit that doesn't exist
+[08:30] <rogpeppe1> fwereade: you're just implementing remove-unit, i presume
+[08:31] <fwereade> rogpeppe1, looking at it in order to disallow direct subordinate removal, yeah
+[08:31] <rogpeppe1> fwereade: you mean destroy-unit, presumably :-)
+[08:31] <fwereade> rogpeppe1, yeah ;p
+[08:32] <fwereade> rogpeppe1, so, ok, why allow removal of Dying units?
+[08:32] <rogpeppe1> fwereade: the issue, i suppose, is that if you don't distinguish the cases, you can do destroy-unit dsknslv/345 and it'll work
+[08:33] <fwereade> rogpeppe1, ISTM that "each entity may only be destroyed once" makes sense
+[08:33] <fwereade> rogpeppe1, in which case Dying should also be disallowed
+[08:33] <rogpeppe1> fwereade: that would be reasonable too, i suppose
+[08:33] <fwereade> rogpeppe1, *or* that destroy-unit should be seen as almost declarative -- "I require that no unit name burble/123 exist -- make it so"
+[08:33] <rogpeppe1> fwereade: i wouldn't mind a different error message when killing a dying unit vs killing a dead or removed unit though
+[08:34] <fwereade> rogpeppe1, if no so named unit exists, nbd, why complain?
+[08:34] <rogpeppe1> fwereade: yeah, they're both reasonable approaches
+[08:34] <fwereade> rogpeppe1, but we're kinda mixing them :(
+[08:34] <rogpeppe1> fwereade: yes, i agree that's probably wrong
+[08:35] <rogpeppe1> fwereade: the problem is if you make a typo trying to remove a unit - you won't get told if you get it wrong.
+[08:35] <rogpeppe1> fwereade: (with the declarative approach)
+[08:37] <fwereade> rogpeppe1, yeah... but with the other approach a perfectly sensible destroy request can be borked by a parallel destroy request for just one of the units you're trying to destroy
+[08:38] <rogpeppe1> fwereade: yes, but perhaps that's as ok as it is when removing files
+[08:38] <fwereade> rogpeppe1, mmmaybe :)
+[08:41] <rogpeppe1> fwereade: pity we've already got --force and it means something different, otherwise we could have -f mean "don't complain if it's already gone" like rm
+[08:41] <fwereade> rogpeppe1, yeah, I think you're right
+[08:42] <fwereade> rogpeppe1, actually we *don't* have --force yet
+[08:42] <rogpeppe1> fwereade: but we will
+[08:42] <fwereade> rogpeppe1, yeah, but it doesn'thave a named already baked into reality, so we're a lot more free to tweak it now ;p
+[08:43] <rogpeppe1> fwereade: doesn't the python version have --force?
+[08:43] <fwereade> rogpeppe1, hm, I didn't think it did
+[08:43] <fwereade> rogpeppe1, I think python just removes the node and hopes the unit agent can pick up the pieces
+[08:44] <rogpeppe1> fwereade: maybe it doesn't. but anyway, we know roughly what semantics we want from --force, i think, and just silencing not-found errors isn't as useful...
+[08:44] <fwereade> rogpeppe1, if we do everything right, --force will not be useful at all
+[08:45] <rogpeppe1> fwereade: isn't the point of --force that it can work if a node is isolated or hung up and can't take itself down?
+[08:46] <fwereade> rogpeppe1, the point of --force is to decref refs that are not being decced due to hopelessly broken code, I think
+[08:46] <rogpeppe1> fwereade: that's what i mean
+[08:46] <fwereade> rogpeppe1, if the node is isolated it will not respond to being Dead any better or worse than it will to Dying
+[08:46] <fwereade> rogpeppe1, ah, probably, sorry
+[08:47] <rogpeppe1> fwereade: "hopelessly broken" might be "i poured some water on the machine"
+[08:47] <rogpeppe1> fwereade: but anyway, that's a much more useful semantic than ignoring not-found errors
+[08:49] <TheMue> rogpeppe1: Found that I already had downloaded the special mongo, but seem to have been interrupted when installing it. I still had the original package.
+[08:49] <fwereade> rogpeppe1, if it's just that the hardware is a smoking crater, we can handle that
+[08:50] <rogpeppe1> fwereade: really? how do we do that?
+[08:50] <fwereade> rogpeppe1, assuming the provider knows about it, the PA will redeploy the unit to a fresh instance
+[08:52] <rogpeppe1> fwereade: really? how does it know when it's appropriate to do that?
+[08:53] <fwereade> rogpeppe1, when there's no actual instance for a machine with an instance id set
+[08:53] <fwereade> rogpeppe1, doesn't it?
+[08:53] <rogpeppe1> fwereade: the instance may well be still around
+[08:53] <rogpeppe1> fwereade: depends on the failure mode
+[08:53] <TheMue> rogpeppe1: Could you send me your init script for mongod? Would be faster. ;)
+[08:53] <rogpeppe1> TheMue: my init script?
+[08:54] <fwereade> rogpeppe1, yeah, but its ability to cause trouble is strictly curtailed by the fact that the PA will set a new password
+[08:54] <TheMue> rogpeppe1: Or how do you start mongod locally?
+[08:54] <fwereade> rogpeppe1, (btw what happens if your password changes mid-connection? do you get kicked off?)
+[08:54] <fwereade> rogpeppe1, (I presume not)
+[08:54] <fwereade> rogpeppe1, (hmm)
+[08:54] <rogpeppe1> TheMue: the test suite starts mongod
+[08:55] <fwereade> TheMue, I just have the fancy mongo in ~/bin and have that at the front of my $PATH
+[08:55] <rogpeppe1> fwereade: i don't think you do get kicked off, though i remember having that question before and i can't quite remember for sure the answer
+[08:55] <fwereade> rogpeppe1, ah! you don't I'm sure
+[08:55] <fwereade> rogpeppe1, we set new passwords in jujud and just keep going
+[08:56] <fwereade> rogpeppe1, haven't spotted even long-running agents falling over as a result
+[08:56] <fwereade> rogpeppe1, bah
+[08:56] <rogpeppe1> fwereade: anyway, the question is how the provisioner can tell that a unit is borked when the provider can't tell that
+[08:56] <fwereade> rogpeppe1, that said, that's something that can be handled by the API I guess
+[08:56] <TheMue> rogpeppe1: Ah, interesting, because I didn't had that, only the standard mongo running by the standard init script at boot time (may be the cause for the troubles too). And the test suit never complained.
+[08:56] <rogpeppe1> TheMue: the test suite always starts its own mongod
+[08:57] <fwereade> rogpeppe1, it does indeed depend on the failure mode
+[08:57] <rogpeppe1> TheMue: it runs it from your $PATH
+[08:57] <rogpeppe1> fwereade: so that's the common use case i see for destroy-unit --force
+[08:57] <TheMue> rogpeppe1: Yes, and it doesn't cares if it is the special version or not.
+[08:57] <rogpeppe1> TheMue: it can't tell
+[08:58] <rogpeppe1> TheMue: (maybe it should actually - it could probably find out)
+[08:58] <fwereade> rogpeppe1, forgive my slowness this morning... please describe a specific use case that you are thinking of
+[08:59] <fwereade> rogpeppe1, or restated -- "what classes of borkenness we are concerned with re --force"?
+[08:59] <TheMue> rogpeppe1: Yes, so one reminder to me to finish started installations. ;)
+[09:00] <rogpeppe1> fwereade: some machine hangs up (a common enough occurrence if my laptop is anything to go by). the provider can't tell this has happened, so the deployer can't, so we need destroy-unit --force, no?
+[09:00] <fwereade> rogpeppe1, hmm, if a machine hangs up I think that's a job for destroy-machine --force, and some tricky questions re reqssignment of units
+[09:01] <fwereade> rogpeppe1, maybe it's ok to require manual forced unit removal before allowing the forced machine removal? not sure
+[09:02] <rogpeppe1> fwereade: hmm, yes. i dunno.
+[09:02] <rogpeppe1> fwereade: i think destroy-machine --force should probably do all it can to remove everything on the machine and the machine itself
+[09:03] <rogpeppe1> fwereade: maybe don't need destroy-unit --force
+[09:03] <fwereade> rogpeppe1, yeah that sounds sane actually
+[09:03] <fwereade> rogpeppe1, at least while we don't have any control over unit assignment
+[09:04] <rogpeppe1> fwereade: i'm not sure about the whole idea of reassigning units tbh
+[09:04] <fwereade> rogpeppe1, yeah, nor am I
+[09:04] <fwereade> rogpeppe1, ok, I think we're off in the weeds
+[09:04] <rogpeppe1> fwereade: yup!
+[09:04] <fwereade> rogpeppe1, I'm going to start complaining about destruction of anything non-alive
+[09:04] <rogpeppe1> fwereade: sounds good
+[09:05] <fwereade> rogpeppe1, that's the closest match to python behaviour
+[09:05] <fwereade> rogpeppe1, now I come to think of it :) ^^
+[09:05] <fwereade> rogpeppe1, thanks :)
+[09:20] <jam> rogpeppe1: /wave
+[09:20] <rogpeppe1> jam: yo
+[09:20] <rogpeppe1> jam: shall we?
+[09:20] <jam> rogpeppe1: I think martin also wanted to sit in, and I don't see him around yet.
+[09:20] <jam> (which is a bit surprising, but maybe we'll see him shortly)
+[09:20] <rogpeppe1> jam: ah yes, that's worth doing
+[09:32] <jam> weird, I see w7z disconnect 3 hours ago, but nothing about things reconnecting. So we might as well have our chat. Let me set up a hangout
+[09:33] <rogpeppe1> anyone else fancy talking about go package versioning?
+[09:34] <jam> rogpeppe1, dimitern https://plus.google.com/hangouts/_/472c54386502b014c99e35ebd97a6b172f13c02b?authuser=2&hl=en#
+[09:34] <jam> though dimitern is grabbing some food for 15 min
+[09:34] <jam> so we can take it slow :)
+=== TheMue_ is now known as TheMue
+=== _mup__ is now known as _mup_
+[09:46] <TheMue> rogpeppe1: I'm getting crazy! *grmplfx*
+[09:46] <TheMue> rogpeppe1: Now I removed the standard mongo and installed the special mongo in the hope that it may be one reason.
+[09:47] <dimitern> jam, rogpeppe1: I'm ready - joininh
+[09:47] <TheMue> rogpeppe1: First test run afterwards, Machine password change passed, but Unit failed.
+[09:47] <TheMue> rogpeppe1: Second run, Machine failed, Unit passed.
+[09:48] <TheMue> rogpeppe1: Third run, both failed. *aaaaaaaaaaaaaargh*
+[09:48] <TheMue> rogpeppe1: And all on a fresh pulled trunk (808).
+[09:49]  * TheMue loves those kind of errors.
+[10:02] <TheMue> rogpeppe1: Even more strange, when MachineSuite.TestChangePasswordChanging fails there are two different asserts from run to run while UnitSuite.TestChangePasswordChanging always fails at the same point (in bootstrap_test.go, like one of the two MachineSuite failures).
+[10:03] <rogpeppe1> TheMue: on a call
+[10:03] <jam> mgz: https://plus.google.com/hangouts/_/472c54386502b014c99e35ebd97a6b172f13c02b?authuser=2&hl=en#
+[10:03] <TheMue> rogpeppe1: ok
+[10:03] <jam> if you want to chat about the versioning stuff.
+[10:04] <mgz> jam, ta
+[10:04] <TheMue> rogpeppe1: and I now know which one. ;)
+[10:19] <fwereade> aw, bugger, I thought it was weird that Unit.EnsureDying didn't need changes... of course it does
+[10:34] <jam> mgz: where did you go?
+[10:34] <rogpeppe1> TheMue: you're sure that you're using the proper version of mgo
+[10:34] <rogpeppe1> ?
+[10:35] <mgz> didn't run upstairs quite fast enough :)
+[10:35] <TheMue> rogpeppe1: Now yes, because I removed the original one I once had installed with apt.
+[10:36] <TheMue> rogpeppe1: I'm especially wondering about this non-deterministic behavior.
+[10:36] <rogpeppe1> TheMue: you've checked with the which command, yes?
+[10:36] <rogpeppe1> TheMue: that does seem odd, right enough
+[10:37] <rogpeppe1> TheMue: could you paste an error log from when the tests fail?
+[10:37] <TheMue> rogpeppe1: yep, and there is only the version i just fetched with wget from the localtion in cloudinit.
+[10:37] <TheMue> rogpeppe1: sure, one moment.
+[10:38] <rogpeppe1> TheMue: sounds like the problem isn't with mgo then... probably :-)
+[10:38] <TheMue> rogpeppe1: hehe, mongo as source has been my hope, but no
+[10:39] <rogpeppe1> TheMue: it's weird that nobody else seems to be able to reproduce the same problems
+[10:39] <TheMue> rogpeppe1: and it's no side effect of my changes, they are in a different branch and i'm here testing on fresh pulled trunks to just get rid of those errors
+[10:40] <TheMue> rogpeppe1: maybe the reason is in my environment as i'm running it in a vm
+[10:40] <rogpeppe1> TheMue: i'm wondering about that
+[10:41] <TheMue> rogpeppe1: http://paste.ubuntu.com/1512321/
+[10:41] <TheMue> rogpeppe1: here both fail the same way. i'll try to reproduce the other failure for the MachineSuite
+[10:43] <fwereade> rogpeppe1, quick sanity check: I was planning to make unit.EnsureDying cause the subordinates to become Dying too, but that's actually annoyingly complex
+[10:44] <fwereade> rogpeppe1, I think it's smarter to add to the uniter filter such that subordinates keep a watch on their principal and set themselves to Dyingwhen it becomes Dying
+[10:44] <fwereade> rogpeppe1, with the caveat that I am not thinking about remove-unit --force at this time
+[10:44] <fwereade> rogpeppe1, sane?
+[10:45] <rogpeppe1> fwereade: i think that seems reasonable
+[10:46] <rogpeppe1> TheMue: could you change the places in the code i suggested yesterday to print out the passwords when connecting and changing them?
+[10:46] <TheMue> rogpeppe1: the other one is http://paste.ubuntu.com/1512325/
+[10:47] <TheMue> rogpeppe1: yep
+[10:50] <fwereade> rogpeppe1, actually, better yet: principal sets its own subordinates to Dying once it knows it's Dying
+[10:50] <rogpeppe1> fwereade: yes, that's better.
+[10:51] <rogpeppe1> fwereade: and works nicely in the face of crashes
+[10:51] <fwereade> rogpeppe1, yep -- cool, thanks
+[11:06] <TheMue> rogpeppe1: http://paste.ubuntu.com/1512352/ now has debug statements for the password setting in it
+[11:07] <fwereade> rogpeppe1, TheMue: https://codereview.appspot.com/7058061
+[11:07] <TheMue> fwereade: *click*
+[11:07] <rogpeppe1> TheMue: could you also add a debug statement in State.Open saying what entity name and password are being connected with?
+[11:08] <TheMue> rogpeppe1: will change it, the pw is already in
+[11:09] <TheMue> rogpeppe1: eh, entity name?
+[11:09] <rogpeppe1> TheMue: info.EntityName
+[11:10] <TheMue> rogpeppe1: oh, yes, missed it.
+[11:12] <TheMue> rogpeppe1: this time i also had again the different machine fail -> http://paste.ubuntu.com/1512362/
+[11:12] <mgz> jam: put the bucket for mongo things in the readme as well as you suggested, want to double check it and approve the mp?
+[11:12] <mgz> or the rietveld version of the same...
+[11:13] <jam> mgz: I'm not seeing the MP
+[11:14] <jam> nm, I think I saw it
+[11:15] <jam> mgz: btw, you need to run 'lbox propose' again to update the reitveld data, you can't just 'bzr push' to launchpad.
+[11:15] <jam> (lbox propose will do the push for you, if you only want 1 step)
+[11:16] <mgz> ran it without -cr
+[11:16] <mgz> let
+[11:16] <mgz> 's see what happens...
+[11:17] <mgz> 403... wonder if I just tyoped the password
+[11:18] <mgz> nope, worked fine with same creds re-ran with -cr
+[11:18] <mgz> joyous.
+[11:20] <TheMue> fwereade: you've got a lgtm
+[11:27] <rogpeppe1> TheMue: try putting this log statement after the ReadFile in the openState function in cmd/jujud/agent.go
+[11:27] <rogpeppe1> log.Printf("agent open state, initial password %q; password in file: %q",  conf.InitialPassword, data)
+[11:27] <TheMue> rogpeppe1: ok
+[11:28] <rogpeppe1> TheMue: it looks like the agent isn't changing the password as it should be, and i'm not sure why
+[11:31] <TheMue> rogpeppe1: hehe, this time machine worked, but unit still failed: http://paste.ubuntu.com/1512425/ (changed it from printf to debug btw).
+[11:33] <rogpeppe1> TheMue: which is the line that i suggested above?
+[11:34] <rogpeppe1> TheMue: or isn't it showing up?
+[11:34] <TheMue> rogpeppe1: oh, seen it in a first run. will repeat it.
+[11:34] <rogpeppe1> TheMue: (i'm not sure what you mean by changing from printf to debug)
+[11:35] <TheMue> rogpeppe1: only that i used Debugf instead of Printf
+[11:36] <TheMue> rogpeppe1: http://paste.ubuntu.com/1512450/
+[11:36] <TheMue> rogpeppe1: wife just called me to lunch, back in a few moments
+[11:58] <TheMue> rogpeppe1: so, back again
+[12:03] <rogpeppe1> TheMue: try this branch and see what it prints: lp:~rogpeppe/+junk/jujud-debug
+[12:04] <TheMue> rogpeppe1: ok, will do
+[12:04] <rogpeppe1> TheMue: (it works fine on my machine, but i'm presuming it'll fail on yours)
+[12:04] <TheMue> rogpeppe1: and i sadly think you're right :)
+[12:05] <rogpeppe1> TheMue: that's good, actually. at least the bug is reproducible
+[12:09] <TheMue> rogpeppe1: here we are, as expected: http://paste.ubuntu.com/1512566/
+[12:11] <rogpeppe1> TheMue: that's a bit bizarre - i don't see any of the printfs from within openState in agent.go
+[12:12] <TheMue> rogpeppe1: that "agent open state, initial …"?
+[12:13] <rogpeppe1> TheMue: yes
+[12:13] <rogpeppe1> TheMue: i don't see that in the log output, but i'd expect to
+[12:13] <rogpeppe1> TheMue: have you tried removing the pkg directory from the gopath root and rebuilding? i'm starting to suspect some kind of build anomaly
+[12:13] <TheMue> rogpeppe1: took a look, found it in the source.
+[12:14] <TheMue> rogpeppe1: will do
+[12:14] <TheMue> rogpeppe1: but it shows me the recompilation each time
+[12:14] <rogpeppe1> TheMue: yeah, i dunno.
+[12:15] <rogpeppe1> TheMue: but i can't understand why i wouldn't see those log messages
+[12:15] <TheMue> rogpeppe1: so, next run, removed it and also looked into /tmp
+[12:17] <rogpeppe1> TheMue: what's the value of your $GOPATH, and what's your current directory?
+[12:18] <TheMue> rogpeppe1: look, first and second run are different, and i changed nothing inbetween => http://paste.ubuntu.com/1512599/
+[12:20] <TheMue> rogpeppe1: and here are path, dir and command => http://paste.ubuntu.com/1512608/
+[12:25] <rogpeppe1> TheMue: try pulling and running again
+[12:25] <rogpeppe1> TheMue: same branch
+[12:26] <rogpeppe1> TheMue: (i'm pretty sure i've found the problem and the fix)
+[12:26] <TheMue> rogpeppe1: ok
+[12:26] <TheMue> rogpeppe1: *thumbsPress*
+[12:27] <rogpeppe1> TheMue: i thought we'd fixed this issue ages ago - perhaps the branch never got through to completion
+[12:28] <TheMue> rogpeppe1: for true { hug(rogpeppe1); }
+[12:28] <rogpeppe1> TheMue: cool
+[12:28] <TheMue> rogpeppe1: three times, no failure!
+[12:29] <rogpeppe1> TheMue: i'll submit a CL
+[12:29] <TheMue> rogpeppe1: great, you're a fantastic guy
+[12:33] <TheMue> rogpeppe1: ah, the old version of the for loop may cause that runOnce() is never called?
+[12:33] <rogpeppe1> TheMue: yup
+[12:33] <rogpeppe1> TheMue: because the tomb is killed before we get to the loop. (that's the racy bit)
+[12:34] <TheMue> rogpeppe1: that's itchy :D
+[12:34] <rogpeppe1> TheMue: it's not a race that matters for anything other than the tests...
+[12:35] <TheMue> rogpeppe1: interesting that it happened only here
+[12:35] <rogpeppe1> TheMue: yeah, that'll be because of your VM
+[12:36] <TheMue> rogpeppe1: so thankfully to Daves reject of my Firewaller change i stumbled over it ;)
+[12:37] <rogpeppe1> TheMue: i'm surprised you weren't seeing the issue before - it's nothing new.
+[12:38] <rogpeppe1> TheMue, fwereade: https://codereview.appspot.com/7067056
+[12:38] <TheMue> rogpeppe1: i have to admit that i'm not very often run the whole suites. but now i'll do it more.
+[12:38] <rogpeppe1> TheMue: you should always run the whole suite :-)
+[12:38] <rogpeppe1> TheMue: and the live tests too, if what you're doing might impact them
+[12:39] <TheMue> rogpeppe1: sure
+[12:48] <fwereade> rogpeppe1, click; but, whoops, late:
+[12:49]  * fwereade => lunch
+=== Guest39143 is now known as amithkk
+=== Aram2 is now known as Aram
+=== TheMue_ is now known as TheMue
+[14:42] <fwereade> rogpeppe1, dimitern: if either of you are interested, https://codereview.appspot.com/7058061/ is up
+[14:49]  * dimitern looking
+[14:54] <fwereade> rogpeppe1, dimitern: and I think https://codereview.appspot.com/7065061 may be trivial
+[14:54] <dimitern> fwereade: done
+[14:54] <dimitern> fwereade: that's the same CL
+[14:55] <dimitern> fwereade: oops, i'm blind :) sorry
+[14:55] <fwereade> dimitern, ;p
+[14:55] <fwereade> mramm, may I skip the kanban meeting? I need to keep half an eye on laura for a bit,I suspect it will become complex
+[14:55] <fwereade> mramm, I will update my cards right now ;)
+[14:56] <mramm>  fwereade: that's fine
+[14:57] <dimitern> fwereade: the other one is done as well
+[14:57] <mramm> you sent a status update e-mail, and updated the cards -- I think that is sufficent!
+[14:57] <fwereade> dimitern, <3
+[14:58] <dimitern> mramm: I want to pop in to the kanban meeting to listen
+[14:58] <mramm> dimitern: sure.   I'll send you the hangout invite...
+[14:59] <fwereade> mramm, cheers
+[14:59] <dimitern> mramm: 10x
+[15:20] <fwereade> dimitern, concur trivial on the latest?
+[15:21] <dimitern> fwereade:  708061 ?
+[15:21] <dimitern> that's 758061
+[15:21] <dimitern> aaagr 7058061 :)
+[15:22] <dimitern> fwereade: it still looks good and trivial to me
+[15:23] <fwereade> dimitern, cheers
+[16:04] <TheMue> rogpeppe1: your hint with the password is good. it is changed twice on a machine, but the opening of the entity is done with the first one. so i'll now find out where it is set the first time and where the second time.
+[16:20] <fwereade> rogpeppe1, TheMue, dimitern: https://codereview.appspot.com/7063055 is basically trivial I think
+[16:24] <rogpeppe1> fwereade: reviewed
+[16:29] <fwereade> rogpeppe1, tyvm
+=== mohits1 is now known as mohits
+=== amithkk is now known as mechanobot
+[16:38] <TheMue> rogpeppe1: may you help me with some stack output? i now have found how a machine pw is set twice, but the older one shall be used.
+[16:38] <rogpeppe1> TheMue: sure. do you want my little function?
+[16:38] <TheMue> rogpeppe1: I first sho you my output, maybe it's enough for you, otherwise yes, thank you.
+[16:40] <TheMue> rogpeppe1: http://paste.ubuntu.com/1513480/
+[16:41] <TheMue> rogpeppe1: interesting are lines 1, 46 and 61. first set and used correctly, then set again, but then still try to use the former pw.
+[16:42] <rogpeppe1> can you push the branch that this happens on, please? (so i can see the code the stack trace is referring to)
+[16:42] <rogpeppe1> TheMue: ^
+[16:42] <TheMue> rogpeppe1: sure
+[16:45] <TheMue> rogpeppe1: here it is lp:~themue/+junk/firewaller-integration
+[16:48] <rogpeppe1> TheMue: it looks like it's the same instance id problem to me
+[16:49] <TheMue> rogpeppe1: huh, the instance id is set (i hope i haven't looked into the wrong version).
+[16:49] <rogpeppe1> TheMue: the problem is at line 46
+[16:50] <rogpeppe1> TheMue: it's setting machine 0's password
+[16:50] <TheMue> rogpeppe1: yes
+[16:50] <rogpeppe1> TheMue: and if you look at the stack, that's happening within Provisioner.processMachines - startMachines(pending)
+[16:50] <rogpeppe1> TheMue: and pending can only be added to if the machines have no instance id
+[16:51] <rogpeppe1> TheMue: hmm, i wonder if there's a race here. perhaps you're adding a machine while the provisioner is active.
+[16:52] <rogpeppe1> TheMue: you could use InjectMachine
+[16:52] <fwereade> rogpeppe1, I don;t think there's a mystery -- if the machine doesn't have an instance ID the provisioner is justified in provisioning one for it
+[16:52] <fwereade> rogpeppe1, regardless of the fact that the provisioner is actually running on that machine
+[16:52] <rogpeppe1> fwereade: we are setting an instance id for the machine, immediately after adding it.
+[16:52] <TheMue> fwereade: but we're settign it
+[16:52] <rogpeppe1> TheMue: i think you should use State.InjectMachine
+[16:53] <rogpeppe1> TheMue: which doesn't have the same add-then-set race possibility, so the provisioner can't grab it
+[16:53] <TheMue> rogpeppe1: i'll take a look
+[16:54] <fwereade> rogpeppe1, TheMue: if you're setting it before starting the provisioner that surely indicates a provisioner bug?
+[16:54] <rogpeppe1> fwereade: yes
+[16:54] <rogpeppe1> fwereade: but i'm not sure that's the case
+[16:55] <fwereade> rogpeppe1, ah ok
+[16:55] <TheMue> rogpeppe1: huh, it seems that setting the id has gone when pulling it. *gnarf*
+[16:55] <TheMue> rogpeppe1: just compared it to my backuped code.
+[16:58] <TheMue> rogpeppe1: aaaaaaargh, please don't listen to me anymore. i'm wearing sackcloth and ashes. *sigh*
+[16:58] <rogpeppe1> TheMue: found the problem?
+[16:58] <TheMue> rogpeppe1: mixed up my branches.
+[16:59] <fwereade> rogpeppe1, I have a thought that may be crack
+[16:59] <TheMue> rogpeppe1: yes, it has been the instance id, as you said. but i looked before into the saved branch. so i have been sure it is in.
+[17:00] <fwereade> rogpeppe1, one of the things that is getting me down about removing AUST entirely is the hassle of having to set a unit address before a RelationUnit can enter scope
+[17:00] <rogpeppe1> TheMue: nonetheless, it might be sensible to use InjectMachine
+[17:00] <TheMue> rogpeppe1: no i set it again properly in addMachine() and everything is fine.
+[17:00] <rogpeppe1> fwereade: AUST?
+[17:00] <fwereade> rogpeppe1, AddUnitSubordinateTo
+[17:00] <TheMue> *rofl*
+[17:00] <rogpeppe1> fwereade: of course, sory
+[17:01] <rogpeppe1> r
+[17:01] <fwereade> rogpeppe1, and ISTM that it might be defensible to have EnterScope(setting map[string]interface{}) error
+[17:01] <fwereade> rogpeppe1, but the intended semantics take a bit of thought
+[17:02] <rogpeppe1> fwereade: what would it do?
+[17:02] <fwereade> rogpeppe1, iff a scope document is created, overwrite the settings doc with the contents of the supplied settings
+[17:03] <fwereade> rogpeppe1, (or create it)
+[17:03] <fwereade> rogpeppe1, (that is the proposal, anyway; other schemes make make sense)
+[17:05] <fwereade> rogpeppe1, doing this saves about 100 lines in the tests, because I can just do EnterScope(nil) where I had EnterScope ;p ;p
+[17:06] <hazmat> fwereade, are there any vol manage docs extant?
+[17:06] <fwereade> hazmat, nothing
+[17:06] <hazmat> fwereade, ack, just fielding some questions from ops
+[17:07] <fwereade> hazmat, crap -- the plan was always that niemeyer and I would sit down and hash something out... well, round about now, but it's pushed back by an unknown amount
+[17:07] <rogpeppe1> fwereade: why is it a particular hassle to set a unit address?
+[17:08] <fwereade> rogpeppe1, it's 2 lines of code that is totally irrelevant to the purpose of the test, repeated all over the place
+[17:08] <fwereade> rogpeppe1, at best it's irritating, at worst it's confusing
+[17:08] <hazmat> fwereade, mramm so its likely on the at risk for moving past 13.04 re vol?
+[17:09] <TheMue> interesting, now i've got no more hanging code and in 9 of 10 runs it passes (the one test function), but then one assert fails.
+[17:09] <hazmat> fwereade, no worries, just trying to get clarity about what we're ack is on the roadmap for 13.04
+[17:09] <hazmat> we're acking
+[17:09] <fwereade> hazmat, I think a definitive answer to that will emerge during the austin sprint
+[17:09] <mramm> fwereade: hazmat: we will probably have to trim the 13.04 list somewhere
+[17:10] <mramm> fwereade: hazmat: we will probably have to trim the 13.04 list and austin is where we decide exactly where we trim
+[17:10] <rogpeppe1> fwereade: so your idea is that EnterScope would change the unit's settings?
+[17:10] <mramm> fwereade: hazmat: and perhaps how we re-allocate resources to best meet our goals
+[17:10] <fwereade> rogpeppe1, no -- just the relation unit settings, as it already does
+[17:11] <fwereade> rogpeppe1, my proposal leads it in a slightly less crackful direction
+[17:11] <fwereade> rogpeppe1, ATM, first enter scope will set private-address and never touch it again
+[17:12] <fwereade> rogpeppe1, with this change a fresh entry to scope (ie returning after leaving) will clear outdated settings
+[17:12] <rogpeppe1> fwereade: i'm afraid i'm not entirely clear on the relationship between unit settings (is there such a thing) and relation unit settings
+[17:12] <fwereade> rogpeppe1, ah ok -- I thought you meant "contents of the unit doc itself"
+[17:13] <rogpeppe1> fwereade: ah, i think i see.
+[17:13] <fwereade> rogpeppe1, yes, units only have "settings" in the context of a relation
+[17:13] <rogpeppe1> fwereade: you want to make private-address less special
+[17:13] <fwereade> rogpeppe1, yes -- it's still special, but its specialness should happen in uniter instead of in state
+[17:13] <rogpeppe1> fwereade: and provide a general facility to have settings that are available immediately a relation is created
+[17:13] <fwereade> rogpeppe1, exactly
+[17:13] <rogpeppe1> fwereade: emphatic +1 to that
+[17:14] <fwereade> rogpeppe1, sweet, tyvm
+[17:14] <rogpeppe1> fwereade: because we may very well provide other settings that are always available, in the future
+[17:15] <fwereade> rogpeppe1, indeed so
+[17:16] <rogpeppe1> fwereade: just a thought, looking at the code:
+[17:17] <rogpeppe1> fwereade: isn't it a bit potentially problematic, in EnterScope, that we do readSettings, then add an op that asserts docMissing only if that's true?
+[17:17] <rogpeppe1> s/that's true/they weren't found/
+[17:18] <rogpeppe1> fwereade: do relation settings persist from leaving a scope to entering a scope again?
+[17:21] <fwereade> rogpeppe1, I think they shouldn't
+[17:21] <fwereade> rogpeppe1, but they currently do
+[17:21] <rogpeppe1> fwereade: ah
+[17:21] <fwereade> rogpeppe1, there's no actual facility for re-entering scope ATM
+[17:22] <fwereade> rogpeppe1, but I have rough agreement with niemeyer that there's no good reason to forbid it
+[17:22] <rogpeppe1> fwereade: in that case the logic should be simpler - just create the doc with the right settings
+[17:22] <fwereade> rogpeppe1, *however*, if the unit is re-entering any settings from the previous bunch of hooks should, I think, be presumed to be invalid
+[17:22] <rogpeppe1> fwereade: surely the settings should be removed when leaving the scope?
+[17:22] <allenap> mramm: Hi there, can Red Squad (allenap, rvb, julian-edwards, jtv) join the ~juju team?
+[17:23] <fwereade> rogpeppe1, the wrinkle is that a unit that has ever entered a scope must retain *some* settings forever
+[17:24] <rogpeppe1> fwereade: orly?
+[17:24] <rogpeppe1> fwereade: which ones?
+[17:25] <fwereade> rogpeppe1, yeah -- any other unit might be running late on hook processing and have a perfectly legitimate reference to that unit according to its own timeline
+[17:25] <fwereade> rogpeppe1, if it doesn't have cached settings, it will want to get them
+[17:27] <fwereade> rogpeppe1, (to be explicit, the ones it must retain are the latest known legitimate settings)
+[17:27] <rogpeppe1> fwereade: is there such a thing as an illegitimate setting?
+[17:28] <fwereade> rogpeppe1, yes: IMO, once we re-enter scope, old settings are illegitimate
+[17:28] <fwereade> rogpeppe1, say you create a new random password on relation-joined
+[17:29] <fwereade> rogpeppe1, when we enter, we're expecting to run a relation-joined, and it seems much better not to have a bad value lying around: it makes it much harder for the units on the other side
+[17:29] <rogpeppe1> fwereade: so you want to overwrite any existing settings, creating the doc if necessary
+[17:29] <fwereade> rogpeppe1, yes -- if and only if I'm also creating the scope doc that txn
+[17:30] <fwereade> rogpeppe1, otherwise we assume that the hooks will handle whatever changes need to be made
+[17:34] <fwereade> rogpeppe1, still sounding sane?
+[17:35] <rogpeppe1> fwereade: sounds reasonable, although i don't understand all the implications
+[17:35] <rogpeppe1> fwereade: assuming it's not too hard to do in a transaction
+[17:36] <fwereade> rogpeppe1, I don't think it's any more complex than the existing EnterScope, just different
+[17:36] <rogpeppe1> fwereade: cool
+[18:24]  * rogpeppe1 is off for the night. nght all.
+[22:07] <hazmat> robbiew, forwarded you an email that was a cause to the thread on the juju list (which i'm also writing up a reply to)
+[22:30] <davecheney> mramm: ping
+[22:30] <mramm> davecheney: pong
+[22:30] <fwereade> davecheney, ping
+[22:30] <fwereade> ha
+[22:31] <davecheney> mramm: g+ or skype ?
+[22:31] <fwereade> davecheney or mramm: very briefly, is there a way I can get a list of the bugs fixed in juju-core since the last release?
+[22:31] <mramm> davecheney: I'm in the G+ but I don't mind skype
+[22:31] <davecheney> fwereade: i looked at the 1.9.6 milestone, nothing useful there
+[22:32] <fwereade> davecheney, likewise -- I guess I should have been retargeting my bugs to that as I did them
+[22:32] <fwereade> davecheney, I'll try to be cleverer
+[22:32] <davecheney> fwereade: bzr log after rev 796 will be the best solution
+[22:36] <davecheney> mramm: g+ sucks balls
+[22:36] <davecheney> you are never online for me
+[22:36] <mramm> hmm
+[22:36] <davecheney> is there another mark ramm I dont' know about ?
+[22:37] <mramm> well, there is mark canonical ramm-christensen
+[22:37] <mramm> the hangout I'm in is https://plus.google.com/hangouts/_/8135680b0c8e4091160281dd5651402e2bec7133
+[22:37] <mramm> which is linked in the meeting
+[22:38] <davecheney> that one invites the wrong dave cheney
+[22:39] <davecheney> screw it, skype is easier
+[22:42] <davecheney> fwereade: will do release notes this morning and send them to you
+[22:42] <fwereade> davecheney, I'm noting subordinate state down for you
+[22:42] <fwereade> davecheney, I just wanted to check whether I'd done anything else worth mentioning
+[22:43] <davecheney> you can explain what works and what doesn't work
+[22:54] <fwereade> davecheney, sent; let me know if it needs clarification, I'm not sleeping *quite* yet
+[22:57] <davecheney> fwereade: thank you
+[22:57] <davecheney> dont' worry, i'll do the release over the weekend so there is no rush
+[22:57] <fwereade> davecheney, offhand, do you know how to express "completely replace the contents of this document" in mgo/txn?

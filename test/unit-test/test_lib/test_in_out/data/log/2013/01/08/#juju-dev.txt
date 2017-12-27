@@ -1,0 +1,375 @@
+=== mohits1 is now known as mohits
+=== _mup__ is now known as _mup_
+[08:01] <TheMue> Morning
+[08:10] <rogpeppe> mornin' all
+[08:14] <TheMue> rogpeppe: Hiya
+[10:16] <TheMue> rogpeppe: ping
+[10:16] <rogpeppe> TheMue: pong
+[10:16] <TheMue> rogpeppe: Maybe you can help me localizing an error.
+[10:16] <rogpeppe> TheMue: glad to help if i can
+[10:17] <TheMue> rogpeppe: You know about the rollback of my firewaller change by Dave? It lead to a hanging test in cmd/jujud
+[10:17] <rogpeppe> TheMue: i'd seen that go past, yes
+[10:18] <TheMue> rogpeppe: It is the MachineSuite.TestProvisionerFirewaller.
+[10:19] <TheMue> rogpeppe: So I loked at it with gocheck.vv.
+[10:19] <TheMue> rogpeppe: One moment, will paste the log.
+[10:20] <TheMue> rogpeppe: http://paste.ubuntu.com/1509166/
+[10:20] <rogpeppe> *click*
+[10:20] <TheMue> rogpeppe: You'll see from line 66 that there's a loop. And that will time out after 5 minutes.
+[10:20] <fwereade> rogpeppe, TheMue: heh, I was just needing to write some tests there myself and getting depressed about the can't-sync issue
+[10:21] <TheMue> rogpeppe: The firewaller tests themselves pass fine.
+[10:21] <fwereade> TheMue, ah, that weirdness is fixed in one of my current CLs
+[10:21] <TheMue> fwereade: Oh!
+[10:22] <TheMue> fwereade: *hug*
+[10:22] <rogpeppe> fwereade: which particular weirdness is that? and what was the fix?
+[10:22] <fwereade> TheMue, well, ok, some of the weirdness
+[10:22] <fwereade> rogpeppe, the lack of a sane environment in which to run and the whining about tools
+[10:23] <rogpeppe> fwereade: sorry, i'm feeling stupid - how does that tally with TheMue's issue above?
+[10:23] <fwereade> TheMue, rogpeppe: yeah, I'm probably wrong -- I think I was looking at the wrong bit of the log
+[10:23] <TheMue> fwereade: From reading the test itself I found now problem regarding the firewaller. Funnily the test passes before I merge the firewaller change. Afterwards it looks like in the paste.
+[10:23] <rogpeppe> fwereade: it looks like the crux is that it's getting unauthorized access
+[10:24] <TheMue> rogpeppe: Exactly.
+[10:25] <rogpeppe> TheMue: have you tried putting in printfs that print when the password is being changed, and what password is being connected with?
+[10:25] <rogpeppe> TheMue: that might help narrow down the issue
+[10:26] <fwereade> dimitern, heyhey, are you back in town?
+[10:26] <TheMue> rogpeppe: Inside the test there's no obvious change, but I'll add statements to see where it may happen.
+[10:27] <dimitern> fwereade: hey :) yeah - landed early this morning
+[10:27] <fwereade> dimitern, ah cool
+[10:27] <rogpeppe> TheMue: that's worth doing i think - put the printfs in the relevant state functions
+[10:27] <rogpeppe> dimitern: yo!
+[10:27] <fwereade> dimitern, nice hols?
+[10:28] <dimitern> fwereade: oh yeah! much needed as well
+[10:28] <dimitern> fwereade: yours?
+[10:28] <fwereade> dimitern, yeah, very peaceful, was really nice having nico and rie over for xmas
+[10:29] <fwereade> dimitern, we've still got another duck in the freezer, I'll let you know when I can be bothered to cook it ;p
+[10:31] <dimitern> fwereade: cool :) beers later?
+[10:31] <fwereade> dimitern, sgtm, I'll figure out cath's movements and let you know
+[10:32] <TheMue> rogpeppe: Interesting, the failure differs. Just had a different simple test fail, and now again the hanging process due to unauthorized access. :(
+[10:33] <rogpeppe> TheMue: the failure differs after you've added the printfs? or just it differs from run to run?
+[10:34] <TheMue> rogpeppe: From run to run.
+[10:34] <rogpeppe> TheMue: what did the new failure look like?
+[10:35] <fwereade> rogpeppe, TheMue: a suggestion: the runOnce methods should *take* a *State, and then we get to do an end-run around the deployer-testing nonsense; the machiner-testing nonsense I'm about to hit; probably uniter-testing weirdness I don't remember
+[10:35] <fwereade> rogpeppe, TheMue: ...and as a bonus it is somewhat likely we'll be able to write a firewaller/provisioner test I can understand ;p
+[10:36] <rogpeppe> fwereade: i'm looking at that stuff right now as well :-)
+[10:36] <rogpeppe> fwereade: what difference would passing a state to runOnce make?
+[10:37] <TheMue> rogpeppe: The hanging looks like before, otherwise I get one unautherized, but afterwards the opening of the port fails.
+[10:37] <TheMue> fwereade: So, I have a problem following you. :/
+[10:37] <fwereade> rogpeppe, IMO the fact that we can't touch the state used in the workers without serious gymnastics makes everything harder
+[10:38] <rogpeppe> TheMue: i'm afraid i can't really help without more information. you'll just have to dive in and work out what's going on
+[10:38] <rogpeppe> fwereade: how does changing the signature of runOnce help there?
+[10:39] <fwereade> rogpeppe, that it gives us a point at which we can sanely hook a test in
+[10:39] <rogpeppe> fwereade: personally, i was thinking of adding a var openState func(*state.Info) (*state.State, error)
+[10:39] <rogpeppe> fwereade: global
+[10:40] <rogpeppe> fwereade: i'm not sure i want tests to know about runOnce
+[10:40] <fwereade> rogpeppe, the tests know everything anyway, except the things they need to know
+[10:40] <rogpeppe> fwereade: lol
+[10:40] <fwereade> rogpeppe, I must say I really am finding them hard to work with :/
+[10:42] <rogpeppe> fwereade: the idea is that the test is minimal, because all the real testing is done in the worker packages themselves, and in jujud we only need to verify that the right components have been joined up correctly
+[10:43] <rogpeppe> fwereade: if we call runOnce directly, we aren't verifying that Run will actually do the right thing
+[10:44] <fwereade> rogpeppe, so maybe we should test them both?
+[10:44] <rogpeppe> fwereade: you're principally concerned about the sync issue here, right?
+[10:44] <fwereade> rogpeppe, the sync issue is one thing
+[10:45] <fwereade> rogpeppe, the fact that there's duplication between the two agents also concerns me
+[10:46] <fwereade> rogpeppe, the dancing around with passwords is hard to follow, and should clearly be common
+[10:46] <rogpeppe> fwereade: i had that factored out originally, but was persuaded not to do that
+[10:47] <fwereade> rogpeppe, I can well believe it :/
+[10:47] <rogpeppe> fwereade: and... it's only four lines of code
+[10:47] <rogpeppe> fwereade: i'm not sure it's that hard to follow
+[10:48] <fwereade> rogpeppe, trust me, it is hard to follow
+[10:48] <rogpeppe> 	if passwordChanged != "" {
+[10:48] <rogpeppe> 		if err := m.SetPassword(a.Conf.StateInfo.Password); err != nil {
+[10:48] <rogpeppe> oops
+[10:48] <fwereade> rogpeppe, there is no justification I can see for smearing the password-handling across openState and 2 spearate clients
+[10:48] <rogpeppe> that's new
+[10:48] <rogpeppe> fwereade: you can't set the password before you've retrieved the relevant entity from the state
+[10:49] <rogpeppe> fwereade: so you'd need to pass in a function to do that
+[10:49] <fwereade> rogpeppe, or maybe we could have a sane state API
+[10:49] <rogpeppe> fwereade: and if you do that (i did, before) the code ends up just as difficult to understant
+[10:49] <rogpeppe> d
+[10:50] <fwereade> rogpeppe, we have this ridiculous groupthink lie that "agents aren't a concept that exists in state"
+[10:50] <rogpeppe> fwereade: i started with a different API too.
+[10:50] <fwereade> rogpeppe, SetAgentPassword(entityName, password string)
+[10:50] <rogpeppe> fwereade: what happens if the entity doesn't exist?
+[10:50] <rogpeppe> fwereade: (FWIW that was my original design)
+[10:50] <fwereade> rogpeppe, state can figure that out trivially
+[10:51] <fwereade> rogpeppe, I believe you :(
+[10:51] <fwereade> rogpeppe, this is the trouble
+[10:51] <rogpeppe> fwereade: i'm reluctant to change this stuff now - it was hammered out at some length, and it's not too bad as is, i think
+[10:52] <rogpeppe> fwereade: apart from the code-readability issue, what does it help with?
+[10:52] <fwereade> rogpeppe, it gets us one step closer to treating the two agents the same
+[10:52] <fwereade> rogpeppe, maybe this is just a pipe dream of mine
+[10:53] <rogpeppe> fwereade: i think it's reasonable to have different code for both agents - they're independent entities
+[10:53] <fwereade> rogpeppe, the only thing that should be different is the list of workers
+[10:54] <fwereade> rogpeppe, everything else is exactly the same, but we duplicate it imperfectly because niemeyer insists
+[10:54] <fwereade> rogpeppe, and so I get really grumpy whenever I have to work around there
+[10:55] <fwereade> rogpeppe, because there *is* a good design, and it's probably pretty close to a combination of the things that you and I both tried to do early on, but we've been forbidden to do that
+[10:56] <fwereade> rogpeppe, a thought -- if you find it easy to work in that area
+[10:56] <rogpeppe> fwereade: i dunno - i'm not sure that making the two agents be exactly the same except for the tasks the run is necessarily right. the current design gives us leeway to make them significantly different if we want without significant code disruption, and i think that's a useful freedom.
+[10:57] <rogpeppe> s/the run/they run/
+[10:57] <fwereade> rogpeppe, honestly, it feels to me like being different from python just for the sake of it
+[10:57] <fwereade> rogpeppe, the python stuff was just fine, once yu scraped away the layers of twisted caking it
+[10:58] <fwereade> rogpeppe, (to be clear: the very specific idea of having "agent" functionality distinct from the actual agents themselves)
+[10:59] <fwereade> rogpeppe, it lets you, eg, test the Run code without dicking around with the details of what the individual agents happen to want to do in runOnce
+[10:59] <fwereade> rogpeppe, but let us stipulate that for some reason I am irrational here
+[10:59] <rogpeppe> fwereade: ? we can do that, can't we?
+[10:59] <rogpeppe> fwereade: isn't testing the Run code what we do currently?
+[11:00] <fwereade> rogpeppe, by unreliable side-effect of the action of runOnce, yes
+[11:00] <rogpeppe> fwereade: ah, you mean the Run code without runOnce
+[11:01] <rogpeppe> fwereade: we could do that, actually, without too much hassle, if we wanted
+[11:01] <rogpeppe> fwereade: the Run code is more-or-less identical for both
+[11:01] <fwereade> rogpeppe, well, not really, because we duplicate Run for each agent
+[11:01] <fwereade> rogpeppe, yeah
+[11:01] <fwereade> rogpeppe, so there's nothing common except by coincidence
+[11:02] <rogpeppe> fwereade: we could have a function: func Run(once RunOncer) error
+[11:02] <rogpeppe> fwereade: no coincidence - i try to keep them as similar as possible so i can look at them side by side and see that they're the same
+[11:03] <rogpeppe> fwereade: maybe func RunLoop
+[11:04] <fwereade> rogpeppe, yeah, I guess that could work, but it still feels like it's primarily dictated by the arbitrary "these 2 bits of code that are the same must be duplicated because we might one day want to change them" constraint
+[11:04] <fwereade> rogpeppe, we factor another little common bit out, great
+[11:04] <fwereade> rogpeppe, and we now have another, slightly simpler structure, that is duplicated across the agents
+[11:05] <fwereade> rogpeppe, but, let me take a step sideways for a moment
+[11:05] <fwereade> rogpeppe, I am pleased that you find jujud easy to deal with, because I surely do not
+[11:06] <fwereade> rogpeppe, if I cut back what I'm doing and just propose a Machiner
+[11:06] <fwereade> rogpeppe, and assign to you a bug for integrating it and testing it
+[11:06] <fwereade> rogpeppe, I will shut up about it
+[11:06] <fwereade> rogpeppe, until next time ;p
+[11:06] <rogpeppe> fwereade: i'm not saying i find it *easy* to deal with :-)
+[11:07] <rogpeppe> fwereade: but the concerns you've voiced don't map well to the difficulties i have with it
+[11:07] <rogpeppe> fwereade: http://paste.ubuntu.com/1509259/ ?
+[11:08] <rogpeppe> fwereade: oops http://paste.ubuntu.com/1509261/
+[11:08] <fwereade> rogpeppe, that would, I agree, be a step forward
+[11:22] <rogpeppe> fwereade: func (st *State) Entity(entityName string) Entity; type Entity interface {everything that entities have in common}
+[11:23] <rogpeppe> sorry, func (st *State) Entity(entityName string) (Entity, error) of course
+[11:24] <fwereade> rogpeppe, I would *probably* love that, but I think it's a non-starter because niemeyer doesn't believe in agents
+[11:24] <rogpeppe> fwereade: i don't see anything about agents there
+[11:24] <fwereade> rogpeppe, yeah, but it's actually all about agents
+[11:25] <rogpeppe> fwereade: that's the trick :-)
+[11:25] <fwereade> rogpeppe, only the entities with agents have "entity names"
+[11:25] <mramm> mgz, jam, dimitern: I was able to add all of you to the juju core kanban board
+[11:25] <mgz> mramm: ace, thanks
+[11:25] <fwereade> rogpeppe, everything else just has names (as do the ones with agents too ofc)
+[11:25] <dimitern> mramm: cool, 10x
+[11:25] <mramm> mgz, jam, dimitern: I added ian too, and you should be able to see everything now
+[11:25] <fwereade> rogpeppe, IMO there is something badly wrong when we have entities, that have names, but EntityName means something entirely different
+[11:26] <dimitern> mramm: I can see it yeah
+[11:26] <rogpeppe> fwereade: yeah, i think we're using the word "entity" wrong
+[11:26] <mramm> jam: I didn't realize I could make that change since I had admin on that board, so thanks
+[11:26] <fwereade> rogpeppe, and the only reason we're doing it is because we're not allowed to mention agents :(
+[11:27]  * dimitern => lunch
+[11:27] <fwereade> rogpeppe, despite the existence of a bunch of agent methods already
+[11:27] <mramm> rogpeppe, fwereade, TheMue: you all should be able to see the blue kanban board now too
+[11:28] <fwereade> mramm, so I can; thanks
+[11:29] <TheMue> mramm: Thx
+[11:31] <fwereade> rogpeppe, however, I don't think I am engaging in anything constructive here :( if you can see a way past my mental blockage I will be very happy
+[11:31] <rogpeppe> fwereade: i'm having a go
+[11:33] <fwereade> rogpeppe, I think for now I will just do the Machiner and forget about integration, at least I will accomplish something :)
+[11:42]  * fwereade lunches
+[12:01] <jam> mramm: no problem, thanks for adding us to juju-core
+[12:07] <TheMue> Lunchtime
+[12:59] <jam> mgz, fwereade, TheMue, Aram, rogpeppe, dimitern: are we meeting at https://plus.google.com/hangouts/_/33acfc2c8af8792568274fa110371db956f9fde7# ?
+[12:59] <rogpeppe> jam: i believe we are
+[13:00] <mgz> okay
+[13:05] <jam> mramm: https://plus.google.com/hangouts/_/33acfc2c8af8792568274fa110371db956f9fde7#
+[13:30] <dimitern> ping
+[13:33]  * mramm gets some breakfast -- will be back soon
+[13:42] <rogpeppe> lunch
+[14:05] <rogpeppe> back
+[14:16] <rogpeppe> fwereade:  https://codereview.appspot.com/7071051
+[14:16] <fwereade> rogpeppe, looking
+[14:18] <rogpeppe> fwereade: of course, it's a law of nature that the overall line count goes up, even though we're removing duplicated code :-(
+[14:18] <rogpeppe> fwereade: i think it's nicer though
+[14:18] <rogpeppe> pwd
+[14:18] <fwereade> rogpeppe, from what I've seen so far the clarity is worth it -- and I think it's a step towards an actual reduction one day
+=== TheMue_ is now known as TheMue
+[14:21] <fwereade> rogpeppe, LGTM
+[14:22] <rogpeppe> fwereade: thanks
+[14:22] <rogpeppe> Aram, TheMue, jam, mgz, dimitern: any chance of a second opinion? https://codereview.appspot.com/7071051
+[14:23]  * dimitern looking
+[14:23] <TheMue> *click*
+[14:26] <dimitern> rogpeppe: LGTM - nice and simpler
+[14:26] <rogpeppe> dimitern: thanks
+[14:27] <rogpeppe> dimitern: would you mind replying with your LGTM to the CL, please?
+[14:27] <rogpeppe> dimitern: (i see a blank reply, which i surmise might've been intended to contain something :-])
+[14:28] <dimitern> rogpeppe: hmmm I did enter the LGTM but let me see what went wrong
+[14:28] <dimitern> rogpeppe: done
+[14:29] <fwereade> rogpeppe, dimitern: https://codereview.appspot.com/7069055 is hopefully also trivial
+[14:29] <dimitern> all sorts of crazy stuff is happening with my machine today :(
+[14:29] <rogpeppe> dimitern: thanks. will submit assuming TheMue thinks it's ok.
+[14:29] <rogpeppe> fwereade: looking
+[14:29] <TheMue> rogpeppe: Just sent my LGTM. ;)
+[14:29] <rogpeppe> TheMue: ta!
+[14:30] <fwereade> this is totally irrelevant but utterly awesome:
+[14:31] <fwereade> I see you driving / round town with the girl I love / and I'm like "HAIKU"
+[14:33] <rogpeppe> fwereade: ignoring that :-] i'm not sure that "machiner" is a great name for the code you've put into worker/machiner
+[14:34] <rogpeppe> fwereade: is the plan to expand it, or is the "wait for dying, make dead" thing its full extent?
+[14:34] <fwereade> rogpeppe, well, yeah, it's an awful name, but it's one I thought we had consensus on
+[14:34] <fwereade> rogpeppe, not sure yet
+[14:34] <fwereade> rogpeppe, no *current* plans
+[14:34] <fwereade> rogpeppe, it may or may not end up handling, say, authorized-keys
+[14:35] <rogpeppe> fwereade: for me, "machiner" is what the machine agent does, but that code's only a small part of that
+[14:35] <dimitern> fwereade: looking
+[14:35] <fwereade> rogpeppe, but I think that's probably a different worker's job
+[14:35] <fwereade> rogpeppe, strongly disagree
+[14:35] <fwereade> rogpeppe, the machine agent has always had provisioner and firewaller and suchlike
+[14:36] <fwereade> rogpeppe, the machiner is for the stuff that's directly relevant to a *state.Machine
+[14:36] <fwereade> rogpeppe, or at least that was the logic I inferred
+[14:36] <dimitern> fwereade: done - I like these short CLs
+[14:36] <rogpeppe> fwereade: yes, those are workers within the machine agent
+[14:37] <fwereade> rogpeppe, agreed... machiner and machine agent distinguish the stuff-for-dealing-with-the-machine from the process-that-runs-on-the-machine-and-deals-with-all-sorts-of-things
+[14:37] <rogpeppe> "mr.tomb.Kill(mr.loop())" - i think you should tell Mr Tomb to play nicely with Mr Loop :-)
+[14:37] <fwereade> rogpeppe, haha
+[14:40] <fwereade> rogpeppe, (do you have a better name than machiner? I picked it because (1) AIUI it was already agreed and (2) it saved me inventing a worse name ;))
+[14:41] <rogpeppe> fwereade: i was just wondering about "lifecycler"
+[14:41] <fwereade> rogpeppe, hmm, I think it's have to be MachineLifecycler
+[14:41] <fwereade> rogpeppe, which is a bit icky
+[14:42] <rogpeppe> fwereade: unless it was generic
+[14:42] <rogpeppe> fwereade: which might not be too hard, especially given that the agent types now have "Entity" methods
+[14:42] <fwereade> rogpeppe, but it won;t be, because the machine's handling of lifecycle issues is rather different to that of the uniter, which is the thing responsible for unit lifecycle
+[14:43] <rogpeppe> fwereade: yeah, that is a pity
+[14:43] <fwereade> rogpeppe, I think that trying to split that stuff out of the uniter is a very bad idea
+[14:43] <rogpeppe> fwereade: i'm sure that's true
+[14:43] <rogpeppe> fwereade: that reminds me: have you seen this? http://1.bp.blogspot.com/-OHqQoQLJPQA/UOqyvDiHdjI/AAAAAAAAAeM/u_TJ1vXkTjw/s1600/what-the-british-say.jpg
+[14:44] <fwereade> rogpeppe, IMO it maintains symetry and something close-enough to clarity given what already exists
+[14:44] <fwereade> rogpeppe, yeah, love it
+[14:51] <rogpeppe> fwereade: shouldn't this code wait for the deployer to kill the units before setting the machine to dead?
+[14:53] <rogpeppe> fwereade: ah, but perhaps we can assume that the machine can't be set to dying while there are still units around
+[14:53] <rogpeppe> fwereade: if so, that deserves a comment
+[14:54] <TheMue> rogpeppe: Just merged your latest changed, instead of a hanging loop I now get a panic.
+[14:54] <fwereade> TheMue, that sounds liek progress to me :)
+[14:54] <rogpeppe> lol
+[14:55] <rogpeppe> TheMue: what's the panic?
+[14:56] <fwereade> rogpeppe, but, yeah, that is the case; I'm a touch reluctant to comment things that should be clear from a reasonable understanding of state.Machine, mainly because it's just one more place to re-comment as and when that detail changes
+[14:56] <fwereade> rogpeppe, but I don't feel that strongly
+[14:56] <TheMue> rogpeppe: One moment, will paste it. It's again in the TestProvisionerFirewaller
+[14:57] <TheMue> rogpeppe: http://paste.ubuntu.com/1509698/
+[14:57] <rogpeppe> fwereade: just a single line before EnsureDead should suffice: // It's OK to set the Machine to dead because it can't be set to dying unless it has no units.
+[14:57] <fwereade> rogpeppe, fair enough
+[14:59] <rogpeppe> TheMue: could you push a branch so i can have a look?
+[14:59] <TheMue> rogpeppe: It's during the second run of the Changes() loop, after the first one has an IsNotFound().
+[14:59] <TheMue> rogpeppe: Yep, I'll let my printlns in.
+[15:00] <fwereade> kanban review meeting btw
+[15:01] <fwereade> https://plus.google.com/hangouts/_/539f4239bf2fd8f454b789d64cd7307166bc9083#
+[15:02] <TheMue> rogpeppe: it's @ lp:~themue/juju-core/007-firewaller-integration
+[15:36] <fwereade> rogpeppe, https://codereview.appspot.com/7035060/ https://codereview.appspot.com/7028049/ https://codereview.appspot.com/7030061/ and the one linked above... https://codereview.appspot.com/7069055
+[15:36] <fwereade> TheMue, the 1st and 3rd of those want for an additional reviewer, if you're of a mind
+[15:38] <TheMue> fwereade: one moment, meeting
+[16:05] <TheMue> fwereade: Back again, so now looking
+[16:22] <rogpeppe> fwereade: all reviewed, i think
+[16:22] <fwereade> rogpeppe, tyvm
+[16:30] <TheMue> rogpeppe: Any idea on the panic?
+[16:31] <rogpeppe> TheMue: ah, sorry, i'd been elsewhere, will have a look
+[16:32] <TheMue> rogpeppe: np, had been elswhere too. ;)
+[16:37] <rogpeppe> TheMue: well, i've found why it's panicing, but it won't help you...
+[16:37] <TheMue> rogpeppe: As long as it allows me to continue error searching. ;)
+[16:38] <rogpeppe> TheMue: BTW for debugging messages, it's usually better to use log.Printf (or c.Logf) rather than println - that way it fits into the usual gocheck logs
+[16:40] <TheMue> rogpeppe: But you miss them w/o at least gocheck.v. And sometime I want to reduce those messages and only have a first narrowing. ;)
+[16:41] <rogpeppe> TheMue: grep is your friend :-)
+[16:41] <TheMue> rogpeppe: They all will be removed before pushing it.
+[16:41] <TheMue> rogpeppe: There are many ways to reach the same goal.
+[16:54] <rogpeppe> TheMue: i think i've found your problem
+[16:55] <TheMue> rogpeppe: I'm listening.
+[16:56] <rogpeppe> TheMue: yup, it's a one line fix
+[16:56] <TheMue> rogpeppe: Great
+[16:56] <rogpeppe> TheMue: the problem is that the machine that's added by TestProvisionerFirewaller doesn't have an instance id
+[16:56] <rogpeppe> TheMue: so the provisioner tries to provision it
+[16:57] <rogpeppe> TheMue: but it's already been provisioned (and the password changed) so we've got two places changing the same password
+[16:57] <rogpeppe> TheMue: (you should've followed my suggestion to print out the passwords :-])
+[16:58] <TheMue> rogpeppe: I wouldn't have been able to interpret that output because I'm not in that mimik.
+[17:00] <rogpeppe> TheMue: adding a SetInstanceId in machine_test.go after the st.AddMachine in addMachine fixes the problem
+[17:00] <TheMue> rogpeppe: Wonderful, thx.
+[17:10] <TheMue> rogpeppe: Yeah, now everything is green.
+[17:16] <fwereade> rogpeppe, re state already having fetched the machine, I don't trust the client not to reuse the machine on another goroutine
+[17:16] <fwereade> rogpeppe, sane/acceptable?
+[17:17] <rogpeppe> fwereade: i think it's ok to pass ownership to the machiner in this case
+[17:18] <rogpeppe> fwereade: hmm, this is where we really want a Clone method
+[17:18] <fwereade> rogpeppe, yeah, indeed, that would make everythig perfectly explicit
+[17:19] <rogpeppe> fwereade: i think we should do it.
+[17:19] <fwereade> rogpeppe, in the meantime I think I prefer habitually telling other goroutines about ids rather than entities
+[17:19] <rogpeppe> fwereade: NewMachiner isn't a goroutine, it's a function
+[17:20] <fwereade> rogpeppe, can I make it a separate CL? no point doing it if I don't actually trawl the codebase for places it'd be useful...
+[17:20] <rogpeppe> fwereade: yeah, i guess
+[17:22] <TheMue> rogpeppe: Btw, both TestChangePasswordChanging still fail.
+[17:22] <rogpeppe> TheMue: fail how?
+[17:23] <rogpeppe> TheMue: in trunk?
+[17:23] <TheMue> rogpeppe: http://paste.ubuntu.com/1510037/
+[17:24] <TheMue> rogpeppe: Will test trunk, one moment.
+[17:24] <rogpeppe> TheMue: the tests work ok for me in trunk
+[17:24] <fwereade> rogpeppe, btw, sorry, I forgot to propose https://codereview.appspot.com/7030061 again :(
+[17:24] <fwereade> rogpeppe, should be trivial now
+[17:26] <TheMue> rogpeppe: Strange, in my trunk  MachineSuite.TestParseUnknown panics.
+[17:28] <rogpeppe> TheMue: it passes for me
+[17:28] <rogpeppe> TheMue: as does the TestChangePasswordChanging tests
+[17:28] <TheMue> rogpeppe: I'll pull a clean trunk.
+[17:30] <rogpeppe> interesting, the jujud tests take 20.941s against tip (ish) and 41.8s against go 1.0.2
+[17:32] <hazmat> fwereade, re previous discussion on charms and relation names. my concern is that this is a change being made which breaks dozens of charms with no benefit since the charms are logically self-consistent, its juju thats imposing the implicit relation which is not addressable by the charm anyways. so in that respect there is no conflict. ie what's the scenario where this is a problem. else this is just breakage for purity.
+[17:33] <fwereade> hazmat, it opens the door to relations that cannot be expressed unambiguously
+[17:33] <fwereade> hazmat, you can't specify a relation over juju-info between two charms that add their own juju-info relations
+[17:34] <fwereade> hazmat, rare but real; just like the run-wrong-hooks problem
+[17:34] <hazmat> fwereade, the implicit is always over provide not on require. we match on interface names not on relation names. the implicit provide is not addressable
+[17:35]  * hazmat tries to restate for clarity
+[17:35] <fwereade> hazmat, `juju add-relation foo:juju-info bar:juju-info` -- if both define their own juju-infos in addition to the implicit ones, what relation are we trying to create?
+[17:35] <hazmat> fwereade, its forbidden to provide juju-info
+[17:35] <hazmat> so its quite explicit in that case
+[17:36] <fwereade> hazmat, everything provides juju-info...
+[17:36] <TheMue> rogpeppe: Now a fresh trunk, doing a go test -gocheck.v in cmd/jujud shows no panic now but lets the password changes fail. :/
+[17:36] <hazmat> fwereade, exactly.. and its only the providing side that we need to restrict
+[17:36] <robbiew> I'm all for open dialogue , but maybe a hangout would improve communication on this subject ;)
+[17:36] <rogpeppe> TheMue: the password changes tests are in state, no?
+[17:36] <fwereade> hazmat, in the example above, both are requires
+[17:36] <TheMue> rogpeppe: No, all in cmd/jujud
+[17:37] <fwereade> hazmat, what should that command do?
+[17:37] <fwereade> hazmat, if it's ok for charms to have require relations named juju-info, and both charms do, that command is ambiguous
+[17:38] <fwereade> hazmat, I know it's breakage; I know it's annoying; but I believe that it is *already* broken
+[17:38] <rogpeppe> TheMue: ah yes. it all passes for me.
+[17:39] <TheMue> rogpeppe: In a fresh pulled trunk?
+[17:39] <rogpeppe> TheMue: yes
+[17:40] <TheMue> rogpeppe: Hmm, I'm using go 1.0.3. And you?
+[17:40] <rogpeppe> TheMue: tip and 1.0.2
+[17:41] <rogpeppe> TheMue: i'll try against 1.0.3, but i don't think it'll make a difference
+[17:42] <TheMue> rogpeppe: No, I don't think so too. Maybe I have to update mgo.
+[17:42] <rogpeppe> TheMue: possibly - i just tried that
+[17:43] <rogpeppe> TheMue: if it still fails then, try printing out the passwords that are being set, and the password and entity name being used to connect to the state.
+[17:43] <hazmat> fwereade, that's pretty convincing from a purity perspective. in practice its quite odd, akin to a subordinate with a subordinate relation.
+[17:44] <TheMue> rogpeppe: Uuugh, ok, but have to find out where I have to do that so that it makes sense.
+[17:44] <rogpeppe> TheMue: see the SetPassword methods in state, and the state.Open function
+[17:46] <hazmat> ie. its only already broken if its already broken ;-)
+[17:46] <fwereade> hazmat, I agree it's a bit odd, but I still have a small part of my brain that wants to charm some sort of automated penetration testing tool (consuming juju-info for private-address), and I think that opens the door
+[17:47] <rogpeppe> fwereade: you've got a LGTM
+[17:47] <hazmat> fwereade, and why would that be a problem?
+[17:47] <hazmat> fwereade, because its non subordinate attaching to subordinate?
+[17:48] <hazmat> via juju-info
+[17:48] <hazmat> the typical non subordinate juju-info usage i use for examples is a dns provider for units
+[17:49] <fwereade> hazmat, even better then -- my point is that once we have someone using implicit juju-info globally we're in danger of hitting that case in practice
+[17:50] <hazmat> fwereade, we can disallow it explicitly for non subordinates without hosing the extant charms
+[17:51] <fwereade> hazmat, that's two explicit workarounds now... I'm not convinced that this is a better way forward than a staged migration to something that works without hacks
+[17:51] <hazmat> the only charms we can fix are those that are owned by charmers..
+[17:52] <fwereade> hazmat, incidentally, what's the situation re charm upgrade sanity in pyjuju?
+[17:52] <hazmat> the rest die or we fork forward
+=== alexlist` is now known as alexlist
+[17:52] <fwereade> hazmat, eg if v2 of a charm no longer has relation foo
+[17:53] <fwereade> hazmat, sorry derail
+[17:53] <fwereade> hazmat, can I point you to the docs, all the same?
+[17:53] <fwereade> hazmat, https://juju.ubuntu.com/docs/implicit-relations.html
+[17:53] <hazmat> fwereade, the relation would still be extant
+[17:54] <fwereade> hazmat, "Implicit relationships are named in the reserved the juju-* namespace."
+[17:55] <hazmat> fwereade, i'm aware of the docs and the intent, again my concern is breaking dozens of charms
+[17:56] <fwereade> hazmat, and my concern is that layering on the special cases will end up hurting us more in the long run
+[17:58] <hazmat> fwereade, the docs btw also provide an example of what your saying should be illegal, look at the rsyslog metadata
+[17:58] <fwereade> hazmat, I think that's invalidated by the preceding "The charm author should not declare the juju-info relation and is provided here only as an example."
+[17:58] <hazmat> fwereade, your taking that out of context.. provides vs. requires
+[17:59] <hazmat> fwereade, the rsyslog metadata is in the next section
+[17:59] <hazmat> fwereade, the problem is isn't with declaring the provides juju-info.. that
+[17:59] <hazmat> that's not allowed anywhere.
+[17:59] <fwereade> hazmat, that's not how I read it -- but, yeah, maybe arguing from the authority of these docs either way is somewhat weak :)
+[18:00]  * rogpeppe is off for the night. see y'all tomorrow.
+[18:00] <fwereade> gn rogpeppe
+[18:01] <fwereade> hazmat, I feel we're at something of an impasse... we each understand the other's perspective but still think our own should win ;p
+[18:02] <hazmat> fwereade, i'm okay with losing, as long as we figure the way and resources to work  forward on the charms
+[18:05] <hazmat> fwereade,  otoh i don't see the two workarounds offered as inherently problematic given the special case nature where this is an issue
+[18:05] <hazmat> fwereade, are you up for tabling till niemeyer can chime in?
+[18:06] <fwereade> hazmat, yeah, absolutely
+[18:07] <fwereade> hazmat, I'm doubtless overvaluing code clarity vs charmer convenience to some degree, but I can't tell how much ;)
+[18:07] <fwereade> hazmat, perhaps because I don't have a clear picture of just how much inconvenience it will cause
+[18:08] <hazmat> fwereade, its not a charmer convenience, its breaking working software..
+[18:09] <fwereade> hazmat, I think we can find a path that doesn't break anything so long as the charms provide a sane upgrade path
+[18:11] <fwereade> hazmat, and I favour that primarily because it gives us a way to consign the difficulty to the dustbin of history, rather than carrying it forward forever -- but, yeah, consider it shelved :)
+[18:13] <hazmat> fwereade, cool
+[19:57] <hazmat> does anybody know a good full text search lib for go.. not finding much by way of googling for such

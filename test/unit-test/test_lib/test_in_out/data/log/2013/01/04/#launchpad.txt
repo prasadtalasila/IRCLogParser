@@ -1,0 +1,184 @@
+=== slank is now known as slank_away
+[01:32] <george_e> https://launchpadlibrarian.net/127463424/buildlog.txt.gz
+[01:32] <george_e> Can anyone tell me what's going on here?
+[01:33] <george_e> "rmdir: failed to remove `obj-i686-linux-gnu': No such file or directory"
+[01:33] <george_e> Where did "obj-i686-linux-gnu" come from?
+[01:42] <wgrant> george_e: 'debian/rules clean' saw fit to invoke it, so it's a bug in your package
+[01:42] <wgrant> Perhaps 'make cleanbuilddir' fails when it's already clean
+[01:42] <george_e> I'm using CDBS so there's basically only two lines in "debian/rules".
+[01:42] <wgrant> In which case your debian/rules should ignore the error from it
+[01:43] <wgrant> Oh, CDBS? ew
+[01:43] <wgrant> Still, package bug :)
+[01:43] <wgrant> Use dh instead :)
+[01:43] <george_e> That's so weird because I've used the exact same debian/rules in other projects with no problems.
+[01:43] <george_e> I copied it verbatim.
+[01:43] <wgrant> Sure
+[01:43] <wgrant> Other projects will have a different makefile
+[01:43] <george_e> Well... I'm actually using CMake :)
+[01:44] <wgrant> Anyway, trying running debian/rules clean in a freshly extracted copy of the source package locally
+[01:44] <george_e> Above all... what I really don't get is why the Makefile/CMakeLists.txt is being invoked at all before the package is even uploaded.
+[01:44] <wgrant> debian/rules clean is run as part of the source build
+[01:45] <george_e> Oh.
+[01:45] <george_e> Well that explains part of the problem.
+[01:45] <wgrant> (dpkg-buildpackage does that bit)
+[01:45] <wgrant> So it's nothing specific to Launchpad
+[01:45] <george_e> wgrant: I'll try running the command you suggested to see what's going on.
+[01:48] <george_e> Interesting: I can actually reproduce the error (of course it says "obj-x86_64-linux-gnu: No such file or directory" since I'm running an x64 kernel).
+[01:48] <lifeless> actually, its because you're running a x64 userspace I expect ;)
+[01:51] <george_e> lifeless: Right - I'm in too much of a hurry to be totally accurate :)
+[01:51] <george_e> Anyway - my work is cut out for me now.
+[01:51] <wgrant> Great
+[01:51] <george_e> Is there an easier alternative to running CMake with CDBS?
+[01:51] <george_e> If there is, that would be awesome and remove an extra build dependency.
+[01:52] <lifeless> dh
+[01:52] <wgrant> Nowadays you'd normally just use dh
+[01:52] <wgrant> cdbs is pretty much dead
+[01:52] <george_e> Ah, okay then.
+[01:53] <george_e> My tendency to fall back on CDBS comes from my days packaging qmake projects.
+[01:55] <george_e> It works now!
+[01:55] <george_e> wgrant, lifeless: Thanks for your help.
+[02:07] <george_e> Oh great:
+[02:07] <george_e> https://launchpadlibrarian.net/127532845/buildlog.txt.gz
+[02:07] <george_e> "warning: the current version (0.3-0~201301040159~raring1) is earlier than the previous one (0.3-1)"
+[02:07] <george_e> There _is_ no previous version.
+[02:08] <george_e> The only other package in the PPA is the Qt5 libraries.
+[02:09] <wgrant> george_e: That's referring to the version in the changelog
+[02:10] <wgrant> The latest version in the branch's debian/changelog is 0.3-1, but the recipe produces 0.3-0blahblahblah
+[02:10] <wgrant> Not a problem unless you care about that sort of thing
+[02:14] <george_e> It's failing though - like it refuses to upload.
+[02:15] <george_e> Oh wait - the build log is different from the upload log.
+[02:15] <george_e> Another packaging error :)
+[02:15] <george_e> My email address was malformed.
+[02:16] <lifeless> more haste more waste :)
+[02:16] <george_e> At least this one is easy to fix.
+=== verterok` is now known as verterok
+=== hggdh_ is now known as hggdh
+[03:08] <broder> hmm. is there a trick to pulling up build logs for private ppas?
+[03:08] <broder> i keep getting a 404
+[03:09] <lifeless> use a browser that obeys URL standards.
+[03:10] <lifeless> [yes, really]
+[03:10] <wgrant> ie. not Chromium
+[03:10] <broder> heh, ok
+[03:10] <wgrant> Chromium reencodes tildes, so private build logs of packages with tilde in the version == fail
+[03:10] <lifeless> + and : too IIRC.
+[03:10] <broder> yeah, i think i had all of those in my version number :)
+[03:10] <broder> hmm, not :. just the rest
+[03:10] <wgrant> I'm pretty sure it's just tilde, but yeah
+[03:12] <lifeless> https://bugs.launchpad.net/launchpad/+bug/677270
+[03:12] <ubot5> Launchpad bug 677270 in Launchpad itself "restricted librarian urls give a 404 if normalised (e.g. by apache, chromium, often shows up on private PPA build logs)" [High,Triaged]
+[03:12] <lifeless> '
+[03:12] <lifeless> Fairly simple file names - 'foo+bar.txt' - will show this problem.'
+[03:13] <wgrant> Hmmm
+[03:13] <wgrant> You sure that wasn't before nocanon?
+[03:13] <lifeless> https://launchpad.net/~soyuz-team/+archive/ppa/+build/1334368/+files/buildlog_ubuntu-karmic-i386.openproj_1.4-2%2Bpx1_FAILEDTOBUILD.txt.gz ?
+[03:14] <lifeless> anyhow. use firefox, it doesn't reencode urls to be less encoded than they were given to it as
+[03:14] <wgrant> lifeless: That works fine for me in Chromium
+[03:15] <lifeless> wgrant: ok, weird.
+[03:15] <wgrant> + only broke before nocanon AFAICR
+[03:15] <lifeless> wgrant: or rather, you may be right.
+[03:15] <lifeless>  :>
+[03:15] <wgrant> Heh
+[11:41] <BigWhale> Greetings.
+[11:42] <czajkowski> BigWhale: ello
+[11:43] <BigWhale> So, renaming a project in launchpad, is it a: - bad idea, - terrible idea, -worst idea ever, or - not possible?
+[11:45] <alo21> hi all... I can't add my second email in my profile
+[11:45] <czajkowski> BigWhale: not it's fine and is possible
+[11:45] <wgrant> BigWhale: It's a fine idea. Ask at https://answers.launchpad.net/launchpad/+addquestion
+[11:45] <czajkowski> we also add in an alias to the old one as well
+[11:45] <alo21> can someone help me, please?
+[11:45] <wgrant> alo21: Sure, can you give us more information about the probem?
+[11:46] <wgrant> problem
+[11:48] <BigWhale> czajkowski, Hmm. Interesting, so lp:kazam will become lp:whatever ?
+[11:48] <czajkowski> yup
+[11:48] <alo21> wgrant, I am trying to add an email contact, when I confirm on LP, I received an email. Then nothing happens
+[11:48] <czajkowski> BigWhale: just follow the link wgrant posted so we can do it
+[11:48] <wgrant> alo21: What do you mean? Did you enter the code from the email?
+[11:48] <BigWhale> czajkowski, ok, great! thanks. We need to decide on a name ... then we're good to go.
+[11:48] <BigWhale> :)
+[11:49] <alo21> wgrant, no... I push on 'confirm' on my LP page...
+[11:50] <wgrant> alo21: But you said that you received an email
+[11:50] <alo21> wgrant, I receive an email
+[11:50] <wgrant> Did you follow the instructions in the email?
+[11:51] <alo21> wgrant, this is what I got: http://pastebin.ubuntu.com/1495132/
+[11:52] <wgrant> Ah, another LoCo address.
+[11:52] <wgrant> Let me see
+[11:52] <czajkowski> wgrant: same loco also
+[12:04] <wgrant> alo21: Launchpad's outgoing mail server can't talk to ubuntu-it.org's due to an internal firewall. I'm filing a ticket to get that firewall fixed.
+[12:04] <czajkowski> wgrant: want to add that to the other anwer there on lp
+[12:04] <czajkowski> *answer
+[12:04] <czajkowski> you're down as asignee
+[12:06] <wgrant> Oh, am I still
+[12:06] <wgrant> Oops
+[12:06] <wgrant> I shall respond
+[12:06]  * wgrant blames holidays
+[12:06] <alo21> wgrant, weird... other people with ubuntu-it.org mail account succeed
+[12:07] <czajkowski> alo21: hmm odd as we've had others wht the same issue as yours
+[12:07] <czajkowski> alo21: it's not been looked into
+[12:07] <czajkowski> so nothing more can be done till then
+[12:08] <alo21> ok
+[12:08] <czajkowski> *now been looked into
+[12:08] <wgrant> alo21: It probably worked in the past.
+[12:08] <wgrant> But I doubt it works for anyone any more
+[12:09] <alo21> well... in this case.... doesn't matter if there is, or not my ubuntu-it.org email on LP
+[12:16] <czajkowski> wgrant: https://answers.launchpad.net/launchpad/+question/209852
+=== Quintasan_ is now known as Quintasan
+=== yofel_ is now known as yofel
+=== BradCrittenden is now known as bac
+[13:58] <apw> czajkowski, do you know if you can see work items which are in the past, as in as shown on the https://launchpad.net/people/+me/+upcomingwork thing ?
+[13:59] <apw> as it stands overdue work seems to be missing and sort of lost
+[14:12] <czajkowski> apw: nope dont think so
+[14:12] <czajkowski> apw: I use burndown charts to see all work
+[14:12] <paultag> czajkowski!
+[14:12] <czajkowski> taggy
+[14:12] <paultag> oh snap, I never sent you goodies.
+[14:13] <apw> bah another nearly useful feature ... the +upcomingwork is great cause it is live
+[14:13] <czajkowski> narp bought my own and gave up on you
+[14:13] <paultag> whhoppsies. back in the front of my mind
+[14:13] <czajkowski> apw: let me go and ask rick_h he's in -dev
+[14:15] <czajkowski> rick_h_: boo
+[14:16] <rick_h_> party
+[14:16] <czajkowski> rick_h_: apw was wondering : do you know if you can see work items which are in the past, as in as shown on the  https://launchpad.net/people/+me/+upcomingwork thing ?
+[14:16] <rick_h_> what's up czajkowski ?
+[14:16] <czajkowski> I didn't think so but I've never really used that feature and use burndown charts instead but wondered did you know
+[14:16] <apw> rick_h_, yeah ... i have stuff against '-month2' which i know was not completed but they are just not there now so i can't find them to move them :)
+[14:17] <rick_h_> czajkowski: oh hmmm, the work items stuff was worked on outside a bit. I'm not sure 100%.
+[14:17] <czajkowski> apw: cant you just seen them in your blueprints?
+[14:17] <czajkowski> again not used this feature ever so not 100% sure
+[14:17] <czajkowski> rick_h_: welcome to my world :)
+[14:17] <rick_h_> czajkowski: I'm looking around sec
+[14:17] <czajkowski> thanks rick_h_
+[14:18] <apw> czajkowski, i can find the ones i know about, but the ones on other peoples blueprints, or bugs assigned by other people, that was one of the only views
+[14:18] <rick_h_> czajkowski: apw a quick look through the code I don't see anything. This was worked on by a few guys that really wanted the upcoming work bits to work right
+[14:19] <czajkowski> nods
+[14:19] <agrestringere> Spam report https://bugs.launchpad.net/ubuntu/+source/xorg/+bug/594702/comments/4
+[14:19] <ubot5> Launchpad bug 594702 in xorg (Ubuntu) "bottom 1/3 of mouse cursor flickers in and out of existance" [Undecided,Expired]
+[14:19] <rick_h_> so it wasn't really fleshed out to support all use cases, just the general one
+[14:19] <apw> rick_h_, ok thanks
+[14:22] <czajkowski> agrestringere: thanks, you just need to link to the bug not the comment we can take it from there
+[14:25] <agrestringere> czajkowski, OK, I've been seeing lots of spam like this recently...is that normal?
+[14:30] <czajkowski> seems to come in waves
+[14:30] <czajkowski> people just file an answer on LP and I remove it
+[14:30] <agrestringere> ok, thanks for the help have a good day
+=== slank_away is now known as slank
+=== deryck is now known as deryck[lunch]
+=== deryck[lunch] is now known as deryck
+[19:45] <Roedskaegg> Hi! I've got a newbie question about how to get around on the launchpad site. Can anyone help me? :-)
+[19:45] <lifeless> !ask | Roedskaegg
+[19:45] <ubot5> Roedskaegg: Please don't ask to ask a question, simply ask the question (all on ONE line and in the channel, so that others can read and follow it easily). If anyone knows the answer they will most likely reply. :-) See also !patience
+[19:50] <Roedskaegg> Ok. I've found a bug report that says there's a fix for the bug, but I cannot find any info about how to fix the bug. Where are relevant info located? In the comment section or in the list with "Affects, Status, Importance, " etc?
+[19:50] <Roedskaegg> *I've found a bug report and
+[19:51] <dobey> it depends on the bug and how the project owning the bug manages their bugs
+[19:53] <TheLordOfTime> and if its an Ubuntu bug then its likely going to say in which release and version of softwrae it was fixed in.
+[19:54] <TheLordOfTime> (i.e. a bug against the ubuntu package)
+[19:54] <lifeless> Roedskaegg: which bug - url please.
+[19:54]  * TheLordOfTime wants to know too :P
+[19:56] <Roedskaegg> ok, it's specifically bug #1005495. it seems to be 2 fixes released but don't know how to access them.
+[19:56] <ubot5> bug 1005495 in gnome-settings-daemon "Change brightness keys don't work on Acer Aspire One D270" [Medium,Fix released] https://launchpad.net/bugs/1005495
+[20:19] <Roedskaegg> !patience
+[20:19] <ubot5> Don't feel ignored and repeat your question quickly; if nobody knows your answer, nobody will answer you. While you wait, try searching https://help.ubuntu.com or http://ubuntuforums.org or http://askubuntu.com/
+[20:20] <ikkyu> this is not channel for msp-430 launchpad is it...
+[20:20] <dobey> no
+[20:21] <dobey> Roedskaegg: it says it was fixed upstream, and the reporter of the bug marked it as fixed in ubuntu; so perhaps it is fixed on a newer version of ubuntu than you're running
+[20:22] <dobey> Roedskaegg: there is no indication of when it was actually fixed, in that bug, or the upstream bug. so you'll probably need to comment on the bug and ask what version it was fixed in
+[20:29] <Roedskaegg> dobey: alright, thanks for the help :-) I'll investigate it further (I am running 12.04 lts).
+[20:42] <cody-somerville> Hey. I tried to add my new work address to launchpad but never received the e-mail. Is there any way to confirm it was successfully delivered on lp end?

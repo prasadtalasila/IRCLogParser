@@ -1,0 +1,73 @@
+=== henrix_ is now known as henrix
+[10:38] <henrix> brb
+[12:22]  * henrix -> lunch
+=== henrix is now known as henrix_
+=== henrix_ is now known as henrix
+=== arges_ is now known as arges
+=== rsalveti_ is now known as rsalveti
+=== Traxer831 is now known as Traxer|on
+[15:31]  * ogasawara back in 20
+=== mjg59` is now known as mjg59
+[16:01] <bjf> brendand, how is the SRU kernel testing coming?
+[16:01] <brendand> bjf - quantal done. precise soon
+[16:46] <bdmurray> ogasawara: how should I fix bug 1100198?
+[16:46] <ubot2> Launchpad bug 1100198 in apport (Ubuntu) "source_linux.py logic fails to detect 3.8.0-0-generic as an Ubuntu kernel" [Undecided,New] https://launchpad.net/bugs/1100198
+[16:47] <bdmurray>     # If running an upstream kernel, instruct reporter to file bug upstream
+[16:47] <bdmurray>     abi = re.search("-(.*?)-", report['Uname'])
+[16:47] <bdmurray>     if abi and (abi.group(1) == '999' or re.search("^0", abi.group(1))):
+[16:47] <bdmurray> just remove the 'or' or something else?
+[16:51] <ogasawara> bdmurray: I'm trying to remember what that the second half of the 'or' expression was supposedly checking for
+[16:51] <bdmurray> ogasawara: well its checking for a 0 in 3.8.0-0-generic
+[16:52] <ogasawara> bdmurray: I'd say remove it
+[16:52] <ogasawara> bdmurray: or just wait till we bump our abi to 3.8.0-1 :)
+[16:52] <ogasawara> bdmurray: which will likely  happen within a week
+[16:53] <bdmurray> ogasawara: it'll take just a moment so I'll do it
+[16:53] <rtg> bdmurray, I'm curious why '0' has special significance ?
+[16:55] <ogasawara> rtg: I think it was the lazy way of detecting our mainline builds which are versioned eg 3.8.0-030800rc3-generic
+[16:55] <rtg> ah
+[16:56] <ogasawara> bdmurray: so we may want to make that mainline build check smarter
+[16:56] <bdmurray> ogasawara: what are they numbered now?
+[16:58] <ogasawara> bdmurray: lemme install one and double check, but I'm pretty sure it'll be 3.8.0-030800rc3-generic or similar
+[16:59] <bdmurray> oh, well ^0\d should work
+[17:01] <ogasawara> bdmurray: except in the case when we have -0 in our distro kernel abi
+[17:03] <ogasawara> bdmurray: oh wait, I should have parsed that better
+[17:03] <ogasawara> bdmurray: yes, you are correct
+[17:03] <bdmurray> ;-)
+[17:03] <ogasawara> bdmurray: so I say go with that
+[17:22] <utlemming> question about 12.04.2: what is the default kernel going to be? I heard a rumor it might be 3.5. 
+[17:22] <bjf> utlemming, yes, the default will be the quantal kernel
+[17:22] <utlemming> bjf: will there be a -virtual kernel? 
+[17:23] <bjf> utlemming, for quantal, there is no separate -virtual kernel
+[17:24] <utlemming> bjf: right, I understand that. What I am trying to figure out is how this screws up the cloud-images and all the things that expect a -virtual kernel. For example, grub2-legacy, will be broken because of this change...which means that we need an SRU, otherwise the new kernel won't get used. 
+[17:27] <bjf> utlemming, ok, so the answer is for the default, there is no -vertual flavour
+[17:27] <rtg> the primary purpose of the LTS kernels is for HW enablement.
+[17:28] <utlemming> bjf: for quantal there is no -virtual flavour, but there is a linux-image-virtual package to install from
+[17:28] <smb> rtg, bjf I cannot really say from top of my head. Wondering whether in precise there really was a seperate kernel still or already the meta-package only.
+[17:29] <smb> and iirc at least at some point the cloud images had to know how to tell from the /boot/ config options whether they would use it in grub
+[17:29] <utlemming> so the question, I guess, is if there will be the meta-package for -virtual
+[17:30] <utlemming> smb: for the boot loader, this going to be a bit screwy...I'll have to SRU version detection logic
+[17:30] <rtg> utlemming, I don't think virt instances should (or can) use the point release.
+=== yofel_ is now known as yofel
+[17:31] <rtg> the 12.04.2 point release that is.
+[17:32] <utlemming> for 12.04.2, generally the release team wants a point release update. We build daily images of precise. So if this change breaks the dailies, then that is a problem for us.
+[17:32] <rtg> ogasawara, help me out here. don't we have a page describing how point releases address HW enablement ?
+[17:33] <ogasawara> rtg: we have https://wiki.ubuntu.com/KernelTeam/Specs/QuantalLTSEnablementStack
+[17:33] <ogasawara> rtg: but that's more regarding the policies and procedures for updates/upgrades etc
+[17:33] <rtg> ogasawara, which kind of addresses -virtual, right ?
+[17:34] <rtg> AMI images should be sticking with the original release, or 12.04.1 at the latest.
+[17:34] <bjf> rtg, have we clearly messaged that 12.04.2 is for HW enablement and should not be used for cloud instances?
+[17:34] <utlemming> that's kind of what I am reading here
+[17:35] <rtg> bjf, according to ogasawara's wiki pages, that is the message we've been sending.
+[17:37] <bjf> rtg, i'm reading that and don't come away with that message
+[17:39] <rtg> bjf, lemme review it. it was certainly our intent when messaging this to the community that point releases were for HW enablement.
+[17:39] <bjf> rtg, yup, no argument there
+[17:41] <rtg> bjf, well, I guess you do sort of have to imply from the decisions listed in that page that some stuff just won't be supported in the point releases. perhaps we should expand the discussion therein to include impacts on virt instances. ogasawara ?
+[17:42] <ogasawara> rtg: wfm, did you want to add a blurb or shall I
+[17:43] <rtg> ogasawara, you are so loquacious that I thought you ought do it :)
+=== henrix is now known as henrix_
+=== chiluk is now known as chiluk_away
+=== chiluk_away is now known as chiluk
+=== zequence_ is now known as zequence
+=== chiluk is now known as chiluk_away
+=== chiluk_away is now known as chiluk
+=== cnd` is now known as cnd

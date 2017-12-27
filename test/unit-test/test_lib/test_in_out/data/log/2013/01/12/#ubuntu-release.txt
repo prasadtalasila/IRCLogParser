@@ -1,0 +1,26 @@
+[03:10] <infinity> cjwatson: I really want to accept this livecd-rootfs, but I'm scared.
+[03:10] <infinity> cjwatson: Did you do before and after test builds and compare package lists and (more importantly, IMO), apt-auto-install states?
+[11:30] <cjwatson> infinity: I compared package lists and they looked broadly reasonable.  I put a requirement to check before-and-after auto-install states in the bug's test case.
+[11:35] <cjwatson> infinity: As I said in the bug report, if I had a less invasive idea which would actually work then I'd use it :-/
+[15:44] <doko> cjwatson, infinity: https://launchpad.net/ubuntu/+archive/test-rebuild-20121221/+build/4096089
+[15:45] <doko> INFO Upload was rejected:
+[15:45] <doko> INFO 	Component "non-free" is not allowed in raring
+[15:45] <doko> ?
+[18:30] <doko> cjwatson, infinity: https://launchpadlibrarian.net/128286296/buildlog_ubuntu-raring-i386.armhf-cross-toolchain-base_1.97_FAILEDTOBUILD.txt.gz
+[18:31] <doko> the package builds fine on amd64
+[18:32] <doko> shouldn't incompatible libraries just be skipped instead? I assume on amd64 it is done because the host ist 64bit, and the target is 32bit
+[19:06] <infinity> doko: Have you noticed all the hung builds that have been killed in the gcc-4.8 rebuild test?
+[19:06] <infinity> doko: Sometimes cc1plus hanging, sometimes perl hanging, but they were all in the gcc-4.8 rebuild, none in the normal one.  Maybe a bug in libgcc1 or something?
+[19:07] <doko> infinity, example?
+[19:10] <infinity> doko: (There's an example hung on komainu right now, if you want to try to get some debugging info from webops or something, though that might be tough on a weekend)
+[19:10] <infinity> doko: One on lamiak too.  Same package, so that might actually be reproducible.
+[19:10] <infinity> doko: Oh, wait.  pdl might be hanging for other reasons, it might not be an example of what I was talking about. :/
+[19:12] <infinity> doko: Well, like I said, those two ongoing pdl builds.  But they might be something else, I can't remember if they also failed in the normal test rebuild.
+[19:12] <infinity> Hrm, no, they didn't.
+[19:12] <infinity> So, yeah.  Those.
+[19:17] <infinity> doko: There were a fair few of them, though.  Pretty much any x86 build log in the rebuild with "Session terminated, terminating shell... ...terminated." in it, and then evidence of someone forcibly killing a hung process is probably the same issue, whatever the issue is.
+[19:17] <doko> infinity, any idea about the ldd issue?
+[19:18] <infinity> doko: (It's not x86-specific, mind you, we saw it on ARM too, but timeouts can happen there for other reasons too)
+[19:18] <infinity> doko: I'm looking at the cross/shlibs thing right now, it piqued my curiosity.
+[19:18] <infinity> doko: I'm also looking at a glibc testsuite regression that only happens on Ubuntu, not Debian.  Haven't bisected the cause yet, but it worries me a bit. :/
+[19:29] <infinity> doko: Yeah, the pdl testsuite looks like a good reproducer for the hang.  At least, I can't reproduce it on plain raring, and it's currently hung on two buildds with gcc-4.8

@@ -1,0 +1,264 @@
+[07:53] <jibel> fginther, veebers I think you're notified but in case you weren't unity daily release testing failed. There's been a dconf crash, a compiz crash and an autopilot crash, could you please have a look?
+[07:54] <jibel> ap crash seems to be an installation failure
+[08:23] <rperier> Hey, I found a bug in unity from trunk. Open commands.lens then, then press "Super" to open the dash, the commands.lens is closed and there are no transitions...
+[08:25] <zniavre> good morning , any tips to remove the small shadow there is between panel and launcher  ( http://i.imgur.com/CxELtD9.png )please ?
+[08:25] <rperier> I might propose a fix , however I don't find which component/module handles shortcuts in the code
+[08:32] <popey> zniavre: I would recommend you file a bug
+[08:32] <popey> zniavre: "ubuntu-bug unity" will do it, and let us know the number
+[09:43] <zniavre> popey, https://bugs.launchpad.net/ubuntu/+source/unity/+bug/1107698    (sorry for the lag im babysitting too)
+[09:43] <ubot5> Launchpad bug 1107698 in unity (Ubuntu) "removing shadow between launcher and panel" [Undecided,New]
+[09:47] <popey> zniavre: awesome, confirmed.
+[09:53] <zniavre> thnak you
+[09:53] <zniavre> thank*
+[09:54] <popey> bug 1107708
+[09:54] <ubot5> bug 1107708 in Compiz "compiz crash (_ZN5unity11UnityScreen25OnMinimizeDurationChangedEv+0x209" [Undecided,New] https://launchpad.net/bugs/1107708
+[09:54] <popey> anyone else get that from the daily ppa?
+[10:01] <rye> oh, there exists even more bleeding edge ppa than unity-team/staging!
+[10:04] <popey> rye: I'm running ppa:ubuntu-unity/daily-build
+[10:05] <sil2100> rye: I think there's nothing more bleeding-edge than staging actually ;)
+[10:05] <rye> sil2100: ^ daily-build! staging has last build for Jan 25th, not bleeding-edge enough!
+[10:07] <sil2100> rye: actually, staging has package builds per-commit
+[10:07] <sil2100> rye: while daily has them one-per-day ;) So, what matters in the staging versioning is the revision it's based on
+[10:09] <rye> sil2100: while I somehow got your attention - I've been trying to find the reason of https://bugs.launchpad.net/ayatana-design/+bug/723167 - and it looks like cairo is not happy about creating antialiased areas on a totally transparent surface. The same was happening in unity-2d and the fact that we have a nice antialiased text in Ambiance looks like pure luck.
+[10:09] <ubot5> Launchpad bug 723167 in unity (Ubuntu) "Fuzzy fonts caused by Cairo antialiasing artifacts with Radiance theme." [Medium,Triaged]
+[10:10] <sil2100> rye: hm, let me see that
+[10:10] <rye> sil2100: I was wondering whether you (or somebody around) are aware of how the dash is rendering the text - that looks pretty and without artifacts? Were there any hacks involved?
+[10:11] <rperier> sil2100: Hi, I've a question: where is the component/module which handles shortcuts for starting the dash ? (with "Super"). In fact, I found a bug when you switch from commands.lens to the dash
+[10:11] <rperier> (type Alt+F2, it opens commands.len, then type "Super" it closes the dash. It should make a transition imho)
+[10:12] <rye> unity 2d bug is https://bugs.launchpad.net/ubuntu/+source/unity-2d/+bug/945608
+[10:12] <ubot5> Launchpad bug 945608 in unity-2d (Ubuntu) "[Top bar] Subpixel rendering not working in Radiance theme" [Undecided,Confirmed]
+[10:14] <sil2100> rye: hm, I don't recollect right now how this is done in nux exactly, but I can try refreshing my memory - don't remember any hacks there though
+[10:15] <sil2100> rperier: hi - ooh boy, that's a big concept actually, since compiz uses a lot of trickery to get this done right
+[10:15] <rye> sil2100: ok, will dig into that later, thanks. I don't recall any dash fonts being fuzzy at any time too
+[10:16] <rperier> sil2100: so, the code would be into plugins/* ?
+[10:28] <jussi> hrm, is UNity dash supposed to hilight the icon that will be selected when I press enter, and if not, why not?
+[10:47] <popey> jussi: depends.. if you just press super, type, press enter, it will choose the first one in the top left, no highlight
+[10:47] <popey> jussi: if you press super, type and then use arrows or mouse, then yes you get hilights
+[10:49] <jussi> popey: is there a reasn there is no hint for the first one? or are you "just supposed to know/assume that" ?
+[10:50] <popey> jussi: ask design ☺
+[10:50] <jussi> hah!
+[10:50] <popey> JohnLea: ^^ see jussi comment
+[10:51] <jussi> popey: thanks, Ill wait for JohnLea to comment :=)
+[10:51] <rye> Setting up unity-autopilot (6.12.0daily13.01.25.1bzr3079pkg0raring148) ...
+[10:51] <rye> Sorry: IndentationError: ('expected an indented block', ('/usr/lib/python2.7/dist-packages/unity/tests/test_dash.py', 67, 55, '\t"""Switch to command lens without closing the dash."""\n')) ?
+[10:52]  * rye fetches trunk, sorry for the quick paste
+[10:53] <rye> yes, test_dash.py file is broken, there is a tab before the docstring
+[10:55] <sil2100> Oh
+[10:55] <sil2100> Good catch
+[10:56] <sil2100> Let's fix that ASAP
+[10:57] <JohnLea> jussi; this is a weird corner case.  The keyboard navigation in the Dash is completely spacial, and only one element can be focused at a time.  The search box is always the focused element while you type.  If you then press the down arrow, the next element below the search box is highlighted, and this is frequently the Category Header.  That is the standard rules.  The "pressing enter to action the first search result" is a handy sho
+[10:57] <JohnLea> rtcut, but it doesn't fit into the "Dash is completely spacial, element most recently interacted with has focus" framework.  However it is a handy shortcut so we have it in, but it breaks the rules
+[10:57] <JohnLea> popey ^
+[10:58] <popey> ta
+[10:59] <jussi> JohnLea: I understand your point, but it doesnt have to be focused, just highlighted, no?
+[11:02] <JohnLea> jussi; at the moment 'highlighted = focused', this would be swapping one broken rule for another, and 'highlighted = focused' is an important rule.  Also if we were to do this what would happen if a use presses the down cursor arrow after typing a search term?  Instead of the item directly below the search box being focused, the focus would jump to the item below the highlighted 1st search result which would also be very weird.
+[11:02] <JohnLea> This would then break the spacial navigation
+[11:06] <jussi> JohnLea: again, fair points. the way I would have expected it to be is there are 2 levels of highlight. 1 may just be a single line around the box, and then the other a full highlight, so there would be a "highlighted, but not focused" annd a highlighted and focused. I _think_ this behaviour is similar in nautilus, although I am currently on KDE at this second (my wife is using my UNity machine). It is the way how Dolphin in KDE works though
+[11:07] <jussi> (Dolphin uses an underline)
+[11:08] <jussi> see this image for an example: http://img.gawkerassets.com/img/17uuilz9as6u1jpg/original.jpg
+=== mmrazik is now known as mmrazik|lunch
+[11:12] <JohnLea> jussi; Nautilus has loads of different states:  mouse over, keyboard highlighted, keyboard highlighted and focused, keyboard highlighted and mouseover, keyboard highlighted and focused and mouseover, and also has even weirder things like two different search boxes (if you type something while a file/folder is focused a search box pops up at the bottom of the window, if you press search you get a search box at the top of the window).
+[11:12] <JohnLea>  Also If the search box at the top of the window is focused, you can shift the focus to the last focused and currently highlighted item in the Nautilus window by pressing the down arrow, but you cannot return the focus to the search box by pressing the up arrow.
+[11:13] <JohnLea> jussi; all in all very complex - we have managed to simplify the a lot which is a very good thing, but the cost so far is this one corner case where we have broken one rule
+[11:13] <jussi> JohnLea: sure, but I don't think that invalidates the 2 state item I mentioned earlier?
+[11:19] <JohnLea> jussi; two states is still adding a bunch of complexity, and in the Nautilus implementation of this you have the issue that when the user presses the down arrow the focus jumps to the highlighted item, not the item immediately below the search box.  And it adds a bunch of complexity, reducing everything to a single 'highlighted = focused' rule makes everything easier.  If there were two cases where we were breaking the rule we might
+[11:19] <JohnLea> need to think about changing it, but I think one corner case that breaks it is an acceptable compromise for the reduction in complexity.
+=== _salem is now known as salem_
+=== mmrazik|lunch is now known as mmrazik
+[11:57] <popey> hmm, seems 'show desktop' breaks desktop spread.. 1107810
+[11:57] <popey> bug 1107810
+[11:57] <ubot5> bug 1107810 in unity (Ubuntu) "Show desktop causes previews to be blank in spread view" [Undecided,New] https://launchpad.net/bugs/1107810
+[11:59] <rye> popey: https://bugs.launchpad.net/unity/+bug/1104236 ?
+[11:59] <ubot5> Launchpad bug 1104236 in unity (Ubuntu) "Invisible windows in Spread after showing desktop" [Undecided,New]
+[11:59] <popey> ta
+[12:00]  * popey marks dupe
+[12:00] <rye> popey: legends say that it was fixed at some point
+[12:00] <rye> but then broke
+[12:01] <sil2100> Show desktop seems to have a lot of issues, but it's anyway more stable than before
+[12:03] <sil2100> I wonder if this behavior can be easily APd, I wonder if we can somehow introspect that one of the windows in the spread is 'invisible'
+[12:06] <luv> hi there, got my plugin working and into fine condition over the weekend :-)
+[12:06] <luv> https://github.com/luv/assorted_patches/blob/master/bamficon_windowlist.patch
+[12:07] <luv> and here is a video for ayatana team: killem.al/windowlist.ogv
+[12:08] <luv> the patch is against unity in ubuntu12.04 agains, but im happy to forward patch if ayatana team says they like it
+[12:08] <sil2100> luv: looking nice! Would love to have that on launchpad, just to have it in one place
+[12:09] <rye> ^ DO WANT (but i am neither upstream nor unity developer)
+[12:09] <sil2100> luv: would you be so kind and prepare a bzr branch for it and an launchpad bug ;) ? I can help out if anything
+[12:10] <luv> im happy to do that, but i will need to be walked through the process
+[12:11] <luv> rye: cheers man
+[12:12] <davmor2> luv: this is a pretty good bzr guide that will land your code in launchpad http://doc.bazaar.canonical.com/latest/en/mini-tutorial/
+[12:13] <sil2100> luv: excellent! First step would be to create a launchpad bug for that in unity
+[12:13] <sil2100> luv: you have an LP account?
+[12:13] <luv> yeah
+[12:13] <sil2100> Code looks nice for a first glance
+[12:15] <popey> agreed, that looks awesome. i know a good few people who would like to see this feature
+[12:15] <sil2100> luv: fill in a bug for this feature in https://bugs.launchpad.net/unity/ and we'll mark it as wishlist, add the design team etc.
+[12:15] <popey> needs running past design for their review too
+[12:15] <sil2100> luv: since once it's all in Launchpad, Unity developers and users will much more easily find it - even if it won't get accepted by the design team
+[12:16] <sil2100> We might make a package with the patch in some PPA for those who want to have the feature in
+[12:17] <sil2100> luv: give us a sign once you fill in the bug :)
+[12:18] <luv> im on it now :-)
+[12:29] <luv> umm, forgot my launchpad password and no email from launchpad yet ..
+[12:31] <sil2100> uh :/
+[12:35] <luv> ok, im in
+[13:02] <luv> https://bugs.launchpad.net/unity/+bug/1107866
+[13:02] <ubot5> Launchpad bug 1107866 in Unity "Show window list when right clicking an icon in launcher - enables quick window switching" [Undecided,New]
+[13:03] <sil2100> luv: thanks!
+[13:03] <luv> no probs, shall I make it a wishlist and/or mark it for ayatana-team attention?
+[13:04] <sil2100> luv: already did that ;)
+[13:04] <sil2100> luv: ok, so now, there's a few other things that you could do
+[13:05] <sil2100> luv: could you branch lp:unity/5.0 (since you said you tested it for 12.04), apply your patch and push the branch to e.g. lp:~yourusername/unity/some_nice_branch_name and attach it to the bug?
+[13:15] <luv> sure, i will do it later today, thanks
+=== dandrader is now known as dandrader|afk
+=== dandrader|afk is now known as dandrader
+[13:58] <mterry> fginther, hello!  So I'm looking at http://10.97.0.1:8080/job/ps-unity-autopilot-release-testing/label=autopilot-ati/55/ with it's crash artifacts (which are awesome to have), but I'm not sure how to safely read them.  I assume the builders are i386?  And I'd need to install the staging PPA to get the right executable?
+[14:03] <fginther> mterry, the ati machine is i386. It's using ppa:ubuntu-unity/daily-build
+[14:03] <fginther> mterry, There is a package manifest in dpkg-list.log if you need to know specific package revisions
+[14:04] <mterry> fginther, thanks!
+=== chiluk_away is now known as chiluk
+[14:19] <Gadget_> Hi- good morning. Is anyone home?
+=== mmrazik is now known as mmrazik|otp
+=== mmrazik|otp is now known as mmrazik
+[15:18] <luv> alright, just pushed a new branch with the patch applied against 5.0, though im not sure how to approach developing on trunk
+[15:19] <sil2100> luv: excellent, thanks! I linked it against your bug
+[15:20] <sil2100> luv: it would be best if someone running raring could take your patch, build and test if it works - does it apply cleanly to lp:unity trunk?
+[15:21] <luv> nah, it wont apply cleanly
+[15:41] <luv> I am a bit afraid of pulling latest trunk and then installing and eventually reverting my workstation back to 5.0. How I wrote the patch was that I got the debian srcpkg with apt-src install, did my changes and then installed with dpkg-buildpackage and sudo dpkg -i , well a bit awkward but the big advantage is that everything gets installed and set up exactly the same way it does when installing the official unity package, and it's agn
+[15:42] <luv> So if I could just add one ppa to my sources.list and repeat the process, that would be ideal for me.
+=== jono is now known as Guest10241
+[15:54] <sil2100> hm hm
+[15:55] <sil2100> luv: well, when using bzr it also can be safe, since there's something called bzr-builddeb
+[15:55] <sil2100> luv: when you do bzr lp:unity, you can modify the changelog to give it some version number you recognize and then do bzr bd in the source tree - it will build a package when using the packaging inside the source
+[15:56] <sil2100> (since in raring lp:unity already includes the debian/ packaging)
+[15:56] <sil2100> The problem here is that when you have 12.04, well, lp:unity most likely won't build correctly
+[15:56] <rye> luv: if you get the patch applied cleanly to the trunk you can ping me, i'll build it on raring and test it, since I find this patch invaluable
+[15:56]  * rye has 10 terminals now for some reason
+[15:57] <sil2100> luv: yes, rye has a good point - you can simply modify the patch so it looks ok source wise and ping someone using raring to test if it works
+[15:58]  * rye feels adventurous
+[15:58] <luv> sure, thanks guys, I will start by giving bzr-builddep a shot tonight
+[15:59] <fginther> mterry, what's the process for following up with the ps-unity-autopilot-release-testing failures? Are you creating bugs for the crashes?
+[16:01] <rye> luv: you will need a newer nux and probably something else too... OTOH you can create a pbuilder environment with raring and build it there. Or a VM or LXC
+[16:01] <mterry> fginther, I will if it makes sense.  I've been working on something else this morning, but I'll get to the test crashes in a bit
+[16:01] <fginther> mterry, just wanting to know if I need to do additional followup.
+[16:01] <mterry> fginther, not quite yet
+[16:01] <fginther> thanks for looking at them
+=== dandrader is now known as dandrader|afk
+[16:08] <dylan-m> Hey, can anyone tell me about this fabled Snap Decisions Framework? I'm imagining some day in the future where notifications are neat and tidy, and I feel like that might be an important part :)
+[16:09] <JohnLea> dednick; I just looking at my open reviews in Launchpad and I noticed this https://code.launchpad.net/~nick-dedekind/unity/lp1045831.menu-key-previews/+merge/126907
+[16:09] <luv> rye: good point, i will try what i can do with pbuilder and if i get stuck, i will modify the patch to apply against trunk and just verify it compiles fine and then I would pass the patch/branch to you, if that's ok?
+[16:09] <JohnLea> dednick; can we get this merged now, doesn't need a FFE any more ;-)
+[16:10] <dednick> JohnLea: doesnt need one to go into 6.0?
+[16:10] <dednick> it's already in trunk. that mp was for unity/6.0
+[16:10] <JohnLea> dednick; yes, it needs to go into 13.04 now
+[16:10] <dednick> JohnLea: i c
+[16:10] <JohnLea> dednick; ok, cool, no worries then
+[16:11] <dednick> JohnLea: ah. yes. all is well
+[16:11] <JohnLea> ;-)
+[16:13] <JohnLea> andyrock, Trevinho, seb128; what do you think of bug #1107866 ?  Like / dislike / what are your thoughts?
+[16:13] <ubot5> bug 1107866 in unity (Ubuntu) "Show window list when right clicking an icon in launcher - enables quick window switching" [Wishlist,Confirmed] https://launchpad.net/bugs/1107866
+[16:13] <sil2100> fginther, mterry: I'm now working on two AP failures right now
+[16:13] <sil2100> fginther, mterry: one related to quicklist recycling, and the other is the standard IBus thing - but with IBus I'm still waiting for feedback from upstream
+[16:13] <Trevinho> JohnLea: that's something I would have done since the beginning :P
+[16:14] <rye> luv: sure
+[16:14] <mterry> sil2100, nice, thanks.  Do those failures cause crashes?
+[16:14] <Trevinho> JohnLea: then, I learned to live without it, but I think that new-comers would appreciate it
+[16:14] <JohnLea> Trevinho; well I would have preferred something more along the lines of Windows 7 which is more graphical, but someone has done this so we have the opportunity of getting it for free.
+[16:15] <sil2100> mterry: the quicklist failure causes a few tests to fail, since something seems sometimes broken in unity and it cannot detact that a quicklist is open - so it doesn't clean up properly, and the opened quicklist stays and breaks all following tests until it finally gets closed by accident
+[16:15] <Trevinho> JohnLea: yeah, mee too. But as first thing
+[16:16] <Trevinho> JohnLea: on the other side, we should avoid to have the quicklist too much crowded...
+[16:16] <sil2100> mterry: and the ibus thing well, it's broken since quite a long time, since we want to make the tests 'better' - but ibus python support seems strangely broken, so it takes time to poke upstream about that
+[16:16] <mterry> sil2100, OK...  I'm investigating why compiz leaves a core file
+[16:16] <sil2100> mterry: awesome - that's also very irritating, those crashes...
+[16:16] <mterry> sil2100, so sounds like we aren't stepping on each other's toes
+[16:22] <dylan-m> Mainly what I'm wondering about Snap Decisions is if it's being implemented with a server over dbus, like the notification system, and how that's going to interact with the existing specification and with other desktops. Any hints?
+[16:23] <dylan-m> (I'm also secretly wondering if it exists, because I've been seeing the name - and only the name - popping up for over two years).
+[16:24] <rperier> lp:unity from trunk is still opened for fixes ? as I said this morning, I fixed a bug to don't close the dash while switching to commands.len, however if you open commands.lens and try to switch to home.lens (by typing Super) it is closed.
+[16:24] <rperier> (so I will probably write another fix for the second case)
+=== sil2100_ is now known as sil2100
+=== mmrazik is now known as mmrazik|afk
+[16:52] <sil2100> Strange, I'm getting a segfault when trying to run unity from staging
+[16:52] <sil2100> Anyone else has the same problem?
+[16:53] <sil2100> Another ABI problem?
+[16:56] <rye> sil2100: upgrading.... :)
+[16:56] <sil2100> rye: maybe when compiz and nux are upgraded, maybe the problem goes away
+[16:56] <sil2100> But upgrading only unity breaks the system it seems
+[16:58] <bschaefer> sil2100, you shouldn't need the staging ppa anymore
+[16:59] <bschaefer> IIRC
+[16:59] <sil2100> bschaefer: I want to test per-commit unity
+[16:59] <sil2100> Daily is just daily ;)
+[16:59] <bschaefer> sil2100, well I thought didrocks mentioned that should all be in main already
+[17:00]  * bschaefer could have mis understood that
+[17:01] <rye> sil2100: some windows did not come up drawn after unity restart but no segfaults
+[17:01] <sil2100> rye: did you upgrade all packages?
+[17:01] <sil2100> rye: i.e. compiz + nux + unity? Or just unity?
+[17:03] <rye> sil2100: got whatever the latest is in current staging ppa and main archives. No nux and compiz upgrades, only unity
+[17:03] <sil2100> rye: ok, thanks!
+=== dandrader|afk is now known as dandrader
+[18:06] <rperier> how to do enable logging in lp:unity/trunk ? I would like to enable warnings output in order to understand something
+[18:07] <rperier> (warning or debug whatever it's just for local debugging)
+[18:21] <bregma> rperier, set the environment variable UNITY_LOG_SEVERITY="unity=DEBUG"
+[18:21] <bregma> or "unity=WARN" for less verbosity
+[18:22] <rperier> I tried  UNITY_LOG_SEVERITY="unity.dash.view=warning", and I did not work
+[18:22] <rperier> I will retry, thanks
+[18:23] <bregma> I think case counts
+[18:24] <bregma> so it should be "unity=WARNING"
+[18:25] <rperier> It does not work
+[18:25] <rperier> I tried to start unity with "unity --replace" from the staging dir, both nux and unity are up-to-date
+[18:26] <rperier> before starting it , I typed :  export UNITY_LOG_SEVERITY="unity=WARNING"
+[18:31] <rperier> In fact, I want to show logs from dash/DashView.cpp , I probably need to restart another component
+[18:31] <bregma> did you get nothing output into ~/.xsession-errors ?
+[18:33] <Andy80> hi
+[18:33] <rperier> bregma: no
+[18:33] <rperier> nothing
+[18:33] <bregma> hmm
+[18:33] <rperier> (at least not my logs)
+[18:33] <Andy80> when I look for an application in the Unity Dash and I've multiple results for the same app, how can I know the original path of the application? For example I've 3 "QtCreator" showing...
+[18:35] <Andy80> I really would like to be able to "right-click" items in the Dash and access to more features/properties
+[18:36] <Andy80> (no, not the showcase that appears right now)
+[18:39] <sil2100> Andy80: hi
+[18:40] <sil2100> Or hm, nevermind
+=== dandrader is now known as dandrader|afk
+=== dandrader|afk is now known as dandrader
+[20:00] <fginther> mterry, ping
+[20:00] <mterry> fginther,
+[20:01] <mterry> fginther, hi.  working on getting some clean stacktraces in my i386 vm
+[20:01] <fginther> mterry, you read my mind
+[20:02] <mterry> fginther, do you use VirtualBox?
+[20:02] <fginther> mterry, did you open a bug? I would like to have something that we can reference in the test notes for others to see.
+[20:03] <fginther> mterry, and yes, I have VB
+[20:03] <fginther> I think I even have a daily ppa setup on one.
+[20:03] <mterry> fginther, I couldn't get it to share my USB devices to transfer the crash files.  I ended up just putting it on a web server
+[20:04] <mterry> fginther, I didn't want to open a bug until I understood the problem a bit.  Like, I'm not sure which component yet is the problem
+[20:04] <fginther> mterry, I see
+[20:06] <mterry> Ugh... And of course the PPA doesn't generate dbgsym packages
+[20:07]  * mterry rebuilds unity
+[20:12] <notgary> Is anybody home who can speak with authority on unity-jhbuild? https://launchpad.net/unity-jhbuild
+[20:26] <bregma> notgary, are you having a problem with it?
+[20:27] <notgary> No, just came across it and noticed the truck's not been updated since November and was wondering if it can be considered a reliable way of working with the Unity stack.
+[20:37] <bregma> notgary, I and other Unity devs use it every day
+[20:37] <bregma> there's a small bug, but other than that, it works better than the alternatives
+[20:38] <notgary> bregma: Thanks a lot, that's all I needed to near :)
+[20:44] <mterry> fginther, https://bugs.launchpad.net/unity/+bug/1108221
+[20:44] <ubot5> Launchpad bug 1108221 in unity (Ubuntu) "Crash in PluginClassHandler on Jenkins" [Undecided,New]
+[20:45] <mterry> Does the above crash mean anything to anybody?  It's stopping the daily builds for unity
+[20:59] <bregma> mterry, compiz ABI breakage?
+[21:06] <mterry> bregma, which would be fixed by just another daily build?  I think we've been failing for a day or two
+[21:07] <bregma> I would assume that https://code.launchpad.net/~sil2100/compiz/abi_bump_due_to_3584/+merge/145214 working its way through the system might fix it, but I'm a little vague on daily build magic
+[21:09] <mterry> bregma, let's hope so
+[21:09] <mterry> It would be nice if it went away "by itself"  :)
+[21:10] <bregma> I'm not sure what that MP has taken over 3 hours to land so far, but perhaps there is a time dilation effect involved
+[21:15] <mterry> fginther, ^ is that merge time normal?
+=== salem_ is now known as _salem
+[21:16]  * mterry has to head out
+[22:19] <luv> well so i got pbuilder to compile raring unity dsc
+[22:20] <luv> though i dont know where the resulting .deb has been created :-) and moreover, it's rather useless because i won't be able to install that .deb to 12.04lts anyway because of all the deps
+[22:21] <luv> so the best way to work on trunk unity would be to install raring into VM or better yet on a dedicated dev box
+[22:27] <luv> i suppose i wont be unable to compile trunk on 12.04 either
+[22:43] <rye> luv: if you have a diff for the current trunk I can give it a go
+[22:43] <luv> hehe, i didnt want to highligh you b/c it's quite late
+[22:44] <luv> well, i wont have a diff untill I can compile and verify at least that :-/
+[22:44] <luv> though im downloading raring iso now
+[22:45] <rye> luv: re pbuilder -  /var/cache/pbuilder/result/ ?
+[22:47] <luv> oh, i got rid of pbuilder already
+[22:47] <rye> so... precompiled headers make distcc unhappy
+[22:53] <fginther> bregma, https://code.launchpad.net/~sil2100/compiz/abi_bump_due_to_3584/+merge/145214 is building now
+[23:19] <luv> ok raring vm installed, logging of now, good night

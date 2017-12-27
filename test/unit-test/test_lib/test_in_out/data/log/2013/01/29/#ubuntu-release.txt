@@ -1,0 +1,450 @@
+[00:40] <phillw> Hi guys, now please don't laugh... but what is the difference between the mini-iso and ubuntu-core?
+=== Ursinha is now known as Ursinha-afk
+=== Ursinha-afk is now known as Ursinha
+=== Ursinha is now known as Ursinha-afk
+=== Ursinha-afk is now known as Ursinha
+=== mmrazik is now known as mmrazik|lunch
+=== Ursinha is now known as Ursinha-afk
+=== mmrazik|lunch is now known as mmrazik
+=== Ursinha-afk is now known as Ursinha
+=== Ursinha is now known as Ursinha-afk
+[12:13] <ogra_> infinity, FYI, still no cadejo (IS is pinged again though)
+[12:14] <infinity> ogra_: Pinging's about the best I can do too, so if you're keeping on them about it, at least you're in the right timezone to do so. :/
+[12:16] <ogra_> yeah
+[12:17] <ogra_> i really wonder why such outages always happen when we actually need the machines for sprints etc ... while they are happy all the rest of the time where they only do daily operation
+[12:17] <ogra_> must be a builtin panda-murphy or so
+[12:19] <infinity> We lose several Pandas a week to random things.  It's less about Murphy and more about using glorified cell phones as production servers.
+[12:19] <infinity> This horrible misery should all be past us in a year or three, but it's going to feel like a decade.
+[12:20]  * ogra_ is more in the "three" camp
+[12:20] <infinity> Well, it depends.  We could get armv7 (A9 or A15) server kit this year, and it may even be stable and awesome.  It certainly can't be worse than dev boards.
+[12:21] <infinity> But the "three" would be around what one might expect for decent armv8 kit.
+[12:21] <infinity> Which is, ultimately, where we want to be.  Building armhf on arm64 machines (just as we build powerpc on ppc64, i386 on amd64, etc)
+[12:21] <ogra_> i highly doubt the "this year" part here
+[12:22] <infinity> It already exists in the wild.
+[12:22] <infinity> It's just scarce.
+[12:22] <ogra_> i know you will likely have to pre-order a year in advance though
+[12:22] <ogra_> amnd get a hand soldered machine signed by the engineer or so
+[12:23] <infinity> :P
+[12:58] <jamespage> any SRU team members around? bug 1085255 has been fixed commited for a while now and openstack upstream are about to release a new point release for folsom so it would be great if the packages could be pushed through to -updates
+[12:58] <ubot2> Launchpad bug 1085255 in quantum (Ubuntu Quantal) "Meta bug for tracking Openstack 2012.2.1 Stable Update" [Undecided,Fix committed] https://launchpad.net/bugs/1085255
+[13:05] <infinity> jamespage: Did no one bother to verify any of the other bugs?
+[13:06] <infinity> jamespage: Oh, I see, this is part of some provisional MRE with fancy CI testing strategy.
+[13:07] <jamespage> infinity, indeed it is :-)
+[13:07]  * jamespage nearly had a heart attack then
+[13:07] <jamespage> infinity, adam_g has put it through the CI testing; we test a few deployment configurations
+[13:07] <infinity> To be clear, I'm still not happy about not having specific bugs verified.  Why reference them in the changelog if no one's willing to test?
+[13:08] <infinity> (The kernel has an MRE too, but they verify every single bug they fix, or revert the patch)
+[13:09] <cjwatson> Yeah, I'm not happy about it either.  If nothing else, if all the bugs in the changelog were verified (one way or another), then you'd find that the update would be pushed to -updates without you having to ask.
+[13:10] <cjwatson> Which should clearly be better from your point of view.
+=== Ursinha-afk is now known as Ursinha
+[13:12] <infinity> jamespage: Anyhow.  Releasing it this time, but I really do think we need to revisit this.  It's lovely you have rigorous QA (hey, so does the kernel), but if you're claiming to fix specific bugs, it shouldn't be too much to ask that someone verifies they're actually fixed.
+[13:13] <jamespage> infinity, OK - I've kinda picked up on the back of this SRU; once we have this lot through I happy to revisit and figure out what fits best for SRU + Ubuntu Server team
+[13:15] <infinity> jamespage: Different people have different workflows, and I'm entirely prepared to acknowledge that, but the bottom line, really, is that if you say you've fixed a bug, you should be prepared to test and back that up.
+[13:15] <infinity> jamespage: And hey, if that means adding a new test for every bug to your automated CI machine of doom, verifying the results, and then marking v-done on each bug after looking at the logs, that's cool.  Just something other than "well, we tested all the bits together and none of our computers are on fire, so it probably also fixed all these other bugs".
+[13:18] <infinity> jamespage: Well, you should be prepared to test, or prepared to revert.  The latter being the stance the kernel team took.  If bug reporters outside their team refuse to verify bugs, they just revert the patches and say "nyah nyah".
+[13:19] <infinity> jamespage: (You'd be amazed at how effective that's been at getting people to test)
+[13:21] <jamespage> infinity, so I'm busy reading through the TB list around this MRE
+[13:21] <jamespage> infinity, I expect this has been discussed prior to now (but it did not involve me :-))
+[13:26] <jamespage> infinity, cjwatson: is the objection from you guys that the specific bugs are referenced at-all in the changelog?
+[13:26] <infinity> jamespage: No.  If the uploads fix bugs, referencing them is good and right.
+[13:26] <infinity> jamespage: But if you claim it fixes bugs, someone should test that the bugs are fixed.
+[13:27] <jamespage> infinity, so reading this https://wiki.ubuntu.com/StableReleaseUpdates/MicroReleaseExceptions
+[13:27] <jamespage> "For MRE packages only, it can generally be assumed that bugs claimed to be fixed have actually been fixed upstream, and it is not necessary to manually independently verify them. (Some bugs may deserve specific verification if for example they are hard to reproduce upstream.) "
+[13:27] <infinity> jamespage: I'll use the kernel team as a stellar example here again.  They do a ton of regression testing (not unlike your CI infrastructure), but if they also fix specific bugs, they verify those.
+[13:28] <infinity> jamespage: It's possible I disagree with the wiki on this point.  But it does seem you're more or less doing as told in this case.
+[13:30] <cjwatson> jamespage: My objection is the mismatch between listing bugs in the changelog and tagging them
+[13:30] <infinity> jamespage: There's also the part where provisional MREs aren't quite MREs.
+[13:30] <infinity> cjwatson: To be fair, they're doing exactly what the MRE instructions say to do.
+[13:30] <cjwatson> jamespage: That note in the MRE page is more intended to be about random bugs cited in the upstream changelog, rather than ones that you've gone to the effort of listing explicitly in debian/changelog
+[13:31] <infinity> "When the preceding steps have been done, the headline bug (only) should be marked verification-done"
+[13:31] <jamespage> cjwatson, well gone to effort is actually 'generated the changelog from git' in this case
+[13:31] <cjwatson> A bletcherous practice, but it still counts as effort :)
+[13:32] <cjwatson> The uploader still takes responsibility for the output of automated tools
+[13:32] <cjwatson> Anyway, the point of the MRE thing should - IMO - be that you don't have to manually verify them, not that the bugs don't have to be tagged
+[13:32] <jamespage> cjwatson, indeed - ftr its also peer reviewed
+[13:32] <cjwatson> I don't know where that thing about only tagging the headline bug came from - it's clearly wildly out of step with the process
+[13:33] <cjwatson> Feel free to bring that up on the TB list for correction
+[13:34] <cjwatson> The whole process would, in any case, work much more smoothly if all bugs mentioned in the changelog were tagged.  Whichever way you want to resolve that.
+[13:35] <Daviey> Hello o/ :)
+[13:35] <jamespage> cjwatson, OK - I'll give that some sort; we actually raise tasks for Ubuntu during the SRU update process if they are missing; maybe we should stop doing that
+[13:35] <cjwatson> As in, this update would have been released over three weeks ago.
+[13:35] <Daviey> cjwatson: Can you clarify what tag you want?
+[13:35] <cjwatson> verification-done
+[13:35] <cjwatson> jamespage: Yeah, sounds pretty pointless
+[13:35] <jamespage> sort/thought
+[13:35] <cjwatson> If there's already one, listing it is useful so that it gets closed
+[13:35] <cjwatson> But creating it just for the sake of independent verification you don't plan to do is pretty pointless
+[13:35] <infinity> jamespage: If all parties involved agree that the MRE+CI is enough, then you could easily script or otherwise automate adding the v-done tag to all the bugs.
+[13:36] <Daviey> jamespage: We did do some semi-automation for handling the verification of each bug task last cycle.
+[13:36] <jamespage> infinity, indeed - if the SRU team are happy with that then we can do that
+[13:36] <infinity> Well, it would get your SRUs released in a timely fashion, as Colin points out.
+=== Ursinha is now known as Ursinha-afk
+[13:37] <infinity> The only other option is to track your SRUs separately, as we do for the kernel, but that doesn't scale well if we have too many unique snowflakes.
+[13:37] <Daviey> jamespage: There is tooling to change tag state, already in the tools branch.. no?
+[13:37] <cjwatson> The SRU team is looking at http://people.canonical.com/~ubuntu-archive/pending-sru.html and in general isn't going to have read all the bug histories; the best way to get something released is to make sure it all looks nice and green there.
+[13:37] <Daviey> infinity: well the openstack suite is getting larger per cycle.. so yeah
+[13:37] <cjwatson> (I do still tend to eyeball each bug to catch abuse, and so would appreciate it if there weren't a wild excess of automatically-created bugs there)
+[13:38] <Daviey> if we release early and often avoids the wild excess :)
+[13:38] <infinity> Speaking of old SRUs, I need to do something about my initramfs-tools in precise for dot-two.  Grr.
+[13:39] <cjwatson> Daviey: Helps, but even so it's a lot quicker to eyeball (say) two bugs than five :)
+=== Ursinha-afk is now known as Ursinha
+[13:40] <Daviey> cjwatson: I think that was the initial reason for the master tracking bug TBH
+[13:40] <jamespage> infinity, cjwatson: well we could not auto-generate missing bug tasks and links in the changelog; so we only see 'Ubuntu reported' bugs
+[13:41] <cjwatson> Daviey: Right, the master bug is not the problem here, it's all the other ones that as far as pending-sru.html is concerned appear to be blocking the release
+[13:41] <jamespage> which would limit the SRU list
+[13:41] <cjwatson> jamespage: Sounds entirely rationale
+[13:41] <cjwatson> *rational
+[13:41] <cjwatson> That seems like a decision to not do work with no value :-)
+[13:41] <jamespage> cjwatson, I'd be happier automating the verification-done stuff on that basis; as its against actual ubuntu bugs rather than upstream
+[13:42] <infinity> jamespage: I don't actually have issues with the tasks being created and then tagged, though Colin's eyeballing point stands too.
+[13:42] <cjwatson> jamespage: Or, you could write the bug references that don't have Ubuntu tasks in such a way that dpkg-genchanges doesn't see them as bug closures
+[13:42] <Daviey> cjwatson: I did disucss with SpamapS about the potential to NOT tag and comment on each bug, as part of the SRU process.
+[13:42] <cjwatson> e.g. "see LP #nnnnnn"
+[13:42] <Daviey> cjwatson: It seems quite rude to hijack an 'upstream' bug with verbose ubuntu process.
+[13:42] <cjwatson> That way, they're available as cross-references for humans, but don't jam up the process
+[13:42] <jamespage> cjwatson, that would still let end-users reference back to LP
+[13:42] <cjwatson> Daviey: Indeed
+[13:42] <jamespage> cjwatson, which gets a +1 from me
+[13:42] <infinity> cjwatson: The only sadness with intentionally avoiding closure syntax is you miss out on auto-linking in web UIs and such.
+[13:42] <Daviey> "Hi $someone-that-doesn't-care-about Ubuntu, please test our Ubuntu packages"
+[13:43] <cjwatson> infinity: Yeah, but that's fairly minor ...
+[13:43] <cjwatson> (And some UIs will manage to guesstimate it anyway)
+[13:43] <cjwatson> So this sounds like we're all in agreement and we just need to correct the lies in the MRE process
+[13:43] <jamespage> cjwatson, lol
+[13:43] <Daviey> erm, the LP UI is still fine.. It was more the sru-accept.py content that i found uncomfortable
+[13:43] <jamespage> so to summarize
+[13:43] <Daviey> marking them with LP janitor closing logs is reasonable IMO
+[13:44] <jamespage> 1) don't generate bug tasks and closes entries for upstream bugs with no ubuntu task
+[13:44] <cjwatson> If they aren't in a form that dpkg-genchanges recognises, the LP janitor won't close them
+[13:44] <cjwatson> Which IMO is fine here
+[13:44] <jamespage> 2) still reference the bug in the changelog but without the closure
+[13:44] <Daviey> Hmm, i don't see the problem with a Ubuntu bugtask?
+[13:44] <cjwatson> If you have an Ubuntu bug task, you should close it
+[13:44] <Daviey> and why not close them?
+[13:44] <cjwatson> Otherwise you'll end up with cruft in the bug database
+[13:44] <jamespage> 3) automate the verification-done step once all is good
+[13:45] <cjwatson> If you close them, they'll show up on sru-report / sru-accept etc. and you MUST tag them when happy to release
+[13:45] <cjwatson> I don't care which way round you do things, but it needs to match
+[13:45] <Daviey> Right.. I mean.. Have a bug task, and have the changelogs reference them.. but don't add sru tracking tags to the bugs?
+[13:45] <cjwatson> That ain't happening because the tools can't tell
+[13:45] <jamespage> Daviey, this is why
+[13:45] <jamespage> "     - [1c99b24] Jenkins jobs fail because of incompatibility between sqlalchemy-
+[13:45] <jamespage>        migrate and the newest sqlalchemy-0.8.0b1 (LP: #1073569)"
+[13:45] <ubot2> Launchpad bug 1073569 in nova (Ubuntu) "Jenkins jobs fail because of incompatibility between sqlalchemy-migrate and the newest sqlalchemy-0.8.0b1" [Undecided,Fix committed] https://launchpad.net/bugs/1073569
+[13:46] <jamespage> raising the task and marking verification-done is farcical
+[13:46] <cjwatson> You have to either (a) both have Ubuntu (appropriate stable release) bug tasks and set appropriate verification tags, or (b) neither
+[13:46] <Daviey> cjwatson: pending-sru.htmk can't be fixed to ignore bugs without tags?
+[13:47] <cjwatson> Daviey: sru-accept can't be fixed to automatically not create them, and it is very bad to require even more manual work in that process
+[13:47] <cjwatson> Daviey: One of the reasons the SRU queue gets so backed up is that the tools for accepting SRUs require so much tedious manual work
+[13:47] <cjwatson> Daviey: (Which is on somebody's WI list to fix this cycle)
+[13:47] <Daviey> cjwatson: ./sru-accept $@ --no-tags, wouldn't be reasonable?
+[13:47] <cjwatson> Daviey: No, because it still needs tags for some bugs
+[13:48] <cjwatson> Daviey: And, in any case, the goal is not to require manual invocation of sru-accept at all
+[13:48] <cjwatson> It should be done automatically from a frontend SRU review tool
+[13:48] <cjwatson> I don't think it's necessary for openstack packages to be special snowflakes here
+[13:48] <Daviey> cjwatson: Okay.. I will be saddened if we lose the ability to have presence for each suitable bugtask
+[13:49] <cjwatson> You have two perfectly good options to choose from for any given bug, both of which will work fine
+[13:49] <Daviey> So.. If there is a ubuntu task ALREADY.. we tag it.. but don'tcreate superfluous ones?
+[13:49] <pitti> infinity, cjwatson: FYI, langpacks built, debdiffed and tested, uploading now (for precise)
+[13:49] <cjwatson> Daviey: Nobody is saying you need to lose that ability
+[13:49] <cjwatson> Daviey: You simply need to tag the bug verification-done if you do it
+[13:49] <cjwatson> Daviey: Otherwise your update sits in a queue for weeks
+[13:49] <cjwatson> Or rather, in -proposed
+[13:49] <infinity> pitti: Huzzah.
+[13:49] <cjwatson> Daviey: This is a simple matter of appropriate communication ...
+[13:50] <Daviey> right
+[13:51] <cjwatson> And if a bug task is unsuitable for having an Ubuntu bug task and the bug log noise that goes along with it, just don't give it one and don't use the LP: #nnnnnn syntax for it in the changelog
+[13:51] <cjwatson> (After all, most upstream commits in most projects never have an associated bug task and it's fine)
+[13:51] <Daviey> jamespage: the too for git->dch changelogs already polls for LP bug... we should make it check if there is already a task.. and use proper LP #syntax if there is, and inproper LP syntax if it doesn't.  Sound reasonable, everyone?
+[13:51] <Daviey> cjwatson: these should all MOSTLY have LP bug tasks fwiw
+[13:51] <Daviey> (upstream)
+[13:51] <cjwatson> I mean Ubuntu bug tasks
+[13:52] <Daviey> ah, yes
+[13:52] <cjwatson> changelog tool> that will be fine so long as all the ones that do have Ubuntu bug tasks then get tagged v-done when the MRE upload is ready to go
+[13:52] <cjwatson> Then the whole thing will light up green in pending-sru and we'll know what to do
+[13:53] <pitti> infinity: do we still have a way to mass-accept them from -proposed?
+[13:53] <jamespage> cjwatson, OK _ I think I have it now
+[13:53] <pitti> infinity: from unapproved I mean
+[13:53] <infinity> pitti: Yep.
+[13:53] <infinity> pitti: I'll get to them shortlyish.
+[13:53] <Daviey> jamespage / cjwatson: We will also track pending-sru's closer :)
+[13:53] <pitti> infinity: ok, thanks; please let me know if you still need anything from me langpack-wise
+[13:54] <infinity> pitti: Assuming these are complete and all work, I'm fine with 'em.
+[13:54] <Daviey> pitti: do you not use the queue tool?
+[13:54] <infinity> pitti: Thanks for the silly workaround to appease people's missing hash phobias.
+[13:54] <pitti> Daviey: ah right, that; TBH, I've become a bit rusty with archive admin stuff
+[13:55] <infinity> Daviey: pitti probably still lives in the past where we used to do everything on ftpmaster.
+[13:55] <pitti> infinity: no worries; at some point I'll need to get the built sources to macquarie, but that's not a biggie
+[13:55] <pitti> infinity: actually, most of what I did was by-package review and clicking accept on the +queue page :)
+[13:55] <cjwatson> For this purpose queue is basically equivalent to the old ftpmaster queue with additional network latency per accept but lower startup cost
+[13:55] <Daviey> pitti: the queue tool can match by regex.. but wise to use --dry-run first :)
+[13:56] <cjwatson> Oh, and it no longer does substring match by default
+[13:56] <Daviey> err, yeah substring.. not regex.
+[13:56] <pitti> yeah, I remember now
+[14:00] <infinity> pitti: How many of these are there, BTW?
+[14:00] <pitti> infinity: stil uploading; 500ish
+[14:01] <infinity> Need fewer languages.
+[14:01] <Daviey> crikey, i had better free up some inodes on my mail server, for the noise on *-changes
+[14:01] <pitti> infinity: oh, 824
+[14:01] <infinity> Can't we just roughly divide the world into "English America", "Spanish America", "German Europe", "Russian Europe/Asia", and "Chinese everywhereelse"?
+[14:02] <pitti> infinity: well, there are 6 packages per language
+[14:02] <infinity> I'm sure that wouldn't annoy anyone at all.
+[14:04] <xnox> infinity: and about half of those packages are empty and have not translations at all =)
+[14:05] <xnox> infinity: my solution is that when we start publishing packagesets data on the mirrors, we can publish translations packagesets (e.g. such that all gnomy apps that have translations in l18n-gnome-pack-CC declare a packageset l18n-gnome-pack)
+[14:06] <xnox> and then we can use magic from ubuntu-drivers-common to query: oooh I have languages AA, BB, CC enabled & I have packages from l18n-gnome-pack set installed, hence my language support is incomplete until I install l18n-gnome-pack-[AA|BB|CC]
+=== Ursinha is now known as Ursinha-afk
+[14:07] <xnox> cause currently we have, -base|-updates gnome-base|gnome-updates mozilla chromium and kde language pack packages which a lot of them are empty
+[14:07] <xnox> simply because we have no clear way to figure out on the client side which once are needed.
+[14:07] <xnox> (well empty - meta-packages)
+[14:10] <xnox> but this cunning little plan, relies on either auto-generating packageset headers or manually declaring "Translation-Pack" (in approx. similar fasion to Modaliases:*)
+[14:10] <cjwatson> We'll be autogenerating package set headers as soon as I figure out the necessary pile of SQL
+[14:10] <cjwatson> I need that for other reasons anyway
+=== Ursinha-afk is now known as Ursinha
+[14:17] <infinity> pitti: Clearly too late, since I've accepted half of these, but this has always bugged me.  Could the automagic changelog for langpacks be switched from "Initial release" to something like "Updated translation export from $date".
+[14:17] <infinity> pitti: Cause "Initial release" is so clearly a lie for most languages. :P
+[14:17] <pitti> infinity: it actually does that if lp-o-matic updates a langpack
+[14:17] <pitti> infinity: but for a fresh base rebuild I just rm -rf ../precise and rebuild them from scratch
+[14:18] <pitti> infinity: so indeed, it's a wart
+[14:18] <infinity> pitti: language-pack-hpv?
+[14:19] <pitti> infinity: please feel free to reject the NEW ones
+[14:19] <pitti> infinity: need to run out for some 2 hours or so, bbl
+[14:19] <infinity> pitti: Why do we not love the NEW ones?
+[14:19] <pitti> infinity: I thought it was a kind of principle to not introduce new packages in SRUs
+[14:19] <pitti> infinity: I have no strong opinion either way
+[14:20] <infinity> pitti: I have no issues with supporting new languages.
+[14:20] <xnox> pitti: ubuntu should be usable by everyone no matter what language they speak ;-)
+[14:20] <infinity> xnox: As long as that language is English.
+[14:21] <pitti> infinity: as long as you accept -tlh :)
+[14:21] <xnox> infinity: да ладно =)
+[14:21] <infinity> xnox: I feel like you may have perhaps just cursed at me, but I'm not going to ask Google Translate.
+[14:22] <xnox> it's not a curse, but i bet this phrase will loose it's meaning in translation.
+[14:22] <xnox> (and the second it's should be its)
+[14:22] <pitti> I understand "yes" at least; no idea about ладно
+[14:23] <cjwatson> google translate says "oh well"
+[14:23] <pitti> Я говорю по-русски очень плохо
+[14:24] <xnox> cjwatson: very good. =)
+[14:24] <xnox> pitti: =))))
+[14:24] <infinity> xnox: Yes, his copy and paste skills know no bounds.
+=== Ursinha is now known as Ursinha-afk
+=== Ursinha-afk is now known as Ursinha
+=== bjf[afk] is now known as bjf
+=== Ursinha is now known as Ursinha-afk
+=== Ursinha-afk is now known as Ursinha
+[18:19] <phillw> hi huys, raring-core is in iso tracker as a tar.gz and not as an iso. Who's best to ask about that?
+[18:21] <infinity> phillw: It's not an ISO.
+[18:21] <infinity> phillw: I'm not sure what there is to discuss. :)
+[18:22] <phillw> infinity: which does beg the question of it being on the iso tracker, as I can't test it :)
+[18:22] <infinity> It's just a minimal root filesystem tarball.
+[18:22] <infinity> I think it has a linked testcase, doesn't it?
+[18:23] <infinity> Something like "download, untar, cp /etc/resolv.conf chroot/etc/resolv.conf, chroot in, run apt-get update, profit"
+[18:24] <phillw> infinity: yeah.. drat... I was hoping to use it instead of mini-iso... So much for that carefully laid plan :P
+[18:25] <infinity> phillw: It's not an installer, so that would end poorly.
+[18:25] <infinity> What's wrong with the mini.iso?  It works well.
+[18:26] <phillw> infinity: server is currently over size as an install iso. test-drive doesn't work with mini-iso, I was looking for an alternative.
+[18:26] <cjwatson> It's not a substitute for a mini.iso, and won't be.
+[18:27] <phillw> although I am puzzled as to why server would be over size, with no GUI?
+[18:27] <cjwatson> server being oversized has zero effect on testdrive
+[18:27] <cjwatson> (or should do, anyway)
+[18:27] <cjwatson> It's essentially an academic issue
+[18:28] <phillw> cjwatson: okies, I'll go with server, it has the advantage of being to use the tasksel window to install a choice of GUI to it. Thanks guys, I'll leave you in peace :)
+[18:28] <cjwatson> It turns out there's loads of other stuff people want to shove in *shrug*
+[18:28] <cjwatson> Think cloud, for instance
+[18:28] <infinity> The whole cloud.
+[18:28] <infinity> All of it.
+[18:28] <infinity> And only 15MB over a CD.
+[18:28] <phillw> he he
+[18:28] <infinity> Not too shabby.
+=== Ursinha is now known as Ursinha-afk
+=== Ursinha-afk is now known as Ursinha
+=== Ursinha is now known as Ursinha-afk
+[19:37] <infinity> cjwatson: https://bugs.launchpad.net/ubuntu/+source/debian-installer/+bug/1040393 verified for you, if you want to push that before I spin a new d-i with only ABI changes.
+[19:37] <ubot2> Ubuntu bug 1040393 in debian-installer (Ubuntu Precise) "omap netboot partition too small for flash-kernel backup procedure" [Undecided,Fix committed]
+[19:41] <ogasawara> anyone have a clue how often teams are refreshed for our burn down charts?
+[19:42] <ogasawara> for ex, I just punted pgraner from canonical-kernel-distro-team to get a more accurate view of the work assigned to my team, but it has yet to update and I made the change over 2hrs ago
+[19:43] <infinity> I have no clue how or when any of that is generated.  Was that helpful?
+[19:44] <ogasawara> infinity: slightly
+[19:46] <xnox> ogasawara: from personal experience it is ~4h
+[19:47] <ogasawara> xnox: ah thanks, I'll be more patient and check it later then
+[19:51] <stgraber> ^ done at cyphermox's request
+[20:18] <vanhoof> ogasawara: looks like an update just happened ~5m ago
+[20:20] <ogasawara> vanhoof: hrm, I expected more things to fall off, you sure it's happened?
+[20:21] <ogasawara> vanhoof: I do see timestamps of "Last updated: Tue 29 January 2013, 20:13 UTC" but I don't think the team actually refreshed
+[20:22] <vanhoof> ogasawara: hmm not sure, i know all of this is stored in a db, i wonder if removing someone from a team is enough since the work items were already registered?
+[20:23] <vanhoof> ogasawara: from when i ran my own instance of this, it updated everything each time, but might take a bit longer in this case?
+[20:23] <vanhoof> ogasawara: i was going off of the same timestamps myself
+[20:24] <ogasawara> vanhoof: which reminds me, call today?
+[20:24] <vanhoof> ogasawara: sure
+[20:25] <vanhoof> ogasawara: whenever is good for you, im call free for a few hours :)
+[20:25] <ogasawara> vanhoof: sweet, how bout now
+[20:25] <vanhoof> ogasawara: sure
+=== Ursinha-afk is now known as Ursinha
+[21:08] <vanhoof> we've validated both bug 1080588 and bug 1091068 ... can we get these promoted to -updates for 12.04.2 (believe those are the last two big ones on our radar for the point release)
+[21:08] <ubot2> Launchpad bug 1080588 in jockey (Ubuntu) "jockey suggests not installable packages on renamed stack" [High,In progress] https://launchpad.net/bugs/1080588
+[21:08] <ubot2> Launchpad bug 1091068 in linux (Ubuntu Quantal) "No support for Ivybridge Server GPUs in 12.04" [High,Triaged] https://launchpad.net/bugs/1091068
+[21:15] <infinity> vanhoof: Patience. :)
+[21:15] <infinity> vanhoof: They'll both get in if they're validated, no worries.
+[21:16] <vanhoof> infinity: ... is a virtue ;)
+[21:16] <infinity> Also the name of a Firefly character.
+[21:16] <vanhoof> infinity: ack, wfm ... just dont want any to fall off :)
+[21:17] <vanhoof> infinity: thanks
+[21:17] <infinity> That IveBridge bug appears to have 'linux' tasks that are still in Triaged.
+[21:17] <infinity> Did the kernel get fixed without a bug reference at some point?
+[21:17] <infinity> Or did the kernel not actually need fixing?
+[21:18] <infinity> Oh, I see, it got broken out into another bug and fixed.  Should twiddle those tasks, then.
+[21:18] <vanhoof> infinity: think thats been sorted in https://bugs.launchpad.net/ubuntu/+source/linux/+bug/1087302
+[21:18] <ubot2> Ubuntu bug 1087302 in linux (Ubuntu Quantal) "Add support for Ivy Bridge GT2 Servers" [Medium,Fix released]
+[21:18] <vanhoof> infinity: just task/bug-galore
+=== Ursinha is now known as Ursinha-afk
+[21:20] <vanhoof> infinity: you're too fast I was just about to do that :)
+[21:20] <infinity> :P
+[21:20] <infinity> I've come to the conclusion that my changelogs are too long.
+[21:20] <infinity> https://bugs.launchpad.net/ubuntu/+source/eglibc/+bug/613662/comments/11 <-- That's, like, half the bug log.
+[21:20] <ubot2> Ubuntu bug 613662 in eglibc (Ubuntu Quantal) "nscd doesn't cache host entries" [Undecided,Fix committed]
+[21:21] <vanhoof> infinity: nice :)
+[21:22] <infinity> vanhoof: Speaking of.  I had several people from several teams asking for things in the latest eglibc SRUs.  I don't recall if any of those were you.  But if so, feel free to peruse the bugs and verify one or two. :P
+[21:22] <infinity> https://launchpad.net/ubuntu/+source/eglibc/2.15-0ubuntu10.4
+[21:23] <vanhoof> infinity: nothing off-hand I know of but let me look
+[21:23] <infinity> Kay.  I need to hunt down the people who cared deeply about the malloc deadlock and the ARM futex thing.
+[21:24] <infinity> The rest, a monkey on valium could validate.
+[21:24] <vanhoof> infinity: nothing sounds familiar, have any names handy, i can go help chase em down
+[21:24] <infinity> I'll remember after I've slept, I'm sure.
+[21:24] <infinity> It's been one of those weeks already.
+[21:24] <vanhoof> infinity: :)
+[21:24] <infinity> (Is it Friday yet?)
+[21:25] <stgraber> infinity: almost
+[21:25] <infinity> Are you lying to make me feel better?
+[21:25] <vanhoof> infinity: in 35m it will be
+[21:25] <infinity> You don't have to do that, we're not dating.
+[21:25] <vanhoof> roflz
+[21:26] <vanhoof> infinity: i like long walks on the beach, drag racing, and hockey
+[21:26] <infinity> I also enjoy racing in dresses.
+[21:26] <infinity> We have so much in common.
+[21:27] <vanhoof> :D
+[21:27]  * xnox goes back to knitting scarf
+[21:27] <vanhoof> xnox: orange please
+=== Noskcaj is now known as Noskcaj_afk
+[21:28] <xnox> vanhoof: sure, next one will be orange.
+[21:29] <infinity> vanhoof: Flyers orange or Ubuntu orange?
+[21:29] <infinity> vanhoof: Answer carefully.
+[21:30] <vanhoof> infinity: ubuntu ;)
+[21:30] <vanhoof> I dont like that traitor of a coach the Flyers have ;)
+[21:31] <vanhoof> xnox: http://ubuntuone.com/45rb67F6TBowKJJm3Fb283 ... -ENEEDSCARF
+[21:31] <xnox> vanhoof: is that actually your dog?
+[21:31] <infinity> I refuse to believe a dog can use onboard.
+[21:32] <infinity> Most humans can't.
+[21:32] <vanhoof> yeah she's blessing me with her presence as we speak :)
+[21:32] <xnox> me can do a small one for her ;-)
+[21:32] <infinity> balloons: Hey dude.  You filed a bug a bazillion years ago and never followed up for SRU verification.
+[21:33] <infinity> balloons: y u no love us?
+[21:33] <infinity> balloons: https://bugs.launchpad.net/ubuntu/+source/empathy/+bug/1018504
+[21:33] <ubot2> Ubuntu bug 1018504 in empathy (Fedora) "Empathy doesn't display buddy list" [Undecided,New]
+[21:33] <vanhoof> xnox: :D
+[21:33] <vanhoof> xnox: she's 50lb so not too small :)
+[21:33] <balloons> infinity, ooo
+[21:33] <balloons> that got fixed
+[21:33] <balloons> I check it out
+[21:34] <balloons> what's up with it?
+[21:34] <infinity> balloons: It got fixed 125 days ago, apparently, but you never verified on precise.  Sadness.
+[21:34] <balloons> wha? I thought it got verified :-(
+[21:34] <balloons> it worked for me
+[21:34] <infinity> balloons: I'd love to release that SRU instead of pulling it, if you can verify.
+[21:34] <balloons> I'm not on precise anymore
+[21:34] <xnox> infinity: /me is doing libnih verification. It's ~approx. from that timeframe.
+[21:35] <balloons> ahh.. looks like it never made it to precise perhaps
+[21:35] <balloons> ?
+[21:35] <infinity> balloons: Your only comment was about it being fixed in Q, which was less than helpful. :/
+[21:35] <infinity> balloons: It's been in precise-proposed for 125 days due to lack of verification.
+[21:35] <balloons> well, I can reload precise and do a verify
+[21:36] <balloons> i thought it was released :-(
+[21:36] <balloons> hmm
+[21:36] <infinity> xnox: Someone should SRU libnih to whack that glibc private symbol usage too, to help apt's tiny brain cope better with upgrades.
+[21:38] <infinity> xnox: Though, would require an apport SRU for completeness too.
+[21:38] <infinity> xnox: https://bugs.launchpad.net/libnih/+bug/997359
+[21:38] <ubot2> Ubuntu bug 997359 in libnih "nih uses eglibc private symbol __abort_msg" [Undecided,Confirmed]
+[21:52] <xnox> infinity: yeah, somehow coverity source code analyser says that __abort_msg is never reached in the code (or something like always evaluating to a const value). I'd like to check that first.
+[21:53] <infinity> xnox: Why check that when it should be removed? :P
+[21:53] <xnox> as in the other _nih__abort_msg symbol that got introduced to replace the glibc one is not reached, that is.
+[21:53] <xnox> =D
+[22:25] <ogra_> infinity, fyi, while cadejo is reachable via http, it doesnt seem to do anything when triggering a build
+[22:25] <ogra_> buildlive just silently hangs forever
+=== yofel_ is now known as yofel
+[22:33] <infinity> ogra_: Oh, that probably means you have a few dozen BuildLiveCDs all sitting there waiting on locks.
+[22:34] <ogra_> nothing in nusakans processlist
+[22:34] <ogra_> i had started a manual build right after it came up again, but killed it now since nothing happened
+[22:35] <infinity> nusakan has nothing to do with it.
+[22:35] <infinity> killing the ssh session doesn't kill the remote.
+[22:35] <infinity> Anyhow, looking into it.
+[22:35] <ogra_> i know
+[22:35] <ogra_> i dont think there was a remote session
+[22:35] <ogra_> or if there was one it was just sitting there
+[22:35] <ogra_> none of the logs moved
+[22:36] <infinity> You missed the part where I said "waiting on locks", right?
+[22:36] <infinity> Probably had a stale lock when it came up.
+[22:37] <ogra_> i didnt, thats what i was agreeing to :)
+[22:37] <ogra_> "sitting there"
+[22:37] <ogra_> hmpf, so why does my upstart job not work ...
+[22:37] <ogra_> i can run it manually but it never runs automatically
+[22:38] <stgraber> ogra_: never starts or fails once started?
+[22:38] <infinity> Does it specify when it should start?
+[22:38] <stgraber> ogra_: (do you have /var/log/upstart/<job>.log?)
+[22:38] <infinity> Does it double-fork itself into oblivion and upstart loses it?
+[22:38] <ogra_> http://paste.ubuntu.com/1587278/
+[22:38] <ogra_> pretty trivial
+[22:39] <cjwatson> vanhoof: yeah, the routine for 12.04.2 is going to be that we manually check everything that *doesn't* seem to be going in
+[22:39] <ogra_> oh, i didnt know about that log stuff !!!
+[22:40] <ogra_> gah
+[22:40] <cjwatson> maybe it objects to your pointless use of /bin/echo? :)
+[22:40] <ogra_> cannot create /sys/devices/system/cpu/cpufreq/interactive/boost_factor: Directory nonexistent
+[22:40] <vanhoof> cjwatson: cool, feel free to yell^Wping if you see anything on our end but outside of a few that are already verified, we look to be good
+[22:40] <stgraber> ogra_: hehe, and upstart runs with -e, so any error is critical and the script stops there
+[22:40] <ogra_> i guess i need to bind that to a udev rule and wait for the governor to be initialized
+[22:40] <cjwatson> vanhoof: wouldn't hurt to have a list of things to pay attention to, but it's not vital
+[22:40] <stgraber> ogra_: well, we have a udev bridge you know ;)
+[22:41] <ogra_> right
+[22:41] <vanhoof> cjwatson: noted, i'll have a pass at the queue this evening to be sure
+[22:41] <infinity> ogra_: Or just do it from ondemand, where the governor gets set.
+[22:41] <stgraber> ogra_: so you can do a "start on <device-type>-added" assuming you know what device type you're looking at
+[22:41] <ogra_> infinity, ondemand is off on the nexus
+[22:41] <stgraber> though in this case, it'd be "cpu" which you should have before anything runs :)
+[22:41] <infinity> ogra_: Eh?
+[22:41] <cjwatson> and yeah, I'm checking pending-sru for verified stuff more than once a day; I expect I'm not the only one
+[22:41] <ogra_> we use interactive like android
+[22:42] <infinity> ogra_: I meant the script.
+[22:42] <infinity> ogra_: I know we use interactive, I'm the one who patched it. :P
+[22:42] <ogra_> ondemand has proven to be pretty  wasteful
+[22:42] <ogra_> oh
+[22:42] <ogra_> that one
+[22:42]  * ogra_ tries to stay away from sysvinit for new stuff usually ... i didnt even think about it
+[22:44] <ogra_> though that wont help much if the governor is slow to initalize
+[22:45] <ogra_> i tested the upstart job with "start on started lightdm" i desparation ... seems the dir wasnt even there by then
+[22:45] <ogra_> s/i/in/
+[22:45] <infinity> ogra_: That's inentional.  Read /etc/init.d/ondemand
+[22:46] <infinity> ogra_: The script sleeps so the machine can tear through boot in performance, before dropping you to a friendlier scheduler.
+[22:46] <ogra_> heh
+[22:46] <slangasek> infinity: I think he means the kernel side is slow to appear, not referring to the delay in the init script?
+[22:46] <ogra_> lol
+[22:46] <ogra_> yeah
+[22:47] <ogra_> slangasek, right, i did
+[22:47] <infinity> slangasek: The delay in the init script is why the kernel side isn't there, I imagine.
+[22:47] <slangasek> ogra_: why not do it as a udev rule?
+[22:47] <ogra_> but the sleep will help i guess
+[22:47] <infinity> As in, without enabling the governor, you can't twiddle it.
+[22:47] <ogra_> slangasek, that was what i said above before infinity came up with the ondemand script
+[22:47] <slangasek> infinity: the init script only pokes at /sys, which I think is what ogra is doing too
+[22:47] <ogra_> right
+[22:48] <infinity> slangasek: Yes, but the init script and Oli are doing two different things.
+[22:48] <infinity> slangasek: And one might find that he can't do his thing without first doing what the script does.
+[22:48] <slangasek> right, sure
+[22:49] <infinity> ogra_: cadejo might give you love now.
+[22:49] <ogra_> k
+[22:49] <slangasek> does the 'interactive' governor also adversely impact startup speed?
+[22:50] <infinity> Not sure by how much, but it would do so, yes.
+[22:50] <slangasek> but yeah, I see now; the init script is already where we handle 'interactive', so further tuning should probably go there as well
+[22:50] <infinity> Possibly less than ondemand.
+[22:50] <slangasek> no real sense in splitting the logic between an init script and an upstart job/udev rule that depends on that init script
+[22:51] <ogra_> well, all that stuff should move to upstart/udev eventually
+[22:51] <ogra_> imho
+[22:52] <slangasek> yes, but that's a long "eventually" and we shouldn't leave bits of the logic scattered in multiple different places in the meantime
+[22:52] <ogra_> right
+=== Ursinha-afk is now known as Ursinha
+[23:29] <Noskcaj> the iso tracker has frozen for 12.04, kubuntu alternate

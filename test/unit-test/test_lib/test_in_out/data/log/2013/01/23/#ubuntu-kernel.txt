@@ -1,0 +1,325 @@
+=== yofel_ is now known as yofel
+=== chiluk is now known as chiluk_away
+=== chiluk_away is now known as chiluk
+[03:54] <ricardo-he> hay
+=== chiluk is now known as chiluk_away
+[09:04] <ppisati> moin
+=== henrix_ is now known as henrix
+[10:21] <jodh`> apw: I think I may be seeing the same problem we discussed yesterday where your server dies on boot.
+[10:21] <jodh`> apw: I've got similar behaviour over here on a macbook, but it's definitely a kernel issue fwics
+[10:39] <shadeslayer> ogasawara: ping
+[10:40] <shadeslayer> ogasawara: golem.de : http://www.golem.de/news/linux-distribution-ubuntu-erwaegt-umstieg-auf-rolling-releases-1301-97086.html : says that Ubuntu will become rolling release citing that you said it
+[10:41] <shadeslayer> ( I haven't watched the video just yet )
+=== yofel_ is now known as yofel
+[11:01] <xnox> shadeslayer: it's not like that hasn't been pondered about before..... as usually it's all moot until there is a clear quality & testing & stability criteria.
+[11:02] <shadeslayer> okay, it's just that the tone of golem.de is "We're going to switch, soonish"
+[11:02] <shadeslayer> but then again, it might be just google translate
+=== henrix is now known as henrix_
+=== henrix_ is now known as henrix
+[12:11] <psivaa> jodh: just wondering if you had chance to test the fix that you mentioned for bug 1100386
+[12:11] <ubot2> Launchpad bug 1100386 in linux (Ubuntu) "Raring server installations on VMs fail to reboot after the installations" [High,Confirmed] https://launchpad.net/bugs/1100386
+[12:13] <apw> jodh, yeah it seems to be made happier by 'nomodeset' on my virtual instances, which tends to say it looking like you is coincidence, and likely we are losing all console output
+[12:14] <apw> jodh, do you have any symptoms other than a hang ?  a nice panic perhaps?
+[12:15] <jodh> apw: no - nothing.
+[12:16] <jodh> psivaa: been attempting to test it all morning but everything I've touched so far today has broken (including kernel, compiler, apport, unity, router, sbuild :()
+[12:41] <psivaa> jodh: okay, good luck for the rest of the day :)
+[13:11] <jodh> psivaa: fix for bug 1096531 now uploaded.
+[13:11] <ubot2> Launchpad bug 1096531 in upstart (Ubuntu) "After touch /forcefsck and reboot: Assertion failed in log_clear_unflushed" [High,In progress] https://launchpad.net/bugs/1096531
+[13:19] <psivaa> jodh: thanks
+[13:24]  * henrix -> lunch
+[13:25] <apw> psivaa, do we know when the boot hang at fsck started ?
+[13:25] <apw> psivaa, when did it show up in your testing
+[13:25] <psivaa> apw: its after fsck started
+[13:26] <apw> psivaa, yes that one, what version did it first appear, what version of the kernel
+[13:27] <psivaa> apw: i need to check, 2 mins 
+[13:27] <apw> psivaa, thanks
+=== rsalveti_ is now known as rsalveti
+[13:34] <psivaa> apw: its fsck from util-linux 2.20.1
+[13:35] <psivaa> if that's you asked :)
+[13:36] <apw> psivaa, i think this is possibly a kernel issue, as you have only recently noticed it
+[13:36] <apw> psivaa, i assume you have an image which does not show this, and one that does, i want to know the kernel version in the last working one 
+[13:40] <psivaa> apw: i have a server image from the 9th Nov, but iirc this issue was noticed early jan, so checking if we have a newer image
+=== henrix is now known as henrix_
+=== henrix_ is now known as henrix
+[13:53] <ogasawara> shadeslayer: there might be some issue with translation there, you should probably just watch the video.  I mentioned that a rolling release has only been a discussion at this point and nothing set in stone.  as xnox also noted, I mentioned in the interview the quality and stability aspects need to be in place before such a plan could move forward.
+[13:54] <shadeslayer> I see
+[13:54] <shadeslayer> It's just that I don't have enough bandwidth at the moment to stream :()
+[13:54] <shadeslayer> :)
+[13:55] <xnox> shadeslayer: you should definitely watch it. ogasawara was a real star in that interview: informative and inspiring. Overall very entertaining hangout.
+[13:57] <shadeslayer> :D
+=== henrix is now known as henrix_
+=== henrix_ is now known as henrix
+[14:20] <apw> sforshee, so i have not been using it very long, but preliminary feeling is that this brcm fix has worked, i will be suing it a bit longer before i say for sure ... but i have been bitching much less about my machine with it
+[14:21] <sforshee> apw, great. It tested well for me too. It's already on the linux-wireless list, so I expect it in the next 3.8-rc.
+[14:22] <sforshee> apw, otherwise is brcmsmac working well on your machine?
+[14:27] <apw> sforshee, i think it is ok yeah
+[14:28] <apw> sforshee, if you get me the commit i'll push it to raring as a sauce patch, and it will either rebase out of existance or not depending if it makes the next -rc
+[14:28] <apw> as it is very annoying :)
+[14:29] <sforshee> apw, ack. I'll send it to the list in a bit.
+[14:33] <wookey> Hmm. I see that some bright spark decided that the correct name for the variable keeping the kernel's version of DEB_HOST_ARCH (e.g. 'arm') should be called 'build_arch'
+[14:34] <wookey> It's only used in the rules files. WOuld people object if I sent in a patch to rename it 'host_arch' to reduce cognitive dissonance?
+[14:34] <wookey> (I know the GNU naming is bloody confusding but as we are using that already for every else it seems peverse to use this)
+[14:35] <wookey> I guess it was called 'build' to distinguish it from 'header'. 
+[14:35] <apw> wookey, i guess that would be ok
+[14:35] <apw> wookey, i hate all of those names ... sigh
+[14:36] <wookey> yes it really hurts your head, especially if you don;t do it all the time
+[14:36] <apw> wookey, oh but is that really waht it is ?
+[14:36] <wookey> So anyone coming to it fresh is likely to get it all wrong
+[14:36] <wookey> do you know why we have 'build_arch and 'header_arch'? when are they different?
+=== chiluk_away is now known as chiluk
+[14:37] <apw> build_arch is actually the kernel arch one uses when making things
+[14:37] <apw> so the arch you are building for, is that HOST
+[14:37] <wookey> correct
+[14:37] <wookey> and the arch you are building on is BUILD
+[14:38] <apw> if you are changing it maybe kernel_arch might make more sense, as it is not an _ARCH in the sense of those arches anyhow
+[14:38] <wookey> and tools stuff probably doesn;t keep all this straight. I've fixed one bug. looking for more now. 
+[14:38] <wookey> right. that's a better name. thank you
+[14:38] <apw> and would probabally match header_arch as well
+[14:39] <apw> header_arch used to be different back when 32bit and 64bit x86 were different in the kernel, so it is possible it could reappear
+[14:39] <wookey> OK
+[14:40] <wookey> I'm not sure which is correct when building tools (which use that arch to find the syscalls, for example)
+[14:40] <wookey> doesn;t matter for 'arm', or 'arm64' but I'd like to get it right...
+[14:41] <wookey> I suspect header_arch...
+[15:12] <apw> wookey, you are likely right, hard to be sure
+[15:13] <apw> jodh, hey ... ok these machines are actually not dead at all, in fact we have just lost the console driver en-toto.  i need to find out what upstart thought was going on during early boot, is that recorded?
+[15:14] <jodh> apw: how 'early' are we talking?
+[15:16] <apw> jodh, i want to know what triggered plymouth to start
+[15:17] <apw> start on (started plymouth
+[15:17] <apw>           and (graphics-device-added PRIMARY_DEVICE_FOR_DISPLAY=1
+[15:17] <apw>                or drm-device-added PRIMARY_DEVICE_FOR_DISPLAY=1
+[15:17] <apw>                or stopped udev-fallback-graphics))
+[15:17] <jodh> apw: could have been started in the initramfs.
+[15:17] <apw> jodh, basically i want to know what lit off that
+[15:18] <apw> jodh, i want to know what order and when these events occured in the boo
+[15:18] <apw> jodh, as we seem to be lighting off plymouth just before we switch framebuffers instead of just after
+[15:19] <apw> jodh, is that level of detail recorded anywhere on disk, can i ask for it
+[15:19] <jodh> apw: your best bet if you can't get a console log is to have plymouth.conf call 'set' or 'env' and write a persistent file. That will contain UPSTART_EVENTS (see http://upstart.ubuntu.com/cookbook/#standard-environment-variables).
+[15:20] <jodh> apw: that env var will tell you which events triggered plymouth to start.
+[15:21] <apw> jodh, ahh will have a go at that
+[15:23] <bjf> arges, jsalisbury any progress on the inotify bugs?
+[15:25] <arges> bjf: testing today on an earlier version
+[15:30] <jsalisbury> bjf, I requested testing of earlier kernels in all the bugs, I'll go check for updates now
+[15:30] <bjf> arges, jsalisbury have you been able to reproduce the issue?
+[15:33] <arges> bjf: ok i'lm looking at 1101666 and i haven't been able to reproduce yet
+[15:34] <bjf> arges, ack, was just wondering if were were dependent on testing by the reporters
+[15:36] <arges> bjf: so for this bug, essentially its to run this test program and expect an error of 'inotify_init: Too many open files'? am i missing something
+[15:36] <bjf> arges, that was my reading of the bug
+[15:36]  * ogasawara back in 20
+[15:36] <arges> bjf: i've tried in a 3.2.0-36-generic kernel, and a 3.2.0-32-virtual
+[15:37] <arges> and no luck reproducing
+[15:37] <arges> also looks like this user is reproducing on vmware fwiw
+[15:37] <arges> which i don't have
+[15:37] <jsalisbury> bjf, arges, so far only one person has done some testing.  3.2.0-36 the bug and 3.2.0-35 does not.  I've also asked for testing of 3.2.0-36.56 versus 3.2.0-36.57, but don't have those results yet.
+[15:38] <jsalisbury> s/3.2.0-36/3.2.0-36 has/
+[15:38] <bjf> jsalisbury, arges so this bug has been around for more than one release as i understand it so it's not a regression that just went in
+[15:38] <arges> jsalisbury: also looks like lino (the patch author is looking at this too)
+[15:39] <bjf> jsalisbury, arges though i'd like to get it resolved quickly and into the point release, i'm not going to wait a long time for it
+[15:39] <arges> ok i see a bash script in the comments, trying that too
+[15:40] <jsalisbury> arges, bjf, There is also this comment in one of the bugs: https://bugs.launchpad.net/ubuntu/+source/linux/+bug/1101355/comments/6
+[15:40] <ubot2> Ubuntu bug 1101666 in linux (Ubuntu Quantal) "duplicate for #1101355 inotify fd leak" [Medium,In progress]
+[15:41] <bjf> jsalisbury, yes we have seen that. we generally don't fix a regression by applying a bunch of new commits
+[15:41] <jsalisbury> bjf, arges, however, I haven't looked at those patches as of yet.
+[15:41] <jsalisbury> bjf, ack
+[15:42] <jsalisbury> arges, I haven't tried to reproduce it yet, are you working on that?  
+[15:42] <bjf> jsalisbury, but i'm not ruling it out
+[15:42] <arges> jsalisbury: i'm running the bash script in 1101666 comment #25
+[15:43] <jsalisbury> arges, ok
+[15:43] <arges> so far no problem on bare metal 3.2.0-36
+[15:43] <arges> after iteration 158
+[15:43] <arges> wait
+[15:43] <arges> nope I see the same issue
+[15:43] <arges> testing on earlier version 
+[15:43] <jsalisbury> arges, are you running .56 or .57?
+[15:44] <arges> umm
+[15:45] <arges> jsalisbury: this is a kernel with that headset patch on top... so let me re-test with an official build
+[15:45] <arges> too many things flying around
+[15:48] <henrix> jsalisbury: arges: i was able to reproduce the issue on a VM (kvm), after iteration 117
+[15:48] <arges> henrix: which version?
+[15:48] <henrix> arges: the version in -updates
+[15:49] <henrix> 3.2.0-36.57
+[15:49] <arges> https://bugs.launchpad.net/ubuntu/+source/linux/+bug/1101666/comments/33
+[15:49] <ubot2> Ubuntu bug 1101666 in linux (Ubuntu Quantal) "inotify fd leak" [Medium,In progress]
+[15:49] <arges> this is also interesting
+[15:51] <henrix> ok, so i'll just build a test kernel reverting the fsnotify commits we added on 3.2.0-36.57 
+[15:52] <henrix> arges: jsalisbury: or do you have another suggestion?
+[15:52] <arges> henrix: no however do we think this is already verified?
+[15:52] <jsalisbury> henrix, shouldn't that just be 3.2.0-36.56 ?
+[15:53] <arges> and it looks like that fails from reading the comments. the only fsnotify patches are the ones i SRUed
+[15:53] <henrix> jsalisbury: well, 3.2.0-36.56 actually contains some of these patches already. 3.2.0-36.57 reverts some SAUCE patches and applies them again from mainline
+[15:53] <arges> henrix: did we test 3.2.0-36.57?
+[15:53] <jsalisbury> henrix, ok, got it.
+[15:54] <apw> so it seems we'd want to know if .56 was good (i believe we are saying .57 is bad)
+[15:54] <arges> althought the fsnotify patches in .56 (the original SAUCEd ones) exclude a single patch from that 9 patch series
+[15:55] <henrix> yes, .57 is bad. but most probably .56 is also bad.
+[15:55] <henrix> if you run git log --oneline Ubuntu-3.2.0-36.56..Ubuntu-3.2.0-36.57 you'll see they are pretty much the same, appart from one patch
+[15:55] <henrix> .57 = .56 + 692115c
+[15:56] <henrix> and i don't think we want to leave 692115c out
+[15:56] <arges> no
+[15:56] <arges> but I think its clear it causes a regression
+[15:56] <arges> despite fixing something else
+[15:57] <apw> welll knowing if .56 was good would tell us that indeed, is .56 good
+[15:57] <henrix> ok, i'll build .56 and test it
+[15:58] <jsalisbury> henrix, you can get .56 from here: https://launchpad.net/ubuntu/+source/linux/3.2.0-36.56
+[15:58] <henrix> jsalisbury: ack, thanks
+[15:58] <jsalisbury> henrix, under "Builds" per arch
+[15:59] <arges> also keep in mind that these 9 patches are in ubuntu-raring too
+[15:59] <arges> so i can test raring as well
+[16:00] <apw> jodh, ok that shows what i feared, that the efifb is being detected as a sane frambuffer, then recycled
+[16:00] <jsalisbury> arges, I believe the patches in 3.8 are different 
+[16:01] <arges> jsalisbury: well the ones in 3.2 3.5 are backports of the 3.8 patches
+[16:01] <apw> slangasek, can you remember whether we expect to use efifb as anything other than a fallback during bootsplash ?
+[16:01] <apw> slangasek, ie are there systems where that would be the only one commonly
+[16:01] <slangasek> apw: I don't know about commonly, but if there's no other framebuffer available I think we would wind up just using efifb?
+[16:02] <jsalisbury> arges, ok, were they backported from commit: 96680d2b9174668100824d763382240c71baa811 ?
+[16:03] <apw> slangasek, the issue i am seeing is in VMs, efifb comes up, we splash to it (or tell plymouth to anyhow) and then cirrus comes up and replaces it, failing cause it cannot replace the framebuffer
+[16:03] <arges> jsalisbury: that's the merge... 
+[16:03] <apw> slangasek, in the bad old world we had the same issue with vesafb and it went onto the 'fallback' thing to change the order
+[16:03] <jsalisbury> arges, ack
+[16:04] <apw> slangasek, efifb is triggering the same badness i believe here, and so i am considering whether we can not consider efifb as a primary display just as a fallback
+[16:04] <arges> testing .56 btw
+[16:06] <arges> jsalisbury: henrix : .56 also fails for me
+[16:06] <arges> 3.2.0-36.56
+[16:08] <apw> jodh, your mac which was showing perhaps the same issue.  for me the machine is coming up successfully with a completely dead console (no VTs no nothing)
+[16:08] <apw> jodh, but it is on the network, can you tell if yours is the same, if you can login have a look at /proc/fb which in my failing case was empty
+[16:09] <apw> jodh, if you can login i would also like a dmesg
+[16:09] <jodh> apw: will try to nagivate my menu "blind" and see what happens :)
+[16:10] <henrix> arges: i'm about to test it too
+[16:10] <arges> jsalisbury: Ubuntu-3.8.0-1.5 works fine up to 300 interations of this bash script 
+[16:10] <apw> jodh, would you not be beyond menus when it fails, ie booting
+[16:11] <arges> henrix: ok yours should fail also
+[16:11] <henrix> arges: yep :)
+[16:11] <jodh> apw: no - my menu waits for input by design. I can turn it off though...
+[16:14] <apw> jodh, oh you have your own menu after boot
+[16:14] <apw> soemthing i would not see
+[16:15] <jodh> apw: you're right - I've got it in the odd state now. There is *nothing* in dmesg for the kernel - first entries are for upstart.
+[16:15] <apw> so you can login ?
+[16:15] <jodh> apw: to be more precise, nothing from the kernel until *after* upstart has started.
+[16:15] <jodh> apw: logged in now.
+[16:15] <apw> jodh, well that is odd (re: dmesg being empty of kernel things)
+[16:15] <jodh> apw: keyboard lights fail to work which coupled with a blank screen led me to believe it was dead.
+[16:15] <apw> jodh, what does /proc/fb have in it
+[16:16] <apw> jodh, but can i have dmesg regardless please
+[16:16] <jodh> 0 inteldrmfb\n1 VESA VGA
+[16:16] <jodh> apw: sure...
+[16:16] <henrix> arges: ok, took me a while to reproduce as i was boot the wrong kernel :p
+[16:17] <apw> jodh, ok do you have upstart debug on, maybe we are losing the early dmesg due to size
+[16:17] <arges> oops
+[16:17] <apw> jodh, i am not sure i expect to see VESA loaded there, if you have inteldrmfb loaded ...
+[16:17] <apw> slangasek, ^^ we only load vesafb if we don't get a normal driver in the normal run of things right ?
+[16:18] <apw> jodh, let me know where you have put the dmesg, pastebin it perhaps
+[16:19] <jodh> apw: yeah - one sec. wondering if I can run 'apport-collect' again for the bug?
+[16:19] <apw> jodh, hmm no idea
+[16:22] <jodh> apw: seems you can: https://launchpadlibrarian.net/129184147/BootDmesg.txt (from bug 1103406)
+[16:22] <ubot2> Launchpad bug 1103406 in linux (Ubuntu) "kernel disabled console output and keyboard lights in early boot" [High,Confirmed] https://launchpad.net/bugs/1103406
+[16:30] <slangasek> apw: cirrusfb> isn't there an open bug report about this, which I filed and smb worked on for a bit?  Considering that we have *no console* in the EFI world until efifb is loaded, I don't think it's sane to treat efifb as a "fallback"
+[16:31] <apw> jodh, ok ... can we get an env >/FOO from -fallback-graphics on your system please
+[16:31] <bipul> I am looking some help for writing code in C for Packet capturing through libpcap in Linux(Ubuntu)
+[16:31] <apw> jodh, i want to know if it is seeing the intelfb right
+[16:31] <slangasek> apw: vesafb> yes, AFAIK we only load that via the upstart job you wrote for this
+[16:31] <jodh> apw: on it...
+[16:32] <apw> slangasek, so yeah we don't have a console till efifb starts true, but we get those when we are going to get a better one later as well
+[16:32] <apw> slangasek, which sounds like the vesafb issue in a sense
+[16:32] <ogra_> there is also /usr/share/initramfs-tools/scripts/init-top/framebuffer
+[16:32] <bipul> Any one here who can help me.
+[16:32] <apw> slangasek, we want to use efib, but only if we don't have something more useful
+[16:32] <slangasek> ogra_: which is also "fallback" in its logic
+[16:32] <ogra_> (indeed only if FRAMEBUFFER exists)
+[16:33] <slangasek> apw: why can we not fix the efifb->cirrusfb handoff?
+[16:33] <slangasek> I don't think we want the kernel to delay all video output until it has a chance to probe around and try to find a chip-specific video driver
+[16:34] <apw> slangasek, this is exactly the same handoff issue we had with vesafb, wherein upsteam said don't do that
+[16:34] <slangasek> hmm, is it definitely the same
+[16:34] <slangasek> ?
+[16:34] <apw> slangasek, output will come out on it, the issue is if plymouth has it open when the kernel trys to replace it
+[16:35] <apw> slangasek, then it cannot rip out efifb correctly, nor replace it with cirrus so we have none
+[16:35] <apw> slangasek, so i am not suggesting no output, just no splash on it
+[16:35] <slangasek> ah
+[16:36] <apw> so i guess it would be purple from grub if that is on
+[16:36] <apw> or in my case it has kernel dmesg vommit
+[16:36] <apw> as it is a server image
+[16:37] <slangasek> so you intend efifb to not be autoloaded?
+[16:37] <apw> i seem to be able to 'fix' my machine here by preventing efifb fb0 from triggering PRIMARY_DEVICE_FOR_DISPLAY
+[16:38] <apw> slangasek, i think it is builtin for reasons i now forget, so not stopping it autoload, just not marking it PRIMARY_
+[16:38] <apw> then it gets used, as a fallback rather than first
+[16:38] <apw> at least i think it should, it is very hard to tell here where its not innitialised long enough before the machine boots and turns off splash
+[16:39] <jodh> apw: http://paste.ubuntu.com/1563545/
+[16:39] <slangasek> apw: hmm, ok
+[16:39] <slangasek> I guess that sounds sane
+[16:39] <jodh> apw: ... but oddly, this time /proc/fb just contains '0 inteldrmfb'
+[16:40] <apw> jodh, in this case is /proc/fb showing the same two lines ?
+[16:40] <apw> jodh, ok that one seems a 'good' boot then
+[16:40] <slangasek> apw: can you confirm that if you make this change to efifb, the per-chip driver *does* get marked PRIMARY_ in its place?
+[16:40] <jodh> apw: no - this boot was also 'stuck'.
+[16:41] <apw> slangasek, it does in my VM here that triggers the issue, cirrus comes along very soon after and makes the same things happen
+[16:41] <apw> jodh, and a dmesg off that one
+[16:42] <slangasek> apw: "makes the same things happen" - I specifically want to know that it sets the PRIMARY_ flag, such that we don't have to wait for udev to settle before we get splash init
+[16:42] <arges> jsalisbury: ok i'm building a precise kernel with patches identified here: https://bugs.launchpad.net/ubuntu/+source/linux/+bug/1101355/comments/6
+[16:42] <ubot2> Ubuntu bug 1101666 in linux (Ubuntu Quantal) "duplicate for #1101355 inotify fd leak" [Medium,In progress]
+[16:42] <apw> jodh, i did find in my testing that the timeing change triggered by adding env > can change timing enough to cahnge the issue, which is also annoying
+[16:42] <jodh> apw: updated dmesg - http://paste.ubuntu.com/1563556/
+[16:42] <jsalisbury> arges, cool.  were those patches just missing from the original backport?
+[16:43] <apw> slangasek, sorry yes, that is what i am saying; env from fallback has
+[16:43] <jodh> apw: ack
+[16:43] <slangasek> apw: ok, then that sounds sane
+[16:43] <apw> slangasek, sorry from plymouth-splash has:
+[16:43] <apw> PRIMARY_DEVICE_FOR_DISPLAY=1
+[16:43] <apw> and what looks to be a sane pci id for the cirrus fake thing
+[16:44] <arges> jsalisbury: no the original backport that fixed the bug iw as looking at was 9 patches
+[16:44] <apw> slangasek, i assume where we only have efifb splash will be late of course
+[16:44] <arges> these 6 additional ones came later
+[16:44] <jsalisbury> arges, ahh, ok
+[16:45] <apw> slangasek, ok i will put together a patch for udev and we can get it tested officially
+[16:45] <arges> anyway building. i want to confirm that these new patches fix _both_ issues
+[16:46] <slangasek> apw: we may also need/want to touch udev-fallback-graphics to not try to load vesafb on top of efifb
+[16:48] <apw> slangasek, a point indeed, hmm i wonder what happens there
+[16:48] <apw> slangasek, i'll try preventing cirrus from loading in my case and see
+[16:48] <slangasek> ok
+[16:57] <arges> ok uploading
+[16:59] <apw> slangasek, ok it seems that we will try and load vesafb (as we surmised) but that actually that is ok because it fails
+[16:59] <apw> ERROR: could not insert 'vesafb': No such device
+[17:00] <apw> even with a VGA device installed rather than cirrus, because efifb has it, it fails to load
+[17:00] <slangasek> right
+[17:01] <slangasek> though we preferably would know this and fail silently instead of throwing noise to /var/log/upstart
+[17:01] <apw> i guess we could check /proc/fb for EFI VGA as well if we wanted to be paranoid
+[17:01] <slangasek> (IMHO)
+[17:02] <arges> jsalisbury: henrix : please test http://people.canonical.com/~arges/lp1101666/
+[17:03] <apw> slangasek, oddly it doesn't seem to record anything in there
+[17:04] <apw> slangasek, for that job even when i beieve it ran and failed
+[17:04] <slangasek> hmm, odd
+[17:05] <slangasek> well, we do call modprobe with '-q'?
+[17:05] <apw> slangasek, ahh yes, -q -b
+=== henrix is now known as henrix_
+=== henrix_ is now known as henrix
+[17:08] <jsalisbury> arges, will do shortly.  just need to setup an environment to reproduce.
+[17:09] <arges> jsalisbury ok i'm testing on this end
+[17:10] <henrix> arges: do you have a link to gomeisa/tangerine with the .debs?
+[17:10] <arges> henrix: gomeisa.buildd:lp1101666/
+[17:10] <henrix> arges: cool, thanks
+[17:12] <arges> 300 iterations without a failure...
+[17:12] <arges> brb
+[17:20] <arges> 800 iterations without a failure
+[17:24]  * ppisati -> gym
+[17:27] <jsalisbury> arges, I'll test in about 10 minutes.  Just finishing up another bug
+[17:27] <henrix> arges: same here. and i've just started to run in parallel the inotify stress test that should trigger the original bug that should have been fixed by 3.2.0-36.57
+[17:28] <apw> arges, so is that a further 6 patches on top of what we have already in the tree ?
+[17:34] <psivaa> apw, so the hang issue started with Ubuntu 3.7.0-6-generic (20121213 raring server and later ones)
+[17:35] <psivaa> apw: i tried with 3.7.0.5-generic and earlier ones (20121212 and earlier images) and could not see the hang
+[17:36] <jsalisbury> arges, testing your kernel now.  I changes the script to run for 3000 iterations, so I'll just let it go
+[17:37] <jsalisbury> arges, crap, got a panic
+[17:37] <henrix> jsalisbury: inotify related, or something else?
+[17:38] <jsalisbury> henrix, idk yet.  Happened right at the login screen.  Booting again.
+[17:38] <henrix> ouch
+[17:40] <jsalisbury> henrix, ok, booted fine that time.  Let me do a few reboots, then I'll kick off the test.
+[17:50] <jsalisbury> henrix, arges, got another panic right at the login screen.  The RIP is effective_load() in the scheduler.
+[17:51] <jsalisbury> henrix, arges, This may be another bug, so let me see if I can reproduce it with the Precise kernel 
+[18:11] <henrix> jsalisbury: just curious, are you running on baremetal or VM?
+[18:37] <jsalisbury> henrix, baremetal
+[18:37] <jsalisbury> henrix, I let the script run that reproduces the bug, and it's at 2300 iterations without reproducing it.
+[18:38] <jsalisbury> henrix, I'll see if I can reproduce the panic shortly.
+[19:55]  * ppisati goes to find some food...
+[20:02] <apw> psivaa, thanks for the info
+[20:22] <ogasawara> jsalisbury_, henrix: what's the bug# for this fsnotify regression?  I wanted to throw it in this weekly status report
+[20:23] <jsalisbury_> ogasawara, bug 1101666
+[20:23] <ubot2> Launchpad bug 1101666 in linux (Ubuntu Quantal) "inotify fd leak" [Medium,In progress] https://launchpad.net/bugs/1101666
+[20:23] <ogasawara> jsalisbury_: thanks
+=== jsalisbury_ is now known as jsalisbury
+=== henrix is now known as henrix_

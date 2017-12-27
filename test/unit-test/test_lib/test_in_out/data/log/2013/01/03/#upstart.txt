@@ -1,0 +1,81 @@
+[14:54] <tzafrir_laptop> If I package a package with a upstart file, should I remove the existing init script?
+[14:54] <tzafrir_laptop> Is there anything wrong with having both of them?
+[15:02] <afournier> disk space ? :p
+[15:02] <afournier> double init ?
+[15:15] <tzafrir_laptop> afournier, yes, double init
+[15:15] <tzafrir_laptop> When I removed the init script and rebuilt the package I got an odd warning from lintian
+[15:16] <tzafrir_laptop> about the init.d script missing
+[15:30] <afournier> lintian ?
+[15:30] <JanC> tzafrir_laptop: Ubuntu packages usually symlink a special init script ('/lib/init/upstart-job') in /etc/init.d/ to replace the original init script
+[15:30] <afournier> it's possible that your package contains pre/post install scripts
+[15:39] <tzafrir_laptop> Looks like dh_installinit automatically generates code in postinst script for the init script
+[15:39] <tzafrir_laptop> Even though I don;t have it.
+[15:40] <tzafrir_laptop> And this causes: W: init.d-script-not-marked-as-conffile and E: init.d-script-not-included-in-package
+[15:40] <tzafrir_laptop> No symlink was created
+[15:41] <tzafrir_laptop> nither in the package nor in a postinst script
+[18:40] <Diranged> hey im fighting with upstart and uwsgi right now… when we run our uwsgi service manually (command line) it works perfectly. but when we run the exact same commands in an upstart job, we end up with a threading problem in our django app that causes the app to hang
+[18:40] <Diranged> does upstart do anything strange to the environment, or fork anything in a funny way that might break like this?
+[18:43] <geofft> I don't know a ton here, but upstart ptraces jobs to figure out if a daemon has forked yet, which sounds vaguely relevant. 
+[18:43] <geofft> You might want to play with the 'expect' commands? 
+[18:44] <Diranged> hmm.. 
+[18:44] <geofft> in the job configuration (expect fork, etc.) 
+[18:46] <Diranged> expect fork didnt help.. 
+[18:46] <Diranged> actually it seems to break it.. it starts up, but then i cant kill the app
+[18:48] <SpamapS> Diranged: yeah only use expect fork if your program actually daemonizes
+[18:48] <Diranged> ah yeah.. sorry, uwsgi doesnt in emperor mode..
+[18:48] <SpamapS> if you're not using expect fork, you won't be ptracing
+[18:49] <Diranged> is there a way to "restart" upstart so that it reloads the config? it kind of hangs after this.. 
+[18:49] <SpamapS> upstart will simply fork, and exec. nothing special.
+[18:49] <Diranged> ok.. hrmm
+[18:49] <Diranged> SpamapS: https://gist.github.com/4445532
+[18:49] <SpamapS> Diranged: if you incorrectly specify expect fork, the only way to get rid of the dead pid is to re-exhaust the pid space until that pid exists. Its a well known bug
+[18:49] <Diranged> thats basically our uwsgi config.. (minus the "—master " .. that was a test)
+[18:49] <SpamapS> one that I believe has a solution forthcoming.. finally
+[18:50] <SpamapS> Diranged: I suspect there's something in your environment variables or ulimits / umask that makes it work when you run it directly
+[18:50] <Diranged> hmmmm
+[18:50] <SpamapS> Diranged: are you 100% positive you want to run that as root?
+[18:50] <Diranged> SpamapS:  the master process needs to run as root.. but it doesnt spawn any of the children as root
+[18:50] <Diranged> but hmm
+[18:50] <Diranged> you bring up ani nteresting point
+[18:50] <Diranged> (about the ulimits)
+[18:51] <Diranged> i wonder if theres a way to check that.. 
+[18:52] <SpamapS> just change the 'exec' line to 'exec bash -c "ulimit -a"' and look at what it says
+[18:54] <Diranged> there are a few subtle differences.. hmm
+[18:57] <SpamapS> Diranged: is uwsgi logging why it fails?
+[18:59] <Diranged> SpamapS: yeah so the django app starts up under the uwsgi vessal and begins to do its work. it creates a connection with Kazoo to our zookeeper service, and then immediately hangs. the connection fails, and an execption is raised
+[18:59] <Diranged> SpamapS: the connection is handled in a python Threading object.. so my guess is that the object and/or connection is being broken somehow. but as i mentioned, it ONLY happens when we run inside of upstarts… 
+[19:00] <Diranged> can i set specific limits for my upstart job in the upstart config file?
+[19:00] <SpamapS> Diranged: lots of threaded python stuff runs under upstart, so I can't imagine why that would cause issues.
+[19:00]  * SpamapS points at openstack
+[19:00] <SpamapS> lots of threaded python stuff :)
+[19:00] <Diranged> i know.. im totally stunned by this..
+[19:00] <Diranged> and this isnt the only thread we run.. its just the first one we've seen that does this
+[19:02] <SpamapS> Diranged: does it, by any chance, open stdin and try to select() it or something.. where when its attached to your terminal, thats fine, but in upstart, that might just block
+[19:02]  * SpamapS is grasping at straws
+[19:02] <Diranged> SpamapS:  how messed up is this … zk_watcher (an app we wrote in house) that we run with upstart, leverages nd_service_registry (which is our kazoo management api), and it works perfectly fine
+[19:02] <geofft> Yeah, I'm also surprised. It's just that given that you're having problems, ptrace sounded like an easy thing to blame 
+[19:02] <Diranged> SpamapS:  this only fails under uwsgi, under upstart.. 
+[19:04] <SpamapS> geofft: ptrace is not  used at all without expect fork/daemon
+[19:07] <Diranged> https://gist.github.com/4440744 < the log of the kazoo failure.. it basically hangs at "xid: 1".. and 15 seconds later, a timeout hits and an exception is raised.. 
+[19:07] <Diranged> (not that helpful.. but just in case)
+[19:08] <SpamapS> Diranged: crazy thought, strace the program
+[19:08] <Diranged> ive tried a bit .. but im not a big strace reader.. though, we have  a few devs here who are, so i may get them involved
+[19:10] <SpamapS> its pretty simple
+[19:10] <Diranged> ill run it once via cli and make it work and trace it.. then ill run another time via upstart and trace it.. we'll see what happens
+[19:33] <Diranged> ugh,.. i still think this is upstart+uwsgi related, but im going back to the uwsgi channel to debug this a bit more with them
+[19:42] <geofft> SpamapS: ah, okay. I thought there was a default that involved ptracing, but apparently I was wrong 
+[19:42] <Diranged> this has SOMETHING to do with the way our wsgi app is loading
+[19:43] <Diranged> because if i init *a* kazoo object right inside of our wsgi file (before the application is really loaded), then it initalizes fine.. and THEN our app init's its own kazoo object, and works fine..
+[19:43] <Diranged> (leaving us with 2 connections.. which is bad.. but still.. its some progress)
+[22:06] <Diranged> SpamapS: hey just circling around.. the issue is somewhere in our Django app. If we set the LANG variable in our uwsgi app, it works fine.. if we dont, it fails. Upstart just wasnt getting that environment variable. 
+[22:06] <Diranged> i have no idea why that variable means so much to the way Django handles connections/threads… we're sitll digging in … but its not an upstart failure
+[22:06] <SpamapS> Diranged: *ahh LANG*
+[22:07] <SpamapS> Diranged: right, you can't realy assume any environment variables in upstart jobs
+[22:07] <Diranged> yeah.. itrs funny, we dont.. but it must be something burried in the python code somewhere
+[22:07] <SpamapS> Diranged: I suspect its more that some underlying library wants it to be set..perhaps a non-thread-safe-error-handler is the issue
+[22:07] <Diranged> yeah.. im still diggin around trying to understand it..
+[22:08] <SpamapS> Diranged: glad you got some insight though. I'd say 99% of the time when somebody has a problem with an upstart job that works fine in a login shell, its environment variables
+[22:09] <Diranged> makes sense.. well, now its time for me to dig into the python..
+[22:09] <Diranged> i dont mind setting that vairable, but i want to understand WHY i need to
+[22:13] <SpamapS> Diranged: yeah, I would too
+[22:16] <Diranged> thanks again for hte help.. ttyl

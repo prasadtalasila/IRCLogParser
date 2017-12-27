@@ -1,0 +1,78 @@
+=== Makyo is now known as Makyo|out
+[13:40] <frankban> hi benji, could you please take a look at https://codereview.appspot.com/7039049/ ?
+[13:40] <benji> frankban: sure
+[13:40] <frankban> benji: sometimes, while sending, my local termbeamer crashes with this traceback: http://pastebin.ubuntu.com/1491877/
+[13:41] <frankban> benji: thanks
+[13:41] <benji> hmm
+[13:47] <benji> thanks for the traceback, frankban.  I filed this to track the bug: https://bugs.launchpad.net/termbeamer/+bug/1095646
+[13:47] <_mup_> Bug #1095646: Occational exception about None instead of sequence <Termbeamer:New> < https://launchpad.net/bugs/1095646 >
+[13:48] <frankban> cool benji, thank you
+=== bcsaller1 is now known as bcsaller
+[14:25] <frankban> benji: thanks for the review
+[14:25] <benji> frankban: my pleasure
+[14:27] <frankban> benji: re FINAL=1 for tests: our Makefile exits with an error if FINAL is not defined and the last version in CHANGES.yaml is not 'unreleased'. see http://bazaar.launchpad.net/~juju-gui/juju-gui/trunk/view/head:/Makefile#L73
+[14:27] <benji> frankban: bummer; that is a bug (and should be filed as such)
+[14:28] <frankban> I se three possible solutions: 1) define FINAL or 2) move the tests step before the "change the yaml file", or 3) fix the Makefile
+[14:29] <benji> 1 or 2 are fine in the short term, I would like 3 eventually
+[14:31] <frankban> benji: if you agree, I'd leave FINAL for now, and file a bug like "it must be possible to run tests without defining FINAL when the last release in CHANGES.yaml is not "unreleased"
+[14:31] <benji> +1
+[14:31] <frankban> benji: cool, thanks
+=== Makyo|out is now known as Makyo
+[15:04] <bac> hi Makyo, do you know if bug 1092208 is still valid?  i can't reproduce it but i may be doing something wrong.
+[15:04] <_mup_> Bug #1092208: Pending relation line is not getting events <juju-gui:Triaged> < https://launchpad.net/bugs/1092208 >
+[15:04] <Makyo> Checking..
+[15:04] <bac> Makyo: when i draw the line and then move one of the unit i see the pending relation disappear entirely
+[15:08] <Makyo> bac, Happens too fast for me locally to test, whoops.  Trying uistage.
+[15:08] <Makyo> Ditto there..
+[15:15] <bac> Makyo: i think i can now see it on staging when drawing between mysql and wp.  but it is very short-lived as the line quickly turns into a black relation line and does track.  it happens so quickly that i think this bug is no longer valid.
+[15:16] <Makyo> bac, Yeah, that's what I'm seeing as well.  I'll try later today in LXC and see if I can slow things down any.
+[15:19] <bac> Makyo: that card should probably be marked as blocked on your relation extraction from mega, anyway.
+[15:20] <Makyo> bac, True, that is changing quite a bit.
+[15:20] <bac> i'll do that now
+[15:32] <Makyo> benji, frankban goodspud hazmat teknico call now
+[15:41] <bac> goodspud: will you be around later to chat about bug 1091616?
+[15:41] <_mup_> Bug #1091616: Unusual drag/zoom behaviour <regression> <juju-gui:Triaged> < https://launchpad.net/bugs/1091616 >
+[15:52] <goodspud> bac, apologies. I got wrapped up in a conversation with Luca and Greg, losing track of time
+[15:52] <bac> goodspud: np
+[15:52] <goodspud> bac, happy to talk any time
+[15:53] <bac> goodspud: ok, regular g+?
+[16:15] <hazmat> teknico, frankban so it looks like the browser is ignoring the websocket since its not over https
+[16:18] <frankban> hazmat: do you mean using the gui charm trunk?
+[16:18] <hazmat> frankban, yes
+[16:19] <hazmat> frankban, effectively that means the charm is broken afaics. here's a recent deploy of the charm from today https://91.189.93.123/
+[16:20] <frankban> hazmat: I saw https working, double checking now. So, you expect to see the juju gui service there, right?
+[16:20] <hazmat> frankban, yes, chrome seems to be stripping the connect for the websocket
+[16:22] <frankban> hazmat: that makes sense, I am retrying to deploy the gui
+[16:23] <teknico> it's working here with the encrypted websocket
+[16:23] <teknico> except for one failing test
+[16:26] <hazmat> teknico, right... with your branch merged this will be resolved ... as long as  https triggers wss
+[16:30] <frankban> hazmat: https://ec2-174-129-127-84.compute-1.amazonaws.com/
+[16:30] <frankban> hazmat: it seems to work there :-/
+[16:32] <teknico> hazmat, what code loads config.yaml? are values case sensitive? there's a case of True|true and False|false here
+[16:33] <hazmat> frankban, hmmm
+[16:34] <hazmat> frankban, interesting
+[16:34] <hazmat> frankban, aha.. sorry my mistake the issue with the canonistack intsance is the internal ip address leaking
+[16:34] <hazmat> mea culpa
+[16:36] <frankban> hazmat: no worries, so, it's interesting that, for https sites, chrome blocks all the insecure requests, but allows unencrypted websocket connections
+[16:37]  * benji is back from the mechanic's shop.
+[16:38] <teknico> uhm, according to the reference it should not make any difference: http://yaml.org/type/bool.html
+[16:39] <hazmat> frankban, yeah.. that is strange.. we probably do need to track the issue separately for the charm, as it should work with canonistack setups ideally (ie use ip address) even with the tls wss this won't work there without using the ip address for the websocket config
+[16:40] <hazmat> teknico, so its a bit of a mess..
+[16:40] <hazmat> teknico, juju validates and parses them as yaml
+[16:40] <hazmat> teknico, however the config-get without a charm format metadata specification.. will default to python repr(value)
+[16:42] <hazmat> with a charm metadata.yaml value  of format: 2  i think it does do yaml output by default
+[16:42] <hazmat> of course the config-get also takes a --format / json flag 
+[16:45] <hazmat> frankban, thanks for verifying
+[16:46] <frankban> hazmat: in the charm, the ws address is obtained using unit-get public-address
+[16:47] <hazmat> ic
+[16:51] <hazmat> frankban, that seems sane and reasonable and fine to leave as is. i just confirmed the issue was trying to use ec2 provider against openstack.. with the openstack native provider addresses default to using ips instead of dns entries
+[16:52] <frankban> hazmat: ack
+[17:25] <teknico> hazmat, the yaml thing was a false alarm
+[17:25] <teknico> hazmat, all tests using juju-api-agent pass, the failing one uses juju-api-improv
+[17:27] <teknico> hazmat, I wonder if we miss anything in juju-api-improv.conf.template
+[17:47] <hazmat> teknico, which test fails?
+[17:49] <teknico> hazmat, test_staging
+[17:49] <teknico> here's the error: CalledProcessError: Command '['jitsu', 'watch', '--failfast', 'juju-gui', '--state', 'started', '--open-port', '443']' returned non-zero exit status 1
+[17:50] <teknico> I'm doing a deploy with staging: true to see what happens
+=== BradCrittenden is now known as bac
+[20:22] <teknico> hazmat, WSS branch is finally ready :-) https://codereview.appspot.com/7007045

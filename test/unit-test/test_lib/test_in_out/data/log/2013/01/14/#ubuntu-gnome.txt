@@ -1,0 +1,36 @@
+[02:19] <darkxst> jbicha, whats the go with libaudit1? its stuck in proposed?
+[02:20] <darkxst> gdm 3.7 wants it
+[02:23] <jbicha> darkxst: when there's a new soname, the rdepends have to be rebuilt so that we don't have nbs packages
+[02:23] <jbicha> reverse-depends src:audit
+[02:24] <jbicha> also, although it's difficult to read: http://people.canonical.com/~ubuntu-archive/proposed-migration/update_output.txt
+[02:26] <darkxst> reverse-depends is quite broken here -> ImportError: No module named devscripts.logger
+[02:26] <jbicha> after those 3 packages are rebuilt, it will migrate automatically
+[02:26] <jbicha> http://paste.ubuntu.com/1529738/
+[02:29] <darkxst> ok
+[02:30] <darkxst> jbicha, not sure if you have seen this, mozjs188 goodness, https://bugzilla.gnome.org/show_bug.cgi?id=690982
+[02:30] <ubot5> Gnome bug 690982 in general "gjs: port to spidermonkey js188/esr17" [Normal,Unconfirmed]
+[02:32] <darkxst> although the gnome guys seem to want an official tarball from mozilla before they switch over.
+[02:58] <jbicha> darkxst: how risky would it be to use the newer gjs with GNOME 3.6?
+[03:05] <darkxst> jbicha, I think it should work fine right now, but I don't know if there are any API changes planned down the track
+[03:05] <darkxst> probably best to ask Jasper or gcampax, I guess
+[03:06] <darkxst> but either way, worst case might be cherry-picking a few patches against g-s to get/keep  it working
+[03:08] <jbicha> we'd have to make sure that all of these keep working & building: http://paste.ubuntu.com/1529818/
+[03:08] <jbicha> and you'd need to coordinate with chrisccoulson at least
+[03:09] <darkxst> jbicha, why? library would change to mozjs188
+[03:10] <darkxst> or mozjs187 which was a much smaller diff, but didnt really fix much
+[03:10] <jbicha> darkxst: I assume we wouldn't be keeping the old library around?
+[03:15] <darkxst> probably would have too, I don't really follow any of those other projects, but I am pretty sure no other project has even looked at js188
+[03:16] <darkxst> ricotz and I basically created our own tarball for that
+[03:16] <darkxst> they may have looked at js187, since there is an (unreleased) tarball from mozilla for that
+[03:17] <jbicha> it's a bit cleaner if we don't have to add a new source package but we don't want to start the transition if we don't think we can complete it
+[03:18] <jbicha> anyway, Chris is listed as the mozjs Debian maintainer so see what he thinks
+[03:18] <jbicha> I don't know much about javascript except that I help package gjs
+[03:19] <darkxst> api changes from 187 -> 188 are all trivial, however it was a pain tracking some of them down, since they don't always trigger compiler warnings
+[03:19] <darkxst> and nothing is documented ;(
+[03:20] <darkxst> gjs has lot of custom bindings, it could well be the other packages are much easier though
+[03:21] <darkxst> jbicha, cinammon uses gjs?
+[03:21] <jbicha> I think cinnamon is a customized version of gnome-shell 3.2 with pieces ripped out, new stuff added, and a few things backported
+[03:23] <darkxst> yeh I know that much, so its probably ok, I didnt have to touch a single line of gnome-shell code
+[03:24] <darkxst> its mainly the custom bindings in gjs, that required porting
+[17:33] <jbicha> darkxst: oh now that I updated I'm getting the devscripts.logger problem too :(
+[17:40] <jbicha> installing https://launchpad.net/ubuntu/+source/devscripts/2.12.6 works

@@ -1,0 +1,101 @@
+[01:34] <wookey> infinity: I just build eglibc current-raring with DEB_BUILD_PROFILE=stage1 and only got a libc-dev:arm64 package - all the other packages gave a dpkg-genchanges: warning: package libc6 in control file but not in files list
+[01:35] <wookey> ah yes. I see - that is supposed to happen
+[01:35] <wookey> ah of course. I want stage2, not stage1. doh
+[01:58] <wookey> hmm, seems there isn't a stage2 defined.
+[01:58] <wookey> have hacked one in to do a normal built without selinux- lets see if that works...
+[02:22] <wookey> hmm, fails due to missing libc6-prof files. need to nobble that for arm64. I think.
+[02:48] <kashkraft> Good evening gentlemen. I'm attempting to compile the BCM4330 driver from source on Ubuntu and running into undefined variable warnings. This is a known issue (https://code.google.com/p/bcmon/issues/detail?id=8) that I'm attempting to fix. I'm new to compiling source code, however from tracing the variables they should be defined through the file Kconfig. My first question (apologies, I did Google): does Makefile automatically load Kconfig? It has
+[02:48] <kashkraft> the calls (CONFIG_BCM4330), but the variables are left undefined. Any help or education is greatly appreciated :)
+=== hggdh_ is now known as hggdh
+[03:40] <infinity> wookey: This is all already fixed with some patches from doko, I'll get it into experimental (as 2.17) tomorrow, I hope.
+[03:53] <wookey> the 'don;t build libc6-prof on arm64' thing? Great - I was just abot to ask what the best way to fix that was
+[03:54] <wookey> do send me a patch as lack of libc6:arm64 is the only thing preventing me doing a load raring arm64 build stats
+[03:54] <wookey> (or do the upload)
+[04:14] <infinity> wookey: If I don't finish 2.17 over the weekend, I'll upload a 2.16 with build fixes instead.
+[04:14] <infinity> wookey: But 2.17 should happen.
+=== Noskcaj is now known as Noskcaj_afk
+=== Noskcaj_afk is now known as Noskcaj
+[08:13] <sveinse> Hi. I'm running a large (custom) application on an omap3 device running precise. It has 256Mb RAM, no swap. This app calls a handful of script commands using traditional fork()/exec() methods. However I've seen that the fork() operation fails due to low memory, even when exec() is about to be called. Has anyone here any experience with running large apps on swap-less system and have been...
+[08:14] <sveinse> ...tweaking the overcommit setting. Or is this channel the wrong channel alltogether?
+[08:31] <pkh> I'm looking for some advice getting ubuntu onto a tablet. the end goal is to run opencpn (a navigation/chartplotter app for boating.) Before I start buying devices, I'd love to know if anyone has any suggestions.
+[08:35] <raster> nexus7
+=== doko_ is now known as doko
+=== Quintasan_ is now known as Quintasan
+=== yofel_ is now known as yofel
+=== robin-gloster1 is now known as robin-gloster
+[16:48] <Jef91> Does this page work for anyone? It keeps giving me time out errors -> https://launchpad.net/ubuntu/+source/flash-kernel
+[16:50] <SmallFry> Times out for me
+[16:52] <ubuntubhoy> and me
+[16:53] <Jef91> glad it isn't just mem
+[16:53] <Jef91> me*
+[16:53] <Jef91> mashing f5 got me through
+[16:54] <ubuntubhoy> lol
+[17:04] <ogra_> works fine here
+[17:29] <Jef91> OK so I've got a chroot I'm editing a file system for the nexus 7 in. When I try to install the linux-image-nexus7 I get it stopping at this -> http://paste.debian.net/221672/
+[17:29] <Jef91> Any ideas how I could make it just auto continue instead of waiting on user feedback?
+[17:33] <ogra_> export FLASSH_KERNEL_SKIP=true
+[17:35] <ogra_> zou also want to install linux-nexus7, not only the image meta
+[17:36] <Jef91> yep yep ogra_
+[17:36] <Jef91> in the process of merging all your packages into my Wheezy repo
+[17:40] <Jef91> ogra_: same result when setting that var to true
+[17:44] <ogra_> that cant be
+[17:45] <ogra_> where do you set it exactly ?
+[17:45] <Jef91> in the terminal I am in
+[17:45] <Jef91> ogra_:  -> http://paste.debian.net/221680/
+[17:47] <Jef91> shoot I gotta run out for a bit ogra_ - I'll be back later. If you think of something that might help post it with a ping for me
+[17:48] <ogra_> well, tbe var should completely suppress flash-kernel
+[17:48] <ogra_> oh, wait, you will nee the ubuntu flash-kernel
+[17:48] <ogra_> it is forked a bit
+[17:48] <ogra_> Jef91, ^^^
+[17:48] <ogra_> (the debian one wont even know about tegra3)
+[17:49] <ogra_> (nor does it have the SKIP option at all)
+[17:51] <Jef91> ogra_: already did that -> flash-kernel           3.0~rc.4ubuntu29 armhf
+[17:52] <ogra_> hmm, then there is no reason why SKIp shouldnt work
+[17:52] <Jef91> Anything else you can think of yall have modified from debian?
+[17:53] <ogra_> t definitely does on all our daily builds
+[17:53] <ogra_> they would fail if it wouldnt work
+[17:53] <Jef91> I don't doubt it works for you ;)
+[17:53] <ogra_> not really and nothing realted really
+[17:53] <Jef91> hrm
+[17:54] <ogra_> f-k is a pretty standlone script and the SKIP check is pretty much at the top of the code
+[17:54] <Jef91> I'll just go edit flash-kernel then
+[17:54] <Jef91> and manually make it skip
+[17:54] <einonm> ftse 250
+[17:55] <Jef91> really running out now. Feel free to ping me if you think of anything else ogra_
+[17:55] <ogra_> well, i'll calll it a day soon and am rather out of ideas
+[17:56] <Jef91> kk ogra_ thanks for the help as always - have a good weekend
+[17:57] <ogra_>  /etc/kernel/postinst.d/zz-flash-kernel is the script containing the SKIP stuff btw
+[17:58] <ogra_> (and /etc/initramfs/post-update.d/flash-kernel)
+[18:01] <Jef91> huh ogra_ the "Press Ctrl-C to abort build, or Enter to continue" must be coming from something not those two scripts
+[18:01] <Jef91> cause I just pasted a "exit 0" at the top of each of them
+[18:01] <Jef91> and still get it
+[18:01] <ogra_> yes thats an ugly design flaw in the debian f-k version
+[18:02] <Jef91> ogra_: I'm using the Ubuntu f-k
+[18:02] <ogra_> it tries to determine the root device from fstab and then puts it hardcoded into the initrd
+[18:02] <ogra_> yes i know
+[18:02] <ogra_> the ubuntu one is based on debians indeed
+[18:02] <Jef91> Ahh.
+[18:02] <Jef91> Any way around that message?
+[18:02] <ogra_> but we work around such issues
+[18:03] <ogra_> well, i dont really get why you still get the message
+[18:03] <ogra_> theoreticallys thats not possible since flash-kernel should be completely omitted due to the env var
+[18:04] <ogra_> so i assume debians keernel handling does something additionally that forcefullly runs flash-kernel
+[18:04] <ogra_> iirc ages ago update-initramfs did the flash-kernel calll hardcoded
+[18:04] <ogra_> but that was as i said ... ages ago
+[18:05] <ogra_> grep flash-kernel /usr/sbin/update-initramfs
+[18:05] <ogra_> ;)
+[18:05] <ogra_> check if you are probably using such a version
+[18:19] <ogra_> heh, funny CPU stresstest ...
+[18:19] <ogra_>  time echo "scale=4000; a(1)*4" | bc -l
+[18:19] <ogra_> computes 4000 digits of pi
+[18:20] <ogra_> seems the chromebook is only three times as slow as my core i5 3500k
+[18:21] <ogra_> (5 times for the nexus7)
+[18:39] <xnox> does bc use all cores though?
+[18:39] <ogra_> nope
+[18:39] <ogra_> see #ubuntu-server :)
+[18:40] <ogra_> seems panda and nexus7 are on par with that test
+[18:40] <ogra_> so i'm pretty sure its single threaded
+=== tdc_ is now known as tdc
+[21:23] <hrw> real    0m9.965s
+[21:23] <hrw> on i7
+=== Jef91 is now known as Jef91|AFK

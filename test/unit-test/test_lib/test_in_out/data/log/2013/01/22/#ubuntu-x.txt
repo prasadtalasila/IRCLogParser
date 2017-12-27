@@ -1,0 +1,105 @@
+[08:33] <mlankhorst> morning
+[11:08] <rye> Hello, I am suffering from https://bugs.launchpad.net/ubuntu/+source/xserver-xorg-video-intel/+bug/1100360/ starting from raring - is there anything I (or other people in the bug report) can do to debug this?
+[11:08] <ubottu> Ubuntu bug 1100360 in xserver-xorg-video-intel (Ubuntu) "[raring][sandybridge-m-gt2+] GPU lockup IPEHR: 0x0b160001 IPEHR: 0x0b140001" [Undecided,Confirmed]
+[11:15] <tjaalton> rye: the other bug has a pointer to the upstream bug..
+[11:26] <tjaalton> rye: echo 0 > /sys/modules/i915/parameters/semaphores
+[11:26] <tjaalton> try if that helps
+[11:27] <mlankhorst> tjaalton: are you planning to do a sru of mesa9 to quantal?
+[11:29] <tjaalton> mlankhorst: at some point yes, 9.0.1 would be nice to have
+[11:29] <tjaalton> although it's possible that it regressed intel, bug 1100970
+[11:29] <ubottu> bug 1100970 in xserver-xorg-video-intel (Ubuntu) "transparent dash background flickers on intel graphics" [Undecided,Incomplete] https://launchpad.net/bugs/1100970
+[11:30] <mlankhorst> yeah personally I want 9.0.2, i pulled a bunch of nouveau fixes :)
+[11:30] <tjaalton> is it released?
+[11:30] <mlankhorst> dno
+[11:30] <tjaalton> doesn't seem like it
+[11:31] <mlankhorst> I did a bunch of nouveau cherry picks after 9.0.1 release
+[11:33] <mlankhorst> maybe I should do some more now :)
+[11:34] <tjaalton> go for it
+[11:48] <mlankhorst> hm, did you build llvm-3.2 with the radeon additions yet?
+[11:53] <tjaalton> no, and not going to
+[11:53] <mlankhorst> ah, why?
+[11:53] <tjaalton> doko won't like the idea
+[11:54] <tjaalton> *doesn't
+[11:54] <tjaalton> just drop radeonsi
+[11:56] <mlankhorst> :/
+[11:57] <mlankhorst> will llvm-3.3 be released in time?
+[11:58] <tjaalton> in time for what? raring? no
+[11:59] <tjaalton> upstream says radeonsi isn't useful anyway
+[12:03] <f4bs> when will 310/313 come to quantal?
+[12:04] <f4bs> quantal still has 304.64
+[12:08] <tjaalton> -experimental-310 is there
+[12:12] <tjaalton> tseliot: that package probably should be removed from raring?
+[12:12] <tjaalton> tseliot: -experimental-310
+[12:12] <mlankhorst> yeah but still you'll get people that want to try it :/
+[12:12] <tjaalton> and maybe backport -310..
+[12:12] <tjaalton> raring has -310 already
+[12:13] <tjaalton> nvidia-graphics-drivers-310 which has the latest version, and -experimental-310 which is an older one :)
+[12:17] <f4bs> well i think i switch to xorg-edgers
+[12:22] <tseliot> tjaalton: yes, we should remove -experimental-310 
+=== yofel_ is now known as yofel
+[21:17] <bryce> I see debian-experimental is merged into the ubuntu git tree as of a couple weeks ago, yet that version isn't uploaded to raring?
+[21:19] <bryce> I need to put a patch into xserver (for nexus7).  Should I roll back what's in git to match whats in the archive?
+[21:20] <tjaalton> sorry
+[21:20] <tjaalton> huh
+[21:21] <bryce> it looks like we've pushed a bunch of our changes up to debian, which is good, but it's not released there
+[21:21] <tjaalton> there's some clash again
+[21:22] <tjaalton> oh..
+[21:22] <tjaalton> mlankhorst: you merged xserver master to ubuntu, not ubuntu+1
+[21:23] <bryce> ah
+[21:23] <tjaalton> I thought my tree wasn't pushed, but it was
+[21:25] <bryce> guess we need a branch ubuntu+1-1 ?  ;-)
+[21:25] <tjaalton> heh
+[21:26] <tjaalton> nah I guess it could be reset back to 56953a24f021a67
+[21:26] <bryce> tjaalton, are you aware of any ABI breakage so far in 1.14?
+[21:26] <tjaalton> or just use ubuntu+1 which has the same
+[21:26] <tjaalton> bryce: both video & input abi's have been bumped
+[21:26] <bryce> tjaalton, thanks
+[21:27] <tjaalton> so it's the usual dance again
+[21:27] <bryce> tjaalton, so yeah we're gonna want to hold off on pulling this 1.3.99 stuff in until nvidia's had a chance to update the arm drivers I guess
+[21:27] <tjaalton> nvidia has added support in the latest releases, doubt we have those yet though
+[21:27] <bryce> (+ -nvidia and -fglrx)
+[21:27] <tjaalton> right tegra will be a problem I think
+[21:27] <bryce> been emailing ogra & co about that
+[21:28] <bryce> someone will chase it down
+[21:28] <tjaalton> what's the patch btw?
+[21:30] <bryce> the one to fix touch movement with the screen rotated
+[21:30] <bryce> 237_dix_save_touchpoint_last_coords_before_transform.patch
+[21:31] <bryce> commit 3b9f1c701787965246638c1a6fd99fb2b6078114
+[21:31] <bryce> I've verified raring+nexus7 still needs it, and is fixed once it's applied
+[21:32] <tjaalton> ah, it's in the latest pull request for 1.13.x
+[21:33] <tjaalton> huh, I dropped it
+[21:33] <tjaalton> way to go
+[21:35] <bryce> so... do I not need to patch it in?
+[21:35] <tjaalton> yeah you do, it's not in upstream 1.13.x yet.. dunno why I dropped it, probably failed to apply for some reason
+[21:36] <bryce> there were two patches; the one that was posted to the ML originally that you pointed me at, and one from after peter's review comments - which is the one that was accepted
+[21:37] <bryce> both patches still apply to our xserver, but the former was the one we had in the quantal staging, so perhaps you were looking at that and dropped it because you knew the newer one was available?
+[21:37] <tjaalton> no idea :)
+[21:37] <tjaalton> strong work nevertheless
+[21:38] <bryce> yeah, anyway, do you want to reset the tree back or shall I have a go?
+[21:38] <tjaalton> hmm
+[21:39] <tjaalton> let's see
+[21:40] <tjaalton> guess there aren't that many consumers of the ubuntu branch that an innocent git reset matters much :)
+[21:40] <tjaalton> pushed ubuntu+1 with what was there
+[21:41] <tjaalton> and forced ubuntu
+[21:41] <tjaalton> bryce: so it should be set now, ubuntu has what raring has now, ubuntu+1 has the staged stuff by mlankhorst
+[21:42] <bryce> tjaalton, push?
+[21:42] <bryce> $ git pull
+[21:42] <bryce> From ssh://git.debian.org/git/pkg-xorg/xserver/xorg-server
+[21:42] <bryce>  + 6efcd5b...56953a2 ubuntu     -> origin/ubuntu  (forced update)
+[21:42] <bryce>    9e211da..6efcd5b  ubuntu+1   -> origin/ubuntu+1
+[21:42] <bryce> Already up-to-date.
+[21:43] <tjaalton> bryce: git fetch origin; git checkout ubuntu; git reset --hard origin/ubuntu
+[21:43] <tjaalton> your local tree is "newer" than origin
+[21:43] <tjaalton> need to reset it
+[21:44] <bryce> ok got it.  I just deleted the branch and repulled it
+[21:44] <bryce> tjaalton, thanks!
+[21:44] <tjaalton> np, sorry for dropping the patch :)
+[21:44] <tjaalton> some brainf... there
+[22:03] <bryce> wtf?  gcc: error trying to exec 'as': execvp: No such file or directory
+[22:21] <mlankhorst> well the input abi bump got in for the xserver, so I guess it' s just waiting for rc2 now
+[22:29] <bryce> weird, 2nd pbuilder of xserver passed.  huh.
+[23:15] <mlankhorst> bryce: did it fail on xvfb?
+[23:16] <mlankhorst> sometimes the debian/tmp/main/usr/bin/xvfb-run test hangs :/
+[23:19] <bryce> mlankhorst, maybe, although the error was that gcc/as error I pasted so dunno
+[23:19] <bryce> we'll see how it builds in the archive...
+[23:21] <bryce> Sarvatt, had to play 10 min of Dungeons of Dredmor to get my son to take a nap; Dutch wanted to see my "Mustache friend kill the bad guys" before he'd settle down

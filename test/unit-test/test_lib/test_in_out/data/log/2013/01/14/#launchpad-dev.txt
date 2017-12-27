@@ -1,0 +1,351 @@
+[00:31] <StevenK> wgrant: Something about cleanup? Or should I keep searching for a critical?
+[00:37] <wgrant> StevenK: I'm arranging the cleanup. I suspect another critical would be a good idea
+[00:48] <StevenK> wgrant: Bug 1087896 is timing out on making suggestions for things to translate. I can recall ripping that out, but I'm not sure what pageid it was for.
+[00:48] <_mup_> Bug #1087896: timeout when I click on "Translations" on my personal page <lp-translations> <timeout> <Launchpad itself:Triaged> < https://launchpad.net/bugs/1087896 >
+[00:49] <StevenK> r16212, Remove ITranslationsPerson.suggestReviewableTranslationFiles() and the parts of Person:+translations that call it.
+[00:50] <wgrant> Yeah
+[00:50] <wgrant> That was for review suggestions
+[00:50] <wgrant> This is about translation suggestions, I think
+[00:51] <StevenK> Yeah, the implicated method is ITranslationsPerson.suggestTranslatableFiles()
+[00:53] <StevenK> The two faster queries that are run fetch things the person has translated, so small data set.
+[00:54] <wgrant> What does this one do?
+[00:55] <StevenK> Find a bunch of POFiles that the user has not touched, ORDER BY random()
+[00:55] <wgrant> Hah
+[00:55] <wgrant> How helpful
+[00:56] <StevenK> Right, it's another anti-join
+[00:56] <StevenK> Like suggestReviewableTranslationFiles
+=== bigjools_ is now known as bigjools
+[01:16] <plomme> hey guys, I'm brand new, I'm trying to find view(s) for the graphed timelines on overview pages (or anything related). I've just literaly openned the API, figured I would ask as it would save me some time
+[01:32] <plomme> nvm got it
+=== jtv2 is now known as jtv
+[03:08] <StevenK> wgrant: https://code.launchpad.net/~stevenk/launchpad/remove-suggested-translation-files/+merge/143058
+[03:13] <wgrant> StevenK: Have you considered how this will affect the list?
+[03:16] <StevenK> wgrant: It will still list the top ten, but less than that if the translator hasn't been so active
+[03:16] <wgrant> StevenK: Not quite
+[03:20] <StevenK> wgrant: What will happen to the list, then?
+[03:20] <wgrant> StevenK: It looks to me like it will consist of at most 6 items
+[03:22] <StevenK> Hm
+[03:24] <StevenK> wgrant: http://pastebin.ubuntu.com/1529859/
+[03:25] <wgrant> StevenK: There's also an unused 'fetch =' in that method
+[03:25] <wgrant> And you eliminate the sole _composePOFileTranslatorJoin call, but don't eliminate the method AFAICT
+[03:25] <wgrant> Ah, yes you do
+[03:28] <StevenK> http://pastebin.ubuntu.com/1529867/
+[03:28] <StevenK> I suspect this results in more test fallout, so let's see
+[03:28] <wgrant> That looks more reasonable.
+[03:29] <wgrant> Have you checked around for docstrings that describe the old behaviour?
+[03:29] <wgrant> eg. your MP description didn't actually mention the effect of the change at all
+[03:33] <StevenK> wgrant: I've corrected the MP description
+[03:33] <StevenK> And I think I've fixed all of the test docstrings
+[03:44] <wgrant> StevenK: r=me
+[03:44] <StevenK> wgrant: Thanks
+[03:44] <StevenK> Looks like I refreshed as you were submitting
+[04:01] <wgrant> StevenK: That's a rather dishonest commit message :)
+[04:45] <plomme> quick question regarding JS
+[04:46] <plomme> there are regular and minified files
+[04:47] <plomme> I also noticed that my changes in JS files were reset after make run (not sure about this. either that or I forgot to save my changes)
+[04:47] <plomme> what's the correct procedure when modifying JS files? should I port my changes to the min version as well?
+[04:49] <plomme> or is there another layer above those (and that's what I should be editing)
+[04:50] <wgrant> plomme: Edit the original JS files under lib/, then run 'make jsbuild' to build the minified and unminified versions in build/
+[04:52] <StevenK> wgrant: How so?
+[04:53] <plomme> great thanks =)
+[04:53] <wgrant> StevenK: You're removing some random results from the list of suggestions
+[04:53] <wgrant> You're not removing the suggestions :)
+[04:58] <StevenK> wgrant: Do you think we have a plan re: MixedVisibilityError?
+[05:00] <wgrant> Not at this stage
+[05:00] <wgrant> Ignore
+[05:02] <StevenK> BranchRevision is still waiting, or do you have a half-formed plan?
+[05:09] <wgrant> BranchRevision is going to be the largest change we have to make to fix any critical
+[05:09] <wgrant> I'm sure there's a more practically sized one that you can find :)
+[05:10] <StevenK> wgrant: Ah, but that doesn't answer the question
+[05:10] <wgrant> There's a semi-formed semi-plan
+[05:11] <StevenK> wgrant: I laugh at https://bugs.launchpad.net/launchpad/+bug/983766/comments/1
+[05:11] <_mup_> Bug #983766: Error when uploading screenshot incl. a question mark in url <404> <bugs> <webapp-infrastructure> <Launchpad itself:In Progress by wgrant> < https://launchpad.net/bugs/983766 >
+[05:11] <wgrant> I did :)
+[05:12] <wgrant> But that resulted in a need to followup with more people
+[05:18] <StevenK> wgrant: I can recall the issue in https://oops.canonical.com/?oopsid=OOPS-a4c5d1fa67a0f9de6b1cb8d8149499fc , from some wacky method that is trying to generate names, but I thought that was fixed.
+[05:18] <wgrant> StevenK: It was never fixed, just diagnosed
+[05:20] <StevenK> wgrant: What's the method?
+[05:20] <wgrant> It's not in the traceback?
+[05:21] <wgrant> The OOPS is still loading for me
+[05:21] <wgrant> I'm just assuming that it's the person name conflict resolver issue
+[05:21] <StevenK> Oh, _is_nick_registered
+[05:21] <wgrant> That will be the one making the queries
+[05:21] <wgrant> But it's _is_nick_registered's callsite that has the bug
+[05:22] <StevenK> generate_nick, then
+[05:22] <StevenK> wgrant: I fixed the commit message before landing, too
+[05:22] <wgrant> :)
+[05:22] <StevenK> I thought it had landed, but I got distracted by being asked to switch machines
+[05:32] <StevenK> wgrant: So, uh, how do I fix this terribleness?
+[05:34] <StevenK> I can recall you and Curtis discussing it, but not the solution.
+[05:34] <wgrant> StevenK: We need to decide what we want to do
+[05:34] <wgrant> Do you understand the problem?
+[05:35] <StevenK> We don't want to include the e-mail domain in the nick, we can't have nick collision, and we don't want to loop 1000 times?
+[05:35] <wgrant> Those are the key constraints, yes
+[05:35] <StevenK> And the name can not be blacklisted
+[05:35] <wgrant> But why is it looping 1000 times?
+[05:36] <StevenK> It wants a unique name, at a guess
+[05:36] <wgrant> Right, but why does it take so many loops to get one?
+[05:36] <StevenK>         while attempts < 1000:
+[05:37] <StevenK> Based on the number of OOPSes, we never even get close.
+[05:37] <StevenK> Perhaps 750 iterations
+[05:37] <wgrant> That's why it's limited to 1000, but that doesn't explain why the collision resolution ends up trying so many
+[05:38] <StevenK> I'm still trying to grok the call chain
+[05:41] <StevenK> wgrant: I have a theory. They start with a blacklisted name, and it doesn't matter what we do to the name, it still ends up blacklisted
+[05:41] <StevenK> Like, adding a prefix means it's still blacklisted, or adding a suffix
+[05:41] <wgrant> A reasonable theory
+[05:41] <wgrant> But if you look at the method, you'll see it also eventually permutes the characters of the original name
+[05:42] <wgrant> Which surely gets past any blacklisting
+[05:42] <StevenK> The queries in this OOPS just keep adding suffixes
+[05:43] <StevenK> So we have launchpad-<137 * random alphanumerics>
+[05:43] <wgrant> WHERE Person.name = E'78luphr0rnk2nuqimstywepozxn9kl19tqh0tx66b5dki1x-phn5h7o65-a811i2i3ytqlsztthjth0svbccw8inm65tmkqp9sarr553j'
+[05:43] <wgrant> launchpad has become phn5h7065
+[05:44] <wgrant> s/0/o/
+[05:45] <StevenK> wgrant: Look at the query after that one, though
+[05:45] <StevenK> Just before the transaction is marked Doomed
+[05:45] <wgrant> StevenK: Sure
+[05:45] <wgrant> The next attempt at creating a name attempts to extend the suffix
+[05:45] <StevenK> And includes the nickname again
+[05:46] <wgrant> The order of attempts is suffix, prefix, mutation
+[05:46] <wgrant> So it will add a suffix, then a prefix, then a mutation
+[05:46] <wgrant> If none of those work, it will extend the suffix
+[05:46] <wgrant> Then apply an extended prefix
+[05:46] <wgrant> Then apply an extended mutation
+[05:46] <wgrant> etc
+[05:46] <wgrant> But once it moves onto a new iteration it will start from an untainted name
+[05:47] <wgrant> So if suffix, prefix and mutation all fail to yield a new name, it will go back to just a suffix, adding more characters onto the suffix from the previous round
+[05:49] <StevenK> wgrant: Until it grows to monstrous size?
+[05:49] <wgrant> Right
+[05:49] <wgrant> But why would all the hundreds of names fail?
+[05:50] <StevenK> All of them are invalid?
+[05:50] <wgrant> They're all not valid names for a new person for some reason
+[05:51] <StevenK> Which is odd
+[05:52] <wgrant> Not terribly so
+[05:52] <StevenK> Oh, this thing is always seeded with the same value, and so will always try the same steps?
+[05:52] <wgrant> Bingo
+[05:53] <wgrant> There's one very simple fix
+[05:53] <StevenK> Change the seed
+[05:53] <wgrant> Right
+[05:53] <wgrant> But it still needs to be testable
+[05:54] <StevenK> So use a well-known one for testing
+[05:54] <wgrant> You could
+[05:54] <wgrant> And use a random one on prod?
+[05:54] <wgrant> I can see a better possibility
+[05:54] <StevenK> Which sort of defeats the point of the test, right
+[05:58] <StevenK> wgrant: What's that?
+[05:58] <wgrant> Spoilers!
+[05:58] <StevenK> wgrant: We stop doing this whole random garbage?
+[05:59] <wgrant> No
+[05:59] <wgrant> If you recall the history here, we used to include the domain
+[05:59] <StevenK> Indeed, yes.
+[05:59] <StevenK> And then people said stop doing that
+[05:59] <wgrant> eg. my test account would be me+testing-williamgrant, rather than me+testing
+[05:59] <wgrant> Right
+[05:59] <wgrant> So collisions used to be much more unlikely
+[06:00] <wgrant> Now, we can't include the domain in the nick
+[06:00] <wgrant> But we could include it somewhere else
+[06:00] <StevenK> How does that help us generate a nick, though?
+[06:01] <wgrant> We can't help the uniqueness of the original nick
+[06:01] <wgrant> But we can help the uniqueness of the collision resolution
+[06:01] <StevenK> Oh, use the domain as a random seed or so?
+[06:02] <wgrant> Exactly, we could seed the RNG with the entire email address, like the old days
+[06:02] <StevenK> Mmmmm
+[06:02] <StevenK> And means it's still testable
+[06:03] <wgrant> Exactly
+[06:03] <wgrant> It also means that someone can verify their guess for the email address if the user has an autogenerated and collided username
+[06:03] <wgrant> But I'm not sure that's a huge concern
+[06:05] <StevenK> email_addr + current timestamp, but that means it's hard to test
+[06:12] <stub> We don't use that many signups - you could just use a sequence in the db for a globally unique number.
+[06:13] <stub> Not that it really helps when someone signs up using 'launchpad@example.com' and .*launchpad.* is blacklisted.
+[06:16] <StevenK> launchpad_dogfood=# SELECT COUNT(name) FROM person WHERE name LIKE 'launchpad-%%'; => 629
+[06:16] <wgrant> and that's less than a third of them
+[06:16] <StevenK> SELECT COUNT(name) FROM person WHERE name LIKE '%%launchpad%%'; => 6215
+[06:16] <wgrant> I'd just seed from the email address and be done with it
+[06:16] <StevenK> wgrant: I'll have a branch for you to review in a few seconds
+[06:17] <StevenK> If it scans
+[06:17] <StevenK> wgrant: Do we have a bug, or should I file one?
+[06:17] <wgrant> Not sure
+[06:21] <wgrant> StevenK: r=me
+[06:23] <StevenK> wgrant: Thanks
+[06:23] <StevenK> I was distracted by filing a bug
+[06:24] <StevenK> It's High, but bump it to Critical if you think its warranted
+[06:27] <wgrant> It's timing out
+[06:27] <wgrant> Doesn't that make it critical?
+[06:39] <StevenK> wgrant: Trying to not increase the critical count :-P
+[06:53] <stub1> If the existing blacklist code is slow btw, we could compile it in entirety into a single regexp. Last I looked it was 'good enough' though.
+[06:54] <StevenK> stub1: Random seed plus stepping plus random transforms.
+=== stub1 is now known as stub
+[06:57] <lifeless> StevenK: it is what it is.
+[07:03] <StevenK> lifeless: "that that is is that that is not is not is not that it it is"
+[07:05] <lifeless> hah
+[07:10] <StevenK> Grrr
+[07:11] <StevenK> I dislike losing buildbot bingo
+[07:13] <StevenK> stub: It's not slow queries that's causing the timout, it's doing 800 loops to find a name that doesn't clash.
+[07:13] <StevenK> *timeout
+[07:21] <stub> StevenK: Yah, but that also means 800 db queries atm I think. if you did need to do it 800 times, we could do it client side. But you don't, so don't bother.
+[07:50] <wgrant> The collision resolution code was never meant to run more than a few times
+[07:50] <wgrant> It's just that the consistent seed meant it always resolved identically.
+[07:58] <StevenK> For the same localparts, at least.
+=== almaisan-away is now known as al-maisan
+[08:35] <StevenK> wgrant: Heh, there is an interesting question as how to QA it ...
+[08:36] <wgrant> StevenK: I'd wait until it gets onto staging, create a temporary email alias and create an account for it on staging SSO, then log in and see what happen
+[08:36] <wgrant> launchpad@ or ubuntu@ should do
+[08:36] <wgrant> Maybe admin@
+[09:03] <adeuring> good morning
+=== _mup__ is now known as _mup_
+[12:03] <czajkowski> jtv: ping any idea what could trigged translation import queue going from 0 -> 874 in less than an hour ?
+[12:03] <jtv> czajkowski: typically a large upload...  possibly pulled in from branches.
+[12:03] <czajkowski> never seen that many
+[12:04] <jtv> Whose import queue exactly?
+[12:04] <czajkowski> usually get 10-15 in a go
+[12:04] <czajkowski> https://translations.launchpad.net/+imports/+index?field.filter_target=[PRODUCT]&field.filter_status=NEEDS_REVIEW&field.filter_extension=pot
+[12:04]  * czajkowski is going to be at this all day 
+[12:04] <jtv> czajkowski: simply a KDE upload, I suspect.
+[12:04] <czajkowski> wow
+[12:05] <czajkowski> ok thanks
+[12:05] <jtv> KDE translations aren't bundled into the packages.
+[12:05] <czajkowski> if anyone is looking for me today I shall be giving myself RSI doing this reviews
+[12:05] <czajkowski> :/
+[12:05] <jtv> Instead, they have separate translation packages that will contain, for instance, *all* Greek translations for KDE main.
+[12:05] <czajkowski> 869 and counting
+[12:05] <jtv> Let me have a look.
+[12:05] <czajkowski> cheers
+[12:06] <jtv> czajkowski: be sure to give the auto-approver some time to do as much as it can automatically!
+[12:06] <czajkowski> nods
+[12:06] <jtv> I'm surprised to see KDE uploads for projects rather than for Ubuntu.
+[12:06] <jtv> Oh God, they set up a Bosnian translation for "universe."
+[12:06] <jtv> As a project.
+[12:07] <jtv> That shouldn't happen.
+[12:07] <jtv> I mean it's admirable that they translate universe, but this isn't the way.  Before you know it, you're inviting the world to come to your project and translate everything to their own languages.
+[12:07] <jtv> Which is not likely to do much good if the project is really only there for one language.
+[12:08] <czajkowski> nods
+[12:08] <jtv> Yup.  They set it to Open.  :(
+[12:08] <jtv> And with Launchpad Translators as the translation group.
+[12:09] <jtv> That means: "we do Bosnian translations for universe here.  Come on, everybody, submit translations for your own languages and the Launchpad translation group people will review them, and then they will go nowhere because we're only running this project for one language."
+[12:10] <jtv> This needs some kind of effort to avoid duplication of effort.
+[12:11] <czajkowski> ugh
+[12:12] <jtv> They've already attracted some Italian and Spanish translations, I think.
+[12:12] <jtv> And especially Turkish.
+[12:13] <czajkowski> can we delete all of these imports?
+[12:15] <jtv> czajkowski: I'd suggest setting them to Needs Information, after emailing the owners about this problem.  I don't know if there are any efforts for Universe translations underway, but if so, they ought to try and coördinate with it.  If not, maybe if Milo / David agree, it might be an idea to promote the project to a general universe translation group.
+[12:15] <czajkowski> dpm: ^^^^
+[12:16] <jtv> In any case Launchpad Translators wouldn't be quite the right translation group for this — it's Ubuntu, not Launchpad.
+[12:20] <czajkowski> Gwaihir: cheers
+[12:20] <Gwaihir> hello!
+[12:21] <czajkowski> Gwaihir: a team has set up Bosnian trnaslation for universe as a project
+[12:21] <czajkowski> we now have over 869 pots to review :)
+[12:21] <czajkowski> 12:15 < jtv> czajkowski: I'd suggest setting them to Needs Information, after emailing the owners about this problem.  I don't know if  there are any efforts for Universe translations underway, but if so, they ought to try and coördinate with it.  If not,  maybe if Milo / David agree, it might be an idea to promote the project to a general universe translation group.
+[12:22] <Gwaihir> uhh... awesome
+[12:23] <Gwaihir> there were discussion about opening up translation for universe, and also some suggested packages, but I think nothing was move forward
+[12:24] <czajkowski> someone was eger
+[12:24] <Gwaihir> I have to look into what will happen to those translations, if they will ever be exported and used by ubuntu, otherwise it is a void task
+[12:24] <czajkowski> exactly
+[12:26] <Gwaihir> I would rather set them as "need info" for now and touch base with the Bosnian team, I have to do some research on what's the status with universe translations
+[12:28] <wgrant> Regardless, a language-specific project is wrong
+[12:42] <jtv> Exactly.  And it'd be nice to resolve that in a forwardly direction that makes everyone happy.  Too often in the past have we just told people "you can't do that."
+[12:43] <czajkowski> Gwaihir: ok will mark them all as needs info
+[12:43] <czajkowski> Gwaihir: will you make contact
+[12:43] <dpm> Gwaihir, jtv, czajkowski, enabling universe translations is basically on hold. We tried to enable them and contacted some interested upstreams. Banshee was one of them, and we enabled translations in Launchpad. Everything was working fine up to the export part, which we only realised after the next language pack creation
+[12:43] <Gwaihir> czajkowski, yup, not a problem, I will ping the other translators too about the status of opening up universe fro translations
+[12:43] <dpm> https://bugs.launchpad.net/launchpad/+bug/1048556
+[12:43] <_mup_> Bug #1048556: Language pack translations export needs to add universe packages to domain map <langpack> <lp-translations> <Launchpad itself:Triaged> <Ubuntu Translations:Triaged> < https://launchpad.net/bugs/1048556 >
+[12:44] <czajkowski> cheers folks
+[12:44] <Gwaihir> thanks dpm!
+[12:44] <dpm> So that bug is currently stopping us from shipping universe translations for selected packages
+[12:45] <dpm> it seems 99% of it is working, but the translations are not listed in the text file the export generates, and they are thus ignored by langpack-o-matic (the tool that fetches the Launchpad translations export and creates the actual language packs)
+[12:46] <czajkowski> that bug is on the low list of LP maintenace work and more than likely will not get fixed any time soon
+[12:47] <jtv> :(
+[12:47] <czajkowski> well we're down to 2 people on maintenance folks
+[12:47] <czajkowski> and they are doing criticals
+[12:47] <wgrant> s/maintenance/LP/
+[12:48] <czajkowski> well 2 of ye and one of me :)
+[12:48] <czajkowski> and I don't break anything :p
+[12:48] <jtv> Except hearts, I'm sure!
+[12:49] <jtv> Ahem.
+[12:50] <czajkowski> lol
+[12:50] <wgrant> Though I don't really see why the domain map doesn't include them
+[12:50] <wgrant> As long as POTemplate.languagepack is set
+[12:53] <jtv> You're thinking maybe a tiny step in the right direction to make the goal just a little bit more tempting?
+[12:53] <czajkowski> wgrant: can you answer in lp am at 848 on a roll here!
+[12:54] <dpm> jtv, any ideas on that bug ^^?
+[12:55] <jtv> dpm: It's been long enough that I feel the other commenters are more current with it now.  :(
+[13:00] <wgrant> dpm: Do you have an example of a package that was not exporting?
+[13:02] <dpm> wgrant, we've disabled the templates, so we won't find it in any langpack-o-matic logs. I remember we first noticed it with banshee, let me see if I can think of any other.
+[13:03] <wgrant> dpm: banshee in precise?
+[13:03] <dpm> wgrant, let me check, I think we even tried to add a special case for it in the langpack-o-matic code
+[13:04] <wgrant> 'cause https://translations.launchpad.net/ubuntu/precise/+source/banshee/+pots/banshee/+admin doesn't have the langpack flag set
+[13:04] <wgrant> Which would explain it
+[13:04] <wgrant> It's set in raring, but there's no raring export yet
+[13:08] <wgrant> dpm: The flag is set in quantal, and I see 'banshee banshee' in the mapping.txt from the export in October.
+[13:08] <wgrant> And banshee is in universe in quantal
+[13:08] <wgrant> So I think that bug is wrong :)
+[13:08] <dpm> hm, that's really weird
+[13:09] <dpm> wgrant, we even implemented a workaround in Quantal for banshee and gnome-panel. Here's the diff of the modification pitti did on langpack-o-matic
+[13:09] <dpm> http://pastebin.ubuntu.com/1530750/
+[13:10] <dpm> those were two packages that weren't in the mapping.txt file we looked at when we first noticed the issue
+[13:10] <dpm> unfortunately, I don't have that particular file anymore
+[13:11] <wgrant> They're certainly both there now
+[13:11] <wgrant> So I wonder if someone set the flag on those templates between then and now
+[13:11] <wgrant> Well
+[13:11] <wgrant> Then and October
+[13:12] <dpm> I guess we'll have to give another try at universe packages in raring :)
+[13:12] <wgrant> banshee should be there in the first raring export
+[13:12] <wgrant> Since it has a template that's marked for langpacks
+=== gary_poster|away is now known as gary_poster
+=== gary_poster is now known as gary_poster|away
+=== gary_poster|away is now known as gary_poster
+[13:38] <czajkowski> 537
+=== Ursinha is now known as Ursinha-afk
+=== Ursinha-afk is now known as Ursinha
+=== gary_poster is now known as gary_poster|away
+=== gary_poster|away is now known as gary_poster
+=== gary_poster is now known as gary_poster|away
+=== gary_poster|away is now known as gary_poster
+=== gary_poster is now known as gary_poster|away
+=== Ursinha is now known as Ursinha-afk
+=== gary_poster|away is now known as gary_poster
+=== Ursinha-afk is now known as Ursinha
+=== yofel_ is now known as yofel
+=== slank_away is now known as slank
+=== salgado is now known as salgado-lunch
+[15:51] <czajkowski> Gwaihir: only another 387 to go, you mailed the user?
+[15:53] <Gwaihir> czajkowski, nope, not yet, BTW, do you have a link to the project they set up?
+[15:55] <czajkowski> https://translations.launchpad.net/bosnianuniversetranslation/trunk
+[15:55] <czajkowski> https://launchpad.net/~megaribi
+[15:55] <czajkowski> user
+=== salgado-lunch is now known as salgado
+[17:10] <czajkowski> all 874 pots reviewed and marked needs info
+[17:10] <czajkowski> dont think my hand will talk to me agian
+[17:11] <mgz> czajkowski: due to a pot surfeit?
+[17:12] <czajkowski> eager pots!
+[17:13] <czajkowski> mgz: https://answers.launchpad.net/launchpad/+question/218961  would his issue go away if the bzr builders got the update like the rT from Friday ?
+[17:15] <mgz> yup, that's the one that's fixed in bzr 2.5 but the builders are on 2.4.0
+[17:16] <mgz> so, the guy's last comment is accurate
+[17:18] <Gwaihir> czajkowski, user contacted
+[17:19] <czajkowski> Gwaihir: cheers
+=== deryck is now known as deryck[lunch]
+[18:06] <plomme> hey guys. I've corrected a bug and would like to know where to go from here on
+[18:06] <czajkowski> plomme: a lp bug?
+[18:06] <plomme> I'm filling in the agreement form but will need a contact
+[18:07] <plomme> yes
+[18:07] <plomme> https://bugs.launchpad.net/launchpad/+bug/1097770
+[18:07] <_mup_> Bug #1097770: The series timeline does not distinguish between active and inactive milestones <javascript> <milestones> <projects> <ui> <Launchpad itself:Triaged> < https://launchpad.net/bugs/1097770 >
+[18:07] <plomme> not so much corrected as offered a solution
+[18:08] <czajkowski> plomme: you'll best leave a comment on the bug
+[18:08] <czajkowski> wgrant: or StevenK will then see it and be able to give advice on it
+[18:08] <plomme> shall I just leave a comment owithout pushing the change?
+[18:09] <czajkowski> you can push the change
+[18:09] <plomme> ok
+[18:09] <czajkowski> it'll still be reviewed by them anyways
+[18:33] <plomme> do I leave the bug status as is? I just comment?
+[18:36] <czajkowski> yes for the time being please
+[18:36] <czajkowski> then wgrant and StevenK can review and comment
+[18:37] <plomme> faire enough. thanks a lot
+[18:37] <czajkowski> np
+=== deryck[lunch] is now known as deryck
+=== Ursinha is now known as Ursinha-afk
+=== Ursinha-afk is now known as Ursinha
+=== salgado is now known as salgado-afk
+[23:02] <wgrant> StevenK: Ah
+[23:02] <wgrant> You don't actually depend on the built egg
+[23:04] <wgrant> StevenK: http://pastebin.ubuntu.com/1532797/
+[23:08] <StevenK> Ah ha, success

@@ -1,0 +1,126 @@
+[11:08] <geordish> Morning
+[11:08] <geordish> should squid-deb-proxy automatically be configured with the prefix from which your machines will be coming from?
+=== cmagina_away is now known as cmagina
+[15:06] <roaksoax> rvba: howdy!!
+[15:07] <rvba> roaksoax: hi Andres
+[15:07] <roaksoax> rvba: So I was wondering. I need to install 2 different commissioning images
+[15:07] <roaksoax> rvba: or the same image in two different
+[15:07] <roaksoax> rvba: directories, but it doesn't let me
+[15:08] <roaksoax> rvba: so i want to install images in commissioning/ and xinstall/ dir
+[15:08] <roaksoax> it doesn't let me due to saying something like "these ephemeral images have already been installed"
+[15:09] <roaksoax> or similar
+[15:09] <rvba> What command are you running exactly?
+[15:10] <roaksoax> rvba: let's say I do: maas-provision install-pxe-image "--arch=$arch" "--subarch=$subarch" "--release=$release" --purpose="commissioning" --image="$tmpdir"
+[15:10] <roaksoax> rvba: let's say I do: maas-provision install-pxe-image "--arch=$arch" "--subarch=$subarch" "--release=$release" --purpose="xinstall" --image="$tmpdir"
+[15:10] <roaksoax> (see the different purpose)
+[15:11] <roaksoax> $tmpdir is the same image dir. It fails to install into xinstall because it already has installed the images into commissioning
+[15:11] <roaksoax> rvba: which is right cause it doesn't make sense to copy the same images to a different tftp directory
+[15:12] <roaksoax> rvba: however, we are adding a different purpose (xinstall) for installation using an ephemeral image (fast path installer)
+[15:12] <roaksoax> rvba: so, i was wondering if it would make sense to add a parameter like --symlink="place-to-symlink-to"
+[15:13] <roaksoax> rvba: so that: maas-provision install-pxe-image "--arch=$arch" "--subarch=$subarch" "--release=$release" --purpose="commissioning" --image="$tmpdir" --symlink="xinstall"
+[15:13] <rvba> roaksoax: Where is the code for maas-provision again?
+[15:14] <roaksoax> rvba: that's src/provisioningserver (maas-provision is just a wrapper that uses src/provisioningsrever)
+[15:14] <rvba> roaksoax: ah right, let me have a look at that code.
+[15:14] <bigjools> GOOD MORNING
+[15:16] <roaksoax> rvba: https://code.launchpad.net/~andreserl/maas/maas_fast_path_installer --> this is what I'm adding so far
+[15:16] <roaksoax> bigjools: morning!
+[15:16] <roaksoax> bigjools: us time this week?
+[15:16] <rvba> roaksoax: the path used to store the image already seems to include the "purpose" ('/'.join([arch, subarch, release, purpose]))
+[15:17] <bigjools> roaksoax:  yeah I am in Austin
+[15:18] <roaksoax> rvba: yes. So if I try to install an image dir to purpose 'commissioning' and then the same image dir to purpose 'xinstall', it will fail due to have 2 identical dirs (which is expected). However, I need to access the same commissioning images using a different purpose
+[15:18] <roaksoax> rvba: so I was wondering if it was makes to add the --symlink option that basically does "if I install image with purpose commissioning, symlink that purpose dir into XYZ"
+[15:18] <roaksoax> bigjools: cool!
+[15:20] <rvba> roaksoax: maybe I'm missing something but what I see in the code is that the dirs should not be identical if when you install the same image to another "purpose".
+[15:22] <roaksoax> rvba: Let's look at it another way. I need to use the 'commissioning' images for a different purpose ('xinstall').
+[15:22] <bigjools> roaksoax: too cool, it's bloody freezing :)
+[15:23] <roaksoax> so I need to symlink /var/lib/maas/tftp/<arch>/generic/<release>/xinstall to use /var/lib/maas/tftp/<arch>/generic/<release>/commissioning
+[15:23] <roaksoax> rvba: ^^
+[15:23] <rvba> Ah I see.
+[15:23] <roaksoax> rvba: for that I'd like to add --symlink="purpose", which will do that (when using maas-provision install-pxe-image
+[15:23] <rvba> Right now you only have the option so re-install it right.
+[15:23] <rvba> ?
+[15:23] <roaksoax> bigjools: heh  I don't think is that bad is it?
+[15:24] <bigjools> roaksoax: it depends on your relative outlook :)
+[15:24] <rvba> roaksoax: the part I don't get is why you get the error you're getting when you're simply trying to install the same image for a different purpose.  This should work all right.
+[15:25] <rvba> roaksoax: having a symlink instead of duplicating the file is nice.  But it should be just an optimisation over installing the same image twice.
+[15:26] <roaksoax> rvba: yes that's what I want to do instead of installing the same image twice
+[15:26] <roaksoax> bigjools: heh.. I live in Florida so I feel you :)
+[15:27] <bigjools> roaksoax: EXACTLY!
+[15:27] <roaksoax> bigjools: it's 16C here and its cold for me
+[15:28] <roaksoax> rvba: the error when trying to install $imagedir into 'xinstall' purpose *after* installing them into 'commissioning' purpose is: http://pastebin.ubuntu.com/1559858/
+[15:29] <roaksoax> rvba: but anyways I guess I'll simply add the --symlink option
+[15:29] <roaksoax> since that does make more sense
+[15:29] <rvba> roaksoax: Sounds like an useful optimisation.
+[15:29] <roaksoax> rvba: cool thanks
+[15:29] <rvba> roaksoax: but you should not be getting that error.
+[15:29] <bigjools> roaksoax: you in Miami?
+[15:29] <roaksoax> bigjools: yes I am :)
+[15:30] <bigjools> warm :)
+[15:30] <roaksoax> indeed :)
+[15:30] <roaksoax> i love the weather
+[15:30] <rvba> roaksoax: I'm looking into your error now…
+[15:30] <roaksoax> rvba: yeah but i guess it is comparing all the already installed dirs to check if there's one installed already
+[15:30] <roaksoax> rvba: cool thanks
+[15:31] <rvba> roaksoax: it's not that clever :).  I suspect it's failing because of something else.
+[15:33] <roaksoax> :)
+=== matsubara is now known as matsubara-lunch
+[15:38] <rvba> roaksoax: when you install an image, the source gets cleaned up afterwards.  That's why the second run fails: it does not find the image to import.
+[15:39] <rvba> roaksoax: if you duplicate the directory containing the images first and run the second import on the copy, it will work.
+[15:39] <rvba> roaksoax: note that the symlink thing won't solve that pb :).
+[15:40] <roaksoax> rvba: ah I see that now
+[15:41] <roaksoax> clear
+[15:41] <roaksoax> ls
+[15:41] <roaksoax> err
+[15:41] <rvba> heh :)
+[15:41] <roaksoax> rvba: good catch though!
+[15:41]  * roaksoax needs some coffee apparently
+[16:55] <roaksoax> rvba: I have a question... say i have 2 node controllers and 1 region. In order for me to deploy 2 different networks (on of each of the cluster), do I still need to be accessible to the region controller?
+=== matsubara-lunch is now known as matsubara
+[16:57] <rvba> roaksoax: not sure I understand the question… but every cluster needs to be able to contact the region if that's what you're asking.
+[17:01] <roaksoax> rvba: so the clusters/region communicate through 192.168.0.1/28, while I want each cluster to deploy on nodes using 192.168.1.0/24
+[17:01] <roaksoax> and 192.168.2.0/24
+[17:01] <rvba> roaksoax: that's fine, so the clusters will have 2 interfaces.
+[17:01] <roaksoax> rvba: so they don't have to be able to contact the region then
+[17:02] <rvba> Yes they do
+[17:02] <roaksoax> rvba: so all the deployed nodes have to have 2 interfaces then
+[17:04] <rvba> roaksoax: Either that or you need to add the appropriate routes so that they can contact the region through the cluster.
+[17:04] <roaksoax> right
+[17:22] <roaksoax> bigjools: there's no merge bot for packaging.precise.sru ?
+[17:22] <bigjools> roaksoax: no, because it's not a recognised release branch
+[17:22] <bigjools> it's an integration branch
+[17:22] <bigjools> so you need to merge manually
+[17:22] <bigjools> and push up
+[17:22] <roaksoax> ok cool
+[17:22] <roaksoax> thanks :)
+[17:22] <bigjools> I turned on appendrevisions for it so it should be safe
+[17:23] <roaksoax> cool!
+[17:32] <roaksoax> rvba: btw.. it is now the cluster that runs the tftp server and stores the images ?
+[17:32] <rvba> roaksoax: yes
+[17:32] <roaksoax> ok cool
+=== freeflyi1g is now known as freeflying
+[19:24] <roaksoax> bigjools: btw... i was wondering whether you guys were planning to SRU the kernel_opts tag stuff to precise branch
+[19:30] <roaksoax> t/win 9
+[19:47] <roaksoax> matsubara: ping?
+[19:47] <matsubara> roaksoax, hi
+[19:47] <roaksoax> matsubara: howyd!! quick question. Have you played with tags much?
+[19:47] <matsubara> roaksoax, yes, a bit. How can I help?
+[19:48] <roaksoax> matsubara: a ny ideas? ubuntu@maas:/usr/share$ maas-cli admin tag update-nodes "xinstall" add=node01
+[19:48] <roaksoax> { "removed": 0, "added": 0
+[19:48] <roaksoax> }
+[19:51] <matsubara> roaksoax, did you create the tag xinstall first?
+[19:51] <roaksoax> yes
+[19:51] <matsubara> also the doc says: The nodegroup parameter, which restricts the operations to a particular nodegroup, is optional, but only the superuser can execute this command without it.
+[19:52] <matsubara> maybe you need the nodegroup parameter as well since you seem to be running with the ubuntu user
+[19:52] <roaksoax> matsubara: yeah: http://pastebin.ubuntu.com/1560577/
+[19:53] <matsubara> or node01 is not matching any node in your cluster. are you sure that's the system_id for the node?
+[19:54] <roaksoax> matsubara: ah!1 that's why then
+[19:54] <roaksoax> thanks for the info :)
+[19:54] <matsubara> no problem :-)
+[20:25] <bigjools> roaksoax: no plans to backport any tags
+[20:29] <roaksoax> bigjools: ok
+=== matsubara is now known as matsubara-afk
+[21:51] <roaksoax> bigjools: why do I need maas-dns installed in order for the UI to not fail: http://paste.ubuntu.com/1560879/
+[22:02] <roaksoax> j/win 14
+=== lborda_ is now known as lborda
+[23:39] <bigjools> roaksoax: well that sucks.  Ask rvb about it, he wrote the start up wsgi stuff.  I am a little surprised that this happens but it might be an untested setup :(
+[23:54] <roaksoax> bigjools: yeah anyways, I already filed a bug. I'll check with him tomorrow

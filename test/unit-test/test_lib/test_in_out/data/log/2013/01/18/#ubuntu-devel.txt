@@ -1,0 +1,766 @@
+=== slank is now known as slank_away
+[00:44] <tion> the updater is trying to install nvidia-current but my card is unsupported should i skip that update?
+[00:45] <bryce> tion, details?
+[00:48] <tion> the current drivers dont support FX5000 series
+[00:49] <bryce> tion, explain more what you're trying to do
+[00:49] <tion> i had to revert back to 173 v driver to get OGL support back
+[00:49] <tion> now updater is pushing nvidia-current again along with xorg updates
+[00:50] <bryce> tion, keep on going
+[00:51] <tion> the updater is trying to install nvidia-current but my card is unsupported should i skip that update?
+[00:51] <tion> are you just making conversation?
+[00:51] <bryce> tion, no
+[00:53] <tion> http://www.ubuntuupdates.org/package/ubuntu-x-swat/precise/main/base/nvidia-current?id=436581&page=3
+[00:53] <tion> it reads that only 6 gen and up are supported
+[00:54] <bryce> that's true
+[00:54] <infinity> xnox: Your nagios-plugins merge is dragging in a ton of new Perl modules.
+[00:54] <tion> i cant update im f***
+[00:54] <infinity> xnox: Not that I mind.  I <3 Perl and all.  But MIRs, please.  Or drop the deps.  Whichever.
+[00:56] <bryce> tion, I'd need to know more to give you a proper answer.  Like how did you install -173, what version(s) you had installed previously, what version of ubuntu you're running, etc.
+[00:56] <bryce> tion, with so little info all I can guess is if it's offering to move you to an incompatible driver, maybe you manually installed nvidia and your system's broken.
+[00:57] <tion> i installed 173 from the hardware icon
+[00:57] <infinity> tion: On which release?
+[00:57] <tion> 12
+[00:57] <infinity> 12.04 or 12.10?
+[00:58] <tion> lms
+[00:58] <bryce> tion, and now the updater is saying it wants to uninstall -173 and move you to -304?
+[00:59] <tion> after i installed nvidia-current that actually updated to V 3xx and i lost OGL support
+[01:00] <tion> then a reinstalled 137 again res was 640.480
+[01:00] <bryce> tion, 137??
+[01:00] <infinity> bryce: So, there is a need to update nvidia-173 in precise to support xserver-xorg-lts-quantal, possibly.
+[01:00] <tion> now OPG is working
+[01:00] <infinity> bryce: Not that I have any idea if that relates to whatever's being reported here.
+[01:02] <bryce> infinity, that's #1064192
+[01:02] <tion> the problem is nvida current install the wrong version and i lose OGL support
+[01:02] <bryce> infinity, I'm guessing tion didn't upgrade his xserver though, so precise's -173 should still work
+[01:03] <tion> so i have to spik the updates ?
+[01:03] <tion> upodater is tring to push
+[01:03] <infinity> Nothing should be trying to force nvidia-current on your if it wasn't previously installed...
+[01:03] <infinity> s/your/you/
+[01:03] <bryce> tion, maybe, but if it's offering to put something broken on your system, it should not be doing that
+[01:04] <tion> infinity, it was installed and later removed
+[01:04] <bryce> tion, do I understand you had -nvidia-173 installed, then you installed nvidia-current, and then again installed nvidia-173?
+[01:04] <tion> yes
+[01:05] <bryce> so you have both nvidia-current and nvidia-173 installed?
+[01:05] <tion> no
+[01:05] <bryce> so then it is offering to install nvidia-current and uninstall nvidia-173?
+[01:05] <infinity> dpkg -l nvidia\* | pastebinit -f diff
+[01:05] <tion>  GL_VERSION:  2.1.2 NVIDIA 173.14.35
+[01:05] <tion>   GL_VENDOR:   NVIDIA Corporation
+[01:05] <tion>   GL_RENDERER: GeForce FX 5200/AGP/SSE/3DNOW!
+[01:05] <infinity> Err, without the -f diff.  Finger habit.
+[01:05] <infinity> Not that it matters either way. :P
+[01:06] <infinity> tion: Can you paste the output of "dpkg -l nvidia\*" somewhere?
+[01:07] <bryce> tion, do you have any ppa's installed?
+[01:07] <tion> no
+[01:09] <tion> infinity, see pm
+[01:09] <infinity> tion: "ii  nvidia-current      295.40-0ubuntu1.1" clearly shows you have nvidia-current installed.
+[01:10] <tion> Find obsolete NVIDIA drivers
+[01:10] <infinity> If you don't want update-manager trying to upgrade it, just remove it.
+[01:11] <tion>   nvidia-173-updates  173.14.35-0ubuntu0. NVIDIA binary Xorg driver, kernel module and VDPAU lib
+[01:12] <tion> are both drivers working at the same time?
+[01:12] <tion> WTF!
+[01:12] <bryce> tion, you can have both installed but only one "activated", however it's better to just have the one you need installed
+[01:13] <tion> both say kernel module
+[01:13] <tion> wich is the one actually working right now?
+[01:13] <bryce> tion, I would purge all nvidia-*, then reboot onto nouveau and install only nvidia-173.
+[01:14] <bryce> tion, lsmod | grep nv
+[01:14] <tion> nvidia               7098356  24 ????
+[01:15] <infinity> "modinfo nvidia" is probably more likely to point you at a path that tells you which one you've built.
+[01:15] <tion> what are the numbers?
+[01:15] <infinity> But yeah, just removing the whole lot seems saner.
+[01:15] <bryce> tion, yeah try modinfo nvidia, or check dmesg.
+[01:16] <tion> ERROR: modinfo: could not find module nvidia
+[01:16] <infinity> Cute.
+[01:17] <tion> OpenGL version string: 2.1.2 NVIDIA 173.14.35 this is the one driver
+[01:17] <bryce> that's the mesa driver
+[01:17] <tion> thats actually in use
+[01:17] <tion> what mesa driver?
+[01:17] <bryce> no, that's the mesa driver in use, not the kernel module
+[01:18] <bryce> well, I mean the OpenGL driver
+[01:19] <bryce> tion, https://wiki.ubuntu.com/X/Troubleshooting/VideoDriverDetection#Problem:__Need_to_fully_remove_-nvidia_and_reinstall_-nouveau_from_scratch
+[01:20] <tion> only novou driver supports the new X server?
+[01:21] <tion> will 173 still work after updates?
+[01:22] <bryce> which new X server?
+[01:23] <bryce> as long as you're not moving to the Q-series xserver you should be fine
+[06:22] <pitti> good morning
+[06:22] <pitti> xnox: a-i-d-parner> I thought it was merely a collection of .desktop files for software-center to pick up?
+[06:23] <pitti> xnox: so if "work with" means "extend", I guess add a .desktop file there, and verify that s-c shows it and is able to install it; the package must be in the partner repo, of course
+=== mossplix_ is now known as mossplix
+[08:01] <dholbach> good morning
+[08:08] <infinity> @pilot out
+=== udevbot changed the topic of #ubuntu-devel to: Ubuntu 12.10 released | Archive: Open | Dev' of Ubuntu (not support or app devel) | build failures -> http://qa.ubuntuwire.com/ftbfs/ | #ubuntu for support and dicussion of hardy -> quantal | #ubuntu-app-devel for app development on Ubuntu http://wiki.ubuntu.com/UbuntuDevelopment | See #ubuntu-bugs for http://bit.ly/lv8soi | Patch Pilots:
+[08:10]  * dholbach hugs infinity
+=== bambee is now known as rperier
+[08:50] <Kredo> hi guys, need help: Device /dev/ttyUSB0 is locked (I locked it with pon) - can I send/rcv sms while this gsm modem is connected to the internet? thanks
+=== Tonio_ is now known as Tonio_aw
+[09:06] <xnox> pitti: ok. thanks.
+[09:07] <xnox> infinity: yeah, noticed. i'll drop stuff instead.
+=== stan_ is now known as stan
+=== Sweetsha1k is now known as Sweetshark
+[09:43] <xnox> infinity: openvswitch indeed had cosmic rays on powerpc, built fine after a whack.
+[09:44] <infinity> xnox: Good deal.
+[09:44] <xnox> infinity: also uploaded nagios-plugins which should stop dragging stuff in.
+[09:44] <infinity> xnox: I swear, if we had the hardware resources, I'd build everything twice, and only accept the binaries after proving the output is the same in both runs.
+[09:45] <xnox> =)))))))))))
+[09:45] <infinity> xnox: I don't really want to know (I really don't) how many subtle bugs in any given piece of software (ours or anyone's, really) is due to random bitflips.
+[09:46] <xnox> a modern cpu makes something like 10 000 mistakes a minute =/ to me it's magical any of it actually works =)
+[09:46] <infinity> Probably another argument against "make world" proponents, actually.  At least we can do targetted fixes if we find something needs a rebuild, they're just throwing it all back at the wall and fixing A while potentially breaking B, C, or D.
+=== henrix_` is now known as henrix
+=== smb` is now known as smb
+[10:35] <rperier> hey, I upgraded this morning to 12.10 (from 12.04) everything works fine, just one problem: I have an intel 4000HD ivybridge and I am running VESA VGA :O
+[10:35] <rperier> cat /proc/fb  --> 0 VESA VGA
+[10:41] <mitya57> pitti: it fails to _build_?
+[10:42] <pitti> mitya57: yes, in:
+[10:42] <pitti> ln -sf -python3.3m-config \
+[10:42] <pitti> debian/libpython3-dev/usr/bin/-python3m-config
+[10:42] <pitti> the extra -
+[10:42] <rperier> I was using the wrong kernel (the one backported from quantal to precise and the real kernel from quantal was not used), it works fine now ^^
+[10:43] <jodh> chrisccoulson: hi - I'm looking at how gnome-session currently shuts down and trying to understand why the following is commented out: http://paste.ubuntu.com/1544640/
+[10:43] <mitya57> hm, it built successfully for me both locally and in ppa:mitya57/test1
+[10:44] <chrisccoulson> jodh, IIRC it was to stop gnome-session from swallowing those signals so we got crash reports with apport
+[10:44] <chrisccoulson> but this was a long time ago ;)
+=== henrix_ is now known as henrix
+[10:49] <jodh> chrisccoulson: ok, thanks.
+[10:49] <chrisccoulson> jodh, technically, i think only the call to gdm_signal_handler_add_fatal() needs to be commented out
+[10:49] <chrisccoulson> i can't remember why we disabled all signal handling
+[10:50] <chrisccoulson> i've slept and drank beer since then ;)
+[10:50] <pitti> chrisccoulson: or perhaps a merge error? in the original patch the commented out section might only have been for SIGSEGV, and in newer upstream versions the SIGTERMs got added?
+[10:52] <mitya57> pitti: seems like your $(DEB_HOST_GNU_TYPE) is empty for some reason
+[10:52] <chrisccoulson> pitti, yeah, you're right
+[10:52] <chrisccoulson> the original patch was http://bazaar.launchpad.net/~ubuntu-desktop/gnome-session/ubuntu/revision/18
+[10:52] <chrisccoulson> jodh ^^
+[10:52] <mitya57> should be set by dpkg-architecture
+[10:53] <chrisccoulson> it got changed here by seb128: http://bazaar.launchpad.net/~ubuntu-desktop/gnome-session/ubuntu/revision/233
+[10:53] <chrisccoulson> not sure why ;)
+[10:53] <pitti> that doesn't look intended
+[10:54] <chrisccoulson> jodh, so, the short summary is - the patch is only meant to disable the SEGV handler ;)
+[10:55] <infinity> mitya57: Which package is this you're talking about?
+[10:57] <pitti> https://code.launchpad.net/~mitya57/ubuntu/raring/python3-defaults/resync/+merge/143697
+[10:58] <infinity> Yeah, I just hunted that down from /lastlog
+[11:00] <infinity> pitti: I'm kinda with mitya57 on this one.  What's breaking your environment? :P
+[11:01] <infinity> pitti: DEB_HOST_MULTIARCH is set in debian/rules...
+[11:01] <pitti> je ne sais pas; I'll run it again and log in after the failure
+=== henrix_ is now known as henrix
+[11:02] <mitya57> man dpkg-architecture suggests me to add something like this:
+[11:02] <mitya57> DEB_HOST_GNU_TYPE := $(shell dpkg-architecture -qDEB_HOST_GNU_TYPE)
+[11:02] <infinity> mitya57: Why?  You don't need GNU_TYPE.
+[11:03] <infinity> Oh!
+[11:03] <infinity> You do.
+[11:03] <infinity> Wait, how did this work?
+[11:03] <infinity> I assumed it was using DEB_HOST_MULTIARCH, which is set.
+[11:03]  * mitya57 looks at his build log
+[11:04] <pitti> $ dpkg-architecture  -qDEB_HOST_GNU_TYPE
+[11:04] <pitti> x86_64-linux-gnu
+[11:04] <pitti> in my VM
+[11:04] <infinity> pitti: Yeah.  This is clearly a bug in debian/rules, I hadn't read far enough.
+[11:04] <infinity> But I'm not confused as heck that this works anywhere. :P
+[11:05] <xnox> mitya57: include /usr/share/dpkg/architecture.mk
+[11:05] <xnox> and then _all_ DEB_(BUILD|HOST)_* vars become available to you =)
+[11:06] <xnox> it's much cleaner that way.
+[11:06] <mitya57> xnox: thanks a lot, I like that much better
+[11:06] <xnox> unless pbuilder is being funny inside adt.
+[11:06] <infinity> xnox: No, it's the package that's buggy, not the environment.
+[11:06] <xnox> infinity: ok.
+[11:07] <infinity> But I'm still mind-numbingly confused that this worked on a buildd.
+[11:07] <pitti> mitya57: please feel free to ping me when I should give it another go
+=== henrix is now known as henrix_
+=== henrix_ is now known as henrix
+[11:08] <jodh> chrisccoulson/pitti: thanks - bug 1101154 raised.
+[11:08] <ubottu> bug 1101154 in gnome-session (Ubuntu) "all signal handlers have been removed in error" [Undecided,New] https://launchpad.net/bugs/1101154
+[11:11] <mitya57> pitti: I've updated the branch, please test if it builds for you now
+[11:13] <infinity> Oh, wait.
+[11:13] <infinity> pitti: Does your environment call debian/rules targets raw instead of using dpkg-buildpackage?
+[11:14] <infinity> (Not that that's a bad thing if it does, cause that's meant to work)
+[11:14] <infinity> Looks like dpkg-buildpackage has started exporting dpkg-architecture's variables to builds.  I wonder when that happened?
+[11:14] <infinity> But that's why it doesn't fail on buildds.
+[11:14] <infinity> Despite the package clearly being broken.
+[11:15] <pitti> infinity: indeed, it seems autopkgtest does that; dear Ian, why didn't you use dpkg-buildpackage?
+[11:15] <infinity> pitti: Perhaps because he wanted packages to be policy-compliant?
+[11:15] <pitti> opts.user_wrap(opts.gainroot+' debian/rules binary'),
+[11:15] <infinity> pitti: You did just find a bug after all. :)
+[11:16] <pitti> well, yes, but frankly that shouldn't be a bug
+[11:16] <pitti> if dpkg exports those for you, then it seems redundant to fix each and every debian/rules files to include them again
+[11:16] <infinity> It *is* a bug.  But not a particularly critical one, no.
+[11:16] <infinity> debian/rules targets are meant to work all by themselves without wrappers, however.
+[11:16] <infinity> And it's a bug when they don't.
+[11:17] <infinity> Still, if a-d-t is meant to replicate what a buildd does, dpkg-buildpackage -B/-b is probably saner.
+[11:17] <pitti> mitya57: so it builds now, but one of the tests fails; hang on, running interactively again
+[11:18] <infinity> Still, if a-d-t is meant to replicate what a buildd does, ('dpkg-buildpackage -b -r'+opts.gainroot) is probably saner.
+[11:18] <infinity> Err, assuming gainroot is what I think it is.
+[11:18] <infinity> (either sudo or fakeroot)
+[11:19] <pitti> right, that
+[11:19] <infinity> Oh, and a -uc -us on that commandline, so it doesn't vomit when you have no PGP key. :P
+[11:20] <infinity> Oh, unless there was a reason he was splitting build and binary targets, maybe?
+[11:20] <infinity> To allow for certain trickery?
+[11:20] <infinity> So one can test in between targets, maybe...
+[11:21] <pitti> mitya57: I get
+[11:21] <pitti> dpkg-checkbuilddeps: Unmet build dependencies: python-all
+[11:22] <pitti> mitya57: and indeed debian/tests/control does not require this
+[11:23] <pitti> mitya57: and once I install python-all, it fails with http://paste.ubuntu.com/1544820/
+[11:25] <mitya57> pitti: thanks, will look now
+[11:27] <chrisccoulson> jodh, thanks
+=== _salem is now known as salem_
+[12:03] <mitya57> pitti: can you please paste the full log for dh_usrlocal issue?
+[12:03] <mitya57> there should be something like: D: dh_python3:80: moving files from debian/python3-foo/usr/local/lib/python3.3/dist-packages to debian/python3-foo/usr/lib/python3/dist-packages/
+[12:04] <mitya57> the dependency is now fixed (python-all -> python3-all)
+[12:05] <mitya57> also, worksforme™
+[12:06] <pitti> mitya57: running again
+=== yofel_ is now known as yofel
+[12:08] <mitya57> pitti: ah, I've found the issue myself
+[12:08] <mitya57> EXTENSION_TAG = 'cpython-%smu'
+[12:08] <mitya57> it should be 'cpython-%sm' for 3.3
+[12:09] <mitya57> no, ignore that, I was looking at quantal's code, it's fixed in 3.3.x
+[12:10] <xnox> pitti: about app-install-data-partner, I was hoping for a magic script that i can point at the repository & it would fetch all packages, extract and generate all the needed icons/desktop files for me. Since we do that sort of thing for the main ubuntu archive, don't we?
+[12:10] <pitti> xnox: I'm not sure, i never really touched either; mvo knows this
+[12:11] <xnox> ack.
+[12:32] <jamespage> xnox, thanks for noticing I'd managed to not include that typo fix in my last openvswitch upload...
+[12:39] <mvo> xnox: hi, is it urgent? otherwise we should take monday, its just a script that runs and downloads a bunch of stuff
+[12:40] <xnox> mvo: monday is fine. in the mean time i'll try to verify the quantal-proposed to release that before i'll try to do a next round of fixes for oneiric->quantal.
+[12:40] <xnox> jamespage: =) just clearing up sponsorship queue.
+[12:40] <jamespage> xnox, nice one
+[12:40] <mvo> xnox: cool, I give you details then, need to look what bzr branch to run myself, but its just ./update.sh on a fast machine, should be automated on some server anyway ideally
+[12:41] <xnox> jamespage: I was like "what's the most scary package here, nobody wants to look at? ah openvswitch - hehe just a typo in a comment. win!"
+[12:42] <xnox> mvo: i total rekall something along those lines. maybe I even tinkered with it at one point (when my package was missing an icon in Software Centre)
+[12:42] <jamespage> xnox, I'd noticed the MP and commented and then completely failed to include it when I did the work early this week to upgrade to the new snapshot release.
+[12:42] <xnox> happens =)
+[12:42] <jamespage> yeah
+[12:42] <jamespage> rrd brain
+=== scott-work is now known as Guest94797
+=== MacSlow is now known as MacSlow|lunch
+=== cpg is now known as cpg|away
+[13:28] <pitti> mitya57: I'm sorry, forgot: complete log is at http://paste.ubuntu.com/1545274/
+[13:28] <mitya57> :)
+[13:29] <mitya57> pitti: in fact, I've finally set up my autopkgtest in pbuilder (as suggested by ScottK), and it fails with a different error for me
+=== slank_away is now known as slank
+[13:41] <mitya57> pitti: strange, your dh didn't run override_dh_pysupport target at all :(
+[13:42] <mitya57> (not honoring debian/compat=7?)
+[13:42] <mitya57> it runs it between dh_installinfo and dh_installinit for me
+[13:45] <mitya57> ah, it seems to run it only if /usr/bin/dh_pysupport exists, I'll now add a dependency on python-support
+[13:47] <ogasawara> @pilot in
+=== udevbot changed the topic of #ubuntu-devel to: Ubuntu 12.10 released | Archive: Open | Dev' of Ubuntu (not support or app devel) | build failures -> http://qa.ubuntuwire.com/ftbfs/ | #ubuntu for support and dicussion of hardy -> quantal | #ubuntu-app-devel for app development on Ubuntu http://wiki.ubuntu.com/UbuntuDevelopment | See #ubuntu-bugs for http://bit.ly/lv8soi | Patch Pilots: ogasawara
+[13:48] <infinity> mitya57: python-support?  Really?
+[13:48] <infinity> mitya57: The vile thing we kicked to universe intentionally? :P
+[13:49] <mitya57> infinity: ok, I'll better refactor debian/rules so that it doesn't use override_dh_pysupport
+[13:53] <mitya57> pitti, infinity: done
+[13:55] <pitti> mitya57: running again
+=== security is now known as megha
+=== sraue_ is now known as sraue
+[14:08] <pitti> mitya57: works now \o/
+[14:08] <mitya57> pitti: \o/
+[14:09] <mitya57> pitti: but: can that happen that you vm has libjs-jquery installed?
+[14:09] <mitya57> *your
+[14:09] <pitti> checking
+[14:10] <mitya57> for me it fails with "error: can't copy 'lib/foo/jquery.js': doesn't exist or not a regular file" when it's not installed
+[14:10] <pitti> mitya57: it indeed does
+[14:10] <mitya57> because it's a symlink
+[14:10] <mitya57> pitti: is it really needed there?
+[14:11] <pitti> presumably a reverse recommends of something
+[14:11]  * mitya57 adds a dependency on libjs-jquery
+[14:14] <mitya57> done
+[14:20] <davmor2> hey guys I just hit this on raring https://bugs.launchpad.net/ubuntu/+source/gnome-control-center/+bug/1101213 is there any other info that would be useful?
+[14:20] <ubottu> Ubuntu bug 1101213 in gnome-control-center (Ubuntu) "G-c-c printing doesn't allow you to select a hp printer" [Undecided,New]
+=== MacSlow|lunch is now known as MacSlow
+[14:37] <mitya57> ScottK: can I ask you to commit some of my changes to Debian?
+[14:37] <mitya57> I have prepared a branch: bzr+ssh://bzr.debian.org/~mitya57-guest/public_bzr/python3-defaults/merge-with-ubuntu
+[14:37] <ev> mpt: if we're trying to understand the frequency of the different reasons for not being able to process apport reports and thus would collect some information from a damaged or incomplete report, would there be something better to say than “No details were recorded for this error.”
+[14:38] <mpt> ev, that sounds perfect to me.
+[14:38] <mpt> oh, wait
+[14:38] <mpt> sorry
+[14:38] <ev> :)
+[14:38] <mpt> Didn't realize *why* it sounded perfect...
+[14:39] <mpt> ev, if you have anything to report at all, does that mean you have a timestamp at least?
+[14:45] <ev> mpt: as it creates a file, yes
+[14:45] <ev> would it be helpful if I collected the types of errors in parsing the report that we account for?
+[14:46] <mpt> ev, the reason I asked is that we could always show the timestamp, before the "No details were etc".
+[14:47] <ev> ah, that would be rather nice
+[14:49] <mpt> Spec updated: https://wiki.ubuntu.com/ErrorTracker?action=diff&rev2=135&rev1=134
+[14:51] <ev> mpt: I agree with that, but is that sufficient if we are still going to send some information for why we failed to parse that report (or ran out of memory in loading it, or the application isn't installed anymore, etc)?
+[14:52] <mpt> ev, ah, sure. Yes, it would be informative to distinguish those cases.
+[14:57] <cjwatson> mlankhorst: Can bug 1081122 be marked v-done now?  The three packages you mentioned are in precise-proposed.
+[14:57] <ubottu> bug 1081122 in x11proto-randr (Ubuntu Precise) "x11proto-(gl,randr,dri2)-dev need to be updated for backport stack" [High,Fix committed] https://launchpad.net/bugs/1081122
+[15:02] <mlankhorst> cjwatson: yeah considering the entire backports stack built :)
+[15:03] <cjwatson> mlankhorst: OK, thanks, I'll do that and promote it
+[15:04] <cjwatson> Should help the width of pending-sru.html too since x11proto-randr has a big long version ...
+[15:06] <cjwatson> mlankhorst: How about the backport stack itself?  Do you have a feel as to its safeness for -updates yet?
+[15:07] <mlankhorst> I think so, only outstanding bug is the mesa one with sru and https://bugs.launchpad.net/ubuntu/+source/libdrm/+bug/1086345
+[15:07] <ubottu> Ubuntu bug 1086345 in libdrm (Ubuntu) "Quantal-LTS-stack: Showing low-resolution screen on shutdown/reboot" [Critical,In progress]
+[15:07] <cjwatson> "the mesa one with sru"?
+[15:08] <mlankhorst> there's a mesa sru about libqt4-opengl-dev uninstalling the renamed stack, but it's solved by doing a sru in unrenamed mesa
+[15:08] <cjwatson> erk, yes, I agree renaming plymouth would be enormously painful
+[15:08] <cjwatson> bug 1098215
+[15:08] <ubottu> bug 1098215 in mesa (Ubuntu Precise) "installing libqt4-opengl-dev uninstalls renamed stack" [Critical,Fix committed] https://launchpad.net/bugs/1098215
+[15:10] <mlankhorst> I think we might have do an unrenamed copy of libdrm from quantal to precise, but I have no idea if we should also do a rebuild of the renamed stack without the renamed libdrm, it wouldn't be hard at least to do
+[15:10] <cjwatson> Hmm.  If you're going to do that it should be soon ...
+[15:11] <cjwatson> And yes, if you do that I think you should rebuild relevant bits of the stack against it
+[15:11] <mlankhorst> yeah I've been asking raof, but no reply yet :(
+[15:12] <cjwatson> So, I don't know.  Is it better to drop the current stack into -updates and fix that in a second round?
+[15:12] <cjwatson> infinity: ^- WDYT?
+[15:13] <cjwatson> It might mean people end up with orphaned libdrm-ltsq-* packages on their system - but I somehow can't see that as a huge deal
+[15:13] <mlankhorst> I can regenerate the entire stack easily, I always kept the option open of not renaming
+[15:13] <cjwatson> How much does it involve rebuilding?
+[15:13] <cjwatson> And hence reverifying?
+[15:15] <infinity> cjwatson: I'd prefer we not promote it while there are still open bugs on it, personally.  Especially with fundamental questions like this still floating.
+[15:15] <mlankhorst> in theory it's just removing libdrm-dev-lts-quantal from build-depends, and setting it back to libdrm-dev
+[15:15] <mlankhorst> and then doing a rebuild of all packages that link against libdrm-ltsq2 currently
+[15:15] <infinity> cjwatson: But you're the dot-two guy, it's your call.
+[15:15] <cjwatson> mlankhorst: How many's that?
+[15:16] <mlankhorst> mesa, xserver, vmware, openchrome, modesetting, intel, nouveau
+[15:16] <mlankhorst> and radeon I think
+[15:17] <cjwatson> So not totally awful
+[15:17] <cjwatson> infinity: Yeah.  I really want to get the new stack landed, but I think I agree with you.
+[15:17] <cjwatson> mlankhorst: OK.  Can we get this done today, then?
+[15:17] <mlankhorst> sure
+[15:17] <cjwatson> I can review stuff for you.
+[15:18] <mlankhorst> I'll do a upload against libdrm from quantal
+[15:18] <cjwatson> mlankhorst: Do we know that we don't need a new plymouth if we have a new libdrm?
+[15:19] <mlankhorst> quantal still builds the old nouveau1a, so we don't need a new plymouth, i think it might require a build fix to find the old nouveau, as does old xserver-xorg-video-nouveau
+[15:19] <mlankhorst> but that's only if you do a rebuild
+[15:19] <infinity> Yeah, that fix was in Q, it can be cherrypicked.
+[15:20] <cjwatson> We should include it, rebuild or not, but it needn't block libdrm
+[15:20] <cjwatson> IMO
+[15:20] <mlankhorst> yeah it's just changing configure.ac from looking for pkgconfig libdrm-nouveau to libdrm-nouveau1 iirc
+[15:21] <infinity> debian/patches/update-libdrm-nouveau-library-dependency.patch from http://launchpadlibrarian.net/112820397/plymouth_0.8.4-0ubuntu1_0.8.4-0ubuntu2.diff.gz
+[15:23] <cjwatson> apw: Hmm, I thought we'd switched to shipping just .signature in linux-signed for 12.04.2?
+[15:23] <cjwatson> apw: Urgh, maybe I forgot to backport those installer patches ...
+[15:23] <mlankhorst> ok I commented out the libdrm rename, regenerating entire stack.
+[15:28] <cjwatson> apw: Actually, maybe it doesn't matter.  I switched the livefs handling over, which is the important bit.  Ignore me :-)
+[15:30] <infinity> cjwatson: Any stellar plans on how we're going to shave the last ~12M off the precise CD size?
+[15:30] <cjwatson> infinity: I'm just downloading .1 so that I can start doing fine-grained comparison
+[15:31] <cjwatson> This is of course why I'm asking apw stupid questions :-)
+[15:31] <mlankhorst> 2.4.39.0ubuntu0.1 good enough as version for libdrm?
+[15:31] <cjwatson> WFM
+[15:32] <infinity> cjwatson: Well, we shrink a bit when we remove the duplicate libdrm.  But that won't be a lot.
+[15:32] <cjwatson> No, indeed
+[15:33] <cjwatson> infinity: Not seeing much else at the package level.  There's 2MB or so for SB loaders
+=== kirkland` is now known as kirkland
+[15:33] <cjwatson> (In terms of diff from .1)
+[15:33] <apw> cjwatson, i did think we had done it very much for the CD size issue in q
+[15:33] <apw> are we saying we didn't copy them back after all that
+[15:33] <mlankhorst> ok did a check, only build-depends changed on all affected packages, seems some more are affected than I thought
+[15:34] <cjwatson> apw: I backtracked later on in your scrollback - I was misreading
+[15:34] <mlankhorst> nochange stood for that i removed the changelog entries http://paste.ubuntu.com/1545795/
+[15:35] <cjwatson> Right.  I think we need to suck those up.
+[15:36] <cjwatson> From the sounds of your assessment of the libdrm bug, anyway.
+[15:36] <mlankhorst> yeah
+[15:36] <cjwatson> Would be nice to get feedback from RAOF too, but we're running out of time for .2
+[15:37] <apw> cjwatson, phew :)
+[15:37] <mlankhorst> I mailed him about it on the 15th (well 16th for him), but didn't receive a relpy
+[15:37] <mlankhorst> anyhow rebuild order is libdrm, mesa, xorg-server, rest
+[15:38] <infinity> x11-xserver-utils	7.6+3
+[15:38] <infinity> x11-xserver-utils-lts-quantal	7.7~3ubuntu1~precise1
+[15:38] <infinity> Do we need two of those?
+[15:38] <mlankhorst> the second one only has xrandr
+[15:39] <mlankhorst> and in fact depends on x11-xserver-utils for the rest :)
+[15:39]  * ogra_ hopes all of that -lts stuff was heavily tested on arm before uploading ...
+[15:40] <infinity> ogra_: Seems unlikely, since it's meant to go with the lts-quantal kernel, which is x86-only.
+[15:40] <ogra_> oh, ok, i thought it replaced the shipped xorg through -updates
+[15:40] <mlankhorst> I did test it on arm once
+[15:40] <ogra_> yeah, dont bother if it needs kernel changes arm doesnt have
+[15:40] <mlankhorst> but it was a bit of a pain because of blob being incompatible
+[15:40] <cjwatson> ogra_: No, it's a replacement for new installs
+[15:40] <infinity> ogra_: The general theory is that people can choose one stack or the other, it's not forced on you.
+[15:40] <ogra_> k
+[15:41] <cjwatson> If it switches on upgrade then (AFAIK) that's a v-failed
+[15:41] <mlankhorst> only compiz failed on my pandaboard :)
+[15:41] <ogra_> mlankhorst, yeah, thats normal ... i'm still scared nvidia wont provide us a tegra update before we change the abi in raring
+[15:42] <stgraber> cjwatson: when you have a minute can you let my e-mail to ubuntu-devel-announce through
+[15:42] <cjwatson> stgraber: dodne
+[15:42] <cjwatson> -d
+[15:43] <stgraber> cjwatson: thanks
+[15:43] <mlankhorst> hm I need to fix the changelog entries
+[15:44] <cjwatson> mlankhorst: llvm-3.1 should be good to promote to -updates, right?  No libdrm dep there
+[15:44] <mlankhorst> yeah
+[15:46] <mlankhorst> hm is it ok if I rewrite the most recent changelog entry? my package generate scripts can't keep the old ones
+[15:47] <cjwatson> Err, not exactly sure what you mean
+[15:47] <cjwatson> What package?
+[15:47] <cjwatson> And you can't reuse the same version if it's already in -proposed
+[15:48] <mlankhorst> all *-lts-quantal ones :)
+[15:48] <cjwatson> Show me an example diff
+[15:49] <mlankhorst> it's just that when I upload ~precise2, the ~precise1 entry gets deleted
+[15:49] <cjwatson> I'd still like to see an example diff :)
+[15:50] <infinity> If the entries are just something like "autogenerated backporty thingamajig", and you're saying that it's easier to just generate a ~precise2 without preserving the ~precise1 history, that would be fine.
+[15:50] <mlankhorst> http://paste.ubuntu.com/1545849/
+[15:50] <mlankhorst> infinity: I'll try to preserve it in ~precise3, but that has to wait
+[15:50] <infinity> Yeah, preserving the history on that isn't meaningful.
+[15:51] <cjwatson> That's tolerable, if confusing for anyone watching closely
+[15:51] <cjwatson> Do fix your scripts, but not worth delaying in this instance
+[15:51] <mlankhorst> yeah
+[15:51] <infinity> Dropping old changelog entries messes with apt-listchanges' tiny brain, but I'm probably the only person who still uses it.
+[15:51] <cjwatson> I do!
+[15:52] <mlankhorst> I use it, and it's not that confused about it
+[15:52] <cjwatson> Quite a few things seem to mess with its brain.  Is that what causes it to show all changelog entries ever sometimes?
+[15:52] <infinity> Ahh, well then.  Yay.
+[15:52] <mlankhorst> I think it got smarter about it though
+[15:52] <infinity> cjwatson: It shows the whole changelog if it can't find the entry for your currently installed version, yeah.
+[15:52] <infinity> cjwatson: Though, there seem to be other cases where it does so as well.
+[15:52] <cjwatson> Mm.  But syncing over Ubuntu modifications would do the same, and we do that all the time ...
+[15:52] <infinity> Maybe someone fixed that at some point.
+[15:53] <infinity> Would just take a simple version compare and walking the known versions.
+[15:53] <cjwatson> Well, I still get it showing me the whole changelog quite a lot :)
+[15:53] <cjwatson> So maybe it's still there
+[15:53] <infinity> I only run it on my stable production machines, maybe I should re-enable it on my raring laptop and actually fix the things that annoy me some time.
+[15:53] <mlankhorst> I uploaded libdrm, still playing with the stack, trying to add an entry
+[15:58] <mpt> ev, I added a stub "Cross-release comparisons" list. https://wiki.ubuntu.com/ErrorTracker?action=diff&rev2=136&rev1=135
+[16:02] <mlankhorst> dpkg-mergechangelog ftw
+[16:08] <mlankhorst> ok I think I may be able to upload precise2 rebuilds now
+[16:09] <apw> cjwatson, does LVM install ticky do anything in raring live CDs ?
+[16:10] <xnox> apw: in desktop cd, it is meant to do separate /boot and the rest / on top of lvm.
+=== henrix is now known as henrix_
+[16:10] <apw> the effect seems to be to do nothing
+[16:11] <mlankhorst> ok great, I can preserve history of changelogs..
+[16:11] <apw> xnox, it cirtainly is not doing that at all or indeed doing anything different at all
+=== henrix_ is now known as henrix
+[16:12] <xnox> apw: ... and you are doing wipe & install? (if you are doing upgrade or resize or reuse or replace it will do nothing)
+[16:13] <xnox> as in the checkbox will not have any affect, unless it's a pure wipe & install.
+[16:13] <apw> xnox, wipe and install indeed
+[16:13] <ogra_> tjaalton, whats the status on the nx7 input issue, we're just having the weekly nx7 meeting in #ubuntu-meeting
+[16:13] <apw> though actually it just puked and broke, and didn't install a thing, gah
+[16:13] <xnox> ok. I'll look into it.
+[16:13] <mlankhorst> it's a bit of a hack, but ok it worked..
+=== chiluk is now known as chiluk_away
+[16:18] <arges> hi. if I add the ddeb repo on precise on my x86_64 machine, and install the linux-image-3.2.0-36-dbgsym my /usr/lib/debug/vmlinux-* file is 32-bit ... is this a user-error or bug?
+[16:20] <mlankhorst> cjwatson: ok want me to upload the new affected packages too?
+[16:20] <cjwatson> mlankhorst: Still reviewing libdrm
+[16:21] <cjwatson> mlankhorst: We're going to need to backport a patch or two in plymouth aside from the build issue - bug 927424 at least
+[16:21] <ubottu> bug 927424 in plymouth (Ubuntu Precise) "Please backport commit to enable building without irrelevant drm libs on some arches" [Undecided,New] https://launchpad.net/bugs/927424
+[16:21] <mlankhorst> hm right
+[16:22] <mlankhorst> sorry - I completely forgot that building intel on arm was needed
+=== chiluk_away is now known as chiluk
+[16:22] <cjwatson> mlankhorst: Do you want to do the plymouth changes or should I?  If you do it then I can review :)
+[16:23] <mlankhorst> ok let me check
+[16:24] <ev> mpt: thanks
+[16:25] <cjwatson> mlankhorst: I don't know if you need bug 1018907 as well - hopefully not, since the patch for that was quite large
+[16:25] <ubottu> bug 1018907 in plymouth (Ubuntu Quantal) "plymouth in quantal on arm does only boot with black screen" [High,Fix released] https://launchpad.net/bugs/1018907
+[16:26] <mlankhorst> for 12.04.3 we want plymouth from raring, and disable libdrm-intel/nouveau/radeon entirely
+[16:26] <cjwatson> I guess that was mostly associated with having a new kernel, not with having a new libdrm
+[16:26] <cjwatson> .3> somebody else's problem ;-)
+[16:27] <infinity> arges: Seems weird that you got the i386 package.
+[16:27] <mlankhorst> yeah we don't have to worry about that arm patch, i think it's about more about the new omap driver
+[16:27] <infinity> arges: On the other hand, it's equally weird that the amd64 one didn't make it to the ddeb mirror. :/
+[16:27] <mlankhorst> and it would also work with plymouth from raring if it exposes the dumb api
+[16:27] <arges> infinity: hmm : ) that might be the issue
+[16:28] <infinity> arges: Oh, right.  And if you have a multiarch system, it would have dutifully grabbed the next best thing if the amd64 one didn't exist.  Which it doesn't.
+[16:28] <infinity> That's mildly irksome.
+[16:28] <mlankhorst> cjwatson: bad news though, that patch doesn't apply cleanly to precise plymouth :(
+[16:29] <mlankhorst> iirc I investigated it before, and there were some other changes in upstream git before that
+[16:29] <cjwatson> Do you want me to take care of it then?  I can probably find another reviewer
+[16:30] <cjwatson> It shouldn't be horribly difficult
+[16:30] <mlankhorst> nah I'll do it from the git tree
+[16:31] <infinity> pitti: Did we lose some ddebs with the host cutover?
+[16:31] <cjwatson> Please don't backport any other patches if you can possibly avoid it
+[16:31] <cjwatson> I don't want plymouth from git for .2 ...
+[16:31] <infinity> pitti: Or is the missing set of linux/precise-updates/amd64 udebs just bad luck from our crappy hack sometimes have a sad?
+[16:31] <pitti> infinity: I don't think we did; macquarie had been out of space for 4 or 5 days, and I retrieved the last 7 days from germanium
+[16:31] <infinity> s/udebs/ddebs/
+[16:32] <mlankhorst> cjwatson: nah just for easier diffing
+[16:32] <pitti> infinity: they have a tendency to disappear, but whenever someone notices it the last upload was more than 7 days ago..
+[16:32] <infinity> pitti: Oh well.  Not world ending if they're gone, just a bit of a shame that the one we happen to lose is going to be the 12.04.2 CD kernel.
+[16:32] <pitti> meh
+[16:33] <infinity> Oh, wait.  No it's not.  It's 3.2.0 that went missing, not 3.5.0
+[16:33] <infinity> So, I care even less than I did 2 minutes ago.
+[16:33] <pitti> Tue, 08 Jan 2013 18:36:32 +0000
+[16:33] <pitti> damn
+[16:33] <pitti> three days too late
+[16:33] <infinity> But we reeeeally need to spend a day going through, bit by bit, every thing we need to verify and fix in the pipeline to get this in the librarian.
+[16:33] <pitti> infinity: but 3.2.0 is the precise one
+[16:34] <infinity> pitti: But the 12.04.2 kernel is 3.5.0 :)
+[16:34] <pitti> ah :)
+[16:34] <arges> i thought ddebs.ubuntu.com was upgraded with more space recently?
+[16:35] <infinity> arges: Yeah, very recently.
+[16:35] <arges> so was the ddeb issue related to space or a script problem?
+[16:35] <infinity> arges: Or a buildd disappearing at the wrong time, or any number of other random things that make the current hack so fragile.
+[16:36] <infinity> (In other words: I dunno, and it's too late to hunt it down and fix it)
+[16:36] <pitti> arges: the main cause for lost ddebs had been -ENOSPC, but given how often kernel ddebs go AWOL I have a feeling that there's a script or packaging problem as well
+[16:36] <pitti> arges: we really need to debug this when a kernel upload has happened within the last 7 days, and the ddebs disappeared
+[16:36] <infinity> pitti: I suspect kernel ddebs don't actually get lost any more than others, they're just used more often so people notice.
+[16:36] <mlankhorst> oh right we didn't have a libkms yet, that's why it fails
+[16:36] <pitti> arges: or, having a backup of the .ddebs, that works too
+[16:36] <infinity> pitti: But it could also be because they're huge.
+[16:37] <pitti> infinity: yeah, true; I certainly still see a lot of "missign dbgsym" messages in apport retracer logs
+[16:37] <arges> unfortunately in this case i assume the 3.2.0-36 amd64 ddeb was never uploaded so there was nothing to rsync
+[16:37] <infinity> arges: None of them are "uploaded".
+[16:38] <infinity> arges: They're left in ~/public_html/ on the buildd, and fetched by a script.  There are so many wonderful ways that can go wrong, it's not worth mentioning.
+[16:38] <infinity> We just need to stop doing that and upload them to the librarian instead.
+[16:38] <infinity> See above, re: tracing everything we need to verify (and fix) to make that a reality.
+[16:38] <arges> infinity: ok. so how i can help with this?
+[16:40] <infinity> Run a local instance of launchpad, twiddle some things to make it ask builds to include ddebs in .changes, trace the process from build to upload to publish, see what explodes and why.
+[16:40] <pitti> way to scare off people on a Friday evening..
+[16:40] <arges> whoa
+[16:40] <arges> : )
+[16:41] <infinity> pitti: I'm a people person.
+[16:41] <cjwatson> Not that the librarian is totally without space problems
+[16:41] <infinity> pitti: Also, "I run a local launchpad instance" is a great pickup line.
+[16:42] <infinity> cjwatson: Yeah, the last time we brought this up, we were told it would be alright, but I've been paying attention to recent space firefighting issues.
+[16:42] <pitti> infinity: I have a certain feeling about the kind of people you're gonna pick up with that
+[16:42] <cjwatson> https://lpstats.canonical.com/graphs/LibrarianFreeDiskSpace/ (company-only, sorry)
+[16:42] <infinity> cjwatson: Still worth getting all our ducks in a row WRT making sure it all works right so we can flick the switch when we're told it's okay.
+[16:42] <cjwatson> Yeah
+=== mossplix_ is now known as mossplix
+[16:43] <infinity> I love whoever decided that "22" comes after "2".
+[16:44] <infinity> I guess if you say it out loud as "serve, serve two, and serve two two (or two too?)" it almost makes sense.
+[16:46] <pitti> urgh, what happened yesterday?
+[16:46] <pitti> did we remove 10 old releases or so?
+[16:47] <brendand> is unittest-xml-reporting available for python3 at all?
+[16:48] <mlankhorst> ok I think I got the plymouth patch reworked, will have to test in a vm first
+[16:51] <cjwatson> pitti: slightly long story, but trimming of some private PPAs that needed expiry and had never had any
+[16:53] <tjaalton> ogra_: nothing to brag about :/
+[16:53] <ogra_> tjaalton, pretty bad, couldnt we push the fix into our packages ?
+[16:53] <tjaalton> ogra_: i'll ping the upstream dev next week
+[16:54] <ogra_> thx !
+[16:54] <tjaalton> there is no fix
+[16:54] <ogra_> note that we have weekly meetings for nx7 progress oin fridays at 16:00 UTC
+[16:54] <tjaalton> it's just as broken upstream, but no patchset we've tried has helped any
+[16:55] <ogra_> hmpf, k
+[16:55] <tjaalton> i'm currently at a recording session, couldn't join you this time :)
+[16:55] <ogra_> k
+[17:03] <mlankhorst> cjwatson: erm, what is the autoreconf patch for?
+[17:05] <cjwatson> mlankhorst: sorry?
+[17:06] <cjwatson> mlankhorst: I expect it's the usual ...
+[17:06] <cjwatson> mlankhorst: It dates from before dh-autoreconf being widespread, and we should probably fix that now, but not for precise
+[17:09] <mlankhorst> ah k
+[17:09] <mlankhorst> well it's complaining about nouveau_drmif.h, I suppose I'll need to update it then
+=== Guest96244 is now known as fisted
+[17:09] <cjwatson> Yeah
+=== henrix_ is now known as henrix
+=== henrix is now known as henrix_
+=== henrix_ is now known as henrix
+=== davidcalle_ is now known as davidcalle
+[17:26] <mlankhorst> well plymouth builds now
+[17:27] <cjwatson> infinity: a certain amount is that the new kernel (+drivers) is just plain bigger, and that's partly duplicated in the initramfs
+[17:28] <infinity> cjwatson: We could delete the initramfs from the livefs. :P
+[17:29] <cjwatson> libxul.so has grown rather dramatically
+[17:29] <cjwatson> (9MB or so)
+[17:29] <cjwatson> infinity: It's not in the livefs
+[17:29] <infinity> Oh, kay.  Cause I was gonna say, it shouldn't be if it is.
+[17:29] <cjwatson> infinity: The duplication I meant was between /lib/modules in the initramfs and the livefs
+[17:30] <infinity> Yeah.
+=== Tonio_ is now known as Tonio_aw
+[17:31] <infinity> Alright, I'm finally going to get some sleep.  10:30am seems like a reasonable bed time.
+[17:31] <xnox> indeed.
+[17:31] <cjwatson> /usr/lib/x86_64-linux-gnu/dri/ is up 15MB
+[17:31] <cjwatson> But, again, no idea what to do there
+[17:31] <infinity> cjwatson: That seems excessive...
+[17:32] <cjwatson> mlankhorst: How come the drivers in /usr/lib/x86_64-linux-gnu/dri/ aren't dynamically linked against libdricore any more?
+[17:34] <infinity> Oh, if those objects are all statically linked, that explains their massive size.
+[17:34] <mlankhorst> build system changes in mesa? anyhow it should still compress well
+[17:34] <cjwatson> They're not entirely static
+[17:34] <infinity> And based on the size, I'm guessing there's 6 of them?
+[17:34] <cjwatson> mlankhorst: You trust squashfs to notice that?
+[17:34] <mlankhorst> at least when I checked, the .deb size was only like 1 mb more
+[17:34] <cjwatson> infinity: There are a bunch
+[17:35] <infinity> cjwatson: Well, I'm just counting the 6 that are all >> 4MB.
+[17:35] <infinity> And since libdricore is about 3.7MB, that seems to add up.
+[17:35] <cjwatson> $ cat 1/usr/lib/x86_64-linux-gnu/dri/* | gzip -9c | wc -c
+[17:35] <cjwatson> 5657705
+[17:35] <cjwatson> $ cat 2/usr/lib/x86_64-linux-gnu/dri/* | gzip -9c | wc -c
+[17:35] <cjwatson> 10384236
+[17:36] <cjwatson> If gzip on its own doesn't notice, I'd be surprised if squashfs did
+[17:36] <mlankhorst> cjwatson: try tarring first, then gzip it..
+[17:36] <cjwatson> mlankhorst: Can you (get somebody to) look into this please?  We're very pressed for size
+[17:36] <mlankhorst> is it about the renamed stack?
+[17:37] <infinity> It's the new mesa.
+[17:37] <cjwatson> Size changes vs. 12.04.1.  We are way oversized and there are not many paths left to get back under size
+[17:37] <cjwatson> $ tar -czf - 1/usr/lib/x86_64-linux-gnu/dri | wc -c
+[17:37] <cjwatson> $ tar -czf - 2/usr/lib/x86_64-linux-gnu/dri | wc -c
+[17:37] <cjwatson> 10447832
+[17:37] <infinity> This same bug exists in raring.
+[17:37] <cjwatson> 5688816
+[17:37] <mlankhorst> hmz
+[17:37] <cjwatson> Even aside from the notion that tar might somehow improve compressibility vs. cat ...
+[17:37] <mlankhorst> ok can someone look at plymouth then? I made a .diff but I can't test it locally atm
+[17:38] <cjwatson> Pass it over to me; I can't actually test but I can test-build, if that will help
+[17:38] <cjwatson> And I can add a sanity-check layer
+[17:39] <cjwatson> mlankhorst: This won't solve all our size problems, but it amounts to about a third of it
+[17:39] <mlankhorst> test-build works, http://people.canonical.com/~mlankhorst/plymouth_0.8.2-2ubuntu31.debdiff
+[17:40] <mlankhorst> autoreconf diff is massive :(
+[17:41] <cjwatson> Running autoreconf on precise might be a bit smaller
+[17:41] <mlankhorst> I'm on precise + quantal xserver
+[17:42] <cjwatson> Bluff, that says autoconf 2.69
+[17:42] <cjwatson> And precise had 2.68
+[17:42] <infinity> mlankhorst: Pick the same autoconf and automake versions as the previous package used (you can check headers in configure)
+[17:42] <xnox> bzr shelve debfx ch
+[17:42] <cjwatson> Anyway, I don't care that much about the size of the autotools delta as long as it builds
+[17:43] <mlankhorst> huh, no idea how I got autoconf 2.69
+[17:43] <mlankhorst> must have installed it mnaually at one point
+[17:43] <mlankhorst> but I forgot what for
+[17:43] <cjwatson> Maybe we should just upload everything and test in situ in -proposed
+[17:43] <arges> has anybody had luck installing raring with the daily iso?
+[17:43] <cjwatson> I mean, this looks basically reasonable
+[17:44] <chiluk> arges I installed raring about a week ago with the daily
+[17:44] <mlankhorst> let me figure out which packages need renaming then
+[17:44] <arges> my T420/x220 are not working with 20130118
+[17:44] <mlankhorst> and uploading
+[17:45] <cjwatson> "not working" isn't too informative
+[17:45] <arges> sorry. it is getting stuck booting the kernel so I never reach the first installer scren
+[17:45] <arges> i'll need to boot in verbose mode
+=== ximion is now known as ximion-afk
+[17:47]  * mlankhorst is going to pretend wayland didn't regress in his rebuilt version..
+[17:47] <mlankhorst> somehow it didn't rename it properly, weird
+[17:48] <arges> looks like it gets to * Stopping Syste V runlevel compatibiltiy * Starting, then i see a cursor and it doesn't respond at all (can't switch to virtual terminal)
+[17:52] <mlankhorst> cjwatson: ok I uploaded all the affected packages as well, they should be identical in debdiff, apart from build-depends and changelog entry :)
+[17:54] <mlankhorst> you want to wait with uploading the drivers until xorg-server is rebuilt though, since in the worst case it could rebuild against the renamed one still, since it provides libdrm-dev
+=== ximion-afk is now known as ximion
+[18:00] <mlankhorst> cjwatson: fwiw, the build system changes to mesa in quantal made it hard to backport the patches, and at the time those changes have not been completed, so I think we decided to drop it, if I dig I may be able to find back the patch though
+[18:02] <cjwatson> drop which?
+=== chiluk is now known as chiluk_away
+[18:09] <cjwatson> mlankhorst: could you upload that plymouth too?
+[18:11] <mlankhorst> the patch :)
+[18:11] <cjwatson> the one you posted earlier, yeah
+[18:12] <cjwatson> just because I don't really want to accept libdrm without being able to accept that at the same time or shortly after
+[18:12] <cjwatson> (probably at the same time, since it has a tight build-dep)
+[18:12] <mlankhorst> ok but not sure I can upload to plymouth
+[18:12] <cjwatson> oh
+[18:12] <cjwatson> ok, sure, I can sponsor+accept that then
+[18:14] <mlankhorst> http://people.canonical.com/~mlankhorst/plymouth_0.8.2-2ubuntu31.debian.tar.gz http://people.canonical.com/~mlankhorst/plymouth_0.8.2-2ubuntu31.dsc http://people.canonical.com/~mlankhorst/plymouth_0.8.2-2ubuntu31_source.changes ?
+[18:14] <cjwatson> it's ok, I already built source locally
+[18:16] <cjwatson> mlankhorst: if you could invent and fill in some kind of test case in bug 927424, that'd be helpfu
+[18:16] <ubottu> bug 927424 in plymouth (Ubuntu Precise) "Please backport commit to enable building without irrelevant drm libs on some arches" [High,Triaged] https://launchpad.net/bugs/927424
+[18:16] <cjwatson> l
+[18:16] <cjwatson> (I won't block accepting on that though)
+[18:17] <mlankhorst> cjwatson: I can test on my pandaboard if you want
+[18:18] <cjwatson> the more the merrier
+[18:21] <cjwatson> mlankhorst: I still don't quite understand what mesa patch you were talking about above ...
+[18:21] <cjwatson> mlankhorst: is this something to do with the static linking problem?
+[18:22] <mlankhorst> oh sorry, had to get some food since its late here. It was intended to be about mesa, we kept the shared dricore patch, but didn't use it in quantal since the build system kept changing
+[18:23] <cjwatson> right
+[18:23] <cjwatson> ok, so I'm afraid I think that's .2-critical - I'm going to have to take a hatchet to other things as it is, and I'd rather not chop off too much stuff we actually need
+[18:24] <mlankhorst> it looks like it's nice and small
+[18:26] <mlankhorst> hm, isn't dricore already shared though?
+[18:27] <infinity> It's a shared library, but then all the stuff in /usr/lib/triplet/dri is unhelpfully statically linked to it.
+[18:27] <infinity> mlankhorst: ^
+[18:27] <mlankhorst> ah :/
+[18:31] <mlankhorst> isn't it libgallium that's big?
+[18:32] <debfx> xnox: ??
+=== henrix is now known as henrix_
+[18:32] <xnox> debfx: hello =)
+[18:32] <debfx> hi
+[18:33] <cjwatson> mlankhorst: Is that the same as libLLVM-3.1?
+[18:33] <debfx> why would you shelve me? :(
+[18:33] <cjwatson> Oh, no, separate thing
+[18:33] <xnox> debfx: i'm not sure what you mean. What's up?
+[18:33] <cjwatson> mlankhorst: libgallium may be big but so is libdricore - hard to say what's contributing to the giant size increase exactly
+[18:34] <cjwatson> -rw-r--r-- 1 root root 3681104 Dec  4 08:44 2/usr/lib/x86_64-linux-gnu/libdricore9.0.0.so.1.0.0
+[18:34] <debfx> xnox: [18:42:28] <xnox> bzr shelve debfx ch
+[18:34] <xnox> hmmm... interesting =) let me grep my logs.
+[18:34] <mlankhorst> cjwatson: afaict, all the gallium drivers are big, while the intel ones etc are small
+[18:35] <sarnold> xnox: .. just an hour ago :)
+[18:35] <mlankhorst> so considering the evidence, I would say the conclusion is that we have to build gallium shared
+[18:35] <cjwatson> mkay
+[18:35] <mlankhorst> omg, shared-gallium patch still applies cleanly
+[18:35] <xnox> debfx: i remember. my system froze and while my curson was in the terminal it was not typing anything. I was meant to do $ bzr shelve deb<tab>, to shelve ./debian/ changes in my current branch.
+[18:36] <xnox> well ./debian/changelog to be precise. hence the ch later =)
+[18:36] <mlankhorst> this may be easier than  Ithought
+[18:36] <sarnold> xnox: hehe, nice ;)
+[18:36] <debfx> heh :)
+[18:36] <xnox> debfx: sorry for misspinging you. But I do want to talk to you about CMake and multiarch
+[18:37] <xnox> debfx: cause my other logs say you might be an expert there =)
+[18:37] <xnox> debfx: do you maintain cmake in debian or not?!
+[18:38] <mlankhorst> cjwatson: you're lucky, try building mesa with this.. http://paste.ubuntu.com/1546304/
+=== Ursinha-afk is now known as Ursinha
+[18:39] <debfx> xnox: I'm not maintaining it though I have done several uploads in Ubuntu
+[18:40] <debfx> I hope your question doesn't involve python
+[18:40] <xnox> BINGO! =)
+[18:40] <xnox> ok never mind.
+[18:40] <xnox> then ;-)
+[18:42] <cjwatson> mlankhorst: Haha
+[18:43] <mlankhorst> cjwatson: iirc, before the quantal release I did refresh the shared gallium patch, but with the build system possibly still in flux, and the patch quite involved, we went with disabling it
+[18:43] <cjwatson> mlankhorst: (I'm not going to just now, frantically trying to fit in a last few things before dinner)
+=== james_w` is now known as james_w
+=== ximion is now known as ximion-afk
+=== ximion-afk is now known as ximion
+=== Ursinha is now known as Ursinha-afk
+=== Ursinha-afk is now known as Ursinha
+[19:51] <jemadux> one question ... will ubuntu 12.04.2 have some packages from 12.10 ?
+[19:57] <xnox> jemadux: that's not really a development question, but rather #ubuntu support question. The answer is no it doesn't not have packages from 12.10. But we did backport & recompile: linux-kernel & X stack from 12.10 (quantal) and it's available to manually install in precise from -updates pockets. It will also be used by default on the 12.04.2 iso images.
+[19:58] <xnox> jemadux: also SecureBoot will be part of 12.04.2
+[19:59] <jemadux> ooh i see .backports
+[19:59] <xnox> jemadux: no, not backports. It's new source packages names published in the -updates pocket. You can choose to install them, if you wish, but one will not get auto-upgraded to them.
+[20:00] <xnox> they are only used by default if one uses 12.04.2 installation media.
+[20:00] <xnox> jemadux: look for packages named *-lts-quantal
+[20:00] <xnox> after 12.04.2 is released.
+[20:00] <xnox> currently they are being tested in -proposed pocket.
+[20:00] <jemadux> a i see ...
+=== chiluk_away is now known as chiluk
+=== chiluk is now known as chiluk_away
+=== chiluk_away is now known as chiluk
+[20:34] <hallyn> stgraber: hey, so for bug 1084000, do you see any downside to using the suggestion solution in the debian bug?  (namely, depending on and using the kernel headers)
+[20:34] <ubottu> bug 1084000 in libcap2 (Ubuntu) "libcap2: List of capabilities not in sync with the linux kernel" [High,In progress] https://launchpad.net/bugs/1084000
+[20:35] <hallyn> I've emailed the upstream maintainer twice, no reponse :(  probably on an extended vacation (or I'm in killfile :)
+[20:35] <hallyn> of course another alternative would be to (temporarily) fork the libcap code and just manually insert the missing capabilities
+[20:36] <sarnold> hallyn: apparmor used to use the kernel's headers too, but when the package is compiled on a machine with an older kernel (or software deployed on newer kernels), then the caps just aren't known / available...
+[20:37] <hallyn> sarnold: good point
+[20:37] <stgraber> hallyn: patch seems reasonable, it's not perfect (as sarnold said) but it's an improvement anyway
+[20:37] <hallyn> heh.  very good point.
+[20:37] <stgraber> ideally you'd want a way to grab the list from the running kernel, but if there was, people would be doing it :)
+[20:37] <sarnold> stgraber: yes :)
+[20:38] <hallyn> stgraber: there is a way,
+[20:38] <hallyn> using the bounding set
+[20:38] <sarnold> hallyn: but you don't get to know the names that way, right? (not sure if your use case cares..)
+[20:38] <cyphermox> hallyn: stgraber uploaded network-manager with a patch to fix the handling of bridge
+[20:38] <cyphermox> there was punctuation missing there
+[20:39] <hallyn> cyphermox: \o/
+[20:39] <hallyn> thanks
+[20:39] <cyphermox> let me know how that goes
+[20:39] <hallyn> sarnold: correct
+[20:39] <hallyn> cyphermox: oh, i misread
+[20:39] <cyphermox> hallyn: given that the interface got already trampled you might want to reboot and stuffs
+[20:39] <cyphermox> hallyn: what?
+[20:40] <hallyn> cyphermox: nothing, i'm goign to shut up now
+[20:40] <cyphermox> hallyn: it works for me, lxcbr0 doesn't get overriden now
+[20:40] <hallyn> cyphermox: so you're saying missing punctuation caused the bug, or that there ismissing punctuation in what he uploaded?
+[20:41] <cyphermox> no, there is missing punctuation in my message, I uploaded, he didn't .
+[20:41] <cyphermox> :)
+[20:41] <hallyn> cyphermox: got it :)  then, again, thanks
+[20:42] <hallyn> sarnold: stgraber: no, then again, i think i prefer to hand-massage the capability.h file in libcap2.  do you object?
+[20:42] <hallyn> (as kernel capabilities maintainer, in theory i should not be missing out on any updates in the kernel...)
+[20:42] <hallyn> (so it should not be unmaintainable)
+[20:42] <sarnold> hallyn: don't mind me :) I just wanted to give you one more data point. hehe.
+=== chiluk is now known as chiluk_away
+[20:46] <hallyn> sarnold: but the builders will always have the right linux-libc-dev ....  right?
+[20:47] <sarnold> hallyn: builders may still run a different kernel than the deployed environment..
+=== salem_ is now known as _salem
+[20:52] <hallyn> sarnold: right, but the patch on the debian bug doesn't check the running kernel, so that's ok
+=== _salem is now known as salem_
+[21:00] <stgraber> hallyn: linux-libc-dev should usually get your pretty recent headers. Only case where it may miss some things is with kernel backports to LTS
+[21:01] <stgraber> hallyn: if you end up going the linux-libc-dev route, please add a comment in the changelog saying to do a no-change rebuild of the package when new capabilities are added
+[21:06] <hallyn> stgraber: if new capabilities are added to the kernel?
+[21:06] <hallyn> stgraber: only thing is, I assume this will eventually go in through debian using the originanl patch, so that changelog entry would get lost.
+[21:08] <stgraber> hallyn: well, hopefully the Debian maintainer will think of making some note similar to that or will just remember to do a no change rebuild whenever a new capability is added to linux-libc-dev
+[21:09] <sarnold> the trouble is htose are fairly rare events :)
+[21:12] <zobel> xnox: can you PLEASE stop hijacking my package ed in ubuntu!
+[21:12] <zobel> i maintain it in debian and ubuntu.
+[21:13] <zobel> and 17h from a bug report to a hijack is IMHO a no-go!
+[21:14] <jtaylor> ed is not modified in ubuntu?
+=== salem_ is now known as _salem
+=== cmagina is now known as cmagina_away
+=== cmagina_away is now known as cmagina
+[21:18] <zobel> http://launchpadlibrarian.net/128823514/ed_1.6-2ubuntu1_source.changes
+[21:18] <zobel> it was
+[21:20] <hallyn> stgraber: of course in verifying that bug, i  noticed lxc-setcap is broken wrt the new lxc-init location.  We discourage lxc-setcap, so not sure how much we care
+[21:21] <stgraber> hallyn: well, if it's broken I suppose we should fix it upstream at least ;) As for Ubuntu, I'm tempted to say we should drop lxc-setcap and lxc-setuid from the package
+[21:22] <hallyn> stgraber: is there any other place i could put that note, where ppl would actually see it?
+=== cmagina is now known as cmagina_away
+[21:23] <stgraber> hallyn: you could put it in a README.MAINTAINER file or something similar in debian/, not sure it'd be much more visible though
+[21:23] <hallyn> ok, changelog it is, thanks :)
+=== cmagina_away is now known as cmagina
+[21:27] <hallyn> stgraber: yuck.  with that patch, capsh --print shows '35,36' rather than the capability names, though.
+[21:29] <hallyn> So forget it.  I'll patch the file and send that to amorgan.
+=== chiluk_away is now known as chiluk
+[21:37] <zequence> What would be a meaningful channel/mail list to discuss problems with help.ubuntu.com/community, regarding editing privileges (seems like some new accounts can't edit or add pages)
+[21:40] <hallyn> there, that looks better
+[21:49] <xnox> zobel: i am sorry. it wasn't evident from package history, since it's so well kept in sync. note that currently there are significant efforts being put into cross-building & cross-bootstrapping ubuntu and we have cross-builder network running. and we want as much ubuntu-main to cross-build as possible.
+[21:50] <zobel> xnox: see my recent (the second mail) which i send directly to you.
+[21:50] <xnox> one second. let me check.
+[21:51] <zobel> like... 2-3min old.
+[21:54] <ScottK> zequence: Maybe #ubuntu-doc.
+[21:55] <zequence> ScottK: Thanks.
+=== cmagina is now known as cmagina_away
+=== cmagina_away is now known as cmagina
+=== cmagina is now known as cmagina_away
+=== cmagina_away is now known as cmagina
+=== cpg|away is now known as cpg
+[23:06] <ogasawara> @pilot out
+=== udevbot changed the topic of #ubuntu-devel to: Ubuntu 12.10 released | Archive: Open | Dev' of Ubuntu (not support or app devel) | build failures -> http://qa.ubuntuwire.com/ftbfs/ | #ubuntu for support and dicussion of hardy -> quantal | #ubuntu-app-devel for app development on Ubuntu http://wiki.ubuntu.com/UbuntuDevelopment | See #ubuntu-bugs for http://bit.ly/lv8soi | Patch Pilots:
+=== cmagina is now known as cmagina_away
+=== cpg is now known as cpg|away
+=== cpg|away is now known as cpg

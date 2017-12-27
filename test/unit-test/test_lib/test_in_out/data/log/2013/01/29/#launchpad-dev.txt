@@ -1,0 +1,200 @@
+=== slank is now known as slank_away
+[03:15] <StevenK> wgrant: https://code.launchpad.net/~stevenk/launchpad/cache-known-viewers-specification/+merge/145299
+=== Ursinha is now known as Ursinha-afk
+=== Ursinha-afk is now known as Ursinha
+[03:29]  * StevenK grumbles at bug 1107811. The edit function calls tag_input.focus()
+[03:29] <_mup_> Bug #1107811: Clicking "Add tags" or "Edit tags" doesn't focus the tags field <bug> <form-focus> <regression> <Launchpad itself:Triaged> < https://launchpad.net/bugs/1107811 >
+[03:31] <wgrant> StevenK: Looking
+[03:32] <wgrant> StevenK: Can't you unnest _preload_specification_people?
+[03:34] <StevenK> wgrant: I probably can. Then I append the bare function to the decorators array?
+[03:34] <wgrant> StevenK: Right, a function that takes no arguments and then returns a function is not useful; you can just use the inner function directly.
+[03:36] <StevenK> wgrant: http://pastebin.ubuntu.com/1584386/
+[03:37] <wgrant> StevenK: That looks more reasonable :)
+[03:37] <StevenK> wgrant: Is that your only issue, or still pawing at the rest?
+[03:38] <wgrant> StevenK: The rest looks fine :)
+[03:39] <StevenK> wgrant: TBH, I was expecting you to complain about the function I added to test_specification :-)
+[03:39] <wgrant> Meh :)
+[03:40] <StevenK> (And ISpecification.userCanView() is finally readable again)
+[03:40] <wgrant> Indeed.
+[03:47] <StevenK> wgrant: That MP has updated
+[03:53] <wgrant> StevenK: r=me
+=== Ursinha is now known as Ursinha-afk
+[04:06] <StevenK> wgrant: Shall we pull apart that checkwatches core on carob, or you give me a clue about mpt's latest bug?
+[04:07] <wgrant> StevenK: Have you traced mpt's in a debugger?
+[04:07] <StevenK> In the five minutes or so I've spent on it, I've reproduced it on prod, and read the code.
+[04:11]  * StevenK goes looking for Firebug
+[04:23] <StevenK> Hmm
+[04:23] <StevenK> So the focus() gets called
+[04:26] <wgrant> Does the widget exist?
+[04:27] <StevenK> It's hidden at the time
+[04:27] <StevenK> http://pastebin.ubuntu.com/1584453/ seems to work
+[04:29] <wgrant> Sounds plausible.
+[04:29] <StevenK> NFI how to test it
+[04:40] <StevenK> How do I check which widget has focus in a YUI test?
+[04:41] <wgrant> StevenK: document.activeElement might work
+[04:51] <wgrant> StevenK: https://code.launchpad.net/~wgrant/launchpad/ttb-refactor-create/+merge/145305
+[04:53] <StevenK> wgrant: Won't 90+ return ubuntu.currentseries.nominatedarchindep.default_processor die horribly when a new series is in the midst of populating?
+[04:54] <wgrant> StevenK: Yes, and it does
+[04:54] <wgrant> But fixing that is harder
+[04:54] <wgrant> We generally lose a couple of jobs each time we initialise
+[04:54] <StevenK> Mmmm
+[04:55] <StevenK> wgrant: I'd prefer the one-line comment on line 89 die, and be replaced by the XXX on line 95-98
+[04:55] <StevenK> 95-97 even
+[04:56] <wgrant> Done
+[05:08] <wgrant> StevenK: Any other objections?
+[05:10] <StevenK> wgrant: Sorry, was distacted by phone
+[05:11] <StevenK> wgrant: r=me, looks great
+[05:11] <wgrant> Thanks
+[05:20] <StevenK> Expected: [object HTMLBodyElement] (object) Actual: INPUT#tag-input yui_3_5_1_1_1359436804933_377 (object)
+[05:20] <StevenK> Hmmm
+[05:26] <StevenK> And Firebug does not love the test page at all
+[05:26] <wgrant> Chromium :)
+[05:27] <StevenK> Haven't used Chromium's JS tools
+[05:27] <wgrant> Well
+[05:27] <wgrant> They're not implemented in XUL
+[05:27] <wgrant> Which puts them a fair way ahead of Firebug
+[05:28] <StevenK> +a few million
+[05:29] <StevenK> Uncaught TypeError: Cannot read property 'style' of null /home/steven/launchpad/lp-branches/devel/build/js/yui/dom-style/dom-style.js:65
+[05:30] <StevenK> At least it doesn't cause Chromium to spin, but it is increasing a timer for that error very quickly
+[05:35] <wgrant> Ah, archive.txt, my old nemesis...
+[05:35] <StevenK> Haha
+[05:35] <StevenK> DESTROY
+[05:37] <StevenK> Hmmm, so the _yuid of the #tag-input and document.activeElement are different
+[05:37] <wgrant> StevenK: It looks like the activeElement is the <body>, doesn't it?
+[05:37] <wgrant> Which probably means that activeElement doesn't do what you wnat here
+[05:38] <StevenK> Hmmm, not sure about that
+[05:38] <wgrant> 16:20:24 < StevenK> Expected: [object HTMLBodyElement] (object) Actual: INPUT#tag-input yui_3_5_1_1_1359436804933_377 (object)
+[05:38] <StevenK> Oh, innerHTML is LARGE
+[05:38] <StevenK> Chromium helpfully shows me one line
+[05:38] <StevenK> Right, looks like the <body>
+[05:44] <StevenK> Googling for YUI docs is pretty useless
+[05:47] <StevenK> wgrant: I wonder if r16453 is qa-meh ...
+[05:48] <wgrant> StevenK: It's easy to do
+[05:48] <wgrant> StevenK: Find a project with lots of proprietary specs
+[05:48] <wgrant> Check that the query count is sensible for a user that can see them
+[05:49] <wgrant> And check that users who can't see them indeed can't see them
+[05:49] <StevenK> And since qas has been reset, this easier said than done
+[05:50] <wgrant> Easier done that said, you mean
+[06:12] <StevenK> wgrant: http://pastebin.ubuntu.com/1584603/
+[06:15] <wgrant> StevenK: person_ids.remove(None) might be nicer, but otherwise that seems sensible.
+[06:15] <StevenK> wgrant: .remove will raise a KeyError if we happen to get all specs with everything set. -= will not.
+[06:16] <wgrant> Ah, true.
+[06:16] <wgrant> Carry on, then
+[07:01] <jtv> Hmm...  I'm getting an Unauthorized error when  viewing the translations import queue.  That's new, and a potential problem for maintenance.  Is it a private-projects thing?
+[07:03] <wgrant> jtv: The traceback will tell you
+[07:03] <jtv> I'm well out of practice with deciphering zope tracebacks...  Last line is: Unauthorized: (<ProductSeries at 0x2aac8d794d90>, 'name', 'launchpad.LimitedView')<br />
+[07:04] <wgrant> aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+[07:04] <wgrant> Somehow a private project has managed to get translations...
+[07:04] <jtv> Letters and thoughts to that effect occurred.
+[07:04] <wgrant> jtv: What's the URL?
+[07:04] <jtv> https://translations.launchpad.net/+imports
+[07:05] <wgrant> Oh, right
+[07:05] <wgrant> Well, there's the problem
+[07:06] <wgrant> Hmm
+[07:06] <wgrant> The relevant items have been in the queue for 18 days
+[07:06] <wgrant> So I guess the importer knows to ignore them
+[07:07] <wgrant> But one wonders why they were allowed to be created in the first place.
+[07:07] <wgrant> jtv: Can you see it now?
+[07:08] <jtv> wgrant: yup, that works
+[07:08] <jtv> What did you do?
+[07:08] <wgrant> I set the problematic imports to Blocked to get them to what I assume is near the end of that list.
+[07:09] <jtv> Yuck :)
+[07:09] <wgrant> Rather, but better than a 403 :)
+[07:09] <jtv> Quite.
+[07:09] <StevenK> Yay, another critical
+[07:11] <jtv> czajkowski: it'd be a lot easier for everyone if that Bosnian project could just chuck their templates into a branch.  Assuming they're well-structured, approval will be fully automated.
+[07:12] <StevenK> wgrant: https://code.launchpad.net/~stevenk/launchpad/better-person-preloading-specsearch/+merge/145316
+[07:12] <wgrant> jtv: Why haven't UTC vetoed the Bosnian project?
+[07:14] <jtv> I don't know that they haven't.
+[07:14] <jtv> Last I heard, we were eager to see that project into a shape
+[07:15] <jtv> that we could be happy with.
+[07:15] <jtv> But I haven't kept track.
+[07:16] <jtv> As far as I know, the UTC aren't really organized at the moment.  But my position is:
+[07:16] <jtv> ideally there should be one Universe translation project.
+[07:17] <jtv> If we can't have that, we should try not to get in the way of useful contributions too much.
+[07:17] <jtv> The _problem_ with the project, as I see it, is that it invites doomed translations to other languages.
+[07:17] <wgrant> If a universe translation project is desired then it might as well be done under the normal Ubuntu translation infrastructure
+[07:17] <jtv> What we suggested for that was: set up a translation group with just a Bosnian translation team, and set permissions to Restricted.
+[07:18] <jtv> Yes, absolutely.  Question is: who could manage such a thing?
+[07:19] <jtv> If we don't have manpower to manage it, we should take a minimal-suffocation look at what the actual problems are, because the old policies aren't serving us well enough.
+[07:21] <StevenK> wgrant: Can haz review, or your peer at the pastebin earlier was enough?
+[07:22] <wgrant> StevenK: r=me
+=== almaisan-away is now known as al-maisan
+[09:22] <czajkowski> hmm no jtv to work out what to do with this translation community
+=== al-maisan is now known as almaisan-away
+=== almaisan-away is now known as al-maisan
+[09:59] <mpt> I've forgotten ... How can I log in to staging.launchpad.net?
+[09:59] <mpt> since login.staging.launchpad.net doesn't accept my 2-factor auth
+[09:59] <czajkowski> you'll need to ask webops for help there mpt
+=== matsubara-afk is now known as matsubara
+[10:28] <wgrant> StevenK: If you feel like doing another small spec branch tomorrow, preloading specificationbranch should make the page constant
+[10:30] <StevenK> wgrant: I meant to look at that -- what's prod versus qas now?
+[10:31] <StevenK> wgrant: I guess that will just be a load_referencing() call in the pre_iter_hook
+[10:31] <wgrant> StevenK: qas is 85 to prod's 185
+[10:31] <wgrant> 50 of those 85 are specificationbranch
+[10:31] <wgrant> And yeah, it should be a matter of populating a cachedproperty with load_referencing
+[10:32] <StevenK> wgrant: Well, it would be nice to get the page to <40 queries
+[10:33] <wgrant> Exactly
+[10:33] <wgrant> And this one thing seems to be all of the repetition
+[10:36] <StevenK> wgrant: I'll circle back after I sort out the tests for mpt's latest critical.
+[10:38] <wgrant> StevenK: Great
+[10:38] <wgrant> Thanks
+=== Ursinha-afk is now known as Ursinha
+=== Ursinha is now known as Ursinha-afk
+=== Ursinha-afk is now known as Ursinha
+=== Ursinha is now known as Ursinha-afk
+=== al-maisan is now known as almaisan-away
+=== mpt_ is now known as mpt
+=== frankban_ is now known as frankban
+=== adeuring1 is now known as adeuring
+=== gary_poster|away is now known as gary_poster
+=== Ursinha-afk is now known as Ursinha
+=== almaisan-away is now known as al-maisan
+=== Ursinha is now known as Ursinha-afk
+=== Ursinha-afk is now known as Ursinha
+=== Ursinha is now known as Ursinha-afk
+=== Ursinha-afk is now known as Ursinha
+=== slank_away is now known as slank
+=== Ursinha is now known as Ursinha-afk
+=== al-maisan is now known as almaisan-away
+=== Ursinha-afk is now known as Ursinha
+=== Ursinha is now known as Ursinha-afk
+=== Ursinha-afk is now known as Ursinha
+=== Ursinha is now known as Ursinha-afk
+=== Ursinha-afk is now known as Ursinha
+=== Ursinha is now known as Ursinha-afk
+=== Ursinha-afk is now known as Ursinha
+=== matsubara is now known as matsubara-afk
+=== Ursinha is now known as Ursinha-afk
+=== yofel_ is now known as yofel
+[22:36] <StevenK> wallyworld: O HAI
+=== Ursinha-afk is now known as Ursinha
+[23:47] <StevenK> wallyworld: O HAI
+[23:47] <StevenK> Let's see if you ping out again
+[23:47] <wallyworld> hello there
+[23:47] <wallyworld> how's lp?
+[23:47] <StevenK> wallyworld: Do you have a few seconds to help with some JS, or has Go rotten your brain?
+[23:47] <wallyworld> oh yes, Go has well and truely started that process
+[23:47] <wallyworld> but i may still have some cells left
+[23:48] <wallyworld> a few
+[23:48] <StevenK> And then you had wine with dinner last night, so they're dead ...
+[23:48] <wallyworld> perhaps
+[23:48] <wallyworld> if not, Go will finish them off today
+[23:48] <StevenK> Haha
+[23:49] <StevenK> wallyworld: http://pastebin.ubuntu.com/1587421/ is my in progress diff
+[23:49] <wallyworld> ok
+[23:49] <StevenK> wallyworld: I've shifted the call to .focus() when the widget isn't hidden to fix a critical, but my test breaks because document.activeElement is <body>
+[23:50] <wallyworld> i'm not sure all browsers support activeElement?
+[23:50] <StevenK> Is there any way to see which widget has focus?
+[23:51] <wallyworld> isn't there a yui call to do that?
+[23:51] <wallyworld> ie there should be an attr which reflects the current focus state
+[23:51] <wallyworld> i'll have a quick look
+[23:51] <StevenK> I couldn't find one when looking through yuilibrary
+[23:51] <StevenK> But you and rick have always managed to find stuff when I can't
+[23:53] <wallyworld> StevenK: there's a :focus css selector
+[23:54] <wallyworld> perhaps you can select a child of the form which has focus and see if it it the element you want
+[23:54] <wallyworld> activeElement appears to be supported across major browsers now, but I'd have to check to see if :focus is also widely supported
+[23:55] <StevenK> wallyworld: I've pulled out the element I want, I do .one('#tag-input:focus') ?
+[23:56] <wallyworld> form_node.one("#tag-input:focus")? i think so
+[23:56] <wallyworld> or even Y.one((...) i guess
+[23:57] <wallyworld> i'm not sure why activeElement would not be working

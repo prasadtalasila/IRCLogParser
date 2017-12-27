@@ -1,0 +1,82 @@
+=== Ivanka_ is now known as Ivanka
+[07:09] <infinity> Huh.  Something went very wrong and my d-i-images britney hack didn't work to keep linux_3.8 out.
+[07:10]  * infinity fixes d-i, but would like to know why.
+[07:15] <infinity> Oh, and I see why.
+[07:18] <infinity> cjwatson: Did you just recently start using the faux package stuff in britney?  It's outputting completely broken stanzas to Packages...
+[07:29] <infinity> (Which, I hope, is the cause of my d-i-images hack no longer working..)
+=== yofel_ is now known as yofel
+[09:37] <psivaa> cjwatson: the server installations have linux-headers-server with unmet dependencies (linux-headers-generic (3.8.0.0.13) . is it temporary issue due to the timing?
+=== henrix_ is now known as henrix
+[09:39] <psivaa> that is for today's server installations
+[09:41] <psivaa> apw: henrix: ^^
+[09:44] <infinity> psivaa: It's temporary, yes.
+[09:44] <infinity> psivaa: proposed migration had an oops, and I'm fixing as we speak, though I won't stay up and respin images.
+[09:45] <psivaa> infinity: ack, thank you. will there be a respin today though?
+[09:46] <infinity> psivaa: If someone reminds me in the morning, I could do so, or we could just wait for the next round of dailies.
+[09:46] <Laney> is that what broke desktop dailies too?
+[09:46] <infinity> Laney: Seems likely.
+[09:49] <Laney> although perhaps that has fixed itself
+[09:49] <Laney> or someone fixed it, or whatever
+[09:51] <cjwatson> slangasek: It's a bug that I haven't managed to figure out how to fix yet
+[09:52] <cjwatson> infinity: No, I haven't changed anything there recently
+[09:52] <infinity> cjwatson: Maybe it was that merge with Debian?  I know Packages_foo didn't used to have those broken faux packages at the tail end.
+[09:54] <cjwatson> Hm, could be.  That was a little while back but I guess we haven't been paying close attention since.
+[09:54] <cjwatson> I didn't think it touched faux packages though.
+[09:55] <cjwatson> Actually I thought faux packages were done by britney1.
+[09:55] <cjwatson> And I cleared them all out of there ...
+[09:55] <psivaa> Laney: the raring desktop images have not built due to empathy having unmet dependencies?
+[09:56] <cjwatson> Oh, I missed the fact that some of them were generated, maybe
+[09:56] <cjwatson> Um.  I actually have no idea where those are coming from.
+[09:57] <cjwatson> Ah, britney1/fauxpkg/noremove.d/
+[09:57] <infinity> Yeah, but that's not new.
+[09:57] <infinity> b1 hasn't been touched in ages.
+[09:57] <cjwatson> None of this is new.
+[09:57] <cjwatson> What exactly broke?
+[09:57] <infinity> So, I figured maybe it was b2 that started acting on it somehow.
+[09:58] <infinity> It stopped blocking linux on d-i-images.
+[09:58] <infinity> Entirely.
+[09:58] <infinity> And my guess (didn't dig) is that it thought the d-i-images entry was garbage because of all the broken ones later with the Package headers inthe wrong spots.
+[09:59] <cjwatson> Oh.  But there isn't an ordering guarantee there; it's only broken from the POV of broken code :)
+[09:59]  * Laney tries respinning desktop as it seems like empathy is now installable in release
+[09:59] <infinity> Are you sure?  I've seen several tools complain if the first line in a Package stanza isn't Package:
+[10:00] <cjwatson> I've never seen anything in policy specifying the ordering.
+[10:00] <infinity> Anyhow, that was all a wild guess anyway, but I can't think of any other good reason why d-i-images was completely absent from update_output, and why linux migrated without it.
+[10:01] <cjwatson> A bit hard to prove the negative without reading the whole thing, but I'm fairly sure.
+[10:02] <cjwatson> b2 uses apt_pkg.TagFile to parse Packages files, AFAICS, so it shouldn't mind about ordering
+[10:03] <cjwatson> I have no more bright ideas at this time in the morning, I'm afraid :-/
+[10:04] <infinity> Yeah, I've been too busy fixing the symptom to look for the cause.
+[10:04] <infinity> I'll poke it when I wake up.
+[10:04] <infinity> But at least the current d-i should make it all happy again.
+=== mmrazik is now known as mmrazik|otp
+=== mmrazik|otp is now known as mmrazik
+=== mmrazik is now known as mmrazik|lunch
+[11:12] <cjwatson> infinity,slangasek: If it doesn't terrify you too much, review of ^- that livecd-rootfs upload would be good
+[11:12] <cjwatson> That's for the X enablement stack in 12.04.2
+[11:23] <infinity> cjwatson: If vorlon doesn't beat me to it, I'll check in the morning.
+=== mmrazik|lunch is now known as mmrazik
+[11:57] <Laney> psivaa: you haz desktop dailies now
+[11:58] <psivaa> Laney: thanks
+[12:19] <infinity> cjwatson: Hrm, maybe I was barking up the wrong tree.  Shouldn't the UML build-dep have also kept linux from migrating?
+[12:19] <infinity> cjwatson: Maybe it's stopped taking NBS binary removal into account when doing rdep checks?
+[12:24] <cjwatson> I'm not sure; if you can find an example which doesn't rapidly vanish (i.e. something also blocked by something else), then maybe I can check ...
+=== doko__ is now known as doko
+[12:46] <tseliot> cjwatson: hi, can you approve the following sources and move them to main, please? nvidia-settings-304 nvidia-settings-304-updates nvidia-settings-310 nvidia-settings-310-updates
+[12:47] <cjwatson> I'm about to go out for lunch - maybe somebody else can in the meantime
+=== chuck_ is now known as zul
+=== henrix is now known as henrix_
+=== henrix_ is now known as henrix
+[18:32] <bdmurray> infinity: do you have an opinion on the worthwhileness of SRU'ing bug 1078544?
+[18:32] <ubot2`> Launchpad bug 1078544 in aptdaemon (Ubuntu Quantal) "python-aptdaemon: upgrading marks auto-installed packages as manual" [Medium,Triaged] https://launchpad.net/bugs/1078544
+[18:34] <infinity> bdmurray: Eww.
+[18:34] <infinity> bdmurray: Yes, please SRU that.
+[18:35] <bdmurray> infinity: also I'm inclined to mark bug 1027987 verification-done based off the regression testing and scope of the change, but would like a 2nd opinion.
+[18:35] <ubot2`> Launchpad bug 1027987 in libvirt (Ubuntu Precise) "Starting libvirtd takes too long because of "udevadm settle" timeout" [Medium,Fix committed] https://launchpad.net/bugs/1027987
+[18:38] <infinity> bdmurray: I'm inclined to let it slide, given that it's well-tested elsewhere.
+[18:38] <infinity> Still a bit weird that nobody could reproduce the bug after it was fixed, but several people could before.
+[18:39] <infinity> (As Ryan points out, though, this could just mean that a second bug was fixed elsewhere in the distro, and I'm not entirely against having a bug fixed twice)
+=== henrix is now known as henrix_
+=== scott-work is now known as Guest11420
+=== rsalveti_ is now known as rsalveti
+=== Ursinha_ is now known as Ursinha
+=== Ursinha is now known as Ursinha-afk
+=== Ursinha-afk is now known as Ursinha

@@ -1,0 +1,91 @@
+=== mpt_ is now known as mpt
+[16:30] <infinity> xnox: Do you have a full d-i checkout you can grep for me?
+[16:30] <infinity> cjwatson: Or you?
+[16:30] <xnox> infinity: sure.
+[16:30]  * infinity is trying to figure out what evil perpetrates the /etc/initramfs-tools/conf.d/driver-policy hack.
+[16:31] <xnox> hmm....
+[16:31]  * xnox has debian d-i checkout and only partial ubuntu one. grepping debian one.
+[16:31] <infinity> Debian should be fine, it comes from there.
+[16:31] <infinity> It was tbm who added it long ago, apparently.
+[16:32] <cjwatson> I do
+[16:32] <cjwatson> base-installer IIRC
+[16:32] <infinity> But damned if I can sort out what component.
+[16:32] <cjwatson> Yeah
+[16:32] <infinity> Ah-ha.  Thanks.
+[16:32] <cjwatson> My memory of d-i is a pretty good grep substitute :)
+[16:32] <infinity> It's a bit disturbing, really.
+[16:32] <infinity> Do you remember things like your parents' names, or your own shoe size?
+[16:32] <xnox> base-installer/library.sh
+[16:33] <xnox> cjwatson: beats ack-grep --shell driver-policy
+[16:33] <infinity> Right, so THAT's the source of the "crypt root no workie on ARM" bug.
+[16:33] <cjwatson> infinity: birthdays are always the killer for me ...
+[16:34] <cjwatson> thank google for calendars
+[16:34] <infinity> cjwatson: Going to v-done my initramfs-tools upload after some back and forth with a user.
+[16:34] <infinity> cjwatson: Who installed in expert mode on x86 and intentionally chose 'dep'. :P
+[16:34] <infinity> cjwatson: So, he's all fixed up now.
+[16:34] <infinity> cjwatson: And the ARM portion of those bugs is this base-installer default, not initramfs-tools.
+[16:35] <cjwatson> fair enough
+[16:36] <infinity> I wonder if I should bother changing the base-installer thing, or just tell QA to preseed the value they want.
+[16:40] <infinity> cjwatson: Feel free to promote that one whenever.  We need it to not regress cryptroot on the lts-quantal kernels.
+[16:40] <infinity> (Or any early boot keyboard support)
+[16:41] <cjwatson> which, initramfs-tools?
+[16:41] <infinity> Yeah.
+[16:41] <cjwatson> bug 1066376 is still open in raring, I see
+[16:41] <ubot2> Launchpad bug 1066376 in initramfs-tools (Ubuntu) "keyboard doesn't work to enter password with panda and encrypted partitions" [Undecided,Confirmed] https://launchpad.net/bugs/1066376
+[16:42] <infinity> Lies.
+[16:42] <cjwatson> Ah, heh, OK :)
+[16:42] <cjwatson> Promoted
+[16:43] <infinity> It was reopened when it failed to fix the ARM issue, which is actually the base-installer thing.
+[16:43] <infinity> So, yeah.  Tasks twiddled, all good now.
+[16:44] <ogra_> sigh ... bug 1109029
+[16:44] <ubot2> Launchpad bug 1109029 in udev (Ubuntu) "Depend on linux-initramfs-tools" [High,Confirmed] https://launchpad.net/bugs/1109029
+[16:44] <ogra_> do we plan to ever support dracut ?
+[16:45] <infinity> Some day, we may bend to the pressure and switch.  That day isn't today.
+[16:45] <ogra_> yeah, and surely not this release
+[16:45] <xnox> I think the day we run upstrat in initramfs is closer.
+[16:45] <xnox> I think the day we run upstart in initramfs is closer.
+[16:45] <ogra_> though i guess we'll inherit from debian here nontheless
+[16:45] <infinity> maks is getting closer to throwing his hands in the air and ditching initramfs-tools upstream and joining the dark side.
+[16:45] <ogra_> shudder
+[16:46] <infinity> xnox: I'm still really not sure I grasp the drive for event-based-initramfs.
+[16:46] <infinity> I mean, if initramfs had to do anything more complex than "mount a filesystem", maybe.  But the whole point is to get in and out as quickly as possible.
+[16:47] <ogra_> well, execpt that they arent anymore for just mount filesystem
+[16:47] <infinity> I have a feeling it's one of those specs that started out as a drunken joke.
+[16:47] <ogra_> +a
+[16:47] <ogra_> you have decryption crap, lvm, raid ...
+[16:47] <xnox> infinity: true. So it's to fix the bug of arbitrary nested filesystems case, e.g. lvm's LUKS and RAID-1+0
+[16:47] <infinity> ogra_: Eh, I dunno.  The primary prupose is still to find and mount root.
+[16:47] <ogra_> evil console setups with cyrillic utf-8
+[16:48] <infinity> ogra_: crypt, lvm, raid, is all just finding and mounting root.
+[16:48] <xnox> but I'm not sure what else we need it for.
+[16:49] <infinity> xnox: I'm not sure I even understand how any of that needs upstart.  We have udev.
+[16:49] <ogra_> infinity, well, thats for the day when we move the rootfs into initrd ;)
+[16:50] <infinity> Besides, every time the initrd grows, ogra_ loses hair.
+[16:50] <ogra_> haha, yeah
+[16:50] <xnox> infinity: so the problem with udev is timeouts. you cannot launch get_luks_password() and wait for to return.
+[16:50] <infinity> xnox: But you can ask udev to launch it for you when all the bits are in place.
+[16:50] <xnox> because udev have something like 30s timeout & there was something of udev not being able to communicate with plymouth/tty
+[16:51] <ogra_> "Marking as high as this bug makes dracut impossible to install."
+[16:51] <infinity> xnox: Layering upstart on top of udev when your entire usecase is "waiting for devices" is adding complexity where you don't need it.
+[16:51] <ogra_> *sigh*
+[16:51] <xnox> infinity: true.
+[16:51] <infinity> xnox: udev's really, really good at waiting for devices and triggering on events.
+[16:51] <xnox> yeah, not so good at waiting for user input and/or have global timeout, e.g. "i give up we have broken system"
+[16:52] <xnox> aka no root found....
+[16:52] <infinity> That's okay, mountall is a little TOO good at that. :P
+[16:52] <xnox> infinity: but I see your point, we can totally make this work with udev alone and enough tinkering.
+[16:52] <xnox> infinity: =DDDDDDDDDD
+[16:52]  * infinity shakes his fist at complaints about /tmp every third boot.
+[16:52] <infinity> I DON'T HAVE A SEPARATE /tmp YOU SILLY THING.
+[16:53] <xnox> yeah, I'm confused about those /tmp.
+[16:53] <ogra_> get one then !
+[16:53] <xnox> slangasek is not in this channel....
+[16:53] <infinity> xnox: Good, then we can talk smack.
+[16:53] <xnox> hehe =)
+[16:53] <xnox> infinity: this channel is logged mind you ;-)
+[16:54] <infinity> Sure, but then it's delayed smack.
+[16:55] <xnox> "Lately, dracut gathered the ability to use systemd as process 1 in the initramfs. [3]"
+[16:55] <infinity> Yeah, I'm not sure that makes it a good idea.
+[16:55] <infinity> (I'm not saying it's an awful idea either, but it's unnecessary bloat on some platforms we happen to be paying lots of attention to lately)
+[16:56] <xnox> there is also an os-release file specific to initramfs vs real-system
+[16:59] <infinity> xnox: Yes, I noticed that.  Signs that your implementation may be broken.

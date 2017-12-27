@@ -1,0 +1,119 @@
+[01:23]  * StevenK stabs the blueprints tests
+[01:23] <StevenK> test_hasspecification is calling _valid_specification on a projectgroup with an open spec, and an obsolete spec, and asserting both are returned
+[01:25] <StevenK> Which makes me think the test is buggy, since valid specifications are not obselete or superseded ...
+[03:27] <StevenK> wgrant: How goes the BFJO murder?
+[04:07] <wgrant> StevenK: https://code.launchpad.net/~wgrant/launchpad/handleStatus-refactor-1/+merge/144049
+[04:07] <wgrant> StevenK: As a bonus it makes buildd-manager logging suck a bit less
+[04:07] <StevenK> Hah
+[04:07] <wgrant> When a build completes it will actually log that the build completed, and what its status was
+[04:08] <wgrant> Currently you get, on some types of failure, '******* rother is MANUALDEPWAIT *******'
+[04:08] <wgrant> Without any reference to what the actual build was
+[04:08] <wgrant> And on success or a real build failure, you get no logging at all :)
+[04:12] <StevenK> 8- @classmethod
+[04:12] <StevenK> 10+ @defer.inlineCallbacks
+[04:12] <wgrant> Already fixed and retesting locally
+[04:13] <StevenK> Right
+[04:13] <wgrant> Was hoping you wouldn't notice :)
+[04:13] <StevenK> It was the first change in the diff, bit hard
+[04:13] <wgrant> It doesn't actually make any difference, but yeah
+[04:14] <StevenK> wgrant: That is my only concern with that branch
+[04:14] <wgrant> Thanks
+[04:15] <StevenK> I love the _handleStatus_generic_failure refactor
+[04:17] <wgrant> StevenK: It's pushed
+[04:17] <wgrant> And passes tests too
+[04:20] <StevenK> wgrant: r=me
+[04:20] <wgrant> Thanks sir
+[04:20] <StevenK> Right, hopefully the thinko I've fixed makes the tests pass.
+[04:21] <wgrant> :)
+[04:21] <StevenK> Aw.
+[04:21] <StevenK> It fixed one test, though
+[04:22] <wgrant> How many failures remain?
+[04:22] <StevenK> 4
+[04:23] <wgrant> ah
+[04:23] <wgrant> ez
+[04:23] <StevenK> From -m blueprints -m registry
+[04:23] <StevenK> And I've also bent {Distro,Product}Series to my will, and destroyed Specification.completeness_clause
+[04:23] <wgrant> Excellent
+[04:23] <wgrant> As I plotted
+[04:24] <StevenK>  14 files changed, 383 insertions(+), 765 deletions(-)
+[04:24] <wgrant> Hmm
+[04:24] <wgrant> Only a 50% win
+[04:24] <wgrant> Although I guess it also fixes some omissions
+[04:24] <StevenK> It drops a massive amount of duplication
+[04:25] <wgrant> Right, I just expected more
+[04:25] <StevenK> Perhaps I've missed some bits that can die, though
+[04:34] <StevenK> Hm, I think my LEFT JOIN on product is screwing up my productseries call
+[04:34] <wgrant> StevenK: bugtasksearch does the same thing
+[04:34] <wgrant> You can probably steal ideas from there
+[04:34] <wgrant> It might well omit the check if called in a product or productseries context
+[04:36] <StevenK> It does it differently
+[04:37] <wgrant> How differently?
+[04:38] <StevenK> Currently, I do it all the time, and bugtasksearch will only do that check if product, distribution, productseries and distroseries are all unset.
+[04:38] <wgrant> Right, that makes sense.
+[04:38] <wgrant> The way bugtasksearch does it
+[04:39] <wgrant> Possibly because I wrote it :)
+[04:39] <wgrant> distribution/distroseries are obviously fine because they can't have a product
+[04:39] <StevenK> Yeah
+[04:39] <StevenK> So it gets included for person/project group
+[04:39] <wgrant> And product/productseries are fine because they aren't accessible unless they're active or you can see inactive projects.
+[04:39] <wgrant> person/projectgroup/*, yes
+[04:40] <StevenK> Now I have to pass in the context
+[04:40] <wgrant> You weren't already?
+[04:40] <StevenK> No, I pass in a base clause
+[04:40] <StevenK> Specification.productID == self.id or so
+[04:40] <wgrant> Ah
+[04:47] <StevenK> I could check base_clauses[0].expr2.table, but you might murder me
+[04:48] <wgrant> Might?
+[04:49] <StevenK> :-)
+[04:51] <StevenK> wgrant: So handleStatus_OK is up next?
+[04:52] <wgrant> storeBuildInfo is being demolished
+[04:52] <wgrant> Well, substantially revised
+[05:27] <StevenK> Ugh, I *think* this will fix the productseries failures
+[05:28] <StevenK> Indeed, it does.
+[05:34] <StevenK> wgrant: Is http://pastebin.ubuntu.com/1554189/ a 2.7 failure?
+[06:13] <wgrant> StevenK: There shouldn't be any more 2.7 failures, but that's possible.
+[06:14] <StevenK> Hm
+[06:16] <wgrant> I've seen this before
+[06:16] <wgrant> Perhaps 18 months ago
+[06:16] <wgrant> But i don't remember quite what it was
+[06:17] <StevenK> I've ignored it for the time being, trying to figure out these person failures
+[06:21] <wgrant> StevenK: Oh, I wonder if it's proxied
+[06:23] <wgrant> Yeah
+[06:23] <wgrant> 2.7 doesn't like securityproxied dicts
+[06:23] <wgrant> 2.6 is fine
+[06:25] <StevenK> Haha, so it is a 2.7 failure
+[06:25] <wgrant> I wonder how that was missed
+[06:25] <wgrant> Perhaps it is new
+[06:25] <wgrant> Ah
+[06:25] <wgrant> A change in September
+[06:26] <wgrant>     - Issue #15801: Make sure mappings passed to '%' formatting are actually
+[06:26] <_mup_> Bug #15801: mozilla-firefox-locale-tr: new changes from Debian require merging <mozilla-firefox-locale-tr (Ubuntu):Invalid> < https://launchpad.net/bugs/15801 >
+[06:26] <wgrant>       subscriptable.
+[06:26] <wgrant> That would be how it was missed, I guess.
+[06:26] <wgrant> A regression in 2.7.something
+[06:26] <StevenK> I can rSP to work around it
+[06:27] <wgrant> http://hg.python.org/cpython/rev/2801bf875a24/
+[06:29] <wgrant> (I assume)
+[06:29] <StevenK> Plausible
+[06:31] <lifeless> StevenK: shouldn't need to, just make sure all the attributes needed for the new check pass
+[08:46] <adeuring> good morning
+=== almaisan-away is now known as al-maisan
+=== al-maisan is now known as almaisan-away
+=== almaisan-away is now known as al-maisan
+=== al-maisan is now known as almaisan-away
+[14:46] <cjwatson> wgrant,StevenK: I have a QAed DB patch - do you think I could have an FDT?
+[14:58] <czajkowski> having our only maintenace folks in the one timezone is not ideal :(
+[14:59] <cjwatson> I'm not in a desperate rush beyond "next couple of days would be nice"
+[20:09]  * mwhudson laughs at cjwatson getting 30k+ lines of LoC credit in one go
+[20:10] <cjwatson> the graph looks awesome :)
+[20:11] <cjwatson> http://people.canonical.com/~cjwatson/tmp/loc-cum.png
+[20:14] <mwhudson> would be bad if that was a stock market index
+[20:15] <lifeless> cjwatson: waaaa?
+[20:17] <bigjools> what did you nuke?
+[20:23] <cjwatson> database/schema/launchpad.html, last updated 2009
+[20:24] <cjwatson> make target to build it locally in a few seconds if anyone cares
+[20:25] <cjwatson> kind of cheating of course, but misleadingly obsolete doc is a maint problem imo
+[20:25] <maxb> Never hesitate to poke fun at the arbitraryness of a metric? :-)
+[20:33] <lifeless> well, its accurate so far :>
+[20:33] <lifeless> cjwatson: nice catch
+[21:56] <wgrant> cjwatson: Sure, we should be able to do it in a few hours

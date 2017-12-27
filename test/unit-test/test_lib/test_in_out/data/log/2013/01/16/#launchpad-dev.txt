@@ -1,0 +1,201 @@
+=== slank is now known as slank_away
+[00:26] <StevenK> steven@undermined:~/launchpad/lp-branches/drop-populate-specification-aag% bzr di | diffstat -s
+[00:26] <StevenK>  2 files changed, 1714 insertions(+), 1712 deletions(-)
+[00:26] <StevenK> wgrant: ^ :-(
+[00:45] <wgrant> StevenK: :(
+[00:45] <wgrant> StevenK: How?
+[00:45] <wgrant> Oh, sampledata
+[00:45] <wgrant> But that's quite a lot
+[00:45] <wgrant> postgres order change?
+[00:49] <StevenK> pg_dump jumped from 9.1.6 to 9.1.7
+[00:50] <wgrant> Right
+[00:50] <wgrant> So probably some reordering
+[00:50] <wgrant> Or an arch change
+[00:50] <wgrant> Or something like that :)
+[00:50] <StevenK> Lots of blank lines
+[00:50] <StevenK> http://pastebin.ubuntu.com/1536113/
+[00:51] <wgrant> Our sorting thing doesn't coalesce blank lines, but I'm not sure what's with that order change
+[00:52] <StevenK> I'm not even sure if we have any specs that are non-public in sampledata
+[00:52] <wgrant> Heh, probably not, no
+[00:52] <StevenK> Then it might not even matter
+[03:42] <StevenK> wgrant: Do you know which revno added the dependency stuff?
+[03:42] <StevenK> My pawing through bzr log hasn't turned it up
+[03:43] <wgrant> StevenK: r16333
+[03:43] <wgrant> from bzr log lib/lp/blueprints
+[04:36] <wgrant> StevenK: Looking
+[04:37] <StevenK> I think it needs a fix
+[04:37] <StevenK> I've been pondering for a few minutes
+[04:38] <wgrant> The AP nullness check is pointless
+[04:39] <StevenK> Oh?
+[04:39] <wgrant> Also, I'd probably do it with one query per batch
+[04:39] <wgrant> You're walking up by ID, and the function is idempotent
+[04:39] <wgrant> You might as well just run over all of them, rather than playing planner roulette.
+[04:39] <wgrant> (AP will be left null in almost all cases, because almost all of them are public)
+[04:40] <wgrant> There's also no need to call reconcileAccess here
+[04:40] <StevenK> But we check information_type
+[04:40] <wgrant> Right, but there's no point
+[04:40] <wgrant> Just iterate in batches from spec 1 to MAX(spec.id)
+[04:40] <wgrant> Calling specification_denorm_access on each batch
+[04:42] <wgrant> The spec reconcileAccess was never needed, because there was no legacy privacy to migrate
+[04:46] <StevenK> wgrant: http://pastebin.ubuntu.com/1536441/
+[04:48] <wgrant> StevenK: I'm not sure if that tuple expansion will work, but if it does then great
+[04:49] <StevenK> It does not
+[04:51] <StevenK> It works for id 1, and then it tries for set of more than one id
+[05:12] <StevenK> wgrant: http://pastebin.ubuntu.com/1536494/ even works
+[05:13] <wgrant> StevenK: https://code.launchpad.net/~wgrant/launchpad/registry-view-accounts/+merge/143438
+[05:17] <StevenK> wgrant: r=me
+[05:18] <StevenK> wgrant: So, pastebin peering?
+[05:18] <wgrant> StevenK: If it works
+[05:18] <wgrant> You could also do execute(Select('specification_denorm_access(id)', tables=[Specification], where=[Specification.id.is_in(blah)]))
+[05:19] <wgrant> But it doesn't matter much
+[05:24] <StevenK> Do not understand these test failures
+[05:25] <StevenK> wgrant: The diff is updated
+[05:26] <StevenK> wgrant: But I think I should reset Specification.access_policy to NULL before the second runHourly due to triggers
+[05:28] <wgrant> StevenK: Indeed
+[05:29] <StevenK> And since Specification.access_policy doesn't exist, I'm sort of stuck how to reset it
+[05:29] <wgrant> StevenK: Create it?
+[05:30] <wgrant> This isn't a DB branch; you're allowed to make model changes
+[05:30] <StevenK> Sure, but I've managed to get this far with doing so :-)
+[05:31] <wgrant> SQL!
+[05:39] <StevenK> Hmm
+[05:40] <StevenK> The second runHourly is ignoring the spec since it's already seen it, too
+[05:40] <wgrant> Ah, yeah
+[05:40] <wgrant> You'll have to nuke the memcache record
+[05:41] <wgrant> Or create one public, one private, nuke access_policy across specification, then do a single runHourly
+[05:51] <StevenK> Bleh, it looks like .specifications is supposed to filter out inactive projects and it's broken, and I don't see how
+[05:52] <StevenK> wgrant: Diff updated
+[05:55] <wgrant> StevenK: r=me
+[05:57] <StevenK> I know, let's land it :-P
+[05:58] <wgrant> Bad StevenK
+[05:58] <StevenK> wgrant: Diff is at http://pastebin.ubuntu.com/1536676/ ; test failures at http://pastebin.ubuntu.com/1536679/
+[06:24] <StevenK> wgrant: You lose buildbot bingo
+[06:26] <wgrant> Indeed
+[06:44]  * StevenK facepalms at himself re bug 1100061
+[06:44] <_mup_> Bug #1100061: BranchSubscriptionAddOtherView rejects open teams even for public branches <regression> <Launchpad itself:Triaged> < https://launchpad.net/bugs/1100061 >
+[06:45] <wgrant> Ah, so it was you :)
+[06:49]  * StevenK taps his foot waiting for BMPJ
+[06:49] <StevenK> wgrant: https://code.launchpad.net/~stevenk/launchpad/fix-branch-subscription-for-public/+merge/143441
+[06:50] <plomme> hey guys
+[06:52] <wgrant> plomme: Hi
+[06:52] <plomme> I'm new to submitting patches for lp I wante'd to know what the procedure was.
+[06:53] <wgrant> plomme: Is your change in bug #1097770 still desirable if we remove the private releases restriction?
+[06:53] <_mup_> Bug #1097770: The series timeline does not distinguish between active and inactive milestones <javascript> <milestones> <projects> <ui> <Launchpad itself:Triaged> < https://launchpad.net/bugs/1097770 >
+[06:53] <wgrant> It was added in error, and was never intended to exist
+[06:53] <wgrant> The intent was to prevent release *files* from being added, but not the releases themselves
+[06:53] <plomme> no actually
+[06:54] <plomme> if proprietary projects can handle releases then the bug correction is mute
+[06:55] <wgrant> Right, that's what I thought.
+[06:55] <wgrant> StevenK or I can probably arrange that early next week.
+[06:55] <wgrant> And it's likely a better solution than the somewhat hacky inactive thing
+[06:55] <plomme> yeah
+[06:55] <plomme> I agree
+[06:56] <plomme> thanks a lot for looking into it! It's been somewhat of a thorn in our foot =)
+[06:57] <wgrant> No worries, sorry about the inconvenience. There was a bit of a miscommunication around the addition of that check.
+[06:59]  * StevenK peers at wgrant
+[07:00] <wgrant> I feel like I'm being watched.
+[07:00] <StevenK> wgrant: I linked you an MP :-)
+[07:00] <wgrant> I know, but then plomme appeared :)
+[07:01] <plomme> haha I can get distracting sometimes
+[07:04] <wgrant> Heh
+[07:04] <wgrant> Done now, anyway :)
+[07:12] <plomme> :)
+[07:16] <plomme> brb
+[07:21] <DMill> ok back.
+[08:57] <adeuring> good morning
+[09:46] <czajkowski> jtv: how wise/easy is it to remove a name from a LP  translations?
+[09:48] <jtv> czajkowski: a person's name?
+[09:48] <czajkowski> yup
+[09:48] <jtv> From translated strings?
+[09:48] <czajkowski> https://support.one.ubuntu.com/Ticket/Display.html?id=28061
+[09:49] <czajkowski> do you still have access to the RT ?
+[09:50] <jtv> czajkowski: seems like... trying to get to the ticket
+[09:50] <jtv> Checking out the links the user posted...
+[09:51] <jtv> czajkowski: that's a tough one.
+[09:52] <jtv> The remove-translations script may work for this.
+[09:53] <jtv> czajkowski: you'll have to remove the user's translations from those PO files to get this done.  Have a look at scripts/rosetta/remove-translations-by.py.
+[09:54] <jtv> IIRC we never quite got around to making it work properly with user names, so you may have to look up the user's id.
+[09:54] <StevenK> getUtility(IPersonSet).getByName() wants a word.
+[09:55] <czajkowski> jtv: never gone near those scripts before
+[09:55] <czajkowski> this should be *interesting*
+[09:55] <StevenK> czajkowski: WCPWG
+[09:55] <StevenK> WCPGW, even
+[10:00] <jml> bzr: ERROR: Server sent an unexpected error: ('error', 'xmlrpclib.Fault', "<Fault -1: 'Unexpected Zope exception: DisconnectionError: ERROR:  pgbouncer database is disabled\\n'>")
+[10:00] <jml> just fwiw
+[10:01] <czajkowski> StevenK: you say this...
+[10:01] <lifeless> jml: nice timing :)
+[10:02] <lifeless> jml: I'm just guessing, but I smell a FDT, and you hit the what 5 second window?
+[10:02] <czajkowski> lifeless: bingo
+[10:02] <jml> lifeless: that's my guess
+[10:02] <czajkowski> it finished at 10:01
+[10:03] <StevenK> Yeah
+[10:17] <wgrant> lifeless, jml: 3.2s, actually
+[10:17] <wgrant> That's quite some luck
+[10:25] <czajkowski> jtv: is there a wiki page on this somewhere in the vast quanties of wiki pages ?
+[11:12] <jtv> czajkowski: no, I don't think we have a wiki page on that particular script...
+=== yofel_ is now known as yofel
+[13:27] <cjwatson> wgrant: Could I have a patch number for adding a phase column to BPPH, please?
+=== slank_away is now known as slank
+=== salgado is now known as salgado-lunch
+=== salgado-lunch is now known as salgado
+[16:34] <gmb> bac, benji, gary_poster, frankban, teknico: Do any of you guys have time to review a proposed merge for lp2kanban? If not, no worries; I'm just hoping to get someone with context knowledge to take a glance.
+[16:35] <benji> gmb: I can.  Also, bac was working on it earlier today so he might be primed to do so as well.
+[16:37] <gary_poster> thanks
+[16:37] <gmb> benji, That would be wonderful, thank you: https://code.launchpad.net/~gmb/lp2kanban/cards2workitems/+merge/143543
+[16:37]  * benji looks.
+[16:38] <bac> benji: actually i didn't touch lp2kb directly but our tarmac configs
+[16:38] <benji> bac: ah; you're off the hook then ;)
+[16:41] <gmb> Oo, $0.33 AWS bill for December. Crikey, better sell some silverware...
+[16:53] <gary_poster> :-)
+[17:08] <benji> gmb: the branch looks good, I had a few thoughts about things you brought up in the MP description/comment and a couple small code suggestions
+[17:09] <gmb> benji, Thanks :)
+=== deryck is now known as deryck[lunch]
+[17:19] <gmb> benji, How does the linking-to-multiple external sources work?
+[17:20] <benji> gmb: I have no idea. :)  The code is either in lp2kanban or in a custom script we use to interface between MPs linked to Reitveld and kanban.
+[17:22] <benji> if you look at the Juju GUI board you can right click on some of the cards in review or done-done and look at the "Link to" menu item to see multiple external links
+[17:22] <benji> gmb: ^^
+[17:24] <gmb> benji, Ah, I don't think it's in lp2kanban; that only supports one external link at a time... I shall have a poke around.
+[17:24] <gmb> THanks for the tip :)
+[17:25] <benji> cool, glad to help
+[17:55] <gmb> benji, Ah, cards don't support multiple external links - the ones on the juju gui board have an external_system_url and an external_card_id (the second automatically links to LP, of course).
+[17:55] <gmb> So the MP-nukes-blueprint problem still stands, but is solvable.
+[17:56] <gmb> (in another branch :)
+[17:56] <gmb> )
+[17:56] <benji> gmb: maybe it is a different mechanism, but there is some way of having unlimited (named) links on a card
+[17:56] <gmb> benji, Hmm, maybe I'm missing something.
+[17:57]  * gmb goes to find LKK API docs
+[17:59] <benji> gmb: hmm, I'm looking for it, but I can't find it; you may be right that there can be only one.  I could have sworn that you can have as many as you want.
+[17:59] <gmb> benji, Yeah, I was under the impression at first that you could (not including putting HTML in the description field).
+[18:00] <gmb> Hmm, found this feature request, but no answer: http://support.leankit.com/entries/20414932-multiple-external-links-on-a-card
+[18:00] <gmb> benji, ^^
+[18:01] <gmb> Anyway, EoD time.
+[18:01] <benji> Benji's Rules for Web Apps #231: If your application allows the user to enter one link related to an application entity, they should be able to enter multiple links related to an application entity.
+[18:01] <gmb> benji, Darn tootin'.
+[18:03] <benji> and since their suggestion app uses different credentials than their application propper, that suggestion will never get any votes from me because I can't log in and will not be forced to work that hard to suggest they make their app better
+[18:04] <lifeless> benji: but its web2.0
+[18:05] <benji> heh
+[18:05] <lifeless> benji: what could POSSIBLY be wrong with embedding another app in your apps process space with no controls ?
+[18:06] <benji> lifeless: we should start an industrial espionage agency; the fruit hang so low
+[18:06] <lifeless> benji: lol :)
+=== matsubara is now known as matsubara-afk
+=== deryck[lunch] is now known as deryck
+=== slank is now known as slank_away
+[20:07] <tumbleweed> rr *sounds
+[20:07] <tumbleweed> (excuse that, high latency--)
+[23:21] <wgrant> cjwatson: That seems like a pretty bad name
+[23:22] <cjwatson> wgrant: Suggestions?
+[23:22] <cjwatson> BPPH.phased_update_percentage, I suppose, to go with the control field name
+[23:23] <wgrant> Once the control field is finalised that would sound reasonable
+[23:23] <cjwatson> It is finalised
+[23:23] <cjwatson> Already implemented in update-manager
+[23:23] <wgrant> It's a lot clearer to someone who hasn't seen it before than "phase", and it isn't going to be referenced a huge amount
+[23:23] <wgrant> Aha
+[23:23] <wgrant> That was quick
+[23:23] <cjwatson> mvo overachieved and did it last cycle in advance of the server side
+[23:23] <wgrant> Ah
+[23:24] <cjwatson> It just wasn't documented until I looked it up earlier this week
+[23:24] <cjwatson> Or at least not consistently documented
+[23:25] <wgrant> cjwatson: 2209-36-1 is yours
+[23:26] <cjwatson> Thanks
+[23:27]  * cjwatson attempts to discern a rationale in the choice of second component
+[23:27] <cjwatson> Sorting by owner?
+[23:32] <wgrant> If there's a series of minor standalone patches we will tend to just reuse a minor number per owner, yeah

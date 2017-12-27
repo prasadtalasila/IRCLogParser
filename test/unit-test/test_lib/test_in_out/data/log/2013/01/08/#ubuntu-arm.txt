@@ -1,0 +1,289 @@
+[00:01] <ubuntubhoy> as I say it's not one of the thing's I tried
+=== heathkid|2 is now known as heathkid
+[05:11] <Noskcaj> anyone interested? http://viajemotu.wordpress.com/2013/01/07/ubuntu-loco-games-2013-1/
+[08:39] <mattronix> hello
+[08:39] <mattronix> has anyone used ubuntu arm on a raspberry pi
+[09:13] <hrw> marvin24: you can't
+[09:13] <hrw> "If you have a Pi, try #raspbian !" is in topic for a reason
+[09:14] <infinity> hrw: You meant mattronix, which failed to tab-complete cause he left. :P
+[09:14] <lilstevie> hrw: I was about to say that but the guy left
+[09:14] <hrw> ops
+=== jackson_ is now known as Noskcaj
+[11:01] <ppisati> ikepanhc: do you use DT with any of your arm kernels?
+[11:05] <janimo> ppisati, the armadaxp at least does not use DT
+[11:05] <ppisati> uhm
+[11:05] <janimo> ppisati, not sure about other kernels ike maintains
+[11:05] <ppisati> i'm rpetty sure at leat one of our kernel support DT
+[11:06] <janimo> armadaxp support may be in 3.8 already so in raring we could just switch to mainline. I know it is being upstreamed but I am not uptodate
+[11:09] <hrw> and if is then probably also uses DT
+[11:16] <ppisati> my concern is about ubuntu arm images vs DT distribution/board support
+[11:16] <ppisati> do we separate DTs from ubuntu images?
+[11:16] <ppisati> or do we only support one board?
+[11:17] <ppisati> e.g. for omap4 there are already 2 different DTs
+[11:17] <ppisati> panda and pandaes
+[11:17] <ppisati> which do we pick?
+[11:26] <hrw> both and let uboot choose?
+[11:27] <ppisati> hrw: does the linaro alredy do that?
+[11:27] <ppisati> hrw: *linaro uboot
+[11:27] <hrw> ppisati: no idea - I no longer touch armv7a
+=== Sv2 is now known as sv
+[12:18] <ikepanhc> ppisati: besides armadaxp, highbank and arndale require DT when booting
+=== doko_ is now known as doko
+[12:25] <ppisati> ikepanhc: arndale?
+[12:26] <ikepanhc> ppisati: samsung soc
+[12:28] <hrw> exynos5250
+[12:28] <ikepanhc> exactly
+[12:29] <hrw> nice devboard for development of arm stuff. dual a15 with 2gb ram and sata
+[12:30] <ppisati> ikepanhc: do you know where DT is distributed? in u-boot or in the kernel package?
+[12:31] <ikepanhc> ppisati: DT binary shall be something bootloader hands over to kernel, usually bootloader will put it in dram
+[12:31] <hrw> ppisati: should be with kernel
+[12:31] <ikepanhc> ppisati: in my viewpoint, it shall not be with kenel package
+[12:31] <suihkulokki> it comes from the kernel sources so
+[12:31] <hrw> ikepanhc: but it comes from kernel source
+[12:31] <ppisati> ikepanhc: in the armadaxp case, where does it live?
+[12:32] <ikepanhc> yes, in all of the case I see, all from kernel source
+[12:33] <ikepanhc> but just like acpi table, if we just need a single table for a kernel, why we need it?
+[12:34]  * ppisati download armadaxp and take a look
+[12:35] <hrw> ikepanhc: because we can provide single table for device which runs kernel targetting 100 different devices?
+[12:37] <ikepanhc> hrw: I think it shall be designed for "single kernel can work fine on 100 different board with each DT"
+[12:37] <ikepanhc> ppisati: armadaxp do not have DT support
+[12:37] <hrw> ikepanhc: if you want 4MB kernel with 4MB DT...
+=== asiekierka_ is now known as asiekierka
+[12:38] <hrw> ikepanhc: there are devices where DT will be manipulated from userspace
+[12:39] <RaYmAn> isn't that purely a hack to get around missing DT support in bootloaders though?
+[12:39] <hrw> RaYmAn: no
+[12:40] <hrw> RaYmAn: https://lwn.net/Articles/531569/
+[13:57] <marvin24> hi janimo
+[13:57] <marvin24> I've setup a branch on http://gitorious.org/~marvin24/ac100/marvin24s-kernel/commits/linux-ac100-3.8
+[13:58] <marvin24> with some patches against 3.8-rc2
+[13:58] <marvin24> I'm not sure how to proceed
+[13:58] <marvin24> as there will be no official Raring build for the AC100
+[13:59] <marvin24> on the other hand, a kernel package would make it simpler to create a community build
+[13:59] <marvin24> I wonder if there is some docu on how to create ubuntu installer images for "unsupported" devices
+[14:00] <marvin24> I have modified the omap netboot image already, and it seems to work
+[14:00] <marvin24> but that's more like a hack
+[14:16] <janimo> marvin24, nice, and 3.8 works just as well as our current kernel?
+[14:18] <janimo> marvin24, I am not sure about how community builds are run, ogra may know more
+[14:19] <janimo> I don't think there are easy tools, official images also contain a lot of per-target hacks both for builders and inside packages
+[14:24] <marvin24> janimo: so far everything fine, 3.8 already includes the tegra drm driver (lcd and hdmi output work)
+[14:24] <marvin24> so the patches are rather minimal
+[14:25] <janimo> marvin24, great. But too late for the 3.8 cycle?
+[14:25] <marvin24> it's a bit unfortune that there is so little docu about this
+[14:25] <janimo> marvin24, about image building?
+[14:25] <marvin24> janimo: in fact, bare 3.8 also works
+[14:25] <marvin24> janimo: yes
+[14:25] <marvin24> I guess there are many people who like to build images for their devices
+[14:25] <janimo> marvin24, indeed, it is a pity. The tools used for ubuntu images are not well documented either
+[14:26] <marvin24> well, there is build-live
+[14:26] <marvin24> I didn't dig too deep into the configuration
+[14:26] <ogra_> marvin24, we use livecd-rootfs to create the bits and then debian-cd and cdimage to assemble an image out of them
+[14:26] <janimo> marvin24, it even stops canonical employees from testing things fast locally, it does not only affect outside developers
+[14:26] <ogra_> everything sould be in public branches nowadays
+[14:26] <marvin24> ogra_: maybe someone could setup a page which describes the process somehow
+[14:27] <ogra_> (on launchpad, look for the cdimage team)
+[14:27] <marvin24> I kown I'm to lazy to read the source
+[14:27] <ogra_> marvin24, yes, someone should :)
+[14:27] <ogra_> (since years)
+[14:27] <janimo> it's not that it is not public (anymore at least) but not streamlined into one command that is easier than live-build
+[14:28] <ogra_> (livecd-rootfs is a wrapper for live-build btw)
+[14:28] <marvin24> ogra_: btw, https://gitorious.org/uboot-ac100/create_bootimage
+[14:28] <marvin24> builds an image which can be uploaded via tegrarcm
+[14:28] <ogra_> yeah, saw you talking about it on #ac100
+[14:28] <marvin24> no need to flash
+[14:28] <marvin24> starts raring netboot installer
+[14:29] <ogra_> mkimage ?
+[14:29] <ogra_> why dont you use text files for the config ?
+[14:30] <ogra_> (we do that everywhere lese nowadays)
+[14:30] <ogra_> *else
+=== chihchun is now known as zz_chihchun
+[14:32] <ogra_> oh, a new florence release ...
+[14:33] <ogra_> something to test on the nexus7 :)
+[14:34] <ogra_> janimo, do you still work on the gyro sensor bits and camera support ?
+[14:34] <janimo> ogra_, I am still assigned those WIs so in principle yet. gyro first, webcam later
+[14:34] <ogra_> good
+[14:35] <janimo> for webcam I know there was some nvidia comments on the bugreport suggesting they too are looking into that
+[14:35] <ogra_> awesome
+[14:35]  * ogra_ finally has ureadahead working ... 
+[14:35] <ogra_> still struggling with plymouth
+[14:36] <ogra_> i got it booting without initrd ... but then plymouth crashes and mountall refuses to finish the fsck
+[14:45] <marvin24> ogra_: mkimage adds the u-boot header
+[14:46] <marvin24> ... which is not really required by u-boot anymore
+[14:46] <ogra_> marvin24, u-boot doesnt need that since over a year anymore, you can use uEvn.txt and preEnv.txt instead
+[14:46] <marvin24> I wonder why ubuntu still uses it (uImage, uInitrd)
+[14:47] <ogra_> because we have code that handles them generically across all u-boot images and nobody bothered to change anything there
+[14:47] <ogra_> panda is pretty much in maintenance mode ...
+[14:48] <ogra_> nexus7 and ac100 use fastboot ...
+[14:48] <ogra_> and the diferent server images we have ship with u-bppt on flash
+[14:48] <ogra_> *u-boot
+[14:49] <ogra_> (afaik at least, havent done much in the server area lately)
+[14:49] <marvin24> how is uEnv.txt loaded or embedded into the u-boot image?
+[14:49] <ogra_> the only actual improvement was the switch to txt files from  the silly boot.scr
+[14:49] <marvin24> is this omap u-boot specific?
+[14:50] <ogra_> no
+[14:50] <ogra_> upstream u-boot
+[14:50]  * marvin24 greps the u-boot source
+[14:50] <ogra_> should work on all setups that use upstream more or less
+[14:52] <ogra_> hmpf
+[14:52] <ogra_> so ureadahead speeds up booting noticeable ...
+[14:52] <ogra_> but only the part where we show a splash anyway ... the bits with black screen didnt get faster
+[14:59] <marvin24> ogra_: seems that uEnv.txt is loaded by a user defined script in some configs
+[14:59] <marvin24> tegra has only minimal config scripts for now
+[15:00] <ogra_> well, the functionallity to use it is upstream
+[15:00] <ogra_> you shouldnt need to do anything but enable it
+[15:00] <marvin24> ogra_: there is no "code" for this
+[15:00] <marvin24> it's just a macro in the board config
+[15:00] <ogra_> i thought there was
+[15:01] <marvin24> which calls "env load" from the u-boot prompt at the end
+[15:01] <marvin24> and then something must use these variables
+[15:01] <marvin24> I like the "source <some script>" aproach more
+[15:01] <marvin24> because it is more adaptable
+[15:02] <ogra_> but a nightmare to edit
+[15:02] <ogra_> boot.scr is one of the biggest complaints i had from users over the years
+[15:02] <ogra_> well, the need for post processing
+[15:04] <marvin24> yes, from a user perspective you are right
+[15:04] <marvin24> on the other hand, I first have to upstream some script which interprets the uEnv.txt to make use of it
+[15:04] <ogra_> k
+[15:04] <marvin24> http://git.denx.de/?p=u-boot.git;a=blob;f=include/configs/omap3_beagle.h
+[15:04] <marvin24> search for "bootenv"
+[15:05] <ogra_> i really thought that was an upstream addition thats usable everywhere now
+[15:05] <ogra_> i know there were a bunch of discussions on the cross-distro arm list
+[15:05] <ogra_> (to default to it for everything)
+[15:05]  * ogra_ curses 
+[15:05] <ogra_> ok, my kernel change didnt fix plymouth
+[15:05] <ogra_> :(
+[15:07]  * ogra_ sighs
+[15:08] <hrw> ogra_: nexus7 fight?
+[15:08] <ogra_> well, tegra fight
+[15:08] <ogra_> we have a similar prob on the ac100
+[15:08] <ogra_> i can fix it by running console-setup before plymouth runs
+[15:09] <ogra_> but i dont need to do that on any other arch and would likt to fix the root of the prob
+[15:09] <ogra_> especially since you force yourself to use an initrd when needing to run console-setup before
+[15:10] <ogra_> (and i'm trying to get rid of initrd completely for the installed nexus7)
+[15:13] <Tassadar> why, it speeds up the boot?
+[15:13] <ogra_> yes
+[15:14] <RaYmAn> so it actually partially boots a boot.img without a ramdisk on n7?
+[15:15] <ogra_> right
+[15:15] <RaYmAn> tf201's bootloader is buggy and needs a >0 byte ramdisk to actually boot kernel.
+[15:15] <ogra_> same for nx7
+[15:15] <RaYmAn> ah, ok
+[15:15] <ogra_> alternatively you can just disable the initrd support in the kernel
+[15:16] <ogra_> but since we use the initrd at install time and cant get around that, thats no option
+[15:22] <marvin24> is this a fastboot limitation?
+[15:24] <marvin24> RaYmAn: what about to upgrade to u-boot?
+[15:25] <ogra_> marvin24, rather abootimg i think
+[15:26] <marvin24> abootimg? that just creates a boot partition ...
+[15:26] <marvin24> fastboot has the size limit for the initrd
+[15:27] <marvin24> which comes from downstream AFAIK, so all tegra devices should have similar problems
+[15:27] <ogra_> well, abootimg doesnt let me add a obyte initrd
+[15:27] <ogra_> 0byte
+[15:27] <ogra_> no idea where the limitation lies :)
+[15:27] <marvin24> ogra_: use /dev/null as the initrd name
+[15:28] <marvin24> no joke
+[15:28] <ogra_> but from an enduser perspectice it starts at abootimg
+[15:28] <ogra_> oh, didnt try that
+[15:29] <lilstevie> with the tf201 it is actually the bootloader
+[15:31] <marvin24> ah, didn't know that
+[15:33] <RaYmAn> marvin24: on n7? Not really possible given it requires a signed bl.
+[15:35] <Tassadar> and it does not have nvflash yet - when you corrupt the bootloader, you have one nice brick
+[15:36] <marvin24> ah, rescue (rcm) mode als requires signed blob
+[15:36] <marvin24> otherwise you could just use tegrarcm
+[15:36] <marvin24> maybe someone should ask for the keys ...
+[15:37] <RaYmAn> It's per-device key
+[15:39] <marvin24> so they have a different "zero"-stage boot loader in each cpu?
+[15:39]  * marvin24 forgot how this is implemented in hw
+[15:40] <marvin24> or I just didn't read http://http.download.nvidia.com/tegra-public-appnotes/tegra-boot-flow.html
+[15:40] <marvin24> "The Tegra SoC supports various security modes. Some of these modes require the BCT, bootloader, and/or RCM protocol messages to be encrypted and/or signed with a potentially device-specific key. Details of these features are beyond the scope of this document.The Tegra SoC supports various security modes. Some of these modes require the BCT, bootloader, and/or RCM protocol messages to be encrypted and/or signed with a
+[15:40] <marvin24> potentially device-specific key. Details of these features are beyond the scope of this document."
+[15:40] <RaYmAn> doesn't that only handle the open case?
+[15:40] <RaYmAn> ah, right
+[15:41] <RaYmAn> but yeah, they are encrypted & signed with a device-specific Secure boot key (SBK)
+[15:41] <Tassadar> RaYmAn: so flashing/updating bootloader must be done by current active bootloader, since nothing else has the key?
+[15:41] <RaYmAn> Tassadar: that pretty much sums it up I guess
+[15:41] <Tassadar> that's dumb
+[15:42] <RaYmAn> (and no, you can't extract the key :P)
+[15:42] <Tassadar> yeah, it's all encrypted
+[15:42] <Tassadar> read that somewhere already
+[15:42] <ogra_> yeah, else nvflash would just work
+[15:42] <ogra_> or tegracrm
+[15:42] <lilstevie> Tassadar: why is that dumb? works quite well
+[15:43] <RaYmAn> in any case, fastboot won't let you flash a new bootloader because it requires that it's signed (by an RSA key)
+[15:43] <RaYmAn> (on n7)
+[15:43] <Tassadar> fasboot erase bootloader works pretty well too, unfortunatelly
+[15:43] <RaYmAn> so if google wanted, they could easily let us flash a signed uboot
+[15:45] <Tassadar> chmm, that is weird
+[15:45] <Tassadar> one CM developer managed to accidentally brick his n7 by "fastboot flash bootloader boot.img" Oo
+[15:46] <RaYmAn> that's not very likely
+[15:46] <RaYmAn> well, actually
+[15:46] <RaYmAn> hmm
+[15:46] <RaYmAn> there is *one* case where that could happen
+[15:46] <RaYmAn> It uses a rather specific way of signing bootloaders, so if the boot.img was signed the same way, it would flash
+[15:47] <Tassadar> it was probably just normal boot image
+[15:47] <RaYmAn> it refuses to flash those
+[15:47] <RaYmAn> I can't rule out a previous bootloader version might have allowed it
+[15:49] <Tassadar> anyway, I don't really get why do they even bother to lock it up like that
+[15:50] <RaYmAn> indeed
+[15:50] <RaYmAn> it's kind of pointless
+[15:50] <RaYmAn> I mean, you can partially understand it on phones - carrier lockin and stuff, lots of money involved
+[15:50] <RaYmAn> but on tablets? that's just silly!
+[15:51] <ogra_> probably just the same code
+[15:51] <ogra_> and someone being to lazy to special case it for tablets
+[15:51] <RaYmAn> mm
+[15:51] <RaYmAn> google actively enabled that extra layer of security.
+[15:52] <RaYmAn> It's entirely optional on tegra
+[15:52] <Tassadar> transformer's bootloader was encrypted too I think, Asus said that it was required to get like the DRM licences (?), and they released like "unlocked" version, which disabled google play movies or something like that
+[15:52] <RaYmAn> (as you know from ac100)
+[15:52] <Tassadar> if I'm not mistaken
+[15:52] <RaYmAn> the whole asus thing was one big misunderstanding. No one whining about it had any clue what it was about
+[15:53] <RaYmAn> but they did manage to convince asus to make an unlock, so no point in arguing ;)
+[15:53] <RaYmAn> the encryption/signing of the bootloader is a tegra SoC core feature. It's controlled by OTP fuses, so these fuses has to be actively burned to enable it
+[15:54] <Tassadar> well....nexus 7 has the same thing, shame that nobody cares since we can "unlock" ability to flash system/data/recovery
+[15:54] <RaYmAn> indeed.
+[15:55]  * ogra_ doesnt mind the bootloader ... but the GPT
+[15:55]  * Tassadar searches for GPT
+[15:55] <ogra_> the hardcoded partition table
+[15:55] <Tassadar> partition table!
+[15:55] <RaYmAn> yeah, that's a pain with the hardcoded offsets etc
+[15:55] <RaYmAn> (gpt_offset or something passed to kernel)
+[15:56] <ogra_> i would pretty much prefer we could just wipe the MMC completely and use it as single partition
+[15:57] <RaYmAn> yeah
+[15:57] <RaYmAn> I like how QC does it - just search for a partition iwth a specific UUID and load bootloader from there.
+[15:57] <marvin24> ac100 was never locked at all
+[15:58] <Tassadar> it was transformer prime
+[15:58] <Tassadar> the one with gps problems i believe
+[15:58] <RaYmAn> Tassadar: original transformer had exactly the same issues wrt bootloader.
+[15:59] <RaYmAn> well, except they didn't require signed boot.img & recovery.img for that.
+[15:59] <RaYmAn> But bootloader it self was encrypted & signed in the same way.
+[16:01] <Tassadar> yeah, here it is http://www.androidpolice.com/2012/01/03/you-spoke-asus-listened-an-unlock-tool-for-the-transformer-primes-bootloader-is-in-the-works/
+[16:01] <Tassadar> they say it is required because of DRM
+[16:02] <RaYmAn> the interesting part is that when you unlock e.g. N7, it leaves your DRM keys in tact and DRM still works.
+[16:02] <RaYmAn> whereas on TF Prime, they wipe the keys
+[16:03] <RaYmAn> So I suspect it's more of a misunderstanding in what is required.
+[16:03] <Tassadar> well, on n7 it does not unlock the bootloader itself
+[16:03] <lilstevie> explain?
+[16:03] <Tassadar> like the bootloader is still encrypted and must be signed
+[16:03] <Tassadar> if you want to flash another
+[16:03] <lilstevie> no different on the tf201
+[16:04] <lilstevie> the encrypted business is a one way deal
+[16:04] <Tassadar> :/
+[16:04] <Tassadar> I guess it would be complete surprise if the'd made up that stuff about DRM :)
+=== ben1066_ is now known as ben1066
+[16:08] <Tassadar> by the way, can't you play the movie via HDMI? Isn't the DRM pointless then?
+[16:09] <ogra_> HDMI has builtin DRM :)
+[16:09] <Tassadar> hah, okay)
+[16:10] <RaYmAn> Tassadar: look at HDCP
+[16:11] <Tassadar> "In September 2010, an HDCP master key [...] was released to the public"
+[16:12] <ogra_> sure, has the same status as libdvdcss
+[16:13] <Tassadar> so just another "DRM" to soothe the content publishers
+[16:13] <ogra_> you cant officially use or distribute it
+[16:13] <RaYmAn> does it even work for decrypting bluerays?
+[16:13] <RaYmAn> I mean, on a regular pc etc
+[16:13] <ogra_> HDCP is part of DRM ... else you could ... as you said above ... just copy the video stream
+[16:14] <RaYmAn> er, not blurays of course.
+[16:14] <RaYmAn> From what I heard, you need rather specialized hardware to actually take advantage of that key
+[16:17] <Tassadar> engadget says that "Hardware HDCP rippers like the HDfury2 and DVIMAGIC have been around" before that key was "released"
+[16:18] <Tassadar> it is probably not even used that much anyway, since ripping the blurays is clearly possible
+[16:18] <ogra_> http://www.iloveubuntu.net/mark-shuttleworth-video-demoes-ubuntu-phones-ces-2013
+[16:18] <ogra_> :D
+[16:45] <marvin24> yuhu - we'll get locked ubuntu
+=== mythos_ is now known as mythos
+=== yofel_ is now known as yofel

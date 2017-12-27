@@ -1,0 +1,680 @@
+[00:22] <scientes> infinity, indeed
+[00:22] <scientes> apt-get should also alias isntall to install
+[00:23] <TheLordOfTime> apt-cache should alias info to show too.
+[00:23] <TheLordOfTime> ((opinion))
+=== megha is now known as gia
+[00:54] <cjwatson> pitti: Never mind my earlier question about libnotify; having looked into the libnotify source I've answered it to my own satisfaction (i.e. there is indeed no longer a need to keep a handle around)
+[00:54] <cjwatson> Which is great since I can remove another chunk of code
+[00:59] <cjwatson> Wait.  notify_notification_close does still do something useful ...
+[00:59]  * cjwatson uncommits
+[01:08] <cjwatson> Well, only for notification-daemon, as notify-osd ignores CloseNotification.  But I suppose I should keep it around.
+[01:15] <xnox> dobey: I've made merge proposals to fix apport hook in ubuntuone-client, but i'm not sure about stable branches & packaging management around it. It's to fix bug 1098128 in quantal and raring. Branches are attached to that bug.
+[01:15] <ubottu> bug 1098128 in ubuntuone-client (Ubuntu Raring) "ubuntuone-client hook error, not python3 compatible" [High,Triaged] https://launchpad.net/bugs/1098128
+=== salem_ is now known as _salem
+[03:56] <ScottK> Laney and slangasek: C++ symbols files do seem ~manageable with the symbolshelper that MoDaX did for KDE (referenced in Russ's blog post).
+[03:57] <hyperair> they're somewhat manageable even without, if you c++filt them.
+[03:58] <BenC> xxiao: e500v2 doesn't need soft-float for most cases
+[03:59] <BenC> v1 is a different story and I don't think there are many e500v1's out in the wild anyway
+[04:15] <infinity> BenC: Ahh, it was a lack of soft-float implementation?
+[05:00] <xxiao> BenC: does ubuntu has an e500-v2 rootfs, soft-float is fine, assume it's compiled for e500v2
+[05:00] <xxiao> s/has/have/
+=== jtechidna is now known as JontheEchidna
+[05:17] <infinity> xxiao: I think what he was driving at is that Ubuntu's powerpc userspace works fine on e500v2.  We don't have different "rootfses" for each subarch, nor do we compile userspace over and over again for each.
+[05:17] <infinity> xxiao: But we do have e500 kernels, and a generic ppc32 userspace that works with them.
+[05:53] <pitti> cjwatson: AFAIR it's not because of keeping handles, but because current notifications don't have tray icons any more
+=== jackyalcine_ is now known as JackyAlcine
+=== Quintasan_ is now known as Quintasan
+[07:23] <dholbach> good morning
+=== yofel_ is now known as yofel
+[07:28] <Quintasan> dholbach: dzien dobry
+[07:29] <Quintasan> Laney: Oh I really did name it libmaliit1, so silly. As for symbols, well,  I thought it's generally good idea to provide symbols files for libraries.
+[07:29] <dholbach> Quintasan, cześ´c (can't get the '´' on the c properly :-))
+[07:29] <Quintasan> :D
+[07:29] <Quintasan> ć
+[07:30] <dholbach> ha, thanks - I'll always go back to the log and copy it from here :)
+[07:30] <Quintasan> I was about to suggest that but realised it would be a little bit tedious
+[07:30] <Quintasan> I always have my ☭ in Klipper in case I ever need it again
+[07:31] <Quintasan> :P
+[07:32] <dholbach> :)
+[07:33] <Quintasan> Laney: Well, after looking at rules I'm kind of wondering how was I supposed to figure this cleaning magic out but if you got this covered then I really have nothing to add there.
+[07:33] <ion> compose C C C P ☭
+=== fisted_ is now known as fisted
+=== smb` is now known as smb
+[08:46] <pitti> ion: heh, cool!
+[09:05] <Laney> ScottK: Yeah, I am using that. I suppose that's OK but it does still feel slightly distasteful that I'm supposed to go through one iteration on the buildds before it's correct on all arches. Also I don't really understand why it seems to re-export symbols from dependent libraries.
+[09:05] <Laney> Quintasan: I nicked it from upstream's package and then noticed that some generated files were left over meaning that debuild -S failed so added those ones too. ;-)
+[09:13] <infinity> Laney: Clearly, you're meant to have 13 architectures in your living room, so you don't have to abuse buildds.
+[09:14] <infinity> Laney: (Though, to be vaguely fair, there are ways to guess/pre-mangle symbols for various arch oddities)
+[09:14] <infinity> Laney: A bit harder, though, to guess if a symbol is just completely ifdefed out on an arch unless you know every line of code, though. :P
+=== henrix_` is now known as henrix
+=== JackyAlcine is now known as jalcine
+[11:36] <xnox> dholbach: fixing packages to cross-build will be an irc talk. And I hope to fit it nicer into 30min slot now.
+[11:37] <dholbach> perfect
+=== _salem is now known as salem_
+[12:10] <Laney> Quintasan: The debian-mobile guys think that it would be good to maintain maliit under their umbrella (not really an official team as such)
+=== LoganCloud_ is now known as LoganCloud
+=== LoganCloud is now known as Guest19155
+[12:15] <dholbach> pitti, tumbleweed, ogra_, bdrung, geser: ready for later on? :)
+[12:15] <tumbleweed> oh, right, must write something
+[12:18] <geser> dholbach: I hope :) should I've prepared something?
+[12:18] <dholbach> no no :)
+[12:23] <pitti> dholbach: I'll make something up :)
+[12:23] <dholbach> :-D
+[12:35] <rbasak> Is rmadison broken for anyone else? It just hangs on me.
+[12:39] <rbasak> Looks like it gets there eventually (ie. 4 minutes!)
+[12:39] <tumbleweed> rbasak: yes, that's the normal failure mode with it
+[12:39] <tumbleweed> and then it's fast again
+[12:48] <janimo> Laney, 2 of the Linaro folk I knew got membership approval after a while (it just took longer for them to make up their minds about applying)
+[12:48] <ogra_> dholbach, nope, but will be by then :)
+[12:48] <janimo> one other said he had no interest as it takes too much time to fulfill the ancillary conditions IIRC
+[12:49] <sladen> if the "ancillary conditions" are taking too long this is not good, as the Debian process fails/ed for many years with similiar
+[12:50] <janimo> sladen, anything not pertaining to getting their 1 of 2 software modules out in the archives likely looks like ancillary to most  devs in this category
+[12:51] <janimo> even if they are good at their own package, they may not care about the various patch systems, build systems, UDD and whatever else may be expected from someone that touched packages across the archive
+[12:52] <Laney> per-package upload rights don't require that kind of knowledge
+[12:52] <Laney> you just need to know about stuff relevant to your package
+[12:52] <janimo> Laney, good to know.
+[12:53] <sladen> Laney: I was more assuming this was the "create a wikipage and fill it with stuff"
+[12:53] <janimo> sladen, that too, yes
+[12:53] <sladen> but if it's not that, that's good to know too
+[12:53] <Laney> yeah, it could be.
+[12:56] <tumbleweed> getting involved in any project is going to have some burden
+[12:57] <tumbleweed> and I don't tihnk it's reasonable to give upload rights until people have acclimatised and know their way around
+[12:57] <tumbleweed> which means that they are going to have to put some effort in
+=== MacSlow is now known as MacSlow|lunch
+[13:03] <janimo> tumbleweed, but when people know they way around it is not reasonable to nitpick and demotivate them
+[13:03] <janimo> especially PPUs which carry a lot less risk for the system as a whole
+[13:03] <bdrung> dholbach: i hope so.
+[13:05] <tumbleweed> janimo: we most certainly expect more experience for broad rights than narrow
+[13:07] <tumbleweed> most of the time I'm just looking at whether the applicant is capable of maintaing the package to a reasonable quality level, without a sponsor to help and review
+[13:08] <tumbleweed> once you have upload rights, nobody is going to help you unless you ask
+[13:10] <janimo> tumbleweed, I also think that other contributions to ubuntu such as advocacy should have nothing to do with PPU approval
+[13:11] <tumbleweed> janimo: we probably need to disentangle membership from PPU
+[13:11] <janimo> I know that one needs to (needed to?) be an ubuntu -member to get upload rights, but I don;t think questions like 'how do you represent ubuntu' are appropriate
+[13:11] <tumbleweed> but we haven't yet
+[13:11] <tumbleweed> the membership aspect is only rarely an issue
+[13:11] <janimo> for PPU, a track record in the ubuntu-changes mailing list should suffice. Especially with string endorsements and no -1 endorsements it is absurd to not approve someone
+[13:12] <janimo> s/string/strong/
+[13:12] <tumbleweed> absolutely
+[13:12] <janimo> sorry, but I am still baffled to learn about the libo case :)
+[13:13] <tumbleweed> I wasn't voting in that particular meeting, and I don't really want to discuss details about it
+[13:13] <janimo> The DMB like a good manager should get out of the way and _help_ developers do their jobs more smoothly not nitpick, let alone subtly patronize
+[13:13] <tumbleweed> I'm happily talking in broader terms :)
+[13:14] <janimo> yes, I am talking about broader terms but this is the only case I can think of as it is the only package high profile enough that made me comment
+[13:14] <janimo> but it highlights a lack of agility I'd say
+[13:15] <janimo> it's not that we could not use more uploaders in sandboxes who learn and improve by uploading instead of putting the barrier to entry too high and be a bottleneck
+=== doko_ is now known as doko
+[13:17] <tumbleweed> most applications are no-brainers. Someone comes in with a range of experience, and good endorsements. It's just a matter of checking that they know about release cycles & processes (and you'll learn the important bits from the meeting if weren't already familiar with them)
+[13:18] <Laney> Quintasan: Uploaded! If you've any changes then I'll integrate them into a -2
+=== Tonio__ is now known as Tonio_aw
+=== Tonio_aw is now known as Tonio__
+[13:33] <xkernel> I'm creating my first deb package, where to specify the application Icon and screenshot that will be displayed in the Software Center?
+[13:35] <xnox> xkernel: icon is referenced in the .desktop file.
+[13:36] <xnox> xkernel: screenshots are uploaded here: http://screenshots.ubuntu.com/upload
+[13:38] <xkernel> thanks xnox, I'm creating a package for PHP code project and after I executed dpkg-buildpackage, the result package didn't contain PHP files
+=== Tonio__ is now known as Tonio_aw
+[13:45] <xnox> xkernel: php packages don't usually show up in software center.... they are typically considered 'technical' packages.
+[13:45] <xnox> xkernel: there is more packaging help in #ubuntu-packaging and/or #ubuntu-motu
+[13:46] <xkernel> Thanks a lot
+=== hrww is now known as hrw
+[13:56] <menace> is there a possibility to download from different ubuntu sections into different own repositories? i want to separate the repositories
+[13:57] <jpds> menace: Different ubuntu releases?
+[13:58] <davmor2> ogra_: hey dude are you about?
+[13:58] <ogra_> davmor2, i am, yes
+[14:00] <menace> na, only different sections. one repository for raring, raring-updates, raring-security e.g.
+[14:00] <davmor2> ogra_: I get an odd issue running software-updater on the n7 it pops up a apport window and then pops up an admin window and keyboard.  However the keyboard isn't functioning so I can't report it, I've tried resubmitting it same issue
+=== bdrung_ is now known as bdrung
+[14:00] <ogra_> davmor2, fixed today, send flowers to bdmurray
+[14:01] <ogra_> (might not have propagated around yet)
+[14:01] <davmor2> ogra_: ah okay that explains it then
+[14:01] <davmor2> ogra_: so leave updating till tomorrow then
+[14:02] <ogra_> we need to drop gksu from all images ... update-notifier and xdiagnose are the last tools using it
+[14:02] <ogra_> u-n was fixed today xdiagnose should happen too before release (less urgent though since less visible)
+[14:02] <davmor2> ogra_: fair enough
+[14:02] <cjwatson> menace: debmirror should help
+[14:03] <davmor2> ogra_: I'm assuming then that the keyboard is called under the gksu too then or something?
+[14:03] <cjwatson> menace: in its terminology, raring, raring-updates, etc. are "distributions" or "suites".
+[14:03] <cjwatson> menace: (sections are something else.)
+[14:04] <ogra_> update-notifier called gksu to run apport
+[14:04] <ogra_> the dislog you see after login is update-notifier
+[14:04] <ogra_> *dialog
+[14:04] <cjwatson> u-n still uses gksu for some things, just not apport
+[14:05] <ogra_> oh
+[14:05] <ogra_> k
+[14:05] <cjwatson> though actually those may be fallback paths from aptdaemon and friends
+[14:05] <ogra_> i was hoping we could wipe gksu
+[14:05] <cjwatson> it still Depends on it
+[14:05] <ogra_> k
+[14:05] <cjwatson> shouldn't matter much if it doesn't get used in practice
+[14:05] <ogra_> well, it is still on the images, would be good to slowly educate people over to pkexec
+[14:06] <pitti> bdmurray: btw, was it intentional that update-notifier now hard-depends on gksu? I thought this dep should have been gone now?
+[14:06] <ogra_> (given that we use it since years and nobody seems to know about it)
+[14:06] <cjwatson> pitti: as I say, it's still used by a number of fallback paths in u-n
+[14:06] <pitti> oh, ok
+[14:07] <cjwatson> it may be an error - some of the pieces that use it seem themselves unused
+[14:08] <Laney> at least one path calls synaptic which is itself only a recommends
+[14:08] <pitti> is it? it hasn't been on the images for a long time
+[14:08] <cjwatson> let's see what I can do
+[14:08] <pitti> ah, alternative dep
+[14:08] <Laney> alternate with python-ap...
+[14:09] <pitti> python-aptdaemon.gtk3widgets preferred
+[14:09] <Laney> :-)
+[14:09] <cjwatson> yeah, I think most of this can be superseded by aptdaemon
+[14:10] <cjwatson> bzr log of some of the other things dates from 2004
+[14:11] <ogra_> seb128, are power-statistics supposed to dynamically update their UI ? doesnt seem to happen here if i look at the battery details
+[14:11] <pitti> for example, data/upgrade-app is being called nowhere apparenlty, nor installed
+[14:11] <seb128> ogra_, I don't know off hand, not sure
+[14:11] <pitti> same with dbus-helper
+[14:12] <cjwatson> pitti: too slow old man
+[14:12] <ogra_> heh
+[14:12] <pitti> cjwatson: let me guess, you already dropped it in bzr? :-)
+[14:12] <cjwatson> yeah
+[14:12] <pitti> cheers :)
+[14:13] <cjwatson> cddistupgrader is the last true dep, I think
+[14:14] <Daviey> stgraber: is there intention to SRU your UEFI fix for LXC?
+[14:15] <nemo_> hello :')
+[14:15] <ogra_> seb128, it seems to update if i switch from Details to History and back, but not if i just leave Details open, i think that worked in quantal
+[14:15] <ogra_> (battery details)
+[14:16] <seb128> ogra_, there is no code change between quantal and raring for that source
+[14:16] <seb128> ogra_, the only upload has this diff: https://launchpadlibrarian.net/121932082/gnome-power-manager_3.6.0-0ubuntu1_3.6.0-1.diff.gz
+[14:17] <ogra_> well, pitti's patch could be related
+[14:18]  * ogra_ checks bug 951827
+[14:18] <ubottu> bug 951827 in gnome-power-manager (Ubuntu) "Power Statistics window blank" [High,Fix released] https://launchpad.net/bugs/951827
+[14:19] <pitti> that's very unlikely to affect the running instance, unless you opened it a second time
+[14:19] <ogra_> ah, no, thats to trivial
+[14:19] <ogra_> yeah, just saw the patch
+[14:21] <mohamedalaa98> Hello guys :) ,My friend nemo_ Have a question about vala can you please help him? :D
+[14:21] <stgraber> Daviey: yes
+[14:21] <mohamedalaa98> nemo_: go ahead
+[14:22] <stgraber> Daviey: it missed the last SRU unfortunately but hallyn and I are aware of it and we'll make sure it gets with the next one
+[14:22] <cjwatson> bdmurray: I don't understand how your pkexec stuff in update-notifier works.  pkexec doesn't permit running X applications as another user by default ...
+[14:22] <nemo_>  Is here anyone who have tried to load XML UI file with Vala and the signals worked with him ?
+[14:22] <Daviey> stgraber: Do you have an ETA?
+[14:22] <ogra_> cjwatson, it does with --user i think
+[14:23] <ogra_> if you omit --user it uses root
+[14:23] <cjwatson> ogra_: u-n doesn't use --user
+[14:23] <ogra_> oh
+[14:23] <ogra_> well, then it will use root
+[14:24] <cjwatson> Yes, I know
+[14:24] <ogra_> (which it should actually)
+[14:24] <cjwatson> Therefore pkexec won't permit apport-gtk to talk to the X server
+[14:24] <cjwatson> As I sai
+[14:24] <cjwatson> d
+[14:24]  * ogra_ should probably look at the code 
+[14:24] <cjwatson> And there's no configuration in /usr/share/polkit-1/actions/ for it, which I guess would be needed if we wanted to allow that
+[14:24] <ogra_> err, but thats its purpose
+[14:24] <cjwatson> That's what's purpose?
+[14:25] <ogra_> oh, right, you need the policies indeed
+[14:25] <ogra_> its purpose is to act similar to gksu :)
+[14:25] <xnox> nemo_: yeah. Your question is general programming question, nothing to do with ubuntu development. You are better off with stackoverflow website of #vala channel on GIMPnet irc network.
+[14:25] <ogra_> but indeed it needs a policy to allow the subprocess to connect to X
+[14:26] <xnox> nemo_: you can look at packages that build-depend on vala and see how they do it....
+[14:27] <Laney> cjwatson: /usr/share/polkit-1/actions/com.ubuntu.apport.policy allows that
+[14:27] <pitti> cjwatson, gksu: not sure what you mean, but apport started to ship /usr/share/polkit-1/actions/com.ubuntu.apport.policy which has org.freedesktop.policykit.exec.allow_gui==True (therefore allowing X apps)
+[14:27] <stgraber> Daviey: looks like all our current SRUs have landed, so I'm busy with mobile stuff this week but I can do that early next week (I guess we need to SRU to both 12.04 and 12.10 for that one)
+[14:27] <cjwatson> only for root_info_wrapper, AFAICS
+[14:27] <cjwatson> err
+[14:27] <cjwatson> oh, I have an out-of-date version, typical
+[14:28] <nemo_> Ok , thanks.
+[14:28] <pitti> bdmurray added a second one to run apport-gtk
+[14:28] <pitti> as that was blocking the u-n migration to pkexec
+[14:28] <Daviey> stgraber: yeah, that would be good.  Had a few reports of juju+lxc phantom failure.. and this seems to be it.. Thanks!
+[14:28] <cjwatson> right, I just didn't realise I was out of date there
+[14:28] <Laney> ah, and it's only a recommends, indeed
+[14:29] <cjwatson> "com.ubuntu.pkexec.apport-gtk" is a bizarre id for that action
+[14:29] <cjwatson> s/pkexec/apport/ surely?
+[14:29] <pitti> indeed, will fix in trunk
+[14:30] <pitti> com.ubuntu.apport.apport-gtk-root ?
+[14:30] <cjwatson> *shrug*
+=== iulian is now known as Guest27055
+[14:46] <dholbach> https://wiki.ubuntu.com/UbuntuDeveloperWeek Day 3 starts in 14 minutes in #ubuntu-classrom
+=== slank_away is now known as slank
+[15:28] <smoser> slangasek, around ?
+[15:29] <smoser> i was looking at bug 1031065, and 'networking' job seems to be blocked because /tmp is not yet mounted (maybe because it is blocked on 'mounted /' ?)
+[15:29] <ubottu> bug 1031065 in cloud-init (Ubuntu Precise) "cloud-init-nonet runs 'start networking' explicitly" [Medium,Triaged] https://launchpad.net/bugs/1031065
+[15:29] <smoser> (this is in precise container).
+=== MacSlow|lunch is now known as MacSlow
+[16:08] <diwic> ehm, are the precise daily images (12.04.2) known not to boot, or did I do something stupid?
+[16:12] <roadmr> hey folks, how to access information for a specific error in errors.ubuntu.com? it just loops me in an Ubuntu SSO page
+[16:12] <roadmr> I think I'd need to be in a group but I don't know which one or who to ask to be added
+[16:13] <diwic> roadmr, could it be canonical-ubuntu-platform?
+[16:14] <roadmr> diwic: could be, I'm not a member there
+[16:15] <cjwatson> diwic: not known
+[16:15] <cjwatson> diwic: which image, what architecture / firmware type?
+[16:15] <diwic> cjwatson, precise-desktop-i386.iso
+[16:16] <cjwatson> booting in BIOS mode I presume?
+[16:16] <cjwatson> from CD or USB?
+[16:17] <diwic> cjwatson, from USB, and machine is before UEFI era
+[16:17] <diwic> cjwatson, "ERROR: No configuration file found" "No DEFAULT or UI configuration directive found!" "boot: "
+[16:17] <cjwatson> you used usb-creator?
+[16:17] <diwic> yes
+[16:18] <cjwatson> don't bother, just dd it directly
+[16:18] <diwic> 13.04 usb-creator
+[16:18] <cjwatson> I suspect usb-creator has taken to breaking syslinux again somehow
+[16:18] <cjwatson> but likely to be a usb-creator bug rather than an image bug
+[16:19] <diwic> okay
+[16:19] <diwic> cjwatson, I will try that next, thanks
+[16:20] <davmor2> cjwatson: the sudo -s then  cat x.iso > /dev/sdx is pretty reliable
+[16:25] <diwic> yep, the dd'ed image works better
+=== ximion is now known as ximion-afk
+=== ximion-afk is now known as ximion
+=== ximion is now known as ximion-afk
+=== ximion-afk is now known as ximion
+=== ximion is now known as ximion-afk
+=== ximion-afk is now known as ximion
+=== deryck is now known as deryck[lunch]
+=== ximion is now known as ximion-afk
+=== ximion-afk is now known as ximion
+=== tkamppeter_ is now known as tkamppeter
+=== kentb is now known as kentb-lunch
+=== ogra_ is now known as ogra
+=== ximion is now known as ximion-afk
+=== ximion-afk is now known as ximion
+[17:39] <bdmurray> psusi: is there a test case for bug 1074606?
+[17:39] <ubottu> bug 1074606 in gparted (Ubuntu Quantal) "gparted identifying incorrect raid arrays" [High,In progress] https://launchpad.net/bugs/1074606
+[17:40] <xnox> barry: I've played a little bit with pyo optimisation on the nexus7. All pyo files in total take about 40MB disk space. There are some memory footprint gains. For example, lenses can save about 100-200 kB. very big stuff like software-center 3MB.
+[17:40] <xnox> barry: (for some lenses, they need to be converted to a wrapper script + module, if currently they are just the script)
+[17:40] <xnox> and also shebang adjustments.
+[17:41] <xnox> barry: Do such gains validate to generate optimised byte-compiles & change shebangs?
+[17:49] <Suudy> Hi.  I'm working on our custom Ubuntu based distribution that we are building from scratch.  As part of our effort to move from 8.04 to 12.04, we've noted that our build setup is incorrectly handling dependencies.  I'm wondering how the Ubuntu team handles the cases of circular dependencies (such as gcc depending upon eglibc, which depends on gcc, etc).
+[17:49] <Suudy> We'd like to be able to have a clean build chain.
+=== henrix is now known as henrix_
+[17:49] <cjwatson> Suudy: We don't have a bootstrap-from-scratch recipe as yet
+[17:50] <cjwatson> Suudy: When we bootstrap a new architecture, we put together chroots based on cross-compiling or partial builds or whatever as appropriate, and build a few stages until we reach a reasonable fixed point
+=== henrix_ is now known as henrix
+[17:51] <cjwatson> Suudy: After that, all builds start by unpacking the base chroot and upgrading all packages contained therein to whatever's current in the archive
+[17:51] <cjwatson> Suudy: And the chroots are occasionally upgraded centrally, but that's just for performance's sake
+[17:51] <cjwatson> Suudy: The ability to bootstrap from scratch has some interest to us, but it's mostly academic as we very rarely need to do it
+[17:52] <Suudy> So, for example, if you have in your base chroot a version of eglibc, then you build a newer version of eglibc in that chroot?  Then update the chroot with the newer version?
+[17:52] <cjwatson> Yeah
+[17:53] <Suudy> And you build this chroot using debootstrap?
+[17:53] <cjwatson> The build logs record all the versions of everything involved, so we can go back and reproduce previous state if we have to, but that's almost never actually necessary in practice
+[17:53] <cjwatson> debootstrap --variant=buildd, basically.  (I think it's actually a custom script but --variant=buildd is close enough.)
+[17:56] <Suudy> Sure, sure.  That's what we do.  But debootstrap pulls from some base repo.  In our case, we have a local web server with the base 12.04 release.  Then we build the individual packages.  The problem we have is that we build eglibc.  So depending upon build order, some packages will build against the repo version of eglibc, and after eglibc is built, they will build against the newly built eglibc.  If these versions differ....
+[17:56] <Suudy> So it seems you just make sure your repo is always the same.
+[17:56] <Suudy> er, is up-to-date.
+[17:57] <cjwatson> It's very rare for such differences to matter, and when they do they should be expressed using versioned build-dependencies
+[17:58] <cjwatson> Our archive cycles every half an hour so it updates reasonably quickly, though not instantly
+[17:58] <cjwatson> Bear in mind that we never have to do something like going directly from 8.04 to 12.04 - by definition we've gone through all the intermediate stages
+[17:58] <cjwatson> So that naturally smooths out most of the problems
+[17:59] <cjwatson> In your situation I'd probably build 12.04 once internally, rebuild the binaries against the result, and publish the second build
+[17:59] <barry> xnox: i think they do yes.  esp. -OO which removes docstrings - that should give us a big savings
+[17:59] <Suudy> Well, this is more for bookkeeping purposes.  We want to be able to say that we build what we release.  And if some of the packages are pulled from a repo with 3rd party packages, we can't make that claim.
+[17:59]  * xxiao wonders if he can upgrade windows 95 to windows 8 in one step...
+[18:00] <xnox> barry: *sigh* I did just pyc vs pyo (-O)
+[18:00] <Suudy> Well, we aren't exactly going straight from an 8.04 base distribution to 12.04.  Rather, we have several packages from 8.04 that we are upgrading to 12.04.  We have a custom deboostrap script to assemble the distribution.
+[18:00] <xnox> barry: does pycompile support -OO ?!
+[18:00]  * xnox looks in the source
+[18:00] <barry> xnox: apparently not from the -h
+[18:01] <xnox>     cmd = "/usr/bin/python%s%s -m py_compile -" \
+[18:01] <xnox>         % (version, ' -O' if optimize else '')
+[18:01] <barry> xnox: should be easy to hack in though
+[18:01] <xnox> *sigh*
+[18:01] <barry> yeah
+[18:01] <barry> (and worth getting upstream i think)
+[18:01] <xnox> I think I'll do that next on my train to brussels =)
+[18:01] <barry> xnox: when's that? :)
+[18:01] <xnox> and measure some memory. At least something that doesn't require network.
+[18:01] <xnox> barry: tomorrow morning =)
+[18:02] <barry> cool.  that was the next thing on my list, so maybe i'll work on the patch today
+=== salem_ is now known as _salem
+[18:03] <cjwatson> Suudy: Right, but if you go round a second cycle you should be able to be pretty confident of that.
+[18:03] <cjwatson> Suudy: And certainly keep all your build logs and make sure they record versions of everything (sbuild should take care of that)
+[18:05] <xnox> barry: hmm. ok. But then /etc/python/debian_config needs to support it as well. & pythonX.Y[-minimal] postinst scripts as well. And since there is not .pyoo one will get pyo's which can be one thing or the other.
+[18:05] <barry> xnox: hmm, that's true
+[18:06] <xnox> barry: I mean for memory comparison I can just monkey patch pycompile and be done with it.
+[18:06] <barry> xnox: right.  it would be worth getting those numbers, but i bet they'll be significant
+[18:06] <xnox> barry: also I haven't found and easy way to retrigger python2.7 postinst and all packages post-install re-bytecompilation.
+[18:06]  * barry wonders if we can subvert the pep3147 tags to co-install all optimization flavors
+[18:06] <xnox> I'm sure everyone will be happy! =)
+[18:07] <xnox> so right now I grepped /var/lib/dpkg/info/*.postinst for "py[3]compile -p" & used sed on it to find all the things I can re-bytecompile (including private dirs)
+[18:08] <xnox> i guess if we flip the switch by default, it's not a problem since everything will be correctly compiled on the first time it's installed.
+[18:09] <barry> xnox: i'm not sure we want it on by default.  on plats where it doesn't matter, it's better to use the pycs
+[18:09] <xnox> without docstrings .pyo files should be smaller as well =) so less disk-space penalty.
+[18:09] <barry> xnox: at the cost of introspection
+[18:09] <xnox> barry: well enabling optimised means that _ in addition _ to pyc there is _also_ pyo generated.
+[18:10] <xnox> barry: and we will need to modify shebangs.
+[18:10] <barry> xnox: right, i'm not sure whether we want pyos w/ or w/o docstrings by default
+[18:10] <xnox> barry: so e.g. ipython / python interpreters should use pyc for development style with docsrings.
+[18:12] <xnox> barry: disk penalty seems ok, and every KB counts....... see what small amounts colin was hunting down this week.
+[18:13] <xnox> barry: well =) we can also cross-train to vala developers ;-)
+[18:13] <barry> xnox: yes, for nexus7 definitely.  but i would probably still want docstrings in my pyos on my desktop
+[18:13] <xnox> and QML/Qt
+[18:13] <xnox> barry: why? you will always have them in pyc.
+[18:13] <xnox> (enabling pyo, doesn't remove pyc)
+[18:14] <xnox> also note that nexus7 is your desktop under convergence plan =)))))
+[18:14]  * barry can't wait for his 16gb + 1t nexus 7
+[18:14] <xnox> =)))))))))))
+[18:15] <xnox> 16GB RAM and 1TB SSD? =)
+[18:15] <xnox> nice
+[18:15] <barry> xnox: i'll send you a picture of my weekend soldering hack :)
+[18:16] <xnox> barry: http://images2.wikia.nocookie.net/__cb20090309234128/starwars/images/e/ee/DeathStar2.jpg ?
+[18:17] <barry> xnox: close, but i think they crossed pin 3 with ping 917409239840953023948000109348
+[18:17] <barry> *pin
+[18:18] <xnox> barry: hmm... pin 3 or 4 looks like could be either. but definately with pin 917409239840953023948000109348
+[18:18] <xnox> =)))
+[18:18] <barry> :-D
+[18:18]  * xnox loves your numbers
+=== deryck[lunch] is now known as deryck
+[18:24] <psusi> bdmurray: yea, have a raid array present but not described in /etc/mdadm.conf.. the superblocks may say it should be md0, but since it isn't in mdadm.conf, mdadm activates it as md127 instead... the old gparted code thoguht there should be an md0 and erroed because there wasnt
+[18:24] <psusi> bdmurray: also I think this part requires an intel fakeraid or ddf metadata format, but mdadm reports a "container" pseudo array that doesn't actually have a dev node... gparted was picking up on that as if it was supposed to be a real disk as well
+[18:36] <bdmurray> psusi: could you update the bug for sru verification then?
+=== kentb-lunch is now known as kentb
+[18:59] <mlankhorst> doko: looks like libLLVM-3.2.so.1 is installed twice, you need to move it out of usr/lib/llvm3.2/ to usr/lib/arch/ else llvm3.2-dev installs it too
+[19:00] <doko> mlankhorst, it's supposed to be a symlink, afaik
+[19:03] <mlankhorst> doko: I can see the use for a second libLLVM-3.2.so symlink since mesa packaging seems to want it (and doesn't find it now), but a extra copy of libLLVM-3.2.so.1 ?
+[19:04] <doko> mlankhorst, it's supposed to be a symlink, afaik
+[19:04] <doko> so, send a patch
+=== wendar is now known as allisonrandal
+[19:11] <Suudy> cjwatson:  Sorry, got pulled away from my desk.  Thanks for the info.
+[19:13] <Suudy> cjwatson:  Just one final question.  With regard to the cyclical updates.  You do these incremental builds, each time updating the repo?  So your repo is pretty much a snapshot of the most current builds of at least the base packages (e.g. eglibc, gcc, etc)?
+[19:24] <dobey> barry: hey, do you know if anyone's even bothered trying to use python3-twisted stuff in raring?
+[19:24] <barry> dobey: nope
+[19:25] <barry> dobey: i vaguely remember that being on someone's list for february (not mine tho ;)
+[19:27] <dobey> barry: ah. just wondering. i just tried, and it's horribly unusable :-/
+[19:28] <xnox> =/////
+[19:28] <barry> dobey: oh no.  is it a problem with twisted itself or the packaging, or ...?
+[19:28] <slangasek> smoser: 1031065> is /tmp listed as a separate mount point in /etc/fstab?  If running mountall --verbose, what tag is shown for /tmp?
+[19:28] <xnox> do we have enough on python3-twisted* bits to use it?
+[19:29] <smoser> slangasek, i found the issue
+[19:29] <smoser> (i think)
+[19:29] <dobey> barry: twisted itself. lots more porting work needs to be done it seems. ran into some usage of UserDict still, and zope.interface requires using a @implementer decorator instead of implements() call now
+[19:30]  * barry is aware of that last one :/
+[19:30] <smoser> when run with my full cloud-init patch, i found that the 'cloud-init-container' job was running before /run/network was created.
+[19:30] <dobey> barry: not sure how much work it will be to fix it, but it's > 5 lines at least :)
+[19:30] <barry> dobey: have you communicated these problems upstream?
+[19:30] <barry> (i've been talking w/ some of those guys about our buildbot)
+[19:30] <xnox> slangasek: hmm... what's the difference between local & virtual?
+[19:30] <slangasek> smoser: ah - is that fixable by just having cloud-init-container mkdir -p /run/network?
+[19:31] <smoser> yeah
+[19:31] <slangasek> xnox: isn't it obvious? :)
+[19:31] <smoser> thats what i have.
+[19:31] <smoser> and it seems to work.
+[19:31] <slangasek> smoser: cool
+[19:31] <dobey> barry: not yet, was just trying to run ubuntuone-dev-tools test suite with py3 and hit these issues, while doing other stuff
+[19:31] <slangasek> xnox: local is a filesystem backed by local storage.  virtual is not backed by storage.
+[19:31] <slangasek> by persistent storage, I mean
+[19:31] <slangasek> (it's an in-kernel fs)
+[19:31] <smoser> slangasek, ifquery would exit non-zero and not list network devices if /run/network wasn't there.
+[19:31] <slangasek> smoser: heh, quite
+[19:32] <xnox> slangasek: ok. Funny how /run/user/tdlk/gvfs is local =))))
+[19:32] <smoser> so cloud-init-container.conf would think it had nothing to do.
+[19:32] <dobey> barry: that one bug in the buildbot glyph reported, because it's apparently on 13.04 now instead of 12.10?
+[19:32] <xnox> slangasek: also why does my every boot prints "/tmp is not mounted. Continue to wait or skip...." message?
+[19:32] <smoser> i'm not completly sure why i'd not seen that problem in quantal or raring.
+[19:32] <slangasek> xnox: I don't know, the bug has been reported for some time but I've never reproduced it, please help diagnose :)
+[19:33]  * xnox /tmp is _not_ a separate mountpoint just part of '/' (which is ext4, on top of lvm on top of cryptsetup)
+[19:34] <dobey> xnox, seb128: btw, slangasek said my patch on https://bugs.launchpad.net/ubuntu/+source/gnome-keyring/+bug/859600 looked ok, though he didn't try to build/install it. can we move forward with that? it's still not giving me any trouble here :)
+[19:34] <ubottu> Ubuntu bug 859600 in gnome-keyring (Ubuntu Precise) "Please convert gnome-keyring to multiarch" [High,In progress]
+[19:35] <slangasek> xnox: /tmp is listed in /lib/init/fstab as a template, so that mountall knows to handle it specially *if* it's listed in /etc/fstab; but mountall ought not be making noise about it unless it really is found in /etc/fstab
+[19:35] <xnox> slangasek: well it definatly started after the upload to make it do all things in parallel or something like that.
+[19:36] <slangasek> xnox: hmm, that may be a timing thing - I know there were other reports of this issue prior to those changes.
+[19:36] <xnox> before - never so that message, after that upload - I always do.
+[19:36] <xnox> shoudl I run upstart & mountall in more verbose modes to get logs?
+[19:38] <slangasek> xnox: bug #1067836 and/or bug #1091792 - I would like to see mountall --verbose output for this
+[19:38] <ubottu> bug 1067836 in mountall (Ubuntu) "Disk drive for /tmp error displayed briefly after Lubuntu PP -> QQ dist-upgrade" [Medium,Confirmed] https://launchpad.net/bugs/1067836
+[19:38] <ubottu> bug 1091792 in mountall (Ubuntu) "The disk drive for /tmp is not ready yet or not present" [Undecided,Confirmed] https://launchpad.net/bugs/1091792
+[19:39] <slangasek> xnox: also your /etc/fstab + /etc/crypttab
+[19:39] <xnox> slangasek: just mountall --verbose now, e.g. in the terminal - or as it's running during boot?
+[19:39] <slangasek> xnox: as for /run/user/tdlk/gvfs being local, that's just mountall saying "I don't care which bucket we put this in, it's not in /etc/fstab so we track that it's present but since it's already mounted it doesn't impact anything"
+[19:39] <slangasek> xnox: during boot
+[19:40] <xnox> ack.
+=== _salem is now known as salem_
+[20:08] <xnox> slomo: well rebooted like 10 times and I cannot reproduce it when mountall is under --verbose.
+[20:08] <xnox> slangasek: ^
+[20:08] <xnox> slomo: sorry for miss-ping.
+[20:08] <xnox> maybe it needs something else special going on =/
+[20:09] <xnox> infinity: maybe you can get a boot.log when mountall.conf has --verbose in it ?
+[20:09] <slangasek> xnox: hmm.  But it's consistently reproducible when booted without --verbose?
+[20:09] <xnox> not any more =)
+[20:09] <xnox>  /o\
+[20:09] <xnox> I guess booting with --verbose once fixes it =/
+[20:10] <xnox> (brother printers can't print on tuesdays bug?!)
+[20:10] <infinity> It's consistent here (or has been recently), I can try to do some debugging.
+[20:12] <xnox> i can try shutting it down as it usually happens - run out of battery in the middle of sbuild after like 5 days of suspend/resume cycles with a few dist-upgrades in between with ureadahead running & a new kernel etc....................
+[20:12]  * xnox ponders if fsck & ureadahed will actually race this bug or not.
+[20:13] <xxiao> in ubuntu, qemu-ppc64abi32-static, qemu-ppc64-static, qemu-ppc-static, what does ppc64abi32 mean?
+[20:13] <xxiao> 64bit kernel with 32bit user space?
+[20:14] <xxiao> trying to debootstrap a 32bit userspace rootfs for a 64bit ppc kernel here
+[20:14] <xnox> xxiao: $ mk-sbuild --arch powerpc raring
+[20:15] <xnox> and that's it....
+[20:15] <xxiao> will that work for precise?
+[20:15] <xnox> you have a chroot that you can $ schroot -c raring-powerpc -u root     into
+[20:15] <xnox> xxiao: it should.
+[20:16] <xnox> xxiao: if for some reason it doesn't, try mk-sbuild from lp:ubuntu-dev-tools it gained a few features.
+[20:16] <xxiao> let me try it from x86_64 precise
+[20:16] <xnox> xxiao: with that chroot you can also use sbuild to build powerpc packages
+[20:16] <xxiao> never used that, studying...
+[20:18] <xnox> sbuild --arch=powerpc -d raring bla_
+[20:19] <xnox> sbuild --arch=powerpc -d raring bla_1.0-1.dsc
+[20:19] <xnox> should then build a package for you.
+[20:19] <xnox> with latest mk-sbuild you can also cross-build, but I'm not sure how well cross-building would work on precise, as we only did cross-building fixes in raring.
+[20:20] <xnox> infinity: BenC: why did qemu-ppc-static just core dumped on me?
+[20:20] <xnox> debootstrap --second-stage
+[20:20] <xnox> qemu-ppc-static: /build/buildd/qemu-1.3.0+dfsg/linux-user/signal.c:4587: setup_frame: Assertion `({ unsigned long __guest = (unsigned long)(ka->_sa_handler) - guest_base; (__guest < (1ul << 32)) && (!reserved_va || (__guest < reserved_va)); })' failed.
+[20:20] <xnox> qemu: uncaught target signal 6 (Aborted) - core dumped
+[20:20] <xxiao> xnox: the idea is to bootstrap a 32bit ppc rootfs, then do second-stage, then hopefully build the rest natively
+[20:21] <xnox> xxiao: yeah, sure.
+[20:21] <xnox> xxiao: well you can grab precise powerpc chroot off launchpad.....
+[20:21] <xnox> but then you'll need to add qemu to it.
+[20:21] <xxiao> one challenge i see is to use my own pre-built gcc to build build-essential
+[20:21] <BenC> xxiao: what are you aiming for here?
+[20:22] <xxiao> BenC: i'm trying to load a 32b rootfs to fsl's 64bit e5500/e6500 board
+[20:22] <xnox> hello BenC =) /me hands it over and runs away
+[20:22] <xxiao> xnox: thanks!
+[20:22] <xxiao> BenC: all i have is a yocto rootfs, trying ubuntu precise
+[20:23] <BenC> If you have a yocto, why not create the ubuntu rootfs through there to avoid qemu
+[20:23] <BenC> Also, I can create a raring rootfs from debootstrap if you need me to
+[20:24] <BenC> or quantal or precise, for that matter
+[20:24] <xxiao> i prefer to do any build other than using yocto, which is just too _slowish_
+[20:24] <xxiao> :)
+[20:24] <infinity> There's a powerpc ubuntu-core already.
+[20:24] <BenC> xxiao: Any chance you'll be able to allow other people (*cough*me*cough* access to that e5500/e6500 board?
+[20:25] <xxiao> BenC: i will attend the March meet-up at Oracle, you will see the board there
+[20:25] <infinity> http://cdimage.ubuntu.com/ubuntu-core/daily/current/
+[20:25] <BenC> xxiao: Excellent…just finishing up my travel arrangements for that
+[20:25] <xxiao> we're planning to set up some remote access, so far the board locks up under stress
+[20:26] <BenC> infinity: nifty, I had never known about that before
+[20:26] <infinity> xnox: qemu-ppc-static is known-broken, if I recall.
+=== henrix is now known as henrix_
+[20:26] <xnox> =(
+[20:26] <BenC> xxiao: what kernel are you using? I'd like to get an e5500/e6500 kernel built for ubuntu (might be too late for raring, but who knows)
+[20:26] <xxiao> infinity: how nice...any precise version of that
+[20:27] <xnox> xxiao: sure: http://cdimage.ubuntu.com/ubuntu-core/precise/daily/current/
+[20:27] <xnox> wait...
+[20:27] <xxiao> BenC: shamely it's 3.0.x still, but is upgrading to 3.8.* now
+[20:27] <infinity> xnox: Which doesn't have powerpc, cause I only enabled it in Q...
+[20:27] <infinity> xxiao: There's a quantal one http://cdimage.ubuntu.com/ubuntu-core/releases/quantal/release/
+[20:28]  * xnox !@#@#!!!
+[20:28] <xnox> xxiao: just use quantal one or raring to bring the board up. To get any ubuntu chroot.
+[20:28] <BenC> xxiao, xnox: If I roll out a kernel for that in Ubuntu, would you mind testing it?
+[20:28] <xnox> xxiao: then build the precise one. and switch to it.
+[20:28] <xxiao> BenC: absolutely!
+[20:28]  * BenC suggests raring
+[20:29] <BenC> The QEmu in that supports the KVM stuff in the v3.8 kernel
+[20:29] <xnox> BenC: I have no powerpc kit. I'm the only powerpc-less member of ubuntu foundations team =(
+[20:29] <infinity> Well, it's not like precise will ever have the right installer/kernel support for the board anyway.
+[20:29] <xxiao> xnox: we should enable you with sending you a nice board
+[20:29] <xnox> xxiao: yes, please =)
+[20:29] <infinity> If you're handing out nice boards...
+[20:36] <cnd> smoser, do you know how the azure ubuntu images have been modified to operate on the azure platform?
+[20:36] <cnd> or, who would?
+[20:36] <smoser> utlemming, can tell you more.
+[20:37] <cnd> I may have found what I was looking for here: https://github.com/windows-azure/walinuxagent
+[20:37] <cnd> thanks
+[20:38] <TheLordOfTime> clear
+[20:38] <TheLordOfTime> oops sorry
+[20:38] <TheLordOfTime> was targetting a terminal window, accidentally clicked xchat due to laptop
+[20:38] <TheLordOfTime> :/
+[20:40] <infinity> cnd: There's a bit more than just walinuxagent.
+[20:40] <cnd> infinity: any docs I can look at?
+[20:40] <infinity> cnd: hv-kvp-daemon-init comes to mind too.
+[20:40] <infinity> cnd: Not sure about docs.  utlemming's the man to talk to.  On the other hand, why not just use his images from the Azure gallery?
+[20:41] <cnd> infinity: I'm investigating how to deploy a cloud service on azure
+[20:41] <cnd> the only really documented way it to deploy workers that simply run on windows
+[20:41] <cnd> that sucks in many many ways
+[20:41] <cnd> so I'm trying to figure out more about how the ubuntu image works
+[21:03] <shbk1> hello, does anyone know whether it's possible to look content of /usr/share/misc/magic.mgc in the  understood form?  I need know what magic numbers it uses for detecting files  for program in c++ (which is supposed to work in windows too, and I wouldn't like to use library)
+[21:05] <cjwatson> shbk1: 'apt-get source file' and look at src/magic.*
+[21:05] <cjwatson> (and possibly other nearby files)
+[21:06] <shbk1> in documentation to file is written that it uses database that is hold in magic.mgc. as I understand it takes signatures from there, so source code possibly will not help
+[21:06] <xnox> cnd: to deploy workers on ubuntu cloud images, it is usually preferred to use juju. http://www.ubuntu.com/cloud/orchestration/juju
+[21:07] <shbk1> I check magic.mgc , it looks like it really contatins this information   - http://storage1.static.itmages.com/i/13/0201/h_1359666402_3148352_b5463d55c1.png
+[21:07] <shbk1> if it only were possible to look at it in the understood form
+[21:07] <xnox> cnd: also see #juju channel. It's a tool to right a "charm" which then you can deploy to nodes. The charm will configure the nodes and connect them all up to do stuff.
+[21:07] <xnox> s/right/write/
+[21:07] <cnd> thanks xnox
+[21:08] <xnox> cnd: https://juju.ubuntu.com/ is more developer oriented site.
+[21:08] <xnox> cnd: also askubuntu.com with tag juju is monitored and has a rich knoweledge base.
+[21:12] <cjwatson> shbk1: eh, the entire database is in the source code of 'file' - you mean you're looking for the source of magic.mgc itself?
+[21:13] <shbk1> no, I want to look at database
+[21:14] <cjwatson> right, the source of magic.mgc
+=== Guest27055 is now known as iulian
+[21:14] <cjwatson> shbk1: it's in the magic/ directory under the directory that 'apt-get source file' gives you
+[21:14] <cjwatson> mainly magic/Magdir/
+[21:15] <cjwatson> <cjwatson@sarantium ~/src/packages/file/file-5.11/magic/Magdir>$ fgrep -il c++ * | xargs
+[21:15] <cjwatson> c-lang fonts gcc msdos msvc vxl
+[21:17] <shbk1> hm, thanks  http://storage2.static.itmages.com/i/13/0201/h_1359667045_7519190_f7637925cf.png   it seems I 'm on the right road already
+[21:18] <shbk1> but where is information about formats like mp3, ogg? http://storage4.static.itmages.com/i/13/0201/h_1359667114_9584312_1027c29b2e.png    Music file contains nothing useful
+[21:21] <stgraber> jdstrand: ?? I'm definitely subscribed to bugs for libseccomp
+[21:22] <scientes> did arm support ever get merged?
+[21:22] <scientes> kees cook posted patches
+[21:23] <scientes> oh i see it did
+[21:24] <scientes> in 3.8
+[21:30] <cjwatson> shbk1: use grep
+[21:30] <cjwatson> shbk1: mp3 is in 'animation', ogg is in 'vorbis'
+[21:31] <cjwatson> shbk1: it'll be easier to use grep than to try to work out the file naming scheme
+[21:32] <kees> scientes: hm? I thought everything was up to date now?
+[21:43] <doko> infinity, do you have any idea about https://launchpad.net/ubuntu/+source/clang/3.2-1~exp5ubuntu1/+build/4254653 ? could that be fs corruption too?
+[21:44] <infinity> doko: Didn't it have the same failure a day or two ago and get retried?
+[21:45] <doko> no, your memory is wrong, old man ...
+[21:45] <infinity>   * Merge with Debian; remaining changes:
+[21:45] <infinity>     - Default to softfp on armel.
+[21:45] <infinity> ^-- There's no reason for us to carry that delta anymore.
+[21:45] <doko> the bug was fixed in llvm-3.2
+[21:45] <infinity> Oh, this is a shiny new failure?  Fair enough. :P
+=== salem_ is now known as _salem
+[22:11] <jdstrand> stgraber: weird. you didn't show up when I looked
+[22:11] <jdstrand> oh, I think I looked at *my* subscriptions for it
+[22:11] <jdstrand> hmm
+=== Tonio_aw is now known as Tonio__
+[22:20] <Suudy> Hi.  I'm having some trouble getting our custom debootstrap to install some base packages with dpkg.  The problem I'm having is with installing libc6, libgcc1, and libc-bin.
+[22:22] <Suudy> If I do "dpkg -i libgcc1 libc-bin libc6" (with the appropriate paths and trailing information to the debian packages), I get an error about "libgcc1 depends on libc6 (>= 2.2.4); however: Package libc6 is not installed."
+[22:22] <bdmurray> xnox: usb-creator is starting up for me for devices without vendor id 18d1
+[22:22] <Suudy> But if I do "dpkg -i libc6 libgcc1 libc-bin" I get "libc6 depends on libgcc1; however: Package libgcc1 is not installed."
+[22:23] <Suudy> It doesn't seem to matter what order I put the packages, they don't satisfy dependencies.
+[22:23] <Suudy> I could ignore the issue with --force-depends, but it seems kinda fuzzy.
+[22:24] <Suudy> These are 12.04 packages built from source.
+[22:25] <Suudy> There appears to be this circular dependency that dpkg can't resolve.
+[22:26] <sarnold> wb Suudy_, you didn't miss anything while you were gone
+[22:26] <Suudy_> Sorry, got booted by our firewall.
+[22:26] <Suudy_> Ok.  Thanks :)
+[22:27] <infinity> Suudy_: This is in a debootstrap scenario (ie: none of the packages are installed yet)?
+[22:27] <sarnold> (last we saw was "circular depedency that dpkg can't resolve")
+[22:27] <Suudy_> Yep
+[22:27] <infinity> Suudy_: If so, that's expected.  And the answer is "do what debootstrap does".
+[22:27] <Suudy_> :)  If it were that easy.... ;)  The precise debootstrap script isn't the easiest to follow.
+[22:28] <Suudy_> Ok.  I'll muck around some more there.
+[22:28] <infinity> Suudy_: Unpack them with deps forced, then reinstall, is the easiest way to get around it.
+[22:29] <infinity> Suudy_: I could ask why you're not just using debootstrap, since it does the right thing...
+[22:31] <xnox> bdmurray: =/ weird.
+[22:32] <xnox> bdmurray: can you give me lsusb output please? =/
+=== Tonio__ is now known as Tonio_aw
+[22:33] <xnox> (me has updated upstart job in lp:usb-creator branch you could try that to see if that one is better?!)
+=== Tonio_aw is now known as Tonio__
+[22:34] <Suudy> Damn firewall...corporate pain in the butt.
+[22:34] <xnox> https://bazaar.launchpad.net/~usb-creator-hackers/usb-creator/trunk/view/head:/debian/usb-creator-gtk.upstart
+[22:35] <Suudy> We aren't using debootstrap, because we are creating root filesystem for installation on media, and we build everything ourselves.  So essentially, we have our own script that mimics much of debootstrap.
+[22:36] <Suudy> For extraction, we do the 'ar -p <deb> data.tar.gz | tar xzf -', follow that with 'chroot <path> dpkg --force-depends".  But even with the "--force-depends", it complains mightily.
+[22:36] <Suudy> But the stock debootstrap doesn't spew pages of warnings about dependencies, so I thought perhaps there was something wrong with our setup.
+[22:38] <xnox> debootstrap is versatile and it can be used to prepare root filesystem for installation on media.
+[22:38] <xnox> don't reinvent the wheel if you don't have to.
+[22:39] <Suudy> Hmmm....that does get me thinking.
+[22:39] <xnox> create repository, cross-build packages (or use stock from ubuntu), debootstrap, add other bits you need
+[22:39] <xnox> shove it to media. rinse repeat until you can boot.
+[22:39] <xnox> (raring, quantal, debian should not matter)
+[22:40] <Suudy> We build everything, but debootstrap isn't one of those things.  Our build system could build it, then when we make the root filesystem, extract debootstrap to our debootstrapp'd build environment, and invoke it directly.
+[22:40] <xnox> once you booted you can rebuild everything native twice over to finally get the golden image.
+[22:40] <bdmurray> xnox: s/enchanced/enhanced/
+[22:40] <Suudy> Well, we build on a native system (PPC), but we build in a debootstrapp'd environment.
+[22:41] <xnox> Suudy: note the debootstrap --second-stage flag.
+[22:41] <Suudy> :q
+[22:42] <infinity> Suudy_: You can point debootstrap at any apt-alike repository you want, it's not tied to our archive.  You don't even need to build a new version (unless you really need to change it).
+[22:42] <xnox> first stage resolves, download and unpacks (done outside chroot), second-stage is done inside to finish configuring all packages and needs/wants native execution.
+[22:42] <Suudy> Ooops.
+[22:42] <infinity> Suudy_: "debootstrap --variant=minbase raring raring-chroot http://company.internal/ourstuff" would work just fine.
+[22:43] <Suudy> But you need that internal repo, which we'd have to construct on the fly as packages are built.
+[22:44] <infinity> You kinda want that anyway, don't you?
+[22:44] <Suudy> Right now, our build system compiles all the packages, then we install them manually into the chroot using dpkg.
+[22:44] <infinity> If you have all the debs, you have the repo.
+[22:44] <Suudy> Well, install them via a script using dpkg.
+[22:44] <Suudy> Right, but don't we need the Packages, Indices, etc?
+[22:44] <infinity> cd place_with_debs && apt-ftparchive packages .
+[22:44] <infinity> Done.
+[22:44] <infinity> And you can point debootstrap at a file:// URL.
+[22:45] <Suudy> Ah.  Hmm....
+=== Tonio__ is now known as Tonio_aw
+[22:45] <Suudy> Can you custom tailor what packages as part of minbase are installed?  Say we use busybox instead of coreutils?
+[22:45] <infinity> At least, I think it can use a file:// URL.  Would be a glaring misfeature if you couldn't.
+[22:46] <infinity> Suudy_: minbase operates based on package priority/section headers.  If you prefer different things to be Essential/Required/etc, and you're rebuilding them anyway, fix up debian/control to reflect what you want.
+[22:46] <infinity> (Or build a proper apt archive with overrides, but that's far more effort)
+[22:47] <Suudy> Oh, I see.  It parses the debs themselves.  Go it.  We were specifying required, base, etc.
+[22:47] <infinity> It parses the Packages file.
+[22:47] <infinity> But that all comes from the debs (or from archive overrides that override the debs)
+[22:47] <Suudy> Which is generated by apt-ftparchive, right?
+[22:47] <Suudy> cd
+[22:47] <infinity> *nod*
+=== Tonio_aw is now known as Tonio__
+[22:48] <infinity> Basically, if you look at "apt-cache show coreutils" and "dpkg-deb -I coreutils", you'll notice some shocking similarities.
+[22:48] <infinity> Because the former derives from the latter.
+[22:49] <infinity> And the latter comes from debian/control in the source package.
+[22:49] <infinity> (That dpkg-deb -I was meant to be aimed at a coreutils.deb)
+[22:52] <xnox> Suudy: you can even use a lighter tool dpkg-scanpackages with overrides as needed. Here is a talk about it: http://www.wiggy.net/presentations/2001/DebianWalkThrough/handouts/handouts.html#AEN780
+[22:54] <Suudy> And all deboostrap needs is the Packages file?
+[22:54] <xnox> yeah....
+[22:55] <xnox> Suudy: it's all very lightweight. It has to be. As that's how debian architectures are bootstrapped.....
+[22:58] <xnox> it can verify checksums on the Release and etc. but that is all optional and it should be possible to skip through.
+=== emma_ is now known as emma
+[23:02] <xnox> infinity: should we finally tell them that debian has http://wiki.debian.org/PowerPCSPEPort for e500v1/v2 ?
+[23:04] <infinity> xnox: This is assuming anyone cares about spe.  I've gotten the impression from Ben that the plan is just to ignore the old cores and move forward with the brave new world.
+[23:04] <infinity> xnox: And default PPC works fine on newer e500ish systems.
+[23:05] <xnox> infinity: I see. well debian also has ppc64 port. But I don't know powerpc chips that well.
+[23:10]  * infinity heads out for a bit.
+[23:10] <bryce> !pilot in
+[23:10] <bryce> @pilot in
+=== udevbot changed the topic of #ubuntu-devel to: Ubuntu 12.10 released | Archive: Open | Dev' of Ubuntu (not support or app devel) | build failures -> http://qa.ubuntuwire.com/ftbfs/ | #ubuntu for support and discussion of hardy -> quantal | #ubuntu-app-devel for app development on Ubuntu http://wiki.ubuntu.com/UbuntuDevelopment | See #ubuntu-bugs for http://bit.ly/lv8soi | Patch Pilots: bryce
+[23:11] <Suudy> xnox, infinity:  Thanks for the tips.
+[23:11] <TheMuso> [B/c
+[23:12] <Suudy> (Sorry for the disconnects, our corporate firewall doesn't seem to like the web client, and our direct access is blocked)
+[23:18] <Suudy> What about the Release file, with the md5sums of Packages?  dpkg-scanpackages doesn't create that (I presume apt-ftparchive does).  it appears that debootstrap requires this file
+[23:19] <xnox> <xnox> Suudy: it's all very lightweight. It has to be. As that's how debian architectures are bootstrapped.....
+[23:19] <xnox> <xnox> it can verify checksums on the Release and etc. but that is all optional and it should be possible to skip through.
+[23:19] <xnox> but indeed apt-ftparchive can generate the rest of the files if you want
+[23:20] <xnox> Suudy: here is like overly complete apt-ftparchive config http://debian.scribus.net/debian/apt-ftparchive.conf you probably need much shorter one
+[23:20] <Suudy> I'd rather not use apt-ftparchive, since it appears to be overkill.  But it appears that debootstrap looks for the Release file, and I don't see an option to ignore it (though I do see an option to ignore the signature the Release file)
+=== Tonio__ is now known as Tonio_aw
+=== Tonio_aw is now known as Tonio__
+[23:38] <xxiao> unfamiliar with upstart, i added a ttyS0.conf under init, how can I add it to upstart manually before I can boot off raring-ubuntu-core-rootfs.tgz?
+=== Tonio__ is now known as Tonio_aw
+[23:38] <xxiao> i'm booting over nfs
+=== emma is now known as em
+[23:39] <xnox> it just should pick it up. it walks /etc/init/*.conf at boot and starts them all event based.
+[23:40] <xxiao> ok. thanks. let me boot it
+[23:40] <cjwatson> Suudy: if I were you I'd write a Release file, rather than going to all the effort to avoid it.  You can use 'apt-ftparchive release' if you don't want to write it by hand or use the full 'apt-ftparchive generate' stuff.
+[23:41] <xnox> https://help.ubuntu.com/community/SerialConsoleHowto if there is any trouble with ttyS0
+[23:42] <xxiao> xnox: that worked
+[23:42] <xnox> =)
+[23:42] <xnox> upstart is great ;-)
+[23:42] <xxiao> now with root as the user, what's the magic password for ubuntu-core
+[23:45] <xxiao> xnox: with upstart can I still bypass it with init=/bin/sh?
+[23:45] <xnox> yeah.
+[23:46]  * xnox thought there are no passwords in ubuntu-core, unless you pre-setup the user with a password yourself.
+[23:50] <xxiao> in this case i need somehow reset a password for root, ttyS0 disallow my login
+[23:50] <cjwatson> xxiao: if you use init=/bin/sh then you aren't using upstart
+[23:50] <cjwatson> upstart is entered by the default value of init= (/sbin/init)
+[23:50] <xxiao> cjwatson: i c, got it, i need /bin/sh to debug sometimes
+=== Tonio_aw is now known as Tonio__
+[23:52] <xxiao> xnox: it's indeed odd, nfs server showed empty root password, getty keeps asking for it
+[23:52] <xxiao> minigetty has the autlogin option but getty does not have it
+[23:53] <xnox> root + enter, or grab ubuntu core - chroot into it, create user account with sudo:admin groups and then boot that. Then you know that you will have an account with full sudo.
+[23:53]  * xnox typically creates the account in ubuntu-core before booting it.
+[23:54] <xxiao> ok will do that now

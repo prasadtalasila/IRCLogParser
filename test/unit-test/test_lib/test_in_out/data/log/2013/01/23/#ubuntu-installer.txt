@@ -1,0 +1,68 @@
+[11:13] <directhex> how do i suppress a note with d-i? partman is *really* spammy if you install from a usb drive
+[11:27] <FourDollars> How can I build Debian source package from lp:~ubuntu-installer/ubiquity/precise-proposed/? I tried `debuild -S` and `bzr builddeb -- -S`. All failed. :(
+[11:27] <xnox> FourDollars: close. $ bzr bd
+[11:28] <FourDollars> make: *** source/console-setup/Keyboard: No such file or directory.  Stop.
+[11:28] <xnox> FourDollars: or ./debian/rules update-local && debuild
+[11:28] <xnox> FourDollars: or fetch the source package from the archive and build that.
+[11:28] <FourDollars> xnox: What I want is Debian source package not Debian binary package.
+[11:28] <xnox> FourDollars: pull-lp-source ubiquity precise-proposed
+[11:29] <xnox> will download the source package for you.
+[11:29] <FourDollars> xnox: Thanks.
+[11:29] <xnox> FourDollars: ./debian/rules update-local && debuild -S (for source package)
+[11:29] <xnox> FourDollars: ~ubuntu-installer branches have ubiquity code, without the embeded d-i & partman udebs.
+[11:29] <FourDollars> xnox: Great! Thanks a lot.
+[11:29] <xnox> the final source package as uploaded into the archive has udeb sources embeded.
+[11:29] <FourDollars> I see.
+[11:30] <xnox> sence the ./debian/rules update[-local] to fetch & unpack those udebs. Which is non-standard from majority of packages unfortunately.
+[11:31] <FourDollars> I know. :)
+[11:33] <cjwatson> directhex: Generally you just need to preseed the note to nothing in particular (so that it winds up marked as seen); however if the installer explicitly forces the note to be reshown (which happens sometimes) then you may need something more creative.  I'm pretty sure there's an override for the case you're referring to, but I'd need a debug log to make sure
+[11:35] <directhex> cjwatson, i'll try an empty note preseed first
+[11:35] <directhex> yay, preseeding also worked as a bypass for debian bug 689416
+[11:36] <ubot2> Debian bug 689416 in src:linux "Nonexistant files are asked for on Intel Centrino Ultimate-N 6300 (802.11 a/b/g/n 3X3) Half Mini Card" [Important,Fixed] http://bugs.debian.org/689416
+[11:37] <directhex> hm, nope. "Your installation medium is on /dev/sdb1"
+[11:38] <cjwatson> Is this using d-i or ubiquity?
+[11:39] <directhex> d-i. unless ubiquity can set up luks and i didn't notice, in which case i've been modifying the wrong iso
+[11:40] <cjwatson> d-i partman/filter_mounted boolean false
+[11:40] <cjwatson> Which means the USB device will show up in the partition list and you just have to be careful not to use it in your preseeded recipe
+[11:41] <directhex> i'll give that a shot, ta
+[11:41] <cjwatson> I fear this is undocumented because I suck
+[11:41] <directhex> well if nothing else that made me lol :)
+[11:42] <cjwatson> happy to please
+[11:48] <directhex> go go gadget t530
+[11:50] <directhex> yep, that worked
+[11:52] <cjwatson> grat
+[11:52] <cjwatson> er, great
+[12:13] <directhex> and i think that's it. fallback, metacity, various company-internal packages, and a first-run wizard to set up company mail etc
+[12:14] <directhex> shame i couldn't get EFI to behave, but that's deferred into the future. also couldn't get it down onto a CD
+[12:14] <cjwatson> Nor can we any more ...
+[12:15] <directhex> well i axed unity and qt, which freed up space. and added openjdk-7-jre, which consumed a whole lot of space
+[12:17] <directhex> and 20 meg for crashplan pro
+[15:48] <xnox> nuclearbob: did the nfs hang reproduce itself when running under test with rsyslogd?
+[15:49] <nuclearbob> xnox: I ran into another issue with utah when trying to implement the rsyslog integration.  I have a machine right now where X has frozen up the way it usually does, and hte machine is reachable over ssh.  it looks to me like ubiquity finished, but I haven't been able to get it to pick up my preseed in automatic mode, so it didn't automatically reboot
+[15:50] <xnox> nuclearbob: =/ why does X freeze up? (is it expected / normal?!)
+[15:50] <nuclearbob> xnox: I don't expect it, but it consistenly happens as part of the bug that I'm having an issue with
+[15:51] <xnox> nuclearbob: can you give me details of your presseed file / utah run list and how you are setting up reboot?
+[15:52] <nuclearbob> xnox: would you like them in pastebin, or the bug, or just a pointer to where they are in magners?
+[15:52] <xnox> nuclearbob: any/all will do. Not sure what magners is. Maybe I should learn what that is.
+[15:53] <nuclearbob> xnox: that's the lab where we're having most of the problems since that's where we try to do automated hardware testing with utah.  I'll get you those files
+[15:54] <nuclearbob> xnox: we're not getting far enough when the bug occurs to invoke a runlist, so I usually just use the example installed in /usr/share/utah/client/examples/pass.run, which is here http://pastebin.ubuntu.com/1563406/
+[15:55] <xnox> ok. thanks.
+=== ev_ is now known as ev
+[16:27] <antarus> what is this utah thing? :)
+[16:28] <ogra_> automated testing
+[16:29] <xnox> antarus: http://pad.lv/p/utah
+[16:29] <xnox> provisions VMs/bare metal, downloads tests, runs them, reports results. End-to-end testing.
+=== ev_ is now known as ev
+[16:30] <antarus> holy crap
+[16:30] <antarus> anything to stop using autotest
+[16:30] <antarus> I'll let my testing folks know ;)
+[16:38] <xnox> antarus: yes, please. It should be better. Note that in itself utah does all the side bits, yet one still needs to write the test executable (test.sh, test.py, python -m unittest discover -vvv).
+[17:30] <antarus> we have about 100 tests already
+[17:30] <antarus> we just hate autotest ;)
+[17:32] <antarus> xnox: what do the results look like
+[17:32] <antarus> xnox: UI ?
+[17:32] <antarus> xnox: this is really the only place where autotest is terrible.
+[17:33] <xnox> antarus: talk to folks on #ubuntu-quality. They work with that.
+[17:33] <xnox> antarus: raw logs are nice. But the way I look at them is via jenkins, as they push utah runlists as jenkins results for things I look after.
+[17:34] <antarus> ok
+[17:35] <antarus> thanks

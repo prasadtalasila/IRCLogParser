@@ -1,0 +1,197 @@
+=== hggdh_AFK is now known as hggdh
+[00:26] <gema> hggdh: are you back?
+=== m_conley_away is now known as m_conley
+=== m_conley is now known as m_conley_away
+[02:29] <RAOF> Why are all mail clients so crap?
+[02:30] <TheMuso> Theres always mutt...
+[02:30] <TheMuso> "All mail clients suck, this one just sucks less." :)
+[02:33] <sarnold> :)
+[02:37] <jbicha> is robert_ancell working this week?
+[02:42] <TheMuso> I thought I saw him online yesterday, but not 100% sure, so don't know whats going on.
+[02:42] <RAOF> He was here this morning.
+[05:51] <jbicha> pitti: do you know what needs fixing for bug 1086369 ?
+[05:51] <ubot2`> Launchpad bug 1086369 in alacarte (Ubuntu) "alacarte crashed with ImportError in /usr/share/alacarte/Alacarte/util.py : cannot import name GError" [Medium,Confirmed] https://launchpad.net/bugs/1086369
+[06:08] <pitti> Good morning
+[06:10] <pitti> jbicha: yes, I do; I followed up on the bug
+[06:17] <jbicha> thanks
+[06:55] <ricotz> Sweetsha1k, :\
+[07:29] <pitti> Laney: should we upload glib 2.35 to -proposed now? I'll ask the release team to block it from migration until at least all the autopkgtests succeed
+[09:03] <Laney> pitti: Even given the segfault?
+[09:03] <Laney> Do you need that version for some reason?
+[09:04] <Laney> perhaps we could revert the commit in question
+[09:04] <pitti> Laney: it blocks updating gobject-introspection and gvfs, both of which I got signed up for
+[09:04] <pitti> and we agreed to update at least glib, d-conf, and the introspection stuff to GNOME 3.8
+[09:04] <pitti> I'm a bit worried of intorducing glib 2.35.x too late
+[09:05] <Laney> yeah, I agree with updating it
+[09:05] <Laney> but I am very wary given that we know of this bug
+[09:05] <pitti> Laney: reverting the bad commit sounds fine for me
+[09:05] <pitti> yeah, true
+[09:05] <Laney> ok, lets try reverting it
+[09:05] <pitti> I made another commit to svn to drop the 92_revert_appinfo* patch
+[09:06] <pitti> ah, but I forgot another build-dep, will commit now
+[09:07] <pitti> ah no, desktop-file-utils is already there, nevermind
+[09:08] <pitti> Laney: do you know the commit that needs reverting?
+[09:09] <Laney> pitti: not yet, but https://bugzilla.gnome.org/show_bug.cgi?id=690118#c7 is the clue
+[09:09] <ubot2`> Gnome bug 690118 in general "Crash when closing last tab of a window using Ctrl-w" [Normal,New]
+[09:10] <Laney> that's on 2012-10-09
+[09:15] <pitti> Laney: oh, in comment 11?
+[09:15] <pitti> Laney: I'll try a build with reverting this one and check
+[09:16] <Laney> comment 7
+[09:16] <Laney> ah, 11 shows it too
+[09:16] <Laney> there are a couple more related commits
+[09:16] <Laney> but maybe they can stay
+[09:19] <pitti> hm, when I run gedit in jhbuild it doesn't even crash; trying again
+[09:19] <Laney> .
+[09:19] <pitti> ah, it does now; race condition
+[09:19] <pitti> in jhbuild it's a lot faster to revert/try/etc; doing now
+[09:23] <ricotz> pitti, Laney, hi, be aware of deadlocks with eglibc 2.16 which should be solved with 2.17
+[09:23] <pitti> ricotz: with glib 2.35?
+[09:23] <ricotz> pitti, yes
+[09:23] <ricotz> due the GTask introduction
+[09:24] <pitti> I didn't get a deadlock yet, but I've only run it since yesterday; do you have some details/bug for this?
+[09:24] <ricotz> might be only hitting its actual consumers
+[09:24] <ricotz> pitti, try to run some gstreamer apps
+[09:24] <pitti> ah, maybe; we still by and large have GNOME 3.6
+[09:24] <pitti> ricotz: oh, I'm getting tons of hangs with totem
+[09:25] <ricotz> yes
+[09:25] <pitti> but they happen with glib 2.34, too
+[09:25] <pitti> ever since we moved to gst 1.0, I think
+[09:25] <pitti> with RB as well
+[09:25] <Laney> I get loads of hangs with pretty much any audio app on my 2.34 system
+[09:25] <pitti> especially when trying to seek
+[09:25] <ricotz> hmm, i see
+[09:26] <ricotz> alright, bbl
+[09:27] <pitti> Laney: reverting a36028f386708bb10d seems to do the trick; I tried 5 times in a row
+[09:27]  * pitti commits that to SVN
+[09:27] <Laney> great
+[09:27] <Laney> feel free to upload to proposed then
+[09:27] <Laney> I can take care of the block
+[09:27] <pitti> great
+[09:36] <pitti> Laney: uploaded
+[09:36] <chrisccoulson> good morning everyone
+[09:40] <Laney> & blocked
+[09:44] <czajkowski> Laney: is a helicopter in your way ?
+[09:47] <mitya57> pitti: hi, I've noticed a small error in one of your recent pygobject commits:
+[09:47] <mitya57> http://paste.ubuntu.com/1537089/
+[09:47] <mitya57> (untested)
+[09:47] <pitti> mitya57: oh, thank you
+[09:47] <Laney> czajkowski: that's quite sad news :-/
+[09:48] <Laney> did it affect you?
+[09:48] <czajkowski> Laney: nope was gonna go to London today, but not after seeing that it will be crazy up there
+[09:48] <pitti> mitya57: pushed
+[09:48] <mitya57> thanks pitti!
+[09:48] <pitti> thanks to you!
+[09:49] <czajkowski> Laney: I live down in Aldershot now moved from London there before Christmas but over at my other halfs place in Guildford.
+[09:51] <Laney> mmm, thought you might have gone into the office
+=== Quintasan_ is now known as Quintasan
+[09:56] <czajkowski> Laney: usually do once a fortnight but I try and tie it in with my physio and not having it this week
+[10:28] <Sweetsha1k> pitti: do you have a minute maybe?
+=== Sweetsha1k is now known as Sweetshark
+[10:28] <pitti> Sweetshark: hey, was gibts?
+=== vrruiz_ is now known as rvr_
+[11:12] <chrisccoulson> brrrrrr, i might have to put a jumper on
+[11:25] <czajkowski> chrisccoulson: and stick the kettle on and have a bucket of tea
+[11:25] <pitti> Laney: ah, https://launchpad.net/ubuntu/+source/glib2.0/2.35.4-0ubuntu2 looks good now; crossing fingers
+[11:25] <chrisccoulson> oh, i've got coffee already ;)
+[11:25] <Laney> pitti: yay
+[11:28] <Laney> hm, does anyone happen to know what the 'usb' seed is for?
+[11:29] <pitti> Laney: yes
+[11:29] <pitti> Laney: that was the successor of the "dvd" seed
+[11:29] <Laney> do we build an image for it any more?
+[11:29] <pitti> when we reduced it to an 1 GB (or so) image, while we didn't want to ditch DVDs yet
+[11:30] <pitti> Laney: I don't think so, but perhaps triple-check with the cdimage host's crontab and cjwatson?
+[11:30] <Laney> yeah
+[11:30] <Laney> I was just wondering why pitivi was being kept in main and it seemed like that was the explanation
+[11:30] <pitti> we now just have one image, "the" iso in daily-live/, right?
+[11:30] <Laney> indeed
+[11:30] <pitti> no alternate, no usb, no DVD
+[11:31] <pitti> yeah, I expect quite a bunch of stuff to fall out once we clean up teh seeds
+[11:31] <pitti> Task: ubuntu-usb, edubuntu-usb
+=== MacSlow is now known as MacSlow|lunch
+[13:11] <tjaalton> anyone objects removing gpointing-device-settings from raring? it seems abandoned upstream, orphaned in debian and doesn't build (needs porting to work with current g-s-d, I think)
+[13:12] <Laney> is there any point keeping it in debian too, then?
+[13:13] <tjaalton> probably not
+[13:16] <tjaalton> looks like unapplying one patch made it build again, but whatever
+[13:16] <Laney> if it's still useful for people we should keep it
+[13:18] <tjaalton> ok
+=== jhernandez is now known as jhernandez|lunch
+=== MacSlow|lunch is now known as MacSlow
+=== jhernandez|lunch is now known as jhernandez
+=== m_conley_away is now known as m_conley
+[16:25] <jibel> mterry, hey, autopkgtest of deja-dup failed https://jenkins.qa.ubuntu.com/view/Raring/view/AutoPkgTest/job/raring-adt-deja-dup/59/
+[16:25] <jibel> it used to pass until today
+[16:26] <mterry> huh
+[16:26] <mterry> jibel, thanks
+=== m_conley is now known as m_conley_away
+=== m_conley_away is now known as m_conley
+[16:53] <pitti> Laney: rad! https://launchpad.net/ubuntu/+source/glib2.0/2.35.4-0ubuntu2
+[16:54] <Laney> oh, even armhf :-)
+[16:54] <pitti> yeah, that's the one I was waiting for
+[16:54] <pitti> now gobject-introspection needs to build on armhf
+[16:54] <pitti> (it was depwaiting)
+[16:54] <pitti> poppler, gdk-pixbuf etc. autopkgtests are happy again
+[16:55] <pitti> the only remaining fallout is the deja-dup autopkgtest which stumbles over g_type_init
+[16:55] <pitti> that's something for tomorrow, need to run now
+[17:03] <mterry> pitti, is that what the deja-dup failure is?  I hadn't looked at it, but yeah the timing makes sense
+[17:03] <cyphermox> brb, lunch
+[17:06] <pitti> mterry: yes, indeed
+[17:06] <mterry> hmm, that code is generated by valac.  I wonder if the latest valac skips that
+[17:07] <mterry> Oh but this is autopkgtest, so it would be compiling fresh
+[17:09] <mterry> The autopkgtest error log does not look intelligible.  I'm glad you know what "unable to remove uninstalled invalidation notifier" means, pitti.  :)
+[17:09] <pitti> mterry: oh, is it that? I thought it was g_type_init
+[17:09] <desrt> hey...
+[17:09] <desrt> we're starting to get .la files in /usr/lib again
+[17:09] <desrt> anyone know what's up with that?
+[17:10] <pitti> mterry: so, that's fallout from the signal patch we reverted that causes crashes
+[17:11] <pitti> mterry: gnome bug 690118
+[17:11] <ubot2`> Gnome bug 690118 in general "Crash when closing last tab of a window using Ctrl-w" [Normal,New] http://bugzilla.gnome.org/show_bug.cgi?id=690118
+[17:11] <pitti> mterry: I reverted http://git.gnome.org/browse/glib/commit/?id=a36028f386708bb until that is fixed, as it's probably the lesser evil
+[17:11] <pitti> really need to run now, good night!
+[17:19] <desrt> seb128: this uimanager crash is the only thing stopping you from taking the new glib, hm?
+[17:20] <seb128> desrt, hey, afaik yes
+[17:20] <desrt> k.
+[17:20] <seb128> Laney, ^ was there any other issue?
+[17:20] <desrt> get a chance to go to jeffrey's yet, btw? :)
+[17:20] <Laney> seb128: no, just that, but note that pitti uploaded it today reverting one commit
+[17:21] <Laney> which might not be enough if you read the ^^^ conversation about deja-dup
+[17:21] <seb128> desrt, not yet, still on my list
+[17:21] <seb128> Laney, oh, cool ... will read the backlog on irclogs.u.c, I don't have a proxy to IRC and just started my client
+[17:21] <Laney> ah, well it's just the jenkins autopkgtest failure
+[17:22] <Laney> https://jenkins.qa.ubuntu.com/job/raring-adt-deja-dup/ARCH=amd64,label=adt/59/console
+[17:22] <mterry> Yeah, I believe that's the warning it spits out that is causing the gtest to fail
+[17:22] <mterry> Since IIRC, gtest fails when there is stderr output
+[17:23] <desrt> mterry: s/stderr/g_message/
+[17:23] <mterry> desrt, ah
+[17:23] <mterry> for WARNING or CRITICAL I suppose
+[17:24]  * mterry assumes this is not something to be worked around on the deja-dup side, so will let ya'll figure out the best glib-side fix
+[17:25] <desrt> mterry: and error, of course
+[17:25] <desrt> what's the issue?
+[17:26] <desrt> g_type_init() should not be issuing any g_warning() output
+[17:26] <mterry> desrt, it is the the "unable to remove uninstalled invalidation notifier" message failing the deja-dup test suite
+[17:27] <mterry> desrt, in autopkgtest, which is holding up (rightly) the glib landing
+[17:27] <desrt> that's something different, i think
+[17:27] <mterry> desrt, that's something to do with https://bugzilla.gnome.org/show_bug.cgi?id=690118 eh?
+[17:27] <ubot2`> Gnome bug 690118 in general "Crash when closing last tab of a window using Ctrl-w" [Normal,New]
+[17:27] <desrt> sort of yes
+[17:27] <desrt> the actual bug is much older.  10+ years
+[17:27] <desrt> it has a 5 digit number.  let me dig it out
+[17:28] <desrt> ah.  6 digit number, but starts with 1... :)  https://bugzilla.gnome.org/show_bug.cgi?id=118536
+[17:28] <ubot2`> Gnome bug 118536 in gobject "Make g_signal_connect_object'ed handlers disconnect when the data object is destroyed" [Major,Resolved: fixed]
+[17:28] <mterry> desrt, is deja-dup misusing glib in a way that is just now being exposed, or is this a glib-side bug that is just now being exposed as a warning?
+[17:29] <desrt> mterry: i'm trying to determine that today
+[17:29] <mterry> desrt, ah OK  :)
+[17:29] <Laney> let me find the commit that pitti reverted earlier
+[17:30] <Laney> http://anonscm.debian.org/viewvc/pkg-gnome/desktop/experimental/glib2.0/debian/patches/08_revert_closure_invalidation.patch?view=markup
+[17:36] <desrt> pitti: so gedit does this: $PYTHON -c "import gi; print(gi._overridesdir)"
+[17:36] <desrt> to decide where to install some files
+[17:37] <desrt> this ends up pointing into /usr even if --prefix is given
+[17:37] <desrt> i assume that there is some environment variable that could be used to specify additional override directories.... is there a way to get the full list and/or pick the last one instead of the first?
+[17:59] <robert_ancell> RAOF, any opposition to shipping the latest colord in raring?
+[18:15] <mpt> mterry, for bug 1100405, would it be easier to tell whether updates have ever been installed on the system, than to tell whether any user on the system has run update-manager?
+[18:15] <ubot2`> Launchpad bug 1100405 in update-manager (Ubuntu) "Always says "...since Ubuntu 12.10 was released" in a guest session" [Undecided,New] https://launchpad.net/bugs/1100405
+[18:17] <mterry> mpt, probably yeah
+[18:20] <mpt> mterry, ok, spec updated. <https://wiki.ubuntu.com/SoftwareUpdates?action=diff&rev2=99&rev1=98>
+[18:23] <mterry> mpt, cool
+=== m_conley is now known as m_conley_away
+=== m_conley_away is now known as m_conley
+=== m_conley is now known as m_conley_away

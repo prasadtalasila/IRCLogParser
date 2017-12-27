@@ -1,0 +1,248 @@
+=== Quintasan_ is now known as Quintasan
+=== yofel_ is now known as yofel
+[07:53] <ricotz> RAOF, hi :)
+[07:54] <RAOF> ricotz: Yo!
+[07:54] <ricotz> RAOF, how are you?
+[07:54] <RAOF> ricotz: Pretty good.
+[07:55] <ricotz> RAOF, good, news about Australia arent that good in the last time
+[07:55] <RAOF> Eh, it's just fires and floods.
+[07:55] <ricotz> RAOF, could you take a look into updating colord? https://launchpad.net/~ricotz/+archive/staging/+sourcepub/2955146/+listing-archive-extra
+[07:55] <tjaalton> RAOF: hey, what happened to piglit getting in the archive? was it dropped?
+[07:55] <RAOF> ricotz: I happen to be doing just that now :)
+[07:56] <ricotz> RAOF, oh, nice
+[07:56] <RAOF> tjaalton: Weren't you the one who was going to do that?
+[07:56] <tjaalton> was I? :)
+[07:56] <tjaalton> sheesh
+[07:57] <ricotz> heh
+[07:57] <tjaalton> ok so the first step is to put the packaging somewhere
+[07:57] <ricotz> is waffle added already
+[07:57] <RAOF> tjaalton: I'm pretty sure I wasn't going to be doing piglit. apitrace just made it through AA review, though :)
+[07:58] <tjaalton> oh I must've mixed it with apitrace
+[07:58] <tjaalton> right-o, it was Sarvatt who packaged it for qa
+[07:58] <tjaalton> piglit that is
+[07:58] <tjaalton> ok I'll talk with him how to proceed
+[10:57] <mlankhorst> hmz
+[12:23] <ricotz> MCR1, hi, i hope 12.100~beta3 works alright?
+[12:23] <MCR1> ricotz: Yep, it does. Thanx a lot. Fast as always ;)
+[12:24] <MCR1> (I mean your work, not the driver ;))
+[12:24] <MCR1> ricotz: Although I doubt that one fix of this release was Linux related ;)
+[12:24] <MCR1> *even one fix
+[12:26] <ricotz> yeah, since there are no dedicated changelogs it is hard to say
+[12:29] <ricotz> mlankhorst, hi, did someone had a look at refreshing mesa packaging for the 9.1 branch yet?
+[12:29] <mlankhorst> I think tjaalton did slightly
+[12:30] <ricotz> i got scared away through the buildsys changes which made some patches really diverged
+[12:30] <ricotz> (otherwise there would have been an update in xedgers)
+[12:31] <mlankhorst> I'm building X on nexus7 atm for testing the input bugs
+[12:32] <ricotz> mlankhorst, as a side note, not sure if it is worth to take a snapshot of llvm-3.3 to make it possible to build the r600 gallium driver
+[12:32] <mlankhorst> oh right 
+[12:32] <mlankhorst> that's where I stopped on :P
+[12:33] <ricotz> mlankhorst, https://launchpad.net/~ricotz/+archive/unstable/+sourcepub/2935469/+listing-archive-extra
+[12:34] <tjaalton> that won't happen
+[12:34] <tjaalton> aiui
+[12:35] <ricotz> understandable, could be an option of edgers though
+[12:35] <ricotz> so the only option is to drop the radeonsi driver
+[12:35] <tjaalton> yes
+[12:35] <ricotz> which was done in edgers too
+[12:36] <ricotz> tjaalton, do you finished the packaging update by any chance?
+[12:36] <mlankhorst> can't we just make a llvm-mesa package?
+[12:37] <ricotz> mlankhorst, if so we can use a snapshot too
+[12:37] <ricotz> 3.3 is whole different namespace and doesnt interfere with files of 3.2 or less
+[12:37] <mlankhorst> actually it would need some better name than that
+[12:38] <mlankhorst> something i could copy to precise when the time comes
+[12:38] <tjaalton> mlankhorst: it's possible, talk with doko :)
+[12:38] <ricotz> llvm-3.3 it is
+[12:38] <tjaalton> ricotz: didn't touch it since two weeks ago
+[12:38] <ricotz> they are coinstallable, no need to rename things here
+[12:39] <ricotz> tjaalton, ok, did it build at this time?
+[12:40] <mlankhorst> ok as long as mesa builds with llvm-3.3, it would be fine by me
+[12:41] <tjaalton> ricotz: seems so
+[12:42] <ricotz> tjaalton, can you push it to debian git?
+[13:31] <tjaalton> ricotz: yes, later
+[13:51] <mlankhorst> tjaalton: hm, with http://cgit.freedesktop.org/~whot/xorg-integration-tests/ do you think we could apply for a MRE for xorg-server?
+=== bdrung_ is now known as bdrung
+[14:04] <tjaalton> mlankhorst: yes, that's the plan
+[14:05] <mlankhorst> ok we'll need to have some ppa with the updated packages though
+[14:05] <tjaalton> yup
+[14:05] <mlankhorst> I was testing with that actually
+[14:07] <tjaalton> I haven't looked at xit yet, how is it used?
+[14:08] <mlankhorst> the thing seems to be that xorg-gtest will fail to install due to running some tests of its own in the build step
+[14:09] <mlankhorst> needs to be run as real root
+[14:11] <mlankhorst> and needs /dev/uinput too
+[14:13] <mlankhorst> CONFIG_INPUT_MISC and CONFIG_INPUT_UINPUT with the uinput module loaded..
+[14:16] <tjaalton> ah, crap
+[14:16] <mlankhorst> [ RUN      ] XServer.IOErrorException
+[14:16] <mlankhorst> XIO:  fatal IO error 11 (Resource temporarily unavailable) on X server ":133"
+[14:16] <mlankhorst>       after 7 requests (7 known processed) with 0 events remaining.
+[14:16] <mlankhorst> FAIL: xserver-test
+[14:17] <mlankhorst> o.O
+[14:31] <tjaalton> looks like stephen webb filed an ITP for xorg-gtest yesterday
+[14:31] <tjaalton> in debian
+[14:33] <mlankhorst> it restores the error handler for some reason in RegisterXIOErrorHandler
+[14:35] <mlankhorst> wtf
+[14:37] <mlankhorst> how can it be that old_handler be != _XDefaultIOError
+[14:38] <mlankhorst> some linking thing?
+[14:39] <mlankhorst> hm must be
+[14:53] <jcristau> tjaalton: is that somebody you know?
+[14:53]  * jcristau doesn't want to end up with two competing packagings for this thing
+[14:54] <tjaalton> jcristau: what now?-)
+[14:55] <tjaalton> lost me there
+[14:55] <jcristau> stephen webb
+[14:55] <jcristau> re: xorg-gtest
+[14:55] <tjaalton> ah
+[14:55] <mlankhorst> jcristau: I'm using the debian packaging
+[14:55]  * jcristau is confused
+[14:56] <mlankhorst> git+ssh://git.debian.org/git/pkg-xorg/lib/xorg-gtest.git
+[14:56] <tjaalton> oh
+[14:56] <tjaalton> bregmata is a canonical employee
+[14:56] <jcristau> mlankhorst: that looks way out of date
+[14:56] <mlankhorst> yes :/
+[14:56] <jcristau> raring seems to have a 0.7.0 version
+[14:57] <mlankhorst> hm but no guarantee it's packaged anywhere though, I'll check
+[14:57] <tjaalton> hmm, maybe I should ping him that it's taken care of already?
+[14:57] <tjaalton> I didn't know it existed under pkg-xorg
+[14:58] <tjaalton> jcristau: would piglit make sense under pkg-xorg?
+[14:59] <jcristau> dunno
+[14:59] <mlankhorst> hm shall I just import xorg-gtest into git again then?
+[14:59] <tjaalton> it's kinda special, always out of date
+[14:59] <jcristau> what's the use case for a piglit package?
+[14:59] <mlankhorst> having the same measuring rod
+[14:59] <tjaalton> right :)
+[14:59] <tjaalton> but having the packaging somewhere is useful
+[15:00] <tjaalton> erm
+[15:00] <tjaalton> probably would be fine if I ran piglit first to see what it is :)
+[15:00] <tjaalton> as a distro package it probably doesn't make sense
+[15:01] <mlankhorst> just a bunch of tests, surprisingly it didn't even lock up on nouveau for me
+[15:01] <tjaalton> i most likely did run it during last cycle
+[15:12] <mlankhorst> I guess I'll just update the xorg-gtest branch from ubuntu to debian-experimental branch in git
+[15:36] <mlankhorst> finally got xorg-integration-tests to build
+[15:48] <mlankhorst> doesn't pass all tests, though :)
+[17:05] <tjaalton> mlankhorst: the llvm-config hack in mesa doesn't seem to work with 9.1, or I'm missing some detail
+[17:05] <tjaalton> anyway, I'll push the experimental packaging now..
+[17:08] <mlankhorst> tjaalton: hm would have to check
+=== ogra_ is now known as ogra
+[17:44] <mlankhorst> tjaalton: what version of autoconf?
+[17:46] <mlankhorst> looks like the official way to fake it would be to make a temporary symlink in some temp/bin/llvm-config and then just pass it as --with-llvm-prefix=whatever/temp :/
+[17:47] <mlankhorst> or we could just patch configure.ac again I suppose
+[17:47] <mlankhorst> btw I'm getting this on precise
+[17:47] <mlankhorst> checking for llvm-config... (cached) llvm-config-3.2
+[17:47] <mlankhorst> ../../configure: line 23315: llvm-config-3.2: command not found
+[17:47] <mlankhorst> so guessing you need to fixup the build-deps
+[17:48] <mlankhorst> afk a bit, food
+[17:53] <tjaalton> getting the same, it should be right..
+[18:16] <tjaalton> heh, build-dep on llvm-3.1-dev
+[18:17] <mlankhorst> ;P
+[18:24] <tjaalton> still fails though
+[18:24] <tjaalton> checking for "/usr/lib/llvm-3.2/lib/libLLVM-3.2.so"... no
+[18:24] <tjaalton> checking for "/usr/lib/llvm-3.2/lib/libLLVMTarget.so"... no
+[18:25] <mlankhorst> ugh seems weird
+[18:25] <mlankhorst> llvm-config-3.2 --libdir ?
+[18:27] <tjaalton> i'm building with sbuild
+[18:33]  * mlankhorst should set up git-pbuilder at one point
+[18:36] <mlankhorst>         NOTE: Mesa is attempting to use llvm shared libraries because you have
+[18:36] <mlankhorst>         passed one of the following options to configure:
+[18:36] <mlankhorst>                 --with-llvm-shared-libs
+[18:36] <mlankhorst>                 --enable-opencl
+[18:37] <mlankhorst> looks like /usr/lib/llvm-3.2/lib/libLLVM-3.2.so does not exist, but /usr/lib/llvm-3.2/lib/libLLVM-3.2.so.2 does..
+[18:38] <mlankhorst> maybe a packaging error?
+[18:45] <bjsnider> .so should be in the -dev package
+[18:45] <mlankhorst> yeah but libLLVM-3.2.so should probably not be in /usr/lib/llvm-3.2/lib/, but /usr/lib/$(arch)
+[18:47] <bjsnider> i'm rusty on the rules, hold on a sec
+[18:48] <bjsnider> the headers go in /usr/include but the .so goes alongside the actual shared lib
+[18:48] <mlankhorst> yeah
+[18:49] <bjsnider> so i suppose the -dev has a problem if it isn't installing the .so
+[18:49] <mlankhorst> it's installing it, but something is installing libLLVM-3.2.so.1 twice..
+[18:53] <bjsnider> dpkg -S will tell you what is isntalling a particular file
+[18:53] <mlankhorst> tjaalton: I'll try to get upstream to accept a patch to test for -lLLVM-3.2 first before it tests the location
+[18:53] <mlankhorst> libllvm3.2:amd64: /usr/lib/x86_64-linux-gnu/libLLVM-3.2.so.1
+[18:53] <mlankhorst> llvm-3.2-dev: /usr/lib/x86_64-linux-gnu/libLLVM-3.2.so                                                                                                                                                     
+[18:53] <mlankhorst> llvm-3.2-dev: /usr/lib/llvm-3.2/lib/libLLVM-3.2.so.1  
+[18:53] <mlankhorst> weee
+[18:56] <mlankhorst> looks like a bug in the packaging
+[19:07] <mlankhorst> I'll leave it for tomorrow :/
+[19:17] <bjsnider> pretty easy fix in that -dev package though
+[19:36] <tjaalton> bryce: is it possible for apport to not report false gpu hangs, at least for released versions?
+[19:39] <tjaalton> bug 1073626
+[19:39] <ubottu> bug 1073626 in xserver-xorg-video-intel (Ubuntu) "Constant "false gpu hang" system alerts" [Undecided,Confirmed] https://launchpad.net/bugs/1073626
+[19:52] <bryce> tjaalton, well we can just shut it off entirely for quantal.  
+[19:53] <bryce> we probably don't care about gpu hangs on quantal anyway
+[19:53] <bryce> tjaalton, I can take care of that
+[19:54] <mlankhorst> we sort of do, due to backport stack\
+[19:55] <bryce> tjaalton, for false gpu hangs in development releases, well I don't think we have a sure fire way to distinguish between false gpu lockups and real ones.
+[19:57] <bryce> tjaalton, is there a packaging way we could have the udev rule only be applied for !stable releases?
+[19:58] <jcristau> an udev rule that does wget http://archive.ubuntu.com/ubuntu/dists/ and looks if there's a newer version? :)
+[19:59] <bryce> jcristau, :-P
+[20:02] <mlankhorst> dont we already have something like development release in the motd?
+[20:03] <tjaalton> that's what i was thinking
+[20:03] <tjaalton> bryce: where does the 'false' part come from?
+[20:22] <bryce> tjaalton, a dialog pops up and asks the user if they experienced a display lockup recently.  If they say 'no', it adds False.
+[20:22] <bryce> it mostly works but there's about 10-20% false falses
+[20:23] <bryce> you know, I could do something as stupid as just take the release YY.MM and compare it to the current date, and then exit the apport hook if it looks released
+[20:25] <bryce>  
+[20:26] <bryce> tjaalton, mlankhorst:  but this all begs the question - what do we want to do with the gpu lockup bug reports?
+[20:28] <mlankhorst> it's annoying though
+[20:28] <bryce> we can't grok them.  In the past I just forwarded them upstream, but invariably they just got set to incomplete with a random selection from ["Need steps to repro", "Test on newer kernel", "This patch should do it, trust me."], then +3 months and close as unanswered.  Then next cycle all the same GPU lockup bugs error #'s start coming in again...
+[20:28] <mlankhorst> yeah :/
+[20:29] <mlankhorst> it's been ok fixing some nouveau bugs myself though but the remaining ones.. also hard to get accepted since there aren't always specific launchpad bugs for it (was it this hangbug or that hangbug..)
+[20:29] <bryce> tjaalton, mlankhorst maybe one of you would have better luck working with upstream on forwarding the lockup bugs?
+[20:31] <bryce> unfortunately people who use the apport hook to report gpu lockups assume that it collects 100% of required info to fix the bug, so rarely say anything, and never provide steps to reproduce
+[20:31] <mlankhorst> sort of trying to play upstream for nouveau myself, but without steps to reproduce :/
+[20:32] <bryce> but people reporting reproducible hangs tend to not know to collect the i915 error file and stuff, so require a lot of handholding to get a proper report
+[20:33] <bryce> mlankhorst, yeah you've done a good job tackling the nouveau bugs.
+[20:33] <bryce> mlankhorst, do you mostly use the reported info, or work with the reporter to get more info, or work just on issues you can repro locally?
+[20:34] <mlankhorst> mostly reproducible ones, and sometimes just cherry picking stuff from mesa git that looks important
+[20:36] <bryce> hmm, I wonder about having the apport hook locally log lockups, and only prompt to file a bug on the 10th visit
+[20:36] <bryce> then, we may have a situation more likely to have reproduction steps...
+[20:36] <mlankhorst> well the problem with apport is it immediately gets into your face
+[20:36] <mlankhorst> which steals focus and is annoying
+[20:37] <bryce> not much I can do about that :-)
+[20:37] <bryce> (well, aside from just disabling it entirely)
+[20:37] <mlankhorst> yeah needs to be rethought :/
+[20:38] <bryce> essentially it was --> thus begat whoopsie
+[20:38] <bryce> however it pretty much has that same flaw
+[20:39] <Sarvatt> just showing the crash indicator and not showing the popups unless you click it would be nice
+[20:39] <mlankhorst> indeed..
+[20:40] <mlankhorst> or just not endless windows popping up, but something more organized
+[20:40] <mlankhorst> probably both
+[20:41] <tjaalton> bryce: i've worked with ickle more during the past few weeks to sort out any issues with sna in particular
+[20:41] <tjaalton> not via b.fd.o but irc
+[20:42] <tjaalton> helps that he's subscribed to -intel bugs
+[20:42] <mlankhorst> \o/
+[20:44] <bryce> Sarvatt, explain?
+[20:45] <Sarvatt> like if you get a crash, you just get the icon up top telling you, and clicking that brings up all the crashes in order like it does now
+[20:45] <bryce> tjaalton, cool.  Would you mind working with him on our gpu lockup bugs as well?
+[20:45] <bryce> tjaalton, at least for the rest of this cycle.  we can re-evaluate again next cycle if we still are seeing lots.
+[20:46] <bryce> Sarvatt, ah.  I don't think I can fix that though.
+[20:46] <tjaalton> sure, some are well known already
+[20:46] <Sarvatt> ah yeah wasn't talking about intel, just apport/whoopsie in general
+[20:47] <bryce> Sarvatt, ah gotcha
+[20:47] <bryce> well, I have been looking into how to condense the X hook dialogs, since I know people aren't really looking at them anyway
+[20:47] <mlankhorst> ideally apport would be able to work without user interaction at all..
+[20:48] <Sarvatt> sudo apt-get install ubuntu-desktop^
+[20:48] <Sarvatt> The following NEW packages will be installed:
+[20:48] <Sarvatt>   apport apport-gtk unity-lens-shopping whoopsie
+[20:48] <Sarvatt> every machine i have :P
+[20:48] <mlankhorst> indeed..
+[20:48] <mlankhorst> apport panicking over a WARN_ON in kernel I added myself for testing ._.
+[20:49] <bryce> mlankhorst, well, my thinking is this - MOST of the time we do need to interact with the user to get more info, but we can either do it *before* the bug is filed or *after*.  The latter requires manpower to do bug triage and ask questions, the former annoys the user with dialogs...
+[20:50] <mlankhorst> yes, but we should bug the user only once, instead of repeatedly with newly popping up windows
+[20:51] <bryce> yeah
+[20:51] <mlankhorst> and definitely apport should shut up if the same thing happens a second time :/
+[20:51] <mlankhorst> no need to remind me every reboot a WARN_ON happened
+[20:51] <bryce> heh
+[20:52] <bryce> well, with X bugs, what I really want is just to get the damn bugs fixed!  If the apport hook never has to fire off, then it doesn't matter how annoying it is.  ;-)
+[20:53] <mlankhorst> I do care about stability, but if we never needed those hooks why would we add them? best make them as least annoying and intrusive as possible..
+[22:22] <Azelphur> bryce: That machine with the 7770 we was talking about the other day, I spent another few hours with it today and figured out what was wrong, the ATI drivers refuse to build against the current kernel in Ubuntu 12.10, I booted it up on 3.5 (17) and was able to install the official drivers from amd.com from the debs produced by --buildpkg and then everything worked.
+[22:26] <tjaalton> Azelphur: you probably don't have the headers installed, known bug in 12.10
+[22:27] <tjaalton> install linux-generic and it should pull them
+[22:27] <Azelphur> I think I had the headers installed, I found a forum post saying that they apparently don't build against 3.7, which is why I downgraded
+[22:27] <Azelphur> next time I have access to that box I'll try it :)
+[22:30] <tjaalton> 3.7 isn't "the current kernel" of 12.10
+[22:34] <Azelphur> ah yea, I also upgraded it to xorg-edgers (in an attempt to solve the issues)
+[22:34] <Azelphur> so perhaps it's the missing headers package that caused all the issues,t hen :)
+[22:37] <bryce> Azelphur, :-)
+[22:37] <bryce> yeah all the ppas we have can sometimes cause as much trouble as worth ;-)
+[22:38] <Azelphur> well the ppa wasn't the cause, seems like the missing headers was always the cause
+[22:38] <Azelphur> I tried to do it the normal way first, the weird stuff only came as attempts to problem resolve
+[22:42] <Sarvatt> 3.7 is the default kernel in xorg-edgers for 12.10 yeah :( but there's a fglrx in the ppa that builds against it
+[22:43] <Sarvatt> it's just called fglrx, not fglrx-updates though
+[22:46] <Azelphur> yea, I'm blaming the missing headers thing for all my issues :P

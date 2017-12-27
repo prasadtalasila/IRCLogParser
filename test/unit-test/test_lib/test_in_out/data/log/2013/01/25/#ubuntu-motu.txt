@@ -1,0 +1,193 @@
+[01:48] <ESphynx> hey guys
+[01:48] <ESphynx> micahg xnox ping
+[01:48] <micahg> hi ESphynx
+[01:49] <ESphynx> hi :) So, finally! I have some time !
+[01:49] <micahg> I'll have more Sat night :)
+[01:49] <ESphynx> cool... care to tell me real quick though
+[01:49] <ESphynx> basically, there are a few bugs that have been fixed... so I'm planning to just go over all commits and isolate everything that is a bug fix
+[01:50] <ESphynx> and then test the result... is that basically OK for the SRU?
+[01:50] <micahg> ESphynx: well, bug fix + test case in an LP bug
+[01:51] <ESphynx> hmm, so I'd have to go and create an LP bug for each?
+[01:51] <micahg> usually, it's one issue per bug to track if things go wrong
+[01:52] <ESphynx> I see that, but these are bugs that have been fixed upstream :P
+[01:54] <micahg> well, presumably if it's being SRUd and doesn't have a microrelease exception, the bug is an annoyance for someone
+[01:56] <micahg> they need test cases and must be verified on the packages built in proposed
+[01:57] <ESphynx> micahg: well the major bug, as you might recall, is that it doesn't install on 64 bit releases at all
+[01:57] <micahg> ESphynx: yeah, that can be cherry picked and should be easy enough to write a test case for :)
+[01:57] <ESphynx> but since we're bothering making an SRU, I thought I'd throw in fixes for all the bugs I've ran across since.
+[01:58] <ESphynx> (Some of which surely deserving to be fixed)
+[01:58] <micahg> sure, as long as it's a minimal fix with little risk and you're willing to do the paperwork, I don't see why not
+[02:01] <ESphynx> well, not so set a precedent, but Quantal was the first version including Ecere :P and I don't know how many users started using yet, especially that it wasn't installable on 64 bit and most people install on 64 bit these days :)
+[02:02] <ESphynx> and these fixes lower risk more than anything else... Paperwork -- I would like to have a clue what I'm getting into ... Is the size of the paperwork going to proportional to the number of bugfixes I include? ;)
+[02:02] <micahg> yes, https://wiki.ubuntu.com/StableReleaseUpdates#Procedure , see #3
+[02:04] <ESphynx> Can I pack these together into 1?
+[02:04] <micahg> ESphynx: you can keep https://wiki.ubuntu.com/StableReleaseUpdates/MicroReleaseExceptions in mind if you think ecere upstream is worthy
+[02:05] <ESphynx> regression tests... hope to have these one day ;)
+[02:05] <xnox> ESphynx: so do you have the binary package name conflict fix?
+[02:06] <ESphynx> xnox: that's what I'm gonna hit first.
+[02:06] <ESphynx> xnox: We had determined that it would be up to ecere to be renamed I guess? ;) And not elliptic curves? ;)
+[02:06] <xnox> ESphynx: as soon as you have it, shout out. I'll review and sponsor it quickly =) as that's a bit urgent.
+[02:07] <ESphynx> I guess that stems from me being in experimental while elliptic curve is in unstable? ;)
+[02:07] <xnox> ESphynx: yes, unfortunately =)
+[02:07] <ESphynx> ok. xnox I'm starting on that right about now
+[02:07] <ESphynx> just wrestling a bit with micahg here to try to get a MRE for Quantal SRU :P
+[02:07] <xnox> nah, you won't get MRE that easy.
+[02:08] <ESphynx> micahg: a provisional (one-time) MRE really sounds like the best solution to me... Since the main reason is that it's uninstallable on 64 bit...
+[02:08] <xnox> SRU is easier. for MRE you need to show an existing string of SRU typically.
+[02:08] <micahg> right, and if upstream has no regression tests, that won;t fly
+[02:08] <xnox> ESphynx: being uninstallable is savere, just prepare the debdiff and file a regular SRU.
+[02:08] <ESphynx> I think I'll just forget about Quantal otherwise.
+[02:08] <ESphynx> better luck with Raring.
+[02:09] <xnox> fix the clash & I might help you do the SRU for quantal.
+[02:09] <ESphynx> I know you guys offer your help (and I greatly appreciate that)
+[02:09] <micahg> ESphynx: fair warning, attitudes like that don't encourage others to help...
+[02:09] <micahg> (MRE or else...)
+[02:09] <ESphynx> micahg: oh, it's not an attitude thing. sorry , didn't mean it that way
+[02:10] <micahg> ok :)
+[02:10] <ESphynx> micahg: it's just a matter of making the most of my very limited time
+[02:10] <ESphynx> micahg: e.g. I would like to get proper 64 bit support going
+[02:10] <ESphynx> and when Raring comes out this problem will have magically dissappeared :P
+[02:10] <micahg> ESphynx: that's quite understandable, I'd suggest focusing on the high priority bugs and backport a new feature version
+[02:11] <ESphynx> (not because of 64 bit suppor t( i hope to get that going too), but because it's already fixed in Raring...
+[02:11] <ESphynx> micahg: so, with that in mind, should I still bother with an SRU?
+[02:12] <ESphynx> and if so, should I just do the installability one? or should I do one for all the bugs I deem severe?
+[02:12] <micahg> yes, especially for the installability issue
+[02:13] <micahg> I'd suggest for anything severe
+[02:13] <micahg> but your time is yours
+[02:13] <micahg> paperwork isn't that bad if you understand the issue at hand
+[02:13] <ESphynx> yes... but I do want to try to fit in to the Ubuntu project
+[02:14] <ESphynx> but hmm, is that going to be just 1 SRU? or multiple?
+[02:14] <micahg> your choice
+[02:14] <ESphynx> if it fixes multiple bugs? And I should file multiple issues in LP?
+[02:14] <ESphynx> (all associated with the same SRU?)
+[02:14] <micahg> multiple bugs, one debdiff (choose which bug and note on the others)
+[02:15] <ESphynx> for the https://wiki.ubuntu.com/StableReleaseUpdates#Procedure
+[02:16] <ESphynx> debdiff which fixes this is attached to bug #xxxxxx" -- I see. I'll try to figure that out when I get there.
+[02:16] <ESphynx> so... for now, I'm going to create a special branch just for this 'sru' process here
+[02:17] <ESphynx> 1 commit per bug fix would be best?
+[02:17] <micahg> well, I always suggest that, but you'll want the commits as patches
+[02:17] <ESphynx> and I should create the bugs on LP with the information as specified there
+[02:17] <ESphynx> as patches?
+[02:17] <ESphynx> from?
+[02:18] <micahg> patches against the source
+[02:18] <ESphynx> meaning the original source?
+[02:18] <ESphynx> i.e. one bug fix can't depend over the other, is it?
+[02:18] <micahg> well, I mean quilt patches
+[02:19] <ESphynx> (that's where stuff gets tricky, I got tons of this already which is why I need to start over again already...)
+[02:19] <ESphynx> right the instability fixes I did depends on improvements to the build system
+[02:19] <ESphynx> right now*
+[02:19] <micahg> yeah, so you'll want a quilt patch for those build system fixes
+[02:20] <micahg> and one patch for each fix
+[02:20] <ESphynx> well yeah I'm going to try to isolates stuff and make it a single commit
+[02:20] <ESphynx> but I was going to do the other fixes as commits on that same branch as well... but you're saying it really should be on the original source?
+[02:21] <micahg> branch, sure, source, no, use patches against the source, the patches are stacked one on another
+[02:21] <ESphynx> so it's ok is all the bug fixes depends on the previous one?
+[02:22] <micahg> yeah, just note which are dependent in case they need to be yanked
+[02:22] <ESphynx> k, well I was just saying, but they really sohuld be independent...
+[02:23] <ESphynx> so how's that I'm going to isolate important bug fixes (starting with the uninstallability one), and I'll file LP bags for them
+[02:23] <ESphynx> and I'll reconvene with you on Saturday evening to see how we can get this moving :)
+[02:23] <micahg> depends on what files change in each patch, it might make sense in the way they are stacked
+[02:23] <ESphynx> (or just drop you a line so you can take a look at your earliest convenience :))
+[02:23] <micahg> sure
+[02:24] <ESphynx> well they are going to be stacked in the order of the branch anyways...
+[02:24] <ESphynx> k, thanks a lot
+[02:25] <ESphynx> xnox: is this going to be a new release for debian?
+[02:26] <ESphynx> micahg: Should I also include this package change for Quantal? the libec package needs to be renamed to libecerec or something similar
+[02:26] <ESphynx> due to a conflict with the elliptical curve library in debian/unstable :P
+[02:27] <micahg> ESphynx: I don't think that conflict exists in quantal
+[02:27] <ESphynx> micahg: It doesn't for quantal but will for raring or later?
+[02:27] <micahg> yeah
+[02:27] <ESphynx> but wouldn't it be best to fix it already?
+[02:28] <micahg> sure
+[02:28] <xnox> ESphynx: name-change for debian. no need for name-change in quantal. raring will just get a synced package from debian.
+[02:28] <micahg> but only raring needs the fix
+[02:28] <xnox> ESphynx: so just make a new debian - and i'll sponsor it into debian & sync it into raring.
+[02:30] <ESphynx> xnox: should this be a minimal fix or can I just release a mini version with latest?
+[02:30] <xnox> ESphynx: new debian can be anything you want =)
+[02:30] <xnox> ESphynx: but with name-change fix please ;-)
+[02:31] <ESphynx> 'fair enough. then I'll fix a couple things and test it a bit. yes name change fix of course :)
+[02:31] <ESphynx> I'll try to get both of these things done by tomorrow!
+[02:40] <micahg> ESphynx: don't forget a breaks/replaces on the older version # of libec0  when you do the rename, should make upgrades to raring work fine as well
+[02:40] <ESphynx> micahg: where does that go? control file?
+[02:41] <micahg> yeah
+[02:41] <ESphynx> k, thanks for mentioning ;)
+[02:41] <micahg> ESphynx: http://www.debian.org/doc/debian-policy/ch-relationships.html#s-replaces
+[02:42] <ESphynx> ah ok, great
+[02:42] <micahg> (that whole page is worth reading)
+[02:42] <ESphynx> micahg: the library is still going to be named the same though ... (except a symlink is going to dissappear)
+[02:43] <micahg> ESphynx: I thought you were renaming libec0 to not conflict with the otehr thing
+[02:43] <ESphynx> micahg: I am... so I'm getting rid of /usr/lib/libec.so*  , but keeping /usr/lib/ec/libec.so
+[02:44] <micahg> hrm, I was referring to the binary package
+[02:44] <ESphynx> yes , the package is going to get renamed... but the library .so file is going to keep the same name
+[02:45] <ESphynx> me and xnox already agreed on a lintian override to silence the warning :P
+[02:45] <micahg> that's fine, I was noting the breaks/replaces for the binary rename
+[02:45] <micahg> *package
+[02:45] <ESphynx> yeah ... will it 'break' though?
+[02:46] <ESphynx> (doesn't it just replace?)
+[02:48] <micahg> ESphynx: http://www.debian.org/doc/debian-policy/ch-relationships.html#s-breaks for reasoning
+[02:49] <ESphynx> k
+=== dk_ is now known as dk
+=== almaisan-away is now known as al-maisan
+=== al-maisan is now known as almaisan-away
+[07:53] <dholbach> good morning
+[08:13] <jackyalcine> morning dholbach
+[08:13] <dholbach> hi jackyalcine
+=== yofel_ is now known as yofel
+=== almaisan-away is now known as al-maisan
+=== zequence_ is now known as zequence
+=== al-maisan is now known as almaisan-away
+=== almaisan-away is now known as al-maisan
+=== al-maisan is now known as almaisan-away
+[16:45] <alo21> hi...
+[16:47] <alo21> if I download a source which has patches (via pull-debian-source), and I open a file which has a patch, Is the file patched yet when I open the file with gedit?
+[16:49] <Laney> alo21: that depends on the patch system in use
+[16:49] <Laney> is there a debian/source/format file?
+[16:52] <alo21> Laney, yea... 3.0.0
+[16:52] <Laney> 3.0 (quilt)?
+[16:52] <alo21> yes
+[16:52] <Laney> so yes, with that they should be applied
+[16:53] <Laney> you should have seen a message to that effect when pull-debian-source extracted the package for you
+[16:53] <alo21> Laney, and if there is a dpatch?
+[16:53] <alo21> in fact I got that message
+[16:53] <Laney> you wouldn't expect to see that in a 3.0 (quilt) package
+[16:54] <alo21> Laney, well
+[16:54] <alo21> thanks
+[16:54] <Laney> but: dpatch apply
+[16:55] <alo21> fine
+[16:55] <alo21> and during pbuilder --build, all patch are applied. Right?
+[16:56] <Laney> yes
+[16:56] <Laney> if they're correctly in the series file
+[16:58] <alo21> Laney, I have two build logs. One compiled with 'cc -lX11  yeahconsole.o   -o yeahconsole' and failed. another compiled with 'cc  yeahconsole.o   -o yeahconsole -lx11' and succeeded.
+[16:59] <alo21> how can I decide the order of the arguments
+=== [ESphynx] is now known as ESphynx
+=== e11bits_ is now known as e11bits
+=== cyphermox_ is now known as cyphermox
+[21:22] <alo21> hi... I am merging a package, and I would like to edit an existing patch and makes it work on Ubuntu. Can I edit it, or I have to create a new one?
+[21:24] <micahg> alo21: it depends, if the patch is pulled from an upstream commit, you'll want to add a new one, if it's Debian only and upstreamable to Debian, you could modify it, otherwise, add a new patch
+[21:25] <alo21> micahg, the patch comes from debian, and it edits a makefile. This patch works well on Debian, but not in Ubuntu
+[21:27] <alo21> micahg, what is the best thing to do?
+[21:27] <micahg> alo21: which package and patch?
+[21:28] <alo21> micahg, yeahconsole, patch 50-makefile.patch
+[21:28] <micahg> alo21: the patch is wrong, that's probably why it fails on Ubuntu :)
+[21:29] <micahg> +LDFLAGS += -lX11 should be LIBS, not LDFLAGS
+[21:29] <alo21> micahg, in fact it fails... and I know the solution (is the previous patch)
+[21:30] <alo21> micahg, or what you said is OK...
+[21:31] <alo21> micahg, Can I directly edit the existing patch?
+[21:31] <micahg> yeah, and send the fix to Debian after confirming it still builds there
+[21:32] <micahg> that stuff should probably ideally use pkg-config, but if this one change works, we can probably let it be
+[21:32] <alo21> micahg, why I should send the fix to debian?
+[21:32] <micahg> alo21: it's wrong there too :)
+[21:34] <alo21> micahg, so have I to fill in a new bug, or I can get in touch with the Debian Maintainer?
+[21:34] <micahg> alo21: file a bug with the fix
+[21:34] <alo21> and the fix should be a .patch or a .debdiff?
+[21:34] <micahg> after confirming it solves the problem of course :)
+[21:35] <micahg> debdiff fixing the .patch I guess
+[21:39] <alo21> micahg, Can I edit a patch just with gedit
+[21:39] <alo21> ?
+[21:40] <micahg> in this case, yes
+[21:40] <micahg> you'll want to quilt pop -a first
+[21:44] <alo21> micahg, what happens to wiki.ubuntu.com? A lot of pages seems no exist
+[21:45] <Laney> probably https://lists.ubuntu.com/archives/ubuntu-devel/2013-January/036384.html
+[21:50] <micahg> so he deprecated the whole wiki? :D
+[21:54] <alo21> ahahah
+[22:19] <alo21> micahg, thanks!

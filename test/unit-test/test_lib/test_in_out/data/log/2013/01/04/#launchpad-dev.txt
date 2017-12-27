@@ -1,0 +1,175 @@
+=== slank is now known as slank_away
+[03:56]  * StevenK stabs the error handling for spr.addFile()
+[03:56] <StevenK> bpr.addFile() just checks filename.endswith(), spr.addFile() matches against a regex.
+[04:05] <StevenK> Can I forbid buildout from downloading stuff that isn't in the local cache?
+[04:05] <wgrant> It should be already
+[04:06] <StevenK> Not for LP.
+[04:06] <StevenK> https://pastebin.canonical.com/81106/
+[04:06] <wgrant> install-from-cache = true
+[04:06] <wgrant> Is set in buildout.cfg
+[04:06] <wgrant> So it should already refuse to go to the Internet
+[04:06] <wgrant> Oh
+[04:06] <wgrant> That's not LP
+[04:06] <wgrant> That's auditor, isn't it?
+[04:07] <StevenK> [15:06] < StevenK> Not for LP.
+[04:07] <wgrant> 15:05:50 < wgrant> It should be already
+[04:07] <wgrant> 15:06:01 < StevenK> Not for LP.
+[04:07] <wgrant> :)
+[04:07] <StevenK> And yeah, it's auditor
+[04:08] <cjohnston> Am I mistaking or is bug #517302 a dup of bug #496056
+[04:08] <_mup_> Bug #517302: "1 branch dependent on this one." doesn't link to that branch or a list of them <code-review> <confusing-ui> <easy> <lp-code> <ui> <Launchpad itself:Triaged> < https://launchpad.net/bugs/517302 >
+[04:08] <_mup_> Bug #496056: Dependent branch list is empty <lp-code> <Launchpad itself:Triaged> < https://launchpad.net/bugs/496056 >
+[04:09] <wgrant> Indeed
+[04:09] <wgrant> Done
+[04:10] <StevenK> wgrant: Then I'm confused, since Django is in our download-cache
+[04:10] <cjohnston> :-)
+[04:10] <StevenK> Indeed, 1.3.3 and 1.4
+[04:11] <wgrant> StevenK: Is the flag set in order?
+[04:11] <wgrant> In auditor?
+[04:11] <StevenK> That flag was not set
+[04:11] <StevenK> The order in buildout.cfg matters? :-/
+[04:12] <wgrant> No, I just replaced 'auditor' with 'order' because I'm doing too many things at once :)
+[04:12] <wgrant> As long as it's in the right section it should be fine
+[04:12] <wgrant> AFAIK
+[04:12] <StevenK> wgrant: I've set it locally
+[04:14] <StevenK> Hm, it does indeed try and slurp Django from the net with that flag unset.
+[04:14] <StevenK> It gets 1.4 from the download-cache with it set, and 1.4.3 from the net with it unset.
+[04:15]  * StevenK stabs buildout for being silly.
+[04:17] <wgrant> StevenK: You don't have it locked in versions.cfg?
+[04:18] <StevenK> No versions.cfg
+[04:18] <StevenK> Patches welcome? :-)
+[04:18] <wgrant> Ah, that would be your mistake
+[04:22] <StevenK> wgrant: So it should grow a versions.cfg too?
+[04:22] <wgrant> Probably, or someone'll throw a new Django into download-cache and you'll die
+[04:23] <StevenK> wgrant: So grabbing LP's versions.cfg and putting it on a large diet with head and grep would be fine?
+[04:23] <wgrant> Nope
+[04:24] <wgrant> Set allow-picked-versions = false
+[04:24] <wgrant> Add stuff to versions.cfg until buildout unbreaks
+[04:28] <StevenK> Hmm
+[04:28] <StevenK> Why do we have two versions of setuptools in the cache?
+[04:28] <wgrant> There's only one
+[04:28] <wgrant> Different Python versions
+[04:29] <StevenK> I have a 2.6 and a 2.7 for 0.6c11
+[04:30] <wgrant> Yes
+[04:30] <wgrant> One version
+[04:30] <wgrant> Two Python versions
+[04:30] <wgrant> They're built eggs, not source tarballs
+[04:31] <StevenK> Oh
+[04:31] <StevenK> I see what's happened
+[04:31] <StevenK> My cache has been polluted
+[04:31] <StevenK> -rw-rw-r-- 1 steven steven 326K Jan  4 15:13 setuptools-0.6c12dev_r88846-py2.7.egg
+[04:31] <StevenK> The timestamp is a clue
+[04:32] <wgrant> Ah, yes
+[04:32] <wgrant> bzr st
+[04:32] <StevenK> Yeah, removed them
+[04:33]  * StevenK cleans, since buildout is still attached to the dev release
+[04:33] <StevenK>   Getting distribution for 'setuptools'.
+[04:33] <StevenK> Error: Picked: setuptools = 0.6c11
+[04:33] <StevenK> But setuptools = 0.6c11 is in versions.cfg :-(
+[04:34] <wgrant> Do you have versions.cfg registered in buildout.cfg?
+[04:34] <StevenK> I do now
+[04:35] <wgrant> Does it also work now?
+[04:35] <StevenK> It moved onto zc.buildout, so yay progress?
+[04:36] <wgrant> :)
+[04:37] <StevenK> Generated interpreter '/home/steven/production-auditor/bin/py'.
+[04:37] <StevenK> Fantastic.
+[05:19] <nigelb> Just here to complain about the expiring notices from LP.
+[05:19] <nigelb> I wish I could fix it.
+[05:20] <StevenK> Patches welcome.
+[05:22] <bigjools> lifeless: that android bug made me spit my lunch I laughed so hard
+[05:31] <nigelb> bigjools: the giraffe thing?
+[05:31] <bigjools> yes
+[05:31] <nigelb> :D
+[05:31] <nigelb> Is it a bug/
+[05:31] <bigjools> I even recreated it
+[05:32] <bigjools> well, I wonder
+[05:32] <nigelb> Feels more like a easter egg.
+[05:32] <bigjools> yeah
+[05:46] <lifeless> bigjools: its pretty awesome isn't it :)
+[05:48] <bigjools> ah it is a bug in TTS
+[06:20] <wgrant> StevenK: https://code.launchpad.net/~wgrant/launchpad/divorce-bfj-and-bfjo/+merge/141856
+[06:22] <StevenK> 159"""See `IBuildFarmJobOld`."""
+[06:23] <StevenK> Oh, you aren't disposing of BFJO yet?
+[06:23] <StevenK> 286	+ # Classes deriving from PackageBuild must provide various
+[06:23] <StevenK> 287	+ # methods.
+[06:23] <StevenK> Does that fit on one line?
+[06:23] <wgrant> Not quite
+[06:24] <wgrant> On both counts
+[06:24] <wgrant> BFJO still serves a purpose, and it won't be directly touched by this refactor
+[06:24] <wgrant> Which is why I want the interfaces to not be arbitrarily interrelated without having any actual overlap :/
+[06:25] <StevenK> wgrant: Minor niggle, but you didn't update the copyright in lib/lp/security.py
+[06:25] <StevenK> Other than that, looks great to me.
+[06:25] <wgrant> Fixed
+[06:25] <wgrant> Thanks
+[06:27] <StevenK> wgrant: To be clear, BFJO is marked for death and will be completly ripped out at some point?
+[06:27] <wgrant> It's been marked for death for about 2.5 years, but it'll be easier after my current work
+[06:27] <wgrant> So it might die within the next few months
+[06:34] <bigjools> \o/
+[09:01] <adeuring> good morning
+[09:28] <dpm> good morning all. I was wondering if someone could help me: in preparation for the phone launch I created a private project to contain the code for the tutorials on developer.ubuntu.com. And then I managed to lock myself out of it, so I cannot access the project anymore. As it does not need to be private anymore after the announcement, could someone with admin superpowers set it as a public project for me? It's https://launchpad.net/ubuntu-app-dev-cook
+[09:28] <dpm> book
+[09:29] <dpm> https://launchpad.net/ubuntu-app-dev-cookbook
+=== almaisan` is now known as al-maisan
+[09:29] <wgrant> dpm: You should be able to see it now
+[09:29] <wgrant> It's still private, but you can make it public
+[09:30] <dpm> wgrant, great, thanks! The same happened to the associated team: https://code.launchpad.net/~ubuntu-app-dev-cooks - can I regain access to it so that I can make it public as well?
+[09:31] <wgrant> dpm: That team's public and you're the owner, a member, and an admin
+[09:31] <wgrant> So I'm not sure what the issue is there
+[09:31] <wgrant> Are you referring to some branches owned by that team, perhaps?
+[09:32] <dpm> wgrant, not sure, either. Before you did the magic with the project, if I went to the team's main page I got a "not allowed here" page. But now I seem to access the team's page, so I guess it's all good
+[09:34] <wgrant> Ah, Person.getAffiliatedPillars doesn't do privacy filtering
+[09:34] <wgrant> So the "Related projects" was causing the 403
+[09:35] <czajkowski> aloha
+[09:36] <wgrant> Bug #1095982
+[09:36] <_mup_> Bug #1095982: Person.getAffiliatedPillars doesn't filter out inaccessible private projects <403> <easy> <private-projects> <regression> <Launchpad itself:Triaged> < https://launchpad.net/bugs/1095982 >
+[09:37] <wgrant> Morning czajkowski
+[09:37] <dpm> wgrant, ok, I managed to set the project as public, but I cannot figure out how to make https://code.launchpad.net/~ubuntu-app-dev-cooks/ubuntu-app-dev-cookbook/trunk public. If I click on the "This branch contains Proprietary information" link, the only choice I get on the popup that appears is "Proprietary". Any suggestions on how I can make the branch public?
+[09:37] <wgrant> dpm: https://launchpad.net/ubuntu-app-dev-cookbook/+sharing
+[09:37] <wgrant> You probably want to set bugs, branches and blueprints to public
+[09:37] <wgrant> Then you can make the branch public
+[09:39] <dpm> wgrant, excellent, thanks. I set everything to public now. Do the settings on the table under "Who it's shared with" look sensible for a public project?
+[09:40] <wgrant> dpm: I'd revoke your direct access, but the rest looks sensible (apart from the "{policy_name}" bit, which is a bug that'll be fixed on Monday)
+[09:41] <dpm> wgrant, ok, I'll remove my direct access. Two more questions:
+[09:42] <dpm> 1) I still cannot set the branch to Public: on https://code.launchpad.net/~ubuntu-app-dev-cooks/ubuntu-app-dev-cookbook/trunk if I change it, the change does not get applied
+[09:42] <dpm> i.e. the spinning thing keeps spinning forever
+=== al-maisan is now known as almaisan-away
+[09:43] <wgrant> Um, that's a bit odd. What if you click "Change details" and use the old non-AJAX form?
+[09:44] <wgrant> Oh
+[09:44] <dpm> then I only get a Proprietary option
+[09:44] <wgrant> It's because it's stacked on another branch owned by you
+[09:44] <wgrant> https://code.launchpad.net/~dpm/ubuntu-app-dev-cookbook/trunk
+[09:44] <wgrant> I guess you probably want to unstack the team branch, and delete your old personal one?
+[09:44] <dpm> actually, that was my second question. I'd like to delete that branch (https://code.launchpad.net/~dpm/ubuntu-app-dev-cookbook/trunk)
+[09:44] <dpm> how do I unstack the branch?
+[09:45] <wgrant> bzr reconfigure --unstacked lp:ubuntu-app-dev-cookbook
+[09:45] <wgrant> Then wait a minute or so for it to work out it's done, and you'll be able to delete the old branch and make the new one public
+[09:45] <dpm> cool, let me give it a go, thanks
+[09:48] <wgrant> That looks more sensible :)
+[09:54] <dpm> wgrant, that worked well, thanks. I still get two warnings, though: 1) on https://launchpad.net/ubuntu-app-dev-cookbook/+sharing I removed all direct subscriptions (yours and mine) and LP it's telling me "These information types are not shared with anyone: Proprietary". Is this something that can safely ignore? And 2) on the project's front page at (https://launchpad.net/ubuntu-app-dev-cookbook) I get "(Launchpad 30-day trial commercial license)" liste
+[09:54] <dpm> d as a license. I chose it when I made the project private, but I'm no longer using a commercial license. Is there a way to remove it?
+[09:55] <wgrant> dpm: The Proprietary warning should go away a day or so after there are no proprietary bugs or branches left, I think
+[09:56] <wgrant> As for the licence, just edit the project's licence settings to no longer include Other/Proprietary
+[09:56] <wgrant> The subscription will stay there until it expires, but nothing bad will happen when it does
+[09:57] <wgrant> (if the subscription expires and your project is Other/Proprietary, your project will be disabled)
+[09:58] <dpm> yeah, "Other/Proprietary" was already unmarked, but from what you're saying, I should just wait for the subscription to expire
+[09:58] <dpm> thanks wgrant!
+[09:59] <wgrant> I can probably make the subscription expire right now if you really want, but it'll just naturally expire soon enough
+[09:59] <dpm> wgrant, no worries, that's fine if it expires naturally, no need to create extra work
+[10:01] <wgrant> Great
+=== yofel_ is now known as yofel
+=== BradCrittenden is now known as bac
+=== almaisan-away is now known as al-maisan
+=== gary_poster|away is now known as gary_poster
+=== bac changed the topic of #launchpad-dev to: http://dev.launchpad.net/ | On-call reviewer: bac | Firefighting: - | Critical bugs: <150
+[14:13] <czajkowski> rick_h_: you about
+[14:14] <rick_h_> czajkowski: yep
+[14:15] <czajkowski> if you are free for a few mins can you pop into #lp please
+[14:15] <rick_h_> czajkowski: sure sec
+=== al-maisan is now known as almaisan-away
+=== slank_away is now known as slank
+=== almaisan-away is now known as al-maisan
+=== al-maisan is now known as almaisan-away
+=== almaisan-away is now known as al-maisan
+=== al-maisan is now known as almaisan-away
+=== deryck is now known as deryck[lunch]
+=== deryck[lunch] is now known as deryck

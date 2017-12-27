@@ -1,0 +1,426 @@
+=== ubuntu-nathan is now known as nathanpc
+[02:07] <zhongwei> Hi, folks, Does any know how many kinds of arm assembly language standard exist? I'm very confused by the difference between different arm assembly standard.
+[02:09] <zhongwei> Say the UAL(Unified Assembly Language) and GNU as are different. Is any more standard about arm assembly lanuage?
+=== zz_chihchun is now known as chihchun
+=== discopig is now known as sv
+[06:15] <IamTrying> Where is the boot.img file? http://lilstevie.geek.nz/downloads
+[06:16] <IamTrying> It always goes to black screen
+[06:16] <IamTrying> Downloaded: http://lilstevie.geek.nz/downloads/OLiFE-Prime-Edition.tar.gz_1.2a_TF101_767779ccfa200e5e00b2f1e33a3d73a9
+[06:16] <IamTrying> Downloaded: http://lilstevie.geek.nz/downloads/OLiFE.tar.gz_1.2a_TF101_c30263fd8271a23bb211fd9fdd69fa45
+=== chihchun is now known as zz_chihchun
+=== zz_chihchun is now known as chihchun
+[07:33] <dholbach> good morning
+[07:38] <fabo> ikepanhc: ping
+[07:43] <fabo> ikepanhc: I replied on the bug
+[07:43] <ikepanhc> fabo: thanks for the quick reply. /me is checking
+[07:44] <ikepanhc> fabo: execuse me, which bug you mentioned?
+[07:49] <fabo> ikepanhc: bug 1078356
+[07:49] <ubot2> Launchpad bug 1078356 in Arndale "usb 3.0 support" [Medium,Fix released] https://launchpad.net/bugs/1078356
+[07:49] <ikepanhc> fabo: thanks I see it
+[07:51] <ikepanhc> fabo: one more question, can you point me where I can clone the git tree for the binary?
+[07:54] <fabo> ikepanhc: http://git.linaro.org/gitweb?p=kernel/linux-linaro-tracking.git linux-linaro branch
+[07:55] <ikepanhc> thanks a lot
+[07:55] <fabo> ikepanhc: all the details are available in the changelog (including config fragments)
+=== chihchun is now known as zz_chihchun
+[08:01] <ikepanhc> fabo: the kernel oops at s5p_usb_phy_init+0x56/0x1a8, is that possible that we might have different hardware?
+[08:02]  * ikepanhc is posting the full log on bug
+[08:03] <fabo> ikepanhc: I'm not that different hardware are available. I guess we have the same.
+[08:05] <fabo> ikepanhc: I experienced kernel oops too, reported in a separate bug (seems related to toolchain)
+=== zz_chihchun is now known as chihchun
+[08:15] <fabo> ikepanhc: do you have something connected on usb when you boot?
+[08:16] <ikepanhc> fabo: yes, a usb2ethernet
+[08:16] <fabo> could remove it and see if you still get the oops?
+[08:16] <fabo> +you
+[08:17] <ikepanhc> hmm, a little bit hard, its far away from me and I need someone do that for me
+[08:17] <ikepanhc> I will try to ask. thanks for the suggestion
+[08:21] <fabo> ikepanhc: I observed strange behavior depending on the peripherals connected
+[08:21] <fabo> ikepanhc: I don't know the root cause but it could be hardware
+[08:22] <ikepanhc> fabo: including oops of ohci_irq?
+[08:23] <fabo> ikepanhc: yes, I have random oops if I plug something on ethernet or usb, both are connected on the same bus
+=== sv is now known as discopig
+[08:24] <ikepanhc> fabo: I see that too, the value of regs in ohci_irq() is NULL and the funciton using it
+[08:25] <ikepanhc> fabo: probably the first interrupt comes before everything initial, this is my guess
+[08:26] <ikepanhc> fabo: this is the dirty workaround I have http://kernel.ubuntu.com/git?p=hwe/ubuntu-quantal-arndale.git;a=blobdiff;f=drivers/usb/host/ohci-hcd.c;h=88678526688de06d6ddb142f22fe40ec1596dd9e;hp=4a1d64d92338e7653035b054decf6e714909a41f;hb=d206e0141339b25724445ba79cfb7ec7b57bc5c1;hpb=08ff89b94bc54d91df7fcb8800c8aeb6a1fff072
+[08:28] <fabo> ikepanhc: it worths a try. it could be the same root cause as my oops with ethernet/sata
+[08:28] <fabo> I'll apply and test
+[08:29] <ikepanhc> glad I can help
+[08:31] <fabo> ikepanhc: according to tushar, plugging an usb device might be just avoiding that ATM (probing, enumeration might be taking some time)
+[08:34]  * ikepanhc nods. but I can only remove access to the hardware, ethernet is critical to me :(
+[08:35] <ikepanhc> s/remove/remote
+=== chihchun is now known as zz_chihchun
+=== zz_chihchun is now known as chihchun
+=== chihchun is now known as zz_chihchun
+[13:11] <Riddell> ogra_: I'm playing with ubuntu on this nexus 7, any ideas how to get another shell up?  I've installed plasma-active but I can't seem to persuade lightdm to launch it as the autologin session
+[13:12] <ogra_> i think it should respect ~/.dmrc, not sure
+[13:12] <Riddell> nope, it just changes that back to ubuntu when I change it
+[13:13] <ogra_> Riddell, hmm, i guess thats a question for the desktop team then, i dont see any way to change the session in lightdm here
+[13:13] <ogra_> looks like they dropped the UI element for that
+[13:14] <ogra_> there should be a config file for lightdm though, where you should be able to force the default
+[13:14] <Riddell> I did find that somehow but then there's no way to type in a password
+[13:15] <ogra_>  /etc/lightdm/lightdm.conf has user-session=
+[13:15] <ogra_> you need to enable the keyboard in the panel
+[13:15] <ogra_> (we default to autologin, so the greeter didnt see much love yet)
+[13:16] <ogra_> there should be an a11y icon
+[13:50] <Riddell> ogra_: whee I got it running
+[13:50] <Riddell> alas the touchscreen seems not to be working
+[13:50] <Riddell> I wonder what enabled that to function
+[14:41] <lool> ogra_: Hmm I have installed today's raring image for nexus 7, I get graphical corruption in the background of OEM config and then I'm stuck on "Who are you?" after configuring the wifi; are these known issues and is there a workaround?
+[14:42] <ogra_> lool, a reboot fixes the focus error
+[14:42] <ogra_> lool, wallpaper issue is known and filed as well, just ignore it :)
+[14:44] <lool> Ok; hard-resetting then
+[14:44] <lool> ogra_: is there a bug for the focus issue?
+[14:45] <ogra_> yep, but i'm not at a machine where i can look it up quickly, i'll give you the number later
+[14:45] <ogra_> lool, xnox is working on that afaik
+[14:46]  * xnox is going to add g-s-d hacks to paint background such that everyone stops bugging me about it.
+[14:47] <xnox> but that will not fix background for Xubuntu/Lubuntu/Studio/Mythbuntu
+[14:47] <xnox> =((((
+[14:47] <lool> Shouldn't it be at least black?
+[14:47] <lool> that seems like a driver bug somewhere
+[14:48] <ogra_> yes, thats another issue that has several incarnations
+[14:49] <ogra_> the driver doesnt properly clean up if you shut down X ... booting without splash you actuallly see the content of the desktop on last shutdown for a second when lightdm starts
+[14:49] <ogra_> iirc that was communicated to nvidia
+[14:51] <Tassadar> probably because Android does not use framebuffer directly, I kinda wonder how do they draw to screen Oo
+[14:51] <ogra_> we dont use any android bits :)
+[14:52] <ogra_> there is an actual xorg driver in use
+[14:52] <ogra_> which has the bug
+[14:53] <Tassadar> not only that, everything which writes directly to framebuffer has that bug
+[14:53] <Tassadar> fb's content is not erased after reboot
+=== zz_chihchun is now known as chihchun
+[15:16] <Rjs> hmm, would the fix be simply to erase the contents of the framebuffer before enabling the display (in-kernel, I guess)? (can you do anything else if, say, the kernel crashes or gets stuck and is later rebooted?)
+[15:18] <Rjs> (I've seen very similar things on regular desktop computers with some X drivers as well, so I think it's been quite common at least in the past - e.g., kill an X server and go back to a text console, then restart X, and it was quite common in the past that the previous screen contents were briefly visible before X cleared the display)
+[15:19] <Tassadar> I just set the whole framebuffer to "black" before I do first update.
+[15:21] <Tassadar> on ubuntu's kernel, it was more visible because of the console text/graphic mode switch, maybe it is needed to "erase" fb even before that happens (?)
+[15:46] <lool> ogra_: Seems the daily-preinstalled images for nexus 7 / raring have stopped building since the 24th; can't find more recent logs; any idea why?
+[15:46] <ogra_> lool, DC breakage
+[15:46] <lool> http://people.canonical.com/~ubuntu-archive/cd-build-logs/ubuntu/raring/ stops at the 24th
+[15:46] <lool> ogra_: :-/
+[15:47] <ogra_> lool, todays build should be running right now, they managed to fix it today
+[15:47] <ogra_> the livefs builder broke and we have no fallback ... and there was nobody to go physically to the board to bring it up again
+[15:47] <ogra_> (it isnt in the mandabox)
+[15:47] <lool> ok
+[15:50] <ogra_> there is hope we'll get a fallback builder soon
+[15:50] <ogra_> its quite hard with one livefs builder for all arm images and flavours
+[16:01] <hrw> infinity: aarch64 porting meeting?
+[16:02] <ogra_> janimo, hey ... should i drop the matrix stuff from acceld now ?
+[16:02] <infinity> hrw: The one that's in Finnish? :)
+[16:02] <hrw> yes
+[16:02] <janimo> ogra_, no, far from it
+[16:02] <janimo> the g-s-d change is just  a small part of the picture
+[16:02] <ogra_> ah, ok, your changelog entry sounded hopeful
+[16:02] <janimo> I still need the kernel/udev rules in place
+[16:03] <infinity> hrw: Was it a G+ hangout?  Link me.
+[16:03] <janimo> well,some of g-s-d rotations are fixed
+[16:03] <janimo> but orientation detection relies on kernel support which we do not have yet
+[16:03] <infinity> hrw: (Sorry, a bit scatterbrained today, tag-team debugging initramfs-tools with a user)
+[16:03] <janimo> but it's next on my todo
+[16:03] <hrw> infinity: https://plus.google.com/hangouts/_/da41dcc2462a4ed93ec4e603dcfff109b6004142
+[16:03] <ogra_> ah
+[16:04] <janimo> ogra_, this was a change to the gsd xrandr plugin, the other part is the orientation plugin
+[16:04] <ogra_> janimo, also add a joystick device so we can use games by accelerometer ;)
+[16:04] <plars> ogra_: the serial stuff is working great for login on n7, but is there a way to make the kernel messages and early boot stuff when it unpacks the rootfs go there also? Specifying it as one of the console= doesn't seems to be sufficient.
+[16:04] <ogra_> while you fix the kernel
+[16:04] <janimo> ogra_, what could be done but I don't think it's worth the trouble is using dbus-send to ask gsd to rotate instead of manually calling xrandr and xinput
+[16:04] <janimo> but no real gain
+[16:05] <janimo> ogra_, yes, it actually needs to be exposed as a joystick in order for gsd to talk to it :)
+[16:05] <ogra_> plars, nope, the serial bit comes from a USB driver, it can only start once that is loaded, cant log anything before
+[16:05] <janimo> but only axis and no shoot button
+[16:05] <plars> ogra_: ok
+[16:05] <ogra_> janimo, pfft, users can buy a bluetooth button for that :P
+[16:06] <janimo> or play non-violent games where you just cruise in a spaceship but don't shoot anything
+[16:06] <ogra_> haha
+[16:08] <janimo> plars, thanks for reminding me serial login exists. I have annoying lags and lockups via wifi/ssh
+[16:09] <ogra_> well, sadly serial login also eats our battery
+[16:09] <plars> ogra_: oh, really?
+[16:09] <ogra_> there seems to be a bug in either the g_serial driver or in getty, yeah
+[16:10] <ogra_> which causes a ton of wakeups per second currently ... check with htop, you will see ttyGS0 in the top CPU consumers
+[16:11] <janimo> well, while you're on serial you're also plugged in no?
+[16:12] <ogra_> heh, yeah, you should
+[16:12] <plars> janimo: well, yes but I can easily drain more battery than I'm charging
+[16:12] <plars> janimo: and considering we'd like to do some power testing in an automated way, this could complicate things a bit
+[16:12] <ogra_> it definitely causes a lot of CPU load atm
+[16:13] <ogra_> i know cking will look at it though
+[16:13] <ogra_> but he seems to be off today
+[16:39] <plars> ogra_, janimo: we may end up having to test install differently and just keep a system upgrading, still not having much luck with the preseeding. Does the kernel upgrade properly now? I seem to recall that being an issue at some point
+[16:39] <ogra_> kernel is fine
+[16:40] <plars> awesome
+[16:40] <ogra_> upgrades from quantal to raring have issues
+[16:40] <ogra_> nobody plans to fix that though
+[16:40] <plars> ogra_: yeah, don't need that
+[16:42] <ogra_> wow, the settings i just uploaded actually bring the system load to a sane value on the nx7
+[16:42] <ogra_> !!
+[16:42] <ogra_> finally a default load below 1
+[16:46] <janimo> ogra_, what changed?
+[16:48] <ogra_> janimo, i just added an upstart job that applies the same settings as in init.grouper.rc for the cpufreq governor
+[16:49] <ogra_> we switched to the interactive governor a while ago, which already improved over ondemand but never used the options android uses for it
+[17:08] <janimo> ogra_, nice
+[17:08] <ogra_> yeah, i'm quite impressed what such a small change does
+[17:09] <ogra_> having an idle load below 0.10 if you had it above 1 all the time is quite great
+[17:21] <mosasaur> I'm currently running this on my galaxy note: http://forum.xda-developers.com/showthread.php?t=1845631
+[17:21] <mosasaur> however it's ubuntu 10.10 and it seems the deb files for an update have all length 0
+[17:22] <ogra_> better talk to the creator of that chroot then
+[17:22] <Tassadar> well, it is two and a half years old, repositories are probably down already
+[17:22] <mosasaur> is there a more recent arm image for v7 that I can use as a drop in replacement?
+[17:22] <ogra_> oh, right
+[17:23] <Tassadar> I suppose you can use nexus 7's images when it is just chroot
+[17:23] <mosasaur> thanks Tassadar, is there a link for that?
+[17:23] <ogra_> well, depends how many hacks that chroot has :)
+[17:24] <Tassadar> yeah, gimme a while, I'm reading the thread
+[17:24] <ogra_> theoretically do-release-update should just DTRT and set the sources.list to old-releases.ubuntu.com
+[17:24] <ogra_> and upgrade you
+[17:25] <mosasaur> I guess a release upgrade should work, however the image is rather small
+[17:25] <Tassadar> yeah, 1.6gb?
+[17:26] <mosasaur> compressed, if installed it leaves about 1 gig free
+[17:26] <Tassadar> what is total size of the .img file?
+[17:27] <mosasaur> about 3G
+[17:28] <LisaNori> Wow, I just did "apt-get update; apt-get upgrade" and now my ubuntu installation on my nexus7 reads the X mouse location along the Y axis and vis versa!  It's really weird!  You can start apps (listed along the left side) by touching along the top of the screen.  You can get to top screen menus by touching along the right side!  Some fix since yesterday (when I did the last upgrade) has really screwed up mouse positions!
+[17:28] <ogra_> LisaNori, use the serial shell and upgrade again, there was a small window where kernel and userspace were out of sync today
+[17:29] <Tassadar> mosasaur: I guess that is not enough to do the upgrade
+[17:29] <ogra_> just another upgrade should fix it
+[17:29] <mosasaur> Tassadar: yeah that's why I'd like some torrent with a more recent image
+[17:30] <LisaNori> I did the upgrade just a few minutes ago.  I don't have a way to attach a USB keyboard.  I'll see if i can ssh in.
+[17:31] <ogra_> weird, if it was a few mins ago all should be fine
+[17:31] <mosasaur> LisaNori: I suppose you're not talking about just a chroot?
+[17:31] <LisaNori> nope
+[17:31] <ogra_> the nexus7 is nbative
+[17:31] <ogra_> *native
+[17:32] <ogra_> LisaNori, was that a raring install or did you upgrade from a quantal demo image ?
+[17:32] <Tassadar> I'd say there isn't one you can _just_ drop in, but you could make one from the nexus 7's I suppose, the chroot seems pretty much okay
+[17:32] <ogra_> LisaNori, (the original installation i mean)
+[17:33] <LisaNori> It was a raring install (using the dual boot capability).  Worked fine yesterday.  Worked fine when I turned it on today.  Screwed after I did upgrade and rebooted.
+[17:33] <ogra_> oh, dual boot, hmm
+[17:33] <Tassadar> let me try ti
+[17:33] <Tassadar> it
+[17:34] <mosasaur> is the nexus 7 already at 12.04 or something like that?
+[17:34] <ogra_> if you can ssh in, check the kernel version
+[17:34] <ogra_> mosasaur, 13.04
+[17:34] <mosasaur> OK :-)
+[17:35]  * Tassadar is rebooting to ubuntu on his n7 to try update
+[17:35] <ogra_> smells like the kernel wasnt updated
+[17:36] <ogra_> we are at 3.1.10-9-nexus7
+[17:36] <LisaNori> apparently ssh isn't enabled and the onscreen keyboard is useless now.  I'll try using "adb shell".
+[17:36] <ogra_> uname -r should tell
+[17:37] <Tassadar> won't work, if you are on linux, just plug it in and type "screen /dev/ttyACM0 115200"
+[17:37] <ogra_> we run a serial login on the USB port in the default ubuntu image (no idea if that applies to the dual boot image)
+[17:37] <Tassadar> (and then your username and enter, even if it does not show anything in terminal)
+[17:37] <ogra_> right, follow Tassadar
+[17:39] <LisaNori> Cool!  That worked fine!  I'm in.
+[17:39] <ogra_> well, uname -r
+[17:39] <LisaNori> 3.1.10-8-nexus7
+[17:39] <ogra_> aha
+[17:40] <ogra_> there is your prob
+[17:40] <LisaNori> :)  ?
+[17:40] <ogra_> your kernel wasnt upgraded, no idea why, i only work with the official image
+[17:40] <ogra_> but i guess Tassadar can help you :)
+[17:41] <Tassadar> LisaNori: tell me what "ls -l /boot | grep vmlinuz" shows you
+[17:41] <LisaNori> lrwxrwxrwx 1 root root      23 Jan 24 17:40 vmlinuz -> vmlinuz-3.1.10-8-nexus7
+[17:41] <LisaNori> -rw-r--r-- 1 root root 4523920 Jan 24 13:35 vmlinuz-3.1.10-8-nexus7
+[17:41] <Tassadar> Oo
+[17:42] <Tassadar> okay, just wait until I update my installation
+[17:42] <ogra_> sudo apt-get install linux-nexus7
+[17:42] <ogra_> try that
+[17:42] <ogra_> the kernel wont be upgraded is the metapackage isnt installed
+[17:42] <ogra_> seems thats missing from your setup
+[17:43] <ogra_> s/is/if/
+[17:44] <LisaNori> running now...
+[17:44] <ogra_> it should pull in 3.1.10-9-nexus7 alongside
+[17:45] <Tassadar> does it install also flash-kernel
+[17:45] <Tassadar> ?
+[17:45] <ogra_> i dont think so
+[17:46] <Tassadar> I wonder how could "linux-nexus7" be missing
+[17:46] <Tassadar> *can/whatever-the-correct-english-is
+[17:46] <ogra_> no idea
+[17:47] <LisaNori> in order to install using multirom, I followed the instructions here:  http://forum.xda-developers.com/showthread.php?t=2011403
+[17:47] <LisaNori> Ok, so, now I do "apt-get update ; apt-get upgrade" and reboot?
+[17:48] <ogra_> just reboot should be fine if you see 3.1.10-9-nexus7 in /boot/
+[17:48] <Tassadar> LisaNori: when did you install ubuntu, like from which that was the image you installed via recovery?
+[17:48] <Tassadar> at least roughly
+[17:49] <LisaNori> Following the instructions on the page I mentioned above, I followed the link "here" in step 2 under "Adding ROMs".  That's the image I loaded.
+[17:50] <LisaNori> http://api.viglink.com/api/click?format=go&drKey=1359&loc=http%3A%2F%2Fforum.xda-developers.com%2Fshowthread.php%3Ft%3D2011403&v=1&libid=1359481624518&out=http%3A%2F%2Fcdimage.ubuntu.com%2Fdaily-preinstalled%2Fcurrent%2F&title=%5BWiFi%263G%5D%20MultiROM%20v6%20-%20xda-developers&txt=here&jsonp=vglnk_jsonp_13594818010172
+[17:50] <Tassadar> those images are built daily, every day there is different image,  I wanna know when did you download it
+[17:50] <LisaNori> Of course, I followed those instructions about a week or two ago, so it would have been a different image there at the time.
+[17:51] <ogra_> cat /var/log/installer/media-info
+[17:51] <LisaNori> Let me see if I still have the image I loaded around somewhere.
+[17:51] <ogra_> that should tell from when the installation is
+[17:51] <ogra_> if it uses our tarballs as a source at least
+[17:51] <LisaNori> root@rajnexus7:/boot# cat /var/log/installer/media-info
+[17:51] <LisaNori> cat: /var/log/installer/media-info: No such file or directory
+[17:51] <Tassadar> It should not matter, I just want to know to be sure it is not like some acient image or something like that
+[17:52] <Tassadar> and if it was week or two then it is enough, you don't have to look for the file
+[17:52] <ogra_> hmm, so its not our tarball or the install pre-dates the addition of build stamps
+[17:52] <LisaNori> Ok, the image I downloaded is dated Jan 23, 17:48
+[17:52] <Tassadar> yeah, I don't use the installer
+[17:52] <ogra_> not at all ?
+[17:53] <Tassadar> no, it just extracts the image
+[17:53] <ogra_> i mean the graphical part for user setup etc
+[17:53] <ogra_> it does some kind of important configuration bits
+[17:53] <Tassadar> I thought that the installer which extracts tar.gz archive creates that file...
+[17:54] <ogra_> oh, right, it copies it from the initial initrd
+[17:54] <ogra_> we ship it originally in the initrd
+[17:54]  * ogra_ forgot about that step, sorry
+[17:54] <ogra_> so it cant be in the tarball indeed
+[17:54] <LisaNori> I rebooted and it works fine now.  Thanks a lot!
+[17:55] <ogra_> unless your re-packaging scripts copy it :)
+[17:55] <Tassadar> looks like mine also did not update to newest kernel Oo
+[17:55] <ogra_> well, i'm pretty sure linux-nexus7 is in the tarball :)
+[17:56] <Tassadar> aah, yeah, that's why
+[17:56] <Tassadar> flash-kernel is tied to linux-nexus7
+[17:56] <Tassadar> and I do "apt-get -y purge ac100-tarball-installer flash-kernel"
+[17:56] <Tassadar> because I really don't want to have flash-kernel when dual bootin
+[17:56] <Tassadar> g
+[17:56] <Tassadar> chmm
+[17:56] <ogra_> you could try an evil hack and export FLASH_KERNEL_SKIP=1 in 7etc7environment or so
+[17:57] <ogra_> then f-k becomes a no-op
+[17:57] <ogra_> or at least it should, if you find a place where it doesnt thats a bug
+[17:57] <ogra_> */etc/environment
+[17:57] <Tassadar> LisaNori: you probably won't be able to boot into android now
+[17:58] <Tassadar> try to do "apt-get purge flash-kernel" and before you confirm it, tell me what packages will it remove
+[18:01] <Tassadar> or, better yet, "dpkg --remove flash-kernel" should remove only that package
+[18:02] <Tassadar> ogra_: is that right?
+[18:04] <LisaNori> Here's the output from "apt-get purge flash-kernel":
+[18:04] <LisaNori> Reading package lists... Done
+[18:04] <LisaNori> Building dependency tree
+[18:04] <LisaNori> Reading state information... Done
+[18:04] <LisaNori> The following packages were automatically installed and are no longer required:
+[18:04] <LisaNori>   abootimg apt-clone archdetect-deb dmraid dpkg-repack gir1.2-json-1.0
+[18:04] <LisaNori>   gir1.2-timezonemap-1.0 gir1.2-xkl-1.0 kpartx kpartx-boot libdebconfclient0
+[18:04] <LisaNori>   libdebian-installer4 libdevmapper-event1.02.1 libdmraid1.0.0.rc16 lvm2
+[18:04] <LisaNori>   os-prober python3-pyicu rdate thunderbird-locale-en thunderbird-locale-en-gb
+[18:04] <LisaNori>   thunderbird-locale-en-us uboot-envtools uboot-mkimage
+[18:04] <LisaNori> Use 'apt-get autoremove' to remove them.
+[18:04] <LisaNori> The following packages will be REMOVED:
+[18:04] <LisaNori>   flash-kernel*
+[18:04] <LisaNori> 0 upgraded, 0 newly installed, 1 to remove and 11 not upgraded.
+[18:04] <LisaNori> After this operation, 135 kB disk space will be freed.
+[18:04] <LisaNori> Do you want to continue [Y/n]? n
+[18:05] <Tassadar> yeah, you can proceed, just press y, it will remove only that package
+[18:07] <Tassadar> and then "echo "flash-kernel hold" | sudo dpkg --set-selections", to be sure it will never install again
+[18:07] <LisaNori> what is this accomplishing, exactly?
+[18:07] <Tassadar> flash-kernel flashes ubuntu kernel to main boot partition, replacing android
+[18:07] <Tassadar> you don't want that when dual-booting
+[18:07] <LisaNori> Yep, that makes sense.
+[18:08] <Tassadar> you will probably have to restore boot.img from backup or something, that apt-get install linux-nexus7 probably already flashed ubuntu's kernel :/
+[18:08] <LisaNori> Ok.  Done.
+[18:08] <LisaNori> I just finished shutting down linux and booting android just fine, then rebooted to linux.
+[18:09] <Tassadar> well...then it's all good, but if there was any update to that kernel, it would flash it
+[18:10] <Tassadar> ...and I have to fix the recovery not to remove linux-nexus7 package, and I don't have any idea why does it do that in the first place
+[18:11] <LisaNori> Just rebooted into android again just fine, so I guess everything's ok.  I tend to leave it running ubuntu most of the time though.  :)
+[18:13] <Tassadar> hmm
+[18:13] <Tassadar> you did not do "dist-upgrade", did you?
+[18:13] <Tassadar> like you were always doing "apt-get update; apt-get upgrade", right?
+[18:13] <LisaNori> no, I always go "apt-get update ; apt-get upgrade".
+[18:14] <Tassadar> I think that linux-nexus7 was there, but normal upgrade did not update it because it would require installing new packages
+[18:14] <Tassadar> at least dpkg.log says so
+[18:15] <Tassadar> anyway, I should entirely disable that package when installing ubuntu, we _really_ don't want it
+[18:16] <Tassadar> I mean flash-kernel
+[18:25] <ogra_> Tassadar, ah, yeah, that could be, you indeed always want to dist-upgrade
+[18:25] <ogra_> especially in development releases where dependencies can change around
+[18:25] <Tassadar> hm, the older kernel was not removed
+[18:26] <ogra_> nope
+[18:26] <ogra_> no ubuntu does that
+[18:26] <infinity> apt-get --purge autoremove
+[18:26] <infinity> But we keep two by default.
+[18:26] <Tassadar> at least initrd.img symlink is okay now
+[18:26] <ogra_> ogra@anubis:~$ ls -l /boot/vmlinuz-3.2.0-*|wc -l
+[18:26] <ogra_> 11
+[18:26] <ogra_> thats my x86 desktop
+[18:27] <Tassadar> dammit, just 10 on my debian)
+[18:27] <ogra_> but yeah, the autoremove would clean them up
+[18:28] <Tassadar> I'm just thinking of a way to choose correct initrd now)
+[18:28] <ogra_> except that i cant use it because it would remove packages i still want around
+[18:28] <ogra_> Tassadar, ?
+[18:28] <ogra_> it is always /boot/initrd.img
+[18:29] <ogra_> which is always a symlink to the latest
+[18:31] <Tassadar> yeah, problem is it was not, before this update initrd.img was some rubbish 23 bytes long file
+[18:31] <ogra_> why is that ?
+[18:31] <Tassadar> and I haven't realized that there can be more than one kernel, so I searched for "initrd-*"
+[18:31] <Tassadar> I dunno, you're the guy)
+[18:32] <Tassadar> it is like that in the image
+[18:32] <ogra_> well, indeed it is, the installer cares for creating a proper initrd that matches the HW diuring install
+[18:32] <Tassadar> the graphical part?
+[18:33] <ogra_> the part after it
+[18:33] <Tassadar> ooh, nice)
+[18:33] <Tassadar> then it's no problem and I can just use the symlink
+[18:33] <ogra_> the part that removes the installer (which you definitely dont want on an installed system)
+[18:33] <ogra_> in the end it runs update-initramfs
+[18:34] <ogra_> though note that there is an existing initrd already from the unpacking stage
+[18:34] <Tassadar> yeah...in the image there should always be just one initrd, right?
+[18:34] <ogra_> i'm not sure how all these steps behave if there isnt a file at all or a broken symlink or whatever is 23byte big there
+[18:35] <ogra_> since thats not a usecase that could happen in a normal install
+[18:36] <ogra_> anyway, i'll call it a day now
+[18:36]  * ogra_ is off 
+=== chihchun is now known as zz_chihchun
+[19:34] <ogra_> bug #1109197
+[19:34] <ubot2> Launchpad bug 1109197 in ac100-tarball-installer (Ubuntu) "fails to preserve mtimes" [Undecided,New] https://launchpad.net/bugs/1109197
+=== simon___ is now known as sim590
+[19:55] <sim590> anyone knows how to disable touchpad on the tf101? I've tried "xinput --set-prop "Virtual core XTEST pointer" "Device Enabled" 0" but it doesn't work.. It even made X crash.. :(
+[20:07] <sim590> I got it! you can turn off gondor's alarm fire lights!
+=== Noskcaj is now known as Noskcaj_afk
+[21:54] <nils__> today I installed ubuntu on my nexus7. later i managed to set up everything to compile the kernel but I miss some information how to install the kernel image.
+[21:55] <xnox> it's funny. somehow one should generate boot.img and then you can flash it with fastboot
+[21:55] <xnox> checkout scripts in the ubuntu-nexus7 project branches.
+[21:55] <XorA> sudo apt-get install abootimg (or something like that)
+[21:55] <xnox> unless there is userspace way to do it.
+[21:55] <xnox> XorA: ah, didn't know that abootimg works on nexus7.
+[21:55] <XorA> xnox: biit.img is AFAIk a standard format
+[21:56] <XorA> boot.img
+[21:56]  * XorA does not have nexus 7 to break
+[21:56] <xnox> XorA: ah, ok. Cause like on panda & ac100 there is flashkernel as well which can update kernel in the correct partitions while running ubuntu on device. Such that one doesn't need to use external machine / boot into flashing mode.
+[21:57] <XorA> although I do remember the Android SDK version having some extra options which were essential for booting some boards
+[21:57] <nils__> i have seen abootimg. it somhow packs together the kernel with some other files.
+[21:57] <infinity> flash-kernel works perfectly fine on the nexus7 too.
+[21:57] <nils__> can i simply take the other files from the existing img?
+[21:57] <infinity> (It does, indeed, leverage abootimg along the way)
+[21:58] <infinity> If you're building your kernels via the ubuntu kernel source and, thus, making shiny .deb packages, just installing the package will take care of the rest.
+[21:58] <ogra_> if you use the ubuntu kernel source package, just install the package the buiuld produces with dpkg -i
+[21:59] <ogra_> *snap*
+[21:59] <ogra_> :)
+[21:59] <infinity> If you're doing the whole mess by hand, you'll want to generate an initramf, then run flash-kernel against your version.
+[21:59] <infinity> s/initramf/initramfs/
+[21:59] <ogra_> not even i do that by hand
+[22:00]  * ogra_ uses dpkg -i and then dd's /dev/mmcblk0p2 to an img file
+[22:00] <ogra_> all steps inbetween are automatic that way
+[22:01] <nils__> i wanted to try out if i can make usbnet work. would be fine if i could use usb to transfer files to the nexus7
+[22:02] <ogra_> you surely can, but will have to disable the g_serial setup then
+[22:02] <ogra_> (including the upstart job that runs getty on the werial line)
+[22:02] <ogra_> *serial
+[22:03] <ogra_> by default the usb port is set up as usb serial console
+[22:03] <nils__> if i can have usbnet i should be able to use ssh and dont need the serial any more
+[22:03] <ogra_> well, true indeed
+[22:04] <ogra_> dont you have a wlan ?
+[22:05] <nils__> yes till now i connected via wlan. it worked but i had to use an additional old fritzbox due to lack of any other wlan devices
+[22:05] <ogra_> ah, yeah, thats bad
+[22:06] <nils__> i thought usb is a neater solution. i was wondering why i hadnt found anything regarding usbnet on nexus7 yet
+[22:08] <ogra_> well, while usb is a neater solution, the kernel recieves regular fixes so you likelz have to recompile a lot if you want to keep track
+[22:08] <scientes> nils__, there is an android package for reverse teathering over usb
+[22:09] <nils__> any idea where the right place for further details about hacking nexus7 is - maybe except of this chat.
+[22:09] <nils__> scientes but i am running ubuntu
+[22:09] <scientes> yeah i relize that now
+[22:09] <ogra_> well, here and in #ubuntu-devel and #ubuntu-desktop i'd say
+[22:10] <nils__> thanks for your thoughts. much appreciated.
+[22:10] <ogra_> nils__, i was pondering to actually try the g_composite driver instead of g_serial but havent gotten around to test it yet
+[22:11] <ogra_> composite should actually be able to provide both
+[22:12] <Tassadar> s
+[22:13] <nils__> thanks ogra, I will try to install my kernel tomorrow. actually  just at the beginning. great device. my first mobile gadget with linux.
+[22:13] <ogra_> :)
+[22:16] <XorA> nils__: its a bit fancier than my first mobile linux device :_D
+[22:17] <ogra_> haha, yeah
+[22:18] <ogra_> when i had my first B/W ipaq the nexus7 would have been a supercomputer
+[22:18] <ogra_> or at least a very powerful server
+[22:20] <nils__> ogra, I see you also blog about the Nexus7 status.
+[22:21] <ogra_> well, only the meeting announcements but yeah
+[22:21] <ogra_> others definitely have blogged more and more intresting stuff :)
+[22:22] <nils__> so there's another source where I can gather some infos.
+[22:22] <nils__> nice. thanks a lot. cheers.
+[22:23] <ogra_> most of the blogs that are related to ubuntu on the nexus7 are aggregated on planet.ubuntu.com
+[22:26]  * XorA should stick OZ on nexus for old times sake!
+[22:26] <ogra_> it should fly
+[22:26] <XorA> be interesting compared to plasma desktop
+[22:26] <ogra_> heh
+[22:26] <ogra_> or unity
+[22:27] <XorA> GPE -> Unity and Opie -> Modern QT :-D
+[22:27] <ogra_> heh
+[22:28] <XorA> thats the approx equivs
+[22:28] <ogra_> i actually like unity ... just has to go on a little diet
+[22:28]  * XorA is not a fan
+[22:28] <ogra_> (which it currently is in the middle of)
+=== yofel_ is now known as yofel

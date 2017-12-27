@@ -1,0 +1,276 @@
+=== dfc is now known as Guest82651
+[05:05] <jam> hey wallyworld_, how's it going?
+[05:05] <wallyworld_> g'day
+[05:05] <wallyworld_> ell thanks
+[05:05] <wallyworld_> well
+[05:05] <jam> wallyworld_: any reviews, etc, I can help you out with?
+[05:05] <jam> (My review email box sometimes has 400 things in it from just a couple days. Unforunately, I'm in too many groups on LP :)
+[05:06] <wallyworld_> i've landed everything, am working on some stuff. i'd be happy to fill you in via mumble since i will not be at the meeting
+[05:06] <jam> wallyworld_: sure
+[10:08] <rogpeppe> if anyone has some space to look at this, a review would be very much appreciated: https://codereview.appspot.com/7178044/
+[10:32] <dimitern> what's the idea with panicWrite() -> writeCertAndKey called unexpectedly in the bootstrap tests?
+[10:32] <dimitern> it seems it'll fail always in the normal case
+[10:34] <dimitern> rogpeppe: can you help here? ^^
+[10:35] <rogpeppe> dimitern: hmm, i haven't seen that. looking.
+[10:35] <dimitern> rogpeppe: so there's that callback in environs.Bootstrap(Env, uploadTools, writeCertAndKey())
+[10:36] <dimitern> rogpeppe: which in the tests is always panicWrite instead
+[10:36] <rogpeppe> dimitern: yeah. that will only happen if the environment config doesn't have a CA cert and key
+[10:36] <rogpeppe> dimitern: so if that's happening in the openstack tests, i'd guess you've got a config without those in
+[10:36] <dimitern> rogpeppe: so for the tests what I'm supposed to do - remove the ca/key from ~/.juju ?
+[10:37] <rogpeppe> dimitern: no, pass the testing CA cert and key in the env config
+[10:37] <dimitern> rogpeppe: missing? ahaa ok
+[10:37] <rogpeppe> dimitern: i *think* that's right. give me a few moments to check.
+[10:38] <rogpeppe> dimitern: yeah, that seems about right.
+[10:38] <rogpeppe> dimitern: grep for CACert in environs/ec2/*.go
+[10:39] <dimitern> rogpeppe: I saw it - authorized-keys as well perhaps?
+[10:39] <rogpeppe> dimitern: maybe
+[10:40] <rogpeppe> dimitern: not for live tests
+[10:40] <rogpeppe> dimitern: you actually want it to use the authorized keys from your home directory for live tests, so you can ssh to the started instances
+[10:41] <dimitern> rogpeppe: I see, ok - now I added these conf keys and it passed
+[10:41] <rogpeppe> dimitern: cool
+[10:54] <aram> hi.
+[10:56] <rogpeppe> aram: hiya
+[11:00] <dimitern> aram: hey
+[11:01] <dimitern> rogpeppe: so after the bootstrap is done, we're trying to open the state and connect to the bootstrap machine - how is this simulated in the local live tests?
+[11:15] <dimitern> and why is mongo on my machine defaulting to 27017 and juju expects it to be at :37017 ?
+[11:16] <rogpeppe> dimitern: we don't simulate that in the local live tests AFAIR
+[11:17] <rogpeppe> dimitern: we decided that trying to simulate the cloud-init stuff was going too far
+[11:17] <dimitern> rogpeppe: but I can see things like: [LOG] 18.27607 JUJU environs/openstack: started instance "8cd71439-c5f6-47bd-94e1-f7693d47f11a"
+[11:17] <dimitern> opening connection
+[11:17] <dimitern> [LOG] 23.11676 JUJU environs/openstack: waiting for DNS name(s) of state server instances [8cd71439-c5f6-47bd-94e1-f7693d47f11a]
+[11:17] <dimitern> [LOG] 23.11794 JUJU state: opening state; mongo addresses: ["localhost:27017"]; entity ""
+[11:17] <dimitern> [LOG] 23.11974 JUJU state: connecting to 127.0.0.1:27017
+[11:18] <rogpeppe> dimitern: does the connection succeed?
+[11:18] <dimitern> I changed 37017 to 27017 to match my running mongo and StateInfo to return localhost
+[11:18] <dimitern> no
+[11:18] <dimitern> I'm lost.. what has to happen at this step in BootstrapAndDeploy ?
+[11:18] <dimitern> it's still a test (live, if local)
+[11:19] <rogpeppe> dimitern: if you look at the ec2 live tests, you'll find that LiveTests.CanOpenState is false for the local "live" tests
+[11:19] <dimitern> rogpeppe: got you! right this should work then :)
+[11:19] <rogpeppe> dimitern: and BootstrapAndDeploy looks at CanOpenState to see if it can connect to the state
+[11:19] <rogpeppe> dimitern: BootstrapAndDeploy can't work unless the relevant agents are started too
+[11:20] <dimitern> rogpeppe: so it's only a truly live test then?
+[11:20] <rogpeppe> dimitern: which we don't do in the local tests - we test them independently
+[11:20] <rogpeppe> dimitern: yes
+[11:20] <rogpeppe> dimitern: although it does test some stuff, i guess
+[11:20] <dimitern> rogpeppe: I see
+[11:21] <rogpeppe> dimitern: (in the local case)
+[11:21] <dimitern> rogpeppe: and HasProvisioner = false as well for local tests?
+[11:22] <rogpeppe> dimitern: yeah
+[11:22] <rogpeppe> dimitern: i did once suggest that we could have the local tests start the agents too, but it was considered not worth it.
+[11:26] <jam> dimitern: I'm pretty sure Mongo gets set up directly by the test infrastructure. Which is why it isn't on the port you expected.
+[11:26] <dimitern> jam: it seems something like that, anyway I'm skipping these now
+[11:27] <jam> dimitern: cloudinit_test.go spawns it with "--port 37017"
+[11:27] <dimitern> jam: yeah, I saw this
+[11:27] <dimitern> jam: but was still confusing at first
+[11:27] <niemeyer> Good morning
+[11:28] <dimitern> niemeyer: morning
+[11:29] <dimitern> jam: shall we start?
+[11:29] <jam> dimitern: I'm on
+[11:29] <jam> mgz: poke
+[11:29] <jam> wallyworld won't be making it, movie night
+[11:39] <mgz> dimitern: the other part (talking to the metadata service) is in juju.unit.address.OpenStackUnitAddress
+[11:57] <dimitern> finally, openstack bootstrap - https://codereview.appspot.com/7181046/
+[11:59] <rogpeppe> niemeyer: hiya
+[12:02] <niemeyer> rogpeppe: Just finished a pass on https://codereview.appspot.com/7178044/
+[12:02] <rogpeppe> niemeyer: thanks
+[12:09] <rogpeppe> niemeyer: i'm not entirely sure of the best approach to the two-error thing
+[12:09] <rogpeppe> niemeyer: if we get ErrDead and some other error, which error should we act on?
+[12:10] <rogpeppe> niemeyer: and which error should we return from Run?
+[12:11] <niemeyer> rogpeppe: Both are good questions.. "whatever" is probably not the right answer. :-)
+[12:11] <niemeyer> rogpeppe: I'll step out to grab some coffee and ponder meanwhile
+[12:11] <rogpeppe> niemeyer: runTasks returns the first error and logs the others
+[12:11] <rogpeppe> niemeyer: ok
+[12:11] <niemeyer> rogpeppe: Think about how both are handled meanwhile
+[12:11] <niemeyer> rogpeppe: So we can talk
+[12:34] <niemeyer> rogpeppe: SO, how do we handle ErrDead vs. other errors?
+[12:35] <rogpeppe> niemeyer: i think we could make an importance hierarchy of errors, perhaps
+[12:35] <rogpeppe> niemeyer: ErrDead > UpgradedError > * > nil
+[12:35] <niemeyer> rogpeppe: How do we handle ErrDead vs. other errors today in that context?
+[12:35] <rogpeppe> niemeyer: we just choose the first one, except that UpgradedError gets priority
+[12:36] <niemeyer> rogpeppe: You mean we never compare an error to ErrDead?
+[12:36] <niemeyer> rogpeppe: Why do we even have it?
+[12:36] <rogpeppe> niemeyer: we do, in order to return nil from Run if the error is ErrDead
+[12:37] <rogpeppe> niemeyer: because if the entity has died, we just exit normally
+[12:37] <niemeyer> rogpeppe: Yes, and that means we actually exit from the process
+[12:37] <rogpeppe> niemeyer: and in that case, we probably don't care if someone wants to upgrade us, or other errors.
+[12:37] <rogpeppe> niemeyer: yup
+[12:38] <niemeyer> rogpeppe: I think we do care we've seen an error, to log it if nothing else.. but indeed ErrDead should not be dropped silently
+[12:38] <rogpeppe> niemeyer: i've been toying with the idea of letting the tomb package have some sort of control over error precedence, rather than just discarding later erorrs
+[12:39] <rogpeppe> niemeyer: for instance, one might give it an error-precedence comparison function.
+[12:39] <niemeyer> rogpeppe: Seems like unnecessary complexity
+[12:39] <rogpeppe> niemeyer: you're probably right
+[12:39] <niemeyer> rogpeppe: Let's just solve the problem at hand
+[12:40] <rogpeppe> niemeyer: there are two places we'd want to solve it in: runTasks and the machine agent top level. both are really a similar thing.
+[12:42] <rogpeppe> niemeyer: and there's also the issue of the "configuration does not have state server cert/key" fatal error.
+[12:43] <rogpeppe> niemeyer: i wonder if we could define func IsFatal(err error) bool
+[12:43] <rogpeppe> niemeyer: then we  wouldn't have to kill the tomb in the above place
+[12:44] <rogpeppe> niemeyer: which means we don't run the risk of squashing those errors.
+[12:44] <niemeyer> rogpeppe: Isn't that unrelated to the actual problem?
+[12:44] <niemeyer> rogpeppe: ErrDead must not be dropped silently.. there are two possible errors, and one of them is being dropped silently. That sounds rather easy.
+[12:45] <rogpeppe> niemeyer: actually there are n possible errors, one for each task (if you look at runTasks)
+[12:45] <rogpeppe> niemeyer: we don't want to drop UpgradedError either
+[12:46] <niemeyer> rogpeppe: I'm talking about that loop
+[12:46] <niemeyer> rogpeppe: There are only two possible errors there
+[12:46] <rogpeppe> niemeyer: the loop in MachineAgent.Run ?
+[12:46] <niemeyer> rogpeppe: The one where the review comment was made
+[12:49] <rogpeppe> niemeyer: it's possible that we can drop ErrDead silently in runTasks too
+[12:49] <rogpeppe> niemeyer: but maybe we don't care that much.
+[12:50] <niemeyer> rogpeppe: There's already logic there to pick a proper error
+[12:50] <niemeyer> rogpeppe: If it's broken, it should be fixed
+[12:50] <niemeyer> rogpeppe: If it isn't..
+[12:50] <rogpeppe> niemeyer: it just chooses the first error (unless something returned an UpgradedError)
+[12:51] <rogpeppe> niemeyer: tbh dropping ErrDead in favour of UpgradedError isn't a problem
+[12:51] <rogpeppe> niemeyer: it'll just mean it'll restart only to die with ErrDead
+[12:52] <niemeyer> rogpeppe: It's also cheap to do it right, but that's really unrelated to the problem at hand
+[12:52] <rogpeppe> niemeyer: the loop in MachineAgent.Run is the moral equivalent of the loop in runTasks IMHO - both loops are multiplexing more than one task and returning the result
+[12:53] <rogpeppe> niemeyer: which is why i'm thinking about both of them here
+[12:53] <niemeyer> rogpeppe: Sure, whatever works
+[12:54] <rogpeppe> niemeyer: i think i know a decent way to solve the problem.
+[12:55] <rogpeppe> niemeyer: it's kinda funny that we'll end up ignoring the tomb.Err() value, but i think we've gone beyond its capabilities here.
+[12:56] <niemeyer> rogpeppe: tomb.Err should be whatever error took precedence
+[12:56] <rogpeppe> niemeyer: tomb.Err is always going to be the first error that happened to kill the tomb
+[12:56] <niemeyer> rogpeppe: Sure, and that's great
+[12:57] <rogpeppe> niemeyer: that's not necessarily the error we're going to use though
+[12:57] <niemeyer> rogpeppe: If it was killed ahead of time
+[12:57] <niemeyer> rogpeppe: All errors are used
+[12:57] <niemeyer> rogpeppe: Some of them are logged, others returned
+[12:59] <rogpeppe> niemeyer: sure. tomb.Err won't be the error that took precedence though.
+[12:59] <niemeyer> rogpeppe: Yes, nevermind.. I think we both understand the context
+[13:00] <rogpeppe> niemeyer: yeah.
+[13:01] <dimitern> are we having the weekly meeting?
+[13:01] <dimitern> it seems no one but me is there.. at least using the link in the calendar
+[13:01] <rogpeppe> dimitern: i guess so.
+[13:01] <rogpeppe> dimitern: i'll join now
+[13:02] <aram> what is the url?
+[13:02] <rogpeppe> aram: https://plus.google.com/hangouts/_/33acfc2c8af8792568274fa110371db956f9fde7
+[13:02] <aram> thanks
+[13:03] <rogpeppe> niemeyer: meeting?
+[13:04] <niemeyer> Yep, let's do it
+[13:14] <rogpeppe> mramm: meeting?
+[13:14] <aram> mramm: https://plus.google.com/hangouts/_/33acfc2c8af8792568274fa110371db956f9fde7
+[14:44] <rogpeppe> niemeyer: PTAL https://codereview.appspot.com/7178044/
+[14:44]  * rogpeppe goes for some lunch
+[14:50] <niemeyer> rogpeppe: LGTM
+[14:50] <niemeyer> rogpeppe: Thanks for the changes
+=== slank_away is now known as slank
+[14:57] <rogpeppe> niemeyer: cool, thanks for the prompt review
+[15:25] <rogpeppe> niemeyer: ping
+[15:44] <niemeyer> rogpeppe: Hey
+[15:44] <rogpeppe> niemeyer: i just wanted to run an idea past you
+[15:44] <niemeyer> rogpeppe: Of course
+[15:46] <rogpeppe> niemeyer: i find myself replacing state.Info with a pair of (state.Info, api.Info) everywhere, and i'm wondering if it would be bad to just add a state.Info member to api.Info, to be removed when we can use the API on its own.
+[15:46] <niemeyer> rogpeppe: I think we covered that before
+[15:46] <rogpeppe> niemeyer: that was the connection itself
+[15:46] <rogpeppe> niemeyer: this is just the info, which i think is more reasonable
+[15:47] <rogpeppe> niemeyer: as it's got no methods, and i wouldn't embed it
+[15:47] <niemeyer> rogpeppe: I think the reasoning is the same
+[15:48] <rogpeppe> niemeyer: could you remind me of the reason this is a bad idea
+[15:48] <rogpeppe> ?
+[15:51] <niemeyer> rogpeppe: Sure: http://pastebin.ubuntu.com/1559918/
+[15:52] <rogpeppe> niemeyer: i think there's a significant difference between Info and State here.
+[15:52] <niemeyer> rogpeppe: The idea is exactly the same
+[15:52] <rogpeppe> niemeyer: we're going to need the state.Info around until the very last remnant goes
+[15:52] <rogpeppe> niemeyer: because it's used in setting up the thing that everything talks to
+[15:52] <niemeyer> rogpeppe: Disagree.. you only need it in places where the API doesn't cover
+[15:53] <rogpeppe> niemeyer: you need it in the top-level places where the state is connected to - in juju.Conn and at the top level in jujud. those places are used by everything.
+[15:54] <rogpeppe> niemeyer: so as long as there's something using it, you'll still need it, AFAICS
+[15:54] <niemeyer> rogpeppe: The top level in jujud is "used by everything"?
+[15:55] <rogpeppe> niemeyer: the top level in jujud creates a *state.Info, which is then passed to all the tasks.
+[15:55] <rogpeppe> oops
+[15:55] <rogpeppe> creates a *state.State, of course
+[15:55] <rogpeppe> niemeyer: as long as we have one task that needs a *state.State, we'll need the *state.Info.
+[15:56] <niemeyer> rogpeppe: That's totally fine?
+[15:56] <rogpeppe> niemeyer: but at that point we could just remove the StateInfo field from api.Info
+[15:56] <rogpeppe> niemeyer: with considerably less disruption to the APIs
+[15:56] <niemeyer> rogpeppe: That will mean that every single entity in the system that has a StateInfo will have the api.Info, even if it doesn't care about it
+[15:56] <rogpeppe> niemeyer: no
+[15:56] <niemeyer> rogpeppe: It's exactly the same motivation described before
+[15:57] <niemeyer> Dec 12 09:55:31 <niemeyer>	rogpeppe: It's pretty much impossible to tell if things you're passing apiState in actually are ported or not, without investigating all calls
+[15:57] <niemeyer> Dec 12 09:56:09 <niemeyer>	rogpeppe: In general, when something is ported we can actually *port* it
+[15:57] <rogpeppe> niemeyer: every single entity in the system that has a api.Info will have state.Info
+[15:57] <rogpeppe> niemeyer: but not vice versa
+[15:58] <niemeyer> rogpeppe: Sorry, my opinion is the same.. if you want to talk to William and get agreement on something else, please feel free to move on with it
+[15:58] <niemeyer> rogpeppe: I would just be explicit myself
+[15:58] <rogpeppe> niemeyer: ok, fair enough.
+[15:58] <rogpeppe> niemeyer: in which case, does the following change to Environ make sense to you? http://paste.ubuntu.com/1559933/
+[16:00] <rogpeppe> niemeyer: i was considering having two entry points, StateInfo and APIInfo, but they duplicate almost all of their work.
+[16:00] <rogpeppe> niemeyer: and we'll only want one eventually
+[16:00] <niemeyer> rogpeppe: It is kind of weird.. but that method always was
+[16:00] <rogpeppe> niemeyer: StartInstance?
+[16:00] <niemeyer> rogpeppe: I think eventually it should be returning something environ-specific
+[16:00] <niemeyer> rogpeppe: StateInfo
+[16:01] <rogpeppe> niemeyer: then the environ would connect to the state?
+[16:01] <niemeyer> rogpeppe: Same thing about StartInstance
+[16:01] <niemeyer> rogpeppe: But I think this change looks fine for the moment, yeah
+[16:02] <niemeyer> rogpeppe: Those other things are things to think in the future
+[16:02] <niemeyer> rogpeppe: Why does it need both, btw?
+[16:03] <rogpeppe> niemeyer: how else does a new instance know how to connect to the API?
+[16:03] <niemeyer> rogpeppe: Supposedly there's a lot of duplication in them.. what's the information that is unique to each?
+[16:03] <rogpeppe> niemeyer: the port
+[16:04] <rogpeppe> niemeyer: and, currently, api.Info holds a single address, not a list
+[16:04] <niemeyer> rogpeppe: Hmm.. any particular reason?
+[16:05] <rogpeppe> niemeyer: just that it was easy to get going, and i'm not quite sure how we'll make use of an address list as an API client.
+[16:05] <rogpeppe> niemeyer: perhaps just choose one at random
+[16:06] <niemeyer> rogpeppe: I'm not sure either, but it's quite clear that this will happen
+[16:06] <rogpeppe> niemeyer: but given that nothing has more than one address currently, it seems a bit like overkill
+[16:06] <niemeyer> rogpeppe: Yes, probably random
+[16:06] <rogpeppe> niemeyer: it'll be easy enough to change when HA comes in
+[16:06] <niemeyer> rogpeppe: I'd not do thta
+[16:06] <niemeyer> rogpeppe: It's easy to overlook it
+[16:07] <niemeyer> rogpeppe: For example, the data file in Amazon holds a list
+[16:07] <niemeyer> rogpeppe: In S3, that is
+[16:07] <niemeyer> rogpeppe: Changing to multiple addresses is just a matter of adding more of them, and that won't break previous clients
+[16:07] <rogpeppe> niemeyer: i'd never intended to change that, just the Addr field in api.Info
+[16:08] <niemeyer> rogpeppe: My point is that it's easy to overlook stuff up if you hide the fact this is *intended* to be a list
+[16:08] <rogpeppe> niemeyer: but if you think it should be changed now, i'll do that
+[16:09] <niemeyer> rogpeppe: Using the single item in a list is easy.. backporting data files and making sure previous clients continue to work correctly when you provide a list isn't
+[16:15] <niemeyer> I'm going to step out to take Otávio to his ear check-up
+[16:15] <niemeyer> Back in a bit
+[16:26] <hazmat> niemeyer, ping
+[17:33]  * niemeyer is back
+[17:44] <rogpeppe> niemeyer: i'm presuming the same reasoning applies to juju.Conn too, so i'm making juju.APIConn which is the same as juju.Conn but holds api.State
+[17:44] <niemeyer> rogpeppe: Uh?
+[17:45] <rogpeppe> niemeyer: the alternative is to have juju.Conn hold both *state.State and *api.State
+[17:45] <niemeyer> rogpeppe: I didn't imagine we'd be forking Conn
+[17:45] <rogpeppe> niemeyer: your reasoning applies there too, i think
+[17:45] <niemeyer> rogpeppe: I don't see how..
+[17:46] <niemeyer> rogpeppe: Conn is what we want to port..
+[17:46] <rogpeppe> niemeyer: if we're just passing around juju.Conn, with both connections in it, how can we know easily what's left to port?
+[17:47] <niemeyer> rogpeppe: Whatever uses juju.Conn will continue using juju.Conn
+[17:47] <rogpeppe> niemeyer: ok, what about things that use Conn.State directly?
+[17:47] <niemeyer> rogpeppe: Either return both, or add an APIState method
+[17:47] <rogpeppe> niemeyer: it's a field
+[17:47] <niemeyer> rogpeppe: The latter is probably better
+[17:48] <niemeyer> rogpeppe: Sure, whatever
+[17:49] <rogpeppe> niemeyer: i actually started doing it that way, but thought you'd prefer it separate. and actually, the code *is* quite a bit cleaner when it's kept separate.
+[17:50] <niemeyer> rogpeppe: and then duplicate all the methods of Conn, and all the tests?
+[17:50] <rogpeppe> niemeyer: each method of Conn will need to be ported individually
+[17:50] <bigjools> has go got an x509 library?
+[17:50] <rogpeppe> niemeyer: because most of them have state-related types in the signatures
+[17:50] <niemeyer> rogpeppe: Yes, and it can be ported on the same Conn
+[17:51] <niemeyer> bigjools: Yep
+[17:51] <bigjools> cool, ta
+[17:51] <niemeyer> bigjools: In the standard library.. have a look under crypto
+[17:51] <bigjools> sounds good, ta
+[17:51] <niemeyer> bigjools: http://golang.org/pkg/crypto/
+[17:52] <rogpeppe> bigjools: we do a fair amount of x509 hackery in juju-core - grep for x509
+[17:52] <niemeyer> rogpeppe: Still.. the idea is being able to port one at a time
+[17:52] <niemeyer> rogpeppe: But, I really don't mind too much, to be honest..
+[17:52] <bigjools> ya, we need to use it for Azure
+[17:52] <niemeyer> rogpeppe: It feels like a lot of work to be introducing a second juju.Conn and duplicating all the tests and porting all the client sites
+[17:52] <niemeyer> rogpeppe: If you feel like that's easier..
+[17:53] <rogpeppe> niemeyer: i think it may be
+[17:54] <rogpeppe> niemeyer: i'll see how it goes.
+[17:54] <rogpeppe> niemeyer: currently it certainly seems cleaner than interleaving the code,  but i may well change my mind!
+[17:54] <niemeyer> rogpeppe: If there are two methods, you'll be unable to port one of them at a time, for example..
+[17:55] <niemeyer> rogpeppe: But you have better context than I do, so go for it
+[17:55] <rogpeppe> niemeyer: it would be awkward the other way around too - e.g. AddService returns *state.Service, which AddUnits expects as an argument
+[17:56] <niemeyer> rogpeppe: Yeah, and maybe the API is not that big anyway
+[17:57] <rogpeppe> niemeyer: i think so. we'll see
+[17:57] <rogpeppe> niemeyer: i've gotta go now. good progress made today, BTW.
+[17:57] <rogpeppe> g'night all
+[17:59] <niemeyer> rogpeppe: Great to hear!
+[17:59] <niemeyer> rogpeppe: It looks like things are progressing very well indeed
+[17:59] <niemeyer> rogpeppe: Have a good evening there
+[20:28] <bigjools> What are the requirements of provider storage now?  What needs to be stored and what key is used to access it?

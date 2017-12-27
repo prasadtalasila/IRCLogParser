@@ -1,0 +1,133 @@
+=== Makyo is now known as Makyo|out
+=== frankban_ is now known as frankban
+=== gary_poster|away is now known as gary_poster
+[13:37] <gary_poster> morning all.  bcsaller and Makyo|out, I'd like to hear about the status of bug 1099921 sometime today.  no rush though.
+[13:37] <_mup_> Bug #1099921: Dragging services fails intermittently <juju-gui:Triaged> < https://launchpad.net/bugs/1099921 >
+[13:58] <bac> hi bcsaller
+[14:12] <bcsaller> bac: hi
+[14:26] <gary_poster> bac, benji is prototyping "Test needed for work-around on building relations."  Is that the thing you said you had done as an aside?
+[14:27] <bac> gary_poster: yeah
+[14:27] <benji> oh
+[14:27] <benji> I'll... put the card back then, and assign it to you, bac
+[14:27] <gary_poster> sorry benji.  that was a product of bac being sick, I think
+[14:27] <gary_poster> and out of that loop
+[14:35] <gary_poster> benji, I suck, but I think that one should wait for goodspud to be around
+[14:36] <gary_poster> benji, call in 2?
+[14:36] <benji> gary_poster: sure
+[14:45]  * benji suspects gary_poster is traveling close to the speed of light.
+[14:45] <gary_poster> :-P sorry
+[15:01] <Makyo|out> Compiz bugging out, in for real in a moment.
+[15:01]  * teknico will be back in half an hour, please start the call without waiting for him, he'll be there shortly
+[15:29] <gary_poster> bac bcsaller benji frankban hazmat Makyo teknico call in 2
+[15:29] <gary_poster> make that 1
+[15:31] <gary_poster> bac hazmat starting
+[15:33] <hazmat> network problems.. trying
+[15:57] <teknico> benji, deRailing people sounds like a pretty cool thing to do, as long as you Djangoize them at the same time :-)
+[15:57] <benji> heh
+[15:57] <Makyo> Is there another PS sprint along with UDS in April/May?
+[15:57] <benji> that sounds like a good name for a blog run by a former Rails guy trying to convert people to Django
+[16:31] <gary_poster> Makyo, yes, that is my expectation
+[16:32] <gary_poster> Makyo, Oakland this year, if you didn't see
+[16:32] <Makyo> gary_poster, cool, thanks.
+[16:32] <gary_poster> welcome
+[16:32] <Makyo> gary_poster, Yeah, I saw.  Oakland, at the Bella Sky Convention Center, Denmark, last I checked :)
+[16:32] <gary_poster> lol
+[16:40] <bcsaller> on a hunch I tested it and I think CSS transitions are working again, the incremental redraw stuff seems to have fixed that. 
+[16:40] <gary_poster> cool!
+[16:41] <bcsaller> someone else would have to verify, I think its running to quickly on chrome, but I *think* its working. I don't see any bad visual artifacts now
+[16:52]  * gary_poster runs to lunch for a bit
+[16:57] <gary_poster> hazmat we do have bug 1104098 on the board as the only single high bug.  I think that is what you are talking about for "enable serving up gui and websocket on same port."  I guess we could treat the bug as the more long term solution that would work for pyjuju and gojuju, like what Francesco investigated...
+[16:57] <_mup_> Bug #1104098: secure GUI on Firefox with self-signed cert requires second, hidden cert acceptance <juju-gui:Triaged> < https://launchpad.net/bugs/1104098 >
+[17:00] <hazmat> gary_poster, it is the same, though the branch in review doesn't do the charm work to enable usage of that. i'm more comfortable given that we're released/announced if we can get an interim fix in. the long term solution also needs vetting on ssl inbound <- proxy -> ssl outbound .. currently francesco suggest ssl needs to be disabled on outbound which invalidates that solution
+[17:00] <gary_poster> ssl outbound from juju you mean
+[17:00] <gary_poster> invalidates it because of go only?
+[17:00] <hazmat> gary_poster, ssl outbound to juju from the proxy
+[17:00] <hazmat> gary_poster, yes
+[17:01] <hazmat> gary_poster, but only because we control the endpoint in the gui on pyjuju
+[17:01] <hazmat> if the endpoint we're part of the state server, in pyjuju the same issue applies
+[17:01] <hazmat> i'm hopeful further experimentation with haproxy can resolve..
+[17:02] <gary_poster> hazmat, if not, do you feel that it would be a reasonable argument to have a non-exposable Juju API-only port
+[17:02] <gary_poster> ?
+[17:02] <gary_poster> in go
+[17:02] <hazmat> but again i'd like to get a fix in place given that we've started directing users to the gui.. that can be haproxy, but then we need to priortize assessing the haproxy as a long term solution
+[17:02] <gary_poster> right
+[17:03] <gary_poster> haproxy can be part of the go bits
+[17:03] <gary_poster> go work
+[17:03] <gary_poster> and when we do that
+[17:03] <gary_poster> we can switch to using that everywhere
+[17:04] <gary_poster> improv on charm ("staging" mode) will still be broken for Firefox with the current fix, right hazmat?
+[17:04] <gary_poster> as broken as it is now I mean
+[17:04] <hazmat> gary_poster, i'm not comfortable with the non exposed port not using ssl, there are non tenant network isolation scenarios with maas/hardware that would effectively allow for attacks.. in cloud environments its reasonable okay though they'd have to guard against std password attacks etc on the port
+[17:04] <hazmat> gary_poster, no this should fix that to, improv will grown a cli option to point to gui-dir
+[17:05] <hazmat> gary_poster, i mean thats one option.. at the moment improv has no cli config..
+[17:05] <gary_poster> ack hazmat makes sense
+[17:06] <hazmat> er.. by cloud envs i mean ec2 non vpc, most other clouds do net tenant isolation
+[17:06] <gary_poster> ok, *now* I'm going to lunch :-P
+[17:06] <hazmat> gary_poster, :-)
+[17:27] <frankban> hazmat, gary_poster : I did some more investigation: it seems to be possible to forward encrypted data on outgoing connections (api agent). this can solve the problem of having an insecure connection to localhost. 
+[17:27] <hazmat> frankban, awesome
+[17:28] <hazmat> well its not localhost in the general case  but that's cool
+[17:28] <frankban> hazmat: in the long term, will we need to use different certs for browser -> haproxy and haproxy -> gojuju?
+[17:28] <hazmat> frankban, probably
+[17:28] <hazmat> frankban, almost definitely
+[17:29] <hazmat> gojuju shouldn't be sharing its private api server cert with a service in the env
+[17:42] <bac> benji: could you look at my branch in review in order to de-red the lanes?  it simply adds the test we discussed
+[17:42] <benji> bac: sure
+[17:45] <benji> bac: Looks good.  I added a couple of comments.
+[17:46] <bac> thanks
+[17:47] <bac> benji: oops.  :)
+[17:47] <benji> heh
+[17:54] <frankban> hazmat: it seems to work also using two certs! https://ec2-184-73-51-76.compute-1.amazonaws.com/
+[17:56] <Makyo> Running into EMFILES with node watching files in make devel.  Helped to increase /proc/sys/fs/inotify/max_user_instances a little (though I suspect I've probably got other problems), in case that helps anyone else.
+[17:56] <hazmat> frankban, excellent, that's the preferred solution then
+[17:59] <frankban> hazmat: cool, however, does that link work for you (firefox)?
+[18:00] <hazmat> frankban, what's the password?
+[18:01] <frankban> hazmat: if you see the login screen, then it works
+[18:02] <hazmat> frankban, i do, cool
+[18:03] <frankban> hazmat: new configuration: http://pastebin.ubuntu.com/1586550/  adding this link to the card
+[18:04] <hazmat> frankban, do you mind if i reassign the card to you then
+[18:04] <hazmat> we don't need the static serving in rapi afaics with this
+[18:05] <frankban> hazmat: i mean bug 1104098
+[18:05] <_mup_> Bug #1104098: secure GUI on Firefox with self-signed cert requires second, hidden cert acceptance <juju-gui:Triaged> < https://launchpad.net/bugs/1104098 >
+[18:05] <hazmat> ah cool
+[18:06] <frankban> hazmat: I think we need further discussion on the path to follow, we still have haproxy unreleased.
+[18:07] <hazmat> frankban, good point.. okay i'll continue on with the rapi serving static. with the intent that this is the future
+[18:08] <hazmat> the beauty of charms is that its not a big deal, alhtough agreed a src dev-base/compile env is not ideal
+[18:09] <frankban> hazmat: yes, we could also add our nginx build to some ppa, maybe better
+[18:18] <gary_poster> +1 on PPA frankban, and awesome!  (worked for me on FF too)
+[18:24] <frankban> gary_poster: cool, EOD, have a nice evening
+[18:24] <gary_poster> you too frankban 
+[18:56] <gary_poster> bac, gave you second review
+[18:56] <gary_poster> (land as is or with trivial changes()
+[18:56] <bac> thx
+[19:24] <gary_poster> benji I approved sauce labs email to juju-gui fwiw so you can verify that account if you want
+[19:25] <benji> gary_poster: thanks
+[19:56] <gary_poster> guihelp, what do you see in https://launchpad.net/~juju-gui/+mailing-list-subscribers 
+[19:56] <gary_poster> just yourself, or a group of us?
+[19:56] <hazmat> gary_poster, i just see you
+[19:57] <gary_poster> :-(
+[19:57] <hazmat> gary_poster, we're not using that
+[19:57] <Makyo> Just you.
+[19:57] <hazmat> gary_poster, we're using mailman directly on lists.ubuntu.com
+[19:57] <gary_poster> right thanks hazmat
+[19:57] <hazmat> ie. the channel title
+[19:57] <hazmat> else it wouldn't really be a public list
+[19:57] <gary_poster> right
+[19:58] <hazmat> speaking of public lists.. that's where the saucelabs invite went out to
+[19:59] <hazmat> not sure that it matters, but we should update the contact info for that perhaps
+[19:59] <gary_poster> benji ^^
+[20:00] <benji> hazmat: I am prototyping using them for our browser tests, what would you like the contact address to be set to?
+[20:00] <hazmat> benji, private list since its a private resource
+[20:00] <benji> k
+[20:01] <hazmat> juju-gui-peeps would do the trix
+[20:04] <benji> making it so
+[20:06] <hazmat> thanks
+[20:10]  * bac preemptive dog walk.  bbiab.
+[20:43] <benji> gary_poster: if you have a second I would like to discuss the current and future of my saucelabs.com card
+[20:43] <gary_poster> benji on call.  will ping soon
+[20:44] <benji> k
+[21:06] <gary_poster> benji, I'm in juju-ui for you whenever you are ready.
+[21:06] <benji> k
+[21:49] <bac> Makyo: review done.
+[21:49] <Makyo> Thanks, bac
+[22:05]  * Makyo -> dogwalk

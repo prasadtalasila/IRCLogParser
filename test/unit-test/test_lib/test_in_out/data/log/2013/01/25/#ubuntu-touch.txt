@@ -1,0 +1,58 @@
+[12:18] <hweg162> hi
+[12:19] <hweg162> is there any successor for grail? i checked http://bitmath.org/code/grail/ and the download links are dead
+[12:23] <bregma> hweg162, there's https://launchpad.net/grail
+[12:24] <bregma> it's packaged and available in the last few Ubuntu releases
+[12:24] <hweg162> i know it's packaged. i just wondered if there is any development going on.
+[12:25] <bregma> it's fairly mature at this point
+[12:26] <hweg162> okay, i think i need to explain what i am doing :)
+[12:26] <bregma> I'm not aware of any active development, but I could be mistaken
+[12:26] <hweg162> i am testing multitouch capabilities on a samsung slate pc series 7
+[12:26] <hweg162> with both ubuntu 12.04 and 12.10
+[12:27] <hweg162> unity recognizes three finger gesture out of the box, giving the window move and resize handles
+[12:28] <hweg162> but four fingers aren't recognized
+[12:29] <bregma> you might want to verify the touch data coming from X (xinput -test-xi2) to make sure more than 3 touches are recognized
+[12:30] <hweg162> so i need a way to debug this. i installed mtview and ran it. in mtview only two fingers are handled correctly. if i touch the display with three fingers it looks like random coordinates are reported from the hardware/driver/lib/whatever
+[12:30] <bregma> sounds like a driver problem
+[12:30] <hweg162> kernel driver or Xorg driver or...
+[12:31] <bregma> mtview only talks to the kernel
+[12:31] <hweg162> oh you are right. it opens /dev/input/event*
+[12:32] <bregma> there are some newer tool in the evemu-tools package, let you capture data for later replay
+[12:32] <hweg162> btw, i don't know under which circumstances mtview manages to grab that device. sometimes it's "cannot grab device" and sometimes it just works. each time run as root in X.
+[12:33] <bregma> you're going to have trouble opening the device reliably while X is running
+[12:33] <bregma> it works best from a text console
+[12:33] <hweg162> but mtview needs X for displaying its window
+[12:34] <bregma> yeah, pretty nasty, that catch-22
+[12:34] <bregma> we haven't really used mtview since the XINPUT changes went in to the X server, grabbing the device
+[12:34] <bregma> that's what the evemu tools are for
+[12:35] <bregma> except they dump text data
+[12:35] <hweg162> okay. so the wiki pages are simple outdated?
+[12:35] <bregma> most likely
+[12:36] <hweg162> okay. i'm gonna check the xinput -test-xi2 thing first
+=== dandrader is now known as dandrader|afk
+[12:37] <hweg162> so XI2 are multitouch event in Xorg?
+[12:52] <hweg162> bregma: if xinput -test-xi2 reports RawTouchEnd and TouchEnd events, does that mean MT is basically working?
+=== MacSlow is now known as MacSlow|lunch
+[13:18] <hweg162> it looks like xf86-input-multitouch (which isn't installed by default on ubuntu) has its own gesture recognition (instead of doing it with a library on evdev basis). is this driver deprecated?
+[13:30] <bregma> hweg162, that driver was deprecated some time ago
+[13:31] <hweg162> that's valuable info, thanks
+[13:31] <bregma> unfortunately, I don;t know enough about the low-level protocols (evdev, etc) to help out much
+[13:32] <bregma> the evdev events are documented, and the xinput events are documented, but not in one central place
+[13:33] <hweg162> afaik the kernel delivers MT events using a specific protocol (mtdev?)
+[13:42] <bregma> yes
+[13:43] <bregma> there are a number of devices out there that do not implement the protocol correctly
+=== dandrader|afk is now known as dandrader
+=== MacSlow|lunch is now known as MacSlow
+[14:52] <hweg162> bregma: thanks again, bye
+[14:52] <bregma> yw
+=== dandrader is now known as dandrader|lunch
+=== dandrader|lunch is now known as dandrader
+=== dandrader is now known as dandrader|afk
+[18:10] <LIDH> hello
+[18:11] <LIDH> i need help configuring a PS/2 touchscreen device
+[18:11] <LIDH> can't get it to be detected
+[18:21] <bregma> does 'sudo lsinput' list anything that might remotely look like your input device?
+=== dandrader|afk is now known as dandrader
+=== dandrader is now known as dandrader|afk
+[19:14] <LIDH> nope
+[19:15] <LIDH> but i think i found a way to get it installed, problem is now i dont get image, because i created a new xorg.conf
+=== dandrader|afk is now known as dandrader

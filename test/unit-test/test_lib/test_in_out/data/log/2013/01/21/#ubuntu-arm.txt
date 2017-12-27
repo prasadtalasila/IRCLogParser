@@ -1,0 +1,90 @@
+=== sv is now known as discopig
+=== XorA|gone is now known as XorA
+=== zz_chihchun is now known as chihchun
+=== AmEv_ is now known as AmEv
+=== XorA is now known as XorA|gone
+[07:41] <dholbach> good morning
+=== agomez is now known as cybernettic
+[10:31] <mvt007geek> hey guys please help me/. i wrote ubuntu on sd card but panda doesn't boot it.and serialport shows nothong
+[10:32] <mvt007geek> i mean pandaboard
+[10:40] <V155> mvt007geek: do you also copied the kernel image into the bootsector? On my arm platform (but not panda board) this is needed
+[10:42] <mvt007geek> all i did to sdcard was this: dd if=ubuntu-12.04-preinstalled-desktop-armhf+omap4.img of=/dev/sdb
+[10:45] <V155> mvt007geek: perhaps you will find your answer here: http://www.eewiki.net/display/linuxonarm/PandaBoard
+[10:50]  * [mbm] has seen issues before where people try to use mobile phones and other linux devices as sd card writers, ends up mangling the write
+=== k1l_ is now known as k1l
+=== chihchun is now known as zz_chihchun
+[12:01] <Ethernin> Hey all you awesome devs in here, the latest raring build for the nexus7 seems to be pretty broken...
+[12:01] <Ethernin> after flashing with fastboot, the installer is pretty fubard...
+[12:02] <Ethernin> the display behind the installer is totally whacked white multi-colored
+[12:02] <Ethernin> and once you get to the user setup things constantly freeze especially when you try to type a user name...
+[12:03] <Ethernin> bueler?
+[12:03] <Ethernin> :P
+[12:08]  * xnox is sad, because I couldn't find my ac100 charger over the weekend =(
+[12:25] <ogra_> xnox, i think thinkpad chargers work for the ac100, iirc infinity used that in the past
+[12:26] <xnox> ogra_: i don't own thinkpads.... but my housemate does.... i think I know the culprit that stole my charger now.
+[12:27] <xnox> thanks a lot =)
+[12:27] <ogra_> haha
+[12:28] <ogra_> yay, so i have a working implementation of a rotation daemon in shell
+=== _Lucretia__ is now known as _Lucretia_
+=== cmagina_away is now known as cmagina
+=== mahmoh1 is now known as mahmoh
+[14:56] <sveinse> What is the logic of dpkg triggers? I have a set of packages where each activates the update-initramfs trigger. However I see that update-initramfs is run multiple times. Isn't this what triggers should prevent?
+[16:00] <ogra_> janimo, fyi ... i just uploaded http://paste.ubuntu.com/1555763/ as an interim solution
+[16:00] <ogra_> (ubuntu-devel mailed as well)
+[16:01] <janimo> ogra_, excellent thanks!
+[16:01] <ogra_> it is far from perfect, eats quite some CPU
+[16:01] <janimo> if it is dash it may not even have such a large mem footprint
+[16:02] <janimo> but I did not check except with an empty dash script in a loop
+[16:02] <ogra_> "read" is slighly lighter than using $(cat ...) ... whgich spawns a subshell
+[16:02] <janimo> meanwhile I am discussing and looking into g-s-d to see if it is feasile to have it there in C
+[16:02] <ogra_> but still far from what a simple read from C would do
+[16:02] <ogra_> i found it more important to get something out to the user though so this will do for a start
+[16:03] <janimo> I agree
+[16:03] <ogra_> i guess we need to step on some compiz devs toes though
+[16:04] <ogra_> the rotatin is so sloooow
+[16:04] <ogra_> *rotating
+[16:04] <ogra_> it gets a bit better if i change the sleep to .3 or .5 .... but that costs a lot more CPU
+[16:05] <janimo> slow as in noticable latency?
+[16:05] <ogra_> slow as in ... as slow as your GO variant
+[16:05] <janimo> or the redrawing?
+[16:05] <ogra_> yeah
+[16:05] <ogra_> i'm pretty sure thats compiz
+[16:05] <janimo> but the redrawing is not helped by making more freequent wakeups
+[16:05] <janimo> that's why I was not clear what you meant
+[16:05] <ogra_> ah, k
+[16:06] <ogra_> yeah, changing the sleep value wont fix the redraw slowness
+[16:06] <ogra_> but makes it feel more responsive
+[16:07] <ogra_> anyway, while it is cool that we can use portrait now, not having input doesnt rellay help :(
+=== valdiyen is now known as cmagina
+=== plars is now known as plars-off
+[16:19] <janimo> ogra_, completely broken input in unity in all but the default rotation you mean right?
+[16:20] <ogra_> right
+[16:21] <janimo> ogra_, in lubuntu redraws seem a bit faster
+[16:21] <ogra_> heh, for sure
+[16:21] <janimo> and input works too
+[16:33] <ogra_> i thought so
+[16:40] <ogra_> janimo, why did you mark bug 1077062 as fix released ?
+[16:40] <ubot2> Launchpad bug 1077062 in ubuntu-nexus7 "upower says battery is charged when it is not" [Medium,Fix released] https://launchpad.net/bugs/1077062
+[16:41] <ogra_> i still see massive power manager issues here
+[16:41] <ogra_> i frequently get something like "Only 7min of battery life left (100%)"
+[16:42] <ogra_> and if it is actually at a low level after a few hours i get the "will suspend soon" message constatly flashing on and off
+[16:43] <janimo> ogra_, IIRC the issues I think we see were not the ones actually mentioned in that bug
+[16:43] <ogra_> oh, ok
+[16:43] <janimo> at least not what the subject says
+[16:43] <janimo> I know there are a few power related bugs
+[16:43] <janimo> but they need to be separate and specific and I thinkg a few still remain open
+[16:44] <ogra_> well, the fun is that i didnt see any such bugs in quantal
+[16:45] <ogra_> i wonder if there are kernel config issues
+[16:45] <ogra_> two devices for the same thing or some such
+[16:46] <ogra_> hmm, upower -d shows me a /sys/devices/platform/tegra-i2c.4/i2c-4/4-0055/power_supply/usb ... as well as an "ac" device
+[16:46] <ogra_> i wonder if the usb one was there in quantal
+[17:13] <Guest61343> Asking simple questions and getting a simple answer from search engines seems a thing of the past but would anyone know if ubuntu was installed on a raspberry pi would only packages designed for the pi work?
+[17:16]  * Tassadar erases the answer he just wrote and shakes his fist angrily at Guest61343
+=== XorA|gone is now known as XorA
+=== solarcloud_AFK is now known as solarcloud_3scrn
+=== solarcloud_3scrn is now known as solarcloud_AFK
+[20:33] <AmEv> Back for more.... Got a working rootfs for sure.
+[20:39] <AmEv> Any kernel thoughts lilstevie?
+[21:34] <AmEv> Or anyone else...?
+=== jkridner_ is now known as jkridner
+=== cmagina is now known as cmagina_away

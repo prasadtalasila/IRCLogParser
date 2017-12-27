@@ -1,0 +1,21 @@
+[13:06] <jodh> xnox: how are the updates to user-log-dir coming along?
+[13:08] <xnox> yes, should do those. fixes as agreed + docs.
+[13:09] <jodh> xnox: ta :)
+[15:45] <xnox> jodh: what if HOME="../lolcats/"
+[16:25] <jodh> xnox: is that even legitimate?
+[16:26] <xnox> jodh: i'm just pondering that XDG_CONFIG_HOME might end up ralative, after the fallback is used which expands $HOME. Hence I am pondering to move the check that path is absolute to a match later point.
+[16:26] <xnox> such that returned conf-sources array is always legitimate. 
+[16:27] <xnox> jodh: I can totally see puppet/chef/whatnot misconfigure passwd 
+[16:28] <jodh> xnox: yeah - that sounds like the safest option.
+[16:32] <xnox> jodh: does upstart handle alright if logdir is non-existant or NULL.
+[16:32]  * xnox adds a note to check that.
+[16:32]  * xnox ponders how far one can get a desktop session going with relative $HOME
+[16:37] <xnox> right, needs more tests. I need to check on a few more urgent installer things now.
+[20:55] <JanC> what would a relative path in $HOME be relative to?  ☺
+[21:02] <stgraber> your current working dir, whatever it's :)
+[21:05] <JanC> how do you go "up" from '/' ?
+[21:06] <JanC> well, I suppose it just stays there
+[21:06] <stgraber> hehe, I didn't say relative $HOME would make sense, just said how it'd work ;) but yeah HOME="../../home/test" will be equal to HOME="/home/test" in upstart's case ;)
+[21:07] <stgraber> right, .. on / points to . so you can't go any further but it won't fail either
+[21:08] <JanC> I wonder if there is a rule about what applications should do with a relative $HOME...
+[21:15] <stgraber> applications usually just append stuff to $HOME and let the libc do any kind of expansion

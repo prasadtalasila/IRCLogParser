@@ -1,0 +1,247 @@
+=== yofel_ is now known as yofel
+[00:17] <dingo311> guys, why wont my permissions for alsamixer stick after a reboot? i have to use sudo to run it. this is on server 12. never had this issue with the desktop distro
+=== slank is now known as slank_away
+[00:41] <dingo311> guys, why wont my permissions for alsamixer stick after a reboot? i have to use sudo to run it. this is on server 12. never had this issue with the desktop distro
+[00:45] <sarnold> dingo311: wild guess: is there policykit on your machine? if not, do you need to add your user accout to the audio group?
+[00:46] <dingo311> sarnold: first part: not sure, fresh install, i added apache2, ssh basically. second part: yes, dingo has been added to group audio
+[00:47] <sarnold> dingo311: does 'id' show that? (adding a user to a group typiucally requires logging out and back in again, or running 'sg' or 'newgrp')
+[00:51] <dingo311> sarnold: no, audio does not appear in id. i will pay attention now when i log out next. also, does server have some issue against ssh-keys. i am having a terriable time but have done it before.
+[00:53] <sarnold> dingo311: I've never heard any issues with ssh keys; unless you've generated your key on a debian system with busted OpenSSL random number generator a few years ago and your key is in the blacklist as a result of being generated with low entropy...
+[00:53] <qman__> yeah, but that shouldn't happen anymore
+[00:54] <qman__> of course I did run into it just a few months ago, on a debian 4 server
+[00:55] <dingo311> sarnold: that cant be it. i will go back over the tut, i must be missing something. i dont set up keys very often
+[00:56] <dingo311> my only other issue since installing yesterday is today all services where unreachable. i thought system lost power but power was still on, a reboot fixed it.
+[01:11] <sarnold> dingo311: oh. that's odd. firewall settings? was it behind a NAT firewall?
+[01:13] <dingo311> sarnold: not sure about the settings, havent changed anything. no NAT firewall. wireless router
+[01:14] <sarnold> dingo311: unreachable by ip or by name or both?
+[01:17] <dingo311> sarnold: i have a ddns setup, that wasnt working, then when i got home local ip 192.168.0.1 wouldnt open router config.
+[01:18] <sarnold> dingo311: 192.168.1.1? I've had default-configuration routers on both 0.1 and 1.1...
+[01:21] <dingo311> sarnold: this is dlink, none of the ip's worked
+[01:26] <patdk-lap> some actually to 2.1
+[01:28] <sarnold> hehe, funny :)
+[01:28] <patdk-lap> some 10.1.10.1
+[01:28] <patdk-lap> can't remember any others I have seen
+[01:29] <sarnold> I've seen a 10.x somewhere, can't recall any details...
+[01:29] <patdk-lap> comcast business does the 10.1.10.1, but I have seen it somewhere else also
+[01:36] <dingo311> ok, so i generate a public key on my phone app, copy key to clipboard, get into ~/.ssh/authorized_keys and paste key. save and exit. restart ssh, and i get the error that "authentication method publickey with key home key failed'
+[01:37] <escott> dingo311, can you paste your auth_keys file please
+[01:37] <sarnold> dingo311: check permissions on your ~, ~/.ssh, ~/.ssh/authorized_keys files -- none must be group or world writable
+[01:38] <TheLordOfTime> also, make sure you put in the public key that was created, not hte private key (i've seen this as something others have sometimes done)
+[01:40] <RoyK> sarnold: ~/.ssh nor ~/.ssh/authorized_keys can be world readable either in most setups
+[01:42] <sarnold> RoyK: oh, does sshd enforce that too? heh, news to me :) I remember spending hours tracking down the group write case one day though, so it sticks with me.
+[01:42] <sarnold> RoyK: thanks :) that might save me hours in the future. hehe.
+[01:43] <escott> sarnold, enforces it all the way to system root
+[01:43] <RoyK> sarnold: chmod -R go-rw ~/.ssh is a good start
+[01:43] <escott> sarnold, basic idea is to verify that it is in fact your home directory and your folder in your home and your key in your folder in your home
+[01:43] <sarnold> escott: group or world writes, yes; but at least my homedir is 755, and ssh lets that work alright :)
+[01:43] <dingo311> escott: http://paste.ubuntu.com/1561376/
+[01:44] <escott> dingo311, you said something about a "home" key but the keyname in auth keys is "gs3"
+[01:45] <dingo311> sarnold: ls -l ~/.ssh = -rw------- 1 dingo root 217 Jan 21 22:51 authorized_keys
+[01:45] <RoyK> dingo311: sometimes sshd will check the files under there
+[01:45] <escott> dingo311, also a weird config why is root the other owner of your auth_keys file? why not dingo311/dingo311
+[01:45] <RoyK> better chmod go-rw those
+[01:46] <dingo311> escott: that is what the app is replying with, i thought that looked suspect.
+[01:46] <escott> dingo311, there is no "home" key in auth keys. so its either sending the wrong key or looking in the wrong place
+[01:47] <dingo311> escott: not sure. chown to change?
+[01:48] <sarnold> dingo311: how about ls -ld ~ ~/.ssh   ?
+[01:48] <escott> dingo311, the permissions of auth_keys is ok, but i would "sudo chown dingo311:dingo311 ~/.ssh ~/.ssh/*"
+[01:48] <escott> dingo311, thats just personal preference though. i dont like things to be owned by root without a reason
+[01:49] <dingo311> escott: i understand not wanting root in things that dont need it
+[01:51] <dingo311> sarnold: http://paste.ubuntu.com/1561385/
+[01:53] <sarnold> dingo311: I recommend "sudo chown dingo:dingo ~/.ssh" followed by "chmod 700 ~/.ssh" -- the first bit of advice is very much like escott's advice, so if you've run his (with the dingo311 -> dingo change obviously..) then mine won't be needed by now :)
+[01:54] <sarnold> dingo311: hey, just to make sure, you're trying to ssh into deathstar from your phone, right? sometimes people confuse the ~/.ssh directory on their client with their ~/.ssh directory on their server. (The 'home' vs 'gs3' makes me wonder..)
+[01:55] <dingo311> sarnold: ya, i went ahead and ran what he put up. and i have chmod 700 already .ssh is showing -rw-------
+[01:55] <sarnold> dingo311: .ssh _should_ report drwx------
+[01:56] <sarnold> dingo311: be careful with that -d to ls :)
+[01:56] <dingo311> sarnold: yes, the app is connectbot. it has a place to specify pubkey authentication, options are do not use any keys, use any open, or gs3. obviously i select gs3...
+[01:58] <dingo311> sarnold: thats kinda a duh, the .ssh is a folder correct, so should have d>>>>>>>
+[01:58] <sarnold> dingo311: exactly :)
+[01:59] <dingo311> sarnold: not sure i understand your line about:be careful with that -d to ls :)
+[01:59] <sarnold> hrm, does sshd read the ~/.ssh/authorized_keys file as root or as the user?
+[01:59] <sarnold> dingo311: ah, I worried about that after writing it
+[02:00] <escott> sarnold, doesn't make a difference since root can read anything (unless he has attributes or an encrypted home)
+[02:01] <sarnold> dingo311: if you just run ls -l ~/.ssh  it will show you the directory listing, which complicates seeing the permissions and ownership on the directory -- you either need to run ls -la ~/.ssh  and look for the "." entry (annoying) or run ls -ld ~/.ssh   -- which does _not_ give you a directory listing, and shows the details for the requested directory
+[02:01] <sarnold> escott: encrypted home was my destination...
+[02:02] <sarnold> escott: though I also wondered about an apparmor profile denying e.g. CAP_DAC_READ_SEARCH or CAP_DAC_OVERRIDE (which is more idle curiosity than helpful advice right now.. :)
+[02:03] <dingo311> sarnold: ahh, i get that. makes sense
+[02:04] <dingo311> sarnold: do i check if sshd reads the file as root in the sshd.config?
+[02:04] <escott> sarnold, i think he is looking at the wrong user/wrong ~/.ssh folder or something. it clearly is sending the wrong identity/checking against the wrong identity
+[02:05] <sarnold> dingo311: don't worry about that, that was idle curiosity on my part.
+[02:06] <sarnold> dingo311: I think escott's probably right; if it still doesn't work after fiddling with the permissions, then it feels like you've got something else going on. the error message you reported first was ".. with key home key failed" -- and the allowed key isn't labelled 'home'.
+[02:06] <dingo311> sarnold: i get that. hmmm.....must be problem with the app.
+[02:15] <dingo311> if anyone wants to look into this the guide i used is http://michaelchelen.net/articles/android-connectbot-ssh-key-auth-howto.html
+=== megha is now known as database
+[02:20] <sarnold> the guide mostly looks alright, though I'd have used chmod 600 instead of chmod 644. but on my 12.10 system, both work...
+[02:21] <dingo311> sarnold: thats crazy, not sure whats up.......argggg
+[02:22] <dingo311> should i check to make sure all of ssh is installed, i would think so, but if you cant tell im rather noobish :)
+[02:31] <Free99> hey everyone, I'm trying to resize the partition on an ext4 disk that is not the system disk. I seem to be having a problem using the newly made space because I don't know how to format/mount it
+[02:31] <Free99> I've set it up in parted and everything but mount complains when I try to... well, mount it
+[02:32] <Free99> I can't tell if it is formatted or not
+[02:32] <dingo311> e
+[02:34] <dingo311> i cant remeber who helped me, but alsamixer no longer needs root. thanks.
+[02:35] <sarnold> dingo311: woo :)
+[02:36] <sarnold> Free99: you're probably looking for resize2fs or mke2fs
+[02:38] <Free99> sarnold: I already resized with resize2fs, then deleted the partition with fdisk, made 2 new primary partitions
+[02:38] <sarnold> Free99: oh, then you probably do'nt have any filesystems on the partitions?
+[02:38] <Free99> crud
+[02:39] <escott> Free99, if you know what block the partition ended on you can remake it on top of where it should be
+[02:39] <Free99> good thing I'm doing this on a soon-to-be server, I'm trying to do these steps so I can resize a partition on another machine which has important files on the partition
+[02:39] <Free99> (backing up obviously)
+[02:40] <Free99> sarnold: I'm trying to find some tuts where I could do this resize live, I'm setting up DRBD, but it needs some space for metadata... hence the resize operation
+[02:41] <Free99> mount /dev/sdb7 /mnt
+[02:41] <Free99> my bad
+[02:41] <escott> Free99, the steps for something like that are usually (a) resize2fs (b) fsck (c) mount to make sure (d) umount (e) write down the partition begin and end address in LBA and CHS if you have got it (f) back up the table (g) modify the table deleting partition if needed (h) recreate the table (i) remount
+[02:41] <Free99> (wrong window lol)
+[02:43] <Free99> ok escott. What's a good way to get LBA & CHS?
+[02:44] <Free99> also I don't know how to do (f)
+[02:44] <Free99> pretty much everything after (e) is what I'm having issues with, having never done that stuff before
+[02:44] <escott> Free99, tools like parted should be able to get you LBA and that should be all you need, but some tools for insane reasons like to ask for CHS... i have no idea how one gets that
+[02:45] <escott> Free99, perhaps one of the converters online
+[02:45] <Free99> cripes
+[02:46] <Free99> cool, found one
+[02:46] <escott> Free99, ripping tables out from under filesystems is and should be a scary thing to be doing
+[02:46] <escott> Free99, if it doesnt make you want to switch to LVM then you missed the point of it
+[02:47] <Free99> escott: I've never really understood it to be honest. RAID and the various Filesystems+options are as deep as I go into disk territory, besides mdadm
+[02:48] <Free99> well I guess I'll look into it based on your suggestions
+[02:48] <Free99> alright, so I have this new partition
+[02:48] <Free99> do you have a recommended setup method?
+[02:49] <escott> Free99, just put LVM on top of your RAID array. Then you have a logical partition table that you can grow and shrink in blocks of a few hundreds megs (depending on how you configure it)
+[02:49] <Free99> dang.
+[02:49] <Free99> too late to do that right?
+[02:49] <Free99> well yeah
+[02:50] <Free99> I can't now
+[02:50] <Free99> one of these machines is production
+[02:50] <Free99> but I still need to get it on DRBD, meaning I need a partition at least 80 megs for metadata
+[02:58] <Free99> escott: found this tool called cfdisk from the man tables, way better
+[03:11] <Free99> hey, anyone know if its possible to copy a 1TB sparse image onto a 500gb disk, if the sparse is actually only 200 gb?
+[03:15] <escott> Free99, should not be a problem, but it will never be possible to expand the sparse file since the filesystem is thin-provisioned
+[03:15] <Free99> escott: that's fine, just moving a VM disk
+[03:15] <Free99> problem is I used rsync -S and it's not writing it as sparse for some reason
+[03:16] <Free99> df -h
+[03:32] <Free99> night everyone
+[06:07] <vhadil> on ubuntu 12.04 i'l instal squid, but squid3 installed no squid2, why
+=== megha is now known as hack
+[09:24] <ftpd> Hi.
+[09:25] <ftpd> Guys, when is /etc/hosts generated? I suppose, during the installation. As I can observe, it adds records '127.0.0.1 hostname', instead of 'real_ip hostname'.
+[09:26] <ftpd> Can I avoid it somehow? I'm deploying mass amounts of machines by kickstart.
+[09:27] <lifeless> no, that line is appropriate
+[09:44] <ftpd> lifeless, Not for me. As hostname is resolved for 127.0.0.1, it makes me unable to monitor Java ;-)
+[09:45] <ftpd> JVM in Zabbix, to be more precise.
+[09:46] <lifeless> you should have 127.0.0.1 localhot
+[09:46] <lifeless> and 127.0.1.1 hostname
+[09:46] <ftpd> Oh, right. 1.1, not 0.1.
+[09:47] <ftpd> But still, I need the 'real' IP.
+[09:47] <ftpd> From DHCP.
+[09:48] <lifeless> I'm just sure why zabbix is buggy like this
+[09:48] <lifeless> but you could put in a if-up.d script to rewrite /etc/hosts
+[09:48] <ftpd> I can manage it by puppet, it's not a problem to change, but found this today and I'm just curious, why Ubuntu core team decided to use this. On Centos machines, for example, it uses the real IP.
+[09:48] <ftpd> Yup, a script, puppet or many other solutions. I just want to know _why_ is it like this.
+[09:49] <lifeless> I'm not 100% sure sorry. Speculation though - there are many ip's that may map to the hostname. Which one should be chosen ?
+[09:50] <ftpd> The one that fqdn points to, for me.
+[09:55] <degot> Hello, I've Ubuntu 12.10 server.  eth0 - wan , eth1 - lan .  I need to configure sub-interfaces for eth0:0-3 to use  4 IP addresses from different subnets with different gateways. Purpose: 1 ip for nat. 3 for one-to-one. How?
+[09:56] <degot> I did such thing, when I had many IPs from one subnet... it was easy with /etc/shorewall/masw
+[09:56] <degot> *masq
+[09:58] <ftpd> You can use route(1) on specific device.
+[09:58] <ftpd> Or -net.
+[09:59] <ftpd> route add -net 10.192.0.0/16 gw 10.193.6.129
+[09:59] <ftpd> Something like this.
+[09:59] <degot> route  is based on destination IP... not on source ip
+[10:00] <ftpd> Oh, right. My bad.
+[10:02] <degot> By the way, I have ideas, but i don't want to make experiments on remote server.. Is there some kind of rollback... ?  trigger rollback with delay 2 mins... If it was not canceled. It will restore configs and restart server/service
+[10:02] <degot> Or crontab + script will be easier?
+[10:05] <ftpd> <your command>; sleep 300; reboot
+[10:05] <ftpd> Or, better, use at.
+[10:05] <ftpd> now+3m or something like this.
+[10:21] <Koheleth> Loads of php and mysql updates this morning as I arise, anyone had problems after update?
+[10:24] <ic31> hi guys
+[10:25] <ic31> did any one install rdsserver on ubuntu 12.04 LTS?
+[10:25] <Andrei> nope ic31
+[10:25] <ic31> o
+[10:25] <ic31> ok
+[10:26] <Andrei> by the moment it's almost the default config from rackspace cloud the one i have to deal with
+[10:31] <ic31> new question, where can i find a good tutorial about samba 4 except the wiki because is really confusing?
+[10:35] <Andrei> That's not Ubuntu, but still a lot of usefull infos here https://wiki.archlinux.org/index.php/Samba from the ArchLinux Wiki ;)
+[10:35] <Andrei> I'm also on Arch, and i must say the docs are great ;) hope it helps
+[10:37] <ic31> i will look
+[10:37] <ic31> thx
+=== yofel_ is now known as yofel
+[11:06] <pythonsnake> Hey
+[11:06] <pythonsnake> What're the flags PHP is compiled with?
+[11:22] <feisar> hi, how can I ensure that 'update-package-lists' and 'unattended-upgrade' happen out of hours?
+[11:31] <feisar> ok found it in /etc/crontab. Is there any significance to cron.daily being run at 6:25, would I do any harm by changing it to 12am?
+=== Jikan is now known as Jikai
+=== Jikai is now known as Jikan
+=== cpg is now known as cpg|away
+=== Ursinha_ is now known as Ursinha
+=== ichikata is now known as ichikata_
+=== ichikata_ is now known as ichikata
+[14:05] <Donks> buntu server 12.04 up and running….webmin setup….samba shares created and writable along with new unix file/directory mode @ 777…when i try to copy over anything from OSX, Im asked to authenticate and told "Items cant be copied to "folder" becasue you dont have permission to read them.  The user on ubuntu server and osx are exact same.  I have read/write privs on the files themselves.  Anyone have an possible ideas on wher
+[14:05] <Donks> roadblock might be?   I have also tried adding "write list" "read/write list" and "valid users" none have seemed to give me the access Im looking for
+[14:06] <jamespage> zul: hows glance looking now?
+[14:07] <zul> getting there
+[14:07] <zul> jamespage: https://bugs.launchpad.net/oslo/+bug/1103473
+[14:07] <uvirtbot> Launchpad bug 1103473 in oslo "Running glance nosetests fails" [Critical,Confirmed]
+[14:15] <booom> does anyone knows how can i improve my ip email reputation?
+[14:22] <ikonia> ip email reputation ?
+[14:22] <ikonia> what
+[14:23] <Andrei> yeah, ikonia, same question !
+[14:23] <ikonia> do you mean you've been marked as a spammer ?
+[14:36] <hallyn> ikonia: well if you're using a cloud instance with reused ip..
+[14:36] <ikonia> hallyn: is it dynamic, or reused
+[14:37] <hallyn> reused as in someone else had it before
+[14:37] <hallyn> and spammed
+[14:37] <ikonia> contact the blacklists it's on and explain and make sure you meet their de-list requirements
+[14:38] <ikonia> however most spam lists treat cloud services as spam hosts the same as dhcp blocks
+[14:41] <hallyn> well booom left after 30 secs anyway :)
+[14:45] <JaChr_> Hi all! I'm in the process of migrating some servers from gentoo to ubuntu server (12.04). I've a queston about upgrading packages. In Gentoo, when upgrading pacakges, emerge would prompt me and ask me what to do if i had made changes to configuration files that otherwise would have been overridden.
+[14:46] <JaChr_> What is the procedure with Ubuntu? Will it leave all configuration files untouched, or will it in the same way promt me?
+[14:46] <maswan> it will ask
+[14:46] <maswan> or keep it untouched
+[14:46] <maswan> as long as the file is tagged as a configuration file in the package
+[14:47] <zerick> Hi guys, Does anybody know how to determine from which sourcelist  was downloaded a package ?
+[14:47] <JaChr_> maswan: Okay, thanks :)
+[14:48] <JaChr_> Then i don't need to worry when upgrading ;)
+=== slank_away is now known as slank
+=== matsubara is now known as matsubara-lunch
+=== Err404NotFound is now known as Error404NotFound
+[16:36] <hallyn> zul: found a bug in the 1.0.1 libvirt fixed by a later git commit.  new version will build in my ppa for another testset before i push to archive
+[16:36] <zul> ack...which bug?
+[16:36] <hallyn> zul: when you define a new net, it is marked non-persistent
+[16:37] <hallyn> so you can't mark it autostart
+[16:37] <zul> hallyn: oh lovely
+[16:37] <hallyn> (until you restart libvirt)
+[16:37] <hallyn> took me awhile to find the commit bc i was searching on 'transient' rather than 'persistent' in git log :)
+[16:41] <orudie> Greetings. I installed fail2ban on a new server. What is a good way to make it so that fail2ban will email daily reports to a specified email address ?
+=== matsubara-lunch is now known as matsubara
+[17:09] <Teduardo> Is anyone here using maas? on quantal? it doesn't seem to work as per the instructions here https://maas.ubuntu.com/docs/quantal/install.html
+[17:13] <RoyK> orudie: dunno - I use denyhosts instead, because of its ability to post bans to a central server for syncing - denyhosts reports blocked IPs by email, but in realtime - dunno if it can report daily - perhaps logcheck can do?
+[17:14] <orudie> RoyK, I have another host sending daily reports running fail2ban
+[17:17] <RoyK> orudie: ok
+[17:18] <RoyK> orudie: dunno, sorry
+[17:23] <bigjools> Teduardo: what is your exact problem?
+=== matsubara is now known as matsubara-afk
+=== alamar is now known as julian
+=== julian is now known as alamar
+[21:24] <blair> when will openstack grizzly-2 hit http://ubuntu-cloud.archive.canonical.com/ubuntu ?
+[21:25] <blair> i see it's in raring already, but i want to try it on my 12.04 system
+[21:28] <patdk-lap> it will never be in 12.04
+[21:28] <patdk-lap> you could ask for a backport request, and someone might add it to backports
+[21:28] <patdk-lap> or you could build it yourself for 12.04
+[21:29] <patdk-lap> or see if someone else already has
+[21:31] <stgraber> patdk-lap: the archive above isn't the standard ubuntu archive, it's the ubuntu-cloud archive which does contain major backports of openstack
+[21:31] <stgraber> (I don't know what's the ETA for the new openstack to hit the cloud archive though)
+[21:32] <jcastro> zul might know
+[21:33] <stgraber> blair: there appears to be some pretty recent (2013.1) packages in the precise-proposed pocket of the cloud archive. Those are test packages though and shouldn't be used in production.
+[21:34] <zul> blair: end of this week hoepfully
+[21:35] <zul> stgraber:  umm...the milestone candidates should not be used in production the final versions in that archive can be used in production
+[21:35] <zul> and are used in production
+[21:37] <patdk-lap> stgraber, oh? didn't know it was different
+[21:37] <stgraber> zul: that matches what I said above then ;)
+[22:10] <blair> zul, thanks
+[22:10] <blair> stgraber, i'm running into a bug with folsom that i want to see if it's resolved in grizzly, won't be production use
+[22:12] <blair> stgraber, also, what's in ubuntu-cloud archive is grizzly-1, not grizzly-2, and grizzly-1 is 2 months old
+[22:13] <stgraber> blair: even in precise-proposed (as opposed to the default precise-updates)? the packages in precise-proposed are just a few days old based on their version timestamp
+[22:15] <blair> stgraber, yes, they are, but they have g1 in the name and looking at one changelog, it was build on Nov 26
+[22:18] <blair> zul, is there a mailing list to join to follow discussions on openstack releases to the archive
+=== frojnd_ is now known as frojnd
+=== cpg|away is now known as cpg

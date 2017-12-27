@@ -1,0 +1,74 @@
+=== slank is now known as slank_away
+[10:45] <foxhouston> Hi all
+[10:51] <foxhouston> I have a problem for which I could not find a solution.
+[10:52] <foxhouston> when I enter a folder with several project versioned, screen starts blinking
+[10:52] <foxhouston>  The version of Bazaar I use is the 2.5.1
+[10:56] <foxhouston> I have experienced this problem either in Windows Xp Service Pack 3 or Windows 7
+=== mmrazik is now known as mmrazik|lunch
+=== mmrazik|lunch is now known as mmrazik
+[13:01] <jdahlin> jelmer: FYI, I managed to migrate my bzr repositories over to git, but had to work around a couple of bugs that are no longer present in current bzr versions
+[13:04] <jdahlin> # A -> B, B -> A in the same commit should be nulled out
+[13:04] <jdahlin> # A -> B, B -> C, should be A -> C
+[13:04] <jdahlin> none of the existing tools handled that
+[13:07] <jelmer> jdahlin: which of the existing tools did you try?
+[13:10] <jdahlin> jelmer: fast-import, dpush, git-remote-bzr
+[13:11] <jelmer> jdahlin: ah, ok
+[13:11] <jelmer> jdahlin: git-remote-bzr uses either fast-import or bzr-git (just like dpush) under the hood
+[13:13] <jdahlin> jelmer: no, it uses neither
+[13:13] <jdahlin> jelmer: it just reads from bzrlib and generates the fast-import format on the fly
+[13:14] <jelmer> jdahlin: argh, then somebody created another tool with the same name?
+[13:14] <jdahlin> jelmer: https://github.com/git/git/blob/master/contrib/remote-helpers/git-remote-bzr
+[13:14] <jdahlin> it's the one in the git repository
+[13:15] <jelmer> yeah, but it's dated from *after* bzr-git shipped a tool with that name
+[13:15] <jdahlin> oh well.
+[13:15] <jelmer> and judging from the copyright header that guy was aware of the duplication
+[13:15] <jelmer> anyway..
+[13:15] <jelmer> glad you managed to get your repositories converted
+[13:16] <jdahlin> seems to be another few projects called git-remote-bzr as well
+=== slank_away is now known as slank
+[15:37] <LeoNerd> Can I  bzr merge  the addition of a directory from one branch into another, without also merging adding a file in that directory at the same time?
+[15:37] <mgz> yu.
+[15:37] <LeoNerd> Branch contains a revision that adds a dir and a file within it. I want to merge just the directory addition, so it doesn't keep conflicting every time I switch
+[15:38] <LeoNerd> Hrm.. so how's that then? I presume I need some sort of no-recurse option?
+[15:38] <mgz> no, you need to do the full merge, then revert the bit you don't want
+[15:38] <LeoNerd> Oooh.. duh!
+[15:38] <LeoNerd> Ofcourse :)
+[15:38] <mgz> then, if you *are* going to want it later, merge that branch back to the other one and keep the file you didn't merge
+[15:39] <LeoNerd> Yah
+[15:39] <mgz> alternatively, you want the changes I have proposed against 2.6 which make dir conflicts less painful
+[15:39] <LeoNerd> Well, that's an easy workaround for now
+[15:39] <LeoNerd> In future I'll just have to remember to add the directory itself in its own revision on the trunk
+[15:39] <LeoNerd> (I'm playing dual-VCS games :) )
+[15:48] <LeoNerd> Bah.. bzr revert  adding the file to the dir also reverted adding the dir itself :/
+[15:48] <LeoNerd> Ahhah. bzr rm  the file
+[15:48] <LeoNerd> keeps the dir
+[15:49] <mgz> right, or revert with path.
+[15:49] <LeoNerd> Well, I did that
+[15:50] <LeoNerd> bzr revert path/to/dir/file.java    showed   -D path/to/dir/file.java  -D path/to/dir/
+[15:50] <LeoNerd> but I have it working now.. I just  bzr rm  the file and the directory remains, empty
+[15:53] <mgz> ah, revert being smart I guess
+[15:54] <LeoNerd> Yah.. usually I'd liek that but in juuust this case, too smart
+[15:55] <LeoNerd> Anyway, all is now committed and now I can freely switch branches without that dir getting upset
+[15:55] <mgz> right, remember to do the merge the other way before landing, or you'll lose the file and wonder where it went :)
+[15:55] <LeoNerd> Already merged. I actually did   bzr revert --forget-merges  on the trunk
+[15:56] <LeoNerd> Then merged that (empty no-op) commit back into the branch. so now all is happy
+[15:56] <mgz> ace.
+[15:56] <LeoNerd> For general background: I'm using a dual bzr+p4 working directory, using bzr to work around p4's lack of features..
+[15:57] <LeoNerd> So what was confusing bzr was that I'd added one file to a dir, that already actually existed and had other files in.. so it wasn't empty when it wanted to remove whenever I switched to trunk
+[16:56] <LeoNerd> Someone remind me again: how to  bzr shelve  with a smaller diff horizon? It's managed to merge two unrelated changes in one chunk because there weren't enough unchanged lines inbetween
+[16:56]  * LeoNerd ooooohs, having just read about change_editor
+[16:56] <LeoNerd> vimdiff? :)
+[16:56] <mgz> right :)
+[16:57] <mgz> I have this set in bazaar.conf:
+[16:57] <mgz>   change_editor = vimdiff -of @new_path @old_path
+[16:57] <LeoNerd> Hrm... -of ?
+[16:59] <LeoNerd> Hrm... doesn't appear to help.. :/
+[16:59] <mgz> you then hit 'e' in shelve?
+[17:00] <mgz> LeoNerd: I took the options from an example somewhere, -o is horizontal split apparently
+[17:01] <LeoNerd> Ooooooh I see
+[17:01] <LeoNerd> You have to 'e'
+[17:01] <LeoNerd> Soyeah,  vimdiff  implies -o anyway
+[17:01] <LeoNerd> and -f is only useful to gvim
+[17:02] <LeoNerd> Ahyes, e works fine now
+=== SamB_ is now known as SamB
+=== yofel_ is now known as yofel

@@ -1,0 +1,295 @@
+=== ejat- is now known as ejat
+[02:08] <Bluefoxicy> is it possible to get apt to authenticate via certificate?
+[02:09] <Bluefoxicy> http://lists.debian.org/debian-user/2011/06/msg02273.html never mind, apparently it is.
+[02:36] <Bluefoxicy> oops it looks like Pulp can do that :)
+[02:37] <Bluefoxicy> just needs a DEB/APT plug-in.
+[06:28] <pitti> Good morning
+=== mitya57_ is now known as mitya57
+[07:41] <dholbach> good morning
+[07:47] <pitti> hey dholbach
+[07:47] <dholbach> hey pitti
+[07:51] <mitya57> hi dholbach & pitti
+=== Zdra is now known as xclaesse
+=== Sweetsha1k is now known as Sweetshark
+=== Tonio_ is now known as Tonio_aw
+=== Tonio_aw is now known as Tonio_
+=== smb` is now known as smb
+=== Tonio_ is now known as Tonio_aw
+=== cpg is now known as cpg|away
+=== _salem is now known as salem_
+=== Tonio_aw is now known as Tonio_
+[12:28] <mlankhorst> cjwatson: doesn't look like I can drop more space than the shared libgallium thing :(
+[12:30] <ogra_> does anyone know if there is something similar to udev-acl for sysfs files ?
+[12:33] <ogra_> i could just use an upstart job to "chgrp users" but wonder if there isnt a more elegant way
+[12:33] <xnox> well udev runs as root, and it can haz RUN stanza......
+[12:35] <ogra_> but it only acts on devices, not sure there are matching devs at all
+[12:37] <ogra_> (i'll check, running chgrp from udev isnt much diferent to upstart though)
+[12:38] <cjwatson> mlankhorst: OK, well, it's a start anyway; thanks
+[12:44]  * cjwatson is somewhat tempted to drop sl-modem-daemon from 12.04.2 images.  It costs 5MB on amd64 due to dragging in libc6-i386 ...
+=== MacSlow is now known as MacSlow|lunch
+=== cmagina_away is now known as cmagina
+=== chiluk_away is now known as chiluk
+[13:42] <mlankhorst> cjwatson: should I re-upload the mesa (unrenamed) sru to put in a build fix against the new libdrm, and remove the references in the sru to libdrm-dev renamed?
+[13:43] <cjwatson> Don't remove any existing changelog entries, please
+[13:43] <cjwatson> But feel free to reupload with the shared libgallium fix
+[13:43] <mlankhorst> I mean the unrenamed one, mesa 8.0.4
+[13:44] <mlankhorst> the renamed mesa-lts-quantal is currently building https://launchpad.net/~mlankhorst/+archive/ppa/+packages
+[13:44] <mlankhorst> I want to test it first
+[13:45] <cjwatson> So what's the problem - mesa in precise-proposed fails to build against libdrm in precise-proposed?
+[13:45] <mlankhorst> yes :)
+[13:45] <cjwatson> I don't get what you mean by removing references in the SRU, since bug 1098215 doesn't mention libdrm
+[13:45] <ubottu> bug 1098215 in mesa (Ubuntu Precise) "installing libqt4-opengl-dev uninstalls renamed stack" [Critical,Fix committed] https://launchpad.net/bugs/1098215
+[13:47] <mlankhorst> well to be able to work right libdrm-dev-renamed had to be added to the list of packages that could satisfy the libdrm-dev dependency, else things would still break in some circumstances, but now that libdrm is no longer renamed, it could be dropped. But it should be harmless to keep the references to the renamed versions of libdrm-dev
+[13:47] <cjwatson> Oh, right
+[13:48] <cjwatson> I don't really mind which you do
+[13:48] <mlankhorst> I think I'll commit the fix to our git repository only for now then, next sru could pick it up
+=== cmagina_away is now known as cmagina
+[14:19] <tjaalton> why isn't armhf an "official" port in archive.u.c, but instead uses ports.u.c?
+[14:20] <micahg> tjaalton: see https://wiki.ubuntu.com/SecurityTeam/FAQ#Architectures , it's been this way for a while
+[14:21] <tjaalton> micahg: doesn't answer the question though :)
+[14:21] <micahg> I would think so the world doesn't have to mirror less used archs
+=== mahmoh1 is now known as mahmoh
+[14:22] <tjaalton> that's just a matter of doing proper mirroring
+[14:22] <tjaalton> I'm not mirroring i386..
+[14:22] <micahg> yes, but most mirrors are
+[14:23] <micahg> (at least the public ones)
+[14:23] <xnox> tjaalton: e.g. we'd rather mirrors mirror everything, instead of dropping out because there is too much data there.
+[14:23] <xnox> same story is why lpia was on ports.
+[14:24] <xnox> I guess one day i386 will move to ports & armhf/aarm64 might move into archive.
+[14:24] <tjaalton> right
+=== lftp is now known as Tonio_
+[14:38] <cjwatson> tjaalton: https://wiki.ubuntu.com/UbuntuDevelopment/PackageArchive#Ports
+[14:38] <cjwatson> armhf gets massively fewer downloads than i386
+[14:38] <tjaalton> cjwatson: yeah, understood
+[14:39] <cjwatson> Note https://wiki.ubuntu.com/UbuntuDevelopment/PackageArchive#Official_Architectures - armhf is still official even though it's on ports
+[14:39] <Brogrammin> Morning guys. Python programmer looking to get involved with Ubuntu, any opportunities with Python?
+[14:46] <brendand> Brogrammin, python is everywhere in ubuntu
+[15:12] <mlankhorst> well the renamed mesa ran glxgears with shared libgallium so it can't be that broken for i915/nouveau, I'll test on radeon too to be sure
+[15:19] <mlankhorst> ok radeon works too, uploaded..
+=== salem_ is now known as _salem
+=== _salem is now known as salem_
+=== Tonio_ is now known as Tonio_aw
+[15:32] <hallyn> infinity: hey - the CVE patch you pushed to raring qemu...  does that actually do anything?  it seems to only add a check for 'size > 16384' when it already is triggering on 'size > 1522' ?
+=== MacSlow|lunch is now known as MacSlow
+[15:34] <cjwatson> Most i386/amd64 Ubuntu (i.e. not PPA) builders going down soon for a hardware move, lasting about 30 minutes
+[15:36] <Laney> hallyn: Hey ;-) Don't suppose you know anything about this: https://ubuntuone.com/27Vn82hay9zqxyL3O98V1k do you?
+=== Tonio_aw is now known as Tonio_
+[15:39] <hallyn> Laney: hm.  brings up https://bugzilla.redhat.com/show_bug.cgi?id=885464
+[15:39] <ubottu> bugzilla.redhat.com bug 885464 in qemu "qemu 1.3.0 error: unsupported configuration: hda-duplex not supported in this QEMU binary" [High,Closed: nextrelease]
+[15:40] <stgraber> @pilot in
+=== udevbot changed the topic of #ubuntu-devel to: Ubuntu 12.10 released | Archive: Open | Dev' of Ubuntu (not support or app devel) | build failures -> http://qa.ubuntuwire.com/ftbfs/ | #ubuntu for support and dicussion of hardy -> quantal | #ubuntu-app-devel for app development on Ubuntu http://wiki.ubuntu.com/UbuntuDevelopment | See #ubuntu-bugs for http://bit.ly/lv8soi | Patch Pilots: stgraber
+[15:40] <Laney> hallyn: Indeed I found that but the responses aren't so helpful
+[15:41] <stgraber> hallyn: ah yeah, I've got quite a few problems with qemu/kvm with libvirt yesterday. It was complaining quite a bit about the hda-duplex stuff, also about the usb2 devices and then about CPU flags and types.
+[15:41] <stgraber> hallyn: as I needed it working, I simply wiped all matching entries from the libvirt xml file and it worked, but it wasn't a smooth upgrade ;)
+[15:42] <hallyn> I don't see anything in upstream changelog...
+[15:43] <hallyn> Laney: stgraber: does it by any chance help if you set cpu type to -cpu kvm64 ?
+[15:43] <stgraber> hallyn: not really, I had to switch to kvm64 + remove all the list of flags that libvirt had stored in the xml file
+[15:44] <stgraber> hallyn: I think I have a copy of the xml I can paste somewhere, hold on
+[15:44] <Laney> Cannot find suitable CPU model for given data
+[15:45] <hallyn> stgraber: Laney: a hacky workaround for now could be to use spice :)  that would use the old qemu-kvm-spice binary whic his still based on the old source tree.
+[15:46] <stgraber> hallyn: http://paste.ubuntu.com/1555743/
+[15:46] <hallyn> i'm not sure yet what the long term solution will be.  debian group is talking about a kvm wrapper to emulate the old behavior...
+[15:47] <Laney> hmm if I change the audio device model to something else (leaving cpu type alone) I get permission denied errors
+[15:48] <stgraber> so yeah, libvirt worked again after I removed all those "<feature>" tags, switched to kvm64, dropped all the "ich9-uhci*" entries and all the sound cards
+[15:51] <hallyn> stgraber: that was a windwos vm, or ubuntu?  can you paste the /var/log/libvirt/qemu/<vm>.log ?
+[15:51] <hallyn> It's possible the sound cards just erred because of the sound options being re-ordered (alsa first, pa at the end)
+[15:52] <stgraber> hallyn: I first had the problem with a win8 VM yesterday, but the one I pasted above is an Ubuntu one
+[15:53] <stgraber> hallyn: http://paste.ubuntu.com/1555758/
+[15:54] <hallyn> stgraber:  so then what if you *only* switch out the cpu definition for -cpu kvm64 ?
+=== henrix_ is now known as henrix
+[15:57] <stgraber> hallyn: hmm, it starts ;) which is vaguely surprising as that's what I tried to do with virt-manager yesteday but didn't work... anyway, I'll just blame virt-manager for now ;)
+[15:57] <hallyn> stgraber: and does it give you sound?
+[15:58] <stgraber> hallyn: ah, that VM doesn't appear to have a soundcard, might explain why just changing the CPU did the trick
+=== jasoncwarner_ is now known as jasoncwarner
+=== valdiyen is now known as cmagina
+=== plars is now known as plars-off
+[16:41] <Laney> hallyn: /dev/kvm was root:root for me until I rebooted - it's now root:kvm
+[16:41] <hallyn> Laney: stgraber: what i said before was wrong - qemu-kvm-spice was always built on (modified) qemu, not qemu-kvm source.
+[16:41] <Laney> Changing sound ich6→ac97 gets it to boot
+[16:42] <Laney> and I still can't select kvm64 "Cannot find suitable CPU model for given data"
+[16:42] <hallyn> Laney: you're on raring right?  if it was root:root then at this point i dunno, udev is borked
+[16:42] <Laney> well it's right after a reboot ...
+[16:42] <hallyn> what is your rootfs?  (wondering if inotify is not working)
+[16:42] <Laney> ext4
+[16:43] <hallyn> Laney: it shouldn't need a reboot.  qemu-kvm postinst calls udevadm trigger to force it to reread the udev rules for /dev/kvm
+[16:43] <hallyn> Laney: is anything in your /var/log/syslog or /var/log/udev to show why it failed?  (group kvm not existing, or someting)?
+[16:43] <Laney> should it be root:root if qemu isn't installed?
+[16:44] <stgraber> hallyn: bah, I really used the wrong VM for an example didn't I? ;)
+[16:44] <hallyn> Laney: yes, that's how the default udev rules set it up
+[16:44] <stgraber> hallyn: let me switch to standard kvm and give you the other errors then :)
+[16:44] <Laney> alright, so it's like that on my laptop now
+[16:44] <Laney> let me apt-get install qemu and see what happens
+[16:44] <stgraber> hallyn: right, now it fails to start even with kvm64, so similar to what I had with my other VM yesterday
+[16:45] <Laney> yeah still root:root
+[16:45] <Laney> Jan 21 16:44:56 iota udevd[357]: specified group 'kvm' unknown
+[16:45] <hallyn> Laney: intersting, ich6 depends on hda-duplex.
+[16:45] <hallyn> stgraber: is that due to ich6 audio?
+[16:46] <stgraber> hallyn: nope, it's back to CPU problems
+[16:46] <stgraber> hallyn: I don't have audio in that VM
+[16:46] <stgraber> hallyn: I'm getting "error: internal error Cannot find suitable CPU model for given data" even with kvm64, probably because of the feature flags
+[16:46] <hallyn> Laney: I wonder udev needs to be totally restarted, i.e. maybe it has cached a copy of /etc/group
+[16:47] <hallyn> Laney: bc we very clearly, explicitly add group kvm long before we call udevadm trigger, in qemu-system.postinst
+[16:47] <Laney> yeah I have the group now (didn't have it before)
+[16:48] <hallyn> Laney: what do you mean by before?  before qemu was installed, right?
+[16:48] <Laney> yes
+[16:48] <Laney> so that part is as expected
+[16:48] <Laney> sorry that we've ended up debugging three bugs at once
+[16:52] <Laney> is it https://bugs.launchpad.net/ubuntu/+source/qemu-kvm/+bug/1092715 ?
+[16:52] <ubottu> Ubuntu bug 1092715 in qemu-kvm (Ubuntu Raring) "udevadm trigger --action=change not working in quantal and raring" [High,Confirmed]
+[16:52] <hallyn> i don't understand, hda-duplex *should* be qemu...
+[16:53] <hallyn> Laney: sort of, except that one describes symptoms due to several things
+[16:53] <hallyn> Laney: one cause was the udev rule in qemu not explictly removing the group acl
+[16:54] <hallyn> (which in debian gets set to group::rw-, and i think should in ubuntu as well - but i don't even know where that gets set)
+[16:54] <hallyn> Laney: adam_g ran into the one where udev didn't see the new rule, some inotify failure
+[16:54] <hallyn> Laney: and now you're seeing something i've occasionally seen, where udev for some idiotic reason doesn't yet know about group kvm
+[16:55] <hallyn> i could add a sleep 2 to the qemu-system.postinst :)
+[16:55] <hallyn> or 'while [ ! group-exists kvm ]; do : done
+[16:56] <Laney> heh
+[16:56] <Laney> so I touched 40-qemu-system.rules and then re-ran udevadm trigger and it's set it now
+[16:57] <hallyn> stgraber: can you file a bug and attach the xml for the failing vm?
+[16:57] <hallyn> stgraber: With luck we can have libvirt automatically do the appropriate update of xml contents...
+[16:57] <stgraber> hallyn: yep, will do
+[16:58] <hallyn> stgraber: thanks
+[17:00] <Laney> what's responsible for displaying the bootdegraded prompt?
+[17:00] <Laney> (changing the topic ...)
+[17:02] <stgraber> hallyn: bug 1102487
+[17:02] <ubottu> bug 1102487 in libvirt (Ubuntu) "VM won't boot after recent qemu upgrade" [Undecided,New] https://launchpad.net/bugs/1102487
+[17:02] <stgraber> hallyn: sorry for the pretty short description but I have to run to a meeting
+[17:02]  * Laney adds some info
+[17:03] <hallyn> stgraber: thanks :)
+[17:08] <jodh> on the topic of kvm, anyone else having major vm performance degradation after recent update?
+[17:10]  * Laney gets far enough to find out
+[17:11] <hallyn> jodh: make sure to add '-enable-kvm' to cmdline if you're running byhand
+[17:11] <hallyn> (libvirt always does it for you)
+[17:12] <jodh> hallyn: I get the following when modprobing kvm_intel (which used to work for me): 'kvm: VM_EXIT_LOAD_IA32_PERF_GLOBAL_CTRL does not work properly. Using workaround'
+[17:12] <Laney> it's hard to tell
+[17:14] <jodh> hallyn: thanks - that did it! Must be a behavioural change as kvm worked fine last week without that option.
+[17:14] <hallyn> jodh: yes, it's due to the switch from qemu-kvm to qemu upstream source
+[17:15] <hallyn> unfortunately that's the simplest change to fix, it seems :(
+[17:15] <hallyn> s/fix/work around
+[17:17] <jodh> hallyn: but hey, one down... ;)
+=== Tonio_ is now known as Tonio_aw
+[17:26] <hallyn> jodh: I'm afraid that one is going to weird out a lot of ppl.  I noted it in README.debian, but that really isn't very discoveraable imo
+[17:27] <GuidoPallemans> where can I find all the GIcon icons?
+[17:31] <infinity> hallyn: The patch is from upstream.  I agree that the initial || looks odd, but the rest makes sense.
+[17:33] <hallyn> infinity: but it doesn't make any effective change...
+[17:35] <cjwatson> amd64/i386 builders are back
+[17:36] <infinity> hallyn: Did you follow the brackets?
+[17:36] <cjwatson> ... or not
+[17:38] <infinity> hallyn: if (size > BIG || (size > SMALL && register_set)) && other_register_set)
+[17:38] <infinity> hallyn: The brackets are important.
+[17:38] <jodh> hallyn: invocation now certainly has a tautological element to it :)
+[17:40] <hallyn> infinity: ah, there it is :)  yes somehow i didn't see those.  i don't know how.  thanks
+[17:40] <infinity> mlankhorst: Do we get that mesa/libdri linkage fix in Q and R as well, or just lts-quantal?
+[17:41] <infinity> hallyn: I'm with you, I find nested brackets REALLY hard to track across line breaks.
+[17:41] <infinity> hallyn: Which is why I copy and pasted it out and removed all the \n
+[17:41] <hallyn> infinity: i was goign to blame the transparent terms.
+[17:56] <mlankhorst> infinity: it's just for lts-quantal probably, which one do you mean?
+[17:57] <hallyn> stgraber: Laney: good news, I see how I messed up the audio card list in packaging.
+[17:57] <hallyn> I can't however reproduce problems with the cpu lists
+[17:57] <hallyn> so let's see if when i uplaod a new version, maybe magically it'll fix it all
+[17:57] <hallyn> (for me adding all those features to sandybridge cpu works fine)
+[18:03] <Laney> nice, i'll try that tomorrow
+[18:03] <infinity> mlankhorst: The libcricore static linkage thing.  It's just as much a bug in raring as it is in precise-lts-quantal, IMO.
+[18:03] <Laney> night!
+[18:03] <mlankhorst> infinity: yes but for raring we're moving to a new mesa, in which case we can do it in a much cleaner way
+[18:04] <infinity> mlankhorst: Mmkay.
+[18:04] <mlankhorst> there have been some patches on the mailing list, but with build system still in flux I've been holding it off
+[18:06] <mlankhorst> as for quantal, well we could enable it if you want to, but size hasn't been as much as a concern with the cd requirement lifted, so we felt that it wasn't appropriate to enable close to release
+[18:30] <infinity> mlankhorst: For Q, it would be more about keeping the Q and lts-Q packages in sync, since the latter is meant to just be a backport of the former.
+[18:30] <mlankhorst> yeah I'm aware, but quantal didn't have the size considerations lts-q does
+[18:31] <mlankhorst> so while I originally made the patch for q, being close to release time meant I didn't want to risk enabling it.
+[18:34] <infinity> mlankhorst: Sure, but that was months ago, and this is now.  No release pending, just an SRU.
+[18:34]  * infinity shrugs.
+[18:34] <mlankhorst> I suppose if you really want one. :P
+[18:35] <infinity> I'm not wildly picky, to be fair.  Will the next lts-backport stack in .3 also be Q, or will it be R by then?
+[18:35] <mlankhorst> r
+[18:35] <infinity> Okay, then if this is fixed properly in R, that's probably fine, if you'll never need to backport the Q mesa again.
+[18:36] <mlankhorst> I can easily make it part of the scripts to uncomment it for quantal
+[18:36] <infinity> (Of course, if the Q mesa has a CVE or other reason for SRU, it's way less effort in the future to apply fix to Q, backport with scripts to lts-q, done)
+[18:37] <infinity> I guess what I'm driving at is that I see this as a real bug, not as a "we're pretending it's a bug due to ISO space constraints").
+[18:39] <mlankhorst> the script could be made to do the same transformation
+[18:40] <infinity> mlankhorst: Yes, but why?  The backport script shouldn't be fixing bugs, only mangling things needed to backport successfully.
+[18:40] <infinity> mlankhorst: If there are bugs, they should be fixed in the source being backported, not the target backported to.
+[18:41] <mlankhorst> we're already doing something like that for xorg-server, since lightdm passes -nc to the xserver, instead of -background none
+[18:47] <infinity> mlankhorst: And is that a bug that should have been fixed in Q, or something that's P-specific?
+[18:47] <mlankhorst> p specific
+[18:48] <infinity> mlankhorst: Right, so script mangling that is fine.
+[18:48] <infinity> mlankhorst: This is what I'm arguing for the mesa thing, it's not P-specific.
+[18:49] <infinity> mlankhorst: We *noticed* it because of the P images being large and going hunting for the cause(s), but that doesn't make it any less a bug in Q/R.
+[18:49] <infinity> Recklessly shipping tons of copies of something statically linked is always a bug (sure, not a hugely critical one, if it's all from the same source package, but still sloppy)
+[18:50] <infinity> And while a single package maintainer can say "so what, it's only 10MB?", if every package had the same attitude, your installed system would be twice as big, or more. :P
+[18:50] <infinity> Hence, bug.
+[18:50] <mlankhorst> it's going to be fixed in raring
+[18:50] <infinity> Check.
+[19:03] <mlankhorst> infinity: http://lists.freedesktop.org/archives/mesa-dev/2012-August/026040.html
+[19:07] <infinity> mlankhorst: So, in that latest mesa-lts-quantal build, the sizes of /usr/lib/<triplet>/dri/*.so are still huge compared to the P versions...
+[19:07] <infinity> mlankhorst: Did your patch build things shared, but not actually link to the shared versions?
+[19:08] <mlankhorst> it is actually smaller
+[19:09] <infinity> -rw-r--r-- 1 root root 1284072 Mar 30  2012 r600_dri.so
+[19:09] <infinity> -rw-r--r-- root/root   3405324 2013-01-21 18:16 ./usr/lib/i386-linux-gnu/dri/r600_dri.so
+[19:09] <infinity> Old and new.
+[19:09] <mlankhorst> but I mean smaller than it was before
+[19:10] <mlankhorst> I'm unsure since the build system changed and I think the drivers started using llvm, is there any way to check what's causing the size?
+[19:20] <stgraber> @pilot out
+=== udevbot changed the topic of #ubuntu-devel to: Ubuntu 12.10 released | Archive: Open | Dev' of Ubuntu (not support or app devel) | build failures -> http://qa.ubuntuwire.com/ftbfs/ | #ubuntu for support and dicussion of hardy -> quantal | #ubuntu-app-devel for app development on Ubuntu http://wiki.ubuntu.com/UbuntuDevelopment | See #ubuntu-bugs for http://bit.ly/lv8soi | Patch Pilots:
+[19:25] <infinity> mlankhorst: Okay, yeah, you're right, the size did drop a little.  But it certainly isn't as much as I'd been hoping, given the previous size of these modules.
+[19:28] <infinity> mlankhorst: Err, and the original complaint (linking statically against libdricore) is still there.
+[19:28] <mlankhorst> oh ok, I'll try to see if I can get libdricore dynamic too, then
+[19:29] <infinity> mlankhorst: http://paste.ubuntu.com/1556311/
+[19:29] <mlankhorst> hmz indeed
+[19:29] <mlankhorst> but there is no libdricore.a..
+[19:30] <infinity> I'm sure there is during the build.
+[19:30] <mlankhorst> nope :/
+[19:34] <infinity> libtool: install: (cd /build/buildd/mesa-lts-quantal-9.0/build/dri/src/mesa/drivers/dri/i915; /bin/bash /build/buildd/mesa-lts-quantal-9.0/build/dri/libtool  --silent --tag CC --mode=relink gcc -DI915 -I../../../../../../../include -I../../../../../../../src/ -I../../../../../../../src/mapi -I../../../../../../../src/mesa/ -I../../../../../../../src/mesa/drivers/dri/common -I../../../../../../../src/mesa/drivers/dri/intel -I../../../../../../../src/
+[19:35] <infinity> Gah.
+[19:35] <infinity> LONG LINE IS LONG.
+[19:35] <infinity> Sorry about that.
+[19:36] <Laney> it got cut off anyway
+[19:36] <infinity> mlankhorst: Anyhow, I bet you'll find that, at that point in the build, ../../../../../src/mesa/libdricore/libdricore9.0.0.la references a bunch of static objects instead of a shared linking script.
+[19:36] <infinity> Laney: Phew.
+[19:38] <infinity> mlankhorst: So, we go to all the trouble to build a proper shared library and then fail to use it, it would seem.
+[19:40] <mlankhorst> it might appear to be so
+[19:40] <roadmr> hey folks, what's the proper way to get bugs unlinked from an SRU? Deleting the link from the merge request? One of my SRUs failed one verification, I removed the code and resubmitted, but that bug still shows in the SRU queue
+[19:42] <infinity> mlankhorst: And, indeed, the link lines on 8.0.x include an -ldricore (and an appropriate -L, I assume), which makes it all better.
+[19:42] <infinity> roadmr: Hrm?  Which SRU?
+[19:43] <mlankhorst> upstream fail :/
+[19:43] <roadmr> infinity: checkbox 0.13.9, the fix for bug 990133 was bad so I removed it, yet it still shows in the pending-sru thing
+[19:43] <ubottu> bug 990133 in checkbox (Ubuntu Precise) "[camera/still] window that opens to display still image doesn't close" [Undecided,Fix committed] https://launchpad.net/bugs/990133
+[19:43] <mlankhorst> oh i guess not
+[19:44] <infinity> roadmr: That's because you uploaded with -v
+[19:44] <infinity> roadmr: This is one of those rare cases where you don't want to do that. :P
+[19:45] <infinity> roadmr: But we can work around it, if all the other bugs verify fine.
+[19:45] <mlankhorst> must have missed it during the rebase of that patch
+[19:45] <roadmr> infinity: I didn't do the upload myself :( -v to which tool?
+[19:45] <infinity> roadmr: Poke me when every other bug is (re)verified, and we'll make it go.
+[19:46] <roadmr> infinity: thanks so much, I'll do that and get back to you (probably tomorrow, some of those bugs are a bit time-consuming to verify)
+[19:46] <infinity> roadmr: Well, it's not just about who did the upload.  In this case, you would have had to drastically change the changelog.  I wouldn't worry about it, personally.  There are humans involved in this process for a reason.  We're generally smarter than the tools.
+[19:46] <infinity> (Generally)
+[19:47] <roadmr> infinity: heheh :) nice comment about humans. OK, I'll get a-verifying and trouble you for help once all verifiable bugs are done
+[19:47] <infinity> roadmr: The SRU is only 2 days old, no huge rush.  Get back to me when it's all happy.
+[19:48] <roadmr> will do, thanks :)
+=== Tonio_aw is now known as Tonio_
+=== salem_ is now known as _salem
+=== Tonio_ is now known as Tonio_aw
+=== sraue_ is now known as sraue
+[21:18] <stgraber> cjwatson: and one more of my e-mails for you to let through ubuntu-devel-announce ;)
+[21:19] <cjwatson> my kingdom for listadmin bash completion
+[21:19] <cjwatson> done
+[21:21] <stgraber> thanks :)
+[21:28] <infinity> cjwatson: You could always share the u-d-a moderation burden.
+[21:28] <cjwatson> 'cos it's so hard :)
+[21:29] <cjwatson> I thought at least a couple of other people had them, but maybe they're all mostly-emeritus by now
+[21:29] <slangasek> I suspect that's the case
+[21:29] <infinity> cjwatson: You, mdz, and Keybuk.
+[21:29] <slangasek> I think I have access to said queue, but receive no notifications :)
+[21:29] <infinity> cjwatson: So, yeah.  Just you.
+[21:29] <cjwatson> Do I smell two volunteers?
+[21:30] <infinity> cjwatson: You could always give it the same password as ubuntu-archive@ and those of us who care could add ourselves to the admin notifications.
+[21:30] <slangasek> I have no problem being added to the list of suckers
+[21:30] <cjwatson> Meh, or I could just give you the current password
+[21:30] <infinity> Or that.
+[21:30] <infinity> But then I need to remember it.  Which is sooo haaard.
+[21:31] <Laney> you need to teach it to listadmin ;-)
+=== cmagina is now known as cmagina_away
+[23:51] <roaksoax> soren: howdy! yeah i removed it from the agenda as its US Holiday today and wasnt gonna be able to make it!! cheers

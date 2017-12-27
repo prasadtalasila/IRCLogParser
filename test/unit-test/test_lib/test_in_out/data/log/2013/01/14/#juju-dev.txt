@@ -1,0 +1,340 @@
+=== bigjools_ is now known as bigjools
+=== jtv2 is now known as jtv
+[04:45] <jam> wallyworld__: welcome back! I hope you had a great break
+[04:45] <wallyworld__> jam: thanks, yes it was great. i hardly opened the computer at all. it was against the rules i was told by the better half
+[04:46] <jam> :)
+[04:46] <jam> did you travel at all?
+[04:46] <wallyworld__> jam: how was your break?
+[04:46] <wallyworld__> jam: yes, went north to mackay to visit a friend
+[04:46] <wallyworld__> went to the whitsunday islands etc, very nice
+[04:46] <jam> pretty good. No travelling, but took it easy, did lots of family stuff.
+[04:46] <wallyworld__> yeah, back to reality today :-(
+[05:10] <wallyworld__> jam: i have to go and get the car back from the repairer, may be a few minutes late for our call
+[05:10] <jam> wallyworld__: np
+[06:03] <wallyworld__> jam: hi, you free now?
+[06:08] <jam> wallyworld__: yeah, sorry I missed your message.
+[07:26] <TheMue> *: Morning.
+[07:51] <rogpeppe> fwereade_, jam, mgz, TheMue, wallyworld__: mornin' all
+[07:51] <jam> morning rogpeppe
+[07:51] <TheMue> rogpeppe: hiya
+[07:51] <wallyworld__> g'day
+[07:52] <fwereade_> rogpeppe, jam, TheMue, mgz, wallyworld__: mornings!
+[08:39] <rogpeppe> fwereade_: thinking about it last weekend, i definitely think that checking for state-fatal errors (and having workers be more independent) is the way to go
+[08:39] <fwereade_> rogpeppe, cool
+[08:39] <rogpeppe> fwereade_: i have an idea for how it might work actually
+[08:39] <fwereade_> rogpeppe, oh yes?
+[08:40] <rogpeppe> fwereade_: rather than making sure that errors need to be passed back preserving the "this was caused by a state-fatal problem" property, we could make the underlying operations on state check the error from mongo, and record a "was fatal" flag in the state if it found one
+[08:41] <rogpeppe> fwereade_: then we could just check the state to see if we should reconnect or not
+[08:41] <rogpeppe> fwereade_: when we get an error from a worker
+[08:41] <fwereade_> rogpeppe, do you recall what the problem that prevents us from checking the state's liveness/sanity in the first place was?
+[08:42] <fwereade_> rogpeppe, because I worry a little that setting broken state *everywhere* we return some mongo error may be somewhat burdensome and hard to do right
+[08:42] <rogpeppe> fwereade_: no, but i'm wary of another probe - particularly when we might have timeout errors
+[08:43] <fwereade_> rogpeppe, hm, reasonable, still not 100% sure that solution will cover us adequately
+[08:43] <rogpeppe> fwereade_: i don't think it's necessarily a problem - if we wrap Run we get a long way
+[08:45] <fwereade_> rogpeppe, mm, I'm more worried about the arbitrary gets of a doc here, a few fields there, etc
+[08:45] <rogpeppe> fwereade_: basically, i think we can wrap a few mgo methods to check the error, and i *think* that'll be sufficient
+[08:46] <fwereade_> rogpeppe, yeah, maybe we're restricted to something like  FindCount, FindOne, FindAll, FindFieldsOne, FindFieldsAll
+[08:46] <fwereade_> rogpeppe, interesting
+[08:46] <rogpeppe> fwereade_: yeah, that's the idea
+[08:47] <fwereade_> rogpeppe, tentative SGTM then
+[08:53] <rogpeppe> fwereade_: cool, we'll see.
+[08:53] <rogpeppe> fwereade_: just gotta reboot
+[09:09] <dimitern> jam: ping
+[09:59] <fwereade> rogpeppe, TheMue, dimitern, jam, mgz: btw I have a couple more doc drafts in review: https://codereview.appspot.com/7094052/ and https://codereview.appspot.com/7095049/
+[09:59] <fwereade> all lifecycle-related and mostly accurate
+[10:00] <fwereade> but the service destruction stuff is speculative -- it already exists in slightly different form, but needs to be reworked as agreed elsewhere
+[10:00] <rogpeppe> fwereade: will have a look in a bit. thanks.
+[10:00] <TheMue> fwereade: *click*
+[10:06] <aram> moin.
+[10:17] <TheMue> aram: moin
+[10:27] <fwereade> TheMue, what's the status of 006-state-retry-delay?
+[10:28] <TheMue> fwereade: I'll get an answer by Dave tomorrow why he prefers a different solution.
+[10:29] <TheMue> fwereade: He has it on his todo but didn't found time for it today, so he sent me a little note.
+[10:31] <fwereade> TheMue, ok, cheers
+[10:32] <fwereade> rogpeppe, 181-mgo-show-log has been approved for a while, is it ok?
+[10:33] <rogpeppe> fwereade: hmm, i'd forgotten about that
+[10:34] <rogpeppe> fwereade: will submit
+[10:35] <fwereade> rogpeppe, cool
+[10:38] <rogpeppe> fwereade: thanks - i should really go through my outstanding CLs some time!
+[10:48] <niemeyer> Gooood morning all!
+[10:48] <dimitern> niemeyer: hey, morning :) happy new year and congrats on the baby!\
+[10:49] <niemeyer> dimitern: Thanks, and happy new year too
+[10:50] <fwereade> niemeyer, heyhey!
+[10:50] <fwereade> niemeyer, happy new year and many congratulations!
+[10:50] <niemeyer> William!
+[10:50] <fwereade> niemeyer, you had any sleep yet? ;p
+[10:51] <niemeyer> fwereade: Kind of :-)
+[10:51] <fwereade> niemeyer, cool, treasure it ;)
+[10:51] <TheMue> niemeyer: Oh, hello, and a happy new year and grats to the new born child from my side too.
+[10:52] <niemeyer> fwereade: Ale is obviously suffering a bit more as every other hour he demands her attention
+[10:53] <fwereade> niemeyer, yeah, it can all get a bit much
+[10:53] <niemeyer> TheMue: Heya! Thanks!
+[10:55] <TheMue> niemeyer: Even if the first weeks are hard enjoy them. Little children are a precious wonder, and getting a smile opens the heart.
+[10:56] <niemeyer> TheMue: Yeah, we're definitely enjoying it a lot
+[10:59] <TheMue> niemeyer: For us this time is now so long away, but still each day is different and interesting. Currently we're discussing ideas about jobs and our older daughter now has a driver license (and we no car anymore, she's using it all the time). :D
+[11:04] <rogpeppe> niemeyer: yo!
+[11:05] <rogpeppe> niemeyer: brilliant news, BTW, i was so happy when i saw your G+ announcement.
+[11:06] <niemeyer> rogpeppe: Hey man!
+[11:06] <niemeyer> rogpeppe: Thanks for sharing the joy
+=== _mup__ is now known as _mup_
+[11:29] <hazmat> niemeyer, g'morning, and congratulations!
+[11:29] <niemeyer> hazmat: Morning, and thanks!
+[11:30] <TheMue> lunchtime
+[11:43] <rogpeppe> fwereade: https://codereview.appspot.com/7096054
+[11:44] <fwereade> rogpeppe, cheers
+[11:45] <rogpeppe> niemeyer: you might wanna take a look too - there's a new package that hopefully you won't consider too crackful :-)
+[11:47] <niemeyer> rogpeppe: I'll start from the bottom up
+[11:47] <rogpeppe> niemeyer: where's the bottom? :-)
+[11:48] <niemeyer> rogpeppe: I'll have a look at the changes done since I went out
+[11:48] <rogpeppe> niemeyer: good plan
+[11:52] <rogpeppe> fwereade: what's your intended audience for the docs? much of the death-and-destruction document seems to me like it might live more happily as comments inside the state package.
+[11:52] <fwereade> rogpeppe, yeah, I had that though too
+[11:53] <rogpeppe> fwereade: in particular, talking about transactions seems like it's really very implementation-specific. i'd thought that the docs were to be higher level.
+[11:53] <fwereade> rogpeppe, the trouble with the state docs is that they are by their nature distributed across files and it's hard to explain things clearly that way
+[11:54] <rogpeppe> fwereade: perhaps an overview doc comment in state.go might be the way forward
+[11:55] <rogpeppe> fwereade: i'd like to see some docs on death and destruction that will still be valid after we've moved over to using the API
+[11:55] <fwereade> rogpeppe, but the real purpose of that CL is to get people either agreeing or disagreeing with what's there, because I feel like the state package is approaching maturity
+[11:55] <fwereade> rogpeppe, will those not still be valid?
+[11:55] <fwereade> rogpeppe, the same stuff will happen, but in a different place, surely?
+[11:58] <rogpeppe> fwereade: i'm just not sure how helpful it is to see the implementation details (e.g. "Removing a unit involves *two* transactions, defined as follows:") when what we're trying to do, i think, is document what we're aiming towards - the externally visible behaviour rather than the details of how we make that happen.
+[11:59] <rogpeppe> fwereade: i'm not saying that it's not good to have implementation details somewhere, but i *think* that closer to the source is better for those.
+[11:59] <fwereade> rogpeppe, I need at least one other person to analyze my plans at this level of detail
+[12:00] <rogpeppe> fwereade: i think that's a great plan, but i think that should be either an email to juju-dev or a doc comment in state. i still think it's worth having a document that summarises at a high level (and hopefully very simply) our approach to death and destruction.
+[12:03] <fwereade> rogpeppe, I think the line-by-line comments make a CL a good discussion point; much of it may go well in doc comments, but to evaluate it all properly you do kinda need to read it all and check it's internally consistent
+[12:03] <rogpeppe> fwereade: ok, i'll review it as if it were a doc comment
+[12:03] <fwereade> rogpeppe, last time I tried a braindump of this nature doc/draft was suggested as an appropriate landing point
+[12:04] <rogpeppe> fwereade: well, if others differ, i'm happy to defer to them. this was just my initial reaction when going through the doc.
+[12:06] <fwereade> rogpeppe, cool -- I think there's a lot of value to having that information all collected in one place
+[12:06] <rogpeppe> fwereade: it does seem very implementation-specific to me, something that would live happily in state, as you don't need to know any of those details externally to state.
+[12:07] <rogpeppe> fwereade: hence my suggestion for putting it in state as a doc comment
+[12:07] <rogpeppe> fwereade: or is there more of a cross-package nature to the doc that i'm not seeing?
+[12:09] <fwereade> rogpeppe, it's not cross-package, and it's definitely all about state, but it's a complex-enough topic that I think distributing the docs across comments for various methods on various types will be counterproductive
+[12:09] <rogpeppe> fwereade: that's not what i'm suggesting
+[12:09] <rogpeppe> fwereade: i'm suggesting that we could have it as a single comment/.
+[12:09] <rogpeppe> fwereade: maybe even in its own file, doc.go
+[12:11] <fwereade> rogpeppe, I think that's a place for API docs, which are not quite the same thing
+[12:11] <fwereade> rogpeppe, but I may be wrong
+[12:11] <rogpeppe> fwereade: we have many comments about the internal implementation too; they're not visible with godoc, but they're still useful when working on state.
+[12:12] <rogpeppe> fwereade: this doc seems like it comes into a similar category
+[12:15] <fwereade> rogpeppe, perhaps so -- I'm basically treating doc/draft as a sort of holding area for things that I feel ought to be written down
+[12:16] <fwereade> rogpeppe, writing that stuff down was important for coming to understand it all better myself
+[12:16] <rogpeppe> fwereade: fair enough. i hadn't realised that - to my shame this is the first of your drafts i've looked at, and i was presuming it was all higher level stuff.
+[12:16] <fwereade> rogpeppe, no worries
+[12:17] <fwereade> rogpeppe, the original plan for the first stuff that went in there was "give the technical writer something to start with"
+[12:28] <rogpeppe> aram, TheMue, dimitern, jam, mgz: any chance of a second look at this CL? https://codereview.appspot.com/7096054
+[12:28] <dimitern> rogpeppe: looking
+[12:28] <rogpeppe> dimitern: ta!
+[12:28] <jam> rogpeppe: I'm *really* not a fan of global state like that mutex. Is it possible to put it struct local?
+[12:29] <jam> (*c = *nc) is a bit scary, but I sort of understand why.
+[12:30] <rogpeppe> jam: i agree in principle, but in this case, i really want to keep the struct with all-exported fields. also, i want it to work even if two agents are using different config structs that point to the same datadir/entity
+[12:30] <rogpeppe> jam: i *could* have a global mutex per dataDir/entity, but that would be overkill
+[12:31] <rogpeppe> jam: (and i'd still need a global mutex to guard access to that!)
+[12:31] <dimitern> rogpeppe: LGTM
+[12:31] <rogpeppe> dimitern: thanks
+[12:38] <dimitern> fwereade: +1 on https://codereview.appspot.com/7094052/
+[12:39] <fwereade> dimitern, tyvm
+[12:53] <rogpeppe> fwereade, niemeyer: i think we need a collection in the state that holds entity-name/password pairs (as distinct from mgo user/password pairs, currently used, which will eventually only be used by the API servers). i thought about calling it "users". how does that seem to you?
+[12:54] <niemeyer> rogpeppe: Hard to tell without background
+[12:54] <rogpeppe> niemeyer: ok
+[12:54] <fwereade> rogpeppe, seems to echo my own ill-formed thoughts but I don't think I can justify it to myself yet, would like to hear more
+[12:54] <rogpeppe> niemeyer: so... eventually, when everything possible is going through the API, we don't want a random agent to be able to connect directly to the state
+[12:55] <niemeyer> rogpeppe: Indeed
+[12:55] <rogpeppe> niemeyer: so our current approach of storing mongo user/passwords won't fly, so we need to store the passwords somewhere else.
+[12:55] <rogpeppe> niemeyer: and inside the state seems like the most reasonable (only possible?) approach
+[12:55] <niemeyer> rogpeppe: Ideally we should never store passwords themselves
+[12:56] <rogpeppe> niemeyer: sure, we'll store them hashed
+[12:56] <niemeyer> rogpeppe: s/them hashed/their hashes/ yes
+[12:56] <rogpeppe> niemeyer: i'm thinking that the current SetPassword will end up renamed to (perhaps) SetMongoPassword
+[12:57] <rogpeppe> niemeyer: and that SetPassword will operate on the mongo collection
+[12:58] <rogpeppe> niemeyer: then when the provisioner want to allocate a new machine that's allocated the APIServerJob job, it will additionally add a password for the new agent using SetMongoPassword
+[12:59] <rogpeppe> niemeyer: so that the new machine agent can access the state directly.
+[12:59] <niemeyer> rogpeppe: Not entirely sure about that
+[13:00] <niemeyer> rogpeppe: Who would use unit.SetMongoPassword?
+[13:00] <rogpeppe> niemeyer: the provisioner
+[13:00] <rogpeppe> niemeyer: (only)
+[13:00] <niemeyer> rogpeppe: Why?
+[13:00] <niemeyer> rogpeppe: The unit should never connect to the state
+[13:00] <niemeyer> rogpeppe: To mongodb, that is
+[13:00] <rogpeppe> niemeyer: i thought we had agreement that the API server would be just another job that the machine agent could run
+[13:02] <rogpeppe> niemeyer: (and i've been proceeding on the basis of that understanding)
+[13:02] <niemeyer> rogpeppe: That seems completely unrelated to what I just said
+[13:03] <rogpeppe> niemeyer: ah, sorry, i'd missed the "unit" bit
+[13:03] <rogpeppe> niemeyer: yes, we wouldn't have that method
+[13:03] <rogpeppe> niemeyer: just Machine.SetMongoPassword
+[13:05] <rogpeppe> niemeyer: although we'd leave Unit.SetMongoPassword around for the time being, until the unit no longer needs to connect directly to the state.
+[13:10] <niemeyer> rogpeppe: +1
+[13:10] <rogpeppe> niemeyer: cool, thanks
+[13:13]  * fwereade -> lunch
+[13:14] <rogpeppe> fwereade: enjoy!
+[13:26] <rogpeppe> jam: are you ok with this CL after my explanation? i won't submit unless you are. https://codereview.appspot.com/7096054
+[13:31] <hazmat> are the ostack and ec2 public containers are global across accounts?
+[13:32] <rogpeppe> hazmat: yes
+[13:32] <rogpeppe> hazmat: well, the ec2 public containers are
+[13:32] <rogpeppe> hazmat: (that's kinda the point)
+[13:32] <hazmat> we're looking for a fallback location to publish cloud image streams/data, istm that those locations might be reasonable choices then if their global to the provider in question.
+[13:33] <dimitern> rogpeppe: but the OS ones seem account-dependant
+[13:33] <jam> rogpeppe: how about a comment that we use a global because what we are actually locking is the filesystem paths. Though arguably you need an on-disk lock for that.
+[13:33] <dimitern> rogpeppe: I can have the same container as another user and using ACLs both than be made public, with different URLs
+[13:33] <jam> rogpeppe: otherwise, I'm certainly not -1 on it. So you can land it.
+[13:34] <rogpeppe> jam: yeah, i'm assuming that we only care about concurrent use within a given agent, which means a lock inside the agent is sufficient
+[13:34] <rogpeppe> dimitern: hmm, how's the juju public-bucket stuff done then?
+[13:35] <rogpeppe> dimitern: ('cos there we really want to avoid uploading tools every time)
+[13:35] <rogpeppe> jam: but i'll add a comment. thanks for the feedback.
+[13:36] <dimitern> rogpeppe: well, wallyworld__ or mgz can tell you more details, but what we agreed upon is to have a public container (with ACLs) per region for the tools in OS
+[13:37] <dimitern> rogpeppe: and specify it's full URL in environments.yaml
+[13:37] <rogpeppe> dimitern: that seems like what i'd expected. global across acounts?
+[13:37] <rogpeppe> dimitern: ah, so rather than specifying a bucket name, we specify the URL.
+[13:37] <rogpeppe> dimitern: that seems fine too.
+[13:37] <dimitern> rogpeppe: depends on how you define "global" - definitely they're not in a single namespace
+[13:38] <mgz> rogpeppe: the goal will be what we talked about in denmark, with a tool to mirror the tools from ec2 to your openstack deployment
+[13:38] <mgz> but we'll also support per-tenant tools, and that's what's going to work first.
+[13:38] <rogpeppe> dimitern: it still sounds like a reasonable place for hazmat's need, i'd guess though.
+[13:39] <rogpeppe> mgz: sounds good
+[13:40] <hazmat> dimitern, its not a single namespace, but it is a url/container that can be reference'd across accounts for tool access which would suffice for also storing/publishing the image stream/data.
+[13:40] <dimitern> rogpeppe: in this sense "global", as in one for all environments running on canonistack region lcy01, yes they are global, but still a specific user/tenant account creates it
+[13:41] <rogpeppe> dimitern: true of ec2 too, although the bucket names themselves are global too.
+[13:41] <dimitern> hazmat: yeah, provided we have easy means (tools) to update and sync the tools in the global location (per region and per OS installation)
+[13:41] <rogpeppe> on ec2, that is
+[13:42] <dimitern> what I'm doing now is making juju bootstrap work (hopefully :) ) on canonistack with goose - using this global container url
+[13:44] <dimitern> mgz: is there a need for both public-bucket and public-bucket-url in the config?
+[13:51] <mgz> dimitern: public-bucket is not strictly needed, but we'd hardcode a string for it otherwise
+[13:53] <dimitern> mgz: not only it's not needed, I don't see it used - it's just confusing
+[13:53] <dimitern> mgz: maybe at lest a TODO or something would be nice
+[13:53] <mgz> we'll use it for the uploading of tools
+[13:53]  * rogpeppe goes for some lunch
+[13:58] <dimitern> mgz: isn't that what the control bucket is used for?
+[14:02] <dimitern> mgz: I see it now - in provider.SetConfig() - but I'm confused - why do we need 2 buckets now?
+[14:19] <fwereade> dimitern, because we generally want people not to have to build and/or upload their own tools: they can get theirs from the public bucket
+[14:20] <fwereade> dimitern, but we also sometimes want to deploy our own tools, eg with juju bootstrap --upload-tools
+[14:20] <fwereade> dimitern, and so we need to use our own private bucket for those
+[14:21] <fwereade> dimitern, the control bucket also holds the charm bundles IIRC
+[14:22] <dimitern> fwereade: so the control bucket (private one) always has either the tools from the public bucket or the ones we upload with --upload-tools specifically
+[14:23] <fwereade> dimitern, I can't remember if we copy public tools into the private bucket; rogpeppe would probably know
+[14:23] <dimitern> fwereade: and if we don't we just copy the tools from the public bucket to the control bucket on bootstrap?
+=== TheMue_ is now known as TheMue
+[14:23] <dimitern> fwereade: I see
+[14:23] <fwereade> dimitern, I *think* so, let me check something
+[14:25] <fwereade> dimitern, environs/cloudinit/cloudinit.go:105
+[14:25] <fwereade>         fmt.Sprintf("wget --no-verbose -O - %s | tar xz -C $bin", shquote(cfg.Tools.URL)),
+[14:25] <fwereade> dimitern, hm sorry that's not so helpful
+[14:26] <fwereade> dimitern, rogpeppe will remember the details of how they're distributed
+[14:29] <dimitern> fwereade: I'm looking at cloudinit.go - so this happens after or during bootstrap?
+[14:31] <fwereade> dimitern, ok, look quickly at environs/ec2/ec2.go:234
+[14:32] <fwereade>     if uploadTools {
+[14:32] <fwereade> dimitern, tools comes from either PutTools or FindTools
+[14:37] <dimitern> fwereade: sorry, my router went berserk again
+[14:37] <fwereade> dimitern, np, so did mine
+[14:38] <fwereade> I didn't actually say much, what was the last thing you saw?
+[14:38] <dimitern> fwereade: I'm looking at cloudinit.go - so this happens after or during bootstrap?
+[14:39] <fwereade> dimitern, the cloudinit file is used to bootstrap each instance, whatever it will end up running, and one of the things you see it doing there
+[14:39] <fwereade> dimitern, is wgetting the tools from the *Tools that was passed in
+[14:39] <dimitern> fwereade: but how does it get called?
+[14:39] <fwereade> dimitern, that *Tools comes from environs/ec2/ec2.go:234...
+[14:40] <dimitern> fwereade: ah, now I see
+[14:41] <fwereade> dimitern, where it does either PutTools (to upload) or FindTools(to pick the right sort); when FindTools is subsequently used, it check for PutTollsed tools before falling back to the public bucket
+[14:41] <fwereade> dimitern, but it doesn't do any copying into the control bucket that I can see except when it's uploading the local tools
+[14:42] <dimitern> fwereade: yeah, that's it then
+=== slank_away is now known as slank
+[14:53] <rogpeppe> back
+[14:54] <rogpeppe> fwereade: yup, that's right
+[16:08] <rogpeppe> mechanical rename CL; trivial if you agree with the rename. https://codereview.appspot.com/7098053
+[16:09] <rogpeppe> fwereade, TheMue, aram, niemeyer: ^
+[16:09] <TheMue> rogpeppe: *click*
+[16:11] <rogpeppe> niemeyer, fwereade: i was thinking that, rather than have a separate user/password collection, the best place to store the passwords would be in the entity docs themselves. does that make sense to you?
+[16:11] <niemeyer> rogpeppe: I still feel it's slightly awkward to expose Mongo at that level of the API, but this feels like a bike-sheddy discussion that won't drive us anywhere. +1 on moving forward with this and reducing impact later.
+[16:12] <rogpeppe> niemeyer: we could call it CoreDBPassword or something
+[16:12] <niemeyer> rogpeppe: It's fine as it is for now.. it'll be more useful to get rid of the method where possible ASAP
+[16:13] <rogpeppe> niemeyer: yeah
+[16:13] <niemeyer> rogpeppe: Regarding storing the password in the entity doc, sounds reasonable in principle (without looking at details)
+[16:14] <rogpeppe> niemeyer: the only issue that i can see is that the state open process will want a way to map from entity name to entity, so it can check the password
+[16:14] <rogpeppe> niemeyer: but if you're ok with that, i think there's a clear path
+[16:14] <niemeyer> "state open process"?
+[16:15] <rogpeppe> niemeyer: sorry, state.Open
+[16:15] <niemeyer> Ah
+[16:15] <niemeyer> rogpeppe: I think it's fine
+[16:15] <TheMue> rogpeppe: You'vve got  a review
+[16:16] <niemeyer> rogpeppe: We'll eventually need that anyway to be able to constrain access on a per-entity basis
+[16:16] <rogpeppe> niemeyer: i'm thinking func (st *State) entity(entityName string) (entity, error); type entity interface {SetPassword(pass string) error; HashedPassword() string; possible other methods}
+[16:16] <rogpeppe> niemeyer: perhaps Entity instead of entity
+[16:16] <niemeyer> rogpeppe: Why do we need that?
+[16:17] <rogpeppe> niemeyer: that's a way to map from entity name to entity
+[16:17] <niemeyer> rogpeppe: I now perceive I don't understand what you meant
+[16:18] <rogpeppe> niemeyer: inside state.Open, we need a way to find the hashed password for an entity given an entity name
+[16:18] <niemeyer> rogpeppe: and why is that non-trivial?
+[16:19] <rogpeppe> niemeyer: i guess state.Open could dive directly into the entity doc
+[16:19] <rogpeppe> niemeyer: perhaps that would be better - is that what you're thinking?
+[16:20] <niemeyer> rogpeppe: Yeah, feels like simple switch statement
+[16:21] <rogpeppe> niemeyer: i was thinking of a simple switch statement actually: switch entityKind {case "unit": return st.Unit(name); case "machine": return st.Machine(name) }
+[16:22] <rogpeppe> niemeyer: and Unit and Machine will already implement the methods in the entity interface
+[16:22] <rogpeppe> niemeyer: so there's no need to spread any doc-specific code outside of the entities themselves
+[16:23] <niemeyer> rogpeppe: The only difference is the collection name.. no need to even load the entities
+[16:23] <niemeyer> rogpeppe: But whatever.. it's fine either way
+[16:23] <niemeyer> rogpeppe: Your implementation.. I agree with the idea
+[16:25] <rogpeppe> niemeyer: ok, i'll go with this for the time being. i'm not sure if the performance difference would be significant.
+[16:26] <fwereade> dimitern, or not? ;p
+[16:26] <dimitern> wow
+[16:26] <rogpeppe> TheMue: thanks!
+[16:26] <dimitern> i just got home and tried and it seems back on
+[16:26] <TheMue> rogpeppe: yw
+[16:26] <dimitern> fwereade: don't send it if you haven't, 10x
+[16:26] <fwereade> dimitern, already sent :)
+[16:27] <dimitern> fwereade: np, I'll reply
+[16:54] <fwereade> rogpeppe, https://codereview.appspot.com/7098053/ LGTM
+[16:54] <rogpeppe> fwereade: tyvm
+[16:54] <fwereade> rogpeppe, can I redraw your attention to https://codereview.appspot.com/7092044/ and https://codereview.appspot.com/7094045/ in particular please? ;)
+[16:55] <rogpeppe> fwereade: looking now, thanks for the reminder
+[16:55] <fwereade> rogpeppe, there are more, if you're of a mind, but I know you have to maintain balance ;)
+[16:56] <rogpeppe> fwereade: i think i'll do just those two for today if that's ok. perhaps i'll have a review morning tomorrow.
+[16:56] <fwereade> rogpeppe, sgtm
+[17:13] <rogpeppe> fwereade: ping
+[17:13] <fwereade> rogpeppe, pong
+[17:13] <rogpeppe> fwereade: i'm looking at this expression in your CL: ru.st.units.Find(selSubordinate).Select(lifeFields)
+[17:13] <fwereade> rogpeppe, oh yes
+[17:13] <rogpeppe> fwereade: can that ever result in more than one result, and if not, why not?
+[17:14] <fwereade> rogpeppe, I believe not, because of the check in the unit addition ops
+[17:14] <fwereade> rogpeppe, (well, it can, but only if you use AUST)
+[17:15]  * rogpeppe has forgotten what AUST stands for
+[17:15] <fwereade> rogpeppe, (the unit add op asserts that the principal has no subordinate unit with a name starting with "svcname/")
+[17:15] <fwereade> rogpeppe, AddUnitSubordinateTo
+[17:15] <rogpeppe> fwereade: of course, ta
+[17:15] <rogpeppe> fwereade: hmm
+[17:16] <rogpeppe> fwereade: can't the unit have several existing subordinate units?
+[17:16] <fwereade> rogpeppe, but only one of each service
+[17:17] <rogpeppe> fwereade: why does that make a difference?
+[17:17] <rogpeppe> fwereade: is the above Find selecting only subordinate units from one service?
+[17:17] <fwereade> rogpeppe, selSubordinate := D{{"service", serviceName}, {"principal", unit Name}}
+[17:18] <fwereade> rogpeppe, (sorry line break)
+[17:20] <rogpeppe> fwereade: ok so (pardon my lack of understanding here) what's stopping RelatedEndpoints returning more than one end point?
+[17:20] <fwereade> rogpeppe, the fact that we can only create relations with 1 or 2 endpoints
+[17:20] <rogpeppe> fwereade: ah, ok.
+[17:21] <rogpeppe> fwereade: i guess i'm trying to see the code path that happens when the principal unit has more than one dying subordinate unit
+[17:21] <fwereade> rogpeppe, only one subordinate unit is ever relevant for a scope entry
+[17:21] <fwereade> rogpeppe, the unit of the other service in the relation
+[17:22] <rogpeppe> fwereade: i think this comes down to my fundamental difficulty in grasping exactly what a RelationUnit is :-)
+[17:23] <fwereade> rogpeppe, it controls a single unit's effects on a particular relation
+[17:23] <fwereade> rogpeppe, in fact, better
+[17:23] <fwereade> rogpeppe, it's the interface a relation exposes to a unit (roughly, with caveats and handwaving)
+[17:24] <rogpeppe> fwereade: and a relation is between two services only?
+[17:24] <fwereade> rogpeppe, two or one
+[17:25] <rogpeppe> fwereade: yea
+[17:25] <rogpeppe> h
+[17:25] <fwereade> rogpeppe, but a subordinate relation will only be between 2
+[17:25] <rogpeppe> fwereade: ok, i'm starting to get it better now, thanks
+[17:25] <fwereade> rogpeppe, this may, one day, change, but I don't think it's yet on the horizon
+[17:26] <fwereade> rogpeppe, cool
+[17:37] <rogpeppe> fwereade: you've got a pair of reviews
+[17:37] <niemeyer> mramm: Is there a consistency meeting today?
+[17:40] <dimitern> niemeyer: the weekly (double) meeting is tomorrow as usual, if you refer to this one
+[17:41] <niemeyer> mramm: Nope, it's a different one
+[17:41] <niemeyer> robbiew: Meeting today?
+[17:41] <robbiew> niemeyer: nah...client sprint this week
+[17:41] <niemeyer> robbiew: Ah, that's why I thought the Austin sprint started on the 13th
+[17:42] <robbiew> :)
+[18:31] <rogpeppe> fairly simple CL: https://codereview.appspot.com/7105054
+[18:31] <rogpeppe> and that's me for the day. see y'all tomorrow!
+[18:31] <hazmat> niemeyer, will you be @ austin?
+[18:49] <niemeyer> hazmat: Nope
+[18:49] <niemeyer> rogpeppe: Have a good one
+[18:50] <hazmat> niemeyer, bummer, but understood
+[18:50] <niemeyer> hazmat: Cesarean and all.. wouldn't feel right
+[18:51] <hazmat> niemeyer, ouch.

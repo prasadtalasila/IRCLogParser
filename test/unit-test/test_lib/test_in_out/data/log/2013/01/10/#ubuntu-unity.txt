@@ -1,0 +1,823 @@
+[06:34] <Mirv> highvoltage: the schema is org.compiz.unityshell, but it is relocatable (to various profiles). I still don't eat gsettings for breakfast so not immediately sure how the unity profile default should be overridden
+[06:34] <Mirv> I guess one could try just [org.compiz.unityshell] in an .override file
+[06:36] <hyperair> check out the dh_installgsettings manpage.
+=== mechanobot is now known as amithkk
+[08:33] <didrocks> mmrazik: any idea why latest ps-unity-autopilot-release-testing failed?
+[08:36]  * mmrazik is looking
+[08:38] <didrocks> sil2100: hey, quick approval: https://code.launchpad.net/~didrocks/nux/common-any/+merge/142647 ?
+[08:39] <mmrazik> didrocks: there is _usr_bin_compiz.1000.crash in /var/crash
+[08:39] <mmrazik> so I guess a compiz crash
+[08:39] <didrocks> mmrazik: during the install?
+[08:39] <mmrazik> going to look via kcm
+[08:39] <didrocks> ok :)
+[08:39] <mmrazik> didrocks: install seems to be completed
+[08:39] <didrocks> it doesn't seem it even launched one test, right?
+[08:40] <didrocks> and having that on all configs, I wonder what's happening
+[08:40] <mmrazik> correct. The test started but the "check unity is on" failed
+[08:40] <mmrazik> didrocks:  this is the AP log: http://pastebin.ubuntu.com/1516238/
+[08:40] <didrocks> mmrazik: let me upgrade from the ppa
+[08:40] <mmrazik> usually it says something like "Starting test ..."
+[08:40] <didrocks> ok
+[08:41] <didrocks> let me upgrade and starts a guest session, one sec
+[08:44] <didrocks> mmrazik: ok, I confirm, unity trunk is broken
+[08:44] <didrocks> sil2100: popey: Mirv: can any of you confirm this?
+[08:45] <didrocks> I think we'll have to look for the guilty commit :/
+[08:45] <didrocks> mmrazik: meanwhile, can you try to do what we discussed yesterday for detecting when we install more than what we should? do you need help for that?
+[08:47] <mmrazik> didrocks: well.. Help would be appreciated. I won't be able to have a look on it this morning. Ideally it would be best to do the testing in the preseed and quit the installation right away. I just don't know if there is a way from the preseed to kill the install in  a way UTAH will notice the whole thing terribly failed
+[08:47] <didrocks> mmrazik: can you just try right now to exit 1 in the late_command?
+[08:47] <didrocks> mmrazik: just to ensure it aborts the install
+[08:47] <didrocks> at least, I will be able to build on that then :)
+[08:48] <didrocks> mmrazik: doing that will be really helpful
+[08:49] <didrocks> mmrazik: you can use the indicator test if needed for it
+[08:49] <mmrazik> didrocks: ok
+[08:52] <popey> hmm
+[08:55] <popey> didrocks: confirmed
+[08:55] <Mirv> hmm, I don't have those in use
+[08:55] <Mirv> ok, seems confirmed enough
+[08:56] <popey> i get a compiz crash
+[08:58] <sil2100> Trying
+[08:59] <sil2100> Since currently I have some unity problems here in overall
+[09:00] <didrocks> urgh, a local build is working…
+[09:03] <sil2100> I confirm, unity from staging seems broken
+[09:03] <didrocks> sil2100: you are using staging or daily?
+[09:04] <sil2100> didrocks: this time I used staging to get the latest unity trunk
+[09:04]  * popey is on daily, not staging
+[09:04] <sil2100> But I see anyway unity didn't have any new risky commits, hm
+[09:04] <didrocks> I don't understand, local build with latest unity -> working
+[09:07] <sil2100> hm, I see that on my guest session, compiz decied that my system needs to use software rendering
+[09:09] <didrocks> I don't see anything in nux leading to an ABI break
+[09:09] <didrocks> duflu: anything in compiz leading to an ABI break?
+[09:09] <sil2100> Not sure if this was related, but unity started working after I installed compiz from staging
+[09:09] <didrocks> the opengl thingy?
+[09:09] <sil2100> So this smells like ABI breakage to me?
+[09:09] <didrocks> yep
+[09:09] <sil2100> THe recent compiz commit seems risky indeed
+[09:10] <didrocks> let me first rebuild unity in the daily build ppa
+[09:10] <duflu> didrocks: No core ABI breaks. OpenGL ABI changed yesterday but that code is unused by Unity or any plugin outside of opengl itself
+[09:10] <sil2100> Since the opengl plugin ABI got bumped
+[09:10] <duflu> So was not really an ABI bump
+[09:10] <didrocks> duflu: yeah, I saw you told that on the merge
+[09:10] <didrocks> duflu: however, right now, unity is crashing at startup, the 2 nux commits seem fine
+[09:10] <didrocks> duflu: and rebuilding locally with latest stack is working
+[09:10] <didrocks> let me try to rebuild it in the ppa
+[09:11] <duflu> didrocks: Hmm, let me see if Unity might use the modified class indirectly by another class
+[09:11] <sil2100> Latest unity works with latest compiz in staging
+[09:11] <didrocks> duflu: this can be some kind of this tricky case
+[09:12] <didrocks> duflu: seb128 confirms that only installing the new compiz since yesterday is breaking unity
+[09:12] <didrocks> so yeah, it's using it indirectly
+[09:13] <duflu> didrocks: Nope the modified class is only used privately inside compiz opengl plugin. That won't be the problem
+[09:13] <didrocks> well, it seems that empirical tests prooves that there is some kind of breakage for unity in some way :)
+[09:14] <didrocks> popey: sil2100: unity rebuild launched, I hope that we can have autopilot test results afterwards
+[09:14] <duflu> didrocks: Only the size/layout of PrivateGLScreen could have changed. Nothing else
+[09:14] <didrocks> duflu: maybe it's used in some way by unity, indirectly? or nux?
+[09:14] <didrocks> I doubt on nux though, it doesn't bring compiz pieces IIRC
+[09:15] <duflu> didrocks: No it's properly private to compiz AFAICT
+[09:15] <didrocks> duflu: well, something is guilty for sure in the recent compiz changes, as the tests seb128 did show
+[09:15] <sil2100> didrocks:
+[09:15] <didrocks> taking yesterday ppa state
+[09:15] <sil2100> \o/
+[09:15] <didrocks> updating   compiz compiz-core compiz-dev compiz-gnome compiz-plugins-default
+[09:15] <didrocks>   libcompizconfig0 libcompizconfig0-dev libdecoration0 libdecoration0-de
+[09:15] <didrocks> and you have the issue
+[09:16] <sil2100> Well, I doubt nux as well, since I didn't install new nux packages
+[09:16] <didrocks> sil2100: during the rebuild, two things, not sure if you saw my nux MP above to change -common from arch: all to arch: any?
+[09:16] <duflu> didrocks: OK, but what revision was working last?
+[09:16] <didrocks> sil2100: second one, I saw that brandon has committed a fix for the 8 new tests failing, what's still on the map?
+[09:16] <sil2100> didrocks: yes, but Alan was faster with approving ;)
+[09:16] <didrocks> oh? he stole karma!!! :)
+[09:17] <seb128> duflu, the issue is in that diff probably: https://launchpadlibrarian.net/128073372/compiz_1%3A0.9.9~daily13.01.09-0ubuntu1_1%3A0.9.9~daily13.01.10-0ubuntu1.diff.gz
+[09:17] <didrocks> duflu: didn't do a bisect, but I can give you with what version it was built against yesterday
+[09:17] <seb128> didrocks, ^
+[09:17] <seb128> duflu, that's the diff between the daily snapshots yesterday (which was working) and today
+[09:17] <duflu> didrocks: Yeah I just reviewed all those :P
+[09:17] <didrocks> duflu: so, between rev 3549 and 3552
+[09:18] <sil2100> didrocks: if our predictions are correct, with Brandon's fix and all the others, we should have no failing tests for the indicators
+[09:18] <duflu> didrocks: OK, looks like   if (!CompPlugin::checkPluginABI("opengl", COMPIZ_OPENGL_ABI))
+[09:18] <sil2100> At least that's the expectation we would wish to confirm :D
+[09:19] <didrocks> sil2100: \o/ let's trust the mayas then!
+[09:19] <duflu> The ABI was not broken, but incrementing the macro prematurely broke Unity :(
+[09:19] <sil2100> Damn you ABI versions
+[09:19] <didrocks> duflu: this is in unity?
+[09:19] <didrocks> this check?
+[09:19] <duflu> didrocks: Yes in unityshell. Looks like the problem
+[09:20] <duflu> I thought ABIs were compared >= but they're compared with ==
+[09:20] <duflu> didrocks: So either rebuild Unity or revert the COMPIZ_OPENGL_ABI increment. The increment was wrong
+[09:21] <didrocks> duflu: argh, the virtual package is juste creating on the core abi version
+[09:21] <duflu> didrocks: I know. Different library, different ABI :P
+[09:21] <didrocks> duflu: as you wish, maybe reverting the increment?
+[09:22] <duflu> didrocks: I will push it back to 6 right now if you like. Need review?
+[09:22] <didrocks> duflu: no, please autoapprove :)
+[09:22] <didrocks> thanks for digging into it
+[09:23] <duflu> didrocks: It's the only explanation. Not proven yet though
+[09:23] <didrocks> duflu: I feel you're right, if you are sure the changed struct is not leaked
+[09:24] <duflu> didrocks: Pushed to lp:compiz in a quick and evil way.
+[09:24] <didrocks> duflu: evil is fine sometimes :)
+[09:25] <didrocks> it's another argument to autobump the build-dep version as part of the daily process
+[09:25] <didrocks> I really wonder, nobody answered on that on the unity-dev ML
+[09:25] <didrocks> but I feel we'll have to
+[09:26] <duflu> didrocks: Technically it is behaving correctly. Checks the opengl plugin for compatibility and bails if it's not reporting itself as compatible
+[09:26] <duflu> But incompatible is bad. Quite bad
+[09:27] <didrocks> duflu: yeah, I guess if this kind of breakage (justified or not) without bump build-dep is happening too much, the only way will be this autobumping build-dep on all components parts of the stack
+[09:27] <didrocks> duflu: it's technically incorrect, but practically…
+[09:29] <duflu> didrocks: I think ted was partially right. Downstream projects like Unity should not be getting new code while that new code still needs to change so often. But your argument for daily builds is at least as strong
+[09:29] <duflu> I would like to call the ABI "0.9.9" when 0.9.9.0 is released and declare it fixed then
+[09:29] <didrocks> duflu: well, after 3 years, seeing that the code still needs to change so often means that something is not working properly :)
+[09:30] <didrocks> I agree on young-incubating project that this doesn't work
+[09:30] <duflu> didrocks: Yes there are bugs because it's a massive codebase and almost no developers :(
+[09:30] <didrocks> but after a public official release, it should be good
+[09:30] <didrocks> yep
+[09:31] <duflu> But it's an order of magnitude fewer new bugs each week than a year ago. So lots is "working properly"
+[09:32] <didrocks> so we should ought to expect trunk to always work, and new incubating things in a separate "per feature" branch
+[09:32] <didrocks> and once properly cooked, merged into trunk
+[09:33] <sil2100> It's anyway much better than before
+[09:35] <sil2100> Since we're able to use staging/daily normally for a longer time, without any big breakages
+[09:35] <didrocks> sil2100: oh, not related but the prev/next issues are fixed? I didn't see a merge for this
+[09:35] <didrocks> as you couldn't figure out why it was still broken yesterday
+[09:37] <duflu> didrocks: There was nothing I could have done to avoid this. The failing function is one I had never looked at before (like 90% of compiz)
+[09:37] <duflu> Failures happen and we fix them
+[09:38] <didrocks> duflu: yeah, but we can mitigate this can of failure by forcing everytime building against latest build-dep
+[09:38] <didrocks> even if it's unecessary
+[09:38] <didrocks> and I can automate that
+[09:38] <didrocks> s/can/kind/
+[09:39] <didrocks> I just need people thought on this to know if they think it's a good idea or not :)
+[09:39] <didrocks> and what the eventual drawbacks that I missed out (I can only see for backports, that we don't support, at least, when the stack is partial)
+[09:39] <duflu> didrocks: So when do you stop forcing it? Release candidates?
+[09:39] <didrocks> duflu: even not
+[09:39] <didrocks> well, SRUs maybe
+[09:40] <didrocks> but otherwise, as we copy from the daily build ppa to the archive
+[09:40] <duflu> didrocks: It certainly has to freeze by release. You need a fixed ABI then :)
+[09:40] <didrocks> duflu: well, it's not a card for "break ABI whenever you want" :)
+[09:40] <didrocks> it's just a technical solution to avoid getting those issues revealed
+[09:41] <MCR> Am I the only one suffering from a broken raring desktop since yesterday night ?
+[09:42] <didrocks> MCR: using staging?
+[09:42] <MCR> yep
+[09:42] <didrocks> MCR: backlog the discussion ^
+[09:42] <didrocks> MCR: and so it's not raring being broken, it's the ppa :)
+[09:42] <MCR> I was not sure what exactly caused it yet
+[09:43] <MCR> Will it be fixed soon ?
+[09:43] <duflu> Heh. And I only stopped using the PPA yesterday (just reinstalled raring)
+[09:43] <didrocks> MCR: just a rebuild of unity is fixing it
+[09:43] <didrocks> or revert to a previous compiz version from the ppa :)
+[09:44] <duflu> didrocks: Since I hacked compiz you only need to rebuild that really
+[09:44] <MCR> (I am on Mint 9 [my failsafe sys] and I want back ;))
+[09:44] <didrocks> MCR: well, revert or rebuild compiz :)
+[09:44] <duflu> didrocks: Yeah I will have to increment Unity's build-deps even if plugin ABIs change in future
+[09:44] <MCR> No PPA fix ?
+[09:45] <duflu> That's a new one
+[09:45] <didrocks> MCR: maybe, but once we'll get a new merge in process, not sure when it happens
+[09:45] <MCR> ok, thx
+[09:45] <didrocks> MCR: as outlined in the ppa description, it's not supported and ensure to work everytime :)
+[09:45] <MCR> yeah, I am not blaming anyone
+[09:45] <MCR> I just was not sure if it was known already
+[09:47] <didrocks> MCR: when unity will be delivered everyday to raring, you won't need the ppa anymore :)
+[09:47] <MCR> :)
+[09:49] <sil2100> didrocks: well, hm, ok, got confused right now
+[09:49] <didrocks> hum?
+[09:49] <mmrazik> didrocks: so exit 1 in preseed does seem to exit the installation. But now utah waits for it to finish (trying to ssh) and it will take some time to timeout
+[09:49] <sil2100> Let me re-check something then
+[09:50] <didrocks> mmrazik: ok, I have another idea, can you just copy the list of additional package to install and we do that as the first test which can aborts, like the one you have to detect unity?
+[09:51] <didrocks> mmrazik: so I'll give you a script to install those eventual new packages, I just need that store the list of packages somewhere in the installed system
+[09:51] <mmrazik> didrocks: sure but its exactly that sort of hacking I was trying to avoid
+[09:51] <didrocks> mmrazik: well, it seems we don't have better solution right now
+[09:51] <didrocks> and no time for refactoring all this preseed stuff
+[09:52] <mmrazik> didrocks: ok
+[09:52] <sil2100> didrocks: since as you know, there was a lot of confusion yesterday on which tests are up-to-date and which not
+[09:52] <didrocks> sil2100: ah, I think those were still valid
+[09:52] <didrocks> sil2100: can you verify?
+[09:53] <didrocks> mmrazik: just tell me where you put this list of package (if empty, nothing else to install), I'll then propose a MP to your branch
+[09:54] <MCR> sil2100: The manual tests are also heavily outdated, one refers to the update-manager and its windows, which have completely changed for example
+[09:54] <sil2100> didrocks: since, for instance, in http://10.97.0.1:8080/job/ps-unity-autopilot-release-testing/23/#showFailuresLink (which was ran on a newer unity) didn't have prev/next failing
+[09:54] <mmrazik> didrocks: lets put it in into /home/jenkins/install_packages (--install-packages is the switch in the customize preseed command)
+[09:54] <sil2100> MCR: hm, yes, I think we'd need to remove those in overall
+[09:54] <didrocks> sil2100: ok, let's see with the new build then
+[09:54] <mmrazik> didrocks: or no...give me a sec
+[09:55] <didrocks> mmrazik: that's the list of package I have to install, right?
+[09:55] <mmrazik> didrocks: I'll put the following for indicators there: "bamfdaemon indicator-datetime indicator-messages indicator-application libindicator7 indicator-sound libmessaging-menu0 appmenu-gtk indicator-printers indicator-power appmenu-qt appmenu-gtk3 gir1.2-messagingmenu-1.0 indicator-appmenu libindicator3-7 libbamf3-1 libsync-menu1 indicator-applet-complete libido3-0.1-0 gir1.2-syncmenu-0.1 "
+[09:55] <mmrazik> which is the jenkins parameter
+[09:56] <didrocks> yep :)
+[09:56] <mmrazik> didrocks: and yep, I'll put it into /home/jenkins/install_packages
+[09:56] <sil2100> Unity as well! Add unity ;)
+[09:56] <MCR> sil2100: I wanted to revisit them, run them, report eventual bugs and update them - but for some (like the one I mentioned above) finding replacement tests is not easy...
+[09:56] <didrocks> mmrazik: oh, but the user don't have sudo right, isn't it?
+[09:57] <sil2100> MCR: I think what we need to do is browse through the manual tests and check what tests are already as autopilot tests and those that are not, but are still valid, simply turning into AP
+[09:57] <mmrazik> didrocks: If you need it I can add it to sudoers in preseed
+[09:57] <didrocks> mmrazik: or what we can do is create those two files
+[09:57] <sil2100> MCR: since we decided we don't want any manual-tests anymore
+[09:57] <sil2100> MCR: the idea is to have everything automated
+[09:57] <didrocks> mmrazik: like: /home/jenkins/install_packages and /home/jenkins/installed_packages
+[09:57] <didrocks> /home/jenkins/installed_packages beeing the output of apt-get install during the preseed
+[09:58] <MCR> sil2100: Yes, gotta look @ autopilot, but I am not sure if all things can be automated...
+[09:58] <didrocks> mmrazik: then, the script will only test the logic of this
+[09:58] <didrocks> mmrazik: and exit if something is wrong
+[09:58] <didrocks> wdyt?
+[09:58] <mmrazik> didrocks: ok
+[09:59] <MCR> sil2100: So no more nice-testhouse ?
+[09:59] <sil2100> MCR: autopilot is really nice, and indeed - visual changes can't really be testable by autopilot, but those we anyway don't really test
+[09:59] <sil2100> MCR: I think testing is still needed - remember that we're not completely automated for precise and quantal ;)
+[09:59] <mmrazik> didrocks: did you already branch the ~autopilot/unity/utah-jenkins branch?
+[10:00] <sil2100> And, checkbox-tests, which check overall system integration, are still manual
+[10:00] <mmrazik> if so, can you please discard and branch again? Not proud what I just did there but I changed it.
+[10:00] <MCR> sil2100: I seem to be the master in finding and being affected by Unity bugs noone else is suffering from :P
+[10:00] <didrocks> mmrazik: not yet, just creating the parsing script right now
+[10:00] <didrocks> mmrazik: ok, will do :)
+[10:04] <sil2100> MCR: ;p
+[10:12] <mmrazik> didrocks: can I kill ps-unity-autopilot-release-testing?
+[10:12] <mmrazik> or is it actually something you need?
+[10:12] <didrocks> mmrazik: it's needed
+[10:12] <mmrazik> ok
+[10:12] <didrocks> mmrazik: that's what was prevented by the ABI break before
+[10:12] <mmrazik> didrocks: I think the files should be there. The net (queued) indicators job will confirm
+[10:13] <mmrazik> s/net/next/
+[10:13] <didrocks> mmrazik: sweet! did you cat them?
+[10:13] <didrocks> so that we can see we have the expected content, for debugging :)
+[10:13] <mmrazik> didrocks: http://pastebin.ubuntu.com/1516437/
+[10:14] <mmrazik> "unity indicator hud" are just 3 random packages (which don't even exist)
+[10:14] <didrocks> mmrazik: right, I just mean cat the /home/jenkins/installed_packages for the first weeks
+[10:14] <didrocks> mmrazik: so that if my script don't have the proper content, we can debug it
+[10:15] <didrocks> or I can do it in my scripts I guess
+[10:15] <mmrazik> didrocks: cating wouldn't help -- utah is not stdout friendly :-/ need to store them as jenkins artifacts.
+[10:15] <didrocks> ah :/
+[10:15] <didrocks> ok
+[10:15] <mmrazik> didrocks: lets store them in /home/jenkins/results/artifacts
+[10:16] <didrocks> mmrazik: remember they are optional though
+[10:16] <didrocks> mmrazik: like with the "whole ppa" preseed, they are not here
+[10:16] <mmrazik> didrocks: after the job ends we are scp-ing the whole results dir and storing it as artifacts
+[10:16] <didrocks> ok, it's not file by file then
+[10:16] <mmrazik> didrocks: nope
+=== mmrazik is now known as mmrazik|lunch
+[10:43] <mhr3> mmrazik|lunch, could you look at why https://code.launchpad.net/~mhr3/libunity/fix-nested-previews/+merge/142538 keeps failing please?
+[10:43] <mhr3> stuck xvfb or something?
+[11:01] <didrocks> mmrazik|lunch: rev 170 and 171. Can you give it a look and if good, will worth testing that it indeed aborts the tests :)
+[11:13] <solancer> hey guys
+[11:14] <solancer> I want to hack on unity on my local system
+[11:14] <solancer> i have a launchapd Id and all
+=== mmrazik|lunch is now known as mmrazik
+[11:14] <solancer> I have cloned the unity repository and have been going through the doccs
+[11:15] <solancer> can someone explain what upstream merge means >
+[11:15] <mmrazik> mhr3: we had this recently with libdbusmenu. xvfb-run is trying to run the X on a specified display :99. If you are building on amd64 and i386 on the same machine then only one of the instances will work and the other fail to start
+[11:15] <mmrazik> mhr3: the solution is to run "xvfb-run -a"
+[11:16] <mmrazik> solancer: it IMHO means merging your changes back to lp:unity (but I'm lacking some context)
+[11:17] <solancer> mmrazik, oh I see
+[11:17] <mhr3> mmrazik, didn't know the merger is so awesome now that it can run both 32 and 64bit builds at the same time
+[11:18] <mhr3> anyway thanks
+[11:18] <solancer> mmrazik, so I have two repos cloned from launchpad with me
+[11:18] <solancer> mmrazik, unity and unity revamped
+[11:18] <mmrazik> mhr3: its there for months
+[11:19] <solancer> mmrazik, if I make changes to the unity repo and push it to my personal PPA
+[11:20] <solancer> mmrazik,and if unity has a new version release
+[11:20] <solancer> mmrazik, would have to do something extra to keep up with the releases >
+[11:21] <mhr3> mmrazik, then the machine got faster or something :)
+=== _salem is now known as salem_
+[11:22] <mmrazik> solancer: yes. You would need to merge the upstream (lp:unity) back to your own branch
+[11:23] <mmrazik> solancer: usually something like bzr merge lp:unity in your working dir
+[11:23] <solancer> mmrazik, cool
+[11:23] <mmrazik> didrocks: the changes look sane. I would prefer not to modify the other preseed files but it shouldn't hurt either
+[11:23] <solancer> mmrazik, and 1 more question
+[11:23] <mmrazik> (i.e. only base-preseed needs to be modified)
+[11:24] <didrocks> mmrazik: just for consistency as we run it and it will exit with 0
+[11:24] <mmrazik> solancer: sure. Shoot.
+[11:24] <didrocks> but as you prefer :)
+[11:24] <didrocks> mmrazik: will this be picked automatically in the indicator run?
+[11:24] <mmrazik> didrocks: its already there... lets keep it
+[11:24] <didrocks> ok
+[11:24] <solancer> mmrazik, the cloned repo's name is unity and mine is unity-dodge
+[11:24] <mmrazik> didrocks: not sure. let me kill it and start again
+[11:24] <didrocks> mmrazik: ok :)
+[11:25] <didrocks> sil2100: one hud test fail remaining! just one! :)
+[11:25] <sil2100> !
+[11:25] <sil2100> didrocks: which one? ;)
+[11:25] <didrocks> sil2100: seems we have the same with the dash
+[11:25] <didrocks>  unity.tests.test_hud.HudBehaviorTests.test_closes_then_focuses_window_on_mouse_down
+[11:25] <didrocks> unity.tests.test_dash.DashRevealTests.test_closes_then_focuses_window_on_mouse_down  is failing as well
+[11:25] <didrocks> I bet same cause
+[11:25] <solancer> mmrazik, shou ld I change the name of the cloned repo or I can jus start making changes to it and push it to my PPA
+[11:26] <sil2100> Ok, let me see that then!
+[11:26] <mmrazik> solancer: you have the repo on your HDD? It doesn't really matter what is the name.
+[11:26] <didrocks> sil2100: look at jenkins directly
+[11:26] <didrocks> sil2100: the public instance is broken
+[11:26] <solancer> mmrazik, yep I have it on my HDD
+[11:26] <didrocks> job/ps-unity-autopilot-release-testing/label=autopilot-nvidia/lastCompletedBuild/testReport/
+[11:27] <mmrazik> solancer: I would also sugest to push the repo somewhere to launchpad so you have a backup... not sure what is your launchpad ID but something like bzr push lp:~solancer/unity/my-branch-name
+[11:27] <mmrazik> solancer: but you don't have to do it
+[11:27] <didrocks> sil2100: same failure on intel at least
+[11:27] <mmrazik> solancer: so nothing needed. You can start make changes and then dput into a ppa
+[11:27] <solancer> mmrazik, cool i'll start hacking then
+[11:27] <didrocks> few minutes for ATI :)
+[11:34] <didrocks> sil2100: and ati as well, so reproduceable everywhere :)
+[11:51] <didrocks> mmrazik: ok, the build failed, which artefact did you use to see that it didn't run?
+[11:52] <mmrazik> didrocks: mhm... there is some utah stack trace in the job output. The files were apparently not copied back to jenkins
+[11:53] <mmrazik> didrocks: so no artifacts :-/
+[11:53] <mmrazik> looks like some utf issue
+[11:53] <didrocks> mmrazik: so, this time, it failed due to UTAH?
+[11:53] <mmrazik> but I wonder where
+[11:53] <mmrazik> didrocks: the stacktrace comes from this command:
+[11:53] <mmrazik> utah --install-type desktop -r /tmp/master.run
+[11:54] <didrocks> mmrazik: same for nvidia btw
+[11:54] <didrocks> nvidia/intel
+[11:55] <didrocks> mmrazik: are you tracking it? I'm not sure to know enough about UTAH and the guys behind it
+[11:56] <mmrazik> didrocks: me neither. But trying to look into source code
+[11:56] <didrocks> the stack is only in the logging module :/
+[11:56] <mmrazik> yeah... just realized that
+[12:01] <sil2100> hm hm
+[12:08] <didrocks> mmrazik: any progress? talked on #qa? (not there, so didn't see)
+[12:08] <mmrazik> I tried to export a locale and re-run the test
+[12:09] <mmrazik> didrocks: I tried to reproduce by running the utah command on the host but didn't observe the stack trace
+[12:09] <didrocks> mmrazik: should we just retry?
+[12:09] <didrocks> weird that it failed on the 3 configs though
+[12:09] <mmrazik> didrocks: yes. The job is already running.
+[12:09] <didrocks> ok
+[12:09] <mmrazik> didrocks: with export LANG=en_US.utf8
+[12:10] <didrocks> ok, let's see ;)
+[12:10] <mmrazik> its just a wild guess
+[12:12] <sil2100> So, what I noticed
+[12:13] <sil2100> hm, autopilot in the jenkins unity tests uses a strange keybinding for maximizing the window - it seems invalid
+[12:14] <sil2100> Since in compiz we're patching through patches it to Ctrl+Super+Up, while it's using the old compiz one Super+Up
+[12:14] <sil2100> And it seems not to maximize the window then
+[12:14] <sil2100> That's why those 2 tests fail - now I need to find out why he has the keybinding set to Super+Up and why then it doesn't work
+[12:15] <didrocks> sil2100: good catch! :)
+[12:18] <didrocks> sil2100: 10_ubuntu-settings.gschema.override:maximize = ['<Super>Up','<Primary><Super>Up','<Primary><Alt>KP_5']
+[12:18] <didrocks> sil2100: I think it's the bug that smspillaz knows about
+[12:19] <didrocks> he has a fix I guess, but don't want to push it without tests and no motivation to write the tests
+[12:19] <sil2100> didrocks: what's the problem here? So it's a real regression then?
+[12:20] <didrocks> sil2100: well, only on this machine, and some others, the "integrated settings" are not overwritting the integrated key on first launch
+[12:20] <didrocks> I think I'll just update to only have '<Primary><Super>Up' by default
+[12:20] <didrocks> a pity, but well…
+[12:21]  * sil2100 sighs
+[12:21] <sil2100> Ok
+[12:21] <didrocks> sil2100: don't we have the same issue we show desktop btw?
+[12:21] <didrocks> sil2100: do you know some tests using it and failing?
+[12:22] <sil2100> hm, let me see, maybe indeed we're also getting hit by that - usually switcher tests are usign show desktop
+[12:28] <didrocks> sil2100: ok, I've uploaded ubuntu-settings in the ppa, once built, I'll relaunch the tests
+[12:29] <didrocks> mmrazik: how to interpret the nvidia autopilot indicator result?
+[12:30] <mmrazik> didrocks: its the same stack trace, isn't it?
+[12:30] <mmrazik> didrocks: build #55?
+[12:31] <sil2100> didrocks: thanks!
+[12:31]  * sil2100 goes for lunch
+[12:31] <didrocks> mmrazik: there are some artefacts, isn't it?
+[12:31] <mmrazik> oh.. right
+[12:31] <didrocks> so not sure if it's exactly the same issue
+[12:31] <didrocks> was my script launched already?
+[12:31] <didrocks> not sure where to see the logs :)
+[12:33] <mmrazik> didrocks: your script has wrong paths. I moved the files into /home/jenkins/results/artifacts
+[12:34] <didrocks> mmrazik: ah, you didn't tell me :) but is the crash before it's launched or the utf8 issue is because of the script itself?
+[12:35] <mmrazik> didrocks: I _think_ your script was not started
+[12:37] <mmrazik> argh.. this preseed stuff debugging is a nightmare
+[12:37] <ritz> anyone good with unity-2d ? wrt https://bugs.launchpad.net/ubuntu/+source/unity/+bug/1096954
+[12:38] <ubot5> Launchpad bug 1096954 in unity (Ubuntu Precise) " Enabling Xinerama causes Unity Panel/Dash to become all black" [Medium,Confirmed]
+[12:38] <didrocks> mmrazik: do you think it's due to the preseed? it's weird that we can reliably crash it now
+[12:38] <mmrazik> didrocks: I don't know but the stacktrace in logs is something I'm worried mostly about
+[12:39] <mmrazik> as it might very well mean the whole utah testcase just wasn't started
+[12:39] <didrocks> yeah
+[12:39] <mmrazik> giving up. asking on #qa
+[12:39]  * didrocks joins
+=== MacSlow is now known as MacSlow|lunch
+=== MacSlow|lunch is now known as MacSlow
+=== mmrazik is now known as mmrazik|afk
+=== dandrader is now known as dandrader|afk
+=== dandrader|afk is now known as dandrader
+=== mmrazik|afk is now known as mmrazik
+[14:39] <didrocks> sil2100: latest result, job ps-indicators-autopilot-release-testing, rev 57
+[14:39] <didrocks> sil2100: still prev/next failing
+[14:40] <didrocks> (both on nvidia, only prev on ati/intel)
+[14:40] <didrocks> mterry: FYI ^
+[14:40] <mterry> :-/
+[14:41] <mterry> I haven't read code branches today.  Does that the tested code include a fix for the alt+f10 problem?
+[14:41] <didrocks> mterry: I didn't see it flying
+[14:41] <didrocks> but maybe I missed it, with all the autopilot issues today…
+[14:42] <mterry> OK, good.  So we may have a path towards completion!  :)
+[14:42] <didrocks> hoping so :)
+[14:42] <didrocks> mterry: you're looking after it? maybe check with sil2100 and brandon
+[14:43] <mterry> k
+[14:46] <didrocks> thanks! :)
+[14:59] <didrocks> mterry: FYI, that's the latest blocker before enabling the daily release for unity \o/
+[15:00] <didrocks> I would love to have the first daily release tomorrow :)
+[15:00] <didrocks> Friday, what can happen? :)
+[15:01] <mterry> heh
+[15:02] <didrocks> mterry: also, sorry to jump on you so early, but did you get anything on the indicator test during build? trying to gather some info as I won't be really available next week :)
+[15:02] <mterry> libappindicator?
+[15:03] <didrocks> right, and indicator-session
+[15:03] <didrocks> IIRC
+[15:03] <mterry> No, I thought I had a promising fix, and it might have fixed part of it, but it wasn't enough.  Still investigating
+[15:03] <didrocks> ok ;)
+[15:03] <mterry> cyphermox, I thought you had indicator-session well understood?  Or a possible fix or something?
+[15:04] <cyphermox> I tried something, it failed
+[15:04] <cyphermox> indicator-session is borken as much as libappindicator -- the test reproducibly fails in a PPA no matter what I change
+[15:05] <cyphermox> I think it's due to some dependency missing in the build -- and then it should probably be explicitly listed in the binary package deps.
+[15:05] <cyphermox> (once we find out what the hell it is)
+[15:05] <seb128> what test is that in indicator-session?
+[15:05] <cyphermox> TestCanStartService
+[15:05] <cyphermox> the one you hacked to use LD_PRELOAD
+[15:06] <cyphermox> incidently, didn't that work?
+[15:06] <didrocks> I think it's the test using the system bus, isn't it?
+[15:06] <seb128> that test can't work
+[15:06] <seb128> drop it
+[15:06] <didrocks> I told you about it :)
+[15:06] <cyphermox> gladly
+[15:06] <seb128> it requires consolekit in a working state
+[15:06] <seb128> and accountsservice
+[15:06] <seb128> and other stuff from the system
+[15:06] <seb128> that can't work in the current form
+[15:06] <cyphermox> if that's all that's needed I can move it to a autopkgtest
+[15:06] <didrocks> however, autopkgtest would be good
+[15:07] <didrocks> cyphermox: I think it should, jibel should be able to confirm ^
+[15:07] <cyphermox> zug zug; that will just take 5 minutes, I got most of the code ready
+[15:10] <cyphermox> I get some issues running autopkgtest locally though, it tends to hang
+[15:10] <cyphermox> it would be useful if we could run this in the right environment soonish to make sure it's good
+[15:10] <mterry> zug zug?  :)
+[15:10] <cyphermox> mterry: warcraft peons?
+[15:10] <didrocks> cyphermox: sure that jibel has all the knowledge you need for that :)
+[15:11] <cyphermox> yup :)
+[15:11] <mterry> heh
+[15:11] <didrocks> knowing him, there is maybe even a wiki page!
+[15:12] <cyphermox> jibel: ^^ is there a wiki page on how to run autopkgtest locally? I know how to do it, but I want to know if I should write the howto on the iwki ;)
+[15:12] <jibel> I stopped writing wiki pages, people first ask questions on IRC instead of reading them
+[15:12] <cyphermox> hehehe
+[15:12] <jibel> but there is documentation http://bazaar.launchpad.net/~auto-package-testing-dev/auto-package-testing/trunk/view/head:/doc/USAGE.md
+[15:13] <cyphermox> ah, that's even closer to jenkins than my adt-run --blah blah --- adt-virt-schroot
+[15:14] <cyphermox> jibel: thanks!@
+[15:14] <jibel> cyphermox, yw
+[15:21] <highvoltage> Mirv, hyperair: ok, will try that. thanks
+[15:22] <highvoltage> hyperair: well actually I use that but since the schema isn't there yet it doesn't work, will check if the manpage has some additional information for that case
+[15:22] <hyperair> hm.
+[15:23] <hyperair> just depend on the package with the schema?
+[15:24] <highvoltage> hyperair: I couldn't find a unity package that provides it. I was wondering if I could just do it.
+[15:24] <highvoltage> hyperair: unless perhaps there's another way I could set the launcher opacity and colour (perhaps I'm just doing it wrong)
+[15:25] <hyperair> no, a gsettings override is probably the right way to do it.
+[15:25] <highvoltage> hyperair: so far it responds to org.compiz.profiles.unity.plugins.unityshell launcher-opacity and background-color, but it's kind of strange that it's not there by default, isn't it?
+[15:25] <hyperair> grep the /usr/share/glib-2.0/schemas folder for the key/schema you're looking for
+[15:26] <highvoltage> hyperair: it's not there
+[15:26] <hyperair> uh hmm.
+[15:26] <hyperair> i see it in org.compiz.unityshell.gschema.xml:
+[15:26] <hyperair> so you could try overriding that
+[15:26] <mterry> sil2100, poke about alt+f10 when you are available
+[15:27] <sil2100> mterry: hi!
+[15:27] <sil2100> didrocks: hm
+[15:27]  * didrocks sees that sil2100 has the didrocks ignore filtering!!!
+[15:27] <mterry> sil2100, hello!  I still haven't caught up on merge mails.  Did you ever get anywhere with the alt-f10 bug?
+[15:28] <sil2100> mterry: I started looking, but I'm not able to reproduce it right now
+[15:28] <highvoltage> hyperair: ah interesting, in a newer 13.04 image it's there, I'll go check what happened there, thanks a lot!
+[15:29] <bregma> hey folks, can anyone tell me if there's an up-to-date place to look for Unity test coverage analysis (gprof, etc)?
+[15:29] <hyperair> :)
+[15:30] <sil2100> didrocks: it's not like that! I was simply still lunching, that's why!
+[15:30] <didrocks> sil2100: yeah yeah :'(
+[15:30] <mterry> sil2100, is there a way I can help?
+[15:30] <mterry> sil2100, since I was able to reproduce yesterday.  (I assume I still can...)
+[15:32] <sil2100> mterry: I'll ping you in a the nearest time, ok :) ?
+[15:33] <mterry> k
+[16:06] <sil2100> mterry: so, hm, are you able to reproduce the alt+f10 issue even now?
+[16:06] <sil2100> mterry: what unity package are you using?
+[16:07] <mterry> sil2100, I'd have to log out and back in to double confirm, but I haven't updated since I could reproduce
+[16:08] <mterry> sil2100, I'm using 6.12.0daily13.01.09.1-0ubuntu1
+[16:08] <sil2100> mterry: on the guest session it's the same?
+[16:08] <mterry> sil2100, ooh good point, let me check.  love that guest session
+[16:10] <sil2100> I'm still unable to reproduce it on the guest session though... so I was wondering if you are able
+[16:17] <mterry> sil2100, yeah I can reproduce on guest session
+[16:17] <sil2100> hm, ok, thanks - I'll try something and get back to you
+=== dandrader is now known as dandrader|afk
+[16:38] <didrocks> tedg: hey, one of your test is timing out on powerpc for dbus-test-runner, am I right? https://launchpadlibrarian.net/128111076/buildlog_ubuntu-raring-powerpc.dbus-test-runner_12.10.2daily13.01.10-0ubuntu1_FAILEDTOBUILD.txt.gz
+[16:39] <sil2100> didrocks: btw. can you also reproduce the problem that mterry noticed? With the first Alt+F10 not working
+[16:39] <tedg> didrocks, Hmm,no, it seems to be getting the wrong data.
+[16:39] <tedg> Finding cat1 data
+[16:39] <didrocks> sil2100: let me check, one sec
+[16:39] <tedg> Finding cat2 data
+[16:39] <tedg> Filtering cat1 data
+[16:39] <tedg> Filtering cat2 data
+[16:39] <tedg> Verifying cat 1
+[16:39] <tedg> Verifying cat 2
+[16:39] <tedg> FAIL: test-output
+[16:39] <mterry> sil2100, bregma could yesterday I believe
+[16:40] <didrocks> tedg: ok, I'm wrong then, any idea what can be the cause? it's passing fine on all the other archs
+[16:41] <didrocks> sil2100: the first alt + F10 is working for me as well
+[16:42] <mterry> cyphermox, libappindicator is killing me.  now the gtk2 tests can't pass, failing on the fallback test
+[16:43] <sil2100> hm
+[16:43] <sil2100> popey: also says he cannot reproduce
+[16:43] <sil2100> mterry: could you maybe try updating to the latest unity packages?
+[16:44] <mterry> sil2100, alright
+[16:44] <didrocks> sil2100: ah, you think the failure is something else then?
+[16:44] <popey> i get the first indicator on first ALT+F10
+[16:44] <popey> will try a guest session..
+[16:44] <tedg> didrocks, Not really.  We'd kinda need the files that it's building.  It generates temp files to do the compare.
+[16:45] <popey> yup, works same as guest
+[16:45] <didrocks> tedg: I tried a rebuild to see if at least it's just flacky
+[16:45] <sil2100> didrocks: yes, since hm, even though it would make sense that this bug causes the failures, but I think there's a seperate test for Alt+F10 and I think it didn't fail
+[16:45] <sil2100> Or hm, wait
+[16:45] <mterry> sil2100, which one runs first?  ;)
+[16:47] <sil2100> mterry: I think each of them is being ran on a clean session I think?
+[16:47] <cyphermox> mterry: yellow paint!
+[16:47] <mterry> Oh good
+[16:47] <mterry> cyphermox, I know
+[16:48] <didrocks> sil2100: right
+[16:48] <sil2100> didrocks: yes, indeed it didn't fail, test_panel_first_menu_show_works passed
+[16:48] <sil2100> This is a big mystery
+[16:48] <sil2100> Back to the drawing board
+[16:49] <didrocks> I'm sure mterry can be of help to distract him from libappindicator love :)
+[16:50] <mterry> I'm trying again with latest unity
+[16:50] <mterry> But it takes me awhile because my backup laptop is dog slow
+[16:51] <didrocks> mterry: oh, you didn't have a spare disk? you switched laptop?
+[16:52] <mterry> didrocks, yeah
+[16:52] <didrocks> feeling the pain :/
+[16:52] <mterry> didrocks, you have spare disks lying around?  I guess that's smart, considering what I just did
+[16:53] <didrocks> mterry: yeah, I have one on usb just in case
+[16:53] <mterry> didrocks, even better, do raid duplication with an external drive  :)
+[16:54] <didrocks> mterry: not that far, only my server has raid duplication :)
+[16:55] <didrocks> ok, latest corner case fixed. I can really say that we are to those 2 tests closed to daily release of unity!
+[17:23] <didrocks> tedg: yeah, it's really flacky, the rebuild worked
+[17:23] <tedg> didrocks, Eh... good?  :-/
+[17:23] <didrocks> well, not really good, but meaning harder to debug
+[17:23] <didrocks> only happens on powerpc and not everytime…
+[17:29] <sil2100> Those _prev _next tests are really mysterious
+[17:29] <didrocks> sil2100: they don't fail locally for you at all?
+[17:29] <sil2100> hm, would it be somehow possible to run single tests on that jenkins machine?
+[17:30] <didrocks> sil2100: well, it is, but what that will teach you?
+[17:30] <sil2100> didrocks: completely, didn't fail even once, both on my session, on my guest session, no problems at all
+[17:30] <sil2100> didrocks: maybe I could add some debugging and run the tests to see what exactly is happening? But hm, maybe really it's pointless
+[17:31] <didrocks> sil2100: for a physical access to the machine, I think only mmrazik has it
+[17:31] <mterry> sil2100, still can reproduce with latest daily-build contents
+[17:31] <bschaefer> sil2100, you should be able to run single tests by changing the value of the  'tests' when you do a build now on jenkins
+[17:32] <bschaefer> a single test*
+[17:32] <sil2100> mterry: oh
+[17:32] <didrocks> mterry: so, it's failing running this pilot test for you? or you mean alt + F10?
+[17:33] <mterry> didrocks, alt+f10 fails.  I ran autopilot test yesterday and it failed too
+[17:33] <didrocks> ah, interesting :)
+[17:33] <didrocks> so maybe that's what is happening on those config
+[17:33] <sil2100> So we have one reliable reproducing person
+[17:33] <mterry> Plus, the logs for the autopilot test indicate that the alt+f10 fails there too
+[17:33] <didrocks> sil2100: and this guy is really reliable, you know :)
+[17:34] <mterry> it fails everytime anyway  :)
+[17:34] <sil2100> ok, so hm hm
+=== dandrader_ is now known as dandrader
+[17:37] <didrocks> bschaefer: no idea of why alt + f10 is still failing on first trial for mterry?
+[17:37] <sil2100> mterry: could you start a fresh session (best guest session I guess?), bzr branch lp:unity and run one specific test?
+[17:38] <bschaefer> didrocks, hmm alt+f10 is work for me :(
+[17:38] <sil2100> mterry: run autopilot run unity.tests.test_panel.PanelKeyNavigationTests.test_panel_first_menu_show_works
+[17:39] <sil2100> mterry: on that guest session please
+[17:39] <sil2100> And tell me if it works or not
+[17:39] <sil2100> :)
+[17:42] <sil2100> The only difference between the _prev/_next tests and the test_panel_first_menu_show_works is that the the first_menu one has a 1 second sleep() in it after launching the application
+[17:42] <sil2100> Which shouldn't matter, as in _prev and _next we're waiting for the application to have focus anyway
+[17:46] <mterry> sil2100, OK.  Will take me a few minutes
+[18:10] <sil2100> mterry: ok, tell me once you find time for that
+[18:10] <mterry> sil2100, failed but then worked (there was some noise with my computer being too slow)
+[18:11] <mterry> sil2100, but seemed like I was able to reproduce problem even on that test
+[18:12] <sil2100> mterry: but it was only failing when ran for the first time, yes?
+[18:12] <mterry> sil2100, yes
+[18:16] <sil2100> Mystical
+[18:20] <mterry> sil2100, so is there a way to give you a more comprehensive log of what happens?
+[18:26] <mterry> sil2100, are there other unity devs around that we can poll to see if they can reproduce?
+[18:27] <mterry> sil2100, in the hopes of hitting someone that can both repro and knows how to fix it?
+[18:36] <bschaefer> mterry, hmm so how do you reproduce this?
+[18:36]  * bschaefer is around
+[18:36] <mterry> bschaefer, on a guest session, open an app and press alt+f10
+[18:36] <mterry> See if it opens a menu
+[18:36]  * bschaefer goes to attempt
+[18:37] <mterry> Then try it a second time, and it should
+[18:40] <bschaefer> mterry, hmm my guest session appears to have a broken unity....
+[18:40]  * bschaefer goes to see what the problem is
+[18:41] <mterry> different than the alt+f10 thing?  hm
+[18:41] <bschaefer> mterry, yeeah, like unity wont start :(
+[18:42] <bschaefer> just an empty background...which is strange...as unity works fine on my other user account...
+[18:44] <sil2100> bschaefer: update compiz maybe?
+[18:44] <sil2100> bschaefer: since there was an opengl plugin ABI break
+[18:44] <bschaefer> sil2100, yeah, im updating now!
+[18:44] <sil2100> So hm, maybe you'll even have to re-build unity with the latest compiz? I know that staging compiz + unity works
+[18:44] <sil2100> But both need to be updated at the same time ;)
+[18:45] <bschaefer> possibly, I have staging, but I have compiz/unity/nux built right now, but not on my guest session
+[18:46] <bschaefer> mterry, also why does it have to be a guest account? Or is it just on a fresh reboot?
+[18:46] <sil2100> bschaefer: on a fresh reboot it's the same
+[18:46] <sil2100> It seems that the first Alt+F10 press is not registered on his system
+[18:47] <sil2100> But on mine, popey's, didier's and other people it's fine
+[18:47] <sil2100> The first on the session start
+[18:47] <bschaefer> sil2100, strange! Is it causing an AP failure?
+[18:47] <sil2100> bschaefer: probably... but the strange thing is!
+[18:47] <sil2100> It *sometimes* causes failure of 2 tests
+[18:48] <bschaefer> sounds like an uninted var
+[18:48] <sil2100> Although there are some other tests that use the same keybinding
+[18:48] <sil2100> So hm, it's not 100% reproducible even on jenkins
+[18:48] <sil2100> Since some machines sometimes are not affected
+[18:48] <bschaefer> sil2100, the keybinding comes through compiz right?
+[18:49] <sil2100> I think so
+[18:49]  * bschaefer hasn't worked with indicators/menus much
+[18:49] <bschaefer> Trevinho, ping
+[18:49] <sil2100> And it's using a correct one
+[18:49] <bschaefer> dang, hes away
+[18:49] <bschaefer> yeah odd, let me try this again (as i've updated...)
+[18:49] <bschaefer> but i might have to reboot ;)
+[18:49] <sil2100> But now at least I know it's more likely a regression in unity that's probably appearing in certain conditions
+[18:49] <sil2100> And not an AP problem
+[18:51] <sil2100> But ok, I need to rest a bit now
+[18:51] <sil2100> bschaefer, mterry: if you guys find out something more, please send me an e-mail!
+[18:51] <sil2100> I'll look into it a bit later too
+[18:51] <sil2100> See you later
+[18:54] <mterry> cyphermox, trying a fix for libappindicator in a ppa
+[18:54]  * mterry crosses his fingers
+[18:56] <bschaefer> hmm strange, my schemas/plugins seems to be messed up on my guest
+[18:59] <mterry> Welcome back! : )
+[18:59] <bschaefer> thanks...I figured I could just try it on a fresh reboot...and it worked :(
+[18:59] <bschaefer> i have trunk compiz/unity/nux and staging ppa as well
+[18:59] <cyphermox> mterry: so? :D
+[18:59] <bschaefer> mterry, do you get it everytime?
+[18:59] <mterry> bschaefer, yeah.  first time per session
+[19:00] <mterry> after that it works normal
+[19:00] <bschaefer> mterry, strange...
+[19:00] <mterry> bschaefer, you don't see it?
+[19:00] <bschaefer> mterry, nope :(, Ill poke some more people later when they get on to give it try
+[19:01] <mterry> darn it
+[19:02] <bschaefer> mterry, you said you were up with the staging ppa as well?
+[19:03] <mterry> bschaefer, daily-build
+[19:03] <bschaefer> that should be pretty much the same...
+[19:06] <bregma> what exactly is the unexpected behaviour I'm trying to see?
+[19:07] <mterry> bregma, the alt+f10 thing?  The first time you press alt+f10 in an app in a session, the menu doesn't appear
+[19:07] <bregma> OK
+[19:07] <bregma> definitely haven't been able to repro with latest staging
+[19:08] <bregma> I'll reboot and try one more time, for posterity
+[19:08] <mterry> hm
+[19:08] <mterry> We still fail the test on jenkins right?
+[19:09] <bregma> is this test_panel_indicators_key_navigation_next_works ?
+[19:10] <bschaefer> unity.tests.test_panel.PanelKeyNavigationTests.test_panel_indicators_key_navigation_prev_works is the only one I see failing atm
+[19:10] <bschaefer> prev/nux
+[19:10] <bschaefer> next*
+[19:10]  * bschaefer goes to look at the video
+[19:16] <mterry> bschaefer, sorry, went away
+[19:16] <mterry> bschaefer, didn't see highlight
+[19:17] <mterry> bschaefer, both next and prev fail, depending on driver
+[19:17] <bschaefer> mterry, no worries, I  should have mentioned your name...
+[19:17] <bschaefer> bregma, ^
+[19:17] <bschaefer> mterry, hmmm yeah the video shows no menu appearing but the AP log shows that Alt+F10 is being pressed
+[19:18] <bschaefer> mterry, different drivers cause this problem?
+[19:18] <bschaefer> do you mean arc?
+[19:18] <mterry> bschaefer, I believe someone mentioned a difference in failing tests between nvidia and intel
+[19:19] <bschaefer> mterry, yeah, looking at those only prev fails, not next
+[19:19] <mterry> bschaefer, curious
+[19:19] <mterry> bschaefer, each test is in a completely new session?
+[19:19] <bschaefer> mterry, yeah they are, whats odd is the nvidia one fails for both next/prev
+[19:20] <bschaefer> but intel/ati only fails the prev
+[19:20] <mterry> OK...  My machine that can replicate the failure is intel
+[19:20]  * bschaefer kicks off another jenkins jobs
+[19:21] <bschaefer> mterry, hmm I have a hybrid, but I only use the intel part but ...
+[19:21] <bschaefer> i cant see how this is video card related
+[19:22] <bschaefer> mterry, strange, I just did a compiz --replace....and the first menu attempted failed...
+[19:22] <mterry> ooh ooh
+[19:22] <mterry> I'm not crazy!  (maybe)
+[19:23] <bschaefer> but i can't get it to repro now :(
+[19:23] <mterry> bschaefer, even further --replaces?
+[19:23] <bschaefer> mterry, replaces just does what 'unity' does...
+[19:23] <bschaefer> and yeah
+[19:24] <bschaefer> wait opps...haha I thought that is what you were asking
+[19:24]  * bschaefer attempts some more
+[19:24] <bschaefer> very strange...
+[19:25] <bschaefer> now it works perfectly, as I just rebuilt unity with a print statement in the function that opens the menu
+[19:25] <bschaefer> well the callback function that gets called from compiz when alt+f10 is hit....
+[19:25] <bschaefer> andyrock, hheeey
+[19:25] <andyrock> bschaefer, hey ;) whatsup?
+[19:26] <bschaefer> andyrock, could you attempt to reproduce this problem?
+[19:26] <andyrock> bschaefer, what problem?
+[19:26] <bschaefer> andyrock, wait I forgot you're running Q!
+[19:26] <bschaefer> andyrock, well anyway
+[19:26] <bschaefer> andyrock, go to a guest session
+[19:26] <bschaefer> and open an app, and press alt+f10
+[19:27] <bschaefer> the problem is on first start up the menu doesn't work
+[19:27]  * mterry goes and tries to reproduce again in guest session
+[19:27] <bschaefer> mterry, I got this when it failed (in the terminal)
+[19:27] <bschaefer> ;3~
+[19:27] <andyrock> do i really need a guest session? (i don't have unity/compiz/... trunk there)
+[19:28] <bschaefer> which means....dang...I remember I bug about that
+[19:28] <bschaefer> andyrock, well it needs to be a on a fresh reboot
+[19:28] <bschaefer> (or possibly a compiz --replace)
+[19:28] <bschaefer> mterry, yeah, im getting it on a compiz replace...second time
+[19:28] <bschaefer> it is very hard to repro though...
+[19:29] <bschaefer> mterry, I think when ^[[21;3~ shows up in a terminal it means there is no key binding for that set up yet...
+[19:29] <bschaefer> i wonder why...
+[19:30] <mterry> ah hm..
+[19:30] <andyrock> bschaefer, can't reproduce it here with unity or compiz --replace
+[19:30] <andyrock> let me restart
+[19:30] <andyrock> reboot sorry
+[19:30] <andyrock> brb
+[19:30] <bschaefer> andyrock, alright :)
+[19:30] <bschaefer> mterry, im also hoping...that its the same problem
+[19:31] <bschaefer> mterry, because it seems if you hold Alt and press F10 a lot of times it fails a few times as well
+[19:31] <bschaefer> mterry, or actually it seems to have broke it for me...wth
+[19:33] <andyrock> bschaefer, nope :/
+[19:33] <andyrock> it's fine here
+[19:33] <bschaefer> andyrock, :(...very strange its hard to get for me...
+[19:34] <bschaefer> if Im even getting the same problem as mterry
+[19:35] <bschaefer> yeah..hmm after like 10 compiz --replaces it seems to fail
+[19:35] <mterry> huh
+[19:35] <mterry> it was may more reproducable for me
+[19:35] <mterry> But my machine is very slow....?
+[19:35] <bschaefer> mterry, yeah...that is why im wondering if its the same problem :(
+=== dandrader is now known as dandrader|afk
+[19:36] <bschaefer> mterry, could you try to reproduce it using a terminal and see if any text appears?
+[19:36] <bschaefer> such at ^[[21;3~
+[19:36] <bschaefer> or just ;3~
+[19:36] <mterry> ok
+[19:39]  * bschaefer attempts a reboot
+[19:41] <bschaefer> mterry, i got it this time..on start up
+[19:41] <mterry> bschaefer, i have some info too
+[19:41] <bschaefer> mterry, sweet!
+[19:42] <mterry> bschaefer, I could reproduce the ;3~ if I did it a bunch in a terminal
+[19:42] <bschaefer> yeah, that seems to be normal
+[19:42] <mterry> But it seems that opening the terminal made the menubar visible for a bit, and the first one worked
+[19:42] <bschaefer> i got the ;3~ on start up with a terminal
+[19:42] <mterry> Unlike
+[19:42] <mterry> Normal apps, which don't make the menubar visible on startup
+[19:42] <bschaefer> and the menu didn't come up
+[19:42] <bschaefer> mterry, oo...so the terminal worked for you on start up?
+[19:43] <mterry> bschaefer, yeah.  Unlike nautilus
+[19:43] <mterry> bschaefer, but when I did it a bunch, it worked intermittently
+[19:43] <bschaefer> strange...it seems to work sometimes for me...
+[19:43] <bschaefer> mterry, yeah, i noticed that as well...but im not sure if that the same thing or a 'feature'/bug
+[19:44] <bschaefer> as you could think hold Alt and press F10 would toggle the menu...
+[19:44] <bschaefer> press*
+[19:44] <bschaefer> presssing*
+[19:45] <bschaefer> mterry, also the ;3~ I think is just what compiz outputs when there is no keybinding, the 3 seems to be for the mod (Alt), as if you do ctrl+F10 its a ;5~
+[19:45]  * bschaefer doesn't know if that is a useful thing to use atm
+[19:46] <mterry> bschaefer, it seems correlated to whether the appmenu appears for a moment
+[19:46] <bschaefer> mterry, yes it does
+[19:46] <bschaefer> mterry, sooo hmm
+[19:47] <bschaefer> mterry, how many times did you try the terminal on a fresh guest session?
+[19:47] <mterry> bschaefer, also... opening the dash seems to make it not occur
+[19:47] <bschaefer> as for me it isn't always repro
+[19:47] <bschaefer> on start up
+[19:47] <mterry> bschaefer, a couple, but they were interspersed with dash and other things
+[19:48] <bschaefer> mterry, o strange, so Startup -> Dash -> no bug?
+[19:48] <bschaefer> mterry, alright, can you try this then...on a start up try just mousing over a launcher icon
+[19:48] <bschaefer> (as the dash is set up on a ~60 second timer to init everything...)
+[19:48] <bschaefer> init everything dash wise
+[19:48] <mterry> ok.  mouse over and then what?
+[19:49] <mterry> launch something and try?
+[19:49] <bschaefer> mterry, yeah
+[19:49] <bschaefer> as mousing over a launcher icon will init the dash
+[19:49] <mterry> well I normally mouse over real quick to click a launch icon to get an app
+[19:49] <mterry> before pressing alt+f10
+[19:49] <bschaefer> mterry, o well then cool, I do a ctrl+alt+t
+[19:50] <mterry> my normal route is login & click nautilus & alt+f10
+[19:50] <bschaefer> mterry, i was checking if the ::EnsureDash fixed the issue or not
+[19:50] <bschaefer> mterry, the same for gcalc as well? ( As thats what the AP test uses)
+[19:51] <mterry> hmm
+[19:52] <mterry> let me put that on my launcher
+[19:52] <bschaefer> wth...my alt+f10 is just broken now...
+=== dandrader|afk is now known as dandrader
+[19:54] <bschaefer> hmm i can't get it to fail with compiz --replace and the gcalctool
+[19:55]  * bschaefer does a reboot
+[19:56] <bschaefer> mterry, well I got it on start up with the gcalc
+[19:56] <bschaefer> soo at lease i seem to be able to repro this...
+[19:57] <mterry> bschaefer, I'm wondering
+[19:57] <mterry> bschaefer, is this a timing thing
+[19:57] <mterry> bschaefer, like if I press alt+f10 intentionally very soon after launch, it doesn't work
+[19:57] <mterry> bschaefer, but it does shortly after
+[19:57] <mterry> bschaefer, when appindicator is all initialized and such
+[19:57] <bschaefer> mterry, it could be...there are a lot of timing things in unity where it waits to init things...
+[19:58] <bschaefer> mterry, though im not as familiar with the panel/indicators
+[19:58] <mterry> bschaefer, this does not explain the repeated presses in Terminal
+[19:58] <bschaefer> mterry, but now that I know what Im looking at im doing it very quickly...
+[19:58] <mterry> bschaefer, but maybe it does the first time ones
+[19:58] <bschaefer> mterry, well I got it on the terminal on start up before
+[19:58] <mterry> bschaefer, try to repro but slowly.  I'll try slowly too
+[19:59] <bschaefer> mterry, alright,
+[19:59]  * bschaefer reboots
+[20:02] <bschaefer> mterry, strange!...
+[20:02] <mterry> bschaefer, gosh darn it.  Nevermind about my darn clues.  I just tried slowly *and* the appmenu appeared for a moment before I pressed alt+f10.  And it didn't work (i.e. I reproduced it)
+[20:02] <mterry> bschaefer, you've got info?
+[20:03] <bschaefer> mterry, well I at first just kinda of went slowly...and attempted it
+[20:03] <bschaefer> and i reproduced it
+[20:03] <bschaefer> mterry, but the second time, I rebooted, started gcalc, and went and poured some coffee...and it worked first time
+[20:03] <mterry> Hm.  So timing seems unlikely
+[20:04] <bschaefer> mterry, yeah...it really seems like an uninitialized variable somewhere...
+[20:04] <bschaefer> which i've seen cause a lot of start up only problems
+[20:05] <mterry> bschaefer, OK.  Doesn't clang or something notify us of such things?
+[20:05] <bschaefer> mterry, hmm yeah, or valgrind
+[20:05] <bschaefer> i haven't used clang much, but that would be fun to test out
+[20:05] <bschaefer> mterry, but im able to reproduce this so I can take a look at it :)
+[20:06] <mterry> bschaefer, OK!  Cool
+[20:06] <bschaefer> mterry, hopefully its a simple problem :)
+[20:06] <mterry> bschaefer, your uninitialized variable idea sounds right
+[20:07] <bschaefer> mterry, its what im hoping!
+[20:07] <bschaefer> but ill play around with that though, a big problem could be too that compiz isn't calling the callback function for the Alt+F10...(which is why we were getting ;3~)
+[20:08] <bschaefer> soo it could also mean that isn't set up right away either
+[20:08] <bschaefer> but ill do some digging :), thanks for being able to reproduce this!
+[20:47] <cyphermox> mterry: indicator-session segfaults when it gets started for the tests!
+=== salem_ is now known as _salem
+[21:02] <cyphermox> ah, i see it needs a crapload of state from dbus to work
+[21:03] <alesage> cyphermox, I'm not seeing it fail in Jenkins dailies fwiw
+[21:03] <cyphermox> it's complicated
+[21:04] <cyphermox> it needs a bunch of state that might be available on the jenkins server, but never in a PPA
+[21:04] <alesage> indicator-session's relationship status to Launchpad: it's complicated
+[21:48] <bschaefer> mterry, it was an un initialized var
+[21:48] <bschaefer> mterry, FIRST MENU SHOW 1852139876
+[22:17] <mterry> cyphermox, you around?
+=== _salem is now known as salem_
+[22:43] <bschaefer> mterry, the fix for the issue is here: https://code.launchpad.net/~brandontschaefer/unity/panel-startup-fix/+merge/142805
+[22:43] <bschaefer> mterry, when it merges you should be able to confirm it your self with an update :)
+[22:44] <mterry> bschaefer, hi
+[22:44] <mterry> bschaefer, yeah, I saw that go by!  Thanks a bunch
+[22:44] <bschaefer> mterry, hello, cool. Ill kick the AP tests once it gets into the daily ppa
+[22:46] <Klap-in> hehe, one line, and so much work... intriguing to see. congratulations!
+[22:48] <bschaefer> reproducing the problem was the biggest problem :)
+[23:02] <cyphermox> mterry: yeah, around
+[23:03] <cyphermox> in class now though so I'll answer when I can
+[23:10] <mterry> cyphermox, sorry was afk.  I just had a proposed branch for ya.  Builds in a PPA for me
+[23:11] <mterry> cyphermox, I proposed a merge against your branch, review at your leisure
+[23:11] <cyphermox> awesome
+[23:11] <cyphermox> linky? :D
+[23:22] <mterry> cyphermox, https://code.launchpad.net/~mterry/libappindicator/fix-tests/+merge/142802
+=== salem_ is now known as _salem

@@ -1,0 +1,706 @@
+[00:01] <anti-neutrino> ohh thanks once again .. i dint know about this utility
+[00:03] <F3Speech> Having problems moving file system from usb to hdd, have moved file system, installed grub, updated, updated fstab mounts. on reboot with usb still i can choose the new disk and it boots find no problems, however as soon as i remove my usb i appear to lose access to sudo etc and system starts churning errors about missing fs. Any ideas how to finilise the fs transfer so i can remove my original usb.
+=== slank is now known as slank_away
+[00:16] <sarnold> F3Speech: you're probably looking for a way to run pivot_root and re-exec init off the 'new root'
+[00:16] <F3Speech> think i might have sussed it 1sec will let you know :)
+[00:17] <F3Speech> sucess :)
+[00:17] <F3Speech> even if it is with just 1 'c' lol
+[00:17] <F3Speech> then grub menu was still setting fs root to the usb even thought it was mounting the fs from the other disk
+[00:18] <sarnold> hehe
+[00:18] <F3Speech> lshw -C disk
+[00:18] <F3Speech> opps
+[00:28] <tflgen2> hey guys, I've almost got everything working with my mail server but I'm having dovecot-lda temporary failures. where can I look? log file: mailsrv postfix/pipe[3888]: 6C2DB41E97: to=<testuser@indycase.com>, relay=dovecot, delay=4719, delays=4719/0.01/0/0.02, dsn=4.3.0, status=deferred (temporary failure)
+[00:34] <tflgen2> nvm, found the issue
+[00:34] <tflgen2> dovecot-sieve wasn't installed
+[00:42] <NoReflex> hello! One of my computers is not able to mount the root file system. I get dropped to busybox and it looks like fsck is not included in busybox
+[00:42] <NoReflex> wget is there ...
+[00:46] <NoReflex> I found examples that mention e2fsck but it is not there
+[00:48] <sarnold> NoReflex: you can download the e2fsprogs off one of the mirrors, unpack it using ar and tar, and use e2fsck that way
+[00:49] <sarnold> hah, busybox has dpkg.
+[00:51] <NoReflex> sarnold, dpkg not found...
+[00:51] <NoReflex> on the sourceforge page there's only the source for e2fsprogs from what I can tell
+[00:52] <NoReflex> ls
+[00:54] <sarnold> NoReflex: yeah, you'll want one of the compiled ones, e.g. http://us.archive.ubuntu.com/ubuntu/pool/main/e/e2fsprogs/e2fsprogs_1.42-1ubuntu2_amd64.deb (that's the e2fsprogs that my AMD64 Precise system has installed)
+[00:55] <NoReflex> sarnold, the server is an older version (Karmic I think)
+[00:55] <NoReflex> but that should not be a problem
+[00:57] <sarnold> NoReflex: this path is for lucid: pool/main/e/e2fsprogs/e2fsprogs_1.41.11-1ubuntu2_amd64.deb
+[01:03] <NoReflex> sarnold, the problem is that inside busybox the network is not configured
+[01:03] <sarnold> NoReflex: oh man. :/
+[01:03] <sarnold> NoReflex: busybox does have a dhcp client, and the 'ip' program in case you just want to statically configure something quickly...
+[01:05] <NoReflex> it has the ip program but the interface do not appear in the list
+[01:05] <NoReflex> only lo
+[01:18] <sarnold> NoReflex: you may need to modprobe the module that provides the interface. hrm.
+[01:26] <NoReflex> sarnold, I've modpobed it (bnx2) but eth0 is still not created
+[01:28] <sarnold> NoReflex: well, perhaps it's time for a change; can you boot to USB or CD? Perhaps the thing to do is to boot to a livecd or liveusb and just fix it with access to _good_ tools.
+[01:29] <NoReflex> sarnold, unfortunately I don't have physical access to the machine; I'm accesing it via iLO from HP
+[01:30] <sarnold> NoReflex: oh man.
+[01:34] <NoReflex> I will try to mount an image using iLO Virtual Media and see how that goes
+[01:34] <NoReflex> thank you for your time
+[01:36] <sarnold> NoReflex: oh, iLO can do that? neat.
+[01:39] <mgw> I have a slightly odd scenario I'm trying to use start-stop-daemon for
+[01:40] <mgw> an unpriviledges user who has sudo only on /usr/sbin/ngrep needs to start ngrep as a daemon
+[01:40] <mgw> that same unprivileged user needs to be able to stop the daemon
+[01:41] <mgw> I thought I had this working on a system some time ago, but what's happening is ngrep appears to be dropping privs to nobody, but the original user cannot stop the daemon
+[01:41] <mgw> any suggestions?
+[02:08] <sarnold> mgw: if it were me, I'd write an upstart job configuration file for ngrep, and then you can grant your unprivileged user sudo access to the commands "start ngrep" "stop ngrep" and "restart ngrep"...
+[02:12] <mgw> sarnold: thanks
+[02:12] <mgw> I'll look into that
+[02:41] <Super_Dog2> Having some problems logging in and did a "df -h" command and find that my server's hard drive is full.  I presume this could be a problem. :-)
+[02:41] <Super_Dog2> Have a 80gb hard drive (SSD) with a 3TB LVM...
+[02:42] <sarnold> Super_Dog2: apt-get clean is a fast way to free up a few gigs in /var
+[02:42] <Super_Dog2> Any good ideas to look at for places to delete files from?  All I have right now is SSH without sudo privileges...
+[02:42] <Super_Dog2> I'll try the apt-get clean...
+[02:42] <sarnold> heh, it'll require sudo..
+[02:43] <sarnold> check if there's stuff in /tmp you can get rid of
+=== Daviey_ is now known as Daviey
+=== funkyHat_ is now known as funkyHat
+[02:45] <Super_Dog2> Looks like I've got some big *** log file...  Running Zentyal which is Ubuntu 10.04 LTS server base.
+[02:46] <Super_Dog2> deleting the big log files?  That shouldn't hurt anything right?
+[02:46] <sarnold> Super_Dog2: well....
+[02:46] <sarnold> Super_Dog2: normally best if you can get the programs involved to do logortates and the like
+[02:47] <sarnold> if you delete the file but the program is still logging to it, the space won't come back _and_ you can't read your log files.
+[02:47] <sarnold> but rm /var/log/*gz ought to be fine. :)
+[02:49] <Super_Dog2> cool... looks like I've got sudo now...
+[02:49] <Super_Dog2> Let me see if I can login at the machine.  (i.e. not SSH)
+[02:50] <Super_Dog2> crap... still no machine login...
+=== hggdh_ is now known as hggdh
+[02:52] <Super_Dog2> Are those *gz files pretty much useless archives / backups of old logs?
+[02:52] <sarnold> Super_Dog2: "useless" is in the eye of the beholder, of course :)
+[02:53] <sarnold> Super_Dog2: but with a full disk, they probably look useless. :)
+[02:53] <Super_Dog2> Is it *gz or *.gz?
+[02:53] <Super_Dog2> I'm used to Winbloze delete command
+[02:53] <sarnold> they're probably the same; at least I haven't seen anything named e.g. /var/log/logz  :)
+[02:55] <Super_Dog2> There were some big log files in there but df -h still shows "0" left in the "/" directory...
+[02:55] <Super_Dog2> Do I have to empty the trash or something via the command line..?
+[02:56] <sarnold> how have you been deleting files?
+[02:57] <Super_Dog2> With your "rm" command above?
+[02:57] <sarnold> oh, good. there's no trash. once you do that, they're gone. :)
+[02:57] <sarnold> Super_Dog2: root is allowed to go beyond the "full" mark
+[02:57] <Super_Dog2> Looks good.  It canned all the *.gz files it looks like when I do an "ls -al".
+[02:58] <sarnold> Super_Dog2: if you haven't gotten below that full mark yet, it will probably still read '0'...
+[02:58] <Super_Dog2> So you're saying "my cup overfloweth..."?
+[02:58] <Super_Dog2> ?
+[02:58] <Super_Dog2> With files that is?
+[02:59] <sarnold> Super_Dog2: that's a possibility. I'm trying to recall where the details are for that..
+[02:59] <Super_Dog2> What about the file "user.log.1" that looks pretty big...
+[03:00] <Super_Dog2> And the file "messages.1"?
+[03:00] <sarnold> Super_Dog2: you can delete those too, if you're that bad for space
+[03:00] <sarnold> Super_Dog2: did you run the 'apt-get clean' ?
+[03:00] <Super_Dog2> How about "sudo rm /var/log/*.1" ?
+[03:01] <sarnold> Super_Dog2: rm /var/log/*.[1-9] may be useful
+[03:01] <sarnold> sure
+[03:01] <Super_Dog2> Don't seem to have any log files beyond *.1...
+[03:02] <Super_Dog2> Yep...  ran "sudo apt-get clean"... Didn't get any error so I assume it worked...
+[03:04] <sarnold> okay
+[03:05] <Super_Dog2> What's a good command to list large files that are not in the /mnt directory?
+[03:06] <sarnold> Super_Dog2: probably "du -s /bin /boot /dev /etc /lib /lib64 /opt /root /srv /usr /var" is the easiest way to skip /mnt, /proc, /sys, etc.
+[03:08] <sarnold> Super_Dog2: oh, better, "du -a /path1 /path2 | sort -n"
+[03:09] <sarnold> Super_Dog2: you could also delete some kernels, if you've got a dozen kernels installed, you may want to clean some up
+[03:18] <Super_Dog2> Where are the old kernels hiding out?
+[03:18] <sarnold> Super_Dog2: /boot
+[03:18] <Super_Dog2> I keep deleting stuff and still df -h says 100% used....
+[03:18] <Super_Dog2> Is there a trash empty function or something I'm missing?
+[03:18] <bradm> Super_Dog2: by default, there's 5% reserved for root on a partition
+[03:18] <sarnold> Super_Dog2: hrm. pastebin your df output..
+[03:19] <bradm> Super_Dog2: so what you're probably seeing is that you've got over that, and you're bringing it back down
+=== remix_tj is now known as Guest87082
+[03:19] <sarnold> bradm: he's only got 80g /, he shold have dropped below that 5% again some time ago, I think...
+[03:19] <bradm> maybe deleted files with open filehandles then
+[03:21] <sarnold> bradm: mm. good thinking.
+[03:21] <sarnold> Super_Dog2: sudo lsof | grep " (deleted)"   -- see if soething has huge files open that you don't mind killing. :)
+[03:22] <Super_Dog2> Which df command?
+[03:22] <sarnold> Super_Dog2: df -h
+[03:23] <Super_Dog2> Sorry.  have to go back from one machine to the other.  Pastebin will be a PITA in this scenario.  Can't SSH from this Ubuntu box for whatever reason.
+[03:24] <Super_Dog2> I just never thought you'd need more than 80G for the server files.  The data files / mounts sure.  But that's on a separate LVM volume mounted in the /mnt directory..
+[03:24] <Super_Dog2> It's an SSD...
+[03:25] <bradm> Super_Dog2: you really shouldn't
+[03:25] <sarnold> Super_Dog2: my / takes 18 gigs.
+[03:25] <bradm> Super_Dog2: well, depends on how many logs you keep, and how busy the server is
+[03:25] <Super_Dog2> That's what I thought.  I've had this thing setup for over a year.  Basically been set it and forget it until today...
+[03:26] <sarnold> Super_Dog2: that includes a pile of lxc things, 150+ apt repository lists, and over six gigabytes of cached deb packages for ten different ubuntu distributions. :)
+[03:29] <Super_Dog2> Going to pastebin... hang on
+[03:32] <Super_Dog2> df -h command output here:  http://pastebin.com/QTujKUtX
+[03:32] <sarnold> (just to answer any potential curiosity, the difference I was thinking of was the minixdf vs bsddf behavior described in the mount(8) manpage, which keeps back the blocks in the filesystem that can't be used for files; it doesn't have anything to do with the 5% saved for root)
+[03:32] <sarnold> heh you even got the columns lined up :) nic
+[03:33] <Super_Dog2> I presume the 100% in "/" is not good...
+[03:33] <bradm> Super_Dog2: try a du -sk [a-lo-z]* | sort -n ?
+[03:33] <bradm> Super_Dog2: trying to avoid doing a du on /mnt/data there
+[03:34] <sarnold> ha! du -x "skip directories on different file systems"
+[03:35] <sarnold> awesome. 18 years in, still learning things about the basic tools. :)
+[03:35] <Super_Dog2> That's where all the big data files are - in /mnt/data...
+[03:35] <bradm> Super_Dog2: right, we want to narrow down where the disk usage is
+[03:39] <bradm> Super_Dog2: so is the du running?
+[03:40] <Super_Dog2> Here you go - http://pastebin.com/7GUe99bu - apologies - but I have to switch desks to do this.  SSH only works on one of my Windows workstations running putty...
+[03:41] <sarnold> oh. I just now notice that there's no /home filesystem...
+[03:41] <Super_Dog2> I'll try SSH on this workstation again...
+[03:42] <bradm> its not that bad though, 11G in /home by the looks
+[03:42] <bradm> is there anything else in /mnt other than the data dir?
+[03:42] <sarnold> 11+7+3+2+1 .. I just don't see how his drive shows full at 80g.
+[03:43] <Super_Dog2> All right cool.... Now I can log in with a terminal on this Ubuntu workstation.  Should go lots faster now....
+[03:43] <bradm> either there's something else on /mnt, or there's stuff in /mnt/data thats had the other FS mounted over it
+[03:43] <bradm> or a _lot_ of deleted files with open filehandles
+[03:44] <sarnold> what does sudo lsof | grep " (deleted)" | wc -l  return?
+[03:45] <sarnold> (granted, number isn't everything, it could be one huge 45gigabyte file...)
+[03:45] <Super_Dog2> running...
+[03:45] <Super_Dog2> says just "8"....
+[03:45] <Super_Dog2> Is that files?
+[03:46] <sarnold> yeah
+[03:46] <sarnold> goahead leave off the | wc -l and you can see them...
+[03:47] <Super_Dog2> mostly stuff in Apache2
+[03:48] <Super_Dog2> You want me to PasteBin that?
+[03:48] <Super_Dog2> Something in "Asterisk"...
+[03:48] <bradm> Super_Dog2: if its /var/log/apache2 its probably just log rotation stuff
+[03:48] <Super_Dog2> Not using asterisk...
+[03:48] <sarnold> mm, apache stuff...
+[03:49] <Super_Dog2> Here's the output of your command:  http://pastebin.com/NT4yC9qq
+[03:49] <sarnold> oh man, two megabytes. :/
+[03:50] <bradm> Super_Dog2: can you do a ls on /mnt?  is there anything else in there than data ?
+[03:50] <sarnold> how about "du -xk / | sort -n" ?
+[03:52] <sarnold> time for me to bail..
+[03:52] <Super_Dog2> This is kind of a good description of my problem that started today when I re-booted the server.  http://forum.zentyal.org/index.php/topic,11306.msg45782.html#msg45782
+[03:54] <Super_Dog2> Nothing in /mnt other than the /lan and /nas...
+[03:54] <sarnold> Super_Dog2: you may wish to check dmesg output, perhaps the kernel is screaming something at you about a corrupted filesystem or something
+[03:54] <Super_Dog2> Big /mnt/data directory where all the files are.
+[03:54] <Super_Dog2> I see something shifty....
+[03:55] <Super_Dog2> Was trying Rsync yesterday to an Rpi and it errored out...
+[03:55] <Super_Dog2> Let's take a look...
+[03:58] <Super_Dog2> Thanks sarnold... think I found the problem.  When the Rsync process errored out yesterday it left a big boatload of Rsync file in the /home/user directory...
+[03:59] <Super_Dog2> going to have to bone up on the rsync command.  Must have done something wrong.
+[03:59] <Super_Dog2> That "du -xk / | sort -n" is a keeper.  Thanks for that one...
+[04:01] <bradm> Super_Dog2: it still looks like there's more files hiding somewhere
+[04:02] <bradm> since the du you pasted doesn't show 70G worth of stuff
+[04:02] <Super_Dog2> I'm pretty sure it was an rsync gone wrong...  I'll have to figure out how the heck it wrote the files to the source /home/user directory....
+[04:02] <bradm> Super_Dog2: wait, you said something back up there about lan and nas in /mnt ?
+[04:03] <Super_Dog2> There must be an rsync switch I missed.
+[04:03] <Super_Dog2> Not much in /lan and /nas in the /mnt directory though.
+[04:03] <Super_Dog2> Let me check again.
+[04:04] <bradm> in /mnt I'd do a du -sk lan nas to see how much it uses
+[04:04] <Super_Dog2> You guys are frickin' Ubuntu geniuses...
+[04:04] <Super_Dog2> :->
+[04:05] <Super_Dog2> Check out this Paste Bin:  http://pastebin.com/ss9vxCYk
+[04:05] <Super_Dog2> 59G though... Still a little heavy for what I'd expect a 10.04LTS / Zentyal 2.27 install to be...
+[04:05] <bradm> that looks better
+[04:06] <bradm> but, yes, there's still some other data somewhere I'd say
+[04:06] <Super_Dog2> Yes.  Thanks a lot.  I am not worthy of you ans sarnold's terminal skills...
+[04:06] <bradm> at least its not completely full now though, you've got some breathing room
+[04:06] <Super_Dog2> Yeah... Any ideas for hunting for other useless files?
+[04:07] <bradm> did you do the du on /mnt/lan and /mnt/nas ?
+[04:10] <Super_Dog2> That wonderful "sudo du -xk / | sort -n" has revealed some other gems.  Looks like someone - me or my associate put a big boatload of PDF file in the web server.  Problem is we don't use that webserver anymore for anything other than logging in the server management interface.
+[04:10] <Super_Dog2> So I can get rid of a big load right there, too.
+[04:11] <Super_Dog2> That "du -sk lan nas" says 12 and 4 respectively.  I presume that's just bytes for the empty directories...
+[04:11] <bradm> yeah, you can ignore them
+[04:12] <bradm> thats really odd, it seems like that covers most of where stuff is stored
+[04:12] <Super_Dog2> Yep... nothing in there when I "ls -al" inside the directories...
+[04:12] <bradm> the du -xk should have showed you where everything was
+[04:13] <Super_Dog2> Yeah, that was brilliant stuff dude...
+[04:14] <Super_Dog2> That sort switch is the key...  Killer idea there...
+[04:14] <bradm> is it possible that the server was ever running without the /mnt/data mounted?  and files got put in there?
+[04:16] <Super_Dog2> Now we're down to 53 G out of 71 G.  Good....
+[04:20] <Super_Dog2> Lots of stuff in /var/cache , /lib , /var , /usr ...Not sure if anything that can go away though.
+[04:21] <bradm> it really depends on what it is
+[04:22] <bradm> but in general for stuff in /lib or /usr, I'd leave it alone
+[04:22] <bradm> its _possible_ there's stuff in /var/cache you can clean up
+[04:22] <Super_Dog2> Yeah.  don't see anything in there that looks like a candidate for deletion...
+[04:22] <Super_Dog2> Yeah.  don't see anything in there that looks like a candidate for deletion...
+[04:23] <bradm> Super_Dog2: /var/cache/apt/archives might be a candidate, depends on how much stuff you've installed
+[04:23] <qman__> apt-get clean will do that for you
+[04:24] <bradm> indeed.
+[04:24] <Super_Dog2> This is an old USB hard drive I used to back up...  "924860	/media/500GB_WDGreen".
+[04:24] <Super_Dog2> This shows on the "sudo du -xk / | sort -n" command.
+[04:25] <bradm> that sounds like you were trying to backup when it wasn't mounted
+[04:25] <Super_Dog2> But it doesn't seem like there's anything there... An old media mount or something?
+[04:25] <bradm> Super_Dog2: try a ls -a in that directory, possibly its hidden files?
+[04:25] <qman__> did you unmount /mnt/data to see if there was anything underneath it?
+[04:26] <Super_Dog2> Permission denied.
+[04:26] <qman__> because that's where my money would be, given the size of the data that's just plain missing
+[04:27] <bradm> qman__: I've asked that a couple of times and been ignored
+[04:27] <Super_Dog2> I presume that needs "sudo umount /mnt/data"  ?
+[04:27] <bradm> qman__: not to unmount it, but if there's possibly stuff under it
+[04:27] <bradm> Super_Dog2: don't do that
+[04:27] <bradm> Super_Dog2: if you've got stuff writing to it, that could be bad
+[04:27] <bradm> Super_Dog2: if you know there's nothing writing there, or processes with it open, go ahead
+[04:27] <bradm> Super_Dog2: but don't just blindly unmount it without checking
+[04:28] <qman__> right
+[04:28] <qman__> make sure it's not busy first
+[04:28] <Super_Dog2> I'm checking the directories in that mount and everything is what I'd expect there.
+[04:28] <bradm> Super_Dog2: but is there possibly stuff that was copied into /mnt/data without that big filesystem mounted?
+[04:29] <qman__> that's all stuff that's on the mount
+[04:29] <Super_Dog2> That's where all my core digital files are on the server.  TV, PDF's, spsheets, word docs, photos, etc....
+[04:29] <qman__> it's possible to have stuff there, and then mount another drive on top of it, and as a result not be able to see those files
+[04:29] <qman__> that can happen if you accidentally copy stuff while it's not mounted
+[04:29] <Super_Dog2> interesting.  never thought of that...
+[04:30] <Super_Dog2> I set this up like right when I built the server...
+[04:30] <Super_Dog2> The odds are lower I'd think...
+[04:32] <Super_Dog2> let's see if I can get this 10.04 server to boot with the Zentyal login screen...
+[04:33] <Super_Dog2> thanks a ton...
+[04:33] <Super_Dog2> You guys totally saved my !@# with that ""sudo du -xk / | sort -n" command.
+[04:34] <Super_Dog2> Still wondering why I have all these files on the server though....
+[04:34] <Super_Dog2> May have to go to a much larger hard drive.
+[04:35] <bradm> Super_Dog2: still feels like there's something missing though.
+[04:35] <Super_Dog2> Anybody have a good recommendation for a high quality / capacity SSD boot drive?  I'm thinking I better up this 80G to about 200+ something...
+[04:35] <Super_Dog2> Well - imagine not being able to even log in to your server...   That's where I was at.  So you guys are awesome..
+[04:36] <Super_Dog2> I will now donate to some charity.  I was going to call my $150/hour linux administrator over here...  Saved me some coin boys.  Thanks...
+[04:37] <koolhead17> Super_Dog2: buy ubuntu goodies even better :)
+[04:37] <Super_Dog2> It's karma....  I was freaking out there for a bit...
+[04:37] <koolhead17> Super_Dog2: cheers!! :)
+[04:37] <Super_Dog2> Couldn't even get sudo privileges on an SSH into the server...
+[04:45] <Super_Dog2> Thanks again...
+[04:46] <Super_Dog2> Still don't see much else to delete though.  Any good server quality drives you guys are using?  Has to be a 2.5" as this is only a 1U blade...
+[04:46] <Super_Dog2> Need 200gb or better probably...
+[04:48] <patdk-lap> hmm, 10 2.5" per 1u, or 4 3.5" in 1u, if you want hotswap
+[04:49] <patdk-lap> I really like my samsung 830, plextors are also good
+[04:56] <Super_Dog2> My 1u only has room for a 3.5" and a 2.5".  That's it.
+[04:56] <Super_Dog2> Is that Samsung 830 an SSD?
+[04:58] <Super_Dog2> Wow... Sammy 830 seems sold out everywhere unless I want a 500GB unit...
+[05:07] <Phibs> anyone know why: https://bugs.launchpad.net/ubuntu/+source/sssd/+bug/1003845 has not been backported into Precise LTS ?
+[05:07] <uvirtbot`> Launchpad bug 1003845 in sssd "Invisible symbols in sssd upstart config causes sssd to not start if /bin/sh is a link to /bin/bash" [Medium,In progress]
+[05:08] <Phibs> tjaalton: ping :)
+[05:11] <Phibs> amazing number of idlers in here
+[05:27] <patdk-lap> phibs, it's not a security issue, and probably no one has request it to the backporters
+[05:29] <qman__> it's probably not even affecting that many people, since it requires a non-default system setting to appear
+[05:57] <Phibs> qman__: what, using SSSD? If you aren't using it you should :)
+[05:57] <Phibs> patdk-lap: pretty lame/bad bug
+[06:08] <patdk-lap> sounds like additions security issues, if I where to use it, plus it's in universe, so security patchs won't be applied
+=== remix_auei is now known as remix_tj
+=== voxadam__ is now known as voxadam
+[09:28] <jdstrand> patdk-lap: that is inaccurate. things that are not Canonical-supported receive community support. The Ubuntu security team will sponsor security patches that are submitted by the community. Therefore, since sssd is in universe, it can receive security support from the community, if people step up to do it
+[10:07] <BlackDex> Hello there
+[10:07] <BlackDex> I get the message: connect_to localhost: unknown host (No address associated with hostname)
+[10:08] <BlackDex> i have searched, but didn't found a helping awnser
+[10:09] <melmoth> BlackDex, well, looks like there s no entry for localhost in /etc/hosts
+[10:10] <BlackDex> there is :(
+[10:10] <melmoth> then your resolver is not using it.
+[10:10] <melmoth> in /etc/nsswitch.conf be sure you have hosts:          files
+[10:11] <melmoth> you may alos have other entry, but be sure there s the files one.
+[11:02] <BlackDex> melmoth: could it have something to do with ipv6?
+[11:03] <melmoth> dont know
+[11:06] <BlackDex> !deur
+[11:06] <BlackDex> oeps
+[11:20] <tizz> Hi all! i have a strange problem: After upgrading a server from 10.04.4 to 12.04.1 dhcp3-server is replaced by isc-dhcp-server. But now the server is unable to start, no matter what I do it wants to start isc-dhcp-server6 instead of isc-dhcp-server. this complains about dhcpd6.conf not present, since only dhcpd.conf is present. how can i get rid of this 6?
+=== cpg is now known as cpg|away
+[12:10] <aFeijo> hi folks!
+[12:12] <aFeijo> I'm in a process of installing a new ubuntu server that will replace our 4 years old one. I have ubuntu 12.10 x64 installed, now I need to migrate the email server services. What would be the best options today? I need smtp, imap integrated with mysql
+[12:16] <aFeijo> no hints?
+=== hack is now known as harsh
+=== harsh is now known as hack
+[12:56] <TeTeT> aFeijo: I'm not up to date with 12.04, unfortunately, but the server guide in the online help might be the best start to see what servers are default
+=== yofel_ is now known as yofel
+[13:01] <vezq> aFeijo: I would use 12.04 LTS
+[13:01] <vezq> aFeijo: Postfix for SMTP and Dovecot for IMAP
+[13:02] <aFeijo> vezq, that was my idea too :) thanks
+[13:11] <uvirtbot`> New bug: #1095988 in nova (main) "nova-api-metadata update causing corruption" [Undecided,New] https://launchpad.net/bugs/1095988
+[13:26] <sazawal> I need to install ubuntu from networkboot
+[13:26] <sazawal> Please help
+[13:26] <sazawal> I have followed the instructions here, https://help.ubuntu.com/community/Installation/QuickNetboot
+[13:26] <sazawal> What next?
+[13:28] <ogra_> netboot your machine
+[13:28] <ogra_> it should dump you directly into the installer
+[13:29] <sazawal> ogra_, I have connected my machine to the another one(target) machine via ethernet cable
+=== gary_poster|away is now known as gary_poster
+[13:30] <sazawal> I guess my server is working, but how to provide the path of iso file?
+[13:31] <ogra_> so do you end up in the installer booting your target machine ?
+[13:31] <sazawal>  I guess so, but I have nowhere provided the path to iso file
+[13:32] <sazawal> It wouldnt know, from where to copy the files
+[13:32] <ogra_> it would default to use archive.ubuntu.com
+[13:33] <sazawal> none of the two machines are conected to the internet
+[13:33] <ogra_> you can mount the iso on your server and export it through http
+[13:33] <ogra_> and then point the installer to the ip of your server during installation
+[13:33] <sazawal> yes, but how to do it? Where do I mount the iso file?
+[13:34] <ogra_> well, if your webserver is confgured to have /var/www as / you mount it under that dir
+[13:34] <sazawal> ogra_, well I do have apache server running on my computer
+[13:34] <ogra_> depends what webserver you install and how you set it up
+[13:35] <sazawal> Does it work for installation?
+[13:35] <ogra_> i guess so
+[13:35] <sazawal> ogra_, Have you tried the netboot yourself?
+[13:35] <sazawal> I googled and got different tutorials on different websites
+[13:36] <ogra_> i usually use my local mirror for that so i dont need to mount any iso :)
+[13:36] <sazawal> I dont know which one will work
+[13:36] <sazawal> ogra_, Can you help me step by step?
+[13:36] <ogra_> well, if you have the installer running on the target machine thats 90% of the work
+[13:36] <sazawal> I have http server running
+[13:37] <ogra_> well, sudo mount /dev/cdrom /var/www/ i guess
+[13:37] <ogra_> and check with a browser if yoou can see the content
+[13:37] <sazawal> Yes it works
+[13:37] <sazawal> I mean, I frequently use it to transfer files over LAN
+[13:45] <sazawal> ogra_, What to do next?
+[13:57] <sazawal> I need to install ubuntu via networkboot, please help
+[13:57] <ogra_> sazawal, what elsse do you want ?
+[13:57] <ogra_> it should fully work now
+[13:58] <ogra_> in the installer point to your server IP that exports the iso
+[14:00] <sazawal> ogra_, How to specify the IP to the target computer
+[14:00] <ogra_> inin the installer dialog that asks for it
+[14:01] <patdk-lap> you download the netinstall iso, and either boot the cd, or copy the netboot files to a pxe server, and pxe boot
+[14:02] <ogra_> that part he has done (he said)
+[14:02] <patdk-lap> oh, I didn't see that
+[14:02] <ogra_> so once you get to the qestion about which mirror should be used, you give it the IP of the server
+[14:21] <sazawal> ogra_, Yes the DHCP connection is made. I have this folder /tftpboot/ubuntu-installer/i386
+[14:21] <sazawal> Do I have to mount my iso file somehwere here?
+[14:21] <ogra_> you said you already booted into the installer
+[14:21] <ogra_> no
+[14:21] <sazawal> Sorry, I have not booted to the installer
+[14:21] <ogra_> you just netboot your client and will end up in the first installer screen
+[14:21] <sazawal> I should have misunderstood something
+[14:22] <ogra_> the installer is inside the initrd
+[14:22] <ogra_> the iso is only needed for the debs later
+[14:22] <sazawal> ogra_, Okay
+[14:22] <donvito> VERSION=`cat /etc/slackware-version` how can i edit this line so in motd ill get ubuntu version
+[14:23] <sazawal> So, how to start the installer in the target machine?
+[14:23] <ogra_> PXE should
+[14:23] <ogra_> you just need to PXE boot the target machine
+[14:23] <ogra_> (if everything is set up properly indeed)
+=== uksysadmin__ is now known as itarchitectkev
+[14:26] <donvito> DISKUSAGE=`du -sh ~/|awk '{print $1}'`
+[14:26] <donvito> or this on ubuntu?
+[14:26] <hallyn> stgraber: I don't like the patch for lxc-shutdown for busybox
+[14:26] <ogra_> what does /etc/slackware-version contain ?
+[14:27] <donvito> ogra
+[14:27] <donvito> fixed that
+[14:27] <hallyn> ISTM busybox is simply broken and we shouldn't hack lxc to work around it
+[14:27] <donvito> i now need command for diskusage
+[14:27] <donvito> so in motd will tell the disk usage
+[14:27] <donvito> at the moment
+[14:27] <donvito> DISKUSAGE=`du -sh ~/|awk '{print $1}'` so i need to edit this line and make work on ubuntu motd
+[14:28] <ogra_> how did you fix it ? on ubuntu you should use the lsb_release command for it
+[14:28] <ogra_> the du should work
+[14:28] <donvito> VERSION=`cat /etc/issue.net`
+[14:28] <donvito> i fixed with this line
+[14:28] <ogra_> ugh
+[14:29] <donvito> du: cannot read directory `/home/nertil/.subversion/auth': Permission denied
+[14:29] <donvito> i got this
+[14:29] <donvito> like error
+[14:29] <ogra_> VERSION="$(lsb_release -ds)"
+[14:30] <ogra_> use that (and depend on the lsb stuff if it is a package you work on)
+[14:30] <ogra_> well, du indeed needs the permissions to index the dir you use it on
+[14:30] <ogra_> but tht wont differ on any othe linux
+[14:30] <ogra_> nothing ubuntu specific
+[14:30] <donvito> how to fix the permision
+[14:31] <ogra_> well, why dont you have access to the dir in the first place if it is in your own home ?
+[14:31] <donvito> i dont even know how to
+[14:31] <donvito> :)
+[14:31] <donvito> im new at this
+[14:31] <ogra_> (assuming you are logged in as netril)
+[14:32] <donvito> im root
+[14:32] <donvito> its my home box
+[14:32] <ogra_> if you are root you should have all permissions you need
+[14:33] <donvito> nertil@Precise:/var/etc$ sudo su
+[14:33] <donvito> root@Precise:/var/etc#
+[14:33] <donvito> sure
+[14:33] <stgraber> hallyn: yeah, not fond of it myself, mostly because we have the SIGPWR stuff in the API too and we don't really want to special case busybox in there...
+[14:33] <stgraber> hallyn: I "think", I'd be much happier with making those signals configurable in the container config, then make lxc-shutdown a part of lxc-stop so it can use the API (instead of being a shell script)
+[14:34] <stgraber> then everything would be using the same code and it'd be the template's job to set any non-standard signals
+[14:34] <hallyn> that sounds good
+=== slank_away is now known as slank
+[14:46] <uvirtbot`> New bug: #1096081 in php5 (main) "server reboots because of php5 cron job" [Undecided,New] https://launchpad.net/bugs/1096081
+[15:03] <caribou> roaksoax: ping
+[15:14] <koolhead17> zul, Daviey smoser hallyn are you folks still on vacation :P
+[15:24] <jabba_> can anyone tell me what to do to get pci-passthrough running on a 12.04 ubuntu domU on a 12.04 ubuntu dom0 with xcp-xapi stack?
+[15:24] <hallyn> koolhead17: not by a long shot
+[15:24] <jabba_> i already bound the desired pci device to pciback, so that lspci -k tells me pciback as driver for that specific device (usb2.0 extension card)
+[15:25] <jabba_> then i told the vm to use this device (via xe vm-param-set blabla...)
+[15:26] <jabba_> the i told the vm to se iommu=soft as kernel-arg
+[15:26] <jabba_> but the damn vm doesn't get any pci-device passed through....
+[15:27] <jabba_> why the hell are there so many variations of xen, toolstacks, pciback as module, build in, etc., etc..  this is so confusing!
+[15:31] <roaksoax> caribou: pong
+[15:32] <caribou> roaksoax: I have someone asking for some fence script added to the precise version of pacemaker which is already in Quantal
+[15:33] <caribou> roaksoax: what would be the best way to work at it : get the whole 1.1.7 version of pacemaker in Precise or just add the one fence script ?
+[15:33] <caribou> roaksoax: to the current pacemaker version in Precise  I mean ?
+[15:34] <roaksoax> caribou:  pacemKer doesn't ship fence agents
+[15:35] <caribou> roaksoax: they must be fence script, lemme find the reference
+[15:35] <roaksoax>  there is a package called fence-agents
+[15:36] <caribou> roaksoax: my bad; he's talking about /usr/sbin/fence_pcmk which is in Quantal but not in precise
+[15:36] <roaksoax> jamespage:  howdy that drbd import is failing cause it's trying to import an older version?
+[15:38] <roaksoax> caribou: so you want to ship that file in precise?
+[15:38] <caribou> roaksoax: yeah, make this available in Precise
+[15:39] <roaksoax> if the precise version is not shipping it is because it is not supported unless the file is not being installed
+=== qhartman_ is now known as qhartman
+[16:01] <roaksoax> zul: why are you installing that?
+[16:02] <zul> roaksoax: centos?
+[16:02] <feisar> probably a simple question, is MySQL 3306 tcp or udp?
+[16:02] <roaksoax> zul: yeah
+[16:02] <zul> roaksoax: so i can make sure our openstack stuff runs centos/rhel images
+[16:03] <_ruben> feisar: tcp
+[16:03] <roaksoax> zul: cool
+[16:03] <feisar> _ruben: thanks : )
+[16:06] <roaksoax> jamespage: you back/win 26
+[16:06] <roaksoax> arr
+[16:23] <zul> hallyn: uploading now god help us all
+[16:24] <hallyn> zul: i should be in front of some shrine or other right now
+[16:24] <zul> hallyn: excactly
+[16:25] <zul> hallyn: done
+[16:27] <hallyn> zul: thanks
+[16:27] <hallyn> stgraber: now that zul has uploaded the new qemu source, what does it take to get that into the server set so i can upload to it (when it invariably breaks)?
+[16:31] <SpamapS> hallyn: +1 on putting it in the server package set. Its critical to a huge portion of the things servers are doing these days.
+[16:32] <hallyn> "but no pressure on the drastic upload you just did which will break it for everyone" :)
+[17:09] <koolhead17> hallyn, :P
+[17:11] <dekatrom> Hi
+[17:31] <TheLordOfTime> so, anyone know where apache2 sets up its site configs by default?
+[17:31] <TheLordOfTime> does it still uses /var/www ?
+[17:36] <vezq> TheLordOfTime: may vary depending on distro
+[17:36] <TheLordOfTime> vezq, i meant in ubuntu
+[17:36] <TheLordOfTime> :P
+[17:36]  * TheLordOfTime thought that might've been implied.
+[17:36] <vezq> yes :)
+[17:36] <vezq> it's still /var/www
+[17:37] <vezq> have too many open channels here :)
+[17:37] <TheLordOfTime> okay, that breaks from Debian policy...
+[17:37] <TheLordOfTime> at least afaict
+[17:37]  * TheLordOfTime was reading the debian packaging policy booklet
+[18:01] <TheLordOfTime> who here's more fluent with the apache webserver packages than I/
+[18:01] <TheLordOfTime> because i certainly am not :p
+[18:01] <TheLordOfTime> (question on its packaging and whether its violating debian policy)
+[18:02] <wilmaaaah> hi all
+[18:02] <wilmaaaah> how well does ubuntu 12.04 work on machines with 2 cpus? do i need to make adjustments? i don't get the performance i like
+=== mcclurmc_away is now known as mcclurmc
+[18:03] <TheLordOfTime> wilmaaaah, are we talking server or gui version?  (server's commandline only unless you add a GUI)
+[18:04] <sarnold> wilmaaaah: how well something runs on SMP systems depends upon the workload, more than anything else. my laptop
+[18:04] <wilmaaaah> it's the server edition, i'm using it as a kvm-host. sysbench showed slower performance than my 2 core athlon. i'm speaking of 2 opterons
+[18:05] <sarnold> wilmaaaah: my laptop's got four cpus, and I can run make -j 4 on it without driving the temperature too high but still getting excellent compile performance...
+[18:05] <wilmaaaah> it's 2 cpus á 6 cores here
+[18:06] <wilmaaaah> sarnold: can i trigger that somehow?
+[18:06] <sarnold> so 12 procs total?
+[18:06] <wilmaaaah> yep
+[18:06] <sarnold> cool. :)
+[18:06] <wilmaaaah> 12 cores
+[18:06] <wilmaaaah> 2 cpus
+[18:07] <wilmaaaah> it's slower than my four year old athlon :(
+[18:07] <sarnold> wilmaaaah: does vmstat and top show you're IO-bound or compute-bound or are the guests just not running as quickly as you'd like?
+[18:08] <wilmaaaah> i did a quick sysbench test and compared the result with my desktop machine
+[18:08] <wilmaaaah> the video of the guests seems laggy, i thought until now it's maybe vnc, but now i tried spice - same lagginess
+[18:09] <sarnold> wilmaaaah: what does sysbench test?
+[18:09] <wilmaaaah> lemme check vmstat though
+[18:09] <wilmaaaah> cpu speed, among others
+[18:10] <wilmaaaah> not sure about the algorithm
+[18:10] <sarnold> is it an accurate reflcetion of the workload you're going to put on the machine?
+[18:11] <wilmaaaah> as i said, i have no idea what is being measured
+[18:12] <wilmaaaah> let me run another test to compare
+[18:12] <wilmaaaah> this one: time echo"scale=4000; a(1)*4" | bc -l
+[18:12] <wilmaaaah> calculates 4000 digits of pi
+[18:13] <wilmaaaah> my athlon stays faster
+[18:13] <wilmaaaah> :(
+[18:13] <sarnold> by how much?
+[18:13] <sarnold> .. and could you run _twelve_ of those simultaneously on your four year old system and still be done more quickly? :)
+[18:14] <wilmaaaah> well, check it on your machine, my opteron gives 26.8s,26.8s,0.004s
+=== mcclurmc is now known as mcclurmc_away
+[18:15] <sarnold> I see what you mean. 10.5 seconds.
+[18:15] <wilmaaaah> sarnold: that's why i asked if i need to take actions
+[18:15] <wilmaaaah> 16.3s on my athlon
+[18:16] <sarnold> wilmaaaah: I wonder if you need to fiddle with your BIOS settings -- ram speeds, clock speeds, etc. :/
+[18:17] <sarnold> wilmaaaah: some systems are quite a bit slower if the RAM isn't installed "just right" -- spread over the banks in an optimal way, for example.
+[18:17] <wilmaaaah> mmh, lemme look into this
+[18:17] <wilmaaaah> that's been done according the manual
+[18:18] <sarnold> because I wouldn't expect any hexacore kind of system to be more than half the speed of my i7 laptop on a compute-intensive workload that has near zero disk io...
+[18:19] <wilmaaaah> i need more ram, two more modules
+[18:21] <wilmaaaah> obviously i need two for each cpu
+[18:23] <sarnold> wilmaaaah: that may help. I know nearly nothing about internals, but I could easily imagine that if the CPUs have to work together to share the memory, you could be running at less than half the speed you expected.
+[18:25] <wilmaaaah> these are dual channel modules, they need to be paired to work as expected, major mistake on my part here
+[18:26] <ogra_> wilmaaaah, also i highly doubt that bc does any multijthreading, you will only stress one core with it anyway
+[18:28] <wilmaaaah> that may be true as well, the problem remains the faulty planning though
+[18:29] <wilmaaaah> i think if i removed one cpu it'd be faster
+[18:32] <sarnold> ogra_: hehe, yes, that was my initial thought of course, but the beauty of the bc test is that it shows the macihne to be 2.5 times slower than my laptop on a single-threaded compute-intensive task.
+[18:32] <ogra_> yep, i also immediately tried it on my varoius machines
+[18:32] <sarnold> ogra_: of course, for something as small as 4000 digits of pi, one might expect it to _also_ run nearly entirely in cache, but that's probably not the case..
+[18:32] <ogra_> my chromebook (running ubuntu) is only three times as slow as my core i5 3500k
+[18:33] <ogra_> five times for my nexus7 though
+[18:35] <sarnold> heh, 52 seconds for my pandaboard.
+[18:36] <ogra_> funny
+[18:36] <ogra_> 50 for the nexus7
+[18:36] <ogra_> and 30 for the chromebook
+[18:36] <ogra_> (10 on intel)
+[18:37] <sarnold> haha, your tablet beats a computer that's plugged into the wall. awesome. :)
+[18:37] <ogra_> that clearly shows that it is only single core ... nexus7 is massively faster than the panda usually
+[18:37] <sarnold> in the twenty minutes or so that I had my panda running X, I was reasonably impressed with the performance for the price, size, heat, etc.
+[18:38] <sarnold> cool to hear the nexus is nicer :)
+[18:38] <ogra_> yeah, its already okayish
+[18:38] <ogra_> but yep, the nexus is so much better
+[18:40] <wilmaaaah> sarnold: anyway, thanks for pointing me in the right direction!
+[18:41] <sarnold> wilmaaaah: sure thing, I hope you get the system you want in the end :) hehe
+[18:42] <sarnold> i'd be curious to know The Solutions, too, if you've got the time.. (don't worry if i'm responsive or not, I read highlights. :)
+[18:42] <TheLordOfTime> sarnold, where should i report potential Debian packaging policy breakage for packages?
+[18:42] <TheLordOfTime> in Debian?
+[18:42] <TheLordOfTime> or also in Ubuntu
+[18:42] <ogra_> TheLordOfTime, if it is caused by an ubuntu modification, file it in ubuntu
+[18:42] <ogra_> otherwise its a debian issue
+[18:43] <TheLordOfTime> ogra_, okay, will do thanks.
+[18:43] <sarnold> TheLordOfTime: debian seems to like bugreports for everything, though something as big as "apache doesn't follow standard for websites in /var/www/" or whatever, maybe bring it up with the maintainer first -- it feels like the sort of tihng to have been covered before
+[18:43] <TheLordOfTime> i'll start there, then, after I spin up a 13.04 VM to try and find a specific bug
+[18:44] <TheLordOfTime> (unrelated to apache)
+[18:44] <sarnold> TheLordOfTime: aha :)
+[19:10] <domino> hey everyone. I've recently encountered an issue and have tried numerous suggestions (to no avail) to try and correct it, so im coming here to see if anyone has any ideas. when I run an apt-get update it fails with this output: https://gist.github.com/d9045e2660167ac33617
+[19:13] <domino> im running ubuntu-server 12.04.1 on virtualbox
+[19:13] <domino> has anyone encountered this before?
+[19:17] <njin> domino, try commenting out that line in /etc/apt/sources.list and run again apt-get update
+[19:20] <sarnold> it's perhaps four lines, deb lines and src lines, for both updates and security.. one wouldn't want to run that way for long :)
+[19:21] <sarnold> domino: are you using any caches?
+[19:22] <domino> sarnold. sorry i'm not sure
+[19:23] <domino> also, when I run: ls /var/lib/apt/lists I get this strange output
+[19:23] <domino> http://d.pr/i/6Tww
+[19:23] <sarnold> domino: I've seen those sorts of hash mismatches before if the package list is retrieved off one mirror, the hashes off another mirror, and sometimes caches can hold onto stale data too long
+[19:23] <domino> when I wc on the file I get 96, I believe its only supposed to have 90
+[19:24] <domino> hmm
+[19:24] <domino> sarnold, how can I check if I have caches (and clear them)
+[19:24] <sarnold> domino: I was thinking more along the lines of squid or apt-cacher-ng ..
+[19:25] <sarnold> domino: those are some funny files in /var/lib/apt/lists -- I've got nothing that looks similar
+[19:25] <domino> sarnold. no I don't believe im using anything like that. this is just a vanilla virtualbox install from a fresh 12.04.1 dl.
+[19:25] <sarnold> domino: was your /etc/apt/sources.list or any of the lists.d/ files updated with, say, a windows text editor?
+[19:26] <domino> i don't believe so. after the OS finished installing the first thing I did was just apt-get update and then ls that file. the VM is probably like 5 minutes old
+[19:27] <sarnold> haha
+[19:27] <sarnold> oy :)
+[19:27] <domino> i've also tried to rm -rf /var/lib/apt/lists/* and then run apt-get update again, and those 6 wierd files always come back, and the update fails in the same way
+[19:27] <sarnold> I think I'd rm /var/lib/apt/lists/* and run 'apt-get update' again and see what happens..
+[19:28] <sarnold> okay, that's a time saver :)
+[19:28] <domino> ;)
+[19:28] <sarnold> paste your /etc/apt/sources.list and the list.d/*list files?
+[19:28] <domino> sure. one sec
+[19:29] <DarylXian> Hi.  A general maintenance 'apt-get update' on my Ubu12LTS_64 box today updates grub.  During the process, I get a warning that "The GRUB boot loader was previously installed to a disk that is no longer present, or whose unique identifier has changed for some reason." and instructing me to choose the right GRUB location:  http://pastebin.com/KGquUbLj
+[19:29] <DarylXian> I'm not sure what's happened -- if there's a problem or not. My current partition plan (/etc/fstab) is: http://pastebin.com/raw.php?i=G2U7Xg8r
+[19:30] <DarylXian> What should I do here -- just check one of the boxes and proceed?  Or is there a problem underway?
+[19:33] <sarnold> DarylXian: oof. uh. hrm. does that uuid still exist in /dev/disk/by-uuid/ ?
+[19:37] <DarylXian> sarnold: hi.  No. ls -al /dev/disk/by-id/ | grep "5d26d773-d323-5b7a-e946-8e64e64cc978" ==> (empty).  but,
+[19:37] <DarylXian> tune2fs -l /dev/sda1 | grep UUID  ==> Filesystem UUID:  5d26d773-d323-5b7a-e946-8e64e64cc978
+[19:38] <DarylXian> oops.  by-uuid.  sec ...
+[19:39] <DarylXian> sarnold: yep. ls -al /dev/disk/by-uuid/ | grep "5d26d773-d323-5b7a-e946-8e64e64cc978" ==> lrwxrwxrwx 1 root root  10 Dec 20 16:29 "5d26d773-d323-5b7a-e946-8e64e64cc978" -> ../../sda1
+[19:41] <sarnold> DarylXian: hrm... that's a partition, so perhaps it was using the un-recommended blocklist mechanism? (large guess here..)
+[19:41] <DarylXian> sarnold: I'm not familiar with that at all ... what can I check to answer that for you?
+[19:42] <sarnold> DarylXian: I odn't know, it's beyond my experience. :(
+[19:43] <DarylXian> sarnold: well, then ... oh-oh?
+[19:44] <sarnold> DarylXian: I _think_ I'd be inclined to install it to both /dev/sda and /dev/sda1 here. This looks like a server system that's never going boot a different OS by selecting a different boot drive in the BIOS, right?
+[19:45] <sarnold> DarylXian: perhaps you've got an msdos-style MBR installed on /dev/sda, and perhaps it automatically selects the "active partition", /dev/sda1, and that's where grub is installed and does its work.
+[19:45] <sarnold> but if grub doesn't like that, maybe overwrite the one on /dev/sda and let grub own the drive
+[19:45] <sarnold> and I think update /dev/sda1 just in case something else is booting that partition through a mechanism I don't understand. :)
+[19:46] <DarylXian> sarnold: Yes, it's a single-purpose, single-drive Zimbra mailserver install on 12LTS UbuSvr.  It will ONLY boot Ubu.
+[19:50] <DarylXian> sarnold: re-reading your comments, I'm in over my head atm.  I'll do my homework on the various options -- but, for now, I'm mainly concerned with NOT fubaring this server.  If I check-to-install both "[X]   /dev/sda (1000204 MB; WDC_WD1003FBYX-027GC3)" & "[X] - /dev/sda1 (270 MB; /boot)", will I be 'safe'/able to boot?
+[19:51] <sarnold> DarylXian: I think so. But it's not my ass on the line :) so I completely understand your skepticism. It's healthy...
+[19:51]  * DarylXian has deomnstrated strong fubar-foo in the past ...
+[19:52] <DarylXian> er, fubar-fu
+[19:52] <domino> sarnold: sorry for the delay. Here is my poor attempt at getting you my /etc/apt/sources.list (https://gist.github.com/f616f64bb7679a1ccb77), and it turns out my list.d/* is empty
+[19:53] <sarnold> domino: ehe, I think you'd have more fun with this system if you install putty and ssh into it for things :) then copy-paste will work way better... or, another option, install "pastebinit" :)
+[19:55] <sarnold> domino: but I don't see anything in there that looks surprising. :(
+[19:58] <Guest84637> Hi. I'm trying to install Ubuntu on VMWare Fusion but I get an error during installation -> Unanble to install the selected kernel. An error was returned while tryin to install the kernal into the target system. Kernel package: 'linux-generic'''
+[20:05] <sw0rdfish> my provider's site says the VPS has 1 cpu core yet when I do cat /proc/cpuinfo it shows cpu cores: 8
+[20:05] <sw0rdfish> does that mean the vps thinks it has 8 cores?
+[20:06] <RoyK> sw0rdfish: I guess they're running xen and just allows you to use a single core for real work
+[20:06] <sw0rdfish> I see.
+[20:06] <sarnold> sw0rdfish: /proc/ isn't very well mangled for containers... chances are good you've got cgroups or something limiting you to a single core
+[20:06] <sw0rdfish> OpenVZ actually
+[20:07] <RoyK> I didn't know you could limit cores in openvz
+[20:07] <sw0rdfish> hehe
+[20:07] <sw0rdfish> well damn they have a cheaper and better vps out as specials offer for christmas/new years....
+[20:07] <sw0rdfish> I'm definitely gonna get that and let this one expire i geuss
+[20:08] <sw0rdfish> guess*
+[20:11] <DarylXian> sarnold: fyi, it appears that install to disk MBR (/dev/sda) was the correct choice.  system's rebooted.  thanks.   still no idea what the installer's actual problem was :-/
+[20:11] <sarnold> DarylXian: *pfew*! :)
+[20:11] <sw0rdfish> what is cpanel for
+[20:11] <sw0rdfish> I think solusvm is more than enough right?
+[20:12] <sw0rdfish> oh its for webhosting and stuff and I don't need that.
+[20:25] <domino> sarnold, thanks for taking a look at it. I'll keep digging and see if I come up with anything
+[20:25] <sarnold> domino: good luck :)
+[20:26] <uvirtbot`> New bug: #1093918 in multipath-tools (main) "grub-probe auto-detection fails on raid" [Undecided,New] https://launchpad.net/bugs/1093918
+[20:33] <DarylXian> sarnold: thx agn!
+[20:43] <adam_g> hallyn: hmm. im getting the same (bad?) results across precise, quantal + raring for the test case you posted to bug #1092715 http://paste.ubuntu.com/1497057/
+[20:43] <uvirtbot`> Launchpad bug 1092715 in linux "chown does not update acls if there are >1 user acls (in quantal)" [High,Confirmed] https://launchpad.net/bugs/1092715
+[20:44] <hallyn> adam_g: yes.  and now i am too.  right before i added that in there, i swear it updated the acl on my laptop
+[20:44] <hallyn> i dunno
+[20:45] <hallyn> adam_g: but note that if you dont do 'setfacl -m user:ubuntu:rw- xxx', then chown does update the group acl
+[20:45] <hallyn> maybe until you do that it doesn't actually set a real acl?
+[20:46]  * hallyn tries out attr
+[20:47] <adam_g> hallyn: :) fwiw, i wasn't checking ACLs yesterday, but it seemed udev did pick up the newly installed rule if i moved it from /lib/udev/rules.d/ to /etc/udev/rules.d/ or (i think) if i modified the rule in /lib/udev/.
+[20:49] <hallyn> adam_g: ok my test was bad.
+[20:50] <hallyn> in the cases where chown seemed to update it, setfacl simply hadn't set an acl (bc it didn't need to)
+[20:50] <zastern> Anybody know if the other_vhosts_access.log that apache uses on debian/ubuntu when you don't configure per-vhost logging includes errors also? E.g. what would show up in a per-vhost error log?
+[20:50] <hallyn> adam_g: the newly picked up rule *is* found even in /lib/udev/rules.d, because otherwise group wouldn't be changed to kvm
+[20:52] <adam_g> hallyn: the group wasn't changing to kvm for me
+[20:53] <adam_g> lemme try again
+[20:53] <hallyn> adam_g: oh, wow.  then that's a different bug than i'd been seeing
+[21:01] <adam_g> hallyn: i think its some inotify wonkiness wrt udev picking up the new rule: http://paste.ubuntu.com/1497150/
+[21:04] <hallyn> adam_g: ext4 rootfs?
+[21:05] <adam_g> hallyn: hm, ext3 actually
+[21:05] <hallyn> adam_g: i've been testing in a quantal vm and not had the same results.
+[21:05] <hallyn> lemme try one.  more.  time.
+[21:06] <adam_g> hallyn: fs might be my issue? dont personally know much about inotify support in ext3 vs ext4
+[21:08] <hallyn> adam_g: yeah my current vm is xfs, but it gets /dev/kvm chgrpd to kvm when i apt-get install qemu-kvm (just tried)
+[21:08] <hallyn> and previously i had it ext4
+[21:08] <hallyn> so yeah this coudl be ext4 bug.  you created thsi vm just for this test?
+[21:08] <hallyn> or where are you testing?  (wondering if anythign else could be modified)
+[21:09] <adam_g> hallyn: this is in a hardware lab where i'm testing other stuff from quantal-proposed, that depends on qemu-kvm (nova/libvirt). ive got ext3 root just to speed up d-i installation, i can try ext4
+[21:10] <hallyn> hold on.  maybe i'm still being an idiot
+[21:22] <hallyn> nope - i mean probably, but my results are still the same
+[21:49] <mikeey> Some sysadmin of ours managed to run Bastille, and it made a couple utilities "root only", how do I reverse it if we do not have the restore file? For instance, ifconfig = -bash: /sbin/ifconfig: Permission denied
+[21:54] <Free99> mikeey: try running "ls -l /sbin/ifconfig" and put the results here
+[21:54] <mikeey> -rwxr-x--- 1 root root 72320 Mar 31  2012 /sbin/ifconfig
+[21:55] <hallyn> adam_g: clue.  if you apt-get purge qemu-kvm; modprobe kvm_intel; apt-get install qemu-kvm, does it then change the /dev/kvm group owner?
+[21:55] <hallyn> adam_g: I'm thinking the very first time you install qemu-kvm, it may refuse to change the group bc /etc/group hasn't been updated yet (though it *should* have been, which confuses me)
+[21:55] <hallyn> i ask bc that's what i just saw on raring
+[21:56]  * hallyn curses fragile magic crap
+[21:56] <Free99> mikeey: sudo chmod +x /sbin/ifconfig
+[21:56] <Free99> and also +r
+[21:57] <adam_g> hallyn: need to try again on a fresh box. fwiw, kvm_intel is already loaded before installing
+[21:57] <Free99> the permissions say that it is read/write/exec by the user root, read/exec by anyone in the root group, nobody else
+[21:58] <Free99> mikeey: (you know how to read permissions right?)
+[21:58] <hallyn> adam_g: yes, but when you apt-get purge qemu-kvm, it gets unloaded
+[21:58] <mikeey> sort of. I should really learn it
+[21:59] <Free99> mikeey: when you did "ls -l", the part of the response that says "-rwxr-x---" is the permissions for a file, or whatever you're looking at
+[21:59] <adam_g> hallyn: ugh. of course when i try again on another box, /dev/kvm looks good after installation. :)
+[21:59] <hallyn> adam_g: then do getfacl /dev/kvm
+[21:59] <Free99> r=read,w=write,x=execute
+[22:00] <adam_g> hallyn: group::rw-
+[22:01] <Free99> mikeey: it's 5, I'm out. But try to find whatever things you need that have weird permissions, and just do "sudo chmod +x <file>" and "sudo chmod +r <file>"
+[22:01] <Free99> peace guys
+[22:02] <hallyn> adam_g: !  in what?  quantal?
+[22:02] <adam_g> hallyn: oh jeez, disregard
+[22:02] <hallyn> ok
+[22:02] <adam_g> hallyn: i wasn't testing from proposed on those systems heh
+[22:02] <hallyn> no need to even explain :)
+[22:03] <adam_g> what a LONG short week :)
+[22:03] <hallyn> so easy to do a bad test with this
+[22:03] <hallyn> oh, the week was short - phew - that explains why i feel so unproductive
+[22:03] <hallyn> anyway i'm trying one more precise installation to test
+[22:04] <hallyn> tbh i'm still not sure that part of it isn't some consolekit daemon racing with udev...
+[22:07] <adam_g> hallyn: apt-get purge qemu-kvm; modprobe kvm_intel; apt-get install qemu-kvm gets me the correct group perms
+[22:07] <sazawal> I need to install Ubuntu via Networkboot. My DHCP server is working. I have also configured TFTP and I am able to get files on the server-system using tftp localhost -c get testfile. But the client system is showing pxe-e32 tftp open timeout
+[22:08] <adam_g> hallyn: and yeah, if i also remove kvm from /etc/group between purge + install, /dev/kvm remains root:root after insatll
+[22:09] <hallyn> adam_g: you getting the correct groups, which release is tha ton, and is that with you being logged in on a console?
+[22:10] <adam_g> hallyn: quantal/quantal-proposed. im ssh'd in
+[22:10] <adam_g> hallyn: trying again once more on another system, but adding kvm group before antyhing
+[22:10] <hallyn> adam_g: ok ssh'ing in is not enough
+[22:11] <hallyn> you have to be logged in on console to make consolekit set acls
+[22:11] <adam_g> hallyn: thats  beyond what im able to test ATM. :|
+[22:11] <hallyn> adam_g: the kvm group thing really scares me.  qemu-kvm.postinst clearly, serially first adds the group, then much later calls udevam trigger
+[22:12] <hallyn> yeah that's why i'm having to test on nested kvm VMS on my laptop :)
+[22:12] <hallyn> (which only had 80G ssd, so i'm short on space to keep things around)
+[22:13] <adam_g> hallyn: yeah, well, just confirmed group perms look good if the kvm group exists prior to doing anything
+[22:13] <hallyn> adam_g: so that would suffice for the tests you need?
+[22:13] <hallyn> it might be worth creating an empty dummy package to test this
+[22:14] <adam_g> hallyn: well, chown'ing vs addgroup'ing prior to install is an easy enough workaround for me.
+[22:14] <sazawal> ogra_, I am using tftp-hpa as tftp server. It is working fine when I try to get files on the server-system using this command "tftp localhost -c get testfile". The client system gets connected via DHCP server and then shows this error "pxe-e32 tftp open timeout"
+[22:16] <hallyn> adam_g: not sure i follow.  you're saying you're ok with what is there now?
+[22:17] <adam_g> hallyn: no. :) but its not blocking me from testing the other things in quantal-proposed.
+[22:19] <hallyn> ok
+[22:26] <adam_g> hallyn: if it were simply an issue of the group not being there, reruning '/var/lib/dpkg/info/qemu-kvm.postinst configure' should fix it like a reboot, no? i still think udev isn't picking up the new rules
+[22:27] <hallyn> adam_g: i believe you
+[22:27] <hallyn> adam_g: at this point i feel like my life is a lie :)
+[22:27] <adam_g> :P
+[22:27] <hallyn> when we finish up some other thing, i'm going to beg stgraber or slangasek for some help in figuring out what on EARTH is going on
+[22:27] <hallyn> hopefully early next week
+[22:28] <hallyn> cause it's apparently still messing up precise - raring
+[22:28] <adam_g> is there a utility around to monitor inotify events?
+[22:29] <hallyn> google for a python based inotify monitor
+[22:30] <hallyn> adam_g: something like http://people.canonical.com/~serge/inotify3.py
+[22:31] <sazawal> I want to set up TFTP for ubuntu installation via Networkboot. I am using tftp-hpa as tftp server. It is working fine when I try to get files on the server-system using this command "tftp localhost -c get testfile". The client system gets connected via DHCP server and then shows this error "pxe-e32 tftp open timeout"
+[22:42] <adam_g> hallyn: a quick look at events using that script: a CREATE for the 40-qemu-kvm.rules.dpkg-new but nothing when its moved to 40-qemu-kvm.rules. assuming udev doesn't pick it after the event since its not a .rules file
+[22:44] <hallyn> adam_g: might add IN_MOVED_TO to the mask,
+[22:45] <hallyn> adam_g: but i'm trying to remember whether we can expect inotify to detect renames
+[22:45] <hallyn> it looks at the inode, so rename won't be marked as a change against the file itself for sure
+[22:45] <hallyn> it might be marked as a change to the parent dir
+[23:04] <sw0rdfish> hey, can my provider move my OpenVZ VPS to another plan that I bought?
+[23:06] <sarnold> it's up to them, probably. maybe they could just twiddle some configs, maybe they'd have to move your data to another system.
+[23:07] <sw0rdfish> i thought its as simple as moving the image or whatever
+[23:07] <sarnold> could be :)
+[23:07] <hallyn> mdeslaur: ^ I'm not going to look into it further today, but if you remember the /dev/kvm weirdness we had around UDS time, adam_g and I are having more oddness in backlog for last few hours
+[23:07] <hallyn> I'll be begging for help next week to figure out WHAT IS GOING ON
+[23:24] <hallyn> adam_g: heh, maybe it'll suffice to have qemu-kvm.postinst echo >> /lib/udev/rules.d/40-qemu-kvm.rules right before udevadm trigger :).  i'll look into it mor next week
+[23:24] <hallyn> \o
+[23:33] <AlphaWolf> Hi. Running "sudo mountall" gives the following error: http://paste.ubuntu.com/1497640/ I also get this error on boot. It doesn't seem to be able to mount my swap partition. Here is my /etc/fstab: http://paste.ubuntu.com/1497645/ Any ideas?
+[23:36] <_KaszpiR_> AlphaWolf try swapon -a
+[23:40] <sarnold> if that device has been corrupted it may no longer be a 'valid' swap space; you may need to run 'mkswap' on it before swapon will use it.
+[23:40] <sarnold> (perhaps you used a suspend-to-disk that somehow did not get cleaned up correctly?)
+[23:44] <AlphaWolf> _KaszpiR_: Sorry, took a while: swapon: /dev/sda6: swapon failed: Invalid argument

@@ -1,0 +1,126 @@
+[00:10] <StevenK> wgrant: Ah ha. The five queries come from package_upload_source_dict[source_file.sourcepackagerelease.id].packageupload.id
+[00:10] <StevenK> Trying to key SPRF to upload id
+[00:11] <wgrant> Ah
+[00:11] <wgrant> To get changesfiles?
+[00:13] <StevenK> No, that is fed into CPU so it can populate the objects
+[00:15] <wgrant> Ah
+=== slank is now known as slank_away
+[00:18] <StevenK> Which it builds by using IPackageUploadSet.getSourceBySourcePackageReleaseIDs()
+[01:30]  * StevenK breaks DistroSeries:+queue :-(
+[01:30] <wgrant> What did you do to it?
+[01:31] <StevenK> I changed one part of it to no longer use IPackageUploadSet.getSourceBySourcePackageReleaseIDs(), and too make use of PUS only, and now the next method called is looking up SPRF.sourcepackagerelease.id and raising a KeyError when it isn't in the dict.
+[01:33] <StevenK> It just wants a mapping of PU id to a list of SPRFs
+[01:33] <StevenK> So I might just rewrite it to not be dreadful
+[01:53] <StevenK> wgrant: 62 == NEW, 66 == DONE
+[01:53] <StevenK> 3 of those are going to be PackageDiff
+[01:58] <wgrant> Great.
+[02:48] <StevenK> wgrant: I've shifted https://code.launchpad.net/~stevenk/launchpad/moar-preload-distroseries-queue-redux/+merge/142056 back to Needs Review, but it's currently cowboyed onto DF.
+[03:49] <StevenK> wgrant: Can haz review, if you're undistracted?
+[03:51] <wgrant> Soon :)
+[03:52] <StevenK> wgrant: Shall I pick up bug 1095982 and make AAGs work for lp.View?
+[03:52] <_mup_> Bug #1095982: Person.getAffiliatedPillars doesn't filter out inaccessible private projects <403> <easy> <private-projects> <regression> <Launchpad itself:Triaged> < https://launchpad.net/bugs/1095982 >
+[03:52] <wgrant> StevenK: Maybe, or work out why LimitedView wasn't sufficient to render the link
+[03:53] <wgrant> StevenK: You can probably grep for the OOPSes
+[03:57] <StevenK> wgrant: Well, an AAG should allow it, by rights
+[03:58] <wgrant> StevenK: An AAG should certainly allow LimitedView, and I think it should allow View, but the private projects implementation assumes that an AAG does not give View
+[03:58] <wgrant> But I think LimitedView should have been enough to render that page
+[03:59] <wgrant> Unauthorized: (<Product at 0x1585a650>, 'displayname', 'launchpad.LimitedView')
+[03:59] <wgrant> https://oops.canonical.com/oops.py/?oopsid=OOPS-c2e7d50102a3b7d7aca70d699226ebee
+[03:59] <StevenK> Clearly not. displayname should remain under View
+[04:00] <wgrant> Should it?
+[04:00] <wgrant> I wonder how BugTask:+index works
+[04:00] <wgrant> Maybe the task table shows title rather than displayname
+[04:00] <StevenK> Likely, just thinking about it
+[04:10] <StevenK> wgrant: IProduct.userCanView() uses ISharingService.checkPillarAccess
+[04:17] <StevenK> wgrant: And checkPillarAccess only checks APGs
+[04:18] <wgrant> StevenK: Doesn't the LimitedView adapter do something different?
+[04:18] <StevenK> It checks userHasGrantsOnPillar
+[04:19] <wgrant> Right
+[04:19] <wgrant> That's what I suspected
+[04:22] <StevenK> wgrant: So I'm not sure how to tackle this
+[04:22] <wgrant> StevenK: How does BugTask:+index render?
+[04:22] <wgrant> I assume it uses Product.title rather than Product.displayname
+[04:22] <wgrant> Which must mean that title is LimitedView
+[04:23] <wgrant> Oh
+[04:23] <wgrant> But displayname is LimitedView too, from that exception
+[04:25] <wgrant> StevenK: Perhaps userHasGrantsOnPillar doesn't respect team participations
+[04:28] <StevenK> That calls IAccessPolicyGrantFlatSource.findArtifactsByGrantee(), which doesn't check TeamParticipation.
+[04:28] <wgrant> tsk
+[04:29] <StevenK> LimitedView for an AAG, and View for an APG just sounds wrong
+[04:33] <StevenK> wgrant: The only that I can see that uses TeamParticipation under APGF is _populateIndirectGranteePermissions
+[04:37] <wgrant> StevenK: I don't think AAG == LimitedView && APG == View is feasible to implement fully, but there's nothing fundamentally wrong with the idea and it's what is mostly implemented today
+[04:37] <wgrant> So we would do well to preserve it for now
+[04:37] <wgrant> StevenK: _getSharedPillars uses TP and APGF
+[04:37] <StevenK> wgrant: Well, it isn't what happens for bugs and branches
+[04:38] <wgrant> StevenK: Sure, but bugs and branches don't have subordinate objects that can have their own grants
+[04:38] <wgrant> The idea is that a grant on a bug gives you access to just that bug, not all details about the product
+[04:38] <StevenK> *cough* stacked branches
+[04:38] <wgrant> While a grant on the product gives you access to all
+[04:38] <StevenK> :-)
+[04:38] <wgrant> Stacked branches are not subordinate
+[04:42] <StevenK> Yes, I was mostly trolling badly.
+[04:43] <StevenK> It probably feels wrong due to bugs and branches acting differently.
+[04:44] <StevenK> _getSharedPillars uses TP and APGF for the owner, but not the grantee
+[04:45] <wgrant> So it does
+[04:45] <wgrant> It's not quite clear why it checks owner or driver at all
+[04:46] <wgrant> Oh
+[04:46] <wgrant> Right
+[04:46] <wgrant> The owner/driver check is to verify that the current user is allowed to see that the grant exists
+[04:47] <wgrant> getSharedProducts lists all direct grants for the *given person* to a product that the *user* owns or drives
+[04:47] <wgrant> checkPillarAccess is the privilege checking implementation
+[04:47] <StevenK> So from what I can see, there is no mtheod that looks for an AAG while respecting TP.
+[04:47] <wgrant> You'll want something similar to that, except on APGF
+[04:48] <wgrant> Sure
+[04:48] <wgrant> getVisibleArtifacts is probably the only thing that uses AAG+TP
+[04:49] <wgrant> (though it shouldn't; all artifacts should have it denormed)
+[04:57] <StevenK> Specification
+[05:04] <wgrant> Hmm?
+[05:04] <wgrant> What about it?
+[05:05] <StevenK> It isn't denormed
+[05:05] <wgrant> Sure
+[05:05] <wgrant> Hence "should"
+[05:05] <StevenK> Right
+[05:05] <StevenK> Can haz review now?
+[05:05] <wgrant> Am looking
+[05:05] <wgrant> Is long
+[05:06] <StevenK> You're not stuck with 3G tethering
+[05:06] <wgrant> source_dict is one of the most useless methods ever, and its name is wrong
+[05:06] <wgrant> Can it be inlined?
+[05:07] <StevenK> Sure.
+[05:07] <StevenK> It is leftovers, effectively
+[05:29] <wgrant> Oh
+[05:29] <wgrant> I can use a selection of Storm "validators" to do my evil
+[05:29] <wgrant> Though I shall probably never be forgiven
+[05:37] <StevenK> OMG, you wouldn't dare
+[06:14]  * StevenK stabs buildbot and it's poller
+=== Ursinha_ is now known as Ursinha
+=== _mup__ is now known as _mup_
+=== almaisan-away is now known as al-maisan
+[08:46] <StevenK> stub: Are you going to QA r16409 today?
+[08:52]  * stub wonders if it is untestable
+[08:52] <stub> I guess if we can retrieve stuff from the Librarian, it is qa-ok
+[08:54] <adeuring> good morning
+[09:11] <stub> StevenK: qa-ok'd
+=== frankban changed the topic of #launchpad-dev to: http://dev.launchpad.net/ | On-call reviewer: frankban | Firefighting: - | Critical bugs: <150
+=== al-maisan is now known as almaisan-away
+=== salgado is now known as salgado-brb
+=== slank_away is now known as slank
+[14:47] <benji> gary_poster: yep, that is a bug in the backend; I was just trying to figure out where to file that and whether or not I should dig into it
+[14:47] <benji> pfft
+=== almaisan-away is now known as al-maisan
+=== salgado-brb is now known as salgado
+=== al-maisan is now known as almaisan-away
+=== yofel_ is now known as yofel
+=== alexlist` is now known as alexlist
+[20:14]  * dobey wonders who to bug about bzr dailydeb having issues only on launchpad :-/
+[20:27] <lifeless> dobey: what do you mean?
+[20:33] <dobey> lifeless: https://launchpadlibrarian.net/127602321/buildlog.txt.gz
+[20:34] <dobey> lifeless: this seems to only happen on lp. the recipe for that build works fine locally, it's just a simple recipe to reubild lp:ubuntu/ubuntuone-client on older versions of ubuntu that we (u1) still need to support.
+[20:34] <lifeless> dobey: that looks like a pristine-tar failure
+[20:34] <lifeless> dobey: there is no exception thrown from bzr routines, so presumably the tags etc were all recreatable
+[20:34] <dobey> yes, but why would it fail only on launchpadk, and not locally? how am i supposed to debug it further?
+[20:35] <lifeless> dobey: clean quantal chroot should let you reproduce it
+[20:35] <lifeless> but I presume you tried that and couldn't ?
+[20:37] <dobey> i've tried dailydeb on quantal and on raring; though not in an empty chroot
+[20:49] <dobey> brb
+[21:26] <dobey> back

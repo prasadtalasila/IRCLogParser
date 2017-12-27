@@ -1,0 +1,295 @@
+=== Tonio_aw is now known as Tonio__
+[00:38] <afiestas> ScottK: taht would be nice yes, in kde-core-devel and kde-hardware-devel
+=== Tonio__ is now known as Tonio_aw
+[04:31] <ScottK> xnox: We can put it in python3-pyqt4.  As long as the .so file is ABI tagged, it should be recognized by python3 before the python one.
+[04:31] <ScottK> xnox: I did similar with kpythonpluginfactory in pydke4.
+[07:13] <micahg> shadeslayer: ok, pushed transmission to raring, will push the rest tomorrow
+[07:14] <shadeslayer> \o/
+[07:14] <shadeslayer> thx micahg
+[07:28] <soee> good morning
+[07:39] <shadeslayer> soee: ho
+[07:39] <shadeslayer> *hi
+[08:30] <shadeslayer> ScottK: what do you suggest we do about amarok stuck in -proposed?
+[08:30] <shadeslayer> it failed to build on arm
+[08:34] <shadeslayer> due to popular demand I'm going to try and build KDE 4.10 on Precise
+[08:34] <shadeslayer> will just put everything in ninjas and see if that works
+=== Tonio_aw is now known as Tonio__
+=== Tonio__ is now known as Tonio_
+[09:02] <yofel> shadeslayer: if you do, at least write some backport rules for boost, otherwise it's A LOT of work - and don't backport pykde
+[09:10] <shadeslayer> good point
+[09:18] <shadeslayer> yofel: do you think this will be enough http://paste.kde.org/639338/
+[09:20] <yofel> no, you'll need that, but there's a few boost-python deps and other stuff too
+[09:21] <yofel> we also used 1.46 in precise so far, not sure if we should keep that or go with 1.48
+[09:25]  * yofel wonders what else needs to be changed
+[09:26] <yofel> at least one package needs libtiff4, a few need the symbol files deleted and you'll need kgapi and kolab from backports
+[09:30]  * yofel realizes that the script doesn't really support backporting different kde releases to one series
+[09:30] <yofel> not that it matters much now as we're done with 4.9
+[09:30] <Riddell> shadeslayer: who's demanding it?
+[09:31] <yofel> users, I got some requests too but was reluctant about it as it's a bit of a support mess
+[09:32] <Riddell> ah, users, we'd have an easy time if it wasn't for them
+[09:32] <Riddell> :)
+[09:32] <yofel> true, but that would be boring :P
+[09:34] <shadeslayer> ^
+[09:35] <shadeslayer> hmm .. why do we want to delete the symbols files?
+[09:35] <yofel> precise has gcc 4.6, so you'll get missing symbols
+[09:35] <yofel> and a few packages fail on that
+[09:36] <yofel> feel free to fix that differently, but it also causes them to be red on the status page from something we don't care about
+[09:39] <shadeslayer> how about I just change boost for now and then we work out symbols and the boost stuff we missed in the PPA?
+[09:40] <yofel> go ahead, just please write rules for them as you fix those so we don't have to do that again for RC3
+[09:40] <shadeslayer> and I'm building with 1.48
+[09:40] <shadeslayer> right
+[10:05] <shadeslayer> any ideas how binary:Version is computed?
+[10:06] <shadeslayer> hmph
+=== Tonio_ is now known as Tonio_aw
+[10:42] <Riddell> shadeslayer, ScottK: I'll take a look at amarok
+[10:42] <shadeslayer> \o/
+[10:45] <shadeslayer> Riddell: oh and we also need a way to ship nepomuk with ffmpeg
+[10:46] <shadeslayer> one way is to split the plugin into a package that does not get shipped on the CD
+[10:48] <Riddell> shadeslayer: yep
+[10:48] <shadeslayer> another is via dlrestrictions
+[10:48] <Riddell> but I also need to tackle me 1852 unprocessed e-mails that have built up over the new year :)
+[10:48] <shadeslayer> No idea how that works and JontheEchidna hasn't replied yet
+[10:52] <shadeslayer> Riddell: whoa
+[10:52] <shadeslayer> There's a button called "Mark all as read" :P
+[10:53] <Tm_T> shadeslayer: poor Mark
+[10:54] <shadeslayer> heh
+=== Tonio_aw is now known as Tonio_
+[11:34] <shadeslayer> hah
+[11:34] <shadeslayer> yofel: http://bazaar.launchpad.net/~kubuntu-packagers/+junk/kubuntu-automation/revision/101
+[11:34] <shadeslayer> I was going to do that
+[11:36] <shadeslayer> Just about to upload the RC for precise
+=== Tonio_ is now known as Tonio_aw
+[11:38] <xnox> ScottK: I am doing final tests & uploading. At this point I reverted py3 designer plugin. I will look at how kpluginfactory is packaged. I just want to test Qt Creator before uploading, in case it freaks out with both 2.7 & 3.3 simultaniously =)
+=== Tonio_aw is now known as Tonio_
+[11:53] <Riddell> what is PAE?
+[11:54] <yofel> in kernel meaning physical address extension
+[11:54] <Riddell> as in http://paste.kde.org/639488/
+[11:54] <yofel> ah yeah, we don't have any non-PAE kernels anymore
+[11:54] <yofel> (IIRC)
+[12:02] <Riddell> hmm, not quite sure how to reply to that without essentially saying "sorry tough luck"
+[12:03] <xnox> Riddell: install precise, or whatever last non-pae supported release is.
+[12:05] <Riddell> ok that'll do for an answer, thanks
+[12:15] <yofel> shadeslayer: your backport attempt is missing kdegames from what I see. Did you use the 4.9 package list?
+[12:16] <shadeslayer> hmm ....
+[12:16] <shadeslayer> sec, my install is all broken after reboot
+[12:16] <shadeslayer> no backlight control no hardware acceleration
+[12:17] <shadeslayer> and now the electricity has gone, so I can only be here for a couple of minutes
+[12:20] <shadeslayer> yofel: seems so, I guess the script used the kdesc-precise-backports.txt ?
+[12:20] <shadeslayer> lemme fix
+[12:20] <yofel> yeah, I didn't take stable-1 backports into account when writing this
+[12:20] <shadeslayer> :P
+[12:21] <shadeslayer> hey, precise is still stable :P
+[12:21] <yofel> argh, you know what I mean ;P
+[12:21] <yofel> anyway, here: https://yofel.dyndns.org/kubuntu/build_status_4.9.97_precise.html
+[12:22] <shadeslayer> yay
+[12:22] <shadeslayer> "Battery 0: Discharging, 20%, 00:25:53 remaining"
+[12:22] <shadeslayer> yofel: ^ Can you do kdegames?
+[12:22] <yofel> I'm at work, so not for a few hours
+[12:24] <shadeslayer> k, I'll try
+[12:34] <shadeslayer> good thing I didn't delete the upload dir
+[12:48] <afiestas> is there anyway of getting the patches from: http://bugs.debian.org/cgi-bin/bugreport.cgi?msg=10;filename=vbox-kcompat-3.6-3.7.patch;att=1;bug=696011
+[12:49] <afiestas> and applying them to the dkms?
+[12:49] <afiestas> I need to use virtualbox on the kernel I'm using (which comes from a ppa)
+[12:49] <Mamarok> claydoh: JFYI: I put the posts to that topic on hold now, they should just shut up
+[12:53] <shadeslayer> afiestas: er, I don't understand, aren't those patches for vbox? how would you apply them to dkms?
+[12:56] <afiestas> shadeslayer: virtualbox dkms
+[12:56] <afiestas> lunch
+[12:56] <shadeslayer> ok
+[12:59] <shadeslayer> afiestas: https://launchpad.net/ubuntu/+source/virtualbox/4.1.22-dfsg-0ubuntu1 < raring already has the fix
+[13:48] <shadeslayer> dantti: print manager ping
+=== Quintasan_ is now known as Quintasan
+[14:06] <Quintasan> \o
+=== Tonio_ is now known as Tonio_aw
+[14:14] <shadeslayer> yofel: https://yofel.dyndns.org/kubuntu/build_status_4.9.97_precise.html
+[14:14] <yofel> seen
+[14:14] <shadeslayer> "Error multiple versions of the same package" ?
+[14:15] <yofel> lp sends data the script can't handle
+[14:15] <yofel> not sure what though
+[14:16] <Quintasan> good news
+[14:16] <shadeslayer> everyone
+[14:16] <yofel> I added the package name to the error, let's see
+[14:16] <shadeslayer> okay
+[14:17] <Quintasan> ScottK, Riddell: turns out installing anthy ins jp_JP locale did the ibus configuration magic itself
+[14:18] <Quintasan> Therfore ScottK's proposed solution of making each langpack depend on ibus is the best solution imo
+[14:18] <Quintasan> I would even go a step ahead and pull the module for ex. ibus-pinyin for chinese langpack
+[14:19]  * yofel notes that lp feels esp. slow today
+[14:20] <Riddell> Quintasan: good good
+[14:20] <Riddell> do you know how to edit the langpacks?
+[14:20] <Quintasan> Riddell: Absolutely no idea.
+[14:21] <shadeslayer> yofel: today? hah, it's been like that for the last couple of days for me
+[14:21] <yofel> didn't notice anything there, but usually the script runs for ~1min, now it's ~4
+[14:22] <yofel> ok, no error this time
+[14:23] <shadeslayer> I uploaded kdegames btw
+[14:23] <yofel> good, I uploaded backend stuff (soprano, aknoadi, kgapi, cmake, attica, ...)
+[14:24] <shadeslayer> awesome
+[14:25] <yofel> oh, rekonq 2.0 is out
+[14:25] <Riddell> whee!
+[14:25] <Quintasan> Riddell: Aron Xu told me he will be trying to bring over the change from ibus to fctix in Ubuntu, he is one of most active members in Debian's pkg-ime
+[14:26] <Riddell> I want to know why input methods needs all this faffy setup, why isn't it just a config value that can be controlled by a GUI?
+[14:28] <Quintasan> Riddell: it seems ibus doesnt automatically enable input methods for certain languages unless your locale is that certain language
+[14:28] <Quintasan> i.e. when you run jp_JP.UTF8 locale installing ibus-anthy will do the magic itself
+[14:28] <Riddell> yeah, nuts
+[14:29] <Quintasan> but when you use for eg. pl_PL.UTF8 installing ibus-anthy will just pull all the required stuff but not configure ibus to use the Anthy input method
+[14:29] <shadeslayer> wheee http://www.zdnet.com/amazons-top-selling-laptop-doesnt-run-windows-or-mac-os-it-runs-linux-7000009433/
+[14:29] <Riddell> nuts
+[14:29] <Quintasan> so to fix it I just need to modify langpacks deps
+[14:30] <Quintasan> But I'm still interested in making the change to fctix
+[14:31] <Quintasan> it has Qt4 module
+[14:31] <Quintasan> there is  input-method panel plasmoid
+[14:31] <Quintasan> plus KCM
+[14:31] <shadeslayer> fun
+[14:31] <shadeslayer> cups is broken http://paste.kde.org/639692/
+=== Tonio_aw is now known as Tonio_
+[14:32] <Quintasan> Riddell: The only drawback I see is lack of Japanese input module
+[14:33] <Riddell> Quintasan: no japanese with fctix? that seems like a big drawback no?
+[14:33] <Quintasan> Yeah, but since it's modular it seems like it's only a matter of time
+[14:34] <Quintasan> I will try contacting appropriate people and see how is that going to work
+[14:34] <yofel> shadeslayer: reading the changelog entry for that I wonder what "Ubuntu for Android" is... and OS for an OS o.O?
+[14:34] <shadeslayer> ah
+[14:34] <shadeslayer> it's basically that :P
+[14:34] <yofel> "fun"
+[14:34] <shadeslayer> you can run Ubuntu ontop of Android
+[14:34] <shadeslayer> Mark demoed it at UDS
+[14:34] <yofel> reminds me of wubi
+[14:34] <shadeslayer> haha
+[14:35] <Quintasan> >wubi
+[14:35] <Quintasan> yofel: get out
+[14:35] <Quintasan> :P
+[14:35] <yofel> why? I actually managed to isntall kubuntu precise with wubi
+[14:35] <Quintasan> wat
+[14:35] <Quintasan> it worked?
+[14:35] <yofel> I never saw ubiquity, but it did install
+[14:35] <yofel> magic
+[14:35] <Quintasan> omfg
+[14:36] <yofel> script runtime is now at 6min...
+[14:40] <shadeslayer> fun
+[14:48] <BluesKaj> Hiyas all
+[14:54] <shadeslayer> yofel: http://bazaar.launchpad.net/~kubuntu-packagers/+junk/kubuntu-automation/revision/104
+[14:55] <shadeslayer> should cover everything from what I can see on the build status page
+[14:55] <shadeslayer> but then again, half the stuff hasn't been built
+[14:56] <yofel> rocs needs the actual lib substituted
+[14:56] <shadeslayer> heh true
+[14:56] <shadeslayer> I wonder why it depends on the lib though
+[14:57] <yofel> because the -dev package SUGGESTS the lib
+[14:57] <yofel> no comment
+[14:57] <shadeslayer> wat
+[14:58] <shadeslayer> yofel: seems fixed in 1.49
+[14:58] <shadeslayer> Depends: libboost1.49-dev (= 1.49.0-3.1ubuntu4), libboost-date-time1.49-dev (= 1.49.0-3.1ubuntu4), libboost-thread1.49.0 (= 1.49.0-3.1ubuntu4)
+[14:58] <yofel> \o/
+[14:59] <shadeslayer> now the tricky part
+[15:00] <yofel> from what I see, okular needs a rule for tiff
+[15:00] <shadeslayer> if we drop it, it might cause an issue in precise
+[15:00] <yofel> and someone needs to backport indi
+[15:00] <yofel> shadeslayer: if that's the case  just add a rule to add it back
+[15:02] <yofel> shadeslayer: errr, you were looking at the deps of libboost-thread1.49-dev
+[15:02] <yofel> graph has
+[15:02] <yofel> Recommends: libboost-graph1.49.0 (= 1.49.0-3.1ubuntu1.1)
+[15:02] <shadeslayer> derp
+[15:02] <shadeslayer> wel
+[15:02] <shadeslayer> better than suggests :P
+[15:02] <yofel> true, but IIRC sbuild installs with --no-install-recommends
+[15:03] <shadeslayer> ah
+[15:03] <yofel> correct me if I'm wrong though
+[15:03] <shadeslayer> dunno, I use pbuilder :P
+[15:04] <yofel> libmusicbrainz5 copied from backports...
+[15:35] <yofel> does print-manager intentionally have a not-versioned build-dep on kdelibs?
+[15:36] <yofel> since it built I guess it doesn't matter, but it built with kdelibs 4.8 now
+=== shadeslayer changed the topic of #kubuntu-devel to: Kubuntu - Friendly Computing | Raring Alpha 1 Released | Packaging TODO: http://notes.kde.org/kubuntu-ninjas | oxygen-fonts in experimental PPA (from oneiric to raring) | KDE 4.9.97 for Precise : https://yofel.dyndns.org/kubuntu/build_status_4.9.97_precise.html
+[15:44] <shadeslayer> hmm
+[15:44] <shadeslayer> yofel: I can't seem to load that link anymore
+[15:44] <shadeslayer> apart from the fact that it's giving me an invalid cert error :P
+[15:44] <shadeslayer> ah there we go
+=== shadeslayer changed the topic of #kubuntu-devel to: Kubuntu - Friendly Computing | Raring Alpha 1 Released | Packaging TODO: http://notes.kde.org/kubuntu-ninjas | oxygen-fonts in experimental PPA (from oneiric to raring) | KDE 4.9.97 for Precise : http://yofel.dyndns.org/kubuntu/build_status_4.9.97_precise.html
+[15:44] <yofel> yeah
+[15:45] <yofel> better
+[15:45] <shadeslayer> *nod*
+=== mck182 is now known as mck182|afk
+[15:57] <shadeslayer> yofel: yay, kde4libs seemed to build fine
+[15:57] <shadeslayer> well almost
+[15:57] <shadeslayer> it's stripping out stuff from what I can tell
+[15:58] <yofel> if it's at that point it won't fail
+[15:58] <yofel> there's missing symbols if anything
+[15:59] <yofel> amd64: Failed to build - no reason
+[15:59] <yofel> thanks LP *-.-
+[15:59] <yofel> retried
+[16:12]  * Riddell jumps on rekonq 2.0
+[16:40] <shadeslayer> wtf?
+[16:40] <shadeslayer> yofel: kde4libs failed again with no build log
+[16:40] <shadeslayer> I guess I'll retry it
+[16:40] <yofel> and i386 seems stuck
+[16:40] <yofel> LP is having a bad day
+[16:40] <shadeslayer> ...
+[16:40] <shadeslayer> yeah
+[17:01] <JontheEchidna> shadeslayer: had you pinged me?
+=== dantti|2 is now known as dantti_laptop
+[17:35] <Laney> hey KDE dudes
+[17:35] <Laney> Does anyone on Raring feel like testing ktp-call-ui from ppa:ubuntu-desktop/gstreamer1.0? I split up telepathy-farstream into a parallel installable package that means Ubuntu can move on with the GStreamer 1.0 transition without being held back by Kubuntu
+[17:36] <Laney> Would be good to know if it works and doesn't, for example, crash due to mixed linkage
+[17:36] <Riddell> hi Laney 
+[17:36] <Riddell> sorry for the lack of reply on your gstreamer mail
+[17:37] <Laney> np
+[17:37] <Laney> I found upstream bugs about it and it seems like there's real movement towards porting
+[17:37] <Laney> s/real/no real/
+[17:37] <kubotu> Laney meant: "I found upstream bugs about it and it seems like there's no real movement towards porting"
+[17:39] <Riddell> however I can't say I've ever used ktp-call-ui
+[17:39] <Riddell> shadeslayer: are you able to test it?
+[17:40] <Laney> I suppose if it's going to be broken after this upload then it'll already be busted now
+[17:40] <Laney> (deps stay the same)
+[17:45] <soee> hiho
+[17:50] <xnox> ScottK: python-qt4 build and published.
+[17:51] <xnox> all of it should go into experimental, cause experimental also has both pythons multi-arched
+[17:59] <Riddell> xnox: great thanks
+[18:00] <xnox> Riddell: way python-kde4 next in the stack to fix against multiarched python2.7? is there some new version to merge or simply get what's in the archive to build?
+[18:04] <Riddell> xnox: yes new upstram version
+[18:04] <Riddell> http://download.kde.org/unstable/4.9.97/src/pykde4-4.9.97.tar.xz
+[18:04] <Riddell> just grab the packaging from pykde4 in raring
+[18:07] <xnox> I think I am going to call it pub time =)
+[18:12] <Riddell> happy drinking
+[18:12] <Riddell> nepomuk-core-ffmpegextractor ok as a package name?
+[18:15] <allee> afiestas: when loading the kscreen module, kded4 crashed immediately http://paste.kde.org/639902/
+[18:16] <allee> afiestas: did before christmas, and now with a fresh git checkout (1 hour ago) too.
+[18:16] <afiestas> allee: pls check if that crash is not reported
+[18:16] <afiestas> if it is not, report it
+[18:16] <allee> afiestas: okay.
+[18:16] <afiestas> and add kscreen-console and xrandr --verbose output
+[18:16] <afiestas> thx
+[18:16] <Riddell> allee: packages or self compiled?
+[18:18] <allee> Riddell: both :-)   I've created pkgs (dh-make template almost) and build them
+[18:18] <allee> Riddell: are there already pkgs available (did find something in this channel)
+[18:19] <afiestas> allee: make sure to have qjson > 0.8.1
+=== Tonio_ is now known as Tonio_aw
+[18:21] <allee> afiestas: yes,   I've backported the r pkg to q.  So I use 0.8.1: ii  libqjson0:amd64                  0.8.1-1~ubuntu12.10~p
+[18:21] <Riddell> allee: no I don't think so, it's on my todo list, maybe tomorrow
+[18:22] <Riddell> shadeslayer: nepomuk-core-ffmpegextractor made and added to kubuntu-restricted-addons, should keep vHanda happy
+=== mck182|afk is now known as mck182
+[18:36] <allee> afiestas: https://bugs.kde.org/show_bug.cgi?id=312836   can you fix product and compnent of the bug?  Or tell me? 
+[18:36] <ubottu> KDE bug 312836 in kded "kded4 crashes when loading kscreen module" [Crash,Confirmed]
+[18:39] <Riddell> Laney: here's the changelog about adding libcanberra-gstreamer to kde-runtime http://paste.kde.org/639926/
+[18:40] <Riddell> Laney: it's an optional recommends so easily removed, is libcanberra-gstreamer now incompatible with something?
+[18:44] <Laney> Riddell: well, canberra-gstreamer is now using gst 1.0 so you may find that your application crashes when you try to use it
+[18:44] <Laney> the pulse one should be ok
+[18:47] <Riddell> Laney: I just got ktp-call-ui working and it's fine
+[18:47] <Laney> sweet, thank you
+[18:47] <Laney> i will upload that stuff soon then
+[18:55] <Riddell> random e-mail du jour http://paste.kde.org/639944/
+[18:55] <Riddell> punch line is at the end
+[19:00] <Riddell> apachelogger: what do you know about what needs to be done to port to gstreamer1.0?
+[19:00] <Riddell> presumably phonon, qtgstreamer and qtmultimediakit would all need it?
+[19:13] <soee> we can set window menu to be showe at the top of the screen
+[19:14] <soee> here on my machine desktop effects dont work for this element
+[19:44] <allee> afiestas: false alarm.  bug closed (was my fault. missing KSC_* plugins :-( ).   Sorry.
+[19:45] <allee> ^^ I've no 2nd monitor right now.  Will test tomorrow ...
+[19:48] <allee> Riddell: Should one upload  the bzr repo of new pkgs (debian/...  only) directly to kubuntu-packages or first to  my account and later clone it?
+[19:54] <yofel> allee: if it's not there just add it
+[19:54] <allee> yofel: okay. first polishing then uploading.  But now first  some salsa dancing :-) ... bbl
+[19:54] <yofel> enjoy :)
+[20:00] <soee> what would be the easiest way to calibrate colors ?
+=== Tonio_aw is now known as Tonio_
+[20:24] <Riddell> allee: kubuntu-packages is fine, are you packaging kscreen?
+[22:44] <Riddell> cor, just had a person phoning me for help with kubuntu, not unusual except this is the first time I've had it from someone who expected me to speak spanish
+[22:44] <Riddell> I didn't tell her I'm half Chillian
+[22:52] <xnox> Riddell: ScottK: i did a test rebuild of pykde4 and existing package builds fine against the fixed python-qt4. So i think i fixed the multiarch fallout and the kde ninjas can proseed with the rest now =)
+=== Tonio_ is now known as Tonio_aw
+[23:21] <allee> Riddell: yes, I've alpha quality pkgs of (lib)kscreen.  Still need to replace dh-make template, get rid of *.ex files and add  dependencies
+=== Tonio_aw is now known as Tonio_
+=== Tonio_ is now known as Tonio_aw

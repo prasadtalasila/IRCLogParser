@@ -1,0 +1,138 @@
+=== popey_ is now known as popey
+=== MacSlow is now known as MacSlow|lunch
+[13:09] <sil2100> Trevinho: ping!
+=== dandrader is now known as dandrader|afk
+=== MacSlow|lunch is now known as MacSlow
+=== dandrader|afk is now known as dandrader
+[15:46] <mterry> cyphermox, bam, libappindicator builds for both i386 and amd64 in my ppa now
+[15:46] <mterry> let me give you branch link
+[15:47] <mterry> cyphermox, lp:~mterry/libappindicator/fix-tests
+[15:50] <cyphermox> mterry: I'd kiss you :P
+[15:51] <mterry> cyphermox, well, several of those fixes were making timeouts longer.  We'll see how armhf does...
+[15:51] <cyphermox> yeah :/
+=== dandrader is now known as dandrader|afk
+[16:53] <mhall119> cwayne: ping
+[16:58] <cwayne> mhall119: pong
+[17:03] <davmor2> mhall119: nice way to blag cwayne into do some work on something :D
+=== dandrader|afk is now known as dandrader
+[17:25] <mhall119> :)
+[17:26] <mhall119> davmor2: you scared him off
+[17:26] <davmor2> it's that work word
+[19:25] <didrocks> mterry: hey, around?
+[19:25] <cwayne> mhall119: ping
+[19:25] <mterry> didrocks, hi
+[19:26] <mhall119> cwayne: welcome back
+[19:26] <didrocks> mterry: i think you saw that unity didn't migrate to the release pocket
+[19:26] <mhall119> cwayne: jvrbanac and I are starting work on https://wiki.ubuntu.com/DeveloperNetwork
+[19:27] <mhall119> which can provide a REST/JSON API for things like Gtk and Qt once it's done
+[19:27] <mhall119> if you want to help :)
+[19:27] <didrocks> mterry: http://people.canonical.com/~ubuntu-archive/proposed-migration/update_output.txt seems to show it's because of bamf bin package change
+[19:27] <didrocks>     * i386: ginn, gnome-pie
+[19:27] <didrocks> ginn and gnome-pie seems to need a rebuild
+[19:28] <didrocks> do you have time to rebuild them?
+[19:28] <didrocks> for ginn, it needs merging back to trunk (you can autoapprove the rebuild I guess)
+[19:31] <mterry> didrocks, OK
+[19:31] <didrocks> mterry: do you have the time? I can try doing it between 2, but it would be great to have unity in hands of people today :)
+[19:31] <cwayne> mhall119: sure, ill help :)
+[19:31] <didrocks> mterry: also, do you have any news on libappindicator?
+[19:32] <mterry> didrocks, yeah I think I fixed the amd64 issue this morning, gave cyphermox a branch
+[19:33] <didrocks> mterry: \o/
+[19:33] <didrocks> cyphermox: oh, FYI, autopilot-gtk lost his libindicate dep
+[19:33] <didrocks> cyphermox: I think you saw the MR, maybe we can daily release it now?
+[19:34] <didrocks> mterry: so yeah, for ginn, feel free to autoapprove it. I hope that a rebuild will suffice :)
+[19:34] <cyphermox> yeah, it should be good now
+[19:34] <cyphermox> didrocks: fwiw, same kind of thing for autopilot-qt, they removed the qt5 dep
+[19:35] <didrocks> cyphermox: sweet! 2 more soon then? \o/
+[19:35] <cyphermox> yup
+[19:35] <didrocks> I just overflight over the autopilot-qt one
+[19:35] <didrocks> I'll blame that on jetlag :p
+[19:35] <cyphermox> let me ship you the MP for indicator-sesion so we can get that out of the way
+[19:36] <didrocks> cyphermox: with the autopkgtest, rocking! :)
+[19:36] <mterry> didrocks, catching up on this unity thing...
+[19:36] <cyphermox> didrocks: wait wait, not sure it actuall yworks right now the autopkgtest
+[19:36] <didrocks> mterry: thx ;)
+[19:37] <cyphermox> I'm having some wifi issues so it will be hard to test for now
+[19:37] <didrocks> cyphermox: can wait for tomorrow :)
+[19:37] <didrocks> we are not in a day-range for indicator-session, but good to see progresses
+[19:37] <cyphermox> it would still be nice to close it up
+[19:37] <mterry> didrocks, I'm a touch confused.  What sort of error is keeping unity from migrating?  How does one get notified?  I can't make sense of this proposed-migration report
+[19:38] <didrocks> mterry: ahah, same for me, seb128 helped me :)
+[19:38] <didrocks> mterry: so the story is that we have libbamf3-0 -> libbamf3-1
+[19:38] <didrocks> I promoted it to main on Friday
+[19:38] <didrocks> but then libbamf3-0 is NBS
+[19:38] <mterry> sure
+[19:38] <didrocks> and the migration don't accept creating new NBS
+[19:38] <mterry> woah
+[19:38] <didrocks> so remaining rdepends on libbamf3-0 are shown in this line:
+[19:38] <seb128> transitions need to be complete ... that sucks a bit
+[19:39] <mterry> We have to solve all NBS issues for a library before it gets upgraded?
+[19:39] <didrocks> * i386: ginn, gnome-pie
+[19:39] <mterry> that's intense
+[19:39] <didrocks> mterry: yep
+[19:39] <didrocks> so, meaning that the debian way of having soname in bin package is useless now
+[19:39] <didrocks> we are like fedora, everything on the same version of a library
+[19:40] <seb128> yes, I tried to argue with cjwatson about that, but they fell like that's a good "feature", reduce the archive churns and the +1 team work
+[19:40] <mterry> didrocks, that section of the report does not look like it has much to do with the bamf transition
+[19:41] <seb128> mterry, how so?
+[19:41] <seb128> mterry, it's listed in the "Trying easy from autohinter: nux/4.0.0daily13.01.11-0ubuntu1 unity/6.12.0daily13.01.11.2-0ubuntu1 bamf/0.4.0daily13.01.11-0ubuntu1 " section
+[19:42] <mterry> seb128, yeah, but no indication that it's because of an NBS from libbamf3-0 to -1
+[19:42] <mterry> seb128, just lists two package names
+[19:42] <jibel> didrocks, hey, auto upload of unity broke this morning because utah failed to provision the systems to run autopilot
+[19:42] <seb128> right, that report is hard to read
+[19:42] <didrocks> jibel: yeah, I saw that you made some retrial, thanks!
+[19:42] <jibel> didrocks, I restarted the test late afternoon
+[19:42] <didrocks> jibel: I've mentionned it to gema
+[19:42] <seb128> mterry, not sure I follow you, do you just point that the report is hard to read, or are you unsure we need to rebuild those?
+[19:42] <didrocks> jibel: it's now copied over the archive
+[19:43] <mterry> seb128: just that the report is hard to read
+[19:43] <jibel> didrocks, ok, cool.
+[19:43] <seb128> mterry, yeah, I agree with that :-(
+[19:43] <didrocks> mterry: yeah, that's why we need to know the context of the change upstream :(
+[19:43] <mterry> didrocks, regardless, sure, I can do rebuilds for those two
+[19:44] <didrocks> mterry: perfect :) don't forget the approved MP on ginn so that it doesn't show tomorrow that the version is higher in the distro :)
+[19:46] <mterry> didrocks...  where is this approved MP?  I can't see anything in https://code.launchpad.net/ubuntu/+source/ginn/+branches
+[19:46] <mterry> Is there some branch upstream that I need?
+[19:46] <didrocks> mterry: oh, I meant, you need to propose one
+[19:46] <didrocks> after the rebuild upload :)
+[19:46]  * mterry is having a fuzzy-brain day
+[19:46] <didrocks> against lp:ginn
+[19:47] <didrocks> mterry: rather me having fuzzy-explanation, sorry :)
+[19:47] <didrocks> but you know, it's late in europe, hem hem :p
+[19:47] <mterry> didrocks, ah-oh.  this is an ubuntu-is-upstream package
+[19:49] <mterry> didrocks, hm.  ginn isn't an inline package.  Do you know what team owns this?
+[19:52] <didrocks> oh, are you sure it's not part of the touch stack?
+[19:52]  * didrocks checks
+[19:53] <didrocks> mterry: oh sorry, brainfuck, it's not in the touch stack anymore
+[19:53] <didrocks> so yeah, just a straight ubuntu-rebuild :)
+[19:53] <mterry> didrocks, is it orphaned upstream then?
+[19:53] <didrocks> mterry: right
+[19:54] <didrocks> we used to be upstream for it
+[19:54] <didrocks> but not touching it anymore
+[19:54] <mterry> didrocks, should we remove it from the archive?
+[19:54] <didrocks> mterry: TBH, I would be in favor, but maybe check with bregma
+[19:54] <didrocks> not sure if it's even working anymore
+[19:54] <mterry> bregma, ^ is ginn a useful thing to have in the archive anymore?  We apparently don't work on it anymore?
+[19:55] <bregma> it is sotr of moribund
+[19:57] <bregma> it needs some lovin' but it's just a touch client, not part of the stack
+[19:58] <mterry> bregma, do you recommend we keep it in the archive?
+[19:58] <bregma> I'd rather keep it in the archive, it should be in universe though
+[19:59] <mterry> bregma, it is
+[19:59] <mterry> didrocks, how does one notice that there is a proposed-migration issue?  Just check daily to see if it migrated yet?
+[20:00] <bregma> OK, then ginn should just limp along until I or someone else gets an itch to improve it
+[20:00] <didrocks> mterry: yeah, I looked at the unity package and saw that it was in proposed
+[20:01] <bregma> it's not broken, it's just hasn't realized its full value at the moment
+[20:01] <didrocks> mterry: not the release pocket
+[20:01] <mterry> bregma, OK
+[20:01] <mterry> didrocks, :-/  OK.  Maybe I'll spend a couple minutes trying to get a script to poll a set of packages for pocket status
+[20:10] <didrocks> mterry: yeah, that can be handy
+=== miso_ is now known as mhr3
+=== _salem` is now known as _salem
+[22:45] <didrocks> mterry: thanks :)
+[22:47] <mterry> didrocks, http://paste.ubuntu.com/1532756/
+[22:47] <mterry> didrocks, that has a script for telling if something is stuck in proposed
+[22:47] <mterry> pass it source or binary package names and it will let you know
+[22:48] <didrocks> mterry: This looks good. I'm wondering at some point if we don't need in fact some kind of dashboard for monitoring stacks and this kind of things, wdyt?
+[22:48] <mterry> didrocks, probably yeah
+[22:48] <didrocks> mterry: I'll add a note I guess :)
+[22:48] <mterry> didrocks, all sorts of things can go wrong, and it'd be nice to have one place to see them all
+[22:49] <didrocks> agreed

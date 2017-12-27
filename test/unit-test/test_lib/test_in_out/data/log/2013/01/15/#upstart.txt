@@ -1,0 +1,92 @@
+[10:58] <toabctl> xnox, thanks for the d-feet sync
+[11:01] <xnox> toabctl: no problem. Why this channel?
+[11:01] <xnox> =))))
+[11:07] <toabctl> xnox, because I know you are here:=
+[11:07] <toabctl> ;)
+[14:00] <ztane> got firefox zombie clinging to pid 1, which is a bit annoying because now for some reason firefox does not want to start using a same profile until I reboot my computer... (maybe it is using a pidfile to guard the profile dir).
+[14:01] <ztane> up-to-date freshish install of 1210
+[14:25] <jodh> ztane: can't you kill the firefox pid?
+[14:32] <ztane> jodh: ofc not, that is what a zombie process is
+[14:32] <ztane> a pid
+[14:33] <ztane> + an entry in a process table
+[14:41] <jodh> ztane: I didn't notice the word 'zombie' there :) is Upstart still responding? Can you start a new job for example?
+[14:44] <ztane> jodh: let me check
+[14:46] <ztane> jodh: works
+[14:47] <ztane> jodh: xnox said that there is no support for general zombie reap in upstart init?
+[14:47] <xnox> well, for jobs that were not started by upstart.
+[14:48] <xnox> (but I may be wrong ztane, maybe jodh can give a more full answer)
+[14:49] <ztane> pstree says init-+-firefox---43*[{firefox}], hanging there tight
+[14:50] <ztane> hmmm
+[14:51] <ztane> ah :D
+[14:51] <ztane> my bad :P
+[14:51] <ztane> there was 1 parent process running, which is apparent from that pstree
+[14:51] <ztane> dunno why it was not killed by killall
+[14:59] <xnox> =)
+[15:06] <jodh> xnox/ztane: upstart calls wait repeatedly so it will handle zombies and orphans.
+[15:27] <xnox> ack.
+[16:09] <stgraber> jodh: hey, any idea why upstart would return user jobs twice?
+[16:10] <stgraber> jodh: initctl --user or --session lists all the jobs twice. I initially thought it was a bug in my code (connecting to both buses) but it's not.
+[16:10] <stgraber> method return sender=:1.119 -> dest=:1.128 reply_serial=4
+[16:10] <stgraber>    array [
+[16:10] <stgraber>       object path "/com/ubuntu/Upstart/jobs/dbus"
+[16:10] <stgraber>       object path "/com/ubuntu/Upstart/jobs/201105/dbus"
+[16:10] <stgraber>       object path "/com/ubuntu/Upstart/jobs/debug"
+[16:10] <stgraber>       object path "/com/ubuntu/Upstart/jobs/201105/debug"
+[16:10] <stgraber>       object path "/com/ubuntu/Upstart/jobs/upstart_2devent_2dbridge"
+[16:11] <stgraber>       object path "/com/ubuntu/Upstart/jobs/201105/upstart_2devent_2dbridge"
+[16:11] <stgraber>    ]
+[16:11] <stgraber> that's what initctl is getting back from upstart. Obviously that's confusing it slightly ;)
+[16:11] <jodh> stgraber: probably because we haven't removed the existing user job handling code.
+[16:11]  * xnox ponders what 201105 in above means
+[16:12] <stgraber> jodh: that's my uid
+[16:12] <jodh> stgraber: try disabling Upstart.conf and seeing if behavious is the same: http://upstart.ubuntu.com/cookbook/#enabling
+[16:13] <xnox> stgraber: a bit high =)
+[16:13]  * xnox is 1000 everywhere =)
+[16:13] <stgraber> xnox: RID-based UID in a samba4 domain gets you pretty big UIDs
+[16:15] <stgraber> jodh: yeah, I think that's it. So hopefully that'll get fixed once we get rid of the current user job code.
+[16:15] <jodh> stgraber: do you want to volunteer? ;)
+[16:16] <stgraber> jodh: one thing that's "interesting" is if you have a job defined as both system and user, then you try to start the user one with "initctl start dbus" (for example). That'll get initctl in some kind of infinite loop and will almost freeze upstart in the process (the user upstart, not the system one)
+[16:16] <stgraber> but my guess is that this will be fixed once we no longer have duplicate entries
+[16:17] <stgraber> jodh: hehe, I've got a reasonably long todo list before I can et to that, but I can take a look once I'm done with my higher priority items :)
+[16:17] <jodh> stgraber: agreed. ok, ta.
+[22:50] <stgraber> xnox: I think I found what's broken in the upstart dailies
+[22:51] <stgraber> basically, the ubuntu branch contains some ubuntu-specific patches that we don't have in the dailies
+[22:51] <stgraber> the most important one being a change to the rc-sysvinit.conf start condition
+[22:51] <stgraber> which perfectly explains the breakage on my machine
+[22:52] <stgraber> so we can't simply use debian/ from the ubuntu branch for the dailies... we need to also get those changes out and into debian/patches, make a second branch with that and use it as the packaging branch
+[22:52] <stgraber> (or just finally make ubuntu:upstart non-native and use debian/patches for those ubuntu-specific deltas, making the packaging branch re-usable for the dailies)
+[23:34]  * xnox +1 for ubuntu:upstart to be 3.0 quilt. But I'm sure it's not slangasek's preferred upstart workflow.... =)
+[23:35] <xnox> stgraber: what about basing recipe on lp:ubuntu/upstart & merging in lp:upstart and hoping it all just works?=)
+[23:36] <stgraber> I'd have to check if the recipe format allows merging and I guess we'd need a fair amount of hoping considering the number of changes we've made lately ;)
+[23:39] <slangasek> 3.0 quilt + bzr is my preferred workflow in the alternate universe where I am the Marquis de Sade
+[23:41] <stgraber> xnox: 5 conflicts, so not terribly bad, but can't be done automatically, so won't quite work for the daily builds
+[23:42] <slangasek> xnox: find a solution to 3.0 (quilt) that won't require us to do stupid merges for anything other than the upstream source tree, and propose it?
+[23:42] <xnox> stgraber: the way i deal with conflicts is created a third branch which resolves the conflicts and then you get a common base you merge up lp:ubuntu/upstart + common-conflict-resolve-branch + lp:upstart
+[23:42] <xnox> recipes can handle that.
+[23:44] <xnox> slangasek: I did make a proposal as summer of code project. Store the tree unpatched and offer looms api to view the patches and diff/switch up & down. But looms are never committed only flat patches are. (v2) same but generate bundles out of patches such that you can create patched branch to rebase it -> and export a new patch series.
+[23:45] <xnox> slangasek: the project was not picked up =)
+[23:45] <slangasek> heh
+[23:46] <xnox> mercurial-queues is the best for debian/patches. They are quilt compatible but each patch has hg metadata in them. And there is nifty commands to rebase/add/remove/merge patches in that quilt series.
+[23:46] <xnox> unfortunately nobody stepped up to write a good hg-buildpackage.
+[23:47] <slangasek> xnox: why do you propose using the patches as the stored representation, rather than using the looms as the stored representation and serializing debian/patches from there?
+[23:49] <xnox> slangasek: because of 3.0 (quilt) package format, which inherintely from quilt doesn't have $ quilt merge-series command nor $ quilt rebase-series command.
+[23:50] <xnox> slangasek: if we get 3.0 ($vcs) format, there is no need for patches. But that opens a different kind of warms (no way to easily get the diff upstream vs packaged-changes)
+[23:51] <slangasek> why would I ever need/want to do such a merge-series or rebase-series?  Shouldn't loom primitives be sufficient?
+[23:54] <xnox> slangasek: if everyone switches and there are no exceptions, we can policy enforce looms and use that and live will be wonderful.
+[23:54] <xnox> s/live/life/
+[23:54] <slangasek> we don't need to switch "everyone" in order to make a policy change on UDD
+[23:56] <xnox> slangasek: i somehow believe that unless everyone switches, there will always be packages that fail to import or do something funny which will break UDD.
+[23:56] <slangasek> who is "everyone"?
+[23:56] <slangasek> I don't understand who you're saying would be switching, here
+[23:56] <slangasek> UDD itself imports from the archive, the archive wouldn't know anything about looms
+[23:56] <xnox> "everyone" - any package that is ever manually generated & uploaded into ubuntu.
+[23:56] <slangasek> unless you mean a 3.0 (bzr) format would be a prereq?
+[23:57] <xnox> yes. prereq.
+[23:57] <slangasek> ah
+[23:57] <slangasek> yeah, that's not a great solution
+[23:57] <xnox> exactly.
+[23:57] <slangasek> why don't you think looms could be used to output 3.0 (quilt) reliably?
+[23:58] <xnox> slangasek: packages that have both /debian/patches/series and /debian/patches/series.ubuntu fail spectacularly in the current UDD workflow.
+[23:58] <xnox> guess which series the importer imported for the whole history?! =)
+[23:59] <xnox> is one practical point I can think of.
+[23:59] <slangasek> hmm

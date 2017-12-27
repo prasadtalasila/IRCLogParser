@@ -1,0 +1,115 @@
+[07:21] <darkxst> ricotz, are you seeing focus issues in overview?
+[07:21] <darkxst> with my gjs patches?
+[07:24] <ricotz> darkxst, hmm, focus issues of what kind?
+[07:25] <ricotz> (you probably want to show the patches to Jasper too)
+[07:29] <darkxst> ricotz, I can't use the mouse to click anything in overview anymore, but it worked yesterday
+[07:29] <darkxst> also alt-tab gets stuck, which also worked yesterday
+[07:29] <darkxst> Jasper has looked at my patches
+[07:30] <ricotz> mouse in overviewe and alt-tab is working here
+[07:30] <darkxst> ok, hopefully something is hosed in my jhbuild
+[07:30] <ricotz> your patches with the changed compat OBJECT
+[07:30] <darkxst> btw dash is fixed
+[07:31] <ricotz> what was it?
+[07:31] <darkxst> bug in my JS_NewNumberValue patch
+[07:31] <darkxst> have replaced that one with a wrapper
+[07:31] <ricotz> ah
+[07:32] <brittyboi> have you guys been crashing in Gnome-Shell when closing apps in 13.04 dev? Every 3-4 times I close a window the whole system becomes unresponsive to input
+[07:32] <darkxst> brittyboi, nope
+[07:33] <brittyboi> hrm
+[07:33] <ricotz> brittyboi, try to disable the event-sounds if they are enabled
+[07:33] <darkxst> brittyboi, can you get a backtrace
+[07:33] <brittyboi> how do I do that?
+[07:33] <brittyboi> I can try, but it isn't being reported in ant logs that I can see
+[07:33] <ricotz> g-c-c > audio > effects > disable
+[07:33] <brittyboi> hold on I'll get you guys the bug number, i'm not the only one
+[07:34] <ricotz> i am suspecting your are hitting the eglibc bug triggered by the newer glib
+[07:34] <brittyboi> https://bugs.launchpad.net/ubuntu/+source/gnome-shell/+bug/1094571
+[07:34] <ubot5> Launchpad bug 1094571 in gnome-shell (Ubuntu) "gnome-shell (or session) continually crashes/locksup when closing any window" [Undecided,Confirmed]
+[07:35] <brittyboi> I'll try that right now
+[07:35] <ricotz> darkxst, could you paste a new patch-set?
+[07:38] <darkxst> ricotz, https://www.dropbox.com/s/dipa498sjc5jcm9/gjs188-r2.patch
+[07:38] <ricotz> darkxst, thanks!
+[07:40] <darkxst> np
+[07:42] <ricotz> darkxst, i guess this is missing some parts
+[07:43] <ricotz> like the defintion of HAVE_JS_NEWNUMBERVALUE
+[07:43] <darkxst> ricotz you need to rerun autogen
+[07:43] <ricotz> i did
+[07:43] <darkxst> thats there +AC_CHECK_FUNCS(JS_NewNumberValue)
+[07:44] <darkxst> check the config.log then I guess
+[07:45] <darkxst> although that should fail anyway on js188
+[07:45] <darkxst> since its removed
+[07:46] <darkxst> it is #ifndef
+[07:47] <darkxst> ricotz, did build fail?
+[07:47] <ricotz> ok, but putting JSVAL_IS_OBJECT into it is wrong
+[07:48] <ricotz> since you want the opposite here
+[07:48] <darkxst> ricotz, no, I am just cheating and using it to detect js188
+[07:49] <ricotz> ah ok
+[07:50] <darkxst> it could just as well be #ifndef HAVE_JS_SOMEOTHER_REMOVED_FUNC
+[08:05] <darkxst> ricotz, working ok ?
+[08:11] <ricotz> not yet
+[08:27] <darkxst> ricotz, oh you need to add static back here +JSBool JS_NewNumberValue(JSContext *cx, double d, jsval *rval) (in compat.h)
+[08:28] <darkxst> (Jasper told me to remove it ;( )
+[08:33] <ricotz> darkxst, i know this is only one part of the problem
+[08:33] <darkxst> what other problem?
+[08:34] <ricotz> linking against libgjs
+[08:34] <darkxst> ricotz, are you using jhbuild?
+[08:34] <ricotz> you should see at least warnings for gjs-console
+[08:34] <ricotz> no, i am not
+[08:35] <darkxst> oh right
+[08:35] <ricotz> while compat.h is a public installed header putting things like #ifndef HAVE_JS_NEWNUMBERVALUE in there
+[08:36] <ricotz> doesnt work
+[08:38] <darkxst> hmm right
+[08:38] <darkxst> but it should be undefined? so why doesnt it work?
+[08:39] <darkxst> either way you can just remove the #ifndef
+[08:40] <darkxst> oh I suppose its picking up js185
+[08:40] <ricotz> if you have it installed then remove it
+[08:41] <darkxst> I am using jhbuild
+[08:41] <darkxst> which links explicitly to the mozjs188.pc
+[08:41] <ricotz> (i have the 188 headers installed so no js185 headers)
+[08:42] <ricotz> note that the header locations are the same
+[08:42] <ricotz> try to remove your systems mozjs headers
+[08:43] <darkxst> ricotz, I can't do that, I am using them!
+[08:44] <ricotz> so you only have 188 around?
+[08:44] <darkxst> no I have js188 headers
+[08:44] <darkxst> and multiple other libs
+[08:44] <darkxst> all off your ppa
+[08:45] <ricotz> ok
+[08:45] <darkxst> but I am building gjs/g-s from jhbuild
+[08:46] <ricotz> alright
+[08:47] <ricotz> i think removing the conditional stuff is better
+[08:47] <darkxst> ricotz, I basically only added it in at Jaspers request
+[08:47] <ricotz> and squash those hunks in the change build version to mozjs188 patch
+[08:47] <ricotz> i see
+[08:48] <ricotz> seems not optimal to do so
+[08:49] <darkxst> whats not optimal?
+[08:49] <ricotz> trying to support backward compat in this case
+[08:50] <ricotz> the other changes arent compatible either, so why bother to try it for those
+[08:51] <darkxst> yeh probably wont happen, given the JSHandleObject/Id stuff
+[08:51] <ricotz> darkxst, btw, it is running now for some time
+[08:52] <ricotz> without "focus-issues"
+[08:53] <darkxst> ricotz, cool, let me know any issues you do see, I think a number of the ones I am seeing are unrelated and that somehow jhbuild has hosed itself (or a broken commit has landed)
+[08:53] <darkxst> they seem more like mutter issues really
+[08:56] <darkxst> any gotta run, dinner time here
+[08:57] <ricotz> darkxst, alright, thanks for your work!
+[09:01] <darkxst> np, although it would have been much easier if the changes were actually documented ;)
+[09:02] <darkxst> which reminds me, I probably should add these to the wiki page
+[09:04] <darkxst> ^mozilla wiki
+[22:05] <darkxst> ricotz, http://git.gnome.org/browse/pango/commit/?id=48423ef827f5fcedac92e1e73c29f0bb94eeadda
+[22:05] <darkxst> can you update that?
+[22:06] <ricotz> darkxst, why?
+[22:08] <ricotz> i hope this new fontconfig will get into raring though
+[22:08] <darkxst> pango depends on it
+[22:08] <darkxst> well I will just revert that commit for now
+[22:08] <ricotz> it just depends on it to make the tests happy
+=== john__ is now known as _j0hn
+[22:23] <ricotz> darkxst, i guess i can upload it to my staging ppa
+[22:28] <darkxst> well it seemed to build ok, after reverting that commit
+[22:29] <ricotz> it is just needed to have pango working "reliable" with multithreading
+[22:30] <ricotz> make check indicates the problems
+[22:30] <ricotz> https://launchpad.net/~ricotz/+archive/staging/+sourcepub/2922082/+listing-archive-extra
+[22:31] <ricotz> robert_ancell, hi, is this a candidate for raring yet in its early state? ^
+[22:32] <robert_ancell> ricotz, I don't know enough about fontconfig/pango but we were taking a cautious approach to shipping them
+[22:32] <robert_ancell> ricotz, having it in a PPA and getting some confirmation it works well will help
+[22:33] <ricotz> robert_ancell, alright, will use it for some time
+[22:33] <ricotz> and maybe move it to testing ppa after
+[22:35] <ricotz> (it might solve a crash with nautilus i saw occasionally with the harbuzz/pango/gtk git-stack)

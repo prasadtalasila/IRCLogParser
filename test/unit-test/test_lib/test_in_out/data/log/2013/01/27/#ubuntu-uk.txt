@@ -1,0 +1,1091 @@
+[00:20] <penguin42> ali1234: Interesting
+[00:20] <penguin42> ali1234: I've just got a package update for libgtk and the change in it is 'Enable Wayland backend' - and your error is that it can't find the wayland stuff
+[00:20] <ali1234> sounds like the culprit
+[00:21] <penguin42> ali1234: Can you tell me the version of your libgtk-3-0* packages - are they 3.6.4-0ubuntu2 ?
+[00:22] <ali1234> yes
+[00:57] <penguin42> ali1234: Ah someone got there a few hours before you
+[00:57] <ali1234> oh?
+[00:58] <penguin42> yeh it's just been duped to bug 1106188
+[00:58] <lubotu3> bug 1106188 in gtk+3.0 (Ubuntu) "Unable to build any GTK app, because of missing wayland-client.pc" [High,Fix committed] https://launchpad.net/bugs/1106188
+[00:58] <ali1234> cool
+[01:23] <ali1234> i'm really disappointed this guy never posts https://plus.google.com/u/0/109940541467224286660/posts
+[03:18] <ali1234> here is a classic example of useless glib errors
+[03:18] <ali1234> ERROR:panel-applet.c:2087:panel_applet_constructed: code should not be reached Aborted (core dumped)
+[03:18] <daftykins> 0o
+[03:18] <ali1234> gnome-panel doesn't contain a file called panel-applet.c
+[03:18] <daftykins> should not be reached? sounds like an intentional fail
+[03:19] <ali1234> and the bug is obviously in gnome-panel
+[03:19] <ali1234> and i know exactly how to reproduce it
+[03:20] <ali1234> oh wait, my bad
+[03:20] <ali1234> it's under a different directory
+[06:19] <popey> happy birthday Laney
+[07:16]  * MartijnVdS played with Blender's video editing bits yesterday.. once you get used to "How Blender does things" it's quite good
+[07:29] <ging> I have a birthday tommorow!
+[08:14] <popey> our snowman is dying
+[08:58] <SuperMatt> morning chumps
+[09:16] <dwatkins> wotcher
+[09:16] <popey> pip pip
+[09:43] <knightwise> morning everyone
+[09:43] <knightwise> small question
+[09:44] <knightwise> i've installed ubuntu on my macbook air and found out that if I upgrade the kernell,
+[09:44] <knightwise> the wifi stops working;
+[09:44] <knightwise> its ok "out of the box" in .17, but it breaks in .22
+[09:44] <knightwise> so i've reinstalled the .17 , but how to do i tell Gnome it needs to pick "that one" instead of the .22 ?
+[09:44] <knightwise> i mean Grub , not gnome
+[09:45] <ali1234> easymode: uninstall .22?
+[09:45] <knightwise> ah , thats also an option :)
+[09:45] <ali1234> hardmode: edit the grub.conf (every time you install a new kernel)
+[09:45] <knightwise> hadn't thought of that :)
+[09:45] <knightwise> ah , ok  , i'll try that one too.
+[09:45] <ali1234> super hardmode: build a package of .17 with a fake extra version bump
+[09:45] <ali1234> super duper hardmode: get the bug fixed upstream
+[09:45] <knightwise> naaah :-)
+[09:46] <ali1234> actually the last one isn't that hard
+[09:46] <ali1234> also what is .22?
+[09:46] <knightwise> latest kernell version
+[09:46] <ali1234> do you mean 3.5.0-22?
+[09:46] <knightwise> yep
+[09:46] <knightwise> it works fine in the .17 , but breaks in the .22
+[09:47] <ali1234> so what you need to do is test the vanilla kernels
+[09:47] <ali1234> test the newest upstream kernel and report it as broken upstream if that doesn't work
+[09:48] <ali1234> then do a bisect to find exactly where it breaks... though you ca probably find it by eyeballing the distro git
+[09:48] <ali1234> since there won't be too many commits
+[09:48] <ali1234> let me look...
+[09:48] <knightwise> ok , its a 2012 macbook air.
+[09:48] <knightwise> 11.6 inch version
+[09:48] <ali1234> that doesn't tell me much
+[09:48] <ali1234> what wifi chipset?
+[09:49] <ali1234> can you test the intermediate kernels... 18, 19, 20, 21?
+[09:49] <knightwise> ok , i"ll do that later on and report back to  ? i'll install the intermediate ones
+[09:49] <ali1234> not sure if they will still be available
+[09:50] <ali1234> 23 is actually newest on git...
+[09:50] <knightwise> yep , i think so , i got the entire list when i do sudo apt-get install
+[09:50] <knightwise> at the dinner table at the moment :) 'ill check in a jiffy
+[09:51] <knightwise> wifey looking at me all strange when I talk about kernels and stuff ;)
+[09:54] <ali1234> is it BCM4322?
+[09:56] <knightwise> The 2012 MacBook Air also features the same Broadcom BCM4322 Intesifi Single-Chip 802.11n Wi-Fi Transceiver, and Broadcom BCM20702 Single-Chip Bluetooth 4.0 Processor with Bluetooth Low Energy support. The stereo speaker design is also identical to models released in 2011 and 2010.
+[09:56] <ali1234> yeah i read that too
+[09:57] <ali1234> but what modules does it use when it actually works?
+[09:57] <knightwise> erm . i'll have to be on the machine for that , give me a couple of minutes to finish brekkies and i'll check
+[09:58] <ali1234> i see a couple of bcm patches
+[09:58] <SuperMatt> http://www.fandigital.com/p/zoncolor.html < this is one of the first theme packs where I've seen someone *really* put the work in
+[09:58] <knightwise> in the .23 ?
+[10:00] <ali1234> no, between 17 and 22
+[10:01] <ali1234> SuperMatt: that looks pretty good
+[10:01] <SuperMatt> it bloody well is!
+[10:03] <knightwise> yeah , but in the .22 i boot with no wifi adapter detected ,
+[10:03] <knightwise> when I boot in the .17 its ok.
+[10:03] <knightwise> so i'll see where it breaks along the way
+[10:05] <SuperMatt> http://www.supermatt.net/wp-content/uploads/2013/01/Screenshot-from-2013-01-27-100345.png
+[10:07] <knightwise> ok
+[10:07] <knightwise> ali1234:
+[10:07] <knightwise> i'm  at the machine ,
+[10:08] <ali1234> SuperMatt: what font is that?
+[10:08] <knightwise> i think i'll need to boot into 1.17 to find out what the wifi chipset is .. right ?
+[10:08] <SuperMatt> ali1234: where?
+[10:08] <ali1234> yeah that would be best
+[10:08] <ali1234> SuperMatt: on your screenshot
+[10:08] <ali1234> is it droid sans?
+[10:08] <SuperMatt> I only ever use the ubuntu font
+[10:08] <ali1234> lies.
+[10:08] <ali1234> ubuntu is not that narrow
+[10:08] <SuperMatt> you talking about in the middle?
+[10:09] <SuperMatt> I need to know specifically where :P
+[10:09] <SuperMatt> there's lots of fonts on the page
+[10:09] <ali1234> no, on the panel
+[10:09] <ali1234> also why does the clock text align properly with your name?
+[10:09] <SuperMatt> panel is definitely ubuntu
+[10:09] <ali1234> *not
+[10:09] <ali1234> you've set hinting to maximum :(
+[10:09] <SuperMatt> but I use tweak tool to knock the font scaling down to 0.7
+[10:10] <ali1234> how can you look at your indicator area and not feel physically ill?
+[10:11] <SuperMatt> I don't tend to look up there all that much
+[10:11] <ali1234> it's only out by one pixel but damn, it looks annoying as hell to me
+[10:11] <SuperMatt> but you're right about that
+[10:11] <ali1234> i would switch desktop over that
+[10:11] <SuperMatt> I'm running raring at the mo
+[10:11] <ali1234> it's why i don't use KDE :)
+[10:11] <SuperMatt> could be that it's only shifted becayse I changed the theme and need to log out and back in again
+[10:12] <ali1234> maybe
+[10:13] <ali1234> is @billgates the real bill gates?
+[10:13] <SuperMatt> probably not
+[10:13] <SuperMatt> oh wait, you mean on twitter
+[10:13] <SuperMatt> could be
+[10:14] <ali1234> it's not very amusing for a parody account
+[10:14] <dwatkins> https://twitter.com/BillGates says 'verified'
+[10:14] <ali1234> must be real
+[10:14] <dwatkins> he does a lot of good charity work
+[10:15] <dwatkins> no idea if it's just dealing with the 'symptoms' or the actual causes of poverty etc. but that's another question
+[10:17] <SuperMatt> ok, there's a file in the homedir somewhere where you set the paths of your Pictures and Music folders, etc
+[10:17] <SuperMatt> where is that?
+[10:17] <SuperMatt> got it
+[10:17] <dwatkins> oh cool, what's the file, SuperMatt?
+[10:18] <SuperMatt> .config/user-dirs.dirs
+[10:18] <dwatkins> cheers
+[10:18] <SuperMatt> shoulda just looked in .config anyway#
+[10:20] <SuperMatt> even after logging out and back in again, my time/name thing is still out of whack
+[10:20] <SuperMatt> blame raring
+[10:20] <dwatkins> out of whack in what way, SuperMatt?
+[10:20] <SuperMatt> take a look at my earlier pic
+[10:20] <SuperMatt> http://www.supermatt.net/wp-content/uploads/2013/01/Screenshot-from-2013-01-27-100345.png
+[10:21] <dwatkins> I assume you can't move/remove the middle one even by holding down alt or some other modifier
+[10:22] <SuperMatt> well, it's unity
+[10:22] <SuperMatt> so probably not
+[10:23] <SuperMatt> it doesn't bother me
+[10:23] <SuperMatt> only other people
+[10:24] <ali1234> it makes me (╯°□°）╯︵ ┻━┻)
+[10:25] <SuperMatt> it may well be a raring thing
+[10:25] <SuperMatt> one tic
+[10:25] <SuperMatt> I have another raring screenshot
+[10:25] <SuperMatt> same in the other one
+[10:25] <SuperMatt> I guess it's time I raised a bug
+[10:26] <SuperMatt> I guess it's not the date that's in the wrong place, I think it's the name because that's not on by default
+[10:26] <ali1234> the date looks like is is misaligned to me
+[10:30] <lukasz> Hi
+[10:32] <SuperMatt> ali1234: submitted
+[10:32] <SuperMatt> 1106800
+[10:33] <lukasz> Could you help me to install lastest firefox (18.0) ?
+[10:33] <lukasz> I have downloaded and extracted package
+[10:33] <lukasz> I dont know how is next
+[10:34] <popey> http://www.theregister.co.uk/2013/01/26/mitch_kapor_lotus_123_anniversary/
+[10:34] <popey> saw that, thought of AlanBell
+[10:34] <brobostigon> good morning everyone,
+[10:35] <SuperMatt> lukasz: I believe that firefox 19 is now in the repositories
+[10:35] <SuperMatt> if you run an update, it'll be there
+=== Lcawte|Away is now known as Lcawte
+[11:04] <popey> SuperMatt: 19 is in beta, 18 is in the repo
+[11:04] <popey> SuperMatt: http://paste.ubuntu.com/1576051/
+[11:06] <SuperMatt> ah, fair enough
+[11:06] <SuperMatt> I don't use firefox these days
+[11:07] <popey> me either
+[11:08] <SuperMatt> having said that, I do constantly change when I find firefox/chrome has a feature that chrome/firefox doesn't have
+[11:11] <jacobw> morning
+[11:15] <Paladine> hey folks
+[11:17] <Paladine> I just wanted to let the apple users among you know that I am assisting Olswang with a UK based group action against Google for bypassing Safari cookie settings between sept 2011/Feb 2012 - if any of you want to join the lawsuit please get in touch with with Daniel.Tench@olswang.com this is a serious lawsuit with a very prestigious law firm behind it, if you want more info feel free to pm me
+[11:27] <jacobw> Paladine: that's interesting
+[11:28] <jacobw> Paladine: i've heard of "class action" in the US, is this something similar?
+[11:30] <Paladine> this is a Group Action which is similar yes
+[11:31] <Paladine> we are hoping to enjoin millions of UK users
+[11:31] <Paladine> potentially the biggest ever lawsuit in the UK
+[11:31] <MartijnVdS> too bad only 3 people use Safari
+[11:31] <Laney> meow
+[11:31] <Paladine> actually 10s of millions of UK people use safari
+[11:31] <MartijnVdS> 10s of people 8-)
+[11:31] <jacobw> that's a lot of people
+[11:31] <Paladine> on their iPhones, iPads, Mac Books, Windows Machines
+[11:32] <MartijnVdS> Paladine: pop = 62,641,000; no way >1 in 6 has a mac
+[11:32] <popey> Sounds like a nice little earner for the lawyers
+[11:33] <Paladine> MartijnVdS, check the metrics on Apple devices in us in the UK
+[11:33] <Paladine> use*
+[11:33] <dwatkins> I use an Apple device, but I use Chrome and Firefox.
+[11:33] <Paladine> oh and disclaimer, I am not getting paid for assisting Olswang in this case
+[11:34] <jacobw> Safari has run on Windows since 2008 :|
+[11:34] <MartijnVdS> Paladine: also, how many of those people block cookies, etc.
+[11:34] <Paladine> although I don't know if that will change in the future, if it does I will make sure I disclose it
+[11:34] <dwatkins> who benefits from this lawsuit, Paladine? I'm genuinely curious what the ideal result would be.
+[11:34] <Paladine> MartijnVdS, you don't understand the case do you, Google were BYPASSING Safari cookie blocking
+[11:34] <MartijnVdS> Paladine: but if you don't enable the blocking in the first place.. there's nothing to bypass
+[11:35] <Paladine> Safari blocks 3rd party cookies by default
+[11:35] <Paladine> Google found a way to circumvent the settings
+[11:35] <dwatkins> I suspect a very small group of people have 1) iOS/OS X 2) Safari as their main browser and 3) Cookies blocked
+[11:35] <jacobw> Solve breaking and entering by not locking your door?
+[11:35] <dwatkins> ah ok, it's the default
+[11:36] <popey> dwatkins: nah, loads of people who buy iPhones have that exact combination
+[11:36] <Paladine> and ipads
+[11:36] <dwatkins> fair enough, popey
+[11:37] <dwatkins> so what should happen, assuming the lawsuit is successful? is it a slap on the wrist for Google, or is the money meant to do something?
+[11:37] <Paladine> if the lawsuit is successful we are expecting damages against google to the tune of 10s of millions
+[11:37] <ali1234> "Apple holds 28% of the UK smartphone market, with 8.6 million users"
+[11:38] <Paladine> maybe even in excess of 100 million
+[11:38] <dwatkins> so each iPhone user gets £11.63?
+[11:38] <ali1234> lolno
+[11:38] <Paladine> ali, that is the smartphone market, not add to that ipads, mac books (pro and airs), apple desktop machines etc.
+[11:38] <ali1234> each user will get £1, lawyers take the rest
+[11:39] <popey> +1
+[11:39] <MartijnVdS> Also, Google have stopped doing it and apologised. This tends to count in court.
+[11:39] <Paladine> this case isn't about money, it is about making sure Google pay the penalty for breaching the law
+[11:39] <ali1234> Paladine: iphone owners and ipad owners are the same people
+[11:39] <popey> that £1 doesn't begin to cover the lack of care most people have
+[11:39] <SuperMatt> and the people that benefit from that penalty are?
+[11:39] <dwatkins> ali1234: indeed, I am concerned this will result in Google paying out, lawyers making ots of money, but users not benefitting apart from a slightly higher liklihood companies won't circumvent such defaults in future
+[11:39] <jacobw> The EU cookie law requires from consent from a user before a cookie is set on they're browser, if one of the major web companies is violating this law either by ignoring it or circumventing enforcement mechanisms like cookie blocking (which is more deliberate than ignoring the law) then they're definitely liable to a group action claim IMO
+[11:39] <Paladine> ali, not true, for example, I was an iPad owner but not an iPhone user
+[11:39] <MartijnVdS> Paladine: better go after more large companies for not (or hardly) paying tax then
+[11:40] <ali1234> popey, how many ipads and iphones do you have now?
+[11:40] <popey> household has one ipad, two iphones, two machines running osx
+[11:40] <popey> only one of them runs safari
+[11:40] <Paladine> Supermatt, the entire UK benefit, because it sends a clear message to the rest of the big tech companies that circumventing law will have serious consequences
+[11:41] <jacobw> The users benefit from the company being challenged on it's violation of the law that users as part of the electorate that provides the legislature with the mandate to created
+[11:41] <popey> i see the US have already gone through this..
+[11:41] <popey> http://money.cnn.com/2012/08/09/technology/google-safari-settle/index.html
+[11:41] <ali1234> wat
+[11:41] <popey> looks like someone in the UK being opportunistic
+[11:41] <SuperMatt> yes, but if google are fined, what benefit do the people get? where does the money go
+[11:41] <MartijnVdS> SuperMatt: lawyers
+[11:41] <Paladine> now feel free to disagree as much as you like, I merely came here to let you all know about the lawsuit (because I know a lot of people here have apple devices) dont shoot the messenger
+[11:41] <popey> well, you're not just a messenger
+[11:41] <popey> you're working on it
+[11:42] <ali1234> this is interesting information to me anyway
+[11:42] <popey> indeed
+[11:42] <popey> its interesting
+[11:42] <dwatkins> Paladine: I appreciate the message being sent to companies like Google. It's good this is happening in general.
+[11:42] <ali1234> i mean i don't give a toss about apple users... apple does far worse to them than google ever has, and they do it every day
+[11:42] <ali1234> just because it's legal doesn't make it moral
+[11:42] <dwatkins> Personally I'd prefer the proceeds to be given to some relevant charity, but anyway.
+[11:42] <jacobw> If they're fined by the EU body that's responsible for web regulation then that body will have more funds to do it's work, though each litigant will have to pay legal fees as all litigants do
+[11:43] <Paladine> I have worked on improving cookie laws in the UK for the last 5 years, this is the first time I have had an opportunity to take such an action and raise so much awareness
+[11:43] <Paladine> so yeah, I agreed to help them when they contacted me
+[11:43] <ali1234> oh, so you;re the one we should blame for that disaster then?
+[11:43] <jacobw> I didn't realize how cynical this channel was :|
+[11:44] <MartijnVdS> ali1234: it's not as bad as the one we have.. where _explicit consent_ is required to set cookies.. and guess how it's stored if you don't want cookies.
+[11:44] <Paladine> I worked personally on the changes to 5(3) of the ePrivacy Directive with the EU Commission, yeah, and I am proud of that work
+[11:44] <dwatkins> MartijnVdS: lolwut
+[11:44] <MartijnVdS> ali1234: I have a browser preference flag.. why can't the law just let me use that?
+[11:44] <MartijnVdS> dwatkins: Dutch lawmakers = computer-illiterate
+[11:44] <dwatkins> MartijnVdS: sadly this does not surprise me
+[11:44] <jacobw> Paladine: thanks, web privacy is important to many of us
+[11:45] <Paladine> MartijnVdS, because 99% of the population know absolutely nothing about browser settings nor ever change them, just because you are tech savvy does that mean everyone else should just go to hell?
+[11:45] <MartijnVdS> Paladine: No, but requiring every site to have a (different!) pop-up is annoying as well.
+[11:45] <Paladine> and I happen to know the Dutch Law Makers very well, they are far from computer illiterate, they are some of the most well informed legislators in Europe
+[11:45] <dwatkins> "For cookies that are deemed to be ‘strictly necessary for the delivery of a service requested by the user’ the consent of the user is not needed."
+[11:45] <Paladine> thereis no requirement to have pop-ups
+[11:46] <MartijnVdS> Paladine: Browser makers could implement it instead of website builders: just like "This site wants to install a plugin" or "It wants to know your location"
+[11:46] <MartijnVdS> Paladine: no there's a requirement for disclosure (and in some countries, consent)
+[11:46] <Paladine> pop-ups were implemtented by the ad industry to deliberately make the situation cumbersome and make users complain, looks like they managed to trick you eh?
+[11:46] <dwatkins> I remember pop-ups.
+[11:47] <MartijnVdS> Paladine: bbc.co.uk ?
+[11:47] <Paladine> MartijnVdS, I am a respected expert on 5(3) across the world, I know it incredibly well, I worked on it, so I know everything there is to know about the law, the process which made it law and the lobbying by industry against it, I have lived and breathed 5(3) for the last 5 years
+[11:48] <MartijnVdS> Paladine: they don't do ads...
+[11:48] <MartijnVdS> but they DO have the annoying popup
+[11:48] <Paladine> 5(3) is not just about ads
+[11:48] <Paladine> it is about tracking
+[11:48] <Paladine> it isnt just ads that track
+[11:48] <MartijnVdS> As if they won't find other ways to do that.
+[11:48] <Paladine> BBC have a whoile bunch of tracking technologies on their site
+[11:49] <ali1234> so what's the alternative to popups?
+[11:49] <MartijnVdS> Also, only European sites have to comply. US sites just ignore it.
+[11:49] <MartijnVdS> ali1234: "no tracking"
+[11:49] <ali1234> just remove all tracking technology from the site?
+[11:49] <Paladine> and 5(3) isn't just about cookies it is about any technology which requires interaction with an end users terminal equipment in order to track them
+[11:49] <dwatkins> Ghostery is handy as a browser extension, blocks all manner ot trackers. Some websites show over ten different systems in use.
+[11:49] <Paladine> so it includes device identifiers and serverside fingerprinting too
+[11:49] <kvarley> How can I enable remote desktop viewing from an SSH session?
+[11:49] <MartijnVdS> kvarley: which way?
+[11:50] <MartijnVdS> kvarley: view the desktop of another machine on the SSH client, or view the desktop of an SSH server on an SSH client?
+[11:50] <kvarley> I'm logged into my desktop on SSH and want to enable remote desktop access on my desktop for all
+[11:50] <MartijnVdS> uhr
+[11:50] <kvarley> So enable VNC from ssh
+[11:50] <solarcloud_3srcn> Morning.  I just fell outta bed !
+[11:50] <dwatkins> x11vnc is what I use for this
+[11:50] <MartijnVdS> kvarley: that's going to be hard..
+[11:50] <Paladine> actually US sites have to comply too and this will soon be much more clear when the new Data Protection Regulation becomes law in 2016
+[11:51] <kvarley> MartijnVdS: What's the config util in ubuntu called? Surely I can just run the config app via SSH with X forwarding?
+[11:51] <MartijnVdS> kvarley: no, because your session variables (Dbus etc.) don't match up
+[11:51] <MartijnVdS> Paladine: Still, the current way of notifying is BAD
+[11:51] <Paladine> I was just in Brussels last week in meetings with Article 29 Working Party, EU Politicians, EU Commission and the FTC
+[11:51] <MartijnVdS> Paladine: and I'm still not convinced the tracking is 100% bad
+[11:52] <Paladine> FTC are currently beginning discussion with EU regulators about bringing mutual actions against privacy violaters
+[11:52] <Paladine> it is not about whether the tracking is good or bad, it is about obtaining consent
+[11:52] <Paladine> you want tracking and profiling of your behaviour that is fine, many people don't, the law requires consent be given, you want it give your consent
+[11:53] <ali1234> public websites should be covered by implied consent like anything else public
+[11:53] <ali1234> "in my opinion"
+[11:53] <MartijnVdS> Paladine: so set an HTTP header, have the browser add one of those "permission" bars like it does for the "Location" API, or something
+[11:53] <Paladine> research shows that implied consent is bad because most of the population are not tech savvy and therefore never change their settings but they don't like being tracked when they are made aware of it
+[11:53] <MartijnVdS> Paladine: so I can configure my browser for "consent to everything" if I want to.. or "Deny everything"
+[11:53] <ali1234> it doesn't matter
+[11:53] <Paladine> that is why we spent 5 years changing the law to require informed consent
+[11:54] <MartijnVdS> Paladine: we have sites that only work if you click "Yes, I accept tracking cookies"
+[11:54] <MartijnVdS> Paladine: if you don't, you get a blank page with "Enable cookies anyway"
+[11:54] <ali1234> actually they say "yes, i accept cookies"
+[11:54] <ali1234> no mention of tracking
+[11:54] <Paladine> so they lose most of their visitors then, their loss
+[11:54] <MartijnVdS> Paladine: except they dont
+[11:54] <ali1234> basically it just says "click here to make website work"
+[11:54] <ali1234> absolutely nobody refuses
+[11:54] <MartijnVdS> exactly
+[11:55] <ali1234> nobody is informed
+[11:55] <ali1234> you cannot legislate around stupidity
+[11:55] <MartijnVdS> not usefully anywy
+[11:55] <Paladine> ali, that is because the Information Commissioners Office in the UK are in breach of EU Law and advising sites to use implied consent (against EU law) that will be dealt with with the new regulation
+[11:55] <kvarley> MartijnVdS: I used an SSH session with X forwarding to run "vino-preferences" which allowed me to gain access to a VNC session :)
+[11:55] <MartijnVdS> kvarley: ok
+[11:55] <Paladine> ali, currently 8% of visitors across a large sample are refusing to accept the cookies
+[11:55] <ali1234> no, it's because nobody reads the damn popups
+[11:55] <Paladine> that is a HUGE nbumber
+[11:55] <MartijnVdS> Paladine: I'm in the Netherlands, explicit consent is required here
+[11:56] <MartijnVdS> Paladine: the popups just get more annoying, it doesn't help with educating users
+[11:56] <Paladine> MartijnVdS, I know, I know the netherlands law and legislators very well
+[11:56] <ali1234> i could easily see that the 8% is people who clicked the wrong button on accident
+[11:56]  * kvarley never accepts cookie disclosures for random sites because it's wasting my time
+[11:56] <Paladine> ali, there is only 1 button "Accept"
+[11:56] <kvarley> Is providing an opt-out button ok?
+[11:56] <Paladine> so they cant click the wrong one
+[11:56] <ali1234> that's not true, sometimes there are two buttons
+[11:56] <Paladine> no opt-out isnt compliant
+[11:56] <kvarley> Hhmm
+[11:56] <Paladine> ali, the sites we are monitoring are using a single button
+[11:57] <ali1234> so, what you're saying is that 8% of users... do nothing?
+[11:57] <Paladine> we are monitoring a wide sample of sites using the same api
+[11:57] <ali1234> how do you monitor that exactly?
+[11:57] <MartijnVdS> honour system?
+[11:57] <Paladine> we have access to the API stats
+[11:58] <ali1234> since there is no button to opt out, there are no stats on how many people opted out
+[11:58] <Paladine> and yes 8% of users are doing nothing
+[11:58] <ali1234> it's like saying "100% of people who didn't visit the site rejected tracking"
+[11:58] <Paladine> we know how many people are visiting the page and how many people are clicking the "Allow" or "Continue" button
+[11:58] <Paladine> so yes it is easy to derive stats on how many arent
+[11:59] <MartijnVdS> Paladine: do you have stats on how many people actually read the notice, and how many accidentally clicked the wrong button?
+[11:59] <ali1234> what does one of these sites look like anyway?
+[11:59] <MartijnVdS> because those numbers are very important in determining whether it's effective
+[11:59] <Paladine> and the 8% is why the US lobby are so strong at the moment, because to you 8% may not sound liek a lot (and this is before DNT is even implemented) but to big corps 8% is a huge number
+[11:59] <ali1234> have you got an example of "the correct way"?
+[11:59] <MartijnVdS> ali1234: omroep.nl
+[12:00] <Paladine> we are seeing similar figures for DNT in Firefox too, around 7%
+[12:00] <ali1234> so you can't use the site at all without accepting cookies?
+[12:00] <Paladine> so before DNT has even become a standard, 7% of users are enabling it
+[12:00] <MartijnVdS> Paladine: is that "7% wants to be tracked" or "7% does NOT want &"
+[12:00] <Paladine> we are currently still gathering stats for Chrome
+[12:00] <Paladine> 7% turn on DNT
+[12:01] <Paladine> brb need to go bathroom
+[12:01] <Azelphur> this reminds me to turn on DNT.
+[12:01] <MartijnVdS> ali1234: yes, because they're required by law to track how many visitors they get, from which part(s) of the country/world
+[12:02] <MartijnVdS> ali1234: and there's no exception in the "cookie law".. so you HAVE to accept their tracking cookies if you want to use the site(s)
+[12:02] <ali1234> hmm also, how exactly do you track the number of people who don't want to be tracked, without breaking the law you're trying to monitor?
+[12:02] <MartijnVdS> ali1234: I have no idea.
+[12:03] <MartijnVdS> I love how the "I don't want to be tracked" data is stored.. in a cookie
+[12:04] <ali1234> if there is a site which has no purpose other than tracking people, is it covered by the "strictly necessary" exception?
+[12:04] <MartijnVdS> Like "Google Analytics"?
+[12:04] <MartijnVdS> As far as I've heard.. no
+[12:05] <ali1234> nah. more like a site that just says "you last visited on ..." and nothing else at all
+[12:05] <ali1234> whendidilastvisitthiswebsite.com
+[12:07] <Paladine> MartijnVdS, there is no law which requires web sites to track visitors
+[12:07] <Paladine> the Data Retention Directive only applies to telecommunications companies, not content providers
+[12:07] <Paladine> so I am not sure why you think it does
+[12:07] <MartijnVdS> Paladine: Dutch Public Broadcasting is required to keep stats on its visitors
+[12:08] <Paladine> and where did you see that?
+[12:09] <Paladine> because I know the dutch law very well and it is explicitly written into the dutch transposition of the data retention directive that content providers are NOT required to retain data
+[12:10] <MartijnVdS> Paladine: it's part of the charter of "Dutch Public Broadcasting" (NPO) to report on its performance.
+[12:10] <MartijnVdS> Paladine: i.e. how many people it's reaching, related demographic data
+[12:11] <Paladine> Charter != Law
+[12:11] <Paladine> a Charter doesnt override law either
+[12:11] <Paladine> so if their charter is incompatible with law they need to chaneg their charter
+[12:11] <MartijnVdS> Paladine: except they won't get subsidies if they can't prove they're doing their work
+[12:11] <ali1234> yeah, instead of having tracking cookies, they could just shut down instead
+[12:11] <MartijnVdS> Paladine: and then we wouldn't have public broadcasting anymore
+[12:11] <ali1234> they would be within the law
+[12:12] <Paladine> you can argue the point as much as you like, their charter doesn't override law, same as BBC's charter doesnt
+[12:12] <Paladine> if their charter is incompatible with law they need to change it
+[12:12] <penguin42> hmm impressive change in weather over night
+[12:13] <ali1234> if the law is incompatible with reality they need to change it
+[12:13] <Paladine> I will have a chat with Jacob Kohnstamm about it
+[12:13] <MartijnVdS> Paladine: they can't change their own charter
+[12:13] <brobostigon> penguin42: that was yesterday, sun and gradual daytime increase in temperature.
+[12:13] <MartijnVdS> Paladine: Dutch public broadcasting is.. weird
+[12:14] <Paladine> ali, if you dont like the law you are free to lobby to change it, that is the wonderful thing about democracy
+[12:14] <Paladine> if you dont want to lobby to change it then dont complain about it
+[12:14] <ali1234> tat's bullshit
+[12:14] <ali1234> sorry but it is
+[12:15] <ali1234> you're saying that anyone who can get a law passed automatically justifies that law as correct
+[12:15] <MartijnVdS> The Germans tried that years ago
+[12:15] <penguin42> brobostigon: I think it actually his something like 7c last night, but down to 3c here now - all the snow's gone
+[12:15] <Paladine> yeah it is soo much bullshit, that is why despite corporate lobby pumping millions of euros into lobbying against 5(3) changes, we still managed to have the law changed without any resources, just through democracy....such bullshit that
+[12:15] <MartijnVdS> Paladine: next time, have it changed in a less idiotic way
+[12:15] <brobostigon> penguin42: yes, here it was about that temperature here also last night,
+[12:17] <Paladine> ali, I never said that at all, I said if you don't like a law lobby to have it changed.  I lobbied against 5(3) of the ePrivacy Directive and got it changed because I didn't agree with it, if you don't like something get off your ass and do somethign about it instead of just whining
+[12:17] <MartijnVdS> Paladine: "mediawet" is the law that requires NPO to report its performance (which is incompatible with what's known as "cookie law" here)
+[12:17] <MartijnVdS> Paladine: so yes.. we have conflicting laws.
+[12:17] <ali1234> Paladine: lobbying and whining are exactly the same thing
+[12:18] <Paladine> no lobbying is getting off your ass and delivering reasoned arguments backed up by empirical research to legislators
+[12:18] <ali1234> if you whine long enough, the law will get changed, no matter how ridiculous what you are asking for it. you are the living proof of that.
+[12:18] <penguin42> ali1234: http://research.cs.wisc.edu/cbi/  is an interesting approach top bug solving
+[12:18] <Paladine> whining is just what you are doing now
+[12:19] <Paladine> MartijnVdS, I don't think mediawet is incompatible with the directive, the directive doesn't make it illegal to gather site statistics, it makes it illegal to track users without consent
+[12:19] <Paladine> having stats which show 2 000 000 people from amsterdam visited this page on this day is not unlawful under the directive
+[12:20] <MartijnVdS> Paladine: Except Dutch law is more strict than the EU directive.
+[12:20] <Paladine> stats which show that 1 users with this IP address visited all these pages in succession - that is illegal without consent
+[12:20] <Paladine> because it allows you to infer behaviour and build a profile
+[12:20] <Paladine> no it isnt the dutch law is verbatim
+[12:20] <Paladine> it is wored identically to the directive
+[12:21] <Paladine> worded
+[12:21] <MartijnVdS> It's in need of a rewrite then
+[12:21] <Paladine> it was passed by your constitutional court, so if you don't like it complain to them
+[12:22] <MartijnVdS> Paladine: uhhh.. we have a constitutional court?
+[12:22] <ali1234> penguin42: not sure how that is different to apport really...
+[12:22] <MartijnVdS> as far as I know, Dutch law can't be tested for "constitution-compliance".
+[12:22] <Paladine> your supreme court makes judgements on constitutional matters
+[12:22] <penguin42> ali1234: Oh read the detail it's very very different
+[12:23] <MartijnVdS> Paladine: except cookie law != constitution
+[12:23] <penguin42> ali1234: It's sampling normal running not  just crashes and it's sampling things like just branches
+[12:23] <Paladine> Directive 5(3) of the ePrivacy Directive is based on the Lisbon Treaty articles on Privacy
+[12:23] <Paladine> you are a signatory to the Lisbon Treaty
+[12:23] <Paladine> the Lisbon Treaty is an EU Wide Consitution
+[12:23] <Paladine> Constitution
+[12:23] <ali1234> penguin42: but... i don't see how that's useful, to know that, for example "pos < x never, pos == x once, and pos > x fourteen times"
+[12:24] <ali1234> i mean it still has to handle all those cases
+[12:24] <Paladine> the whole reason 5(3) was changed was because of the strengthening of Privacy as a fundamental citizens right under the Lisbon Treaty
+[12:24] <penguin42> ali1234: The idea is to get massive correlation data that it normally goes that way, and then when something crashes you can flag that it's gone down an unusual path
+[12:24] <ali1234> hmm
+[12:25] <MartijnVdS> Paladine: I'm not against what it's trying to accomplish, I just think it's trying to accomplish it in a bad way
+[12:25] <ali1234> i guess that could help find one bug
+[12:25] <penguin42> ali1234: They have examples of using it to find race conditions and lots of stuff
+[12:25] <ali1234> buuuuuut... what i want is a programming language where bugs are impossible :)
+[12:25] <penguin42> ali1234: I'll give you one; it's going to have the single verb 'doHelloWorld'
+[12:26] <jacobw> there's no bugs, just unexpected behaviors
+[12:26] <ali1234> no, there are bugs
+[12:26] <ali1234> segfault is not unexpected behaviour, it's *always* an error
+[12:26] <Paladine> MartijnVdS, I say again, the directive is good, the way industry have chosen to comply is the problem, they have done so in a deliberate attempt to annoy consumers and drive them against the directive, I was present at all the meetings and saw the lobbying directily, I have even had meetings with the industry groups such as IAB, I know their methods and tactics very well
+[12:26] <jacobw> yes :)
+[12:26] <jacobw> (j/k)
+[12:27] <MartijnVdS> Paladine: It could have been prevented with more careful wording of the directive.
+[12:27] <penguin42> we seem to have almost as many euphemisms for bugs as we do for sex
+[12:27] <Paladine> the Directive does not require compliance using the method industry have chosen, there are far more suitable methods of compliance, but the industry want to derail the law because it costs them money
+[12:27] <jacobw> penguin42: well, bugs and sex are very important to programmers, unfortunately they get much more the former ;)
+[12:28] <Paladine> anyway I have a lot to do so I better get back to it, but thanks for the chat
+[12:28] <jacobw> good luck Paladine
+[12:28] <MartijnVdS> fighting windmills
+[12:28] <penguin42> jacobw: and that's before we get to endianness
+[12:28] <jacobw> ha
+[12:29] <ali1234> turing machines have a halting problem. but do we really need a turing machine to post stuff on twitter?
+[12:30] <penguin42> ali1234: I'm not sure I know; but it's amazing how almost all systems turn out to be Turing machines if you look hard enough
+[12:30] <ali1234> what if we have a programming language with only two datatypes: int, and char[139];
+[12:30]  * penguin42 hands ali1234 bcpl
+[12:31] <penguin42> ali1234: If you can index into your char[139] array by a variable then I believe you have the same problem; you have to prove that it's not possible to overflow the 139
+[12:31] <ali1234> you can't :)
+[12:31] <ali1234> and no pointers either
+[12:32] <penguin42> ali1234: If you can't index into the array then how do you form the contents?
+[12:32] <ali1234> the programming language has a function readupto139charactersfromuser();
+[12:33] <penguin42> ali1234: OK, so what operations can you do on tweet_t ?
+[12:33] <ali1234> and the string would be neither readable nor writable
+[12:33] <ali1234> or rather, it would be immutable
+[12:33] <ali1234> or const, or whatever
+[12:34] <penguin42> ali1234: Yeh so you're not going to be overflow it; but you're going to have a pretty basic tweet program
+[12:34] <ali1234> essentially, an opaque blob
+[12:34] <ali1234> also, maxint = 256
+[12:34] <penguin42> why not 139 ?
+[12:34] <ali1234> even better
+[12:34] <ali1234> and each function can have no more than two arguments
+[12:35] <ali1234> thus, it is possible to directly test all possible inputs to a function (since every string is equivalent)
+[12:35] <penguin42> ali1234: The trick is you can make programming languages that you can't make any significant bugs in; but you can't do anything significant in them
+[12:35] <ali1234> maybe you can' do anything significant, but that doesn't preclude writing a twitter client
+[12:35] <penguin42> ali1234: In your language you can't highlight part of the tweet, edit it or do anything else
+[12:36] <penguin42> ali1234: All you've done is move all the complexity into the implementation of the language (which can now do very little)
+[12:36] <ali1234> well, this is what managed languages do...
+[12:37] <ali1234> but obviously not to an extreme
+[12:37] <penguin42> ali1234: The challenge is to get a language you can write useful programmes AND make it hard to write bugs
+[12:38] <ali1234> we have loads of languages like that already
+[12:38] <ali1234> i think it's more interesting to make a less useful language when bugs are impossible... it's a less explored avenue :)
+[12:39] <AlanBell> there are a few, depending on how you define bugs
+[12:40] <AlanBell> http://en.wikipedia.org/wiki/ATS_(programming_language) would be one
+[12:40] <ali1234> yeah, that's exactly the kind of thing i'm talking about
+[12:43] <penguin42> AlanBell: Interesting one
+[12:52] <solarcloud_3srcn> Happy 300th issue of UWNews ... https://wiki.ubuntu.com/UbuntuWeeklyNewsletter/Issue300
+[13:02]  * dwatkins is mildly surprised to note gmail promoting godaddy
+[13:02] <popey> surely godaddy are paying for it like any other customer?
+[13:03] <MartijnVdS> dwatkins: anyone can buy ads
+[13:03] <dwatkins> ah yes
+[13:18] <solarcloud_3srcn> Anyone wanna go all conspiracy theory ? .. Count me out ! http://www.indiegogo.com/Citizen-Spy-Not?c=home
+[13:26] <penguin42> hmm I can't find where in ff the setting for 'open new tab as the one you just closed' - or whatever it's called; because it's on and annoying me
+[13:26] <MartijnVdS> ctrl+shift+tab
+[13:26] <MartijnVdS> uhr
+[13:26] <MartijnVdS> T
+[13:26] <MartijnVdS> not tab
+[13:26] <penguin42> MartijnVdS: No, I mean it's doing it whenever I opena  tab and I don't want it to
+[13:27] <MartijnVdS> don't press shift ;)
+[13:27] <MartijnVdS> ctrl+t
+[13:27] <penguin42> hehe possible
+[13:27] <Paladine> http://www.reuters.com/article/2013/01/27/idUSnPreXJWM1a+13c+PRN20130127  < more info on the Google case for those that are interested
+=== Hornet- is now known as Hornet
+[13:30] <dwatkins> Paladine: wouldn't the decision to circumvent the Safari setting be likely to have been made in the US, and therefore not something a UK court can penalise Google for?
+[13:31] <Paladine> that is for UK courts to decide, the lawsuit is being issued against both Google's US and UK companies
+[13:31] <penguin42> dwatkins: Does that matter? They do business here, they usually redirect you to google.co.uk etc
+[13:31] <dwatkins> ah I see
+[13:32] <Paladine> the US Safe Web Act permits US courts to take action against non us companies, why shouldn't other countries do the same?
+[13:33] <Paladine> it is a good question though and one that came up in brussels this week in a meeting with Julie Brills from the FTC, she stated she sees no reason legally why other jurisdictions can't take legal action against US companies since the US do the same
+[13:34] <ali1234> the issue is always going to be enforcement
+[13:34] <ali1234> i can't see google pulling out of the UK
+[13:34] <dwatkins> I can see them being fined for this, though.
+[13:35] <ali1234> oh certainly
+[13:35] <Paladine> no this isnt a fine, they already got away with it from the regulator
+[13:35] <Paladine> this is a lawsuit
+[13:35] <ali1234> who doesn't want free money?
+[13:35] <Paladine> so there is the potential for vast damages being issued against them
+[13:35] <dwatkins> so a fine, all be it a big one?
+[13:35] <Paladine> damages != fine
+[13:35] <Paladine> fines are paid to the state
+[13:35] <Paladine> damages are paid to claimants
+[13:36] <dwatkins> oh I see, thanks
+[13:36] <Paladine> the maximum fine google could have faced was £500 000 from the information commissioner
+[13:36] <Paladine> but the maximum damages are unlimited and will likely exceed £100M is enough people join the action
+[13:36] <Paladine> s/is/if
+[13:39] <knightwise> ls
+[13:39] <knightwise> oops  sorru   wrong window
+[13:40] <knightwise> danm ipad keyboard
+[14:07] <solarcloud_3srcn> popey: Just so we know .. when is the next episode likely to be of the Ubuntu-UK podcast ??
+[14:10] <jacobw> that's a popular question, the answer is usually that it'll be ready when it's ready
+[15:15] <solarcloud_3srcn> Nice and wharme in my house today :D
+[15:15] <dwatkins> It's time for some nice loud Pendulum.
+[15:15] <Pendulum> dwatkins: I'm quiet :P
+[15:16] <dwatkins> haha
+[15:16] <solarcloud_3srcn> scanning for Pendulum on spotify ...
+[15:16] <Pendulum> heh
+[15:16] <dwatkins> I have Immersion playing on the speakers I just installed, may use them for some Doctor Who shortly.
+[15:19] <solarcloud_3srcn> mmmphf ! don't thnk muych o ' Pendulum, anyhow ::: http://open.spotify.com/track/4rVRolQ2qr0TqGQSl000pM
+[15:19] <dwatkins> each to their own :) I also like all kinds of other music
+[15:19] <dwatkins> I don't have Spotify anymore, so I can't follow that link.
+[15:19] <solarcloud_3srcn> true.
+[15:19] <solarcloud_3srcn> it should just be a webpage ..
+[15:20] <dwatkins> ah yes, it tells me which track it is, so I could probably find it in iTunes
+[15:20] <solarcloud_3srcn> hands up who hates iTunes ??
+[15:21] <solarcloud_3srcn> o/
+[15:21] <dwatkins> :-p
+[15:21] <dwatkins> It works, people can say what they like.
+[15:21]  * penguin42 flicks a CD case at solarcloud_3srcn
+[15:22] <solarcloud_3srcn> I haven't used it in 5 years, Anyway the Real news is that I have a Pepperoni pizza coming out of the Oven in 7 mins ... :)
+[15:22] <dwatkins> I won't mention carbohydratyes, solarcloud_3srcn ;)
+[15:22] <dwatkins> you avoid iTunes, I avoid carbs and sugar.
+[15:22]  * solarcloud_3srcn wonders if £1.50 piza is all it's cracked up to-be ?
+[15:23] <dwatkins> you will probably get what you paid for.
+[15:23] <solarcloud_3srcn> mm. 2 for £3.
+[15:29]  * solarcloud_3srcn broke his vow of 'fb coventry' today , by allowing someone to join his fb linux group .. damn facebook group .. no-one ever shares anything anyway !
+[15:30] <solarcloud_3srcn> What's that beebing noise ?
+[15:30] <solarcloud_3srcn> Oh pizza .. :)
+[15:30] <dwatkins> or a model B with 32k...
+[15:31] <jacobw> crappy, i've been missing 'homage to catalonia' on Radio 4 for the last half hour
+[15:31] <dwatkins> is there a +1? ;)
+[15:33] <jacobw> no, but there's the iPlayer for listening at one's convenience
+[15:34] <jacobw> and, stashing forever with get_iplayer :p
+[15:34] <solarcloud_3srcn> jacobw: OH POoo. I read it was about Eric Cantana
+[15:36] <jacobw> it's not
+[15:38] <solarcloud_3srcn> jacobw: yes, anything but ..
+[15:47] <penguin42> http://www.ediblegeography.com/the-last-places/   the wine cellar under the ministry of defence
+[15:47] <solarcloud_3srcn> opening...
+[15:48] <solarcloud_3srcn> mmm . don't see a boss , but the red wine's nice..
+[15:49] <popey> (╯°□°）╯︵ ┻━┻
+[15:50] <solarcloud_3srcn> hieroglyph's popey ? Are you watching SWars again ?
+[15:51]  * penguin42 thinks popey has been reading unicodeemoticons
+[15:52] <jacobw> my emotions are on the astral plane >_>
+[15:52] <popey> solarcloud_3srcn: dunno soon
+[15:58] <popey> solarcloud_3srcn: we're off out for curry soon to decide when to do season 6
+[16:04] <solarcloud_3srcn> popey, I just don't know how to donate, other than phone messages.
+[16:04] <solarcloud_3srcn> BTW the pizza was a https://dl.dropbox.com/u/55128914/Attachments%20Email%20Xchat/success.png
+[16:10] <penguin42> someone put some more coal on the ubuntu archive servers please
+[16:20] <bigcalm> Ahoy
+[16:21] <bigcalm> Playing Half-Life with a trackball is not as easy as one would hope
+[16:22] <solarcloud_3srcn> bigcalm: What make/model is the trackball ??
+[16:22] <bigcalm> Logitech M570
+[16:22] <solarcloud_3srcn> scanning..
+[16:24] <solarcloud_3srcn> looks kinda LibreCAD to me .. but I haven't a clue as I've never used one.
+[16:24] <penguin42> is that the one with the big marbely ball?
+[16:24] <solarcloud_3srcn> looks like it .. either blue or red ball...
+[16:24] <bigcalm> penguin42: no, that's the Logitech Marble
+[16:24] <bigcalm> (which I also have)
+[16:25] <penguin42> ah
+[16:29] <solarcloud_3srcn> bigcalm: Have you captured any monsters yet ??
+[16:33] <brobostigon> itv2, toy story, sid, :)
+[16:46] <neuro> toy story on itv2? yuck
+[16:46] <neuro> ads :(
+[16:47] <brobostigon> yes, advertising is not conductive to a smooth viewing experience.
+[16:48] <neuro> and they'll trim the crap out of the credits too :(
+[16:49] <brobostigon> out-takes if memory serves, at the end.
+[16:50] <neuro> na
+[16:50] <neuro> just credits
+[16:50] <popey> ugh, hideous compression artifacts too
+[16:50] <neuro> i'm a purist, i want to see the whole movie
+[16:50] <neuro> popey: if you're watching on freeview, aye
+[16:50] <popey> virgin
+[16:50] <neuro> probably just as bad
+[16:51] <popey> oh, we have hd
+[16:51]  * popey looks
+[16:51] <neuro> yeah, was gonna say :)
+[16:51] <solarcloud_3srcn> mmp  neauro is a puritan .. do you wear a hat ??
+[16:51] <bigcalm> Does itv2 have an HD version?
+[16:51] <popey> bah, cant find itv hd
+[16:51] <neuro> bigcalm: yup
+[16:51] <popey> oh its 2
+[16:51]  * bigcalm scratches his noggin
+[16:51] <popey> not on virgin
+[16:51] <penguin42> what are the bitrates like on HD, or are they just more pixels compressed harder?
+[16:52] <bigcalm> That'll be why I don't remember seeing an itv2 HD :)
+[16:52] <neuro> penguin42: depends on the platform and the channel
+[16:52] <neuro> in theory sky have more available bandwidth to just throw Mbps at the problem
+[16:53] <neuro> virgin has some constraints, freeview has serious constraints
+[16:53] <neuro> the freeview HD multiplex only has about 28Mbps to go around
+[16:53] <neuro> shared amongst 4 24/7 channels
+[16:53] <mgdm> However Freeview HD at least uses a modern codec
+[16:53] <neuro> popey: yeah, sky only, i think
+[16:53] <neuro> h.264 baby
+[16:53] <mgdm> whereas SD Freeview uses old MPEG2 crap
+[16:53] <neuro> well, it wasn't crap when it was spec'd
+[16:54] <bigcalm> How about freesat?
+[16:54] <neuro> bigcalm: sky only
+[16:54] <mgdm> neuro: yes, true
+[16:54] <bigcalm> I see
+[16:54] <neuro> channel 225
+[16:54] <neuro> although it switches to 118 and moves SD to 225 once you're a sky subscriber
+[16:55] <neuro> quite neat
+[16:55] <mgdm> I suspect that DVB-S uses MPEG 2 in a transport stream the same as DVB-T
+[16:55] <neuro> yup
+[16:55] <neuro> and DVB-C
+[16:55] <neuro> the only difference on DVB-T was QAM
+[16:56] <neuro> 8k vs 64k
+[16:56] <neuro> eventually they all went 64k so they could squeeze some more channels in
+[16:56] <neuro> and improve tx robustness
+[16:56] <neuro> oops, rx robustness, i meant
+[16:57] <neuro> it's a shame when we went itvdigital -> freeview they couldn't have respecced everything to DVB-T2 / h264, but there were too many itvdigital/ondigital boxes out there, so they stuck with regular DVB-T
+[16:58] <mgdm> yeah
+[16:58] <neuro> so DVB-T2 is HD only
+[16:58] <neuro> for now
+[16:58] <mgdm> I suspect the new Local TV stuff will be DVB-T2
+[16:58] <neuro> most likely
+[16:58] <mgdm> but that's idle speculation
+[16:58] <neuro> :)
+[16:59] <neuro> just a shame they're squandering the old analogue UHF frequencies
+[16:59] <neuro> could easily have added three or four DVB-T2 multiplexes
+[16:59] <neuro> i think one more may be on the cards, but again ... idle speculation
+[16:59] <mgdm> No money in that, when they could be sold to mobile networks ;-)
+[17:00] <neuro> i know
+[17:00] <daftykins> only trouble with standards is how many standards there are ;D
+[17:00] <neuro> although LTE in the 800-900 band would be nice for building penetration
+[17:00] <solarcloud_3srcn> And now for somm-it completely different :::::http://vimeo.com/57370112#
+[17:00] <neuro> daftykins: the world can rarely agree on one thing
+[17:00] <neuro> especially when it comes to television with so many commercial interests involved
+[17:01] <neuro> long gone are the days when the beeb could just create something at R&D and then magically turn it into a standard
+[17:01] <neuro> cf NICAM
+[17:01] <daftykins> certainly glad the Beeb aren't in charge of things
+[17:01] <neuro> really?
+[17:01] <neuro> teletext and NICAM were pretty kick ass
+[17:02] <daftykins> past is past
+[17:02] <daftykins> :)
+[17:02] <neuro> 728kbps 14-bit 32kHz stereo audio
+[17:03] <neuro> now you get TV channels broadcasting video at almost that low a rate
+[17:03] <daftykins> it's alright because there's nothing worth seeing :)
+[17:03] <neuro> grumpy guts :)
+[17:04] <daftykins> nah it's not being grumpy, i'm just saying TV is terrible today :)
+[17:04] <neuro> most media is
+[17:04] <daftykins> it's ok though, the broadcast model shall soon be dead with any luck
+[17:04] <neuro> doubtful
+[17:04] <daftykins> that's where the luck part comes in
+[17:04] <neuro> there's still a desire for "as it happens" media consumption
+[17:05]  * mgdm would be upset if the broadcast model died soon
+[17:05] <brobostigon> QI and HIGNFY rock. :)
+[17:05] <mgdm> I'd have to go and find another job
+[17:05] <neuro> and the reason ratings aren't as high these days is because of multichannel profligation, not due to receding viewing figures in total
+[17:05] <neuro> it's easy to get 20m watching a programme when there's only 3 channels to pick from
+[17:05] <neuro> but when there's potentially several hundred channels ...
+[17:06] <daftykins> i just have a bunch of stuff stashed locally that i watch at-will
+[17:06] <neuro> ah but what new stuff do you get?
+[17:06] <daftykins> i'm not paying the Beeb to churn out their... well their.
+[17:07] <neuro> is it all youtube indie style stuff?
+[17:07] <daftykins> just this US spy parody series called 'Archer' right now
+[17:07] <daftykins> animated
+[17:07] <daftykins> youtube? not sure i follow
+[17:07] <neuro> Archer
+[17:07] <neuro> which is broadcast on FX
+[17:07] <mgdm> Presumably you bought that all legally on DVD or something similar, or a paid-for download?
+[17:07] <neuro> :)
+[17:08] <daftykins> i'm not sure how it being broadcast originally bears any relevance to what i'm saying?
+[17:08]  * neuro pays his licence fee and netflix dues, even though i rarely watch actual tv on my humax (and aerial is disconnected from tv, because samsung's freeview implementation circa 2008 was rubbish)
+[17:08] <daftykins> *he
+[17:08] <neuro> daftykins: you're predicting the end of the broadcast model
+[17:08] <neuro> but Archer is brought to you via that same model
+[17:09] <popey> http://www.kickstarter.com/projects/gcw/gcw-zero-open-source-gaming-handheld
+[17:09] <popey> iiinteresting
+[17:09] <daftykins> neuro: it would be if i lived in the US, i suppose
+[17:09] <daftykins> but no i obtain it after the fact
+[17:09] <neuro> um
+[17:09] <neuro> archer has been on Ch 5
+[17:09] <neuro> or at least one of their offshoots (5USA?)
+[17:10] <neuro> and i'm saying archer possibly wouldn't exist but for that broadcast model
+[17:10] <daftykins> ah, a point at last
+[17:10] <daftykins> :)
+[17:10] <neuro> that was my point 2 minutes ago :)
+[17:10] <neuro> i obviously just didn't articulate it clearly enough :(
+[17:10] <daftykins> do you not think it antiquated to have to be somewhere at a specific time to watch a program?
+[17:11] <neuro> no
+[17:11] <neuro> but at the same time, that idea isn't new
+[17:11] <daftykins> did it need to be new?
+[17:11] <neuro> cf video cassette recorders
+[17:11] <neuro> no
+[17:11] <neuro> but i'm pretty sure there were "THE BROADCAST MODEL IS DOOOOOOMED" conversations after home video took off
+[17:12] <daftykins> heh
+[17:12] <daftykins> sure but there's a generational element isn't there
+[17:12] <neuro> VHS, Betamax, DVD, HD-DVD, Blu-Ray, TiVo, PVRs, YouTube ... and the broadcast channels just keep on goin'
+[17:12] <daftykins> just the other day at lunch with friends one was referring to his parents rushing off home to catch a program ¬_¬ sounded so sad
+[17:12] <penguin42> neuro: And what's wrong with video 2000 ?
+[17:12] <neuro> some people actually enjoy the social aspect of watching at point of broadcast
+[17:13] <popey> yeah, i do
+[17:13] <neuro> penguin42: sorry!!! v2000 was frickin' awesome! double sided video tapes!!
+[17:13] <popey> i like to watch some programmes as they air
+[17:13] <daftykins> how-so? talking about it the day after?
+[17:13] <popey> not seeing spoilers for one
+[17:13] <neuro> daftykins: i mean ... take that example you just gave us
+[17:13] <neuro> those parents were going to enjoy watching that programme as it aired, together
+[17:13] <popey> and interacting
+[17:13] <popey> e.g. Doctor Who for the first example, and Question Time for the second
+[17:14] <neuro> and maybe they were really looking forward to seeing it, and didn't want to wait until watching it recorded later
+[17:14] <neuro> good examples
+[17:14] <popey> everything else I pvr
+[17:14] <neuro> and the new media aspect can enhance shared live viewing
+[17:14] <popey> I never watch stuff live on commercial TV
+[17:14] <popey> alsways 15 mins or more offset so I can skip ads
+[17:14] <neuro> cf twitter, zeebox, etc
+[17:14] <daftykins> i keep trying to pause and rewind any live TV when i'm subjected to it :(
+[17:14] <neuro> daftykins: with a decent PVR, you can
+[17:14] <daftykins> that's not the point imo
+[17:15] <neuro> what is the point?
+[17:15] <neuro> :)
+[17:15] <popey> watching Question Time with twitter on the laptop is fun ☺
+[17:16] <daftykins> i think broadcast is outmoded for current generations
+[17:16] <popey> depending who is on it and the topic of the week
+[17:16] <popey> if by "current generation" you mean people under 25, I agre
+[17:16] <popey> +e
+[17:16] <popey> they have zero attention span
+[17:16] <popey> </generalisation>
+[17:16] <neuro> daftykins: i disagree with outmoded
+[17:16] <daftykins> say i go to a friends and they say, oh hey have you seen series x?
+[17:17] <daftykins> "oh no i haven't"
+[17:17] <neuro> otherwise for every live event ever, we'd just put the event in the middle of a field somewhere, film it and upload it on youtube
+[17:17] <neuro> who needs spectators?
+[17:17] <daftykins> ok let's play an episode from this lovely on-demand subscription service i have here
+[17:17] <brobostigon> was a good ep of question time the other day, ian hislop was on.
+[17:18] <neuro> daftykins: replace "on-demand subscription service" with "this handy DVD", or "this convenient VHS bought in a shop" or "this fabulous recording I made from the TV"
+[17:18] <popey> ooh.. you missed VideoCD!
+[17:18] <neuro> or "this 8mm film I took from the TV"
+[17:18] <neuro> crap
+[17:18] <popey> ☺
+[17:18] <neuro> and laserdisc
+[17:18] <popey> lasterdisc was readonly tho
+[17:19] <popey> (I was gonna mention that too) ;)
+[17:19] <neuro> well i was talking about buying a tv series from a shop as well as home recording
+[17:19] <daftykins> neuro: not sufficient given release delays / decisions not to even produce
+[17:19] <popey> ok ☺
+[17:19] <neuro> daftykins: all that's changed is the speed of releases
+[17:19] <daftykins> with regard to what?
+[17:19] <neuro> your point
+[17:20] <neuro> it took years for some US cinema releases to reach the UK
+[17:20] <neuro> it would take months for home video releases to come after theatrical release
+[17:20] <daftykins> this sounds like a tangent
+[17:20] <neuro> not really
+[17:20] <neuro> you're talking about introducing some new content to a friend who hasn't seen it before
+[17:20] <neuro> and taking the use case of something like netflix to make it
+[17:20] <daftykins> that was the example scenario, the means was the service
+[17:21] <shauno> that's the one part of broadcast I really want to see die.  geolocking markets doesn't work anymore.
+[17:21] <neuro> i'm just saying there have always been ways to introduce new content to people, they were just slower
+[17:21] <neuro> or less convienent
+[17:21] <daftykins> shauno: indeed
+[17:21] <popey> Oooh!
+[17:21] <neuro> agreed with that
+[17:21] <popey> Watching itv2 - Toy Story right now..
+[17:21] <popey> adverts came on
+[17:21] <daftykins> neuro: well that bears no relevance to what i'm thinking about
+[17:21] <popey> Sam said "can we skip it?"
+[17:21] <popey> "no"
+[17:21] <popey> "Why not?"
+[17:21] <popey> heh
+[17:21] <neuro> daftykins: i have no idea what point you're trying to make then
+[17:21] <neuro> popey: synchronicity :)
+[17:21] <daftykins> pesky adverts
+[17:22]  * popey muted the telly
+[17:22] <popey> time for tea
+[17:22] <neuro> daftykins: i'm trying to say that you're talking about replacements for broadcast media that in some way have always been there
+[17:22] <daftykins> neuro: that a nice online service you pay for access to would let you have the freedom to watch whatever whenever
+[17:22] <neuro> yeah
+[17:22] <neuro> amazon
+[17:22] <shauno> ironically, the reason geolocking doesn't work is because broadcast does.  I want to see shows at the same time (±) that my friends do
+[17:22] <daftykins> sure, but media is wasteful
+[17:22] <neuro> or going down to HMV or Tower or Virgin Megastore and buying the video
+[17:22] <neuro> or renting it
+[17:22] <daftykins> again, outmoded
+[17:23] <neuro> no, just obsoleted
+[17:23] <neuro> the actual *activity* hasn't really changed
+[17:23] <daftykins> now you're arguing semantics
+[17:23] <neuro> just the method of consumption and the convenience of access
+[17:23] <neuro> no, i'm really not
+[17:23] <penguin42> hmm I guess with things like online film rentals are bunches of people all renting the same thing at the same time?
+[17:23] <daftykins> i'm sorry but i find this incredibly tedious, so i'm going to stop now
+[17:23] <neuro> the only real danger i can see to "broadcast" media is indie content makers getting more eyes onto their content via youtube, etc
+[17:23] <neuro> that's the real disruptor
+[17:23] <daftykins> we're not on the same page and i don't feel i have the will in me to be bothered making it so
+[17:24] <neuro> not so much that the consumption method is different, but that the creation method has less of a barrier to entry
+[17:24] <neuro> wow
+[17:24] <neuro> ok, fair enough
+[17:24] <neuro> LET'S TALK ABOUT KITTENS
+[17:25] <neuro> THEY ARE NON-THREATENING AND FLUFFY
+[17:25] <daftykins> you are free to enjoy watching broadcast and i shall resume this paused file i have here as and when i wish :>
+[17:25] <neuro> i thought you didn't have the will to be bothered
+[17:25] <daftykins> no need to push it
+[17:25] <neuro> my point was that the paused file you're watching would not exist but for the broadcast model
+[17:26] <popey> reasons why I hate my kids watching adverts...
+[17:26] <neuro> they want stuff?
+[17:26] <popey> i just told them I don't like them singing advert jingles and stuff
+[17:26] <neuro> uh oh
+[17:26] <popey> (sophie sang "funky pidgeon dot com")
+[17:26] <daftykins> popey: XD
+[17:26] <neuro> haha
+[17:26] <neuro> pwned
+[17:27] <popey> then sam said "For embarrasing moments there huggies, sponsors of you've been framed"
+[17:27] <daftykins> neuro: let it go :)
+[17:27] <popey> which made me wtf even more
+[17:27] <neuro> daftykins: what?
+[17:27] <daftykins> i'm tempted to up a vid to YBF to try and get the money
+[17:28] <neuro> why did you say let it go?
+[17:28] <neuro> i was talking to popey
+[17:28] <daftykins> ok
+[17:28] <popey> i have a vid of wifey on holiday in the sea, big wave comes in and her boobs pop out
+[17:28] <popey> kids keep asking me to send it in to YBF
+[17:29] <daftykins> XD
+[17:29] <daftykins> may make more money elsewhere.
+[17:29] <daftykins> *cough*
+[17:30] <neuro> popey: just give in and let them sing jingles, as i believe everything in demolition man will one day come true
+[17:30] <popey> hah
+[17:30] <neuro> except for the three seashells, as I don't think that was fully explained to my satisfaction
+[17:30] <daftykins> i better learn the taco bell menu
+[17:30] <neuro> :)
+[17:31] <neuro> and stop eating salt, as it's bad for you and therefore is illegal
+[17:31] <neuro> WILL BE, WILL BE illegal
+[17:31] <shauno> yet taco bell took over the world.  not exactly healthfood
+[17:31] <daftykins> tell you what they should outlaw before that
+[17:32] <neuro> pepper?
+[17:32] <daftykins> people that put things on food before trying it first
+[17:32] <neuro> OOOH scum
+[17:32] <daftykins> inorite, unacceptable!
+[17:32] <solarcloud_3srcn> pepperoni !
+[17:32] <neuro> and people who say they don't like stuff without trying it
+[17:32] <daftykins> neuro: the animals D:
+[17:32] <neuro> they need a slap
+[17:32] <shauno> (obiligatory horse burger joke here)
+[17:32] <neuro> lol
+[17:33] <neuro> HORSE BURGER? NEIGH PROBLEM!
+[17:33] <solarcloud_3srcn> lol
+[17:33] <neuro> haha, it's funny because i'm scottish, and i'd say "no" as "nay"
+[17:34] <neuro> hmm, chrome and its 50-odd tabs wants me to restart it to do an update
+[17:34] <solarcloud_3srcn> over here yes is "tay" in manx .. sounds similar..
+[17:34] <neuro> i think chrome and I will have to have words
+[17:35] <neuro> acht, sod it, the word is: command-q
+[17:35] <daftykins> in FF at least file -> exit keeps all the tabs
+[17:35] <neuro> it does/can in chrome too
+[17:35] <neuro> i just hate reloading all those tabs
+[17:35] <daftykins> i have to do that because a client of mine keeps 3+ windows with 20+ tabs each constantly =|
+[17:36] <neuro> and why chrome always wants to use my GTX 640M instead of the intel lightweight GPU is beyond me
+[17:36] <neuro> i think it's a flash thing
+[17:36] <popey> so now I tell the kids it's tea time...
+[17:36] <neuro> and?
+[17:36] <penguin42> daftykins: ?!
+[17:36] <popey> "Can you pause the telly!"
+[17:36] <neuro> well, can't you?
+[17:36] <popey> i put stuff on food before trying it
+[17:36] <neuro> SCUM!
+[17:36] <popey> e.g. mustard or horseraddish on beef
+[17:36] <popey> mint sauce on lamb
+[17:36] <popey> etc
+[17:37] <daftykins> penguin42: yeah :( technology abuse my non-understanders
+[17:37] <neuro> well, i think daftykins meant "trying it for the first time" (although i may be wrong?)
+[17:37] <penguin42> daftykins: hmm, you can always bookmark the set of tabs
+[17:37] <neuro> surely by now you know what beef and lamb tastes like
+[17:37] <popey> i used to work with someone who was unable to have two items of food in her mouth at once
+[17:38] <popey> had to eat meat then eat some veg
+[17:38] <daftykins> nah i meant if you go to a restaurant, so you don't know their food, why put stuff on before sampling it without 0o
+[17:38] <popey> never put meat and veg on the fork
+[17:38] <popey> it was hilarious to watch
+[17:38] <daftykins> popey: dear god, my old man's the opposite - he has to have one piece of every food item on the plate per forkload
+[17:38] <neuro> :)
+[17:38] <daftykins> that however, is painful to watch
+[17:38] <popey> hah
+[17:38] <daftykins> he takes 3x longer than anyone else to eat
+[17:39] <neuro> that sounds backwards
+[17:39] <neuro> surely having bits of all the food on the plate, he'd be finished faster than someone putting one or two bits on the fork
+[17:39] <popey> other people are odd
+[17:39] <popey> all of them
+[17:39] <neuro> yup
+[17:40] <neuro> you're odd
+[17:40] <neuro> i'm not
+[17:40] <neuro> this talk about food is making me hungry though
+[17:40] <neuro> and i had a pot noodle for lunch, and that's not exactly food
+[17:40]  * popey has left-overs from roast dinner
+[17:41] <daftykins> i don't like roasts and yet it's what's tonight :(
+[17:41] <penguin42> oh, send them over here then
+[17:41] <popey> outrage!
+[17:41] <daftykins> ^_^
+[17:47] <daftykins> that reminds me, i was going to look up a film i never saw
+[17:47] <penguin42> which?
+[17:49] <daftykins> err, that Bruce Willis and kid that sees ghosts one
+[17:49] <penguin42> Sixth sense?
+[17:50] <daftykins> that's the one ja
+[17:50] <daftykins> though i've already had it ruined over the years naturally =/
+[17:50] <penguin42> good film
+[18:18] <solarcloud_3srcn> penguin42: My best film of all time .... https://www.youtube.com/watch?v=_i9u9Ps7zh4
+[18:21] <daftykins> people should be shot for uploading videos at the wrong aspect ratio
+[18:25] <mgdm> that's slightly extreme
+[18:26] <daftykins> if taken literally, yeah
+[18:26] <penguin42> solarcloud_3srcn: Hmm, those are 'ok'
+[18:26]  * penguin42 prefers High planes drifter
+[18:27] <popey> Sunday afternoon is: Children brushing my hair and putting it in a pony tail.
+[18:29] <solarcloud_3srcn> Apt request : can popey have a feather in his hair please, as a feature ?
+[18:31] <daftykins> popey: you have long hair? 0o
+[18:37]  * solarcloud_3srcn Maps the t'internet .. ::: https://dl.dropbox.com/u/55128914/Attachments%20Email%20Xchat/AK38c.jpg
+[18:39] <daftykins> i wonder what a sea of downoads is
+[18:39] <solarcloud_3srcn> not an aacount-an-see anyway !! haha..
+[18:42] <penguin42> daftykins: /var/cache/apt/archives?
+[18:43] <daftykins> penguin42: i was just being a spelling pedant
+[18:44] <daftykins> also i frequently run a good clean ^_^
+[18:44] <daftykins> and purge my older kernels
+[18:45] <penguin42> solarcloud_3srcn: I'm sure the cats must occupy a larger area of the internet
+[18:55] <solarcloud_3srcn> penguin, true, but is 'occupy'still going, in your part of the woods ?
+[19:02] <solarcloud_3srcn> take that as a no
+[19:02] <penguin42> solarcloud_3srcn: haha well I didn't mean that occupy; I think in this part of the woods they got as far as about 3 tents on a piece of grass near the town hall for about a week
+[19:02] <penguin42> a year or so ago
+[19:03] <solarcloud_3srcn> They still meet on a mumble server believe it or not !
+[19:04] <penguin42> has mumble got any better? It used to be almost but not entirely possible to get the audio to work reliably
+[19:04] <solarcloud_3srcn> no
+[19:05] <solarcloud_3srcn> everyone gets frustrated with mumble .. needs crowdfunding ... !!
+[19:06] <penguin42> solarcloud_3srcn: I guess they keep trying to have meetings to discuss it but ....
+[19:06] <solarcloud_3srcn> lol
+[19:07] <solarcloud_3srcn> could be forked easy enough, if i recall.
+[20:03] <alex__> alex
+[20:03] <alex__> Fine, don't ask me then
+[20:23] <meet> Which is a good light weight distro using ubuntu? I plan to use it from a live usb and use it in my college to do practical work and classes
+[20:24] <AlanBell> I would just use Ubuntu
+[20:25] <daftykins> meet: xubuntu is lighter
+[20:26] <ali1234> "portable" ubuntu
+[20:27] <meet> ali1234 is there such thing?
+[20:27] <ali1234> can you install nvidia driver and amd driver onto a live usb, and then have it still work correctly?
+[20:27] <ali1234> meet: yes, use the live usb creator
+[20:27] <AlanBell> yes with the persistent partition thing
+[20:27] <ali1234> but i would expect issues now that ubuntu requires a working 3d driver
+[20:27] <ali1234> since getting that to work is highly machine dependent
+[20:27] <ali1234> i would go with a distro that doesn't have this requirement
+[20:28] <ali1234> and nobody better even think of saying llvmpipe is a workable replacement for 3d acceleration, because it isn't
+[20:29] <AlanBell> not entirely sure that you can install the nvidia drivers then go use an ATI machine and install drivers for that and then flip about between all kinds of machines and have it just work
+[20:29] <AlanBell> but maybe you can
+[20:29] <meet> Daftykins are these the lightest distros out there? I also will not need thunderbird and all that bloat
+[20:29] <daftykins> meet: well with a persistent install, you can just remove packages...
+[20:29] <ali1234> the lightest distro are also hard to use
+[20:29] <ali1234> removing packages that you don;t use won't make the system run faster
+[20:29] <daftykins> meet: are you sure you can even boot your own OS in a College? most machines are locked down in such places
+[20:30] <solarcloud_3srcn> AlanBell: How was London ??
+[20:30] <AlanBell> cold
+[20:30] <solarcloud_3srcn> ok, fair enough.
+[20:30] <meet> Daftykins ya I checked the other day. I was able to boot from a USB
+[20:32] <solarcloud_3srcn> meet: You could try, Lubuntu , I do, and it's fine.
+[20:32] <meet> Ali1234 so is there any thing which is ubuntu based and has unneeded softwares removed like the music player and all
+[20:32] <daftykins> meet: you might get told off for that. even if it works, wouldn't there be a web proxy to block net access? or is it not really a well provisioned college?
+[20:32] <solarcloud_3srcn> Lubuntu.
+[20:33] <ali1234> meet: why worry.just having stuff on  usb disk isn't going to slow anything down
+[20:33] <ali1234> the killer is unity
+[20:33] <solarcloud_3srcn> yes, Unity is not in Lubuntu.
+[20:33] <meet> Daftykins you may say that ;-)
+[20:34] <daftykins> ^_^
+[20:34] <MartijnVdS> Which pay-as-you-go SIM should I get? Or does anyone know a website where I can compare deals?
+[20:34] <daftykins> meet: just be sure not to mount the local disks, that may make them angry :>
+[20:34] <solarcloud_3srcn> MartijnVdS: For the UK ?
+[20:35] <meet> Ya. Probably won't need them at all
+[20:35] <MartijnVdS> yes
+[20:35] <daftykins> when i was teaching at a College i still knew the BIOS passwords so i booted liveUSBs to show students stuff, but one time it caused the system to fsck itself
+[20:35] <MartijnVdS> solarcloud_3srcn: I'll be going there soon.. and I want a SIM for my mifi :)
+[20:35] <daftykins> which was odd 'cause i didn't even mount them i don't think 0o
+[20:35] <solarcloud_3srcn> dunno , I'm in an enclave called the Isle of Man. soz.
+[20:35] <brobostigon> MartijnVdS: for data, three are the best value, and have the best data i have ever had.
+[20:35] <MartijnVdS> solarcloud_3srcn: the more data the better :)
+[20:35] <MartijnVdS> brobostigon: even in remote places (I'll be going to Land's End)
+[20:35] <MartijnVdS> ?
+[20:36] <brobostigon> MartijnVdS: also, three payg, for £15 do no fup unlimited data,
+[20:36] <MartijnVdS> brobostigon: that does sound good
+[20:36] <brobostigon> MartijnVdS: lands end, i dont know, not been.
+[20:36] <solarcloud_3srcn> MartijnVdS: Say hello to the Lizard, for me ^_^
+[20:36] <ali1234> do three still do that unlimited free skype to skype calls with other three users?
+[20:37] <brobostigon> no idea, ali1234
+[20:37] <meet> Daftykins - haha! Ok then I will opt for ubuntu with an l. Btw will I able to install jdk and everythng else normaly?
+[20:37] <MartijnVdS> brobostigon: I'll post photos ;)
+[20:37] <MartijnVdS> brobostigon: I'll be going in May
+[20:37] <brobostigon> MartijnVdS: :)
+[20:37] <daftykins> meet: again, hit up pendrivelinux.com and learn about persistent installs.
+[20:38] <meet> ok. I was planning to use unetbootin which I felt was easy
+[20:38] <solarcloud_3srcn> Strong winds forecast for lower Wales tonite, BTW.
+[20:38] <ali1234> use live image creator tool in ubuntu
+[20:39] <ali1234> unetbootin does not set up a proper persistent portable install
+[20:39] <solarcloud_3srcn> agreed.
+[20:39] <MartijnVdS> neither does it set up EFI properly
+[20:42] <solarcloud_3srcn> AlanBell: What was the meeting you are doing in the #meeting channel ?
+[20:42] <AlanBell> IRC Council
+[20:42] <solarcloud_3srcn> ah, elders only, ...
+[20:42]  * solarcloud_3srcn is merely a padawan ;)
+[20:43] <meet> Ali1234 is it ubuntu only?
+[20:43] <solarcloud_3srcn> meet not that I recall.
+[20:44] <AlanBell> startup disk creator is what it is called
+[20:44] <meet> Ok... Will search for that.  thanks everyone :-)
+[20:45] <solarcloud_3srcn> AlanBell: Have got any response from your shopping app. yet ? i.e. can they give feedback on the gnome page ?
+[20:46] <AlanBell> there are some comments here https://extensions.gnome.org/extension/564/amazon-shopping/
+[20:46] <solarcloud_3srcn> opening...
+[20:46] <AlanBell> it hasn't really generated any revenue at all, which is interesting
+[20:46] <AlanBell> about 15 clicks or something
+[20:48] <directhex> banshee used to contribute thousands to gnome, but since people started dumping banshee, those numbers are rather sad now
+[20:48] <AlanBell> dunno if I am reading it right, might be 1262 views of detail pages, 15 of them clicked on other stuff
+[20:49] <AlanBell> there was a comment from the reviewer saying that I might like to talk to the foundation about getting the shopping thing in by default
+[20:49] <AlanBell> but as it generates no money at the moment it is rather an academic point
+[20:50] <solarcloud_3srcn> AlanBell: that would be good, Does it take up much server time, your side or not /
+[20:50] <solarcloud_3srcn> ?
+[20:50] <AlanBell> no, hardly any
+[20:50] <solarcloud_3srcn> k
+[20:51] <solarcloud_3srcn> well at least you've opened it up, for everyone .. kudos to AlanBell !!
+[20:53] <directhex> is semi-integrated shopping right in the OS something people want? i can't say i've used it in unity either
+[20:54] <AlanBell> probably not
+[20:55] <AlanBell> would be interesting to know if there is any revenue from the unity shopping lens, I expect there is a bit
+[20:55] <directhex> I'm not saying "YOU SUCK STOP HACKING" i just wanbt to better understand the usage patterns
+[20:56] <AlanBell> I actually quite like it as a concept personally
+[20:56] <ali1234> i don't want integrated anything :/
+[20:56] <AlanBell> and I think you should always nominate an affiliate code when shopping on Amazon as a moral principal
+[20:56] <AlanBell> otherwise you are just giving the commission to Amazon on top of their profit margin
+[20:57] <ali1234> because capitalism is the ultimate moral philosophy, right?
+[20:57] <AlanBell> consumerism ftw
+[20:59] <AlanBell> but if you do shop on Amazon you get to give a 5% kickback to any good cause of your choosing that has an affiliate ID
+[20:59] <ali1234> which is basically none, as we found
+[20:59] <daftykins> hrmm does OS X read and write on NTFS yet, anyone know?
+[20:59] <AlanBell> and if Jeff Bezos is your chosen good cause, then carry on shopping from a browser :)
+[21:00] <ali1234> if everyone uses affiliate codes they'll just put the prices up 5%
+[21:00] <ali1234> you can't win this game
+[21:00] <ali1234> the only way is to not play
+[21:01] <AlanBell> my kids school has an affiliate code, lots of small places do
+[21:01] <ali1234> a large number of the shops on amazon have their own websites too. what you should really do is search amazon, then google for their site and buy there
+[21:01] <ali1234> if you have some problem with giving bezos money that is
+[21:01] <AlanBell> yes, that is good, if they do the shipping
+[21:02] <AlanBell> lots of places have given up on logistics and just put all their stuff in an Amazon warehouse and let Amazon deal with it
+[21:02] <daftykins> 'fulfilled by Amazon'
+[21:02] <daftykins> definitely tougher to find stuff *actually* sold by them lately i find
+[21:03] <daftykins> unless there's a trick to it i don't know of
+[21:03] <ali1234> there is. select "super saver delivery" only
+[21:03] <ali1234> the small shops may do free delivery but it's not the same so they get filtered
+[21:03] <daftykins> that's one step later
+[21:03] <daftykins> is it not?
+[21:03] <ali1234> yes
+[21:03] <ali1234> but i feel you might be asking for a "do what i want" button
+[21:04] <daftykins> not really.
+[21:05] <daftykins> btw that sounds very arrogant
+[21:06] <ali1234> well, complaining about 1 extra click to buy something sounds like first world problems
+[21:08] <ali1234> bug 994921
+[21:08] <lubotu3> bug 994921 in apport (Ubuntu Quantal) "'ubuntu-bug /var/crash/app.crash' (and even more so, 'apport-cli -c /var/crash/app.crash') should still allow manual bug filing in stable releases" [Medium,Triaged] https://launchpad.net/bugs/994921
+[21:08] <daftykins> wasn't really a complaint, perhaps you just read my statement with the attitude you carry around?
+[21:12] <czajkowski> evening
+[21:13] <daftykins> hi
+[21:13] <czajkowski> daftykins: hows things
+[21:14] <daftykins> not bad thanks! getting closer to my house buying completion on the 5th :) and you?
+[21:14] <czajkowski> good thanks, busy but looking for to FOSDEM next weekend
+[21:15] <daftykins> ah-har
+[21:16]  * solarcloud_3srcn finishes his 3 for a pound cadbury's creme egg and wonder's why Uncle Sam owns them now ...
+[21:18] <daftykins> mmm creme eggs
+[21:18] <solarcloud_3srcn> they are nice. but they are /were mine, and not Terry's !
+[21:19] <solarcloud_3srcn> Brace yourself the 'Easter Egg's2 posts are coming ...
+[21:21] <solarcloud_3srcn>                                                                                                                                                        .
+[22:11] <brobostigon> is there a html frontend for get-iplayer? something that will alow my mum to use get-iplayer without her having to learn the terminal commands.
+[22:13] <ali1234> yeah. it's at bbc.co.uk/iplayer
+[22:13] <brobostigon> haha
+[22:14] <directhex> yes
+[22:15] <ali1234> i'm serious btw. they have download links for "portable media devices" which is what get-iplayer fetches
+[22:15] <ali1234> right under the actual embedded video
+[22:15] <directhex> http://linuxcentre.net/getiplayer/get_iplayer-pvr-manager
+[22:17] <brobostigon> interesting, thank you directhex
+[22:19] <ali1234> actually those website downloads are wmv nonsense
+[22:20] <brobostigon> they are flv and then converted into mp4 with ffmpeg, as popey pointed out a few days ago.
+[22:21] <ali1234> get-iplayer is
+[22:21] <ali1234> the iplayer website serves up wmv files
+[22:21] <ali1234> you have to play it in windows media player to obtain a license and then transfer the license to your player along with the file
+=== Lcawte is now known as Lcawte|Away

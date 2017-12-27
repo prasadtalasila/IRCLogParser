@@ -1,0 +1,354 @@
+=== m_conley_away is now known as m_conley
+[04:05] <smspillaz> does anyone understand the fine details of nux's implementation of thread local storage ?
+[04:06] <smspillaz> particularly in the context of the tests?
+=== m_conley is now known as m_conley_away
+[04:55] <smspillaz> argh
+[04:55] <smspillaz> hmm
+[04:55] <smspillaz> Trevinho: you around ?
+[04:56] <smspillaz> Trevinho: what's the view on GLib usage in nux? Am I allowed to use it or should I avoid it if possible?
+[05:54] <RAOF> smspillaz: Wait, nux has an implementation of thread local storage?
+[05:55] <pitti> Good morning
+[06:11] <gnomefreak> how one can help me but i would lik etofind out how to use the cube and wobbly windows befor i file a bug on it, please point me in the right direction
+[06:11] <pitti> gnomefreak: these are not officially supported, but if it's anywhere then in ccsm
+[06:12] <gnomefreak> pitti: i enabled them in ccsm yesterday
+[06:13] <gnomefreak> when i booted just now i got the compiz splash screen
+[06:13] <gnomefreak> thanks for the update
+[06:14] <smspillaz> RAOF: it has an abstraction, but I'm not worried about that right now
+[06:15] <RAOF> smspillaz: Oh, you're still in Perth, right? Want to catch up sometime?
+[06:15] <smspillaz> RAOF: now I'm looking at how to (sanely) inject some kind of GSource to poll on
+[06:15] <smspillaz> RAOF: sure, are you here ?
+[06:15] <RAOF> smspillaz: Indeed I am.
+[06:15] <smspillaz> awesome
+[06:15] <smspillaz> how long until ?
+[06:15] <RAOF> The 10th
+[06:15] <smspillaz> hmm okay
+[06:15] <smspillaz> should be around until then
+[06:16] <gnomefreak> .win 20
+[06:16] <RAOF> smspillaz: Can't you get a GSource to give you an fd?
+[06:16] <gnomefreak> damn'/win 20
+[06:16] <gnomefreak> hyhn
+[06:16] <RAOF> HEh.
+[06:16] <smspillaz> RAOF: well, I'm just thinking about the best way to poll on some fd, inside of a nux thread
+[06:16] <smspillaz> but I think I have an idea
+[06:18] <smspillaz> I love it how nux make check segfaults
+[06:18] <smspillaz> I'm fixing that before someone screams at me for trying to merge anything else
+[06:19] <RAOF> nux has an event loop, doesn't it? Can't you inject into that?
+[06:21] <smspillaz> I can
+[06:21] <smspillaz> RAOF: I'm just wondering how appropriate it would be to use GIOChannel with g_io_add_watch in something that's in Nux/Nux
+[06:21] <smspillaz> considering portability issues (eg, compiling without GLib main loop support on Fenetres)
+[06:21] <RAOF> Obviously you can't do that.
+[06:22] <smspillaz> RAOF: my sarcasm detector is broken
+[06:22] <RAOF> Then again, can you poll on an fd on Windows? I'd have thought you'd be using various Handles, and win32 isn't particularly posixy.
+[06:23] <smspillaz> RAOF: you can, but I can't block the event thread
+[06:23] <RAOF> You can't do a non-blocking select-y thing? Work out whether there's anything to read first, then read if so?
+[06:24] <smspillaz> RAOF: the point is to integrate it into the event loop, don't really want to have to rely on checking it every few ms
+[06:25] <smspillaz> (I wouldn't have to do this if the nux test framework used lots of threads for no apparant reason)
+[06:27] <RAOF> I'm not familiar enough with the nux event loop to know how it handles waking up, but it'd be useful if it could watch fds, wouldn't it.
+[06:27] <RAOF> :)
+[06:27] <smspillaz> it kinda does already
+[06:27] <smspillaz> (geis events and x events)
+[06:27] <smspillaz> but theres no way to say "watch this fd plz"
+[06:27] <smspillaz> can't be too hard to implement I guess
+[06:27] <RAOF> Yeah, it should have one of those.
+[06:27] <RAOF> All real event loops do :)
+[06:28] <smspillaz> well, it just delegates to glib
+[06:28] <smspillaz> which is making me wonder if the API even needs it, since I only need this for the tests
+[06:28] <smspillaz> ...
+[06:28] <smspillaz> I don't really think it needs it
+[06:30] <smspillaz> why is it that every time I try to fix a bug in Nux that's annoying me
+[06:30] <smspillaz> its always a gazillion times more complicated than I thought
+[06:33] <RAOF> Heh.
+[06:34] <RAOF> That's part of what you get with a cross-platform toolkity thing.
+[06:34] <smspillaz> No I think its just ....
+[06:34] <smspillaz> never mind I won't go there
+=== Quintasan_ is now known as Quintasan
+[07:34] <smspillaz> RAOF: the number of ifdefs in nux is too damn high
+[08:43] <desrt> seb128: good morning
+[08:43] <seb128> hey desktoper
+[08:43] <seb128> desrt, hey
+[08:43] <desrt> any word on if the fix took?
+[08:45] <seb128> desrt, no, your fpaste link had expired by the time I wanted to try it...
+[08:45] <seb128> desrt, if you can share again it would be good
+[08:45] <seb128> desrt, default expiration is one hour
+[08:46] <desrt> seb128: you can use a captcha...
+[08:46] <seb128> doh
+[08:46] <seb128> desrt, thanks ;-)
+[08:46] <seb128> trying the patch...
+[08:46] <seb128> (what a stupid ui)
+[08:47] <desrt> it's to prevent people using it as a platform for distributing malware
+[08:47] <desrt> much better than our system of forcing login, imho
+[08:48] <seb128> yeah, it's just that like most people I stopped at the <b>expired:</b> the page you are trying to view has expired
+[08:48] <seb128> users don't read :p
+[08:48] <seb128> I though the captcha/entry was somewhat part of the fpaste site ui
+[08:48] <desrt> pretty weak :)
+[08:49] <desrt> i'm just glad you didn't revert dconf meanwhile :)
+[08:58] <seb128> desrt, that fixes it \o/
+[08:58] <desrt> nice
+[08:58] <desrt> can you get a blame for me on who is responsible for the write that causes the crash?
+[08:58] <desrt> s/causes/caused/
+[08:58] <seb128> desrt, trying
+[08:59] <desrt> because this person is the cause of that other crasher too that was recently fixed
+[08:59] <desrt> turns out dconf-service is not very well-protected against receiving non-sense data from clients...
+[09:00] <seb128> desrt, if DCONF_BLAME is set, where is the debug output going? stdout?
+[09:00] <desrt> no.  you run 'dconf blame' commandline tool
+[09:01] <seb128> what am I looking for?
+[09:02] <desrt> well
+[09:02] <desrt> you said it fixes the problem
+[09:02] <desrt> what did you do?  test logging in?
+[09:02] <seb128> I've the blame log, just looking for the info
+[09:02] <desrt> paste it
+[09:02] <seb128> starting a guest session
+[09:02] <desrt> perfect
+[09:02] <desrt> just curious to know who is sending the change request with zero items
+[09:03] <desrt> could be a bug somewhere else still...
+[09:03] <seb128> Parameters: ()
+[09:03] <seb128> PID: 17024
+[09:03] <seb128> ah
+[09:03]  * desrt would upgrade to R but larsu says it's a bad time :)
+[09:03] <seb128> 17024 pts/3    Sl+    0:00  |               \_ dconf blame
+[09:03] <seb128> hum
+[09:03] <larsu> desrt, it's not that bad a time if you don't need wifi
+[09:03] <seb128> desrt, http://people.canonical.com/~seb128/dconf
+[09:04] <desrt> 16671 ?        Sl     0:00          \_ dconf load /org/compiz/profiles/Default/plugins/core/
+[09:04] <desrt> huh.
+[09:04] <desrt> ohhh!!!
+[09:04] <desrt> i bet that's empty
+[09:04] <seb128> iz compiz?
+[09:04] <desrt> since it's probably trying to migrate zero settings
+[09:04] <desrt> so it ends up trying to commit an empty set of changes
+[09:04] <desrt> i should make 'dconf load' check for empty keyfiles and do nothing
+[09:05] <larsu> seb128, morning!
+[09:05] <seb128> larsu, hey, how are you?
+[09:05] <desrt> since i go around advising people to use it in this way :)
+[09:05] <seb128> desrt, ;-)
+[09:05] <larsu> seb128, good, thanks. Everybody speaks a weird language here
+[09:05] <seb128> larsu, esperanto?
+[09:05] <desrt> seb128: it sounds like french, but they don't know how to count properly
+[09:05] <seb128> larsu, or you mean the people in the street?
+[09:05] <seb128> lol
+[09:06] <seb128> yeah, that's faked french, don't trust them :p
+[09:06] <desrt> like, they don't know that you talk about 99 like "4 20 10 9"
+[09:06] <desrt> idiots
+[09:06] <seb128> ;-)
+[09:06] <larsu> seb128, ha, no. Only one person speaks that here
+[09:07] <seb128> desrt, how did you figure it was 16671 from this log?
+[09:07] <seb128> desrt, the parameters from that call are non empty
+[09:08] <seb128> desrt, btw are you happy with the patch? eg should I upload it?
+[09:09] <desrt> yes. please do
+[09:09] <desrt> also... compiz... wow
+[09:09] <desrt> that's a lot of writes on login
+[09:09] <seb128> desrt, thanks again for taking time to work on that one
+[09:09] <seb128> talk to Didier when he's back next week :p
+[09:12] <popey> hmm.. updated my machine this morning... got a new xserver-xorg-core and now x won't start with nouveau or nvidia drivers
+[09:12] <seb128> popey, raring?
+[09:13] <popey> yes
+[09:13] <seb128> mlankhorst, ^
+[09:13] <seb128> tjaalton, ^
+[09:13] <popey> http://paste.ubuntu.com/1592607/  <- xorg.0.log
+[09:13] <desrt> seb128: larsu just confirmed on his R box that those writes are not on every login
+[09:13] <desrt> but 70 writes during first login is still very bad...
+[09:13] <seb128> desrt, right, I was going to say that the segfault is happening only with guest sessions for me, e.g new users
+[09:14] <seb128> desrt, I think the compiz profile stuff is hackish and it does write all the profiles keys on first start or something
+[09:14] <desrt> ya... i think so too :(
+[09:17] <mlankhorst> popey: looks fine? :S
+[09:21] <popey> http://paste.ubuntu.com/1592628/
+[09:21] <popey> [+0.33s] DEBUG: Failed to start greeter
+[09:24] <seb128> popey, where did you get the Xorg log? you probably want the one in /var/log/lightdm if that's lightdm which fails to start
+[09:24] <popey> ah
+[09:24] <seb128> popey, does it work if you sudo stop lightdm and startx?
+[09:24] <popey> didn't realise there was a separate xorg.log, sorry
+[09:25] <popey> alan@wopr:/var/log/lightdm$ sudo cat x-0-greeter.log
+[09:25] <popey> /usr/sbin/unity-greeter: symbol lookup error: /usr/lib/x86_64-linux-gnu/libgdk-3.so.0: undefined symbol: wl_registry_interface
+[09:26] <popey> that more likely it?
+[09:26] <popey> http://paste.ubuntu.com/1592635/ is /var/log/x-0-greeter.log
+[09:27] <popey> http://paste.ubuntu.com/1592637/ is /var/log/x-0.log
+[09:27] <seb128> popey, using a crack ppa?
+[09:27] <popey> heh, didn't think so..
+[09:27] <seb128> popey, what version of libwayland0 do you have?
+[09:28] <seb128> I saw a bug report yesterday from somebody who had a 1.0.5git
+[09:28] <seb128> dunno where it's coming from, but it seems to break abi and break gtk (since it's built with wayland)
+[09:28] <popey> bah!
+[09:28] <popey> http://ppa.launchpad.net/canonical-qt5-edgers/qt5-beta1/ubuntu/
+[09:28]  * popey pokes Mirv 
+[09:28] <popey> good spot, thanks seb128
+[09:28] <seb128> popey, yw
+[09:29] <seb128> I don't like much that gtk on X breaks when libwayland abi changes though
+[09:29] <seb128> Laney, ^
+[09:29] <Laney> hmm?
+[09:29] <Mirv> popey: bzoltan still handles beta1, although I can help if I know what should be fixed. I know he was trying wayland related builds there yesterday
+[09:29] <Laney> what do you want? the SONAME should be bumped and gtk rebuilt if the ABI breaks
+[09:29] <seb128> Laney, just as fyi, that might make me revert the wayland backend
+[09:29] <Laney> doesn't seem like gtk's fault
+[09:30] <seb128> Laney, well, I just don't like the idea that gtk-X breaks when there is a problem in the wayland backend
+[09:30] <seb128> I would assume that wayland issues only impact people running that backend
+[09:32] <seb128> Laney, bug yeah, you have a point, the bottom of the issue is wayland breaking abi without soname change
+[09:32] <RAOF> Has anyone hooked up sbuild to autopkgtest so that builds automatically do a test run?
+[09:35] <xnox> RAOF: no but there is lp:auto-package-testing which has scripts to setup testbed (cloud image) and run adt tests against package/branch/ppa in kvm using that cloud image.
+[09:37] <RAOF> xnox: Hrm. Not quite what I was after, but I guess it'll have to do :)
+[09:45] <TuxMux> hello everyone
+[09:48] <xnox> RAOF: that's what jenkins uses itself. So it's a more matching environment.
+[09:49] <TuxMux> lol
+=== vrruiz_ is now known as rvr_
+[11:20] <pitti> seb128: bug 160311 -- didn't we use to have a GTK3 change/patch/upstream feature to add a resize handle on the bottom right corner? that seems gone now
+[11:20] <ubot2> Launchpad bug 160311 in metacity "Resizing windows by grabbing window borders is difficult" [Low,In progress] https://launchpad.net/bugs/160311
+[11:21] <seb128> pitti, that's a GTK3 upstream feature
+[11:21] <seb128> we used to distro patch gtk2 to provide it as well
+[11:21] <pitti> but it seems gone now?
+[11:21] <seb128> I think it's activable from the theme
+[11:21] <seb128> it's a theme option
+[11:21] <seb128> it's off by default
+[11:21] <pitti> ah, that's why light-themes has a task there
+[11:21] <seb128> since gnome-shell/compiz both have invisible borders
+[11:22] <seb128> invisible borders = an extra area you can grab
+[11:22] <pitti> there was a recent flurry of comments on that
+[11:22] <seb128> that fixes the bug without needing an extra ui element
+[11:22] <pitti> ack
+[11:23] <seb128> well, not a lot we can do, users can tweak their theme...
+[11:26] <seb128> pitti, http://git.gnome.org/browse/gnome-themes-standard/commit/?id=23c3146ddafe731366212b39d051fef121b29c8a
+[11:26] <seb128> pitti, I guess it's a matter of changing those 2 parameters to !0
+[11:26] <pitti> ah, that's the visible corner?
+[11:26] <pitti> thanks
+[11:26] <seb128> yw
+=== jhernand1z is now known as jhernandez
+=== amithkk_ is now known as amithkk
+=== amithkk is now known as Guest8601
+[12:44] <ricotz> cyphermox, hello :)
+[12:46] <ricotz> cyphermox, could you update network-manager and network-manager-applet to 0.9.7.995? and a look at them and nm is pretty straight forward, but nm-applet needs quite some patches refreshed
+=== MacSlow is now known as MacSlow|lunch
+[13:55] <GunnarHj> seb128: Hi Sebastien, do you have a minute?
+=== bdrung_ is now known as bdrung
+[14:01] <ritz> seb128 , hi https://bugs.launchpad.net/ubuntu/+source/unity/+bug/806248
+[14:01] <ubot2> Ubuntu bug 806248 in unity (Ubuntu Precise) "unity::TimeUtil::TimeDelta returns an int value which overflows after 24 days of uptime" [High,In progress]
+[14:01] <ritz> whom do I talk to about this
+[14:02] <seb128> ritz, #ubuntu-unity, sil2100  Mirv popey
+[14:02] <ritz> seb128++ thank you :)
+[14:02] <seb128> yw!
+[14:05] <ritz> seb128 busy ?
+[14:06] <seb128> ritz, yeah, there is always something to do here :p but I can reply to questions
+[14:06] <ritz> seb128 how long before you log-off ?
+[14:06] <seb128> 4.5 hours at least
+[14:06] <ritz> seb128 wrt https://bugs.launchpad.net/ubuntu/+source/gnome-settings-daemon/+bug/1065979
+[14:06] <ubot2> Ubuntu bug 1065979 in gnome-settings-daemon (Ubuntu) "external/internal monitors mirrored on boot when laptop lid is closed" [Wishlist,Confirmed]
+[14:19] <chrisccoulson> hi jibel
+[14:20] <chrisccoulson> will jenkins be happy with http://people.canonical.com/~chrisccoulson/reftest.xml?
+[14:20] <chrisccoulson> it does validate against https://svn.jenkins-ci.org/trunk/hudson/dtkit/dtkit-format/dtkit-junit-model/src/main/resources/com/thalesgroup/dtkit/junit/model/xsd/junit-4.xsd ok
+[14:23] <jibel> chrisccoulson, excellent. I'll update the jobs to collect and publish these result files. You can generate more than one, e.g one per testsuite, if you wish.
+[14:24] <chrisccoulson> jibel, cool, thanks. i've still got to implement this for one other test-suite, but it shouldn't be too difficult now
+[14:41] <cyphermox> ricotz: yeah, I'll try to get to it today, just need to finish some work on bluetooth first
+[14:43] <ricotz> cyphermox, thanks
+=== m_conley_away is now known as m_conley
+[14:48] <ritz> seb128 hi, pm. thanks
+=== MacSlow|lunch is now known as MacSlow
+[15:41] <xnox> strange but system-service-d is not running on my nexus right now.
+[15:41] <xnox> what do i need to use to dbus activate it?
+[15:44] <Laney> xnox: one way is to open the details panel in g-c-c
+[15:45] <mterry> desrt, got a sec to talk about a crash in dconf-service that I'm seeing on our unity jenkins autolander service?
+[15:46] <Laney> mterry: got https://launchpad.net/ubuntu/+source/d-conf/0.15.2-0ubuntu5 ?
+[15:47]  * mterry confirms
+[15:47] <mterry> I mean, I'm checking
+[15:48] <mterry> Laney, nope...  that may be the bug.  Thanks!
+[15:48] <xnox> Laney: thanks
+[15:55] <seb128> xnox, that service is supposed to go away, don't spend too much time trying to optimize/fix it ;-)
+[15:56] <desrt> mterry: sure
+[15:56] <xnox> seb128: i know =) i'm tinkering to see if python -O or pypy make any difference, my current lab rats are the currently python idle processes.
+[15:56] <desrt> mterry: ah.  cool.
+[15:56] <xnox> seb128: i know they are going away, but some other pieces of python code will not.
+[15:57] <seb128> xnox, right, python optimization is good in any case
+[15:57] <xnox> seb128: but idle is nice to measure as I don't have to launch anything explicit =)
+[15:58] <seb128> right
+[15:58] <seb128> well, u1 and oneconf at least are python as well
+[16:37] <GunnarHj> seb128: ping
+[16:38] <seb128> GunnarHj, hey, sorry I saw your ping earlier but I was a bit busy and forgot about it ... better to just ask your question usually ;-)
+[16:39] <GunnarHj> seb128: Ok, here it is (not a question, really, but anyway...)
+[16:39] <GunnarHj> seb128: Some locale settings migration code in accountsservice.postinst 'disappeared' in the beginning of the Quantal cycle, probably by mistake.
+[16:39] <GunnarHj> http://people.ubuntu.com/~gunnarhj/accountsservice-discontinuity/accountsservice-discontinuity.diff
+[16:39] <GunnarHj> Not good. :( I'm not sure if it should be reinserted - pitti may have an idea.
+[16:40] <seb128> GunnarHj, I probably dropped it, why is it still needed?
+[16:40] <seb128> we don't support upgrades from < precise
+[16:40] <seb128> and users on precise should already have migrated
+[16:40] <seb128> the logic was: anyone upgrading to precise will have the migration done
+[16:41] <seb128> the only users upgrades from quantal (in a supported way) are precise user
+[16:41] <seb128> so migration shouldn't be needed on quantal
+[16:41] <seb128> it's usual practice to keep migration code until the next LTS and then drop it
+[16:41] <GunnarHj> seb128: Well, I guess it would only be useful for upgrades from pre Precice.
+[16:41] <seb128> that's not supported
+[16:41] <seb128> the only upgrade path supported is to upgrade to precise
+[16:41] <seb128> then to quantal
+[16:41] <GunnarHj> seb128: Ok, I see. Then it's not a problem.
+[16:41] <seb128> good ;)
+[16:42] <GunnarHj> Tnx.
+[16:42] <seb128> GunnarHj, thank you for asking, better to check when unsure ;-)
+=== tkamppeter_ is now known as tkamppeter
+=== ogra_ is now known as ogra
+[17:38] <seb128> mterry, do you know offhand if unity-greeter renders its background image/wallpaper or if it uses g-s-d for that?
+[17:38] <mterry> seb128, it renders it
+[17:38] <mterry> speaking of, I should upload a patch for the g-s-d thing, now that it's upstream
+[17:38] <seb128> ok, so we could probably desactivate the g-s-d background plugin by default
+[17:38] <seb128> it does nothing but checking out if nautilus is running and bailing out on the desktop
+[17:39] <seb128> mterry, g-s-d thing?
+[17:39] <seb128> mterry, you mean the spawning?
+[17:39] <mterry> seb128, the dbus-activation vs spawning it
+[17:39] <seb128> mterry, yeah, that would be great, that should fix screen rotation on the greeter ;-)
+[17:43] <bcurtiswx> is there still plans for the unity-webapps so that there does not need to be a browser icon AND webapp icons?
+[17:44] <sarnold> (I thought the webapp icon was 1/3 of the selling points?)
+[17:44] <bcurtiswx> if i only have gmail and twitter open, why would i need my firefox to say it's open ?
+[17:44] <bcurtiswx> thats what the twitter and gmail webapp icons are for
+[17:46] <sarnold> ah, I see :) my firefox never has fewer than 20-ish tabs..
+[17:46] <bcurtiswx> sarnold, you part of that team ?
+[17:47] <sarnold> bcurtiswx: no
+[17:47] <bcurtiswx> who's the head of that team ?
+[17:57] <seb128> bcurtiswx, yes, there are plans to make webapps proper apps
+[17:57] <seb128> e.g be in chromeless ui rather and not match the browser
+[17:57] <seb128> that was the plan last cycle already, just ETOOMUCHTODO
+[17:58] <bcurtiswx> seb128, we got a break from gnome 3.8 so what's taking up all your time? :P
+[17:58] <seb128> bcurtiswx, https://blueprints.launchpad.net/ubuntu/+spec/desktop-r-arm-reduce-footprint ;-)
+[17:58] <bcurtiswx> the phone push 'eh
+[17:58] <seb128> bcurtiswx, and https://blueprints.launchpad.net/ubuntu/+spec/desktop-r-reduced-power-ram
+[17:59] <seb128> bcurtiswx, well, making Ubuntu fit for mobile form factors yes, but improved performances benefit desktop and laptop users as well ;-)
+[18:00] <bcurtiswx> wait, people use desktops still? haha.  I don't have the time to fix, only complain. so I'm still going to contribute any way i can :D
+[18:00] <seb128> ;-)
+[18:01] <bcurtiswx> now if anyone has a tool to write my dissertation for me, i'd totally have more time to spend fixing
+[18:02] <seb128> bcurtiswx, google, copy, paste? :p
+[18:02] <bcurtiswx> haha, i WISH. oh well.. back to typing.
+[18:02]  * bcurtiswx waves bye
+=== gatox_ is now known as gatox
+[18:31] <qengho> (No editor installed? cp and sed will do.)
+[18:32] <sarnold> not brave enough sed -i? :)
+[18:32] <qengho> sarnold: not that brave.
+[18:42] <cyphermox> qengho: sed -i you can backup before changes -- sed -i.bak 's/whatever/whateverelse/'
+[18:47] <qengho> yep.
+[18:51] <chrisccoulson> does the number of workspaces in compiz keep resetting back to the default for anybody else?
+[18:51] <chrisccoulson> i always set mine to 6, but every couple of days i notice it has reset back to 4 again
+[19:00] <qengho> chrisccoulson: I see that a lot.
+[19:00] <chrisccoulson> qengho, ah, i'm glad it's not just me :)
+[19:00] <chrisccoulson> tis a bit annoying though
+[19:01] <qengho> chrisccoulson: it'd be better if it were just you.  :(  Let's talk to #ubuntu-unity
+[19:07] <qengho> chrisccoulson: I'm asking.
+[19:09] <chrisccoulson> thanks
+=== wendar is now known as allisonrandal
+[19:14] <chrisccoulson> ok, i think i'm going to have to restart. my session seems really broken (windows not appearing, randomly not painting) :/
+=== AlanChicken is now known as alanbell
+=== alanbell is now known as AlanBell
+[20:31] <mterry> mpt, the automount behavior that Ubuntu has now; do you like it?  (in the context of upstream dropping the automount tool we use now in favor of embedding it in GNOME Shell; we need to figure our plan of action)
+[20:32] <mterry> mpt, specifically, it automounts usb sticks and acts on the preferences in System Settings -> Details -> Removable Media, as far as I can tell
+[20:33] <mterry> seb128, ^ has this been discussed before?
+[20:33] <mterry> seb128, I ask because the mount helper is taking 2.1M PSS space on the nexus6
+[20:33] <mterry> 7 even
+[20:34] <seb128> mterry, I don't think the UI/interaction got revisited/discussed
+[20:34] <seb128> mterry, we have a workitem to merge that helper in unity though
+[20:35] <mterry> seb128, ooh, we do.  OK
+[20:37] <seb128> mterry, https://blueprints.launchpad.net/ubuntu/+spec/desktop-r-gnome-fallback
+[20:37] <seb128> mterry, the WIs are on this spec
+=== m_conley is now known as m_conley_away
+[23:50] <robert_ancell_> mterry, ping
+[23:50] <mterry> robert_ancell, hi
+[23:51] <mterry> robert_ancell_, hi
+[23:51] <robert_ancell_> mterry, do you know what commit to u-g made the message box expand when large messages come from PAM?
+[23:51] <robert_ancell_> i.e. the change that makes the "Multi Info Prompt" user work in u-g --test-mode
+[23:51] <mterry> robert_ancell_, I believe that was during quantal, as part of some refactoring work from the remote server support
+[23:52] <robert_ancell_> yeah I thought so
+[23:52] <mterry> robert_ancell_, don't know exact commit
+[23:52] <robert_ancell_> any idea how hard it would be to backport to precise?
+[23:52] <mterry> robert_ancell_, but that made box handling much more dynamic
+[23:52] <mterry> robert_ancell_, difficult I'd guess
+[23:53] <robert_ancell_> :(

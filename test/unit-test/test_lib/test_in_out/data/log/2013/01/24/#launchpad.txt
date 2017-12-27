@@ -1,0 +1,101 @@
+=== slank is now known as slank_away
+[08:17] <lifeless> how do you disable gnome-keyring integration for launchpadlib ?
+[08:23] <wgrant> lifeless: keyringrc.cfg
+[08:24] <lifeless> ~/. ?
+[08:24] <wgrant> Surely you jest
+[08:24] <wgrant> python-keyring uses ~/keyringrc.cfg :)
+[08:24] <lifeless> wgrant: WAAAAAT?
+[08:24] <wgrant> ./keyring/core.py:    keyring_cfg_list = [os.path.join(os.getcwd(), "keyringrc.cfg"),
+[08:24] <wgrant> ./keyring/core.py:                        os.path.join(os.path.expanduser("~"), "keyringrc.cfg")]
+[08:24] <wgrant> But yes, wat :/
+[08:25] <czajkowski> aloha
+[08:25] <wgrant> That's also a reasonable attack vector.
+[08:26] <lifeless> wgrant: I'm too tired to see why
+[08:26] <lifeless> wgrant: what should be in that file ?
+[08:27] <wgrant> lifeless: Same reason PATH doesn't include .
+[08:27] <wgrant> lifeless: Um, stuff
+[08:27] <wgrant> Google should know
+[08:29] <lifeless> wgrant: oh, it looks in . as well, didn't read the pasted code that closely.
+[08:29] <lifeless> sigh.
+[08:29] <lifeless> yeah, thats poor form
+[08:29] <wgrant> :D
+[08:37] <lifeless> wgrant: failed...
+[08:37] <lifeless> wgrant: dbus.exceptions.DBusException: org.freedesktop.Secret.Error.IsLocked: Cannot create an item in a locked collection
+[08:37] <lifeless> wgrant: after I set keyringrc.cfg to contain
+[08:37] <lifeless> oh WOW
+[08:38] <lifeless> something deleted ~/keyringrc.fg
+[08:38] <lifeless> *.cfg*
+[08:38] <lifeless> after I made it
+[08:38]  * lifeless makes noise like a teapot
+[08:38] <wgrant> Heh
+[08:39] <lifeless> [backend]
+[08:39] <lifeless> default-keyring=simplekeyring.SimpleKeyring
+[08:39] <lifeless> keyring-path=/home/robertc/.cache/keyring/
+[08:39] <lifeless> is what I put in it
+[08:40] <lifeless> wgrant: apparently:
+[08:40] <lifeless> Password file found in legacy location
+[08:40] <lifeless>   /home/robertc/keyringrc.cfg
+[08:40] <lifeless> and new location
+[08:40] <lifeless>   /home/robertc/.local/share/python_keyring/keyringrc.cfg
+[08:40] <wgrant> Ahh
+[08:40] <wgrant> So it's less dreadful now?
+[08:41] <lifeless> if you call moving a file around on  your file system less dreadfaul
+[08:41] <lifeless> Woe to folk that run a shared homedir, for instance.
+[08:41] <wgrant> Sure, but its heart is in the right place.
+[08:42] <tsimpson> it checks cwd and $XDG_DATA_HOME, then falls back to ~/.local/share/python_keyring
+[08:42] <czajkowski> random non lp question, any idea why a usb stick will not show up, but if I plug in external Hd via usb it does
+[08:43] <lifeless> anyhow
+[08:43] <lifeless> its *still* trying dbus
+[08:43] <lifeless> so I can't run any LP automation
+[08:43] <lifeless> czajkowski: anything in dmesg ?
+=== yofel_ is now known as yofel
+[08:44] <lifeless> wgrant: File "/usr/lib/python2.7/dist-packages/launchpadlib/credentials.py", line 253, in save
+[08:44] <lifeless>     raise e
+[08:44] <lifeless> wgrant: trivial bug there you might want to fix
+[08:44] <wgrant> why would anyone do that
+[08:44] <wgrant> :/
+[08:44] <czajkowski> lifeless: nope will go do another reboot
+[08:44] <czajkowski> cheers
+[08:44] <lifeless> wgrant: because seeing the original exception is confusing to people ?
+[08:44] <wgrant> lifeless: :D
+[08:45] <lifeless> so now I can see that its still using the gnome backend
+[08:46] <lifeless> and the docs on the library are pretty much useless for end users
+[08:46] <lifeless> as they cover the case of writing your ownbackend, not using the thing.
+[08:46] <lifeless> tsimpson: sorry if I'm ranting, but core facilities like this need to be held to a higher standard
+[08:48] <lifeless> and yay, I'm in
+[08:48] <lifeless> I will write this up as a (positive) blog post.
+[08:49] <tsimpson> lifeless: I didn't write it, rant all you want ;)
+[08:50] <lifeless> tsimpson: cheers ;)
+[08:50] <lifeless> and now yay testtools-0.9.27 released
+[08:54] <czajkowski> one for StevenK or  wgrant https://answers.launchpad.net/launchpad/+question/219617
+=== Sweetsha1k is now known as Sweetshark
+[09:30] <lifeless> wgrant: for future ref http://rbtcollins.wordpress.com/2013/01/24/launchpadlib-without-gnome-keyring/
+=== matsubara-afk is now known as matsubara
+=== Ursinha-afk is now known as Ursinha
+=== Ursinha-afk is now known as Ursinha
+=== slank_away is now known as slank
+=== matsubara is now known as matsubara-lunch
+=== matsubara-lunch is now known as matsubara
+=== benji___ is now known as benji
+[17:52] <cmars232> i wrote a script that will set all the "Fix Committed" bugs to "Fix Released" for a milestone. maybe someone will find it useful? http://paste.ubuntu.com/1566712/
+[17:58] <lifeless> cmars232: there may be a version in lptools already, if not thats where it should go
+[18:17] <cmars232> lifeless: good call. I've opened LP: #1104299 to see how the project devs would want it done.
+[18:17] <ubot5> Launchpad bug 1104299 in lptools "lp-milestone release does not update "Fix Committed" to "Fix Released"" [Undecided,New] https://launchpad.net/bugs/1104299
+[18:43] <jtaylor> can you temporarily take away but report rights from the procstef user? he is filing hundreds of duplicates because his perl failed during upgrade
+[18:44] <jtaylor> started yesterday continues now even though we duplicated all his yesterday bugs..
+[18:44] <jtaylor> bug 1103111
+[18:44] <ubot5> bug 1103111 in update-manager (Ubuntu) "Upgrade failure" [Undecided,New] https://launchpad.net/bugs/1103111
+[18:58] <dobey> jtaylor: has anyone e-mailed him and told him to stop?
+[18:58] <jtaylor> he should get mails due the duplications
+[18:58] <jtaylor> though those may go into his spam by now
+[18:59] <dobey> though, why would someone bother doing all that work to file the same bug so many times
+[19:00] <dobey> must be a masochist, or really likes the launchpad bug filing UX
+[19:00] <dobey> :)
+[19:00] <lifeless> they are probably trying very hard to behelpful
+=== matsubara is now known as matsubara-afk
+=== slank is now known as slank_away
+=== slank_away is now known as slank
+=== \n_ is now known as \n
+=== zequence_ is now known as zequence
+=== zequence_ is now known as zequence
+[23:37] <alesage> hi, staging launchpad has been updating for a while--authentically updating or needing a nudge?

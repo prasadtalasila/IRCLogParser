@@ -1,0 +1,101 @@
+[01:46] <Baribal> Hi. IS there a way to set up an already installed machine as a node without having to reinstall?
+[01:48] <Baribal> Also, is it possible to use a machine both as region-controller and a node? 'Cause, why waste a good machine? (Especially if you only have one...)
+[02:10] <bigjools> Baribal: no that's not possible
+[02:10] <bigjools> you can share a machine for region and cluster controller though
+[02:10] <jtv> Small consolation, perhaps.  :)
+[02:11] <bigjools> well it's a bit chicken and egg isn't it :)
+[02:15] <Baribal> Depends on what MAAS does exactly... But are you considering to lift that limitation?
+[02:15] <Baribal> Also, what about making an already installed machine a node?
+[02:16] <jtv> As far as I know, that's not under consideration, no.
+[02:16] <bigjools> it's not a limitation that we have any control over
+[02:17] <bigjools> you have to provision nodes before you can use them - that's what maas does
+[02:18] <Baribal> How about running a VM on the host which is used as a node?
+[02:19] <jtv> You mean use the VM as a node?
+[02:19] <lifeless> you can do that, but its not a MAAS task to provision VMs
+[02:21] <bigjools> also tools such as juju assume exclusive access
+[02:21] <Baribal> Inhowfar exclusive?
+[02:22] <jtv> It's assumed that the entire install is basically disposable.
+[02:23] <jtv> When you allocate a machine through juju, it normaly assumes that that machine is only used for the application that juju puts on it.
+[02:27] <Baribal> Just for clarity: That'd be the units juju deploys?
+[02:28] <jtv> Yes...  I guess a unit is both an instance of an application on the one hand, and an entire machine on the other.
+[02:29] <Baribal> Wait, so per machine, only one unit gets deployed?
+[02:31] <bigjools> normally yes, but you can override that
+[02:31] <bigjools> but the point I am making is that this is one application that assumes that it has total control of nodes
+[02:33] <Baribal> Okay... How do I override it? 'Cause all I have to run MAAS on is two 8right now one :( ) VM.
+[02:33] <bigjools> are you using juju?
+[02:34] <Baribal> Yes.
+[02:36] <bigjools> I can't remember the config offhand
+[02:36] <bigjools> let me see if I can find it
+[02:36] <bigjools> unless jtv remembers
+[02:36] <jtv> Don't even know what config you're referring to...  doesn't juju also need a bootstrap node?
+[02:37] <bigjools> yes but you can make juju dispatch charms to the bootstrap node
+[02:40] <jtv> Ah!  Don't know the config for that then.
+[02:41] <bigjools> Baribal: in the maas section in environments.yaml, add this:
+[02:41] <bigjools> placement: local
+[02:41] <bigjools> and charms get dispatched to the bootstrap node
+[02:42] <Baribal> Not exactly what I'd prefer, but definitely what I need right now. Thanks. :)
+[02:43] <Baribal> So... Is installation time the only one I can make a machine a prospective MAAS-node?
+[02:44] <bigjools> yes, maas is designed to provision bare metal from scratch
+[02:44] <jtv> That's what it amounts to...  You make it a node first, and installation follows.
+[02:44] <Baribal> Okay... Too bad, I have no control over the machine at installation time.
+[02:44] <bigjools> maas is responsible for installing the OS that the API client requests
+[02:45] <Baribal> So I guess I'm back to using Openstack for the moment.
+[02:45] <bigjools> yeah you don't want MAAS then
+[02:45] <bigjools> maas can do VMs but it's more of a testing feature
+[02:46] <jtv> No creation or destruction — you create them and then basically have maas believe that they're physical machines.
+[02:46] <Baribal> I'll try again when I'm building my cluster... But if I understand correctly, my choices are to deploy all units to the bootstrap node or I need one machine per unit? Not quite what I expected.
+[02:47] <bigjools> there may be more to it, but you should ask on the juju channel about that
+[02:47] <Baribal> Will do.
+[02:47] <bigjools> I believe there's a plan
+[02:48] <Baribal> "Going away and buggering the OpenStack people"? :)
+[02:50] <jtv> "bugging"
+[02:50] <jtv> Because "buggering" means something completely different.  :)
+[02:51] <bigjools> well, maybe they ...
+[02:51] <Baribal> Oops...
+[02:51]  * jtv laughs
+[02:59] <lifeless> Baribal: being one of those openstack people...
+[03:00] <lifeless> Baribal: I'd rather you nag us than bugger us.
+[03:00] <Baribal> Don't worry, I'm great at nagging. :)
+[03:01] <Baribal> But, right now, I'll go sleep, I think. I've tried the whole day to get my cloud running...
+[03:03] <Baribal> lifeless, just one quick question: Is Essex still the current OpenStack release?
+[03:03] <Baribal> 'Cause I'm hunting for setup tutorials.
+[03:05] <lifeless> folsom
+[03:05] <lifeless> grizzly coming up
+[03:07] <Baribal> Thanks; so http://docs.openstack.org/folsom/basic-install/content/ is probably what I'll want to read. Except if there's a good shortcut?
+[03:12] <lifeless> no shortcuts :)
+[03:12] <lifeless> not if you want to understand what you're turning on
+[03:14] <Baribal> I do, but not right now.
+[03:18] <lifeless> well for that case you can just install the openstack packages on both nodes
+[03:19] <lifeless> one controller + compute, one compute
+[03:19] <lifeless> I recommend reading a bit though, its useful to know
+[03:19] <lifeless> ...
+=== jtv1 is now known as jtv
+[15:16] <bitwiz> has this question been resolved? https://answers.launchpad.net/ubuntu/+source/ubiquity/+question/207347 I am having the same results on my new install of 12.10 maas
+=== matsubara is now known as matsubara-lunch
+=== matsubara-lunch is now known as matsubara
+[18:29] <roaksoax> allenap: around by any chance?
+[20:17] <roaksoax> matsubara: around?
+[20:40] <matsubara> roaksoax, yes
+[20:40] <roaksoax> matsubara: had a question for you which you miht be able to help me with
+[20:41] <matsubara> shoot
+[20:41] <roaksoax> matsubara: in a multinode maas cluster, who holds the pxe images, the region or the cluster?
+[20:41] <roaksoax> s/holds/stores
+[20:42] <matsubara> I think the region is the first one to get but then when the cluster requests the images from the region, it then stores them itself
+[20:43] <roaksoax> matsubara: ack! thanks for the info
+[20:43] <matsubara> this is my understanding of it, not sure if it changed since the EOY break. didn't touch the cluster controller stuff
+[20:43] <matsubara> I'll know for sure next week when I resume working on the jenkins job to test the cluster controller
+[20:46] <roaksoax> cool
+[20:46] <roaksoax> thanks for the info though
+[20:47] <matsubara> np
+=== matsubara is now known as matsubara-afk
+=== cmagina is now known as cmagina_away
+=== cmagina_away is now known as cmagina
+=== cmagina is now known as cmagina_away
+=== cmagina_away is now known as cmagina
+=== cmagina is now known as cmagina_away
+[22:06] <dpb_> Hi -- if a node is claimed by a user or allocated.  How do I release it, forcefully is fine.
+=== cmagina_away is now known as cmagina
+[22:22] <dpb_> nm, figured it out   maas cli -- node release
+=== cmagina is now known as cmagina_away
+=== cmagina_away is now known as cmagina
+=== cmagina is now known as cmagina_away

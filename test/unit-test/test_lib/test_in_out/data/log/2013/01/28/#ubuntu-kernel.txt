@@ -1,0 +1,176 @@
+=== a16g_ is now known as ypwong
+[08:46] <ppisati> moin
+[08:46] <smb> morning
+[09:37] <ashwini> is there any link to know how to use kgdb over ethernet with kernel 3.x ??
+=== yofel_ is now known as yofel
+[09:53] <apw> zequence, no that is fine for now, but for next time yes
+=== henrix_` is now known as henrix
+[10:53] <ppisati> brb
+[10:54] <hrw> hi
+[10:55] <hrw> is https://help.ubuntu.com/community/Kernel/Compile still the only source of 'how to adapt ubuntu kernel to your needs'?
+[11:05] <smb> hrw, There would also be https://wiki.ubuntu.com/Kernel/BuildYourOwnKernel. Though it just might be 'different' and not add much more... not sure
+[11:06] <henrix> ogasawara: do you know who could verify bug #1103320?
+[11:06] <hrw> anyway 'debian/rules editconfigs' just kill my whole config anyway
+[11:06] <ubot2> Launchpad bug 1103320 in linux (Ubuntu Quantal) "Ubuntu 13.04 and 12.04.2: Login screen does not appear after installing OS on SL4545 G7" [Medium,Fix committed] https://launchpad.net/bugs/1103320
+[11:07] <smb> hrw, not sure I understand. It will run menuconfig with presets taken from the current flavour configs and saves them there...
+[11:09] <hrw> smb: before: 75624 config.flavour.chromebook after: 93 bytes of comments only
+[11:11] <smb> hrw, If the setting will not affect other flavours or is commonly used, things may get moved to one of the higher level config files (even config.common.ubuntu)
+[11:13] <hrw> smb: in other way: if just one kernel is built from tree then flavour file is just placeholder and all is moved to common/
+[11:13] <hrw> time to kill enforce checks 
+[11:15] <ogra_> that means you will miss ubuntu options the userspace needs 
+[11:15] <ogra_> well ... you risk to miss them at least
+[11:16] <smb> hrw, If that flavor actually has nothing from either the architecture or common configuration I would say yes. apw <-- ^ ?
+[11:16] <hrw> smb: it is chromebook kernel which I am trying to update
+[11:16] <smb> hrw, And as ogra_ said those checks are there for a reason. 
+[11:17] <hrw> sure, I know that
+[11:17] <apw> hrw,smb, right if you have one flavour the then all of the settings are common and move up
+[11:18] <apw> you can confirm the config is the same however by 'debian/rules genconfigs' and looking at CONFIGS/<name>
+[11:19] <hrw> CONFIG_USB_DEVICEFS is listed as deprecated. ubuntu still requires that?
+[11:20] <apw> seems to no longer exist in raring at least
+[11:20] <apw> if that is an accurate spelling
+[11:21] <hrw> I have 3.4 kernel
+[11:21] <apw> debian.master/config/enforce:value CONFIG_USB_DEVICEFS n
+[11:21] <apw> and we insist it is off, not on ?
+[11:21] <hrw> ahm right
+[11:22] <hrw> ogra_: can CONFIG_GPIO_TWL4030 land in omap kernels only (enforcement)?
+[11:22] <ogra_> not sure how configs vs. dtb will work but sure
+[11:26]  * ppisati goes out for lunch
+[11:27] <hrw> few more enforces to kill and kernel should get to state where I can try to build
+[11:31] <hrw> check-config: 41/41 checks passed -- exit 0
+[11:31] <hrw> uf.
+[11:33] <hrw> there were few other things which I would love to kill but no time
+[11:34] <hrw> thanks guys
+[12:52]  * cking going offline, electrical supplier is doing meter upgrade soon
+[13:40] <ogasawara> henrix: i'll ping narinder to verify 1103320.  he not online yet, but will be in a few hrs.
+[13:40] <henrix> ogasawara: great, thanks
+=== chiluk_away is now known as chiluk
+=== henrix is now known as henrix_
+=== henrix_ is now known as henrix
+[14:57]  * henrix -> reboot
+=== henrix is now known as henrix_
+=== henrix_ is now known as henrix
+=== ia_ is now known as hallyn
+[15:39]  * ogasawara back in 20
+[15:48] <infinity> apw: I can haz meta-lowlatency to match the kernels?
+[16:00] <apw> infinity, yeah i am doing them right now
+[17:02]  * ppisati -> gym
+[17:02] <ogasawara> infinity: random question re: the clean old kernels stuff, I thought you'd completed that work?
+[17:04] <infinity> ogasawara: It's mostly complete in raring, except for some "polish" work items.
+[17:04] <infinity> ogasawara: We haven't backported it to precise, which was also a goal.
+[17:05] <ogasawara> infinity: ack, thanks.  I had a random work item to check up on it's status.
+[17:06] <infinity> ogasawara: Oh, right, I saw that WI in passing. :)
+[17:06] <infinity> ogasawara: I think you'd checked.  DONEify it.
+[17:10] <apw> infinity, in better news it even seems to work for me :)
+[17:36] <infinity> bjf: Want to do a manual shankbot run for me to see if it wants to update the lowlatency tracking bugs?  I'm trying to sort out of Andy bollocksed them again, or if I'm just impatient. :)
+[17:37] <bjf> infinity, ack
+[17:42] <infinity> bjf: Oh, I see.  It takes two iterations. :/
+[17:42] <infinity> bjf: First one sets upload-to-ppa as Fix Release, second sets the promote-to-proposed task to Confirmed.  Weird.  Why the artificial delay?
+[17:43] <bjf> infinity, just the way it's coded
+[17:43] <infinity> bjf: (And one more run to fix that, please? :P)
+[17:43] <bjf> infinity, i'm runing it multiple times
+[17:43] <bjf> infinity, it doesn't loop on one bug/task until there is nothing to do
+[17:43] <infinity> Ahh, so you are.  It caught up to where I wanted it now. :)
+[17:44] <infinity> Cheers.
+[17:44] <bjf> infinity, i'm giving it one more for good measure
+[17:45] <ogasawara> apw: refresh my memory, you'd written a script we'd run after we rebase that would insert any BugLinks fixed in the latest rebase into our changelog
+[17:45] <ogasawara> apw: I can't remember the name of that script
+[17:45] <apw> ogasawara, insert-upstream-changes
+[17:45] <apw> debian/scripts/misc
+[17:45] <ogasawara> apw: ah, thanks!
+[17:45] <ogasawara> apw: I was looking in kteam-tools and was having no luck
+[17:46] <apw> heh
+=== henrix is now known as henrix_
+[17:56] <einonm> Hullo, I've just posted a patch to the kernel-team list to fix an ubuntu kernel issue I discovered (Bug #1105250) ... the patch is probably also needed in the upstream kernel - what's the general procedure for that? Should I just post the patch upstream and wait for it to trickle down to you, or is a direct patch to ubuntu-kernel also good?
+[17:56] <ubot2> Launchpad bug 1105250 in linux (Ubuntu) "MSI laptop, crash on first suspend and suspend fails thereafter" [Medium,Incomplete] https://launchpad.net/bugs/1105250
+=== henrix_ is now known as henrix
+[17:59] <jsalisbury> einonm, yes, it's best to send the patch upstream for inclusion.  I can post a comment in the bug on how to do that.
+[18:00] <einonm> jsalisbury: Thanks. I've got a linux-next tree, so just run the usual get-maintaners on that, but also cc an ubuntu email?
+[18:02] <jsalisbury> einonm, yes, get-maintainers will tell you who to send it to.  Be sure to cc stable.  There is some info in the source tree ~/Documentation/stable_kernel_rules.txt
+[18:02] <einonm> great, will do.
+[18:03] <jsalisbury> einonm, thanks.  
+[18:09] <bjf> :w
+[18:46] <zequence> apw: The lowlatency meta for precise, is it still wrong?
+[18:46] <apw> 'still wrong' ?
+[18:46] <zequence> The wrong version
+[18:47] <apw> looks to match to me in the current pocket versions ?
+[18:48] <apw> linux-meta-lowlatency | 3.2.0.36.26 | precise-security/universe | source
+[18:48] <apw> linux-meta-lowlatency | 3.2.0.36.26 | precise-updates/universe | source
+[18:48] <apw> linux-lowlatency | 3.2.0-36.36 | precise-security/universe | source
+[18:48] <apw> linux-lowlatency | 3.2.0-36.36 | precise-updates/universe | source
+[18:48] <zequence> One ends with 26, and the other with 36
+[18:48] <zequence> But, that's ok?
+[18:49] <apw> zequence, no that is right.  the last number is the upload number for the package
+[18:49] <apw> so there has been 10 more uploads of the kernel than meta, which happens as you only
+[18:49] <bjf> jjohansen, bug 1106992
+[18:49] <apw> bump meta when there is an abi bump
+[18:49] <ubot2> Launchpad bug 1106992 in linux (Ubuntu) "tomoyo version mismatch, kernel panic" [Medium,Confirmed] https://launchpad.net/bugs/1106992
+[18:50] <zequence> apw: So, I can go ahead and test them now?
+[18:50] <apw> i am unsure if they ahve been copied out of the PPA as yet, do not appear to be yet
+[18:50] <jjohansen> bjf: okay I'll bug tetsuo and see what he says we should do
+[18:51] <zequence> Ah, a bit later than..
+[18:51] <bjf> jjohansen, thanks
+[18:53] <apw> zequence, ahh they were copied out 18 minutes ago, so the -23 and -37 versions are ready to go yes
+[18:54] <zequence> apw: Alright
+[19:05] <smb> :q
+[19:52] <chiluk> Hey everyone sorry for the improperly formated SRU mail on kernel-team .  Live and learn.
+[19:52] <chiluk> if it's still wrong feel free to let me know.
+[19:54] <bjf> chiluk, np
+[19:54] <bjf> chiluk, still wrong
+[19:54] <chiluk> nuts.
+[19:54] <bjf> chiluk, :-P
+[19:54] <chiluk> what should I have done differently?
+[19:54] <chiluk> I was trying to follow https://wiki.ubuntu.com/KernelTeam/KernelUpdates
+[19:54] <chiluk> perhaps the wiki page needs to be more pedantic ?
+[19:55] <bjf> chiluk, how long have you been following the mailing list?
+[19:56] <chiluk> not long enough... only a few weeks.
+[19:56] <bjf> chiluk, i'd point you at one if you've been there a while
+[19:57] <bjf> chiluk, do you have the brcmsmac patch from seth in your history? if so look at the patch 0/1 patch 1/1 mail for comparison
+[19:58] <chiluk> I do. reading..
+[19:59] <bjf> chiluk, so basically, the SRU text is correct, the patch shouldn't come in as an attachment
+[20:00] <chiluk> ok.
+[20:02] <chiluk> bjf, so what's the special sauce, that formats the patches and sends the e-mail?
+[20:03] <chiluk> git-send-email I'm assuming?
+[20:05] <bjf> chiluk, that's what i use though i have a script which has all the command line options that i want
+[20:06] <bjf> git send-email --no-chain-reply-to --thread --suppress-cc all --from "Brad Figg <brad.figg@canonical.com>" --to kernel-team@lists.ubuntu.com $1
+[20:06] <bjf> chiluk, ^
+[20:06] <chiluk> thanks bjf.
+[20:06] <bjf> chiluk, np
+[20:08] <infinity> bjf: And now he's going to send a patch to the list from you. ;)
+[20:08] <chiluk> give me at least a little credit.
+[20:08] <bjf> infinity, it's how i get credit
+[20:08] <bjf> dang
+[20:08] <infinity> chiluk: Where's the fun in that?
+[20:09] <chiluk> do you guys want me to send yet another e-mail? or do you want me to just do it right the next time around?
+[20:14] <chiluk> bjf infinity ^ ?
+[20:15] <bjf> chiluk, you can make the call. if you want to try git-send-email, that's cool otherwise we'll deal with it as it is
+[20:16] <chiluk> alright, I'll probably be sending out another SRU either later today or tomorrow.
+[20:16] <chiluk> so I'll git-send-email on that one.
+[20:17] <bjf> chiluk, https://wiki.ubuntu.com/Kernel/Dev/StablePatchFormat
+[20:18] <bjf> chiluk, also not that the patch needs to have the "BugLink: " line in it
+[20:25] <chiluk> I'll make that piece a bit more obvious in the wiki.
+[20:26] <bjf> chiluk, on the wiki page i referenced it is #1 in the comment body section
+[20:27] <bjf> chiluk, also, there is a python tool we have that is very usefull for adding all this "stuff"
+[20:27] <chiluk> linkage 
+[20:27] <chiluk> ?
+[20:27] <bjf> was getting there :-)
+[20:28] <bjf> chiluk, git clone kernel.ubuntu.com:/ubuntu/kteam-tools
+[20:28] <chiluk> and what's the wiki page you referenced above?  I only see one reference to buglink on the kernelUpdates page.
+[20:28] <bjf> chiluk,  kteam-tools/stable/bug-mod
+[20:29] <bjf> chiluk, https://wiki.ubuntu.com/Kernel/Dev/StablePatchFormat
+[20:30] <chiluk> hmm looks like the sru page might be better served by pointing to your link
+[20:31] <bjf> chiluk, probably, feel free to do so
+[20:31] <chiluk> will do.
+[20:31] <bjf> chiluk, the wiki is "kind of" a mess
+[20:31] <chiluk> that's what the new guys are for right?
+[20:32] <bjf> to make it messier? yup :-P
+[20:32] <chiluk> lol
+=== henrix is now known as henrix_
+=== bjf is now known as bjf[afk]
+[23:52] <brennan> hello room
+[23:52] <brennan> how do you upgrade the dist?
+[23:53] <brennan> ????????????????????
+[23:54] <ppisati> sudo apt-get update && sudo apt-get dist-upgrade?
+[23:54] <ppisati> brennan: &
+[23:54] <ppisati> ^
+[23:54] <brennan> thanks man
+[23:54]  * ppisati -> EOD

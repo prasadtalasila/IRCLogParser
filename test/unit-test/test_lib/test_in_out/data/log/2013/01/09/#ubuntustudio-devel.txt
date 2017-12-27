@@ -1,0 +1,52 @@
+[10:29] <ttoine> hello
+[10:30] <ttoine> scott is not there...
+[10:45] <astraljava> Give it two to three hours.
+[13:01] <ttoine> astraljava, thanks
+[13:38] <astraljava> No worries, but he has exactly 8 minutes to show up, otherwise I wasn't of much use. :)
+[16:34] <zequence> ttoine: What's on your mind?
+[16:55] <ttoine> zequence, just would like to know if he has some news from twitter
+[17:06] <zequence> ttoine: Ah
+[22:06] <len-1304> zequence, I have a hack that lets jack start every time... 
+[22:10] <len-1304> In the qjackctl setup->options->execute script on startup put :
+[22:10] <len-1304> pasuspender sleep 5 &
+[22:45] <len-1304> Probably even 1 or 2 would work instead of 5.
+[22:47] <len-1304> Anyway, For testing I have audacious streaming through pulse to hw:1 (the same IF as jack uses)
+[22:49] <len-1304> I tell qjackctl to start Jack and there is a quick stop start of audio and pulse switches from direct to the device to jack_sink.
+[22:49] <len-1304> zequence, I am not sure, But I think pasuspender uses dbus to tell pulse to release the device.
+[22:50] <len-1304> That would be the same as what Jackdbus does on start up.
+[22:51] <len-1304> The only difference I can see is that there is more time from PA giving up the device to jack trying to grab it.
+[23:15] <zequence> len-1304: pasuspender will make pulse let go of the card, so that enables jack to grab it. Then, when pulse starts again, jack already has the card, right?
+[23:17] <zequence> A hack, yes. But I guess we could consider adding it, if there's no fix
+[23:20] <len-1304> Well my guess is that pasuspender uses dbus to tell pulse to let go of the devices.
+[23:21] <len-1304> Just the same as jackdbus does.
+[23:21] <len-1304> The only difference is the amount of time involved.
+[23:22] <len-1304> I am not that good with c++ which is what jack2 is
+[23:22] <len-1304> But it should not be hard to come up with a patch for jack2 to fix it
+[23:23] <len-1304> add a half second delay
+[23:24] <len-1304> Anyway, I am posting this to the list and a copy to David H, who may at least know if my guess about how pasusupender works is right
+[23:24] <len-1304> That way I would know if I should bug against PA or jack.
+[23:26] <len-1304> zequence, BTW my 12.04 install seems to have stopped working too. So something has been updated that causes it.
+[23:26] <len-1304> Not pulse because it still uses the old version of pulse
+[23:29] <zequence> I have no idea about how dbus works, but the way I'd imagine the thing should work: 1. jackdbus tells pulse to give up the card 2. pulse releases it 3. pulse tells jack it's now release 4. jack takes it
+[23:30] <len-1304> I don't think that happens
+[23:30] <zequence> At least I'm imagining that jackdbus is either getting a false response, or ignoring it
+[23:31] <len-1304> I think dbus just returns an ack that the message got through
+[23:31] <len-1304> Not that it has been acted on.
+[23:34] <zequence> If jack is not able to monitor when pulse let go of the card, it doesn't know when it's ok to grab it
+[23:34] <zequence> You'd want some kind of return when the card was released
+[23:34] <len-1304> I think it assumes an ack from dbus means go.
+[23:35] <zequence> an ack that the message was sent is not the same as that the process finished
+[23:35] <len-1304> Yes.
+[23:35] <len-1304> I agree
+[23:35] <zequence> For some reason it does work when PA is not playing something though
+[23:36] <len-1304> Not always for me.
+[23:36] <len-1304> I have had the same problem after a fresh login
+[23:36] <zequence> Well, I can only guess, since I don't know anything about it. Does sound very undeterministic anyhow
+[23:37] <zequence> Like, it'll work, if pulse was not too busy
+[23:37] <zequence> or soemthing
+[23:37] <len-1304> Once David answers I will put a bug in.
+[23:38] <len-1304> I think I will download the src of both and see if I can find anything.
+[23:39] <zequence> len-1304: You have any experience in searching in code? I'm thinking I need to get a bit more professional with that. Use tools
+[23:39] <len-1304> I have done a bit, but I am more used to c than c++
+[23:40] <zequence> len-1304: You'll find the reserve code easily in the dbus folder of jackd2. The two files authored by Poettering
+[23:40] <len-1304> OK thanks.

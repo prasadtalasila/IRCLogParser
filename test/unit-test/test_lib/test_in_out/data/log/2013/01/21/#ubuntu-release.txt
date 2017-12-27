@@ -1,0 +1,146 @@
+[03:02] <infinity> tumbleweed: Can you refrain from marking SRU tasks as "Fix Committed" when you upload?  We use that to track when they're actually accepted into proposed.
+[03:02] <infinity> tumbleweed: Use In Progress instead, perhaps.
+[03:03] <micahg> infinity: hrm, that used to be standard to show it was uploaded
+[03:04] <stgraber> the standard is different for SRUs
+[03:04] <micahg> stgraber: that was for SRUs AFAIK
+[03:04] <stgraber> for dev release, you mark fix-commited on upload. For SRUs you mark in-progress on upload, then sru-accept marks fix-commited and release to -updates marks fix-released.
+[03:04] <infinity> micahg: Not in my SRU tenure.
+[03:05] <infinity> If it's not been accepted to the archive, the fix isn't committed.
+[03:05] <micahg> stgraber: I never saw that anywhere...
+[03:05] <micahg> makes sense though
+[03:05] <infinity> Same story for uploading during a freeze, really, but no one cares then. :P
+[03:05] <stgraber> micahg: I'm pretty sure I reminded people of that every couple of weeks or so in my 12.04.1 e-mails ;)
+[03:06] <stgraber> not sure about the state of things on the wiki though, some pages may need updating (not that I think anyone who did it wrong lately was looking at those pages anyway)
+[03:06] <micahg> updating https://wiki.ubuntu.com/StableReleaseUpdates#Procedure to reflect the status might be a good idea
+[03:07] <micahg> I'm sure tumbleweed and I aren't the only ones who think that's right...
+[03:07] <stgraber> micahg: at least AFAICS that page isn't wrong, it's just a bit incomplete ;)
+[03:08] <infinity> micahg: I'm equally sure that you and Stafano don't re-read the docs either (I know I don't).
+[03:08] <infinity> The only way to socialise these things is... Socially.
+[03:08] <micahg> infinity: I agree :)
+[03:08] <micahg> but this is the first I've heard of it
+[03:08] <infinity> Updating docs helps new contributors, not crusty old farts. :)
+[03:08] <infinity> micahg: Excellent, now you've heard.  Yay, social.
+[03:10] <stgraber> wiki updated
+[03:10] <infinity> tumbleweed: Oh, while I'm picking on you, you sponsored an upload that had a new patch in debian/patches but no DEP-3 headers.  Given your various positions in the community, I'd kinda expect you to have mentored that patch into better shape. :)
+[03:11] <infinity> tumbleweed: I'll stop picking on you now.
+[03:11] <micahg> stgraber: looks good, thanks
+[03:12] <infinity> Hrm, that could do with some twiddling to stop mentioning release-proposed as a changelog/upload target too.
+[03:12] <micahg> infinity: can you add me to the 12.04.x CD e-mails for xubuntu or is that cjwatson only?
+[03:12] <infinity> Though, that will never actually stop working, so.  Whichever.  Maybe it's less confusing to some.
+[03:12] <infinity> micahg: I can, if I can remember which file holds the list.
+[03:13] <infinity> I removed myself from those emails long ago, as they hit a noise level that I started ignoring, thus making them useless.
+[03:13]  * micahg needs to try to get Xubuntu 12.04.2 back to CD size before it's released
+[03:17] <infinity> Ahh, there it is.
+[03:17] <infinity> You're there for xubuntu anyway.  There's no precise-specific config.
+[03:17] <infinity> If it's not triggering for precise, that's odd.
+[03:17] <micahg> oh, hrm, I only get raring e-mails
+[03:18] <micahg> http://cdimage.ubuntu.com/xubuntu/precise/daily-live/current/ shows as oversized
+[03:20] <infinity> I'm not sure I'd worry about it until we sort out Ubuntu's oversizedness.
+[03:21] <infinity> If we can shrink ours by 12M, it might impact Xubuntu by 7 too. :P
+[03:21] <infinity> Or by 5, even.
+[03:21] <micahg> I'm wondering why Ubuntu cares at this point since it's using a quantal backport stack, why isn't it reasonable to use the quantal ISO size
+[03:21] <infinity> Yeah, fixing the libdricore linkage alone will fix Xubuntu.
+[03:22] <infinity> We may decide we don't care, in the end.  But it's still worth looking at when CD images go up for "no good reason".
+[03:22] <infinity> Most of which are, in fact, bad reasons.
+[03:23] <infinity> Like duplicate packages or things suddenly linked statically that shouldn't be.
+[03:23] <micahg> sure, I still wanted to chat about the dkms update which allows dropping headers from the running kernels with autoremove
+[03:23] <infinity> dkms didn't change that AT ALL.
+[03:24] <micahg> it dropped a depends on the headers virtual package which made all the installed headers no longer depended on except for the latest kernel
+[03:24] <infinity> micahg: The last part is what I'm arguing didn't change.
+[03:25] <infinity> micahg: The virtual package only ever depended on the latest version.
+[03:25] <infinity> Err.
+[03:25] <infinity> Metapackage.
+[03:25] <infinity> Not virtual.
+[03:25] <infinity> Anyhow.
+[03:25] <micahg> right :)
+[03:25] <infinity> micahg: If you didn't have linux-generic installed, why?
+[03:26] <infinity> If you do have it installed, it's keeping linux-headers-generic installed, and the dkms change changed... Nothing.
+[03:26] <micahg> infinity: it's the linux-headers alternate dependency that kept them installed
+[03:26] <infinity> If what you're saying is that your running kernel wasn't the latest installed, and the running kernels headers were removed, that was the same as before.
+[03:26] <infinity> micahg: No, it wasn't.
+[03:26] <infinity> micahg: You're just plain wrong here, and I can draw diagrams and everything.
+[03:26] <infinity> micahg: You saw running kernel headers removed and blamed the dkms update, but the two are unrelated.
+[03:27] <infinity> It's ALWAYS been (broken) like this.
+[03:27] <infinity> You only ever got to keep the latest installed.
+[03:27] <micahg> aptitude never offered to remove the older headers until the dkms update
+[03:27] <infinity> Now, if we backport the fancy new apt magic, we'll fix that.
+[03:27] <infinity> And we plan to.
+[03:27] <infinity> Are you saying aptitude was keeping *all* headers installed forever?
+[03:27] <micahg> yes
+[03:28] <infinity> Based on an alternate dep?
+[03:28] <infinity> Well, that's vomitously broken too.
+[03:28] <infinity> And good riddance to that behaviour.
+[03:28] <micahg> hrm, so, maybe it's aptitude specific, but it seems like a feature..
+[03:28] <infinity> You'll be hard-pressed to convince me that was a good thing.
+[03:28] <infinity> And it's definitely not how apt behaves.
+[03:28] <infinity> Nor update-manager.
+[03:28] <infinity> Nor dpkg.
+[03:28] <infinity> Nor anything sane.
+[03:28] <micahg> well, not removing the headers from the running kernel out from under you seems like wrong behaviour
+[03:29] <infinity> Which aptitude is rarely accused of being.
+[03:29] <micahg> err...s/not//
+[03:29] <infinity> micahg: Yes, keeping the running kernel and its headers is desirable.  And the apt in raring does that.  And we're going to backport that feature.
+[03:29] <micahg> but it's just my corner case with aptitude that was keeping it?
+[03:29] <infinity> micahg: But whatever weird thing aptitude was doing was entirely against spec and incorrect, if it was indeed keeping all your headers.
+[03:30] <infinity> micahg: It would mean that any "foo | virtual" dep would always keep all providers of "virtual" installed forever.  Which is silly.
+[03:30] <micahg> apt doesn't offer to remove those headers ATM with the old dkms
+[03:31] <micahg> hrm, doesn't offer to remove it with the new package either
+[03:32] <infinity> micahg: Then it's not auto, or it's the current version.
+[03:32] <micahg> weird, now I"m wondering why my bug magically disappeared
+[03:32] <infinity> micahg: pastebin "dpkg -l linux\* | awk '/^.i/ {print $2}'" and "apt-mark showauto linux\*"
+[03:34] <micahg> http://paste.ubuntu.com/1554044/ and http://paste.ubuntu.com/1554045/
+[03:34] <micahg> hrm, they were auto before..
+[03:35] <infinity> You may have explicitly set them to manual (or accidentally asked aptitude to do so).
+[03:35] <infinity> aptitude seems to play fast and loose with how I think this should work.
+[03:36] <infinity> I'd drop it from the archive if it wouldn't make a chunk of the nerd contingent whine.
+[03:36] <infinity> There's nothing user friendly with how it does everything subtly differently. :/
+[03:36] <micahg> I happen to like seeing how much a package changes per update (makes one thing if something bad happened when there's a big increase)
+[03:37] <micahg> s/thing/think/
+[03:37] <infinity> Anyhow.  I'm quite convinced I need to backport the apt changes for all of this.  It's on my TODO.
+[03:38] <micahg> sure, my argument was only not to regress based on CD size, I see it on my quantal system ATM
+[03:38] <infinity> The dkms thing, however, was always buggy and wrong.  Keeping it wrong doesn't help anyone.
+[03:38] <infinity> The change wasn't for CD size, that was just a pleasant side effect of fixing the bug.
+[03:38] <infinity> The dependency never (ever) actually guaranteed you had headers matching your kernel.
+[03:39] <micahg> true
+[03:40] <micahg> but AIUI, -updates is supposed to be no regressions where it can be helped, but if I'm the only person screaming about this, maybe I'll just shut up
+[03:41] <infinity> I'd still kinda like to see this aptitude behaviour in action.
+[03:42] <infinity> But, even if it's doing what you say (keeping all providers of a virtual installed), that's a bug in aptitude, not a feature. :/
+[03:42] <infinity> Especially since it's an alternate dep for something you *do* have installed.
+[03:42] <infinity> Either way.  The apt backport will render this somewhat moot.
+[06:57] <tumbleweed> infinity: ACK. Yes, been doing that for ages
+[06:58] <tumbleweed> infinity: (and aaargh, the earlier version had good DEP3 headers, but he had to correct something in them, and I didn't check it since)
+=== mmrazik is now known as mmrazik|afk
+[13:39] <ogra_> ogra@nusakan:~$ w3m cadejo.buildd/~buildd/LiveCD
+[13:39] <ogra_> w3m: Can't load cadejo.buildd/~buildd/LiveCD.
+[13:39] <ogra_> HMPF !
+[13:40] <ogra_> infinity, ^^^
+[13:42] <cjwatson> infinity: So, looking at .2 images, the easiest target by far is going to be language packs, but we'll run into the problem that I think you ran into for .1 there, namely that the language packs are all in a task that we can't change
+[13:42] <cjwatson> infinity: Would you be OK with gross and unpleasant hacks in livecd-rootfs to work around that?
+[14:10] <cjwatson> infinity: Dropping de should be enough on i386; I fear that on amd64 we may have to drop both pt and es (or perhaps drop sl-modem-daemon)
+[14:10] <cjwatson> Well, sl-modem-daemon and pt
+=== mmrazik|afk is now known as mmrazik
+[15:35] <cjwatson> Most i386/amd64 Ubuntu (i.e. not PPA) builders going down soon for a hardware move, lasting about 30 minutes
+=== henrix_ is now known as henrix
+=== plars is now known as plars-off
+[17:27] <infinity> cjwatson: Didn't we do the langpack hacks in live-build for .1?  Recollection's fuzzy.
+[17:27] <cjwatson> Yeah, stgraber just reminded me of that
+[17:27] <cjwatson> I'd been looking in livecd-rootfs instead
+[17:29] <cjwatson> I'm going to wait to see how much space the new mesa-lts-quantal saves us, though
+[17:35] <cjwatson> amd64/i386 builders are back
+[21:23] <cjwatson> infinity: Oh, I see what's happening with copying of -v-less SRUs not putting the right bits in the accepted mail or closing the right bugs
+[21:23] <cjwatson> infinity: It's yet another ancestry calculation bug
+[21:23] <cjwatson> infinity: When I copied duplicity, there was no previous version in quantal-updates
+[21:24] <cjwatson> infinity: I bet in your test there was a previous version in -updates
+[21:24] <cjwatson>         existing = archive.getPublishedSources(
+[21:24] <cjwatson>             name=source.sourcepackagerelease.name, exact_match=True,
+[21:24] <cjwatson>             status=active_publishing_status, distroseries=series,
+[21:24] <cjwatson>             pocket=pocket).first()
+[21:24] <infinity> cjwatson: Probably, yeah.
+[21:24] <infinity> cjwatson: Is there any where in LP that actually get ancestry right? :)
+[21:24] <cjwatson> I literally just traced through Soyuz' entire mail notification code before spotting that
+[21:24] <infinity> s/get/gets/
+[21:25] <cjwatson> Not that I know of
+[21:25] <cjwatson> There are at least three different wrong implementations
+[21:26] <cjwatson> NascentUpload.getSourceAncestry would be the closest to correct for this, I think, but is in an inconvenient place ...
+[21:28] <cjwatson> just pocket=(pocket, RELEASE) wouldn't be dreadful
+[21:28] <cjwatson> But possibly I ought to move that method out of NascentUpload and reuse it, instead

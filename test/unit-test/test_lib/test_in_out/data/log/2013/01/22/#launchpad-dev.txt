@@ -1,0 +1,171 @@
+[01:24]  * StevenK stabs specification filtering
+[01:25] <StevenK> Two methods use SpecificationFilter.{ACCEPTED,PROPOSED,DECLINED} for utterly different things
+[01:28] <wgrant> :)
+[01:28] <wgrant> Series and sprints?
+[01:28] <StevenK> Yeah
+[01:28] <StevenK> The sprint stuff doesn't use search_specifications(), it's just too wacky
+[01:29] <StevenK> Back down to one failure
+[01:30] <wgrant> :)
+[01:56] <wgrant> StevenK: https://code.launchpad.net/~wgrant/launchpad/handleStatus-refactor-2/+merge/144203
+[02:43] <StevenK> wgrant: r=me, perhaps you could run update-copyright. I'm a little concerned about the BUILDERFAIL method now, you just reset the BQ record, and merrily go on your way.
+[02:44] <wgrant> StevenK: The thing is that BQ.reset already sets the status to NEEDSBUILD
+[02:44] <wgrant> But I think BUILDERFAIL is the case that causes some of the broken builds we occasionally see
+[02:44] <wgrant> So it probably already doesn't work for some reason anyway :/
+[02:44] <wgrant> It'll all be reworked when BFJO dies soonish
+[03:13] <StevenK> wgrant: Right
+[03:37] <StevenK> wgrant: I've been staring at this failure for too long. Can haz help?
+[03:37] <wgrant> StevenK: Sure
+[03:38] <StevenK> wgrant: http://pastebin.ubuntu.com/1557408/ is the diff (It's -r submit:, so should include everything)
+[03:39] <StevenK> wgrant: lp.registry.tests.test_person.TestSpecifications.test_in_progress is the failing test, which is failing since the query is returning both the STARTED and IMPLEMENTED specs
+[03:44] <wgrant> StevenK: Looking
+[03:52] <wgrant> StevenK: Look around line 1170 of the diff
+[03:52] <wgrant> in_progress was previously handled inside a "COMPLETE not in filter" guard
+[03:53] <wgrant> Which also added an INCOMPLETE filter
+[03:55] <StevenK> Bah, and that fixes it
+[03:55] <StevenK> Adding INCOMPLETE to the block was probably the kicker
+[03:55] <wgrant> Yeah
+[03:55] <wgrant> Is it really worth having a separate in_progress flag on the underlying method?
+[03:55] <wgrant> Should Person.specifications just map it to (STARTED, INCOMPLETE)?
+[03:56] <StevenK> I can drag that bit back to Person.specifications
+[03:58] <wgrant> It doesn't seem valuable to have that flag on the underlying infrastructure
+[03:58] <wgrant> Given only a single method exposes it
+[04:04]  * StevenK refactors the second if default_acceptance block out
+[05:12] <StevenK> wgrant: https://code.launchpad.net/~stevenk/launchpad/use-specification-aag/+merge/143630 updated
+[05:14] <wgrant> StevenK: That's quite a diff
+[05:14] <wgrant> I may be a while
+[05:14] <StevenK> Haha
+[05:15] <StevenK> wgrant: Do you want a rope around the waist so you don't get lost? :-)
+[05:15] <wgrant> Can you do the neck instead?
+[05:15] <StevenK> Haha
+[05:21] <wgrant> StevenK: Are Milestone and Sprint likely to be portable?
+[05:23] <StevenK> wgrant: I've run out of steam
+[05:23] <wgrant> Sure.
+[05:24] <StevenK> Milestone.getSpecifications() is nothing like anything else, and wants people too
+[05:24] <StevenK> So that's a bit difficult
+[05:24] <wgrant> StevenK: For in_progress, I was hoping you could just add INCOMPLETE and STARTED to the filter.
+[05:25] <wgrant> Although I'm not sure if those filters are meant to be unioned or intersected.
+[05:25] <StevenK> Oh, spec_filter.extend([INCOMPLETE, STARTED]) and get_specification_filters adds get_specification_started_clause ?
+[05:25] <StevenK> Those filters are a mess
+[05:25] <wgrant> Depends if they intersect or union
+[05:26] <wgrant> But I was hoping to keep all those workflow filters in one place
+[05:28] <StevenK> AttributeError: type object 'SpecificationFilter' has no attribute 'STARTED'
+[05:29] <StevenK> No clean up for you
+[05:29] <wgrant> StevenK: Sure, it probably doesn't exist already
+[05:29] <wgrant> But that doesn't mean it shouldn't.
+[05:32] <StevenK> wgrant: Right, so that's been abstracted back into search_specifications
+[05:32] <StevenK> wgrant: http://pastebin.ubuntu.com/1557550/
+[05:35] <wgrant> StevenK: I think you double-join product a couple of times, don't you?
+[05:35] <wgrant> As search_specifications includes the Product.active filter
+[05:36] <StevenK> wgrant: Which callsites do you suspect do so?
+[05:36] <wgrant> StevenK: ProjectGroup.specifications
+[05:36] <wgrant> Though it doesn't rejoin Product, it does duplicate Product.active
+[05:37] <StevenK> wgrant: Right, dropped
+[05:42] <wgrant> StevenK: At the top of search_specifications, can you explicitly put both default/options sets in a branch?
+[05:43] <wgrant> ie. if not default_acceptance: default = ...; options = ...; else: default = ...; options = ...
+[05:43] <wgrant> It's very difficult to understand now
+[05:44] <wgrant> Also, that for option in options thing looks like someone reinvented set intersection
+[05:46] <StevenK> wgrant: http://pastebin.ubuntu.com/1557566/
+[05:47] <wgrant> StevenK: The series targets had a different interpretation of SpecificationSort.DATE, too
+[05:47] <wgrant> StevenK: After adding STARTED was a perfect place to commit :)
+[05:50]  * StevenK reads the SpecificationSort.DATE code in distroseries and groans
+[05:50] <wgrant> StevenK: Also, does get_specification_privacy_filter want an admin shortcircuit like I think the others do?
+[05:50] <StevenK> get_branch_privacy_filter has no admin shortcut
+[05:51] <wgrant> Indeed
+[05:51] <wgrant> Probably OK, then
+[05:52] <wgrant> StevenK: Does _preload_specifications_people still need the SQL() bit now that most callsites are ported?
+[05:53] <wgrant> Also, is that deliberately avoiding getPrecachedPersonsByID?
+[05:54] <StevenK> wgrant: I have *no* idea about that code
+[05:54] <StevenK> I touched it once, and the world broke, so I left well enough alone
+[05:54] <StevenK> Right, I get the series change for DATE
+[06:00] <StevenK> wgrant: STARTED code seperated out and commited, http://pastebin.ubuntu.com/1557578/ is remaining
+[06:02] <wgrant> StevenK: Don'y youy need the PROPOSED/ALL filter in the sorting bit?
+[06:03] <StevenK> I was ignoring that bit, since it acts the same
+[06:03] <wgrant> It's a change in behaviour
+[06:03] <wgrant> Previously if I asked for ALL or PROPOSED from a distroseries it'd order by datecreated
+[06:03] <wgrant> Now it will order by date_goal_decided
+[06:04] <StevenK> Bah
+[06:04] <StevenK> I misread date_completed as datecreated
+[06:08] <StevenK> wgrant: http://pastebin.ubuntu.com/1557587/
+[06:10] <wgrant> StevenK: Isn't that show_proposed check inverted?
+[06:10] <wgrant> Also, you use .intersection there but & in the previous hunk
+[06:10] <wgrant> In fact, I'd merge the show_proposed into the else
+[06:11] <wgrant> so 'if default_acceptance and not (show_proposed & spec_filter):"
+[06:12] <StevenK> wgrant: http://pastebin.ubuntu.com/1557595/
+[06:14] <wgrant> StevenK: Looks reasonable
+[06:24] <StevenK> wgrant: Diff on the MP updated
+[06:27] <stub> $ bzr branch lp:ubuntu/postgresql-9.1
+[06:27] <stub> bzr: ERROR: Revision {package-import@ubuntu.com-20120925054023-lv75ptpdzvjdhkbw} not present in "Graph(StackedParentsProvider(bzrlib.repository._LazyListJoin(([CachingParentsProvider(None)], []))))".
+[06:27] <stub> Anyone know if that means my repo is screwed, or if the lp branch is screwed?
+[06:28] <wgrant> StevenK: The LP branch
+[06:28] <wgrant> Er, stub
+[06:38] <StevenK> wgrant: Still looking?
+[06:41] <wgrant> StevenK: r=me with a comment
+[06:41]  * StevenK has fear
+[06:55] <wgrant> StevenK: https://code.launchpad.net/~wgrant/launchpad/bfjo-shrink/+merge/144227
+[06:57] <StevenK> wgrant: The first paragraph of the description almost requires a diagram.
+[06:57] <wgrant> Quit.er
+[06:57] <wgrant> Quite.
+[06:58] <StevenK> However, r=me
+[06:58] <wgrant> Thankyou sir
+[06:58] <wgrant> Is your spec branch going through EC2?
+[06:59] <StevenK> No, I'm playing buildbot bingo
+[06:59] <wgrant> Aw
+[06:59] <wgrant> I was hoping for a 10 commit streak.
+[06:59] <StevenK> I've ran -m registry -m blueprints enough
+[07:00] <StevenK> So BFJO is dead. But only sort of, since you rename another class to its name
+[07:00] <wgrant> Well
+[07:00] <wgrant> BFJOD delegated to BFJO
+[07:00] <wgrant> And everything inherited BFJOD
+[07:00] <wgrant> But BFJO didn't do anything
+[07:00] <wgrant> So I merged them
+[07:02] <wgrant> And the new class is not terribly long for this world.
+[07:40] <StevenK> Holy crap. I won buildbot bingo.
+[07:40] <wgrant> Impressive
+[07:40] <wgrant> I guess the blueprint tests are crap :)
+[07:40] <lifeless> is bingo a false ok
+[07:40] <lifeless> or an ok ok
+[07:42] <StevenK> lifeless: An ok ok
+[07:43] <StevenK> IE, toss the branch at buildbot and see if it passes, since it's so much faster than ec2
+[07:54] <lifeless> cunning plan
+[08:20] <stub> Anyone know where the button to create a new sourcepackage recipe lives?
+[08:21] <wgrant> stub: On the branch page
+[08:21] <wgrant> It's not there for private branches, as recipes don't support private branches.
+[08:23] <stub> found it. not my branch so first step is working out where it was :)
+[08:45] <StevenK> wgrant: You lose buildbot bingo
+[08:46] <wgrant> I'm well aware :)
+[08:56] <czajkowski> morning
+[08:57] <lifeless> wait, what?
+[08:59] <czajkowski> lifeless: Goood morning
+[09:00] <lifeless> czajkowski: ;) good morning
+[09:00] <czajkowski> nothing good about snow mister nothing!
+[09:00]  * czajkowski cries at her inbox 
+[09:00] <czajkowski> it was all nice and tidy yesterday
+[09:01] <lifeless> czajkowski: heh
+[09:02] <czajkowski> how's the little one doing?
+[09:02] <lifeless> brilliantly
+[09:03] <adeuring> good morning
+[09:03] <lifeless> she was wandering around with my t-shirt on as an over-shirt this evening
+[09:03] <lifeless> cutest thing ever
+[09:05] <czajkowski> awww
+[09:05] <czajkowski> lifeless: is the heat bothering her at all ?
+[09:07] <lifeless> czajkowski: heat?
+[09:09] <czajkowski> you're in AU aren't you?
+[09:14] <lifeless> nope
+[09:14] <lifeless> NZ
+[09:14] <lifeless> AU == boiling heat, why I left there 2.5 years ago :)
+[09:14] <czajkowski> ahh
+[09:14] <czajkowski> now makes more sense
+[09:15] <czajkowski> I'll swap boiling for -8 and poxy snow!
+[09:15] <lifeless> much easier to warm up than cool down
+[09:16] <czajkowski> I like cjwatson and lifeless bugs, they can never be invalid or rarely a duplicate.
+[09:16]  * lifeless aims to please
+[09:16] <czajkowski> after this mornings lot of mails it makes me happy
+[09:26] <wgrant> StevenK: https://code.launchpad.net/~wgrant/launchpad/ttbj-comply/+merge/144250
+=== almaisan-away is now known as al-maisan
+=== slank_away is now known as slank
+=== al-maisan is now known as almaisan-away
+=== matsubara is now known as matsubara-lunch
+=== matsubara-lunch is now known as matsubara
+=== yofel_ is now known as yofel
+=== matsubara is now known as matsubara-afk
+[23:47] <wgrant> StevenK: Can you QA your blueprints thing?

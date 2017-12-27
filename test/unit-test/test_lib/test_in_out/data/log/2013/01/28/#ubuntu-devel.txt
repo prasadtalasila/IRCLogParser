@@ -1,0 +1,492 @@
+[00:05] <ejat> hi , how to check if we succesfully upload .changes to ppa ? since i didnt get the notification say its failed or accepted ..
+[00:06] <TheLordOfTime> ejat, how long ago did you upload to the PPA?
+[00:06] <TheLordOfTime> or try to... :P
+[00:06] <ejat> about 1 hour ago
+[00:07] <TheLordOfTime> should've hit by now, unless your PGP key that you signed with wasn't recognized in LP (i've seen it just ignore such things before without messages)
+[00:07] <ejat> hmm .. thanks for the hint .. so  LP just ignore without giving any messages?
+[00:08] <TheLordOfTime> it may it may not
+[00:08] <TheLordOfTime> i've witnessed it ignore my uploads before, but its rare for me, since all my PGP keys autosync
+[00:22] <zequence> ejat: As said. double check the gpg key
+[00:22] <TheLordOfTime> random question for devs: are packages ever synced to main from debian experimental?
+[00:22] <TheLordOfTime> s/synced/merged, synced, copied, or otherwise/
+[00:23] <jtaylor> on request when it makes sense
+[00:23] <TheLordOfTime> Bluefoxicy, ping.
+[00:23] <TheLordOfTime> jtaylor, mind answering Bluefoxicy's question to me that was in +1 then?
+[00:23] <jtaylor> I don't use puppet so can't answer
+[00:23] <Bluefoxicy> pong
+[00:24] <TheLordOfTime> jtaylor, who would be able to know whether it makes sense?
+[00:24] <TheLordOfTime> (since puppet's in main i didn't want to give an answer in case i got it wrong)
+[00:24] <TheLordOfTime> (since i only really know universe's take on it: Only when requested)
+[00:24] <TheLordOfTime> (and when it makes sense)
+[00:24] <Bluefoxicy> jtaylor more of is it easier/better to get the package into Debian Experimental rather than trying to get Ubuntu to bypass Debian's out-of-date version with their own
+[00:25] <Bluefoxicy> god I'm making a mess of this every step of the way
+[00:25] <TheLordOfTime> Bluefoxicy, if i interpret jtaylor's words in my own wording:
+[00:25] <jtaylor> assuming its a stable release you can file a request and see what people say
+[00:25] <TheLordOfTime> i think that is an "It depends." thing.
+[00:25] <TheLordOfTime> jtaylor, it needs to be in exp first - experimental's OOD as well
+[00:25] <TheLordOfTime> (OOD = Out Of Date)
+[00:25] <Bluefoxicy> it depends on a lot.  Ruby, gems, several libraries
+[00:25] <Bluefoxicy> oh wait
+[00:25] <Bluefoxicy> wrong depends
+[00:25]  * TheLordOfTime rdeps puppet
+[00:27] <micahg> rdeps aren't bad, they should probably be checked with the new version, we generally prefer to merge/sync from experimental rather than introduce a new upstream version directly
+[00:28] <TheLordOfTime> Bluefoxicy, so to answer your question in +1 whether Debian should release 3.0.2 from their git to experimental, i'd say they should before you go looking into syncing it to ubuntu.
+[00:28] <Bluefoxicy> nod
+[00:28] <Bluefoxicy> micahg: are you a different micah?
+[00:28] <micahg> different than?
+[00:29] <Bluefoxicy> There was one asking me this exact question on debian-devel list
+[00:29] <micahg> that's not me (though I idle in the channel)
+[00:29] <Bluefoxicy> It seems now I am relaying a question from micah to micah :|
+[00:29] <TheLordOfTime> hehe
+[00:30] <Bluefoxicy> there needs to be a handbook for this
+[00:31] <TheLordOfTime> Q:"Does Ubuntu ever sync from Debian Experimental?" A:"It depends.  The request has to make sense, and it has to have a limited chance of completely nuking everything else"  <-- that perhaps?
+[00:31] <Bluefoxicy> That way I can read the handbook and not wind up annoying a bunch of people in the process of trying to get one piece of software (in like a dozen packages) updated before release freeze
+[00:33] <micahg> Bluefoxicy: BTW, once 3.0.x is in raring, you can request backports to quantal and precise, we were doing backports regularly before, but there were some issues in the later versions of the packaging which made it difficult to backport earlier than previse
+[00:33] <micahg> *precise
+[00:38] <Bluefoxicy> micahg:  nod.  Makes sense I guess.  I heard Ubuntu was going to a rolling distribution eventually.
+[00:38] <Bluefoxicy> I thought that it was going to HAVE a rolling distribution rather than BECOME a rolling distribution, though
+[00:39] <micahg> Bluefoxicy: not until after 14.04 at the earliest
+[00:39] <Bluefoxicy> Is that going to be essentially the culmination of backports?
+[00:39] <Bluefoxicy> backport ALL the things?
+[00:39] <micahg> no, but it'll make it easier to backport to the LTSs :)
+[00:40] <Bluefoxicy> are there any functional rolling distributions now (besides Gentoo)?
+[00:40] <Bluefoxicy> I remember this being a distinctly hard problem to solve
+[00:41] <micahg> Bluefoxicy: right, that's why there's time needed to improve the migration and QA processes on the devel release
+[00:41] <micahg> testing is essentially a rolling release when it's not frozen
+[00:42] <Bluefoxicy> I have heard many times that Debian Testing essentially works
+[00:42] <Bluefoxicy> I assume you're trying to squeeze that last bit of mermaid tears and unicorn blood into it some time in the next year
+[01:11] <ejat> TheLordOfTime and zequence : thanks ..
+[01:11] <TheLordOfTime> yep
+[01:51] <ejat> https://launchpadlibrarian.net/129726782/buildlog_ubuntu-precise-i386.dnscrypt-proxy_1.2.0-1ubuntu1_FAILEDTOBUILD.txt.gz
+[01:51] <ejat> can someone help me with that log
+[01:52] <micahg> ejat: missing a build dependency on one of the llvm-*-dev
+[01:53] <micahg> sorry, it just needs libltdl-dev
+[01:53] <infinity> Yes, that.
+[01:53] <infinity> ejat: http://packages.ubuntu.com/search?suite=precise&arch=any&mode=exactfilename&searchon=contents&keywords=ltdl.m4
+[01:53] <infinity> ejat: ^-- Handy for finding missing files.
+[01:53] <micahg> it was hiding before the list of the llvm packages in the apt-file output ;)
+[01:54] <infinity> And definitely libltdl-dev in this case, not llvm. :P
+[01:54] <ejat> ok .. trying to add the dependencies ..
+[01:54] <ejat> thanks guys
+[01:55] <infinity> Didn't libtool used to depend on libltdl-dev instead of just Recommending it?
+[01:55] <infinity> Maybe I'm misremembering.
+[01:55] <micahg> I think so...
+[01:57] <infinity> I find no mention of such a change in the changelog.  I'm probably just suffering from getting old.
+[01:58] <micahg> hrm, I guess not
+[01:59] <infinity> It's a recommendation as far back as hardy, at least.  Too lazy to look back further.
+[02:00] <micahg> was there a previous broken behaviour of installing recommends in build chroots?
+[02:00] <infinity> Not on my watch.
+[02:01] <infinity> There may have been for a few weeks in one release when the apt default changed, but I stopped it pretty quickly, IIRC.
+[02:02] <infinity> Actually, no, I don't think it was ever broken on buildds, come to think of it, cause back then, buildds still used the host apt.
+[02:02] <infinity> So, I fixed it in the chroots pre-emptively.
+[02:17] <ejat> http://paste.ubuntu.com/1578662/
+[02:17] <ejat> got this while trying with pbuilder ..
+=== doko__ is now known as doko
+[04:12] <ejat> LP builder freeze ? https://launchpad.net/~fenris/+archive/ppa/+build/4252002
+[04:15] <infinity> ejat: Sorted.
+[04:16] <ejat> infinity: y using pbuilder successfully build .. but when upload to LP failed
+[04:19] <infinity> ejat: It hasn't failed yet...
+[04:20] <ejat> previous it failed .. then i try to rebuild ..
+[04:20] <infinity> Well, I can't say why it failed previously, since there was no log, since it was retried.
+[04:22] <infinity> ejat: If you mean "why did I have to add a build-dep on libevent-dev", I assume your pbuilder chroot is dirty.
+[04:23] <infinity> ejat: You're also getting test failures in your testsuite that assumes you have internet access (the buildds don't).
+[04:23] <ejat> how to check / clean pbuilder ? rebuild ?
+[04:24] <infinity> I don't use pbuilder, so I couldn't say.
+[04:24] <infinity> But yes, building a new chroot would make sense.
+[04:24] <ejat> in pbuilder the testsuite OKAY
+[04:25] <infinity> ejat: Yes, because your computer has internet access.  Like I said, the buildds don't.
+[04:25]  * ejat in progress building new chroot .. 
+[04:25] <ejat> ouch ..
+[04:25] <scientes_> debootstrap is idiotic about qemu-user-static
+[04:26] <scientes_> you have to use --foreign and then restart the second stage
+[04:26] <ejat> so what should i do  ?
+[04:26] <ejat> to make testsuite work on buildds
+[04:27] <scientes_> ejat, just use cowbuilder and see what happens, qemu-user-static is only a cross compiling thing
+[04:29] <ejat> means i cant use my ppa to build ?
+[04:29] <ejat> :(
+[04:30] <micahg> ejat: you have to disable the tests requiring network access
+[04:32] <infinity> scientes_: How did qemu get involved in this?  He's not building for other arches...
+[04:32] <ejat> micahg: the code is not mine .. so i dont really know how to disable the testsuite ... anyone can guide me ?
+[04:33] <infinity> ejat: The regular buildds don't have internet access either, this isn't PPA-specific.
+[04:33] <ejat> infinity: ok tx for d info
+[04:41] <FourDollars> Is there any quick way to find out all bugs between precise-updates and precise-proposed?
+=== Nisstyre_ is now known as Nisstyre
+[04:44] <infinity> FourDollars: All bugs fixed, you mean?
+[04:44] <infinity> FourDollars: http://people.canonical.com/~ubuntu-archive/pending-sru.html may be a good start.
+[04:45] <FourDollars> infinity: It is very useful. Thanks a lot.
+[05:00] <kirkland> sladen: hmm, mapping it to the Ubuntu logo would not be the solution I'm looking for
+[06:09] <pitti> Good morning
+[06:47] <pitti> @pilot in
+=== udevbot changed the topic of #ubuntu-devel to: Ubuntu 12.10 released | Archive: Open | Dev' of Ubuntu (not support or app devel) | build failures -> http://qa.ubuntuwire.com/ftbfs/ | #ubuntu for support and discussion of hardy -> quantal | #ubuntu-app-devel for app development on Ubuntu http://wiki.ubuntu.com/UbuntuDevelopment | See #ubuntu-bugs for http://bit.ly/lv8soi | Patch Pilots: pitti
+[06:47] <pitti> FTR, I don't have much time today, I'm on a (virtual) sprint
+[07:39] <dholbach> good morning
+=== Nisstyre_ is now known as Nisstyre
+=== tkamppeter_ is now known as tkamppeter
+[09:12] <sladen> kirkland: can you describe again what you have in mind?  (example use-case)
+[09:29] <zyga> pitti: good mornign
+[09:29] <zyga> pitti: do you have a minute?
+[09:30] <pitti> hey zyga; what's up?
+[09:30] <zyga> pitti: hi, I'm designing/implementing a feature for checkbox rewrite and I could use your help with regards to current desktop tech
+[09:31] <zyga> pitti: I need to have a part of my app run as to be able to execute priviledged programs/scripts
+[09:31] <zyga> pitti: and I was looking for options here
+[09:31] <zyga> pitti: people point me at policykit and pkexec
+[09:32] <pitti> zyga: right; you can write a .policy file for an executable which a process can run through pkexec
+[09:33] <pitti> zyga: e. g. grep -r exec.path /usr/share/polkit-1/actions/
+[09:33] <zyga> pitti: so would that work for a specific command or could it be more generic? in practice checkbox would start the helper each time and keep it around to spawn additional commands
+[09:33] <zyga> oh, let me check that
+[09:34] <pitti> zyga: it should be specific; otherwise you introduce a (mostly unsafe) alternative to plain sudo
+[09:34] <zyga> is that a pure shell / command interface or is there something I can poke from python? we may need to run headless in some cases
+[09:34] <pitti> zyga: NB that any process can call that, not just checkbox; so if you have somethign which can execute arbitrary code you always need to ask for authentication
+[09:34] <zyga> hmm
+[09:35] <zyga> that's not good really, previously we did not (ask)
+[09:35] <pitti> zyga: authentication needs a DISPLAY or a stdout/stdin
+[09:35] <pitti> zyga: well, you can either do something very specific which is safe and cannot be parameterized by the user, or do something generic and ask
+[09:35]  * zyga needs to check how it worked before but I'm pretty sure it was a sudo of some sort
+[09:35] <pitti> (indepedent of the particular technology)
+[09:35] <zyga> yeah, you are right
+[09:36] <pitti> zyga: pkexec checks org.freedesktop.policykit.exec.path, shows the description and then asks or not depending on the allow_* values
+[09:37] <zyga> pitti: looking at current checkbox code I see sudo all over the place
+[09:37] <pitti> for example, pkexec /usr/lib/ubuntu-release-upgrader/do-partial-upgrade
+[09:37] <pitti> zyga: sudo, not gksu? how does that work on a desktop tehn?
+[09:37] <pitti> zyga: you can run graphical programs with <annotate key="org.freedesktop.policykit.exec.allow_gui">true</annotate>
+[09:37] <pitti> that will pass on $DISPLAY to the executed program
+[09:38] <zyga> pitti: it's a hybrid that tries kdesudo, gksu and sudo
+[09:38] <zyga> pitti: it also greps for gnome-panel, nooo ;-)
+[09:39] <pitti> zyga: so, as we are trying to get rid of gksu, pkexec is certainly the preferred method these days
+[09:39] <zyga> yeah, I want to do it right so that we don't run as root 90% of the time
+[09:39] <pitti> xdiagnose and update-notifier still depend on it, though
+[09:39] <zyga> it's tricky as we pretty much run arbitrary (more less) shell as root often
+[09:39] <zyga> well, packaged but arbitrary
+[09:40] <zyga> is it possible to parametrize policykit based on stuff like user logged in at console?
+[09:40] <pitti> yes
+[09:40] <zyga> like not ask for authentication if I'm logged in interactively?
+[09:40] <pitti> zyga: that's in fact how it always works
+[09:40] <pitti>      <allow_any>no</allow_any>
+[09:40] <zyga> ok, I guess policy kit is the way
+[09:41] <pitti>       <allow_inactive>no</allow_inactive>
+[09:41] <pitti>       <allow_active>auth_admin</allow_active>
+[09:41] <zyga> should I aim for direct execution of pkexec or some bindings?
+[09:41] <pitti> zyga: execing pkexec is fine; I'm not aware of an API for it (but there might be)
+[09:41] <zyga> ok, then last question
+[09:41] <zyga> how does this fare with testing?
+[09:41] <pitti> zyga: but still, you need to ask for auth if you execute something which can run arbitrary commands
+[09:42] <zyga> in some cases we will want to run real stuff as root for automated testing
+[09:42] <zyga> pitti: not arbitrary, only stuff packaged with checkbox, we can make sure it's not looking into arbitrary places
+=== yofel_ is now known as yofel
+=== henrix_` is now known as henrix
+[10:16] <zyga> pitti: do you think it would be appropriate to have a bus-activated service that just sits there and can start/run checkbox "job" with polkit serving as guard to run a particular job; my motivation is that a typical checkbox "session" involves dozens of jobs, most of which want root, I'd like to spawn the notification at most once per started checkbox application
+[10:19] <pitti> zyga: why is that additional indirection any better than just running it through pkexec?
+[10:20] <pitti> zyga: usually you'd either have the spawned d-bus process be the service itself, or run it through pkexec, but why combine both?
+[10:20] <zyga> pitti: not sure, I guess you are right that I could just spawn the daemon once via pkexec
+[10:20] <zyga> pitti: er, scratch that
+[10:20] <zyga> pitti: so dbus daemon is okay, but then it would allow anyone to just run checkbox jobs
+[10:21] <pitti> depends what's more appropriate; i. e. you want the service to start when someone tries to talk to it, or when you know you are going to need it but it doesn't have a single D-BUS interface
+[10:21] <zyga> pitti: for instnace anyone could request 30 sleep/resume cycles
+[10:21] <pitti> right, that's the kind of backend service that needs authentication
+[10:21] <zyga> pitti: so hence dbus (to run as root and get started on deman) and polkit (to ask the user if they really agree)
+[10:23] <zyga> pitti: but I don't want to ask the user all the time, I guess this could be provided by having some session management inside the deamon itself, where some call to com.canonical.checkbox:OpenSession() would query polkit and provide some kind of object back that has actual RunJob() methods
+[10:24] <pitti> zyga: there's always "auth_admin_keep" if you want to retain the priv for the current session
+[10:24] <zyga> oh
+[10:24] <zyga> maybe that's easier than
+[10:24] <zyga> pitti: I'm sorry for throwing all the questions at you, I'm still reading polkit docs
+[10:24] <pitti> no worries :)
+[10:25] <pitti> zyga: but frankly, if most of your tests need root privs, why don't you just run the whole thing as root
+[10:25] <pitti> zyga: things like "suspend" don't need root, but I guess there are things which do
+[10:25] <zyga> pitti: I'm somewhat worried about the multitude environments in which polkit can be used (all the conbination of agents being or not being available, etc), I wonder if just using pkexec() is a simple workaround to make sure it will allways work (ssh to a headless server)
+[10:25] <zyga> pitti: well we want a UI too, I don't want to run the UI as root
+[10:26] <zyga> pitti: then the two want to talk
+[10:26] <pitti> zyga: you want the UI as user so that you can talk to the user's session d-bus and the like?
+[10:27] <pitti> otherwise you'll probably introduce ten times more attack vectors by having this rather open "execute 120 different things as root through PK" than having the whole thing run as root and benefit from the usual process isolation
+[10:27] <zyga> pitti: as a user to keep root away from too many things, the UI will be basically something you start from the desktop so I don't suppose that should run as root; I don't expect it will talk to many things thoug. A few of the tests want to see the user's environment but those don't need to run as root (so can use the current job starting mechaism)
+[10:29] <zyga> pitti: I could write a small tool, checkbox-run-job, that can be started with pkexec, that only runs commands from /usr/share/chcekbox/jobs
+[10:29] <zyga> pitti: then all the app logic runs as normal user
+[10:29] <zyga> pitti: and the helper would only load, validate and execute a job
+[10:29] <zyga> (and passthrough the IO)
+[10:29] <pitti> zyga: right, cf. "introduce more vectors than you close" :)
+[10:30] <zyga> pitti: 'cf?
+[10:30] <pitti> "refer to", "see above"
+[10:30] <zyga> hmm, but how would that be more attack vectors? it would need to run as root and pkexec could handle that, there would be a prompt
+[10:30] <zyga> pitti: is there a better way to do that?
+[10:31] <zyga> (and it's still less risky than plain sudo shell)
+[10:31] <pitti> zyga: if you really don't want to run the whole thing as root, then I don't know any
+[10:31] <pitti> polkit is the standard tech for that then
+[10:31] <zyga> pitti: when you say 'the whole thing', does that include the UI?
+[10:34] <pitti> zyga: yes
+[10:34] <zyga> pitti:  would that be safer?
+[10:34] <pitti> zyga: problem with auth-admin-keep is that from then on every other process in the session can run this process
+[10:34] <pitti> I think privileges are by-session, not by-process, but I'm not 100% sure of that
+[10:35] <zyga> pitti: then auth-admin-keep would not be what I want to use
+[10:35] <pitti> if auth-admin-keep is given out by process, it's fine
+[10:35] <zyga> pitti: ok, let me read on the docs a moment
+[10:38] <zyga> pitti: we don't seem to have pkttyagent in quantal?
+[10:41] <pitti> zyga: no, never heard of that
+[10:41] <pitti> zyga: pkexec just asks on /dev/console / stdout for authentication
+[10:42] <pitti> (unless something like polkit-gnome-authentication-agent-1 is available on the session bus)
+[10:42] <zyga> http://www.freedesktop.org/software/polkit/docs/latest/pkttyagent.1.html
+[10:42] <zyga> could be something new
+[10:43] <zyga> pitti: to some degree this is okay, I suspect that the checkbox rewrite will only be in raring (if we push the package) and we always use ppa for certification
+[10:43]  * zyga checks raring
+[10:55] <zyga> yeah, it's in raring
+[11:22]  * xnox is thinking to fork xchat
+[11:23] <ogra_> fork ? where to ?
+[11:27] <mitya57> which one? xchat or xchat-gnome?
+[11:27] <xnox> mitya57: xchat-gnome sucks as it is, so to fork xchat.
+[11:28]  * mitya57 +1's
+[11:28] <xnox> ogra_: mitya57: I'm just annoyed that I sometimes hit "Ctlr+L" and it wipes the screen, when I was looking at the browser window on my right screen and was hoping focus-to-follow-eye and put my cursor in the adress bar ;-)
+[11:29] <xnox> also new messaging indicator stuff, and other ZNC proxy fixes.
+[11:29] <ogra_> xnox, oh, i got the same prob with focus follow eye !
+[11:29] <mitya57> is upstream not accepting patches?
+[11:29] <ogra_> file a bug !
+[11:29] <ogra_> i'll confirm it
+[11:30] <xnox> mitya57: isn't upstream dead for years now?
+=== _salem is now known as salem_
+[11:31] <xnox> latest news from 28-Aug-2010
+[11:31] <mitya57> the latest commit was on 2012-07-27 according to LP
+[11:31] <xnox> I wonder if I should be running daily build.
+[11:34]  * mitya57 wonders if patches from https://bazaar.launchpad.net/~ubuntu-branches/ubuntu/raring/xchat/raring/files/head:/debian/patches/ were forwarded
+[11:35] <dholbach> I'm going to need a bit of help with one of the Developer Week sessions. We have a 30 minute slot on Thu 31st Jan 18:30 UTC where we need a speaker. We were thinking of having a "here's a small bug, and here's how to fix it" demo or a short session on how to find stuff to work on - but at this stage we'd be happy about whatever session we can put into the schedule. Can anyone please help out?
+[11:35] <dholbach> (https://wiki.ubuntu.com/UbuntuDeveloperWeek/Timetable)
+[11:38] <xnox> dholbach: is how to fix a package to cross-build "small" enough?
+[11:39] <xnox> (most of those patches are trivial, but does require understanding of autoconf terms build,host,targer-arch and the ~approx. similar DEB_HOST_ARCH & DEB_BUILD_ARCH Debian terms)
+[11:40] <dholbach> xnox, if you want to give a session and enlighten the audience about that, that'd be brilliant :)
+[11:40] <xnox> I was thinking I could present the problem, point at how to setup the environment for cross-building and demonstrate a few fixes.
+[11:40] <xnox> Q&A and hopefully get cross-building fixes from community =)
+[11:40] <dholbach> xnox, should 30 minutes be enough?
+[11:41] <xnox> Yes. It's actually very easy.
+[11:41] <xnox> And ties in nicely with Mobile Story ;-)
+[11:41] <dholbach> fantastic - does the timing work for you too?
+[11:41] <xnox> yeah, should be fine.
+[11:41]  * dholbach hugs xnox
+[11:41] <dholbach> thanks a lot!
+[11:42] <dholbach> xnox, would you like to use IRC or a Hangout-On-Air?
+[11:43] <xnox> Hmm... IRC sounds nice, but with Hangout-On-Air I guess I can share my screen.
+[11:43] <xnox> But with Hangout on Air, I'll need to shave. Hmm... I'll tinker with both and check what I will come up with.
+[11:43] <dholbach> it depends what you want to do - if you want people to copy/paste easily, IRC might work better
+[11:43] <dholbach> haha
+[11:44] <dholbach> just let me know beforehand, so we can plan it properly
+[11:44] <xnox> I don't want people to copy & paste stuff interractively, cause e.g. cross-build chroot setup will take a while for some people due to download sizes.
+[11:44] <xnox> Ok.
+[11:48]  * Laney tries to imagine xnox with a beard
+[11:49] <xnox> Laney: if you stock me on facebook enough there are some very obscure pictures when I had a thick even beard. I bet ev would be jealous.
+[11:50] <ev> ha! Hardly. In the time since you last saw me, my beard has grown tenfold.
+[11:50] <Laney> BEARD WARS
+[11:51] <ev> I've started to prefix GNU/ on all of my nouns.
+[11:53] <xnox> =)))))))))))))))))))
+[11:53] <dholbach> haha
+[12:09] <vibhav> Laney: heh
+[12:12] <cjwatson> mlankhorst: I'm sort of considering releasing the enablement X stack to -updates - the only insufficiently-aged piece is mesa-lts-quantal, at 5 days
+[12:12] <cjwatson> But given that it isn't installed by default, I'm not sure that's all that important
+[12:12] <cjwatson> mlankhorst: Do you have any remaining concerns?
+[12:14] <cjwatson> Maybe I should clean up http://people.canonical.com/~ubuntu-archive/testing/precise-proposed_probs.html first
+[12:15] <mlankhorst> erm uninstallable?
+[12:15] <cjwatson> Component mismatches, I think
+[12:15] <cjwatson> I'm just sorting things out so that I get a better report
+[12:16] <mlankhorst> it would seem so, I can install the first one from mesa list just fine, but I'll try them all
+[12:16] <cjwatson> (i.e. not your fault)
+[12:16] <cjwatson> Don't waste time on it for now
+[12:17] <mlankhorst> ok well moving to updates is fine with me then
+[12:25] <cjwatson> Hmm, none of this appears to reproduce in chdist
+[12:30] <mlankhorst> yeah I remember testing earlier revisions of xxv-omap too on panda, apart from compiz fail it worked
+[12:31] <mlankhorst> all the ones it reports have in common that they have libdrm or mesa as dependency
+[12:33] <davmor2> hey guys todays libc6 update triggered a debconf in the details terminal that wasn't obvious is this known already?
+[12:33] <cjwatson> mlankhorst: I think it's failing to consider -updates - fixing
+[12:33] <mlankhorst> ah
+=== security is now known as megha
+[12:40] <cjwatson> mlankhorst: OK, report is better now
+[12:41] <cjwatson> mlankhorst: If I just promote *-lts-quantal, am I missing anything?
+[12:43] <mlankhorst> I don't think so. xorg and mesa unrenamed were promoted already right?
+[12:44] <cjwatson> Yep
+[12:46] <mlankhorst> that should be enough then :)
+[12:47] <cjwatson> Oh, excepting linux*-lts-quantal of course
+[12:47] <cjwatson> OK, promoting
+[12:47] <mlankhorst> you do want some form
+[12:47] <mlankhorst> of linux*lts-quantal
+[12:48] <mlankhorst> else xorg-lts-quantal will suggest a package that can't be installed
+[12:48] <cjwatson> We already have earlier versions
+[12:48] <cjwatson> It's just an ABI change in -proposed right now, insufficiently tested and aged
+[12:48] <mlankhorst> ah sure
+[12:50] <cjwatson> *splat*
+[12:51] <mlankhorst> \o/
+[12:53] <cjwatson> That should make sru-report rather a lot faster
+[12:55] <mlankhorst> could always put https://launchpad.net/~ubuntu-x-swat/+archive/r-lts-backport in -proposed :P
+[12:57] <mlankhorst> did glibc get an update?
+[12:59] <cjwatson> I accepted one for {precise,quantal}-proposed this morning
+[13:01] <mlankhorst> ah right, the i386 version probably needs to update first. apt-get dist-upgrade wants to remove every 32-bits package I have
+[13:02] <cjwatson> -proposed has no guarantee of multiarch safety
+[13:02] <cjwatson> -updates does
+[13:09] <mlankhorst> indeed, would be nice if apt would choose to hold back packages in that case, instead of uninstalling an entire arch, though
+=== chiluk_away is now known as chiluk
+[14:09] <pitti> @pilot out
+=== udevbot changed the topic of #ubuntu-devel to: Ubuntu 12.10 released | Archive: Open | Dev' of Ubuntu (not support or app devel) | build failures -> http://qa.ubuntuwire.com/ftbfs/ | #ubuntu for support and discussion of hardy -> quantal | #ubuntu-app-devel for app development on Ubuntu http://wiki.ubuntu.com/UbuntuDevelopment | See #ubuntu-bugs for http://bit.ly/lv8soi | Patch Pilots:
+[14:10] <hadess> MacSlow, filed https://bugs.launchpad.net/notify-osd/+bug/1107919 if you or didrocks wants to handle it
+[14:10] <ubottu> Ubuntu bug 1107919 in Notify OSD "Should have builtin actions support" [Undecided,New]
+[14:15] <xnox> hadess: but there is existing fallback to standard gtk implementation.
+[14:15] <xnox> not sure which one it is.
+[14:16] <xnox> the problem with that fallback is that it doesn't use GApplication, therefore if one sends ten same action notifications you get 10 poop-ups, instead of the first one to "re-focus"ed
+[14:17] <xnox> so I am not sure how/where this has regressed.
+[14:17] <hadess> xnox, there's no implementation of the notification daemon specs in gtk+
+[14:17] <hadess> xnox, and notify-osd still claims not to support actions in the latest quantal version
+[14:18]  * xnox will have to look how some apps do end up showing GtkDialogs.
+[14:18] <hadess> xnox, because each one of them has that code implemented as fallback
+[14:19] <xnox> ideally we should patch them not to show actions at all. period. =) but hey, it's almost like swimming against upstream.
+[14:21] <hadess> xnox, which is impossible when you have a yes/no question coming from a core part of the desktop
+[14:22] <xnox> but the disk errors do create a GtkDialog with buttons to inspect or cancel.
+[14:22] <xnox> do they do it themself?
+[14:28] <mpt> xnox, I was just looking for an easy way to test it, but notify-send can't, and it seems like there's nothing in lp:notify-send/tests/ that does.
+=== dous_ is now known as dous
+[14:29] <xnox> mpt: yeah, since notify-osd doesn't support those =/ I was thinking to trow a python script together to test it.
+[14:37] <hadess> xnox, pretty certain they do
+[14:37] <hadess> xnox, or did, rather
+[14:38] <hadess> still does actually
+=== henrix is now known as henrix_
+=== henrix_ is now known as henrix
+=== slank_away is now known as slank
+[14:57] <MacSlow> hadess, there is a fallback that opens a gtk-dialog...
+=== henrix is now known as henrix_
+[14:57] <MacSlow> hadess, but that's actually a debug/devel feature disabled by default
+[14:58] <hadess> MacSlow, time to promote it!
+[14:58] <MacSlow> hadess, a distro wanting to ship that enabled is free to do so...
+[14:58] <hadess> MacSlow, the only distro shipping notify-osd as the default is ubuntu
+=== henrix_ is now known as henrix
+[14:59] <hadess> moving the burden to application developers to do something that can easily be implemented server side isn't too nice
+[15:00] <hadess> and it also means patching up parts of the stack that you use (from GNOME gnome-settings-daemon, vino, etc.) to implement the fallbacks
+=== slank is now known as slank_away
+=== slank_away is now known as slank
+=== ia_ is now known as hallyn
+=== ximion is now known as ximion-afk
+=== ximion-afk is now known as ximion
+=== fisted_ is now known as fisted
+=== jono is now known as Guest10241
+[16:30] <mpt> ev, the bug in question is bug 1018117
+[16:30] <ubottu> bug 1018117 in Apport "No design for crashes handled long after they happened" [Medium,In progress] https://launchpad.net/bugs/1018117
+=== sil2100_ is now known as sil2100
+[16:49] <cjwatson> mlankhorst: It'd be good if somebody could verify bug 927424
+[16:49] <ubottu> bug 927424 in plymouth (Ubuntu Precise) "Please backport commit to enable building without irrelevant drm libs on some arches" [High,Fix committed] https://launchpad.net/bugs/927424
+[16:49] <mlankhorst> cjwatson: could try on panda in a bit
+[17:00] <infinity> mlankhorst: Checking the build log from the buildds should do the trick.
+[17:02] <mlankhorst> well it no longer links against libdrm-intel1
+[17:02] <infinity> Right, I just checked that.
+[17:03] <mlankhorst> was just hoping to get it to show splash screen too, but just realized it would probably not do that on omap anyway through drm
+[17:03] <infinity> Not a hope.  libdrm-omap depends on kernel features that aren't in precise.
+[17:05] <mlankhorst> oops, also had to onew libdrm from my own ppa
+[17:06] <mlankhorst> it overwrote the ti one
+[17:10] <mlankhorst> ah well good enough for now :)
+[17:15] <gkcn> On 12.10, after eglibc (2.15-0ubuntu20.1) update I cannot install libc6:i386 and I get unmet dep. libc6:i386 : Depends: tzdata:i386 error. Is it normal?
+[17:15] <mlankhorst> you have -proposed by any chance?
+[17:16] <mlankhorst> if so just wait a few hours, or disable -proposed :)
+[17:16] <gkcn> mlankhorst, yeah I use proposed. Ah so, libc6:i386 not compiled yet?
+[17:17] <gkcn> all my i386 packages are gone with libc6:i386 package : (
+[17:18] <cjwatson> It'll sort itself out soon enough
+[17:18] <cjwatson> Just don't let it remove things for now
+[17:18] <gkcn> cjwatson, eheh too late but thanks for the info
+[17:19] <cjwatson> That was daft of you :)
+[17:19] <cjwatson> Don't ever let apt remove packages without checking
+[17:19] <mlankhorst> considering it was a screen full of deps for wine removal, hard to not notice :-)
+[17:19] <cjwatson> It's built on i386 now, so it's probably just an out-of-date mirror
+[17:22] <gkcn> if I wouldn't use an out-of-date mirror, is there still a chance to update at some point that libc6 update is published but libc6:i386 is not?
+[17:23] <cjwatson> gkcn: Yes
+[17:23] <cjwatson> gkcn: -proposed is not guaranteed to be multiarch-safe; it's fine for users who don't use -proposed
+[17:24] <xnox> cjwatson: clearly we need -proposed-proposed or not publish until fully build.......
+[17:24]  * xnox hides
+[17:24] <cjwatson> ... or not
+[17:24] <gkcn> cjwatson, I see.
+[17:24] <cjwatson> (archive complex enough)
+[17:25] <gkcn> cjwatson, is it hard to make it multiarch-safe or is it a deliberate decision to make testers suffer :)
+[17:26] <xnox> gkcn: haha. possibly we should not ask people to test stuff until build & published.
+[17:26] <cjwatson> It is hard
+[17:26] <xnox> gkcn: it's the same as arch:all (part of i386 build) finishing before arch:any (!i386 builds) packages
+[17:27] <xnox> such that anything that depends on -common gets broken.
+[17:27] <cjwatson> And in any case I tend to think that apt should behave a bit better, rather than further complexifying the archive just for this
+[17:27] <cjwatson> In the case xnox mentions it generally just holds things back, rather than removing lots of stuff
+[17:28] <xnox> holding multi-arch world back would be nice as well.
+=== deryck is now known as deryck[lunch]
+=== Ursinha is now known as Ursinha-afk
+=== henrix is now known as henrix_
+=== henrix_ is now known as henrix
+[18:32] <Phonequer> Hello. How would you package a new software? Should I create a bazar repo on sf.net, for example? Or just locally?
+[18:52] <stokachu> barry: i got the MP created for you
+[18:54] <barry> stokachu: cool.  i'm piloting tomorrow so i'll take a look then
+[18:54] <stokachu> sounds good, thanks man
+=== deryck[lunch] is now known as deryck
+[19:35] <Phonequer> If a package compiles with boost1.49 & boost1.50, which one should I choose for dependency?
+[19:37] <micahg> Phonequer: I believe 1.49 is default still
+=== funkyHat_ is now known as funkyHat
+[19:47] <dobey> Phonequer: use the one that is installed and works.
+=== Ursinha-afk is now known as Ursinha
+[20:02] <adam_g> how do i go about replacing an ubuntu package that was introduced directly into ubuntu, with the same package that has since been released into debian? anything special or will a standard debdiff work?
+[20:03] <micahg> adam_g: treat it like a merge
+[20:08] <adam_g> micahg: how so? i can 'bzr import-dsc' from debian and merge that, but future merges from debian via bzr branches woudln't have any common ancestor. or is that workflow not expected to work?
+[20:09] <micahg> adam_g: I'm not sure, I don't use the bzr workflow, can we not sync whoelsale?
+[20:09] <micahg> *wholesale
+[20:10] <tumbleweed> yeah, I'd debdiff the two and review the differences
+[20:10] <tumbleweed> the difference between this and a merge is that the deviation wasn't intentional. So one gets to decide how important each difference is...
+[20:11] <adam_g> micahg: yeah, i believe a direct sync would be fine here. i guess thats my real question: how to get rid of the original ubuntu package in favor of a direct sync ?
+[20:11] <tumbleweed> if they have the same name, you just sync
+[20:12] <Phonequer> dobey: I can block some other package that relies on 1.49 this way, can I ?
+[20:13] <dobey> Phonequer: i don't understand what you're asking
+[20:13] <hallyn> pitti: hi, do you have any comment on bug 1103022 ?
+[20:13] <ubottu> bug 1103022 in udev (Ubuntu) "70-udev-acl.rules needs to put g+rw on /dev/kvm" [High,Confirmed] https://launchpad.net/bugs/1103022
+[20:13] <Phonequer> dobey: It's about targeting boost 1.49/default or 1.50
+[20:14] <hallyn> i'd like to know whehter the workaround for that is going to need to stay in qemu for awhile or not
+[20:14] <dobey> Phonequer: aren't they parallel installable? isn't that why they have the version numbers in the names for the -dev packages?
+[20:14] <dobey> or is it just a transitional thing?
+[20:15] <infinity> hallyn: Hey, speaking of qemu.  The /etc/kvm/*if* scripts are dangling symlinks on my machine (or, were until I aimed them at /usr/bin/qemu-*)
+[20:17] <hallyn> infinity: interesting.  those should get fixed with the next merge from debian though
+[20:17] <infinity> hallyn: Kay, cool.
+[20:17] <hallyn> though that one scares me, and i should probably talk to you about it anyway: they're splitting up qemu-system into per-arch
+[20:17] <adam_g> tumbleweed: thanks
+[20:17] <hallyn> infinity: so qemu-system-x86 (for instance) will presumably start in universe
+[20:17] <Phonequer> dobey: you might be right. I listed my installed libboost* packages and I have 1.50 & 1.49. The problem was when I was installing libboost-filesystem1.49 -- it reported an impossible situation. However libboost-filesystem1.49.0 (i.e. +".0") works
+[20:17] <hallyn> (and i can only pray i get all the new breaks/repalces/provides right)
+[20:18] <hallyn> on the bright side, i do think this will be the last big reworking for awhile
+[20:18] <hallyn> infinity: anyway i'm working on that merge right now, but i'll jot down a note to check that when i'm done, thanks
+[20:19] <infinity> hallyn: Will there not still be a qemu-system and qemu-user metapackage that pulls in all the tiny ones for smooth upgrades?
+[20:19] <infinity> hallyn: If so, there should be no issues, it'll all sort itself.
+[20:19] <hallyn> infinity: yes, there is a qemu-system meta-package
+[20:19] <hallyn> cool
+[20:20] <hallyn> but my fear is lts->lts upgrades,
+[20:20] <infinity> hallyn: (and user and user-static, assuming those are being split too)
+[20:20] <dobey> Phonequer: is this for a properitary app, or what? you should just list the -dev package in Build-Depends, and use ${shlib:Depends} (or was it shlibs?) in the binary package Depends:, and the right thing will get used
+[20:20] <infinity> hallyn: Well, test precise->raring.  And whatever hacks you have in place now, don't drop until post-14.04.  Profit. :P
+[20:21] <hallyn> infinity: good point - user and user-static are actually not being split.  kind of weird.
+[20:21] <hallyn> i guess fewer ppl use those anyway, and if they do they want other arches, not their own.
+[20:22] <hallyn> whereas qemu-system, mostly they want their own arch and not the others
+[20:22] <Phonequer> dobey: Ok
+[20:22] <infinity> hallyn: Fair enough, I suppose.
+[20:27] <Phonequer> dobey: It also appears that boost can be installed in multiple versions -- except for -dev packages.. I guess I will go for libboost-dev, and other versionless names, to choose default version
+[20:27] <dobey> Phonequer: eh? i see libboost1.49-dev and libboost1.50-dev
+[20:28] <dobey> and for each of the other boost libs, as well there are versioned dev packages
+[20:29] <Phonequer> can't tell, if I do apt-get install liboost1.49-dev, it lists 1.50 packages in to "REMOVE" section and removes them
+[20:30] <sarnold> Phonequer: perhaps these threads can help? https://lists.ubuntu.com/archives/ubuntu-devel/2012-October/036001.html and https://lists.ubuntu.com/archives/ubuntu-devel/2012-October/036069.html
+[20:30] <sarnold> Phonequer: the second one spills into november too: https://lists.ubuntu.com/archives/ubuntu-devel/2012-November/036079.html
+[20:34] <Phonequer> yeah I added #ifdefs for boost 1.50 and the TIME_UTC_, I guess on my side this is handled
+[20:41] <hallyn> slangasek: debian isn't willing to have qemu depend on udev.  if it lets me drop delta from debian is it ok to switch from udevadm trigger back to debian's chown+chmod?
+=== henrix is now known as henrix_
+[21:01] <robert_ancell> slangasek, did you reject unity-greeter 0.2.9? What was the reason?
+[21:04] <hallyn> infinity: feh, so those docs which conflicted in qemu and qemu-system, which you moved to qemu;  they put then in qemu-system;  am i gonna need a replaces for that?
+[21:08] <infinity> hallyn: Talk them into moving them the other way, where all the other docs are? :/
+[21:09] <infinity> hallyn: It makes no sense to ship two docs in one package, and the rest in another.
+[21:09] <infinity> hallyn: And theirs is still in experimental, so a bit of breakage without a replaces for them is fine. :P
+[21:10] <infinity> hallyn: But yeah, if you decide to just follow suit, you'll need a replaces.
+[21:10] <infinity> hallyn: You could probably drop it later in the cycle, though, assuming that most partial upgraders will get it out of their system in a month or two.
+[21:12] <hallyn> lemme read back over the irc logs where mjt explained it...
+=== jackyalcine_ is now known as jalcine
+=== salem_ is now known as _salem
+[21:16] <hallyn> infinity: oh thta'ts right it was in email, not irc, where he says he'd rather move all docs out of the metapackage (qemu)(but hasn't done that)
+[21:17] <infinity> hallyn: Well, if he plans to just move the lot to, say, qemu-doc, then just do that. :P
+[21:18] <hallyn> i think he may ahve turned new-package-shy after all the per-arch qemu-system packages
+[21:18] <hallyn> but maybe ishould just go ahead and create it and passit back.  though then if he change his mind we're stuc, with uglier delta
+[21:19] <infinity> hallyn: Bonus points if the paths change from /usr/share/doc/qemu to /usr/share/doc/qemu-doc, then no replaces necessary for smooth upgrades.
+[21:19] <infinity> hallyn: But yeah, I'd pass him the patch before uploading it to Ubuntu, not after.  If he agrees to take it, then yay.
+[21:20]  * infinity decides he needs a nap.
+[21:20] <hallyn> \o
+=== jalcine is now known as JackyAlcine
+=== mahmoh1 is now known as mahmoh
+[22:38] <slangasek> hallyn: well, I don't think that's a very good solution, but I won't fight it...
+[22:38] <slangasek> robert_ancell: I don't recall rejecting unity-greeter; if I did, I would have either dropped a comment in the bug, or pinged the uploader
+[22:40] <hallyn> slangasek: ok i'm keeping it at the very least while it's needed to clear the acl
+[23:07] <robert_ancell> slangasek, I'm only basing this on https://bugs.launchpad.net/ubuntu/+source/lightdm/+bug/972537/comments/18 because I can't find any reason elsewhere why it was rejected
+[23:07] <ubottu> Ubuntu bug 972537 in unity-greeter (Ubuntu Precise) "lightdm doesn't allow expired passwords" [High,Fix committed]
+=== slank is now known as slank_away
+=== matttbe_ is now known as matttbe
+=== slank_away is now known as slank
