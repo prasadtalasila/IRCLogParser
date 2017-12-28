@@ -50,6 +50,7 @@ setup(
         'nltk',
         'plotly',
         'ddt',
+        'mock'
     ],
     extra_requires={
     	'dev': [
