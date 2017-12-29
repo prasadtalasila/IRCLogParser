@@ -1,0 +1,106 @@
+=== Amaranthus is now known as Amaranth
+[09:34] <mlankhorst> morning
+=== yofel_ is now known as yofel
+[11:41] <mlankhorst> hm, shall I push the reverse prime changes?
+[11:41] <tjaalton> yes
+[11:41] <tjaalton> note that I've added some changes to the current branch
+[11:41] <mlankhorst> yeah noticed
+[11:43] <mlankhorst> I didn't bother adding numbers to the patches, I feel like it's useless to do so now :)
+[11:43] <tjaalton> yep
+[11:47] <tjaalton> huh, fresh 12.10 installation doesn't have jockey installed?
+[11:48] <tjaalton> oh it's under software sources now
+[11:51] <tjaalton> oh and enabling the blob should yell loud and clear that the machine needs to be rebooted, logout will end in misery..
+[11:53] <tjaalton> looks like reboot isn't much better, I get no unity with hd5450 & fglrx
+[11:53] <tjaalton> so much for testing s3 :)
+[11:58] <tjaalton> didn't build the module..
+[12:50] <mlankhorst> oops, I pushed the xorg-server change out under your name.
+[12:57] <tjaalton> oh, heh
+[13:34] <mlankhorst> oh silly xxv-ati.git, one commit 'Fixes rotation with glamor', next commit another fix '[...] Otherwise rotation won't work when glamor support isn't built in.'
+[13:36] <tjaalton> hehe
+[15:34] <tjaalton> mlankhorst: so what do I need to do to test the reverse optimus patches? should it just work when I plug a monitor, or does it need some xrandr tricks?
+[15:36] <mlankhorst> well ati one is still lacking, was hoping i could do a point release first and then just apply the patch on top
+[15:36] <tjaalton> i have intel/nouveau
+[15:37] <mlankhorst> oh sure, just update both
+[15:37] <mlankhorst> and check xrandr -q
+[15:37] <tjaalton> nice..
+[15:37] <tjaalton> will do in a bit
+[15:37] <mlankhorst> I'm fighting nouveau interrupts atm :/
+[15:37] <mlankhorst> btw you might get some conflicts with the symbolic name, like having 2 LVDS1 panels or something
+[15:38] <tjaalton> so 3.5.0-18 has three commits to radeon, none of which have any way of affecting s3 resume on my card :/
+[15:38] <tjaalton> ok
+[15:38] <mlankhorst> tjaalton: didn't fglrx suspend break too? what if it's not a radeon commit that broke it
+[15:39] <tjaalton> mlankhorst: well fglrx is broken on 12.10 regardless
+[15:39] <tjaalton> tried the newer version too
+[15:40] <mlankhorst> ah :-(
+[15:40] <tjaalton> with the stock & updates kernels, all broken so that it won't survive too many cycles :)
+[15:40] <tjaalton> this is a different issue after all
+[15:40] <mlankhorst> so lts-quantal is broken because quantal is broken? to the panic mobile! :O
+[15:40] <tjaalton> well
+[15:41] <tjaalton> I couldn't reproduce the radeon issue on quantal..
+[15:41] <tjaalton> so wondering wth might cause it
+[15:44] <mlankhorst> wasn't there a upstream bug that was related?
+[15:44] <tjaalton> yes
+[15:46] <tjaalton> oh well, just have to bisect -17..-18
+[15:47] <mlankhorst> ah k, I'm going to push a new radeon release upstream, then to raring in a bit
+=== jono is now known as Guest7503
+[16:41] <mlankhorst> pushed :)
+[18:15] <bryce> tjaalton, for bug #1068994 someone suggested disabling MT as a work around.  Is that feasible?  Wanna try it?
+[18:15] <ubottu> bug 1068994 in ubuntu-nexus7 "button1 gets stuck after a while" [Critical,Confirmed] https://launchpad.net/bugs/1068994
+[18:17] <tjaalton> bryce: I already asked, there's no way to do that other than building a server/driver without MT support
+[18:18] <mlankhorst> tbh we should diagnose the root cause
+[18:19] <tjaalton> orly? :)
+[18:20] <mlankhorst> I always wanted to dive into the input stack, down the rabbit hole!
+[18:20] <tjaalton> seriously doubt that, but ymmv :)
+[18:20] <mlankhorst> Sarcasm selftest complete!
+[18:21] <mlankhorst> https://bugs.freedesktop.org/show_bug.cgi?id=56557 ?
+[18:21] <ubottu> Freedesktop bug 56557 in Server/Input/Core "Pointer emulation on root window is broken" [Normal,Assigned]
+[18:21] <mlankhorst> maybe worth testing the series listed at the end
+[18:22] <tjaalton> https://bugs.freedesktop.org/show_bug.cgi?id=56578
+[18:22] <ubottu> Freedesktop bug 56578 in Server/Input/Core "race condition with active/passive grabs when opening menus with touch" [Normal,New]
+[18:22] <tjaalton> it's not that one
+[18:22] <tjaalton> already tried those
+[18:25] <bryce> is there any debugging options that can be flipped on?
+[18:25] <mlankhorst> seems to be in the bug report
+[18:26] <mlankhorst> probably just enable the standard spam
+[18:26] <bryce> m
+[18:30] <bryce> so... any other ideas?
+[18:31] <ogra_> bryce, i'm still not convinced it is X 
+[18:31] <mlankhorst> what else, synaptics?
+[18:31] <ogra_> if it happens to me, i can still interact with apps ... just not with desktop elements
+[18:31] <tjaalton> it's using evdve
+[18:31] <tjaalton> evdev
+[18:31] <mlankhorst> oh evdev, still
+[18:31] <tjaalton> ogra_: those use Xi1
+[18:33] <tjaalton> ogra_: search for an app that uses proper Xi2-based multitouch, and keep it running to see if you still can get to it when input gets stuck
+[18:33] <ogra_> tjaalton, all compiz bits hang ... but i can still use the ubuntu key + number in onboard to switch to i.e. firefox and can tap on links
+[18:34] <ogra_> onboard apparently never dies (i have the floating button enabled, that also always works to bring it up)
+[18:34] <ogra_> so i can navigate my way though the desktop with it to notice that i can even play aisle riot while the rest of the desktop is unresponsive
+[18:35] <ogra_> but i can not move any windows around nor get any clicks through to launcher or panel
+[18:36] <ogra_> you guys are indeed the experts but to me it looks more like a compiz issue (when X input dies i would expect that to affect everything)
+[18:37] <bryce> ogra_, intriguing, yeah may not be X
+[18:37] <bryce> (certainly wouldn't be the first time an "X bug" turned out to just be compiz's fault...)
+[18:38] <bryce> ogra_, is it unreproducible with non-compiz WM's?
+[18:38] <ogra_> yes, it wasnt reproducable with lubuntu 
+[18:38] <ogra_> i havent tried non unity setups in a while though
+[18:39] <bryce> ogra_, I recall we'd gotten gnome-shell up on n7; if it's unreproducible there too then I think we can shift focus to compiz
+[18:39] <ogra_> i think desrt got it running 
+[18:40] <ogra_> i never managed, there is some GL check that didnt work and only got me into fallback when i tried, he had the full shell up
+[18:40] <ogra_> tjaalton, what woudl such an app be ?
+[18:40] <ogra_> (any pointers ?)
+[18:41] <tjaalton> well, whot never blamed it on compiz so we just concluded that it's hitting some bug that the other vm's don't
+[18:41] <tjaalton> :)
+[18:41] <tjaalton> ogra_: good question..
+[18:41] <tjaalton> maybe there are some demo apps?
+[18:41] <ogra_> compiz ?
+[18:42] <ogra_> :)
+[18:42] <bryce> there's that finger drawing toy app, that's fully MT and Xi2
+[18:43]  * ogra_ googles "finger drawing toy app" and fails :P
+[18:45] <bryce> bah :-)
+[18:46] <bryce> ts_test
+[18:46] <bryce> http://ofb.net/~rafi/ts_test.tgz
+[18:48] <tjaalton> that's old
+[18:48] <tjaalton> doubt it does xi2
+[18:48] <bryce> yeah dunno
+[18:54] <Sarvatt> git://people.freedesktop.org/~whot/multitouch
+[18:58] <tjaalton> too obvious :)
+=== Quintasan_ is now known as Quintasan

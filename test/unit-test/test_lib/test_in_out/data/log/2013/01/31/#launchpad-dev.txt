@@ -1,0 +1,204 @@
+[00:00] <StevenK> wgrant: Thanks. When that hits devel, I'll rip out the invalidates, add one to the match method of BrowsesWithQueryLimit and toss it at ec2
+[01:12] <StevenK> wgrant: Yes, having just found the code in the glue, I was going to move the project back, and you alreadyd did it.
+[01:13] <wgrant> Yes :)
+[01:13] <wgrant> loggerhead doesn't have Launchpad-specific bits
+[01:13] <wgrant> They're in launchpad_loggerhead, in the LP tree
+[01:14] <StevenK> Yes, the glue
+[01:15] <wgrant> failures=36
+[01:16] <StevenK> 37 queries/external actions issued in 4.41 seconds
+[01:16] <StevenK> That looks like SUCCESS
+[01:17] <wgrant> DF?
+[01:17] <wgrant> Or it on qas already?
+[01:17] <StevenK> That's qas
+[01:17] <wgrant> Nice
+[01:17] <wgrant> ubuntu needs DS preloading, but at least there's only ever likely to be a few DSes
+[01:18] <wgrant> So it's not so important.
+[01:23] <StevenK> wgrant: https://code.launchpad.net/~stevenk/launchpad/loggerhead-reject-no-sreg/+merge/145760
+[01:23] <wgrant> StevenK: Terrible error message is terrible.
+[01:24] <StevenK> The log, or the exception
+[01:24] <StevenK> ?
+[01:24] <wgrant> The one that's going to be entirely unhelpful to users :)
+[01:25] <wgrant> (also, we prefer "cannot" to "can not" in most contexts)
+[01:26] <StevenK> wgrant: http://pastebin.ubuntu.com/1591934/
+[01:27] <wgrant> Maybe "You don't have a Launchpad account. Check that you're logged in as the right user, or log into Launchpad and try again."
+[01:32] <StevenK> wgrant: I've pushed that up and the diff has updated.
+[01:33] <wgrant> It's a bit sad that you can't set explanation in __init__
+[01:33] <wgrant> But there seems to be no way around it
+[01:33] <wgrant> StevenK: Is this testable?
+[01:33] <StevenK> I couldn't find any tests
+[01:33] <wgrant> Indeed
+[01:34] <StevenK> That entire method that block is in is mocked out
+[01:34] <wgrant> r=me
+[01:34] <wgrant> Yeah
+[02:47]  * StevenK peers at these failures
+[02:48] <StevenK> IntegrityError: new row for relation "specification" violates check constraint "specification_completion_recorded_chk"
+[02:51] <StevenK> wgrant: Do you have a broken OpenID account on staging handy?
+[03:09] <wgrant> StevenK: OOPS-17fcee4cc96517eb7f0dca9fe7cdf8ec
+[03:10] <wgrant> codebrowse must be lagging
+[03:12] <StevenK> Oh, the glue is run on tellurium?
+[03:12] <wgrant> StevenK: It's run as part of the codebrowse application, yes.
+[03:23] <StevenK> wgrant: No magic BFJ branches for me yet?
+[03:27] <wgrant> StevenK: https://code.launchpad.net/~wgrant/launchpad/flatten-bfj-0-db/+merge/145540 https://code.launchpad.net/~wgrant/launchpad/flatten-bfj-1-populate/+merge/145541 https://code.launchpad.net/~wgrant/launchpad/flatten-bfj-2-garbo/+merge/145542 https://code.launchpad.net/~wgrant/launchpad/flatten-bfj-3-query/+merge/145543 are the majority of the current state, but not yet ready for review
+[03:28] <StevenK> Crumbs
+[03:29] <wgrant> 0, 1, and 2 will grow a couple of extra bits each
+[03:30] <wgrant> 3 is basically done, as the corresponding additions are worth a 3.5
+[03:30] <wgrant> There'll be a 2.5 to drop garbo
+[03:30] <StevenK> Yeah
+[03:30] <wgrant> And 4 has another 100 lines of diff or so
+[03:30] <StevenK> But that's a clean revert of the revno -2 ends up as, so meh
+[03:30] <wgrant> Exactly
+[03:37] <StevenK> wgrant: I thought our Zope machinery caught Unicode errors? Bug 897053
+[03:37] <_mup_> Bug #897053: apport generated urls can trigger UnicodeDecodeError <oops> <Launchpad itself:Triaged> < https://launchpad.net/bugs/897053 >
+[03:37] <wgrant> StevenK: In URLs, sure
+[03:37] <wgrant> That bug's not about that.
+[03:39] <StevenK> wgrant: It isn't?
+[03:40] <wgrant> StevenK: That doesn't seem to be an error involving invalid Unicode in a URL segment, no
+[03:41] <StevenK> Oh, the URL segment is okay, it's the form data that's bong
+[03:41] <wgrant> No
+[03:41] <wgrant> It's the widget that's the problem.
+[03:42] <wgrant> Well, or something's not giving the widget unicode, I guess
+[03:42] <wgrant> Look at the traceback.
+[04:01] <StevenK> wgrant: Haha, I see that OOPS
+[04:03] <wgrant> ?
+[04:06] <StevenK> wgrant: https://oops.canonical.com/?oopsid=OOPS-cc84945e33282c37b36e0441a72db951 but it causes an ISE
+[04:08] <wgrant> StevenK: "that OOPS"?
+[04:08] <wgrant> Oh
+[04:08] <StevenK> wgrant: ./2013-01-31/OOPS-986af52b1270191ca6d71de17241b352 on neem, it has your username on it, and is a UnicodeDecodeError
+[04:08] <wgrant> The instance that I generated?
+[04:08] <wgrant> Right
+[04:09] <StevenK> I'm a little worried that it's ISEing
+[04:09] <StevenK> Without giving an OOPS id
+[04:14] <StevenK> And the access log is not helpful
+[04:14] <wgrant> The access log won't show errors
+[04:15] <wgrant> Because it's an access log :)
+[04:15] <StevenK> The error log is also unhelpful
+[04:18] <StevenK> I can view other OOPSes, just not that one
+[04:32] <StevenK> wgrant: ('value', "package uml-utilities 20070815-1.1ubuntu2 failed to install/upgrade: el subproc\xe9s post-installation script retorn\xe0 el codi d'eixida d'error 1")
+[04:32] <StevenK> Note the lack of u
+[04:32] <wgrant> StevenK: Well, yes, that was pretty obvious from the exception :)
+[04:32] <wgrant> Casting a unicode to a unicode doesn't try to decode it!
+[04:34] <StevenK> Still trying to work out the cause
+[04:35] <StevenK> So it's a TextWidget, and it seems to expect unicode strings
+[04:37] <wgrant> Right
+[04:40] <StevenK> I wonder if it's the call to self.widgets['title'].setRenderedValue(self.extra_data.initial_summary)
+[04:40] <StevenK> Which may point to publishTraverse() not doing unicode-y things
+[04:40] <wgrant> I'm not sure it's the publisher's place to decode query string arguments.
+[04:40] <wgrant> Work out how it ends up undecoded.
+[04:41] <StevenK> Sadly, it isn't that
+[04:42] <wgrant> publishTraverse handles the path, not the query string, so I'm not terribly surprised.
+[04:43] <StevenK> I mean the extra_data bit, which has a comment saying that it was populated by publishTraverse
+[04:43] <wgrant> Oh, are you sure you care about extra_data?
+[04:44] <wgrant> That's usually the bit retrieved from the apport blob
+[04:44] <StevenK> I do not in this case
+[04:44] <wgrant> (which is referenced by a trailing UUID path segment; hence the publishTraverse relevance)
+[04:44] <StevenK> My theory was incorrect
+[04:45] <StevenK> H
+[04:45] <StevenK> *Hmmm
+[04:45] <StevenK> We just toss the data straight into render()
+[04:46] <StevenK> WCPGW and all
+[04:49]  * wgrant comes up with a cunning plan
+[04:50] <StevenK> Oh?
+[04:50] <wgrant> buildfarmjob will survive my purge
+[04:50] <wgrant> Though it shall be gravely disfigured.
+[04:52] <StevenK> /home/steven/launchpad/lp-sourcedeps/eggs/zope.app.form-3.8.1-py2.7.egg/zope/app/form/browser/textwidgets.py:139: UnicodeWarning: Unicode equal comparison failed to convert both arguments to Unicode - interpreting them as being unequal
+[04:52] <StevenK>   if self.convert_missing_value and input == self._missing:
+[04:53] <StevenK> Which means something is tossing a string into _toFieldValue
+[04:56] <StevenK> Which is implicated by the zope form machinery
+[04:57] <StevenK> wgrant: Disfigured how?
+[05:04] <wgrant> StevenK: Gravely!
+[05:04] <wgrant> Duh
+[05:05] <StevenK> Hah
+[05:05] <StevenK> wgrant: Your helpfulness knows no bounds :-P
+[05:07] <wgrant> :)
+[05:08] <StevenK> wgrant: In other news, I don't understand this error
+[05:08] <wgrant> StevenK: Why not?
+[05:08] <StevenK> It looks like we just toss the string into the widget, and then it goes bang.
+[05:09] <wgrant> Who is "we"?
+[05:09] <wgrant> Given the arg is named field.title, it's plausible that it's zope.app.form doing it itself
+[05:10] <StevenK> wgrant: http://pastebin.ubuntu.com/1592257/
+[05:10] <StevenK> Portion of a traceback.print_stack()
+[05:10] <wgrant> StevenK: That's probably well after the problematic value has been injected
+[05:11] <StevenK> wgrant: A large chunk of the traceback is all TALES, and then zope's publisher calling render()
+[05:13] <wgrant> Ah, that sequence isn't actually valid UTF-8
+[05:13] <wgrant> That might be why it's not being automatically decoded
+[05:13] <StevenK> I thought that was known
+[05:13] <StevenK> I just don't know what does that part of the magic
+[05:16] <wgrant> Probably zope.formlib
+[05:16]  * wgrant looks
+[05:24] <wgrant> hee hee
+[05:24] <wgrant>         for charset in self.charsets:
+[05:24] <wgrant>             try:
+[05:24] <wgrant>                 text = unicode(text, charset)
+[05:24] <wgrant>                 break
+[05:24] <wgrant>             except UnicodeError:
+[05:24] <wgrant>                 pass
+[05:25] <StevenK> OH
+[05:25] <StevenK> WHY
+[05:25] <StevenK> WHY
+[05:25] <StevenK> Is that in zope.formlib?
+[05:25] <wgrant> Nope, the base BrowserRequest
+[05:26] <wgrant> (which is in zope.publisher, but not actually related to the publisher)
+[05:26] <StevenK> Twitch
+[05:26] <wgrant> I wonder what the test suite will think of you if you override that to decode as UTF-8 or die
+[05:26] <StevenK> Remove the try and except?
+[05:27] <wgrant> How did we end up handling the bad unicode in PATH_INFO thing?
+[05:27] <StevenK> At the moment, I'm wondering why Store.of(context) is None
+[05:27] <wgrant> Ah, that's right
+[05:27] <wgrant> We decode as UTF-8 with replace
+[05:27] <wgrant> StevenK: Which?
+[05:28] <StevenK>   File "/home/steven/launchpad/lp-branches/browseswithquerylimit-invalidates/lib/lp/testing/matchers.py", line 84, in match
+[05:28] <StevenK>     Store.of(context).invalidate()
+[05:28] <wgrant> StevenK: This decoding happens later, so you might be able to raise an exception that you can turn into a 400
+[05:28] <StevenK> AttributeError: 'NoneType' object has no attribute 'invalidate'
+[05:28] <wgrant> (we couldn't do that with PATH_INFO because it was too early)
+[05:28] <wgrant> What is context?
+[05:29] <StevenK> wgrant: So inside zope.publisher, or we call into the publisher?
+[05:30] <StevenK> (Pdb) p context
+[05:30] <StevenK> <lp.registry.model.distributionsourcepackage.DistributionSourcePackage object at 0x10887fd0>
+[05:30] <wgrant> StevenK: DSPs aren't real objects
+[05:30] <wgrant> Try DSP.distribution
+[05:30] <wgrant> (the distributionsourcepackage table is represented by DistributionSourcePackageInDatabase, not DistributionSourcePackage)
+[05:30] <wgrant> StevenK: I'd override LaunchpadRequest._decode or so
+[05:31] <wgrant> Either make it decode('utf-8', 'replace') or catch the UnicodeDecodeError and give a 400
+[05:31] <StevenK> (Pdb) p context
+[05:31] <StevenK> <lp.registry.model.milestone.ProjectMilestone object at 0xf0a6dd0>
+[05:31] <wgrant> 'cause if someone uses anything other than UTF-8 then they're not worth our time :)
+[05:31] <wgrant> ProjectMilestone also isn't real
+[05:31] <wgrant> Could just invalidate all stores
+[05:31] <StevenK> That would work too
+[05:32] <StevenK> IStore.invalidate() ?
+[05:32] <wgrant> No
+[05:32] <wgrant> Interfaces don't work that way
+[05:32] <wgrant> lp.services.database.sqlbase.flush_database_caches()
+[05:35] <StevenK> Oh, nice. That branch failed to scan six hours ago, and I didn't notice.
+[05:36] <StevenK> wgrant: You mean LaunchpadBrowserRequest ?
+[05:37] <StevenK> The interface seems to be IBasicLaunchpadRequest
+[05:37] <wgrant> StevenK: Possibly, or something lower than that
+[05:37] <wgrant> I forget what the hierarchy looks like
+[05:37] <StevenK> I can't find a LaunchpadRequest class, that's all
+[05:37] <wgrant> But any of our request classes that inherit zope.publisher.browser.BrowserRequest at all want it
+[05:38] <wgrant> THey might all inherit LaunchpadBrowserRequest
+[05:39] <StevenK> class LaunchpadBrowserRequestMixin:
+[05:39] <StevenK>     """Provides methods used for both API and web browser requests."""
+[05:39] <StevenK> Haha
+[05:40] <StevenK> wgrant: lp.services.webapp.servers.get_query_string_params
+[05:47] <wgrant> StevenK: Yeah, that uses the same _decode method
+[05:49] <StevenK> wgrant: https://code.launchpad.net/~stevenk/launchpad/browseswithquerylimit-invalidates/+merge/145774
+[05:52] <wgrant> StevenK: You'll want to flush before you register the query collector, otherwise any pending writes will get collected
+[05:52] <wgrant> Also, test_sprint has a flush that's now redundant
+[05:56] <StevenK> wgrant: http://pastebin.ubuntu.com/1592333/
+[05:57] <wgrant> StevenK: Seems odd to split the collector definition and registration, but otherwise fine
+[05:57] <StevenK> wgrant: http://pastebin.ubuntu.com/1592336/
+[05:57] <wgrant> Indeed
+[06:04] <StevenK> wgrant: That MP is now with more red and a little more green
+[06:05] <wgrant> StevenK: r=me, thanks
+[06:09] <StevenK> db-devel is obviously cursed
+[06:10] <wgrant> Apparently.
+=== yofel_ is now known as yofel
+[09:04] <adeuring> good morning
+=== slank_away is now known as slank
+=== matsubara is now known as matsubara-lunch
+=== matsubara-lunch is now known as matsubara
+=== deryck is now known as deryck[lunch]
+=== deryck[lunch] is now known as deryck
+=== matsubara is now known as matsubara-afk

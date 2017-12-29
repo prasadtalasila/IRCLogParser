@@ -1,0 +1,16 @@
+[17:21] <jodh> stgraber/xnox: my setenv branch should be usable if you want to give it a try. Tests will take a day or so to write (he says optimistically ;-) before I raise an MP.
+[21:17] <jonnor> I have a custom software running on Ubuntu 12.04 where I just converted from using sysvinit scripts to an upstart job for starting. Problem is: the service crashes when ran with upstart, and not without
+[21:17] <jonnor> How is the runtime environment of an upstart (system) job different from that of sysvinit or when using a shell?
+[21:18] <jonnor> And how may I attach gdb to my service when ran from upstart?
+[21:19] <jonnor> The issue is reproducible when the upstart job just consists of "exec /opt/my/service"
+[21:54] <jonnor> I am able to run gdbserver from inside the upstart job, and connect to it using gdb (on same machine). However, when ran this way, no symbols are found for the executable and the stack only has one entry in ld. When running gdb /opt/my/service I get all symbols and proper stack (and no crash...)
+[21:54] <xnox> when running from upstart there isn't much of environment at all. Try for example `exec env` and look at the logs.
+[21:55] <xnox> (under sysvinit the environment is poluted more)
+[21:55] <xnox> for example $HOME is not set at all.
+[21:59] <jonnor> xnox: thanks! It is very minimal indeed. The code uses $HOME, could be that is what takes it down
+[22:01] <jonnor> xnox: haha, exporting HOME fixed it. Thanks a lot!
+[22:01] <xnox> well it did take down and caused emacs daemon to hang. it turns out software doesn't often handle missing environment variables well ("e.g. surely $HOME will always be set")
+[22:01] <jonnor> you can tally this piece of software up on that list :p
+[22:07] <jonnor> and confirmed - converting my sysvinit script to upstart fixed my original issue as well. Now I can sleep
+[22:07] <jonnor> good night
+[22:19] <xnox> night

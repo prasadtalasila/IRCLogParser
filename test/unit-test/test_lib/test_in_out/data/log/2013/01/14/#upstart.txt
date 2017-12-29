@@ -1,0 +1,20 @@
+=== soren_ is now known as soren
+[14:50] <royal121> Hello Everyone! Where can I read about migrating to upstart from other init systems?
+[14:54] <stgraber> xnox, jodh: I may be a couple of minutes late for the meeting
+[15:15] <xnox> jodh: the fix is to write cookbook answer "if you need to depend on the sysv init starting, just add emit that event in the init script"
+[15:15] <xnox> stgraber: ^
+[15:15] <xnox> =))))
+[15:15] <xnox> jodh: stgraber: i can hear you.
+[15:16]  * xnox 's ISP is rated as the worst in the UK for latency (virgin media)
+[22:51] <emacsen> I have a (hopefully) simple question. I want to write a daemon that detects when the network is active and only attempts to operate then. Is upstart the way to do that, and if so, what should I be looking for?
+[22:55] <stgraber> we don't have any internet-is-ready even at this point (assuming you're using upstart on ubuntu), mostly because the definition of "internet" and "is-ready" depends quite a lot on what you're planning to do with it :)
+[22:55] <stgraber> so you can your job depend on an interface being configured but can't reliably have it depend on the system having internet connectivity
+[22:55] <stgraber> *can make
+[22:56] <stgraber> if you just want to start it when the system is done configuring all defined network interfaces, you can have it start on "static-network-up"
+[22:58] <emacsen> stgraber, okay. Thinking about what I want to do, I guess it doesn't matter much
+[22:58] <emacsen> (I'm just thinking about an improved msmtpQ
+[22:58] <emacsen> I can just do it with cron
+[23:06] <stgraber> xnox: got initctl to work with UPSTART_SESSION, still have to debug why I'm seeing all entries twice (same thing when using --session), will do that tomorrow
+[23:07] <stgraber> my current guess is that for some reason initctl queries both the session and system bus for the state, which is obviously quite wrong
+[23:08] <stgraber> oh, and initctl apparently gets into an infinite loop when you try to start/stop a job that has a name matching that of a system job ;)
+[23:08] <stgraber> (same bug, just worse symptom that what I first noticed)

@@ -1,0 +1,126 @@
+[00:35] <cjwatson> infinity: d-i pushed to -updates
+=== doko__ is now known as doko
+[02:40] <doko> cjwatson, infinity: online?
+[02:51] <doko> hm, promoted libcloog-ppl1 for now
+=== henrix_ is now known as henrix
+=== zequence_ is now known as zequence
+=== yofel_ is now known as yofel
+=== mmrazik is now known as mmrazik|lunch
+=== mmrazik|lunch is now known as mmrazik
+[11:27] <ogra_> there is a brcm-patchram-plus  in raring source NEW, it makes (or is supposed to make) BT work on the nexus7, would be great if that could be reviewed soon
+[11:48] <seb128> ogra_, seems ok, but shouldn't the source contain the license's text? e.g have a COPYING with the apache license?
+=== mmrazik is now known as mmrazik|afk
+[11:52] <ogra_> seb128, debian/copyright points to "/usr/share/common-licenses/Apache-2.0"
+[11:52] <ogra_> i think thats enough, iirc we only need to ship the full license if there is nothing in /usr/share/common-licenses/
+=== mmrazik|afk is now known as mmrazik
+[12:20] <ogra_> cjwatson, (or anyone else familiar with sysvinit ) .... i'd like a quick glance over http://paste.ubuntu.com/1589449/ before i upload
+[12:22] <ogra_> (it is tested and works on the nx7)
+[12:22] <cjwatson> what if /sys/module/cpu_tegra3 doesn't exist?
+[12:22] <cjwatson> this script's architecture-independent
+[12:23] <ogra_> so i should add tests for every line ?
+[12:23]  * ogra_ does so
+[12:24] <ogra_> hmpf, that gets bulky
+[12:24] <cjwatson> I think it's OK to assume that the interactive governor entries exist
+[12:24] <cjwatson> I don't know about cpuidle
+[12:25] <cjwatson> "if [ -d /sys/module/cpu_tegra3 ]; then ...; fi" around the two cpu_tegra3 entries seems to make sense to me?
+[12:25] <ogra_> yup
+[12:25] <cjwatson> You could sort the entries while you're at it
+[12:27] <seb128> cjwatson, brcm-patchram-plus in NEW is a simple debian-native style package with one .c file under apache license ... does the source needs to contain the apache license text?
+[12:28] <ogra_> debian/copyright points to "/usr/share/common-licenses/Apache-2.0" ...
+[12:28] <seb128> ogra_, well, my understanding (and what I've applied to far for NEWing) is that the license needs to be distributed with the source
+[12:29] <ogra_> right, mine always was that this only applies to licenses not in /usr/share/common-licenses
+[12:29] <cjwatson> If it's in common-licenses, and the situation is clear, it's normally fine for it to be referenced in debian/copyright
+[12:30] <cjwatson> We don't need to police upstream's licence distribution practices; we only need to ensure that we're meeting our obligations ourselves
+[12:30] <seb128> ogra_, I got uploaded rejected in Debian because the LGPL was not included in the upstream tarball IIRC (and it's in common-licenses)
+[12:30] <cjwatson> And distribution in common-licenses is enough
+[12:30] <seb128> uploads*
+[12:30] <xnox> seb128: source upstream tarball typically should have a full license text, debian binary packages can simply have a pointer to /usr/share/common-licenses.
+[12:31] <seb128> well, anyway, I just wanted to check
+[12:31] <cjwatson> xnox: it is not our job to police the contents of upstream tarballs
+[12:31] <seb128> ogra_, NEWed
+[12:31] <seb128> cjwatson, thanks
+[12:31] <ogra_> seb128, well, debian ...
+[12:31] <ogra_> :)
+[12:31] <cjwatson> seb128: I can't speak for every Debian ftp-master, but that doesn't fall under the various things in REJECT-FAQ
+[12:31] <seb128> cjwatson, maybe I remember wrongly or maybe some ftpmaster are picky about that ... anyway, thanks for the clarification!
+[12:32] <cjwatson> seb128: There has to be either an indication in the upstream tarball of the licence that the copyright holder(s) intended, or a description of how we figured out what the licence was
+[12:32] <cjwatson> ("License II" in REJECT-FAQ)
+[12:33] <cjwatson> Of course, it might still be a good idea to contact upstream and get them to spell out the licensing more clearly in their tarball
+[12:33] <cjwatson> I just don't think it's cause for rejection
+[12:35] <seb128> noted, thanks
+[12:37] <ogra_> hmm, how do i pull that into the image now
+[12:37] <ogra_> i guess a dep from ubuntu-defaults-nexus7 will do
+[12:40] <seb128> ogra_, binNEWed as well
+[12:43] <ogra_> cjwatson, http://paste.ubuntu.com/1589513/
+[12:50] <cjwatson> ogra_: LGTM
+[12:50] <ogra_> great, uploading
+[13:08] <tjaalton> I've done a clean install of 12.10, then ran dist-upgrade and rebooted. after that I enabled fglrx and rebooted again, noticing that unity didn't run because the fglrx module wasn't built
+[13:08] <tjaalton> the reason for that was that while linux-headers-generic got upgraded, it didn't pull the new headers package
+[13:09] <tjaalton> so I did 'apt-get --fix-policy install', which did pull the new headers and a bunch of others, like ecryptfs-utils
+[13:10] <tjaalton> also, linux-generic isn't installed on the system, although dpkg.log shows it being installed during image build
+[13:10] <tjaalton> same for the ecryptfs stuff
+[13:14] <tjaalton> so the question is, is it normal?
+[13:28] <cjwatson> tjaalton: there's a known bug in the quantal installer that some of the kernel metapackages were mistakenly uninstalled - bug 1070427
+[13:28] <ubot2> Launchpad bug 1070427 in ubiquity (Ubuntu Quantal) "Ubiquity removes kernel headers, fails to build nonfree drivers" [High,Triaged] https://launchpad.net/bugs/1070427
+[13:29] <cjwatson> We'll probably have to quirk it in upgrades from quantal, or something
+[13:29] <tjaalton> cjwatson: oh..
+[13:29] <tjaalton> thanks
+[13:29] <tjaalton> apw: ^
+[13:30] <apw> tjaalton, ahhh erp, ok that would expalin things
+=== smartboyhw_ is now known as smartboyhw
+=== henrix is now known as henrix_
+=== henrix_ is now known as henrix
+[19:39] <balloons> infinity, so I went to verify this bug -- i don't see a package in -proposed for it. https://bugs.launchpad.net/ubuntu/precise/+source/empathy/+bug/1018504
+[19:39] <ubot2> Ubuntu bug 1018504 in empathy (Fedora) "Empathy doesn't display buddy list" [Undecided,New]
+[19:41] <balloons> som the changelog doesn't show that it went in.. however the fix was backported from upstream: http://changelogs.ubuntu.com/changelogs/pool/main/e/empathy/empathy_3.4.2.3-0ubuntu1/changelog
+[19:41] <balloons> d'oh.. wrong changelog
+[19:45] <balloons> hmm.. ok, so telepathy-glib0 never saw an update -- ahh, that's the upgrade
+[20:15] <infinity> balloons: It wasn't empathy, it was telepathy.  The bug's mistargeted.
+[20:15] <balloons> infinity, yes I think it's sorted now
+[20:32] <infinity> balloons: Ugh, and if people had just done the right bug paperwork, I wouldn't have had to bug you.  There was another bug (without a precise task) that someone has verified months ago.  Grr.
+[20:32] <balloons> it's ok.. like I said, I thought it had gotten in and everything was taken care of
+[20:32] <balloons> I actually looked at that last year again in Nov when it was pinged again
+[20:33] <balloons> anyways.. let me know if I can do anything else to help
+[20:33] <infinity> balloons: I'm releasing it now, so not much more you can do for that bug. :P
+[20:33] <balloons> hehe
+[20:33] <balloons> good
+[20:34] <infinity> balloons: But we're driving toward 12.04.2, if you want to get together hordes of testers to throw at dailies.
+[20:34] <infinity> balloons: Between the new kernel/X enablement stacks and SecureBoot, there's something there to break for everyone.
+[20:34] <balloons> I know.. I was thinking about asking.. it's only going to be the dailies then -- no milestone at all?
+[20:35] <balloons> I believe slangesk answered me on it a few weeks ago when I asked saying so
+[20:36] <cjwatson> 12.04.2 will be the milestone
+[20:36] <cjwatson> I posted a note to ubuntu-devel-announce a few days ago with the rough schedule for candidate images and such
+[20:37] <infinity> balloons: Yeah, the milestone will appear soon enough.  But early testing never hurts.  Especially in the face of massive changes that we may need last-minute fixes for.
+[20:37] <balloons> cjwatson, ahh, ok good
+[20:37] <balloons> that's saner, I missed your annouce then
+[20:37]  * balloons goes to look
+=== henrix is now known as henrix_
+[21:28] <infinity> Dear Soyuz, the source isn't NEW when the package is already in -updates, kthx.
+[22:09] <cjwatson> infinity: Ancestry again :-/
+[22:10] <infinity> cjwatson: Yeahp.  And well-known.
+[22:11] <infinity> cjwatson: Just annoys me occasionally. :)
+[22:11] <cjwatson> Yeah
+[22:15] <antarus> anyone know where arges hangs out?
+[22:15] <infinity> Dear Soyuz.  Oh.  Wait.  We've had this conversation.
+[22:16] <infinity> antarus: #ubuntu-kernel is a fair bet.
+[22:16] <antarus> do you know what TZ he is in?
+[22:17] <infinity> Something vaguely Americanish.
+[22:17] <infinity> He's in Austin.
+[22:18] <antarus> ahh yes
+[22:28] <antarus> SpamapS: ping
+[22:45] <SpamapS> antarus: pong, sup?
+[22:45] <antarus> SpamapS: hi
+[22:46] <antarus> SpamapS: looking for a sponsor for eslayer   ] [ yofel     ]
+[22:46] <antarus> ugh
+[22:46] <antarus> chromeos screws me again
+[22:46] <antarus> eslayer   ] [ yofel     ]
+[22:46] <antarus> sigh
+[22:46] <antarus> I give up
+[22:46] <yofel> ^^
+[22:46] <antarus> bug 806248
+[22:46] <ubot2> Launchpad bug 806248 in unity (Ubuntu Precise) "unity::TimeUtil::TimeDelta returns an int value which overflows after 24 days of uptime" [High,In progress] https://launchpad.net/bugs/806248
+[22:46] <antarus> yofel: sorry :/
+[22:47] <antarus> chromeos + chromoting == crappy copy and paste :/
+[22:47] <yofel> happens ;)
+[22:47] <antarus> could be worse, I didn't paste confidential information ;p
+[23:47] <infinity> tjaalton: ^

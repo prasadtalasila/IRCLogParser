@@ -1,0 +1,211 @@
+[06:52] <Walther> I'm seeing serious battery life regressions in 13.04, any help?
+[06:52] <Walther> Bumblebee is installed and discrete video card is off
+[06:52] <Walther> but still I get around 2h from full battery instead of the ~5-6 i used to get
+[06:53] <Walther> Tunables in powertop are set
+[07:32] <gnomefreak> anyone know how to diable the paswor for keyring upon gnome loading
+[08:16] <gnomefreak> no one?
+[08:30] <bazhang> gnomefreak, I've always just left it blank; did you mean how to blank it once its set? system settings users and groups I thought, though let me check
+[08:32] <gnomefreak> i dont want the propmt at all, i did it like a year ago and cant recall how to do it
+[08:37] <bazhang> http://www.fandigital.com/2012/05/how-to-auto-unlock-keyring-in-ubuntu.html
+[08:37] <bazhang> gnomefreak, ^
+[08:39] <gnomefreak> thanks'
+[08:39] <bazhang> np
+[08:47] <gnomefreak> bazhang: here is where i got stuck: Next, on Password and Keys window, right-click on a password item that you will unlock. If you have more than one password item, just right-click on each of them. When the pop-up menu shown, click "Change Password".  not sure what one to change
+[08:47] <bazhang> gnomefreak, let me try on mine, just  a minute
+[08:49] <gnomefreak> thanks
+[08:51] <bazhang> I've got two as well. desktop couch authentication they are named, and evolution so three
+[08:51] <gnomefreak> bazhang: i dont have either of those
+[08:51] <bazhang> odd
+[08:52] <bazhang> well I never need to enter mine, so it must the same as my sudo password
+[08:57] <gnomefreak> bazhang: here is a screen shot. after the last entry in it is just browser passwordds. http://img217.imageshack.us/img217/6508/screenshotfrom201301150.png
+[08:57] <bazhang> yeah, no clue then sorry gnomefreak
+[08:58] <gnomefreak> bazhang: np thanks for you r help anyway
+[08:58] <gnomefreak> s/you r/your
+[09:00]  * gnomefreak wonders if some of the things changed 
+[09:06] <gnomefreak> 35 not upgraded :(
+=== yofel_ is now known as yofel
+[12:10] <rye> hi, totem / gnome-shell / any pulseaudio app is hanging due to https://bugs.launchpad.net/glibc/+bug/1085342 which is fixed upstream but broken in debian and consequently in ubuntu. Anybody here I can poke about that?
+[12:10] <ubottu> Ubuntu bug 1085342 in totem (Ubuntu) "Totem window constantly becomes unresponsive with gstreamer1.0-pulseaudio installed" [Undecided,Confirmed]
+=== trijntje_ is now known as trijntje
+[12:25] <Walther> I'm seeing serious battery life regressions in 13.04, any help? Bumblebee is installed and discrete video card is off but still I get around 2h from full battery instead of the ~5-6 i used to. Tunables in powertop are set.
+[12:27] <rye> Walther: what kernel and what is the video card that is currently enabled?
+[12:27] <Walther> Linux affogato 3.8.0-0-generic #3-Ubuntu SMP Fri Jan 11 17:26:08 UTC 2013 i686 i686 i686 GNU/Linux
+[12:28] <rye> Walther: for how long have you been running 3.8.0 kernel?
+[12:28] <Walther> intel i7 ivy bridge CPU -> HD4000 graphics, and optionally, with bumblebee, Nvidia 620M
+[12:28] <Walther> rye: Idk, when was it pushed to 13.04
+[12:28] <Walther> i just apt-get upgrade :)
+[12:29] <rye> Walther: because in 3.7 one there was a massive regression both in cpufreq (speed was always at 100%) and i915 kernel module which always was running at full speed.
+[12:29] <Walther> hmm
+[12:29] <Walther> interesting
+[12:29] <rye> Walther: 3.8.0 was pushed on Jan 11-Jan 12
+[12:30] <Walther> that then, probably
+[12:30] <Walther> I use this on my main laptop all the time, update&&upgrade multiple times a day
+[12:31] <rye> Walther: let me look up the file which shows what freq the GPU is on to see whether it is fixed for you
+[12:31] <rye> Walther: ok, first CPU - "cat /sys/devices/system/cpu/cpu0/cpufreq/cpuinfo_cur_freq"
+[12:32] <Walther> 800000
+[12:32] <rye> ok, cpufreq works
+[12:33] <Walther> works, two terminals with "yes" running -> increases to 2401000
+[12:34] <rye> Walther: sudo  cat /sys/kernel/debug/dri/0/i915_cur_delayinfo | grep CAGF
+[12:35] <Walther> 700MHz
+[12:35] <rye> Walther: ok, then these two are ok, when did you last measure the battery usage?
+[12:35] <Walther> with two terminals with yes, drops to 350MHz
+[12:36] <Walther> Not actually sure. Haven't had lectures during last month so I've pretty much been plugged in
+[12:37] <Walther> but i've had nice 5-6h battery life at least with 12.10 and initial setup of 13.04 if i recall correctly
+[12:37] <Walther> and I've always got >4h
+[12:37] <Walther> now if I unplug, it shows about 2h15
+[12:38] <Walther> (and it's not just the battery indicator, it actually doesn't last longer)
+[12:38] <rye> Walther: well, ok, if you can test it now with 3.8.0 then that should be much better, with 3.7 on intel machines the CPU and GPU was always at 100% speed causing severe battery usage
+[12:38] <Walther> I am on 3.8
+[12:38] <Walther> I'm always at the latest pushed update :P
+[12:39] <Walther> But yeah, no problems surviving through this, i'm also willing to help debugging this
+[12:40] <rye> Walther: what's the laptop model?
+[12:40] <Walther> Zenbook UX32VD
+[12:40] <Walther> but upgraded to have a 256GB SSD
+[12:41] <Walther> ivy i7, 13" fullHD LED IPS, 256GB SSD, Nvidia 620M, 4GB DR3 160MHz (will upgrade to 10GB asap)
+[12:47] <rye> Walther: uh-huh, unfortunately I am not a kernel developer so operating only upon the data available in public sources and my experience... nVidia module is not loaded, right?
+[12:48] <Walther> rye: probably not correctly
+[12:48] <Walther> even though optirun --status reports
+[12:48] <Walther> sudo  cat /sys/kernel/debug/dri/0/i915_cur_delayinfo | grep CAGF
+[12:48] <Walther> eh
+[12:48] <Walther> Bumblebee status:  Ready (3.0.1). X inactive. Discrete video card is on.
+[12:49] <Walther> and yeah, that probably explains the battery thing
+[14:17] <BluesKaj> Hi all
+[14:29] <BluesKaj> running on the 13.04 live dvd trying to figure a way to get ubiquity to install the OS , it just hangs at the disk examination stage and goes nowhere. Too bad there's no text mode installer :(
+[14:30] <rye> BluesKaj: are you able to get to the console? Any errors there?
+[14:30] <BluesKaj> rye, i didn't try
+[14:33] <BluesKaj> odd part is nouveau driver is working fine here , can't figure out  what the problem is since on the previous kernel X wouldn't even start
+[14:50] <BluesKaj> rye, I did dmesg , but I don't see anything to do with disksetup etc
+[15:05] <BluesKaj> this is what /var/log syslog prints out at what seems to be my last attempt to install the OS , http://pastebin.com/CuHXREZT
+[18:01] <alo21> hi everybody....
+[18:02] <alo21> I cannot install ubuntu rating on my usb-key with usb-creator-gtk, because I got: checksum not valid. Why?
+=== hggdh is now known as hggdh_AFK
+=== jbicha_ is now known as jbicha
+[19:08] <Walther> alo21: are you sure your download didn't go awry?
+[19:08] <Walther> alo21: try re-downloading the image :)
+[19:08] <jtaylor> using zsync will safe you some time if you have a slow connection
+[19:24] <Walther> Anyone want to help me find out why installing nvidia kernel modules fails?
+[19:24] <Walther> Processing triggers for initramfs-tools ...
+[19:24] <Walther> update-initramfs: Generating /boot/initrd.img-3.8.0-0-generic
+[19:24] <Walther> modprobe: ../tools/modprobe.c:550: print_action: Assertion `kmod_module_get_initstate(m) == KMOD_MODULE_BUILTIN' failed.
+[19:24] <Walther> Aborted (core dumped)
+[19:24] <Walther> when issuing "apt-get install bumblebee bumbelbee-nvidia nvidia-current"
+[19:54] <Walther> Uh, anyone?
+[20:06] <yofel> Walther: that modprobe error isn't fatal, but nvidia-current (304) doesn't build with 3.8
+[20:06] <yofel> use nvidia-310 instead
+[20:12] <alo21> Walther, did... but still the same issue
+[21:15] <BluesKaj> well, I managed to get Kubuntu 13.04 installed by installing 12.10 first then doing a net upgrade and not installing the nvidia "additional driver ". Ss it stands the nouveau is struggling with OpenGL and Native on Qt
+[21:16] <BluesKaj> a few crashes , that do recover , especially when launching and making changes in system settings
+[21:29] <johnjohn101> having a problem with 64 bit 13.04 and firefox 19 and flash crashing all the time.
+[21:36] <BluesKaj> johnjohn101, did you install kubuntu-restricted-extras?
+[21:37] <johnjohn101> i'm running regular ubunut
+[21:37] <johnjohn101> it looks like it's the latest version
+[21:37] <BluesKaj> then ubuntu-restricted-extras
+[21:37] <johnjohn101> what does that provide?e?
+[21:38] <BluesKaj> flash and codecs
+[21:38] <johnjohn101> i used software center
+[21:38] <BluesKaj> !restricted-extras
+[21:38] <yofel> flashplugin-installer will be enough, but that's what's usually installed
+[21:38] <BluesKaj> hmm , no factoid
+[21:39] <yofel> I haven't gotten any flash crashes here lately, but I don't really use it much
+[21:39] <yofel> johnjohn101: any particuar public page that crashes it?
+[21:40] <johnjohn101> http://www.youtube.com/watch?v=aXVuF3IWSSA
+[21:40] <johnjohn101> loading the extras
+[21:42] <johnjohn101> really almost anything on youtube
+[21:42] <BluesKaj> seems to work ok here ..
+[21:44] <yofel> can't get it to crash here either so far..
+[21:45] <johnjohn101> crashes everytime here
+[21:46] <johnjohn101> even on chrome now
+[21:48] <johnjohn101> even sending the error report fails
+[21:51] <johnjohn101> anything i can collect and send or just wait to see if it gets resolved with a new patch or something
+[21:55] <Walther> Installed the 310 driver, now I can't get to desktop
+[21:55] <Walther> on login, flashes a couple times and back at login
+[21:55] <Walther> can get to the tty's though :P
+[21:56] <Walther> aaaand it still reports X inactive, card on
+[21:58] <Walther> Help, anyone?
+[22:11] <johnjohn101> Walther:  be patient.  they are here and there.
+[22:13] <Walther> Sure are :)
+[22:14] <Walther> I just happen to have a full day of lectures + work tomorrow (...uh, in 8 hours), kinda want to get my laptop in working shape :P
+[22:14] <Walther> Of course I can just fallback and use vi
+[22:15] <johnjohn101> you're using 13.04 now?
+[22:15] <Walther> yup
+[22:15] <Walther> wouldn't be asking in this channel otherwise
+[22:15] <johnjohn101> never use alpha for something you need to work
+[22:15] <johnjohn101> just my two cents
+[22:16] <JonEdney> I'm weary to run Beta on a production machine.
+[22:16] <yofel> Walther: a pastebin of your /var/log/Xorg.0.log would be helpful
+[22:17] <yofel> use pastebinit if you don't have X
+[22:18] <BluesKaj> I've been sruggling with 13.04 Kubuntu on an AMD64 bit pc with nvidia 8400gs card , finally got it to work , altho still a bit crashy using OpenGL , so xrender will have to do for the time being
+[22:19] <johnjohn101> maybe i'll reload in late feb.
+[22:20] <Walther> http://paste.ubuntu.com/1535816 should be
+[22:21] <yofel> 3.8 still doesn't like my desktop's optical drives. I'm not really sure what's wrong though
+[22:21] <Walther> 3.8 seems to have plenty of issues
+[22:21] <Walther> it's only a good thing, tells us that something is being worked on :P
+[22:21] <BluesKaj> 3.7 was worse here
+[22:22] <yofel> (II) intel: Driver for Intel Integrated Graphics Chipsets
+[22:22] <yofel> Walther: twin card setup?
+[22:22] <yofel> Walther: as X is loading the intel driver
+[22:22] <BluesKaj> ubiquity is still broken on 3.8 tho , I had to install 12.10 then do a net upgrade from there
+[22:22] <Walther> yofel: ...eh, like i've been telling a couple times, i7 w/ HD4000 (ivy bridge) and Nvidia 620m
+[22:23] <Walther> nvidia-310 + bumblebee + bumblebee-nvidia installed
+[22:23] <yofel> ah sorry, I didn't scroll back *that* far
+[22:23] <Walther> nvidia-current et al didn't break my X but it still had the GPU on all the time -> battery loss
+[22:23] <Walther> someone sugested nvidia-310, got broken X
+[22:24] <Walther> (and still GPU on all the time)
+[22:24] <yofel> I did as I only saw your nvidia installation issue
+[22:24] <yofel> as nvidia-current isn't installable
+[22:24] <Walther> mm
+[22:24]  * yofel doesn't know anything about optimus :/
+[22:29] <BluesKaj> yofel, the the nvidia additional drivers/jockey fails to install any in the list here , so the nouveau is it ,but I'll settler for it to stop breakage
+[22:30] <yofel> nvidia-310 works, nouveau has come a long way, but until it actually supports my displayport I need nvidia
+[22:30] <BluesKaj> 'yeah , well that
+[22:31] <BluesKaj> the cost of leading edge hardware
+[22:31] <Walther> and nouveau doesn't play along with optimus / bumblebee
+[22:32] <BluesKaj> is 310 the experimental driver ?
+[22:32] <Walther> it's hit stable already
+[22:32] <yofel> !info nvidia-310
+[22:32] <Walther> but it's not the default one yet
+[22:32] <ubottu> nvidia-310 (source: nvidia-graphics-drivers-310): NVIDIA binary Xorg driver, kernel module and VDPAU library. In component restricted, is optional. Version 310.19-0ubuntu2 (raring), package size 36503 kB, installed size 104046 kB (Only available for i386; amd64; lpia)
+[22:33] <BluesKaj> hmmm...wonder if it
+[22:33] <yofel> 310.14 is the experimental one I think
+[22:33] <BluesKaj> ll run my 8400
+[22:34] <BluesKaj> ekcheapo card , but mosy nvidia drivers will run it
+[22:34] <BluesKaj> elcheapo
+[22:34] <Walther> yofel: yeah but the 310.19 is newer, and stable
+[22:37] <BluesKaj> Walther, did you get the 310.19 from nvidia;s site
+[22:37] <yofel> BluesKaj: it's in the archive
+[22:37] <yofel> called nvidia-310 for now
+[22:39] <Walther> BluesKaj: nope, repos
+[22:39] <Walther> I try to aviod manual installs as much as possible
+[22:39] <Walther> packae management <3
+[22:40] <Walther> peace for mind etc, not having to worry about security threats and exploits, patching everything on my own
+[22:40] <Walther> just update && upgrade
+[22:42] <BluesKaj> found the 310.19 , taking a gamble on it
+[22:43] <BluesKaj> it wasn't marked as an upgrade in synaptic
+[22:44] <yofel> technically it isn't one
+[22:44] <Walther> it's a separate package
+[22:44] <Walther> nvidia-current vs nvidia-310
+=== sdx32 is now known as sdx23
+[22:44] <Walther> otoh i wonder why it hasn't been applied as such yet
+[22:44] <Walther> 310.19 is stable release by nvidia
+[22:45] <BluesKaj> should be interesting to see what happens next
+[22:45] <Walther> BluesKaj: tell me if you get a working X :P
+[22:45] <Walther> also iirc you didn't have optimus?
+[22:47] <BluesKaj> I'll be back either on 13.04 or 12.10
+[22:51] <BluesKaj> glxinfo | grep OpenGL indicates 310.19 is in service :)
+[22:52] <BluesKaj> no optimus here , this is an older desktop
+[22:52] <BluesKaj> Walther, yofel , thanks for thre tip
+[22:52] <Walther> But yeah, any help on my issue? :P
+[22:56] <BluesKaj> sorry , was too busy trying to fix mine ...and optimus is a tough nut
+[22:56] <BluesKaj> still crashy here tho ..similar to nouveau
+[22:57] <Walther> I've never had "crashy" problems
+[22:57] <Walther> it either works or doesn't
+[22:58] <Walther> but no random kpanics or anything
+[22:58] <Walther> or crashing under stress etc
+[22:59]  * yofel gets system lockups on his notebook sometimes - not under stress, only when doing "nothing"
+[23:00] <BluesKaj> system settings seems to crash a lot , it recovers immmediately , but leaves the notifier behind
+[23:00] <yofel> any indication what crashes there from the backtrace?
+[23:05] <BluesKaj> yofel, backtrace , http://pastebin.com/58M2G8F7
+[23:06] <BluesKaj> wife wants to watch the local news ...BBL
+[23:06] <yofel> #5 is kinda useless..
+[23:06] <yofel> it's something QML though
+=== dniMretsaM_away is now known as dniMretsaM

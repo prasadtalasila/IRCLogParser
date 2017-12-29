@@ -1,0 +1,210 @@
+[00:07] <mwhudson> wgrant: is this the form of replication that lp uses? http://www.postgresql.org/docs/9.1/static/warm-standby.html#STREAMING-REPLICATION
+[00:07] <wgrant> mwhudson: Yes
+[00:08] <wgrant> It works excellently, though it's somewhat arcane at times
+[00:08] <mwhudson> it's postgres, i think that last bit is implied
+[00:09] <wgrant> And it's not meant to be possible to demote the master to a slave without rebuilding, but we do it anyway with a bit of evil.
+[00:09] <wgrant> Hopefully it'll be a bit better in 9.3, but it works very well once you work it out
+[00:09] <wgrant> A tonne less annoying than slony
+[00:09] <mwhudson> wgrant: can you restore a slave from a backup that's say about 24 hours old and have it catch up from the master?
+[00:10] <wgrant> mwhudson: Um, sort of.
+[00:10] <wgrant> It can't be a pg_dump backup
+[00:10] <wgrant> It has to be a backup of the raw data files
+[00:10] <mwhudson> ah
+[00:10] <wgrant> And you have to have WAL retention set high enough
+[00:11] <mwhudson> yeah, that last bit was the thing that was starting to scare me a little
+[00:11] <mwhudson> well not scare me
+[00:11] <mwhudson> intimidate me with the prospect of reading a lot more documentation
+[00:11] <wgrant> Once we have enough disk space around we're planning on moving away from pg_dump backups
+[00:11] <wgrant> Just rsync the data dir to a backup volume, and keep WAL for weeks
+[00:11] <wgrant> Lets you easily bring on a new replica, plus gives you arbitrary PITR for DR.
+[00:12] <mwhudson> hmm
+[00:12] <mwhudson> hmm
+[00:12] <wgrant> For a less insane DB it's probably worth doing both from the start
+[00:12] <mwhudson> the reason I'm wondering about this is that i want to move pg off a server temporarily while we upgrade
+[00:13] <mwhudson> so maybe i don't need replication at all (a little downtime is ok)
+[00:13] <wgrant> Yeah, probably better to take the few minutes of downtime in that case
+[00:13] <mwhudson> we could just rsync the data dir from one server to the backup
+[00:13] <wgrant> If you have an existing replication setup then sure
+[00:13] <mwhudson> stop the db, rsync again, bring up the backup
+[00:13] <mwhudson> upgrade the original server
+[00:14] <mwhudson> stop the back up pg, rsync back to the original server and start things up again
+[00:15] <wgrant> Or just have the service down for the 5 minutes that it takes to upgrade the original server?
+[00:15] <mwhudson> wgrant: i mean os upgrade
+[00:16] <wgrant> So do I :)
+[00:16] <mwhudson> not expecting that to take 5 minutes
+[00:16] <mwhudson> hm
+[00:16] <wgrant> This isn't Windows or a pandaboard or a desktop, so it should usually be pretty fast, but I guess it depends
+[00:18] <mwhudson> I guess i'm a bit paranoid
+[00:18] <wgrant> That's always good, but sometimes not justified depending on the particular service
+[02:58] <StevenK> wgrant: Does https://code.launchpad.net/~stevenk/launchpad/destroy-pylint-comments/+merge/142053 frighten you?
+[03:10] <wgrant> StevenK: Naturally
+[03:14] <StevenK> wgrant: Is that code for 'self-review that, damn it' ?
+[03:14] <wgrant> No
+[03:14] <wgrant> Nearly done
+[03:17] <wgrant> StevenK: Done
+[03:40] <StevenK> wgrant: Can you glance at the changes in r16406 for that branch to see if I missed something?
+[03:41] <wgrant> StevenK: Can you just read through the new revision diffs and remove the many comments that are now obsolete?
+[03:42] <StevenK> I already did that before commiting, I'm wondering if I missed something
+[03:42] <StevenK> r16406 only changed 36 files
+[03:43] <wgrant>  # A zope interface doesn't have self as a parameter for its methods.
+[03:43] <wgrant> - # pylint: disable-msg=E0211
+[03:43] <wgrant>  # This class should know about the private _window attribute.
+[03:43] <wgrant> - # pylint: disable-msg=W0212
+[03:43] <wgrant>  # We are deliberately not calling PullerWorkerProtocol.__init__:
+[03:43] <wgrant> - # pylint: disable-msg=W0231
+[03:43] <wgrant>  # We know we are not using dirnames.
+[03:43] <wgrant> - # pylint: disable-msg=W0612
+[03:43] <wgrant>  # The super constructor is a no-op.
+[03:43] <wgrant> - # pylint: disable-msg=W0231
+[03:44] <wgrant> - # pylint thinks this raises None, which is clearly not
+[03:44] <wgrant> - # possible. That's why this test disables pylint message
+[03:44] <wgrant> # E0702.
+[03:57] <StevenK> wgrant: So it seems getUtility(IPackageDiffSet).getDiffsToReleases(sprs, preload_for_display=True) preloads the LFAs and LFCs, but the page goes ahead and queries again anyway. Surely it should be cached since it's just a key lookup?
+[03:58] <wgrant> StevenK: Right, you'll need to work out why they're not
+[04:03] <StevenK> Hmm, looks like the LFA ids are not the ids from the packagediff query
+[04:03]  * StevenK peers closer
+[04:06] <StevenK> (Pdb) lfa.filename
+[04:06] <StevenK> u'filename-100051'
+[04:06]  * StevenK facepalms
+[04:09] <wgrant> Hmmmm?
+[04:10] <StevenK> I'm poking around in the DB for that id, so I can work out what it is
+[04:10] <StevenK> It isn't a SPRF, BPF or a PackageDiff
+[04:10] <wgrant> Ah
+[04:10] <wgrant> Check the traceback on the query?
+[04:11] <StevenK> The test isn't giving a traceback
+[04:12] <wgrant> If it's a query count test then the statement collector will have tracebacks
+[04:12] <StevenK> AH HA
+[04:13] <StevenK> It's the files from the PUCs
+[04:19] <wgrant> StevenK: https://code.launchpad.net/~wgrant/launchpad/bfj-mixin/+merge/142055
+[04:21] <StevenK> 170+class TestBuildFarmJobBase:
+[04:21] <StevenK> And then you call super() ?
+[04:22] <wgrant> I didn't write that, but yes, it's fine to call super() in a class with no superclasses
+[04:22] <wgrant> Because of multiple inheritance, there still may be classes further up the MRO
+[04:23] <wgrant> Otherwise if I inherit from (TestBuildFarmJobBase, TestCaseWithFactory) it might not go all the way up
+[04:23] <StevenK> 417# The url of the upload log file is determined by the PackageBuild.
+[04:23] <StevenK> That comment is sort of wrong now, no?
+[04:24] <wgrant> The tests are all very strange now
+[04:24] <wgrant> I just needed them to pass
+[04:24] <wgrant> They'll obviously need to be significantly reworked over the next couple of days when PackageBuild and BuildFarmJob cease to exist :)
+[04:24] <StevenK> Yeah
+[04:25] <StevenK> Niggle dropped, since you'll need to revisit the tests, r=me
+[04:25] <wgrant> Thanks
+[04:50] <wgrant> StevenK: Why's the invalidate in getDiffTo?
+[04:50] <StevenK> Because that creates a PackageDiff?
+[04:50] <wgrant> No
+[04:50] <wgrant> That's a selectOneBy
+[04:51] <wgrant> You might mean requestDiffTo
+[04:51] <StevenK> Yeah, I've just shifted it
+[04:51] <wgrant> Great
+[04:51] <StevenK> Any other issues?
+[04:52] <wgrant> Doesn't look like it
+[04:52] <wgrant> Does it work?
+[04:52] <wgrant> Have you tested the query count on DF?
+[04:53] <StevenK> I've seen appreciable drops in the query count from the tests
+[04:53] <StevenK> I can cowboy it onto DF
+[04:53] <wgrant> Right, but it's worth a cowboy to see that you've actually caught everything
+[05:22] <StevenK> wgrant: +queue ==  At least 56 queries/external actions issued in 0.99 seconds
+[05:22] <wgrant> StevenK: Checked various Done pages?
+[05:22] <StevenK> Just loading Done
+[05:22] <StevenK> Which timed out
+[05:23] <StevenK> At least 66 queries/external actions issued in 12.24 seconds
+[05:24] <wgrant> What are the extra 10?
+[05:24] <StevenK> Reload gets us to 3.26
+[05:25] <StevenK> wgrant: Checking the query log without JS?
+[05:25] <StevenK> You evil man
+[05:25] <wgrant> Because Firefox and Chromium have become stupid, you might need to select the entire page content and View Selection Source
+[05:25] <wgrant> Because View Source seems to reload the page without cookies
+[05:27] <StevenK> Ugh
+[05:32] <wgrant> StevenK: https://code.launchpad.net/~wgrant/launchpad/minimise-bfj-interfaces/+merge/142058
+[05:33] <bigjools> wtf does view source even reload the page ...
+[05:33] <wgrant> It's possible that IPackageBuildDB will need build_farm_job_id, but I don't think so
+[05:33] <wgrant> bigjools: Probably because LP sets no-cache, and browsers are retarded
+[05:33] <wgrant> Although do we actually set no-cache nowadays...
+[05:34] <StevenK> Items in the NEW queue have no SPRs and so a portition of the preloading is skipped?
+[05:36] <wgrant> They have SPRs
+[05:36] <wgrant> But no SPPHs
+[05:36] <wgrant> But +queue shouldn't care about SPPHs except for detecting newness
+[05:36] <StevenK> Ah ha
+[05:37] <StevenK> No binaries for source in NEW
+[05:39] <StevenK> wgrant: http://pastebin.ubuntu.com/1505886/ is a diff between the queries
+[05:39] <StevenK> Between the query logs, even
+[05:41] <wgrant> Well
+[05:41] <wgrant> Obvious one is sections
+[05:41] <wgrant> Are you failing to preload binary sections, perhaps?
+[05:41] <StevenK> I don't grab bprs at all, so likely
+[05:45]  * StevenK shovels more coal into mawson
+[05:46] <wgrant> While you're waiting for it to run 'bzr st' you can review my branch :)
+[05:46] <StevenK> I have
+[05:46] <wgrant> Oh, so you have
+[05:47] <wgrant> StevenK: Hideous!?
+[05:47] <StevenK> Right, NEW is now 58, and DONE is 62.
+[05:47] <wgrant> We only have IBuildFarmJob, IBuildFarmJobOld and IBuildFarmJobDB
+[05:47] <wgrant> I don't know WHAT you are talking about
+[05:47] <wgrant> What did you change?
+[05:49] <StevenK> load_referencing(BPR) and load Section for sprs + bprs
+[05:51] <StevenK> wgrant: I can diff the query logs again if you wish
+[05:52] <wgrant> Aha
+[05:52] <wgrant> Are you sure the BPRs weren't already loaded somewhere?
+[05:52] <wgrant> It already preloads the BPFs
+[05:52] <wgrant> Possibly directly
+[05:53] <wgrant> It may be worth replacing that prejoin
+[05:53] <StevenK> That's inside the browser code, I can rip that out if you wish
+[05:53] <StevenK> But it's a bit disgusting and it links into CPU
+[05:53] <StevenK> So I'm hoping I can leave it alone
+[05:54] <StevenK> Or I could just preload the BPR sections in the browser code
+[05:55] <wgrant> Well, SQLObject prejoins are thoroughly deprecated anyway, so it'd be nice to eliminate it if it's easy
+[05:56] <wgrant> And I suspect it would be cleaner given all the other preloading you're doing now
+[05:56] <StevenK> It's calling into IBinaryPackageFileSet.getByPackageUploadIDs
+[05:56] <wgrant> Oh god why
+[05:56] <wgrant> It may be worth eliminating that method
+[05:56] <wgrant> Rather than double-querying the BPrs
+[05:57] <wgrant> (Since that obviously joins through them, though it might not actually grab them)
+[05:57] <StevenK> browser/queue is the only callsite
+[05:57] <StevenK> And some hideous doctest
+[05:57] <wgrant> Kill
+[05:57] <wgrant> Crush
+[05:57] <wgrant> Destroy
+[05:57] <StevenK> WITH FIRE
+[06:05] <StevenK> wgrant: Haha, IBinaryPackageFileSet and ISourcePackageReleaseFileSet only have stuff used by that page
+[06:05] <StevenK> So I can delete the whole interface and model classes
+[06:06]  * wgrant loses
+[06:06] <wgrant> Excellent
+[06:33] <StevenK> NEW = 65 and DONE = 72
+[08:20] <wgrant> StevenK: Nice easy one if you're still around: https://code.launchpad.net/~wgrant/launchpad/no-+buildjob-redirect/+merge/142066
+=== almaisan-away is now known as al-maisan
+[08:46] <StevenK> wgrant: Was distracted by Orks in SM, but r=me
+[08:52] <wgrant> Thanks
+=== teknico_away is now known as teknico
+=== al-maisan is now known as almaisan-away
+=== benji changed the topic of #launchpad-dev to: http://dev.launchpad.net/ | On-call reviewer: benji | Firefighting: - | Critical bugs: <150
+[14:34] <czajkowski> mgz: best place to send someone intersted in bzr community disucssions?
+=== slank_away is now known as slank
+=== almaisan-away is now known as al-maisan
+=== salgado is now known as salgado-lunch
+[15:24] <mgz> czajkowski: the mailing list?
+[15:26] <czajkowski> mgz: ah yes what is the sign up page for that
+[15:26] <czajkowski> it's not n the signature of the list
+[15:26] <mgz> it's on lists.ubuntu.com
+[15:26] <mgz> linked from the main page
+[15:29] <czajkowski> ah
+[15:29] <czajkowski> cheers
+=== slank is now known as slank_away
+=== slank_away is now known as slank
+=== salgado-lunch is now known as salgado
+=== gary_poster is now known as gary_poster|away
+=== gary_poster|away is now known as gary_poster
+=== al-maisan is now known as almaisan-away
+=== gary_poster|away is now known as gary_poster
+=== teknico_ is now known as teknico
+=== deryck is now known as deryck[lunch]
+=== teknico_ is now known as teknico
+=== deryck[lunch] is now known as deryck
+=== Ursinha_ is now known as Ursinha
+[19:58] <dobey> anyone have any idea what might cause the dailydeb issues happening in https://launchpadlibrarian.net/127602321/buildlog.txt.gz ? running dailydeb locally works fine (save for my needed to use debupstream instead of debversion, otherwise it fails immediately on that)
+[19:58] <dobey> #launchpad seems dead, so asking here
+[20:57] <czajkowski> abentley: allenap gary_poster ^^^
+[21:02] <abentley> czajkowski: Sorry, don't know.
+=== benji changed the topic of #launchpad-dev to: http://dev.launchpad.net/ | On-call reviewer: - | Firefighting: - | Critical bugs: <150
+[22:33] <gary_poster> czajkowski, I have no idea I'm afraid.
+[23:11] <hloeung> morning
+[23:12] <czajkowski> hloeung: ello

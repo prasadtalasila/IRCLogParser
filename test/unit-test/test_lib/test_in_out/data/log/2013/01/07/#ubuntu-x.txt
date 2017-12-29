@@ -1,0 +1,111 @@
+[10:45] <mlankhorst> ok so wine testbot is on life support :(
+[11:18] <Chipaca> hi guys. intel arrandale in R here reporting “not direct rendering capable.”, falling back to llvm :(
+[11:18] <jcristau> x log and dmesg?
+[11:18] <Chipaca> http://paste.ubuntu.com/1506381/
+[11:19] <Chipaca> http://paste.ubuntu.com/1506383/
+[11:19] <Chipaca> jcristau: that's /var/log/Xorg.0.log and /var/log/dmesg respectively
+[11:20] <jcristau> [144099.016] (WW) intel(0): cannot enable DRI2 whilst forcing software fallbacks
+[11:21] <Chipaca> jcristau: yeah, I think I understand what it means, but not how it got there 
+[11:21] <Chipaca> (i.e., why is it forcing software fallbacks?)
+[11:21] <Chipaca> ("well don't do that then!" :) )
+[11:22] <jcristau> yeah, dunno
+[11:24] <Chipaca> new kernel in today's updates, am going to reboot and retest. This is something that starts happening after a while of uptime (maybe after suspend?), so it'll be a little bit before I can re-report
+[11:24] <Chipaca> o/
+[11:24] <jcristau> i'd start with removing the i915 and drm options from the kernel cmdline
+[11:29] <mlankhorst> it sounds more like a xorg option though
+[11:29] <jcristau>         intel->force_fallback =
+[11:29] <jcristau>                 drmCommandNone(intel->drmSubFD, DRM_I915_GEM_THROTTLE) != 0;
+[11:29] <mlankhorst> ah right
+[11:30] <jcristau> also:
+[11:30] <jcristau>         if (!can_accelerate_blt(intel)) {
+[11:30] <jcristau>                 intel->force_fallback = TRUE;
+[11:30] <mlankhorst> prerelease hardware crap, probably
+[11:30] <jwi1> i915_enable_rc6 is out to to kill you...
+[11:30] <jcristau> dunno which of those it can be, having a note in the log would be helpful
+[11:30] <mlankhorst> Chipaca: lspci -vvv, graphics card listing?
+[11:31] <mlankhorst> jcristau: well after I had a similar problem they added a message to dmesg :-)
+[11:31] <tjaalton> arrandale is old, don't think it's meant to be used with rc6 anyway.. silly to force it
+[11:31] <Chipaca> fwiw, with X freshly restarted I again have drm. Do you want the lspci after it stops working?
+[11:32] <mlankhorst> hm just try without all the kernel options first
+[11:32] <Chipaca> mlankhorst: how do i list the graphic card?
+[11:32] <Chipaca> mlankhorst: http://paste.ubuntu.com/1506405/ of it now
+[11:33] <Chipaca> to repeat, it works fresh after a reboot, then suddenly unity crashes and doesn't come back up again (restarting X fixes it, sometimes)
+[11:33] <Chipaca> I have not yet pinpointed the bug, as you see; was hoping it was something known :)
+[11:34] <mlankhorst> I would try without the kernel options first, if it's not enabled by default either the intel devs are evil, or they think it's not ready yet for your card :/
+[11:37] <tjaalton> yeah, probably the gpu gets in a "state" due to the driver not really supporting those options, because of instability or whatever
+[11:41] <jwi1> the lack of any hangcheck vomit in dmesg is a little surprising.
+[11:43] <jwi1> picking up the fix for https://bugs.freedesktop.org/show_bug.cgi?id=55984 probably wouldn't hurt (raring still has uxa by default, right?)
+[11:43] <ubottu> Freedesktop bug 55984 in DRM/Intel "[ilk regression] gpu hangs on ironlake with 3.6 + -next + -fixes code" [Normal,Needinfo]
+[12:35] <jcristau> ah, so it's just a regular hang, and reset not working, then.
+[12:59] <mlankhorst> ok so erm new xserver-xorg-video-nouveau
+[13:19] <shadeslayer> not exactly sure what happened but for some reason I've lost compositing on raring
+[13:19] <shadeslayer> /var/log/Xorg.0.log
+[13:19] <shadeslayer> erm
+[13:19] <shadeslayer> http://paste.ubuntu.com/1506621/
+[13:20] <shadeslayer> http://paste.ubuntu.com/1506622/ < dmesg
+[13:21] <jcristau> uh that backlight spam in xorg.log is insane
+[13:21] <jcristau> shadeslayer: define 'lost compositing'
+[13:22] <jcristau> also what's with people setting random module options in kernel cmdline today?
+[13:22] <tjaalton> hehe
+[13:23] <shadeslayer> jcristau: earlier, with those options, kwin was using opengl
+[13:23] <shadeslayer> but now it falls back to xrender
+[13:23]  * jcristau blames kwin.
+[13:23] <shadeslayer> ( not to mention no backlight control )
+[13:24] <shadeslayer> somehow I doubt that
+[13:24] <mlankhorst> erm sometimes it happens
+[13:25] <mlankhorst> grep OpenGL ~/.kde/share/config/kwinrc
+[13:25] <shadeslayer> OpenGLIsUnsafe=false
+[13:25] <shadeslayer> it worked perfectly before I rebooted into the new kernel
+[13:25] <mlankhorst> should also say Backend=OpenGL, but it doesn't :P
+[13:25] <shadeslayer> Backend=XRender
+[13:25] <shadeslayer> like I said
+[13:25] <mlankhorst> but can change that in systemsettings
+[13:26] <shadeslayer> I tried
+[13:26] <shadeslayer> but it falls back to XRender
+[13:26] <mlankhorst> does it say anything?
+[13:26] <shadeslayer> not really no
+[13:28] <shadeslayer> "Failed to activate desktop effects using the given configuration options. Settings will be reverted to their previous values.
+[13:28] <shadeslayer> Check your X configuration. You may also consider changing advanced options, especially changing the compositing type."
+[13:28] <mlankhorst> what if you start kwin manually from command line after setting that backend line with kwin --replace  ?
+[13:29] <jcristau> also, glxinfo
+[13:31] <shadeslayer> need a couple of minutes
+[13:33] <shadeslayer> hah, kwin crashed
+[13:33] <shadeslayer> libGL error: failed to load driver: i965
+[13:33] <shadeslayer> what
+[13:34] <mlankhorst> LIBGL_DEBUG=verbose glxinfo ?
+[13:36] <shadeslayer> http://paste.kde.org/639572/
+[13:37] <jcristau> sounds like you don't have access to /dev/dri/card0
+[13:37] <tjaalton> issues with policykit then?
+[13:37] <jcristau> no
+[13:37] <jcristau> would be consolekit if anything afaik
+[13:37] <tjaalton> ah
+[13:38] <tjaalton> well, probably the same reason as for the acpi spam
+[13:38] <shadeslayer> okay, how about this, there are quite some upgrades that I need to do, I'll do those and get back to you?
+[13:38] <shadeslayer> I pinged because I thought maybe it was a known issue 
+[13:41] <tjaalton> works fine here
+[13:42] <jcristau> tjaalton: do you guys have some random wiki or forum or doc advising to set i915 module options?
+[13:42] <shadeslayer> hrh
+[13:42] <shadeslayer> heh
+[13:42] <shadeslayer> regarding i915 module options
+[13:42] <shadeslayer> I got those from a blog that I saw a couple of weeks ago
+[13:43] <shadeslayer> because I have dual graphics cards and I disable the ATi card
+[13:45] <tjaalton> jcristau: no :)
+[13:45] <tjaalton> forum users maybe get silly ideas
+[13:45] <mlankhorst> tjaalton: well if you google it you find some of those..
+[13:45] <jcristau> s/maybe/definitely/
+[13:46] <jcristau> "if somebody said so on the intarwebs it must be a good idea"
+[13:48] <tjaalton> and macbooks suck
+[13:50] <mlankhorst> indeed :(
+[13:50] <mlankhorst> need to finish up on my quirking for it
+=== Quintasan_ is now known as Quintasan
+[14:23] <mlankhorst> sent \o/
+[14:39] <tjaalton> mlankhorst: oh you got a macbook now?-)
+[14:41] <mlankhorst> tjaalton: for testing prime stuff
+[14:41] <mlankhorst> debugging that it lost interrupts after a switcheroo cycle was fun :/
+[15:15] <mlankhorst> bryce: hm what would be useful to have is one of those versions check, but then for all precise  .*-lts-quantal package versions compared against what's available in quantal
+[15:41] <shadeslayer> seems like a minor issue
+[15:41] <shadeslayer> erm
+[15:41] <shadeslayer> s/minor/temporary/
+[15:41] <shadeslayer> gone after fully upgrading and rebooting
+[15:46] <mlankhorst> ok started uploading the raring stack to my ppa as well, hopefully I was right and upgrading between stacks will work succesfully too :-)
+=== chrisccoulson_ is now known as chrisccoulson

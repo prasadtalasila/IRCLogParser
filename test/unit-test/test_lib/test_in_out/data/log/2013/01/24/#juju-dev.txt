@@ -1,0 +1,277 @@
+=== slank is now known as slank_away
+[07:41] <jtv> I'm trying to figure out how to unit-test a non-exported function...  Is that possible?  Is there a knack to it?
+[07:49] <rogpeppe> jtv: there are two techniques for that
+[07:50] <rogpeppe> jtv: you can write a test file that's in the package itself (package foo, not package foo_test)
+[07:50] <rogpeppe> jtv: or you can export the function for the tests only
+[07:51] <rogpeppe> jtv: i'm assuming you're talking about Go here
+[07:53] <jtv> rogpeppe: yes, Go, thanks.
+[07:53] <rogpeppe> jtv: there's a convention for applying the latter technique
+[07:53] <jtv> The test and the module are both in the same package.  Maybe the problem is that we have multiple source files and test files in the same package?
+[07:54] <rogpeppe> jtv: they're in the same directory, yes, but what does the "package" declaration at the top of the test file read?
+[07:54] <rogpeppe> jtv: there's no problem with having multiple source files and test files in the same directory
+[07:56] <jtv> They're in the same package (as well as the same directory)
+[07:56] <rogpeppe> jtv: then there should be no problem using unexported functions
+[07:56] <jtv> Hmmm
+[07:56] <jtv> Maybe the problem is getting the branch into my Go environment.
+[07:57] <rogpeppe> jtv: what error message are you getting?
+[07:57] <jtv> Just having it in $GOPATH/src/launchpad.net/ doesn't seem to do the trick.
+[07:57]  * jtv compiles...
+[07:57] <jtv> undefined: <my lower-case function name>
+[07:58] <rogpeppe> jtv: if you push the branch, i could take a brief look
+[08:00] <jtv> It's based on lp:~maas-maintainers/maas/gomaasapi (which I think already has the problem)
+[08:00] <jtv> Meanwhile, I'll commit & push.
+[08:01] <rogpeppe> jtv: i just ran go test in gomaasapi and it worked ok
+[08:01] <jtv> By the way, how do you get a branch with a URL like that into your Go environment?
+[08:02] <rogpeppe> jtv: it lives inside $GOPATH/src/$packagepath
+[08:03] <rogpeppe> jtv: so in this case, you might have it at $GOPATH/src/launchpad.net/maas
+[08:03] <rogpeppe> jtv: the awkward thing is that you can't have a differently named directory per branch, which doesn't fit well with the usual bzr way of doing things
+[08:04] <jtv> Yeah
+[08:04] <rogpeppe> jtv: because package paths are always absolute
+[08:04] <jtv> Hi there rvba
+[08:04] <rvba> \o jtv
+[08:04] <rogpeppe> jtv: i use cobzr
+[08:04] <jtv> Well current bzr versions supersede that, don't they?
+[08:04] <rogpeppe> jtv: but i know others have different workarounds
+[08:05] <rogpeppe> jtv: tell me more :-)
+[08:05] <jtv> See "Co-located branches with Bazaar" here: https://docs.google.com/a/canonical.com/document/d/1GQ3u7keE3hJH2oaweAm28K78hQZAbqeQqR9xwD9OR4I/edit#
+[08:06] <rogpeppe> jtv: cool!
+[08:06] <jtv> Nowhere near as cool as the title.
+[08:06] <rogpeppe> jtv: nice doc, BTW. i'll have a look through it.
+[08:07] <jtv> The more the merrier!
+[08:07]  * rogpeppe should really upgrade to q
+[08:08] <rogpeppe> "But if you do want pass-by-reference, it may be best to pass a pointer to the interface value instead."
+[08:08] <rogpeppe> i think that's spurious
+[08:09] <jtv> It depends a bit on what the purpose of the interface is, I suspect.
+[08:10] <jtv> But in light of other gotchas that have come up, it's certainly not one of our big worries. I'll take it out.
+[08:11] <rogpeppe> jtv: passing a pointer to the interface doesn't help if you want the methods to be operating on the reference
+[08:11] <jtv> No, of course not.
+[08:11] <jtv> But they do help if you want to see, for instance, changes that are made by other functions you pass it to.
+[08:12] <rogpeppe> jtv: yeah. but that's part of the method contract. a pass-by-value implementation of a method can still have side effects that are reflected in later method calls to the same object.
+[08:13] <rogpeppe> jtv: (for example, it might be operating on a global data structure, or an external file)
+[08:14] <jtv> Yes, I wasn't thinking so much of pointer receiver types as of general parameter-parameter passing.
+[08:14] <jtv> (Okay, I'm stating the obvious because an interface can't be a receiver type :)
+[08:14] <rogpeppe> jtv: yeah
+[08:15] <rogpeppe> jtv: in the section on non-nil interfaces, you might want to insert this link: http://golang.org/doc/faq#nil_error
+[08:15] <jtv> Oh yes, thanks
+[08:16] <jtv> Very nice to have some external feedback.  :)
+[08:18] <jtv> rogpeppe: My "go get launchpad.net/maas/gomaasapi" is taking forever.  I'm going to take a break.  After that, I'll see if my problems go away with the right branch setup.
+[08:18] <rogpeppe> jtv: i recommend using play.golang.org links rather than paste.ubuntu.com links. then people can easily try out the examples
+[08:19] <jtv> Oh, thanks.  I'll add a note.
+[08:21] <rogpeppe> jtv: in the "static polymorphism between structurally identical objects" section, you might want to link to the relevant spec section: http://golang.org/ref/spec#Conversions
+[08:21] <jtv> Thanks.  I'm trying to go off on a break here.  :)
+[08:22] <rogpeppe> jtv: ok, np. enjoy!
+[08:23] <jtv> :)
+[08:24] <rogpeppe> jtv: could you give me permission to add comments?
+[08:35] <rogpeppe> davecheney: hiya
+[08:36] <davecheney> rogpeppe: yo
+[08:39] <rogpeppe> davecheney: i'll do a proper review of worker/stater now we think we know where we're going...
+[08:39] <davecheney> rogpeppe: cool, i'mma about to step out for the evening
+[08:39] <davecheney> http://osakamonaurail.com/en/tour.html
+[08:39] <davecheney> ^ tonight
+[08:39] <davecheney> live
+[08:40] <davecheney> for the sydney festival
+[08:40] <davecheney> i have tix
+[08:40] <rogpeppe> davecheney: enjoy. i'll ping you this evening, 7am your time maybe
+[08:40] <rogpeppe> davecheney: cool. not heard of 'em
+[08:42] <rogpeppe> davecheney: japanese soul, interesting
+[08:42] <davecheney> they are tighter than tight
+[08:43] <rogpeppe> davecheney: :-) when my gran said "tight" she meant "drunk"
+[08:48] <rogpeppe> jtv: i looked for launchpad.net/maas/gomaasapi, but it doesn't seem to exist
+[08:48] <rogpeppe> $ bzr branch lp:maas/gomaasapi
+[08:48] <rogpeppe> bzr: ERROR: Permission denied: "Cannot create 'gomaasapi'. Only Bazaar branches are allowed."
+[08:52] <rvba> jtv: not sure why you would want to use launchpad.net/maas/gomaasapi right now… the code is in lp:~maas-maintainers/maas/gomaasapi while we're still getting the project started. http://paste.ubuntu.com/1565492/
+[09:14] <jtv> Gah.  I was using the wrong invocation of "go test" again.  That's all there is to it.
+[09:15] <rvba> That's what I suspected ;)
+[09:17] <jtv> Lost a lot of stupid time to that, barking up the wrong trees.
+[10:18] <rogpeppe> jtv: almost always i just use plain old "go test"...
+[10:19] <rogpeppe> jtv: an invocation that's hard to get wrong :-)
+[10:20] <jtv> otp
+[10:47] <rogpeppe> dimitern: hiya
+[10:47] <dimitern> rogpeppe: yo!
+[11:30] <dimitern> mgz, jam: standup?
+[12:19] <rogpeppe> aram: fancy doing some reviews at some point?
+[12:41] <niemeyer> Hello all!
+[12:42] <rogpeppe> niemeyer: yo!
+[12:43] <rogpeppe> niemeyer: are you still on reviews?
+[12:45] <rogpeppe> niemeyer: yay! just had first successful live API test.
+[12:45] <rogpeppe> niemeyer: well, "success" did take the form of a failure :-)
+[12:45] <rogpeppe> 3:49.482     c.Assert(apiInstId0, Equals, instId0)
+[12:45] <rogpeppe> 3:49.482 ... obtained string = "i-963dcbe6"
+[12:45] <rogpeppe> 3:49.482 ... expected state.InstanceId = "i-963dcbe6"
+[12:50] <niemeyer> rogpeppe: Woah
+[12:50] <niemeyer> rogpeppe: That's cool :-)
+[12:50] <rogpeppe> niemeyer: the string there came back from the Request method of the API
+[12:50] <niemeyer> rogpeppe: In that specific case, even better than silence, as you know it actually worked :-)
+[12:50] <rogpeppe> niemeyer: indeed
+[12:51] <rogpeppe> niemeyer: i had a good chat with davecheney last night BTW
+[12:51] <rogpeppe> niemeyer: i think we know where we're going with the HA stuff now
+[12:54] <niemeyer> rogpeppe: Any changes?
+[12:55] <rogpeppe> niemeyer: pretty much according to the sketch i showed you
+[13:04] <rogpeppe> all live tests pass
+[13:04] <niemeyer> rogpeppe: How's it different from what is already being pushed by Dave?
+[13:04] <rogpeppe> niemeyer: it doesn't involve stater as a jujud subcommand
+[13:04] <rogpeppe> niemeyer: worker/stater stays pretty much as he's proposing it though
+[13:05] <rogpeppe> niemeyer: although it needs more logic to check if it's already running
+[13:05] <niemeyer> rogpeppe: Cool, that makes sense
+[13:05] <rogpeppe> niemeyer: we run the stater as a job in the machine agent
+[13:06] <niemeyer> rogpeppe: +1
+[13:06] <rogpeppe> niemeyer: i'm happy with the direction. i think i can see it all hanging together now.
+[13:07] <rogpeppe> niemeyer: if you were up for doing some reviews, i've got a sequence of 4 noisy-but-fairly-insubstantial reviews that take us up to having a working API
+[13:08] <rogpeppe> https://codereview.appspot.com/7133063/
+[13:08] <rogpeppe> https://codereview.appspot.com/7197049/
+[13:08] <rogpeppe> https://codereview.appspot.com/7133072/
+[13:08] <rogpeppe> https://codereview.appspot.com/7195051/
+[13:09] <rogpeppe> niemeyer: but i totally understand if you don't want to
+[13:12] <niemeyer> rogpeppe: I'll surely have a look
+[13:20] <rogpeppe> niemeyer: thanks
+[13:43] <rogpeppe> niemeyer: how's 17070 for a port number? it's not on either of the two assigned-number lists i've looked at so far.
+[13:44] <rogpeppe> niemeyer: and 7070 is kinda mnemonic for juju if you squint right
+[13:45] <niemeyer> rogpeppe: Hah, looks good :)
+[13:45] <rogpeppe> niemeyer: i only use random ports in the tests, so we can run tests concurrently on the same machine without clashing
+[13:46] <niemeyer> rogpeppe: The default port for mongo is 27017, btw.. that's where 37017 comes from
+[13:47] <rogpeppe> niemeyer: i suspect that we may not need to use a fixed port number in the future, if an agent is actively publishing server addresses. but we may want to anyway.
+[13:48] <niemeyer> rogpeppe: You mean an agent with a fixed port just to tell us what the dynamic port is? :-)
+[13:49] <rogpeppe> niemeyer: no, i don't think we'd *need* any agent with a fixed port.
+[13:49] <niemeyer> rogpeppe: "if an agent is actively publishing server addresses"
+[13:49] <niemeyer> rogpeppe: How would one connect to said agent?
+[13:49] <rogpeppe> niemeyer: yeah, we need a place to publish, but we already need a place to public (currently it's the private storage; you were suggesting tags, which seems like a good plan too)
+[13:50] <rogpeppe> s/to public/publish/
+[13:50] <niemeyer> rogpeppe: Doesn't sound good
+[13:51] <rogpeppe> niemeyer: what i mean is that we've already got a well known place to look, without necessarily needing to have well known ports too
+[13:51] <niemeyer> rogpeppe: One thing is what we do.. something else is requiring that everyone talking to an API implement the full logic to figure out where to talk to
+[13:51] <dimitern> mgz: ping
+[13:51] <niemeyer> rogpeppe: Our "well known place" is not observable without a good amount of logic
+[13:51] <rogpeppe> niemeyer: we already need to find out the IP address. a port isn't much addition to that.
+[13:51] <niemeyer> rogpeppe: The only thing we need is to hand out an IP address
+[13:51] <niemeyer> rogpeppe: and the TCP port
+[13:52] <mgz> dimitern: hey
+[13:52] <niemeyer> rogpeppe: Which is somewhat common for a few decades :)
+[13:52] <rogpeppe> niemeyer: indeed. i'm not sure why the port needs to be well known though. we can hand out an IP-address/port pair if we want.
+[13:52] <niemeyer> rogpeppe: Man.. that's the kind of discussion I'd hope was unnecessary
+[13:52] <rogpeppe> niemeyer: and that might have advantages
+[13:52] <dimitern> mgz: so I found out what I was doing wrong - I assumed in server detail accessIPv4 and accessIPv6 are the addresses to look, but there indeed is addresses with the same structure as server/ips returns
+[13:53] <niemeyer> rogpeppe: Please use a fixed port number for the service
+[13:53] <rogpeppe> niemeyer: for instance, we could potentially run several API servers on the same machine
+[13:53] <rogpeppe> niemeyer: i will, and i am
+[13:53] <niemeyer> rogpeppe: Thakns
+[13:53] <rogpeppe> niemeyer: apart from in tests
+[13:53] <niemeyer> rogpeppe: Sure
+[13:54] <rogpeppe> niemeyer: as for authentication, i don't mind it being open for the moment, as the only thing you can do is request an instance id, which doesn't seem too harmful.
+[13:54] <dimitern> mgz: so instead of landing the CL about /ips, I'll propose a new one, parsing the addresses part of server detail and use that to get the public/private addresses in juju
+[13:54] <mgz> right, it's the 'addresses' key you care about, which has a list of dicts as content
+[13:54] <rogpeppe> niemeyer: authentication is next on the agenda
+[13:54] <niemeyer> rogpeppe: Sounds good then.. please mention that in the CL
+[13:54] <rogpeppe> niemeyer: will do
+[13:54] <niemeyer> rogpeppe: There's no "Destroy" or anything, right?
+[13:55] <rogpeppe> niemeyer: maybe i'll just slip one in for the hell of it. plus a root shell :)
+[13:56] <dimitern> mgz: but the thing is - should I parse and make available all addresses reported, from goose into ServerDetail, so juju can pick which ones to use?
+[13:56] <mgz> dimitern: yes, I'd do that.
+[13:57] <dimitern> mgz: that's what you suggested - move the logic out of goose and into juju, providing all the necessary details
+[13:57] <rogpeppe> niemeyer: thanks v much for the reviews. that's helped immensely.
+[13:57] <dimitern> mgz: ok then
+[13:58] <niemeyer> rogpeppe: My pleasure
+[14:00] <mgz> dimitern: a list of struct that pretty much just corresponds to the json should be fine for now
+[14:00] <dimitern> mgz: what I'm not yet sure is how to implement the "wait" part of getting DNSName - just keep calling server/detail until I have addresses?
+[14:02] <mgz> sounds reasonable for first stab
+[14:02] <dimitern> mgz: cool, I should have it soon
+[14:03] <mgz> it's pretty much what the python code does
+[14:03] <mgz> see the while loop in juju.providers.openstack.launch
+[14:03] <dimitern> mgz: ok, 10x
+[14:04] <mgz> (it only does it when configured to provided a public ip, but the principle is the same)
+[14:07]  * aram doesn't feel very well.
+[14:08] <dimitern> aram, get well soon!
+[14:08] <aram> trying; thanks.
+[14:09] <mgz> fix internal bugs! or kill them...
+[14:27] <rogpeppe> API is live in trunk. not that it *does* anything yet :-)
+[14:27] <rogpeppe> time for lunch and a walk in the snow, i think
+[14:28] <dimitern> rogpeppe: at least you have snow :)
+=== slank_away is now known as slank
+[14:28] <rogpeppe> dimitern: yeah it's great. still aching from sledging activity at the weekend :-)
+[14:29] <dimitern> rogpeppe: man, I envy you a bit - my snowboarding skills got all rusty in sunny malta
+[14:29] <dimitern> but the summer's great :)
+[14:30] <rogpeppe> dimitern: i haven't been skiing in years
+[14:30] <rogpeppe> dimitern: i miss it a  bit
+[14:31] <dimitern> rogpeppe: at lest you don't have to catch a plane to go skiing :)
+[14:32] <rogpeppe> dimitern: i do... the snow only happens here for about a week a year and the hills aren't big enough for skiing unless i go up to scotland where they're still small and the skiing's crap
+[14:32] <rogpeppe> anyway, lunch!
+[14:32] <dimitern> yeah, enjoy
+[16:09] <fss> niemeyer: ping
+[16:09] <niemeyer> fss: Hey
+[16:24] <fss> niemeyer: may we get those iam patches merged? :-)
+[16:24] <niemeyer> fss: Yeah, the end is near
+[16:24] <fss> niemeyer: thanks
+[16:24] <niemeyer> fss: I'm planning some time next week to go over goamz-everything
+[16:28] <fss> niemeyer: nice, we needed some ELB support too, and flaviamissi prepared patches for that too
+[16:28] <niemeyer> fss: Neat
+[16:29] <niemeyer> fss: Are they up for review already?
+[16:29] <fss> niemeyer: not sure, let me ask her
+[16:30] <fss> and there we go :-)
+[16:31] <flaviamissi> niemeyer, https://codereview.appspot.com/7014047/
+[16:31] <flaviamissi> hi, btw
+[16:31] <flaviamissi> x)
+[16:31] <niemeyer> flaviamissi: Cheers!
+[16:31] <niemeyer> flaviamissi: Hi :)
+[16:33] <flaviamissi> niemeyer, I still have to change the regions endpoints and update some stuff... I'll probably do it tomorrow
+[16:33] <flaviamissi> but if you could take a look
+[16:33] <niemeyer> flaviamissi: Sounds good. I'll probably not get to that before next week
+[16:41] <flaviamissi> niemeyer, alright then x)
+[16:41] <flaviamissi> thanks!
+[16:46] <fwereade> niemeyer, rogpeppe, davecheney: https://codereview.appspot.com/7198051 should be very simple: it's basically a straight move (no behaviour changes), leavened by the deletion of a whole bunch of redundant tests
+[16:47] <rogpeppe> fwereade: looking
+[16:47] <rogpeppe> fwereade: morning, BTW!
+[16:47] <fwereade> rogpeppe, heyhey :)
+[16:48] <rogpeppe> fwereade: assuming no test coverage has been lost, LGTM
+[16:48] <fwereade> rogpeppe, I believe that to be the case -- the only lack of redundancy I could find was moved into RUS
+[16:49] <fwereade> rogpeppe, and the intent was always that RUS be the real tests... ORUS was only there out of state-swap paranoia
+[16:49] <rogpeppe> fwereade: we have a "working" API BTW.
+[16:49] <fwereade> rogpeppe, sweeeet!
+[16:50] <rogpeppe> fwereade: it only has one request so far: Machine.InstanceId
+[16:50] <rogpeppe> fwereade: just to check end-to-end sanity
+[16:50] <fwereade> rogpeppe, a black triangle :)
+[16:50] <rogpeppe> fwereade: indeed so
+[16:51] <rogpeppe> fwereade: and now i'm pondering about how much (if any) to resurrect of my old rpc package branch
+[16:51] <fwereade> rogpeppe, oh yes?
+[16:51] <rogpeppe> fwereade: well, i want *something* to take the dogwork out of writing rpc methods
+[16:51] <rogpeppe> fwereade: and the standard rpc package isn't up to it
+[16:52] <rogpeppe> fwereade: because it can't deal with per-connection auth
+[16:52] <rogpeppe> fwereade: i'm wondering about the best way to express permissions without turning the code into a rats' nest
+[16:53] <fwereade> rogpeppe, ha, yes, this has been somewhat on my mind
+[16:53] <rogpeppe> fwereade: three immediate possibilities come to mind
+[16:53]  * fwereade is listening
+[16:54] <rogpeppe> fwereade: 1) map users (entity names) to capabilities; check the requisite capability inside each method
+[16:54] <rogpeppe> fwereade: 2) map capabilities to allowed users; check for the requisite capabilitiy inside each method
+[16:55] <rogpeppe> fwereade: 3) dispense with a table and just check for permissions explicitly inside each method
+[16:55] <rogpeppe> fwereade: rather, check for particular entities inside each method
+[16:55] <niemeyer> rogpeppe: It's not just about having a capability or not
+[16:56] <fwereade> rogpeppe, explicit per-method checks feel clearest and simplest to me... the first two smack a little of premature abstraction
+[16:56] <niemeyer> rogpeppe: Unit foo/1 has see config capability, for its *own* config
+[16:56] <rogpeppe> niemeyer: that's the "see own config" capability :-)
+[16:56] <niemeyer> rogpeppe: Heh
+[16:57] <rogpeppe> niemeyer: i think we'll always need *some* explicit per-method checks
+[16:57] <niemeyer> rogpeppe: That was my point
+[16:57] <niemeyer> What fwereade said, though
+[16:57] <niemeyer> I'd get a feeling for the problem first
+[16:58] <rogpeppe> niemeyer: yes
+[17:00] <fwereade> rogpeppe, I'm sure the right abstractions will emerge in the fullness of time ;)
+[18:33]  * rogpeppe is off for the night.
+[18:33] <rogpeppe> see y'all tomorrow
+[18:35] <fwereade> gn rog
+[20:03] <rogpeppe> davecheney: ping
+=== slank is now known as slank_away
+=== slank_away is now known as slank
+[21:13] <davecheney> rogpeppe: ack
+[21:13] <davecheney> sorry i'm late
+[21:13] <davecheney> is now too late to call ?
+[23:39] <rogpeppe1> davecheney: sorry, missed your ack and now it *is* too late :-)
+[23:39] <davecheney> that is ok
+[23:39] <davecheney> would 7 tomorrow work for you ?
+[23:40] <davecheney> sorry 19:00
+[23:40] <rogpeppe1> davecheney: 1900 would be 6am for you i think
+[23:40] <davecheney> well, i'll ping you when I'm up
+[23:40] <davecheney> if it works out, all the better
+[23:41] <rogpeppe1> davecheney: sounds good. if you're up for an early saturday morning, it'd be good to chat...
+[23:43] <rogpeppe1> davecheney: otherwise maybe sunday night (monday morning for you). or the day after. if you toggle your away status, i'll know if it's worth pinging you.
+[23:44] <rogpeppe1> davecheney: anyway, things going ok?
+[23:45] <rogpeppe1> davecheney: what was the last thing you saw me say?
+[23:46] <rogpeppe1> ach well
+[23:46] <rogpeppe1> davecheney_: hope to speak some time

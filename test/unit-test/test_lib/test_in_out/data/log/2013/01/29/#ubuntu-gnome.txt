@@ -1,0 +1,126 @@
+[09:33] <darkxst> ricotz, have you had any problems with monitor not going in to power saving/sleep?
+[09:33] <darkxst> only works when I force dpms with xset ;(
+[11:40] <ricotz> darkxst, seems not happening here too, just the "screensaver" turns on
+[15:27] <darkxst> ricotz, yeh, i have tried 3 different nvidia blobs and without xorg-edgers, nothing fixes it
+[15:27] <darkxst> wonder if its a bug in g-s-d
+[15:29] <ricotz> darkxst, yes, this is for sure g-s-d/g-c-c
+[15:40] <darkxst> ricotz, I guess I will investigate further tomorrow, there have been a heap of patches to the g-s-d power module, the last few weeks
+[15:41] <ricotz> darkxst, this is a problem with a runtime dependency on systemd
+[15:48] <darkxst> hmm ok
+[18:12] <ivanovnegro> hi guys, if i want to beta test a bit i guess i have to upgrade from an installed 12.10 as there are no images of 13.04 yet? i ask bc i do not run 12.10 :)
+[18:14] <atrus> ricotz: do you know if there's a path forward for ubuntu + systemd (even if mainstream ubuntu doesn't use it)?
+[18:35] <jbicha> atrus: the Ubuntu Foundations team doesn't want systemd in the Ubuntu repositories at this time, I suppose people could start a PPA if they want
+[18:39] <jbicha> ivanovnegro: you're welcome to try building your own image, https://code.launchpad.net/~ubuntu-gnome-dev/+junk/iso-build-script
+[18:41] <ivanovnegro> thanks jbicha
+[18:41] <ivanovnegro> i am a debian guy, so did not found info but i see the home page is in work
+[18:55] <ivanovnegro> special things for the new release?
+[18:55] <ivanovnegro> looks fine so far what was included in 12.10
+[18:55] <ivanovnegro> vanilla, like that
+[19:06] <jbicha> ivanovnegro: we're using Ubuntu Software Center & Software Updater instead of the gpk tools by default in 13.04
+[19:06] <ivanovnegro> thanks, saw it right now, seems, good, package kit is meh :)
+[19:06] <jbicha> and gnome-panel is no longer included by default
+[19:06] <ivanovnegro> will use only apt anyway
+[19:07] <ivanovnegro> no need for the panel
+[19:07] <ivanovnegro> here :)
+[19:07] <jbicha> we may use firefox instead of epiphany by default but I wanted to see how that would affect .iso size first
+[19:07] <ivanovnegro> also good ;)
+[19:07] <ivanovnegro> nice nice
+[19:08] <jbicha> there's a similar question about libreoffice instead of abiword/gnumeric but I'm less sure about that
+[19:09] <ivanovnegro> so far, nice plans i have to say
+[19:09] <ivanovnegro> sure, i use libre
+[19:09] <ivanovnegro> shell runs nicely on my old intel lappy
+[19:09] <ivanovnegro> but still 3.4 on sid
+[19:10] <jbicha> both 12.10 and 13.04 use 3.6 (although 3.6 is a bit more complete in 13.04)
+[19:10] <ivanovnegro> that is the thing, 12.10 would be already an improvement for me :)
+[19:11] <jbicha> getting wheezy out the door is important of course
+[19:12] <ivanovnegro> i know
+[19:12] <ivanovnegro> but gnome on sid is sometimes tough for me
+[19:12] <jbicha> perhaps 3.8 will show up in unstable this spring instead of trying to push 3.6 there
+[19:13] <ivanovnegro> wow
+[19:13] <ivanovnegro> wait, you are in gnome debian, right?
+[19:14] <jbicha> that's not official, just a guess because wheezy still looks a month away and it might be easier to skip a transition
+[19:15] <jbicha> yes I help merge some of the Ubuntu stuff to Debian
+[19:15] <ivanovnegro> ok ok
+[19:16] <ivanovnegro> nice to talk to you and thanks for the info
+[19:16] <ivanovnegro> will play a bit with the remix
+[19:16] <ivanovnegro> i like what i see
+[19:17] <ivanovnegro> off to go outside
+[19:19]  * ivanovnegro is away: Away
+[20:53] <darkxst> ricotz, jbicha, my monitor power saving issues are fixed in g-s-d master, can we put a snapshot somewhere
+[21:08] <ricotz> darkxst, hmm, let's see
+[21:18] <ricotz> darkxst, will push it to ricotz/staging
+[21:18] <darkxst> ok
+[21:19] <ricotz> luckily it "only" needs newer gnome-desktop
+[21:19] <jbicha> darkxst: I think we would want a git snapshot of gnome-control-center then as it's good to keep those 2 in sync
+[21:20] <darkxst> jbicha, yes true
+[21:20] <jbicha> g-c-c has a few more dependencies, I wasn't sure how to package the libwacom update
+[21:20] <ricotz> jbicha, libwacom should be up2date now
+[21:20] <jbicha> we could revert the libwacom changes until we figure that out though...
+[21:21] <ricotz> was there an even newer release already?
+[21:22] <jbicha> oops I meant colord
+[21:22] <jbicha> I knew it was one of those panels I don't use ;)
+[21:24] <ricotz> i see
+[21:25] <jbicha> I should ping RAOF about it
+[21:26] <ricotz> yeah, please do if there is a new release
+[21:26] <ricotz> Requested 'colord >= 0.1.27' but version of colord is 0.1.23
+[21:26] <ricotz> ;)
+[21:28] <jbicha> yeah 0.1.28 is the latest, maybe the problem was I needed a newer colord-gtk which is already fixed, I'll try building it again
+[21:41] <jbicha> ok it was that the patches didn't apply cleanly and I didn't know how to handle it
+[21:41] <jbicha> robert_ancell was the last to touch it so maybe he can fix it
+[22:05] <ricotz> jbicha, looks like a greater packaging change
+[22:05] <ricotz> but you can disable all packages
+[22:06] <jbicha> sure we can build w/o the patches for now for the PPA but it would be nice to just get the new version into raring directly
+[22:06] <ricotz> jbicha, what i am saying is the patches are obsolete or upstreamed
+[22:07] <ricotz> but you will need a libcolord-common package
+[22:07] <ricotz> for the new files
+[22:07] <ricotz> usr/share/colord/*
+[22:07] <ricotz> usr/share/glib-2.0/schemas/org.freedesktop.ColorHelper.gschema.xml
+[22:08] <ricotz> and one new header usr/include/colord-1/colord-session/cd-session.h
+[22:14] <ricotz> jbicha, i guess i can push that package to staging too
+[22:18] <jbicha> ricotz: sure go for it
+[22:18] <jbicha> I wasn't sure about whether Ubuntu wanted those sane patches but whatever
+[22:20] <ricotz> jbicha, will be here https://launchpad.net/~ricotz/+archive/staging/+packages
+[22:22] <ricotz> gnome-desktop3 dropped a symbol so there might be another soname bump, or they just going to ignore it while this symbols wasnt suppose to be exported at all
+[22:33] <ricotz> jbicha, i won't upload g-c-c, i don't have time and some patches needs a refresh
+[22:37] <ricotz> darkxst, so does it work?
+[22:38] <darkxst> oh its built already? I will test
+[22:38] <ricotz> ;)
+[22:38] <ricotz> no g-c-c though
+[22:46] <r4y> Wasn't there a Ubuntu 12.04 of this version?, and if so is it a Long Term release?
+[22:47] <r4y> And is there a torrent for it?
+[22:48] <r4y> http://ubuntu-gs-remix.sourceforge.net/p/home/
+[22:48] <r4y> See it says 12.04
+[22:49] <darkxst> ricotz, yeh works
+[22:49] <darkxst> r4y, that was a different project
+[22:49] <r4y> Ah, sorry I didn't know
+[22:49] <r4y> Thank youfor the help
+[22:50] <jbicha> ricotz: ok I'll look at that tonight, thanks
+[22:51] <ricotz> darkxst, good
+[22:51] <darkxst> r4y, gnome-shell should work fine on the normal ubuntu 12.04
+[22:51] <ricotz> jbicha, alright
+[22:52] <ricotz> jbicha, will put a tarball here http://people.ubuntu.com/~ricotz/g-c-c
+[22:52] <r4y> You mean the Ubuntu 12.04 with nity that has installable gnome-shell?, because I didn't like it
+[22:53] <darkxst> r4y, yes
+[22:53] <darkxst> r4y, change theme to 'Adwaita'
+[22:53] <r4y> LOL, I am running Ubuntu 10.04 right now
+[22:55] <r4y> http://imagebin.org/244727
+[22:56] <r4y> Nothing special but that's my current setup I like
+[22:58] <darkxst> r4y, I guess you might like the new classic mode that is coming then in g-s 3.8 http://worldofgnome.org/gnome-classic-not-classic-all/
+[22:59] <r4y> I should bookmark just in case TY for the link
+[23:00] <jbicha> derivatives often opt out of LTS-length support
+[23:02] <r4y> What about that command?, I mean is it usable in the normal Ubuntu 12.04?
+[23:02] <r4y> Or?
+[23:03] <darkxst> r4y, no
+[23:04] <r4y> OK, so I would use the Ubuntu GNOME Shell Remix for this then?
+[23:05] <r4y> Wait a minute
+[23:05] <r4y> you said this is a different project
+[23:05] <r4y> is this project without the word shell?
+[23:06] <darkxst> yeh
+[23:06] <r4y> I don't understand the difference though
+[23:07] <darkxst> but classic mode is very new and still under development, if you are the type that sticks to LTS releases, then its probably best to wait
+[23:08] <r4y> When you say wait, do you mean for normal Ubuntu 14.04 when it is released? or?
+[23:08] <r4y> I am sorry, lol
+[23:10] <r4y> OK< wait for classic to get better, not for Ubuntu 14 I am guessing
+[23:10] <darkxst> r4y, yes atleast wait for gnome-shell 3.8 release
+[23:10] <r4y> Ah, TY
+[23:13] <r4y> I think I understand now, thank you very much for the help

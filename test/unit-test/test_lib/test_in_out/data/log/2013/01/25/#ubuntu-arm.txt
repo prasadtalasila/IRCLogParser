@@ -1,0 +1,334 @@
+[01:55] <AmEv> Well, I've got a near-chroot method working.
+[01:55] <AmEv> *chroot method near-working...
+[01:55] <AmEv> Now I've figured out how the Ubuntu for Android guys did it... haha
+[01:58] <AmEv> Any ARM Xorg guys on right now?
+[02:26] <slangasek> ogra_: so my 'ssh hangs hard when I try to connect to my nexus7' bug is still here, even after repeated reinstalls
+=== zz_chihchun is now known as chihchun
+=== vhadil is now known as naruto
+=== naruto is now known as Guest19242
+[07:39] <wingze> hi
+[07:39] <wingze> i'm trying to cross compile a kernel on my desktop for a panda board but i get an dependency error
+[07:40] <wingze> but the dependencys are met and i still get that error
+[07:48] <mjrosenb> wingze: what error?
+[07:53] <dholbach> good morning
+[07:56] <highvoltage> good morning
+[07:57] <wingze> dpkg-checkbuilddeps: Unmet build dependencies: libelf-dev libnewt-dev binutils-dev libdw-dev libgtk2.0-dev | gtk2-devel
+[07:57] <wingze> i have all that installed but still get the error
+[08:08] <wingze> this is crazy
+[08:12] <wingze> ok got it working it was a build dependency error it needed gcc-arm-linux-gnueabi
+=== yofel_ is now known as yofel
+=== chihchun is now known as zz_chihchun
+[09:50] <sveinse> I have a headless target which plymouth is not installed, and I'm missing some of the logs from initramfs, even when I have console= console= in the kernel commandline. Is it possible to get this log out on the console, or do I need plymouth even on a headless system?
+[10:58] <xnox> sveinse: plymouth has text-mode plugins & can run fine on headless and output text.
+[10:59] <xnox> sveinse: i dunno how to do this without plymouth.
+[11:19] <asiekierka> is there any reasonably priced 10" tablet that can run Ubuntu well
+[11:19] <asiekierka> bonus points for Flash support in any way, shape or form (for livestreams that don't HTML5)
+[11:47] <sveinse> xnox: Hmm. plymouth is installed after all (dep'd by mountall). But for some reason nothing appears in the console during initramfs. I have another device (another kernel) also with the console= console= bootcmd construct, but here it does work.
+[11:48] <sveinse> Kernel config perhaps. Don't remember seeing any config related to that (since the initial printk of the kernel is output properly on the console)
+[12:21] <lilstevie> asiekierka: flash is a no go with ubuntu-arm
+[12:22] <lilstevie> asiekierka: for 10" tablets I don't really know of one that runs it "well", especially at a reasonable price, it runs fine on the tf201 but that isn't reasonably priced, and while fine I wouldn't call it "well"
+=== chihchun is now known as zz_chihchun
+[13:13] <marvin24_> lilstevie: do you have a device tree for tf201?
+=== rsalveti_ is now known as rsalveti
+[13:40] <ogra_> janimo, hmm, your HDA trick doesnt work if i build the HDA driver as module
+[13:40] <ogra_> :(
+[13:40] <janimo> well we build it in I suggest
+[13:40] <janimo> most our hw stuff is built-in anyway
+[13:40] <janimo> as we know it is there
+[13:40] <ogra_> well, i'm *extremely* short on bootimg space
+[13:40] <janimo> ah I remember
+[13:41] <janimo> how much more can fit there?
+[13:41] <ogra_> so modular would indeed be preferred if we add any stuff
+[13:41] <ogra_> -1M
+[13:41] <ogra_> :P
+[13:41] <janimo> ohm that should fit fine then for a while :)
+[13:41] <ogra_> the boot is slow enough that it justifies to have plymouth in the initrd
+[13:42] <ogra_> which i cant do atm
+[13:42] <janimo> I did not look closely at what we have modular or built-in
+[13:42] <ogra_> everything is builtin
+[13:42] <janimo> I think the majority of settings are as in the original android kernel
+[13:42] <ogra_> well, nearly at least
+[13:42] <ogra_> vmlinuz is 4.5M
+[13:43] <ogra_> (ac100 is 1.2 or so)
+[13:43] <janimo> I say when we hit that limit, we take out non-essential hw stuff (maybe all the USB peripherals)
+[13:43] <ogra_> you dont get it ? we are about 1M above
+[13:43] <janimo> and high-level networking and fss
+[13:43] <janimo> ah, aboce? I thought 1M to go
+[13:43] <ogra_> it currently only works due to some evil hacks and diversions i add
+[13:43] <janimo> that - 1M confused me
+[13:44] <ogra_> well, you asked how much more :)
+[13:44] <janimo> well I thought you said dash 1M not minus 1M
+[13:44]  * ogra_ is neadly done with a set of quietening patches for the boot
+[13:44] <ogra_> *nearly
+[13:45] <janimo> well anything not strictly tegraSoC hw could be modular IMHO
+[13:45] <ogra_> theoretically
+[13:45] <ogra_> sadly practically that will fall over in many places
+[13:45] <janimo> well FSs that are not ext4, TCP, and other bits Asus/Google did not modify should be fine I think
+[13:46] <janimo> Iknow battery and some other bits don't work as modules
+[13:46] <ogra_> all the non std drivers that are woven into android stuff usually require to be builtin
+[13:46] <janimo> right, but the big space consumers are network,fs and the rest of the code
+[13:46] <ogra_> battery, wlan, bluetooth, i bet the accelerometer and all other sensors too
+[13:46] <janimo> so if we can make those modular it should fix the bootimg size issue
+[13:46] <janimo> right, but those are all relatively small footprint  i bet
+[13:47] <ogra_> well, wlan would really help
+[13:47] <ogra_> we could drop all network bits to modules that way (protocols etc)
+[13:47] <ogra_> wlan itself wont gain us much, but firewall, protocols etc
+[14:15] <janimo> ogra_, do we have a nexus meeting today?
+[14:16] <ogra_> yup
+[14:18] <ogra_> GRRR !
+[14:18] <ogra_> i just had the boot quiet ...
+[14:19] <ogra_> enabling HDA gets me another message on the screen
+[14:19] <ogra_> why cant people use pr_info for info messages instead of pr_err
+[14:19] <ogra_> grmbl
+[14:20] <janimo> ogra_, is onboard not working when the gksu dialog after apport pops up a known issue?
+[14:20] <ogra_> yes, gksu is supposed to go asap
+[14:20] <janimo> I seem to have seen lots of onboard related bugs filed but am not sure which are still relevznt
+[14:20] <janimo> what replaces gksu?
+[14:20] <ogra_> pkexec, since about 4 releases now
+[14:21] <janimo> I keep getting an apport dialog on each session start, but cannot send the report due to this
+[14:21]  * janimo never heard of pkexec
+[14:21] <ogra_> yet you use it all the time :)
+[14:21] <janimo> so by asap you mean a couple weeks or a couple more cycles? :)
+[14:22] <ogra_> its part of policykit/consolekit
+[14:22] <ogra_> i mean this cycle
+[14:22] <ogra_> there are two apps left that need porting, then we can unseed gksu
+[14:22] <ogra_> one is update-notifier (which is the apport bit you see) and the other is xdiagnose
+[14:22] <janimo> I don't know what makes up the 'January-2013 Linux Plumbing stack'
+[14:23] <ogra_> where does that come from ?
+[14:23] <janimo> I can only assume it is different from 'December 2012 Linux Plumbing stack' and 'February 2013 Linux Plumbing stack'
+[14:24] <ogra_> oh, you mean wrt pkexec :)
+[14:24] <janimo> wrt the whole moving thing which keeps getting in the way of actually writing features
+[14:24] <janimo> half-joking
+[14:25] <ogra_> yay, completely quiet boot !
+[14:25] <janimo> everything from kernel up until the login manager
+[14:25] <ogra_> if we now just could have plymouth in initrd
+[14:26] <janimo> ogra_, what happened to the no initrd at all attempt?
+[14:26] <ogra_> i got stuck at the console-setup race
+[14:26] <ogra_> and was told bootspped isnt a prio anymore
+[14:26] <ogra_> *speed
+[14:27] <ogra_> so for now i just care about it having bling :)
+[14:27] <lilstevie> marvin24_: nope
+[14:28] <lilstevie> marvin24_: probably should work on that
+[14:31] <infinity> janimo: Who's on armadaxp SRU duty right now?  You or Ike?
+[14:31] <janimo> Ike I guess
+[14:31] <infinity> Kay.  We have a rushed revert in master that needs a quick rebase for derivatives.
+[14:32] <janimo> I was told I'd be doing non-SRU stuff last December, so my last armadaxp thing was the B0 enablement in Precise
+[14:32] <janimo> but if I misunderstood I can be convinced otherwise
+[14:32] <janimo> infinity, or if there's an emergency I can of course try handling it
+[14:33] <ogra_> what happened to NCommander ?
+[14:33] <ogra_> doesnt he do any server kernel work anymore ?
+[14:33] <janimo> ogra_, not on armadaxp at least
+[14:34] <infinity> janimo: I'll ping Ike.
+[14:34] <ogra_> janimo, btw, compiling HDA in or as module doesnt get me any sound working (suspend/resume still does)
+[14:34] <ogra_> are you sure your HDA stuff isnt just a red herring ?
+[14:34] <janimo> ogra_, very strange. I got that repeatedly after enabling it
+[14:34] <janimo> well I am not 100% sure, it just worked in my testing
+[14:35] <janimo> ogra do you have the volume turned on at boot?
+[14:35] <ogra_> no, it is muted
+[14:35] <ogra_> but unmuting doesnt get me any sound
+[14:35] <janimo> that sucks
+[14:36]  * ogra_ tries another reboot
+[14:36] <janimo> could it be i accidentally set some alsa configs which made it work? I'll dump my alsa state and paste it
+[14:36] <ogra_> now that rotation works wutomatically, we should probably consider to just boot in portrait
+[14:37] <janimo> ogra_, alsa store gives me this: http://paste.ubuntu.com/1569919/
+[14:38] <janimo> ogra_, I agree with portrait booting. needs to drop the fbcon rotate cmdline arg too
+[14:38] <ogra_> it also doesnt seem to make any difference if HDA is card 0 or 1
+[14:38] <janimo> ogra_, so reboot and still no sound?
+[14:38] <ogra_> janimo, and i think yoiu did a hack to the touch driver to switch to 1280x800 from 800x1280
+[14:39] <ogra_> i guess we need to drop that too
+[14:39] <ogra_> janimo, right, but sound after resume
+[14:39] <janimo> ogra_, right, I tested with that dropped this week
+[14:39] <janimo> will need the matrices shuffled in the rotate scripts
+[14:39] <ogra_> great, telly me once it entered the kernel and i'll adjust the cmdline
+[14:39] <janimo> but better that way so portrait is the 'normal' one
+[14:39] <janimo> and we drop that needless delta vs the android kernel
+[14:39] <ogra_> right
+[14:40] <ogra_> and getting plymouth inoto landscape seems impossible anyway
+[14:40] <janimo> ogra_, btw the cmdline could be altered separately no? Isn't that only affecting the fbcon (so bootup messages) ?
+[14:40] <ogra_> separately from ?
+[14:40] <janimo> from the rotate script and kernel stuff
+[14:40] <ogra_> the cmdline has two parts, first is hardcoded in the bootloader ...
+[14:41] <ogra_> second is from abootimg
+[14:41] <ogra_> the abootimg part can be altered
+[14:41] <janimo> right, abootimg fbcon rotate=1
+[14:41] <ogra_> yeah
+[14:41] <janimo> which is only about display in console mode
+[14:41] <ogra_> i'll drop that from the builds as soon as the kernel fix is there
+[14:41] <janimo> the kernel bit is only about touch input
+[15:00] <ogra_> janimo, http://paste.ubuntu.com/1569980/
+[15:01] <ogra_> thats the diff to my automatically stored asound.state file
+[15:01] <ogra_> (yours is +)
+[15:01] <ogra_> seems you played with all the controls :)
+[15:02] <ogra_> i wonder if you probably stil have sound working if you now disable HDA in your kernel
+[15:49] <janimo> ogra_, can you try this .deb? http://people.canonical.com/~jani/linux-image-3.1.10-8-nexus7_3.1.10-8.21_armhf.deb
+[15:49] <ogra_> sure
+[15:49] <janimo> I freshly rebuilt with the HDA and the axes inversion changes
+[15:49] <janimo> it works for me if I set the volume up (it is again off at boot)
+[15:51] <ogra_> bah, the noise is back at boot :P
+[15:52] <ogra_> nope
+[15:52] <ogra_> no sound
+[15:53] <ogra_> janimo, how exactly do you test btw ?
+[15:53]  * ogra_ just relies on the plop plop from the volume control applet
+[15:53] <ogra_> (when adjusting with the buttons)
+[15:54] <janimo> ogra_, canberra-gtk-play --file=/usr/share/sounds/gnome/default/alerts/glass.ogg
+[15:54] <ogra_> geez, complex
+[15:55] <ogra_> ergh
+[15:55] <janimo> well, I have no media to play, and this is a simple thing to test via ssh
+[15:55] <ogra_> and indeed the touchscreen is totally screwed now
+[15:55] <janimo> with export DISPLAY=:0 of course
+[15:55] <ogra_> well, i just press vol-up/down
+[15:55] <ogra_> makes an event sound if audio works
+[15:58]  * ogra_ reboots back to a sane kernel that likes my touching :P
+[16:01] <janimo> ogra_, so no sound with this deb?
+[16:01] <ogra_> janimo, right
+[16:01] <ogra_> well, after resume i had it
+[16:01] <ogra_> as with my kernel
+[16:01] <ogra_> well, lets have a meeting :)
+[16:02] <janimo> ogra_, well with this kernel I get sound without having to do suspend
+[16:03] <janimo> ogra_, http://paste.ubuntu.com/1570120/ the matrices changed around to have rotation work with this deb
+[16:03] <janimo> to be uploaded once we have the kernel change
+[16:34] <janimo> xnox, Bus 001 Device 067: ID 04e8:6866 Samsung Electronics Co., Ltd
+[16:34] <janimo> Galaxy Nexus
+[16:37] <xnox> janimo: thanks.
+[16:39] <janimo> anyone else with a nexus 7 willing to test the deb I linked above to see if it fixes the no sound on boot problem?
+[16:40] <Tassadar> yeah, why not, tell me what to do
+[16:42] <Tassadar> just install and reboot I guess)
+[16:42] <ogra_> right, like we discussed in the meeting :)
+[16:43] <janimo> Tassadar, yes, install and reboot but make sure you have ssh enabled or a keyboard or mouse
+[16:43] <janimo> as the touchscreen will be messed up :)
+[16:43] <janimo> via ssh then export DISPLAY=:0
+[16:43] <janimo> and  canberra-gtk-play --file=/usr/share/sounds/gnome/default/alerts/glass.ogg
+[16:43] <janimo> or any other sound playing app you wish
+[16:44] <Tassadar> okay, I'll just update my installation first
+[16:44] <janimo> for me this works on boot without having to issue a suspend
+[16:44] <janimo> but you may need to turn the volume on
+[16:56] <Tassadar> hmm, it does not work for me
+[16:57] <ogra_> Tassadar, does it work after a suspend cycle (as it did before)
+[16:57] <Tassadar> yes
+[16:57] <AmEv> Anyone got some initfs advice for me? I'm trying to get Ubuntu to run natively on the Toshiba Thrive.
+[16:58] <Tassadar> just to make sure it is right kernel, my /proc/version looks like this:
+[16:58] <Tassadar> Linux version 3.1.10-8-nexus7 (jani@parapapio) (gcc version 4.7.2 (Ubuntu/Linaro 4.7.2-19ubuntu1) ) #21 SMP PREEMPT Fri Jan 25 16:55:55 EET 2013
+[16:58] <Tassadar> so I think it is the right one
+[16:58] <Tassadar> yeah, it is, the touch screen is messed up
+[17:00] <AmEv> I was able to get into a chroot Ubuntu, but the X server never displayed anything. I know it had access to the framebuffer because there was garbage on the display before I started it.
+[17:00] <Tassadar> it doesn't need any modules or cmdline params during boot or something like that, does it? You said it is built in the kernel, right?
+[17:04] <janimo> Tassadar, yes it is the right kernel - especially since the touchscreen handling is broken right
+[17:04] <janimo> Tassadar, indeed no extra boot params
+[17:04] <janimo> Tassadar, thanks for testing
+[17:04] <janimo> I am building anothe deb now without the messed up touch now
+[17:05] <Tassadar> theres one hda-codec message if that's any help, "hda-codec: No codec parser is available"
+[17:07] <janimo> Tassadar, I have that too in dmesg
+=== XenGi is now known as XenGi_
+[17:19] <AmEv> Would I need to set a custom cmdline when I make the boot image on mine? If so, what?
+[17:24] <janimo> Tassadar, btw I put a new deb at the same URL, this time without the messed up screen
+[17:25] <janimo> did you test with the canberra command line ?
+[17:25] <janimo> ogra_, did you test with that canberra line btw?
+[17:26] <janimo> that works for me but playing an mp3 in rhythmbox is silent
+[17:27] <janimo> or rather it plays crack. I think I'll soon do a test-reinstall :)
+[17:29] <ogra_> well, we dont ship any mp3 codecs
+[17:30] <ogra_> rebooting to your latest kernel now
+[17:32] <janimo> ogra_, well I installed mpg123 and rhythmbox installed its own
+[17:32] <janimo> my alsa settings are likely broken now
+[17:32] <janimo> not sure how the gtk player just works
+[17:32] <ogra_> anyway, no change with the kernel from the ML
+[17:32] <janimo> volume up?
+[17:32] <AmEv> Hmmm... Sound works perfectly, but I'm not getting anything to display.
+[17:32] <ogra_> and yes, i used the canberra methid too
+[17:33] <ogra_> *method
+[17:33] <AmEv> You and I are in completely opposite sides of the spectrum... haha
+[17:33] <ogra_> volume is indeed up
+[17:33] <janimo> AmEv, does sound not work for you with the regular kernel unless suspending first?
+[17:34] <AmEv> I'm actually on a Tegra 2 device in a Android-to-Ubuntuchroot.
+[17:34] <AmEv> I have absolutely zero speaker issues.
+[17:34] <AmEv> My problem is that I can't get anything to display.
+[17:35] <ogra_> what do you want to display ?
+[17:35] <ogra_> android doesnt ship an X server
+[17:35] <Tassadar> janimo: no, no sound until suspend/resume
+[17:35] <ogra_> right, same here
+[17:35] <AmEv> I've got Ubuntu on an SD card.
+[17:35] <Tassadar> but touchscreen works)
+[17:35] <AmEv> Chroot.
+[17:36] <ogra_> AmEv, but you are aware that ubuntu apps use X ?
+[17:36] <AmEv> Yes.
+[17:36] <janimo> Tassadar, mine is a 16G model if that is any help but I doubt it has to do with the model
+[17:36] <Tassadar> mine too
+[17:36] <AmEv> I'm trying to start X, but nothing's displaying.
+[17:36] <ogra_> android doesnt ship an X server, you cant display anything
+[17:37] <ogra_> janimo, i really think HDA is a red herring ...
+[17:37] <ogra_> janimo, but i also think you must have something that makes it work :)
+[17:37] <janimo> ogra_, could well be
+[17:37] <janimo> yes, so I should not just wipe and reinstall
+[17:37] <janimo> I may have a gem here somewhere
+[17:37] <janimo> :)
+[17:37] <ogra_> we should consult diwic again
+[17:38] <AmEv> I've built an X-compatible kernel. I've been able to get Zygote, Surfaceflinger, Media, and DRM stopped, then chroot into Ubuntu, and start X.
+[17:38] <AmEv> My final goal is to get a working native, zero-Android solution.
+[17:38] <AmEv> Kernel source is https://github.com/Thrive-Hackers/tostab3-gnu-linux-kernel
+[17:39] <janimo> ok, indeed it now works with the stock kernel
+[17:39] <janimo> sigh
+[17:39] <janimo> my nexus just got fixed and I don't know how
+[17:40] <AmEv> In the meantime, I'm trying to esssentially shut down Android and shut down Ubuntu.
+[17:40] <Tassadar> both bohdi and plasma have sound working without suspend, but I don't see jeff here right now :/
+[17:40] <AmEv> *start up Ubuntu
+[17:41]  * janimo wonders whether bodhi and plasma are applications or people
+[17:41] <Tassadar> distributions)
+[17:42] <Tassadar> bohdi is based on debian and plasma active on MER (it is "kde on tablet" project), but both use ubuntu's kernel
+[17:43] <AmEv> Still, if someone does want to try remoting in, I'm willing to.
+=== W1N9Zr250 is now known as W1N9Zr0
+[17:47] <AmEv> Almost in...
+=== doko_ is now known as doko
+[17:54] <AmEv> Hmmm... WiFi module isn't loaded.
+[17:57] <AmEv> Okay, this is new... X is segfaulting.
+[18:00] <AmEv> Wall of text coming in...
+[18:01] <AmEv> root@localhost:/# startx
+[18:01] <AmEv> startx
+[18:01] <AmEv> xauth:  error in locking authority file /data/.Xauthority
+[18:01] <AmEv> xauth:  error in locking authority file /data/.Xauthority
+[18:01] <AmEv> X.Org X Server 1.11.3
+[18:01] <AmEv> Release Date: 2011-12-16
+[18:01] <AmEv> X Protocol Version 11, Revision 0
+[18:01] <AmEv> Build Operating System: Linux 2.6.38-1209-omap4 armv7l Ubuntu
+[18:01] <AmEv> Current Operating System: Linux localhost 2.6.39.4-gnu-v0.01-g49f5e55-dirty #6 SMP PREEMPT Thu Jan 24 18:24:20 MST 2013 armv7l
+[18:01] <AmEv> Build Date: 05 April 2012  02:47:41AM
+[18:01] <AmEv> xorg-server 2:1.11.4-0ubuntu10 (For technical support please see http://www.ubuntu.com/support)
+[18:01] <AmEv> Current version of pixman: 0.24.4
+[18:01] <AmEv>         Before reporting problems, check http://wiki.x.org
+[18:01] <AmEv>         to make sure that you have the latest version.
+[18:01] <AmEv> Markers: (--) probed, (**) from config file, (==) default setting,
+[18:01] <AmEv>         (++) from command line, (!!) notice, (II) informational,
+[18:01] <AmEv>         (WW) warning, (EE) error, (NI) not implemented, (??) unknown.
+[18:01] <AmEv> (==) Log file: "/var/log/Xorg.0.log", Time: Fri Jan 25 09:59:34 2013
+[18:01] <AmEv> (==) Using system config directory "/usr/share/X11/xorg.conf.d"
+[18:01] <AmEv> Backtrace:
+[18:01] <AmEv> Segmentation fault at address 0x4
+[18:01] <AmEv> Caught signal 11 (Segmentation fault). Server aborting
+[18:01] <AmEv> Please consult the The X.Org Foundation support
+[18:01] <AmEv>          at http://wiki.x.org
+[18:01] <AmEv>  for help.
+[18:01] <AmEv> Please also check the log file at "/var/log/Xorg.0.log" for additional information.
+[18:01] <AmEv>  ddxSigGiveUp: Closing log
+[18:01] <AmEv> Server terminated with error (1). Closing log file.
+[18:01] <AmEv> xinit: giving up
+[18:01] <AmEv> xinit: unable to connect to X server: No such file or directory
+[18:01] <AmEv> xinit: server error
+[18:01] <AmEv> xauth:  error in locking authority file /data/.Xauthority
+[18:01] <AmEv> root@localhost:/#
+[18:08] <AmEv> Ouehy..... I'm on 2.6.39.....
+[18:13] <AmEv> Might that be what's happening?
+[18:20] <AmEv> Well, anyone know how to set up a initfs properly, and the proper cmdline?
+[18:23] <AmEv> I should probably mention that I was using http://blog.rot13.org/2012/08/x11-running-on-nook-color-without-android-stack.html as a basis for a lot of what I was doing...
+[18:33] <slangasek> ogra_: hmm, any idea why modem-manager in raring takes over /dev/ttyACM0 when I connect my nexus7 to my raring laptop?
+[18:34] <ogra_> nope, thats a qerustion for cyphermox i think, we noticed other modemmanager issues as well, might be the same bug, not sure
+[18:34] <ogra_> *question even
+[18:37] <slangasek> ah, it apparently opens the port several times and takes a long time to probe it, but eventually lets go
+[18:37] <ogra_> yeah, it sends AT commands
+[18:37] <ogra_> seems it does that for the serial gadget connection too
+[18:37] <ogra_> which can confuse getty a bit
+[18:38] <ogra_> slangasek, btw, make sure to upgrade to the latest, there were a ton of fixes this week
+[18:38] <slangasek> this was installed yesterdy
+[18:38] <ogra_> well, we didnt have images for the whole week :)
+[18:39] <slangasek> we did yesterday
+[18:39] <ogra_> oh, i missed that, only saw that todays failed
+[18:39] <ogra_> perfect then :)
+[18:50]  * ogra_ goes for dinner
+[18:55] <AmEv> Yep. My audio device is tegra8903. Perfect sound in Ubuntu.

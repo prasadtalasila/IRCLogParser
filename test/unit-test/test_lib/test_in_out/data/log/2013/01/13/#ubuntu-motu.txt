@@ -1,0 +1,105 @@
+=== glebihan_ is now known as glebihan
+=== yofel_ is now known as yofel
+[02:55] <micahg> bdrung: about Bug #1099003, does vlc dlopen libopus?
+[02:55] <ubottu> bug 1099003 in vlc (Ubuntu) "VLC 2.0.5 won't work with Opus. Please include libopus0 from n-muench PPA" [Undecided,Won't fix] https://launchpad.net/bugs/1099003
+[02:57] <micahg> bdrung: if so, we can backport opus from quantal to precise
+[02:58] <micahg> bdrung: make that can, as I see there's a build-dep in quantal
+[03:00] <micahg> bdrung: alternatively, we can backport opus+vlc from quantal to precise once the can't build depend on backports in backports bug is fixed
+[04:09] <wendar> recap: gnumeric is a trivial manual merge, but depends on goffice 0.10.0
+[04:09] <wendar> goffice requires a sync, since the Ubuntu patches are no longer relevant
+[04:10] <wendar> but, it's a significant version change so requires a transition
+[04:11] <wendar> anyone got pointers for docs on library transitions?
+[04:13] <wendar> I'll ask cjwatson when the time zones roll around again if no other answers pop up
+[04:13] <micahg> wendar: preferably through merges/syncs from Debian if they're available
+[04:13] <micahg> if that's needed
+[04:14] <wendar> gnumeric is a merge from Debian, goffice will be a sync
+[04:14] <jtaylor> wendar: first setup a transition tracker http://people.canonical.com/~ubuntu-archive/transitions/
+[04:14] <micahg> jtaylor: it's a handful of packages
+[04:14] <micahg> or 2 handfuls
+[04:15] <wendar> jtaylor: is that populated manually or automatically?
+[04:15] <jtaylor> automatic
+[04:15] <jtaylor> you just have to provide the rules
+[04:15] <wendar> goffice isn't in there, but then goffice is blocked on a manual merge
+[04:15] <micahg> it's actually 5 sources
+[04:15] <wendar> so, if goffice is sync'd, will it then appear in the transition tracker?
+[04:15] <micahg> not worth a tracker
+[04:15] <jtaylor> no the tracker has to be setup manually
+[04:16] <wendar> ah, automatically generated, for manually specified package names?
+[04:16] <jtaylor> you provide the afftected, good and bad lines you see in the existing ones
+[04:17] <jtaylor> but it may not be worth it if its only handful
+[04:29] <wendar> is it fairly similar to the Debian transition "ben" format? http://wiki.debian.org/Teams/ReleaseTeam/Transitions
+[04:29] <micahg> indeed
+[04:44] <wendar> ok, exactly 5 packages
+[04:50] <wendar> micahg: is it reasonable to put in the Sync request for goffice, and include the list of reverse depends and reverse build depends?
+[04:50] <wendar> with the note that it may require a transition
+[04:52] <wendar> or would you lean more toward an email to ubuntu-motu (which is where I see some transition conversation happening)
+[04:52] <jtaylor> first do all rdeps still build?
+[04:53] <jtaylor> if yes (and they also work) the actual transition can be simple
+[04:54] <jtaylor> must get to bed now, n8
+[05:29] <micahg> wendar: if everything works, then file the appropriate bugs with notes that they should go together
+[05:30] <wendar> micah: I'm doing a test build on all of them
+=== almaisan-away is now known as al-maisan
+=== al-maisan is now known as almaisan-away
+[10:42] <cjwatson> wendar: yeah, for five I'd JFDI.  Let me know when I should merge gnumeric
+[12:51] <jtaylor> I probably asked that already but forgot,  when doing an sru that build depends on another sru do I have to add versioned depends?
+[12:51] <jtaylor> e.g. jcc (>= 2.11-3ubuntu0.1)
+[13:20] <Rhonda> hmmmmm, why don't I have the ssh key from my laptop on jubany.c.c …
+=== yofel_ is now known as yofel
+[17:18] <wendar> cjwatson: a sync'd version of the latest goffice from Debian builds fine, but I get build failures in gnumeric and gnome-chemistry-utils which depend on it
+[17:19] <wendar> those are the only two reverse depends on goffice that have ubuntu changes, everything else is already sync'd from Debian
+[17:22] <wendar> the build failures aren't directly related to goffice, though
+[17:23] <wendar> which means, it could be other gtk packages in Ubuntu that are different versions than Debian's
+[17:24] <wendar> gnumeric fails with a missing identifier in GTK-Doc
+[17:25] <wendar> gnome-chemistry fails with a missing symbol from libxslt at link time (so, not even gtk related)
+[17:53] <bdrung> micahg: backporting opus+vlc sound good. what needs to be done once quantal EOL?
+[17:53] <bdrung> backport from raring to precise?
+[18:07] <micahg> bdrung: that or just upload the precise version with enable opus + enable ssl
+[18:15] <bdrung> micahg: looking at the precise->quantal diff, it's better to just enable opus and ssl instead of backporting the quantal version
+[18:16] <micahg> bdrung: I was going to backport quantal + reinstate the postinst
+[18:16] <bdrung> micahg: and revert the fonts-freefont-ttf rename, please
+[18:17] <bdrung> otherwise you can't install it (or you backport the freefont package)
+[18:17] <micahg> bdrung: we just need the reverse dependencies tested with the built versions, I can throw them in my PPA
+[18:17] <micahg> bdrung: ah, yes
+[18:17] <bdrung> backporting the font would be probably better
+[18:18] <micahg> it has a few reverse dependencies as well, but I don't mind if they're tested
+[18:21] <bdrung> micahg: once we have one version of vlc in backport, keeping it updated shouldn't be that big issue (because security updates will go to precise and quantal)
+[18:21] <micahg> right
+[18:23] <micahg> ah, we actually don't need the backport on backport version
+[18:23] <micahg> both are new packages in backports
+=== chris|| is now known as chris|
+=== hrww is now known as hrw
+=== kloeri_ is now known as kloeri
+=== yofel_ is now known as yofel
+[19:30] <wendar> cjwatson: is there a better way to test a partial archive rebuild for a library transition?
+[19:32] <wendar> cjwatson: I'm beginning to suspect the build failures may have more to do with creating a test build environent from a mixture of apt-get installs of raring packages and local custom dpkg installs of the new versions of the packages
+[19:32] <wendar> cjwatson: so, it's getting the dependencies confused on building packages that depend on other packages I've already built
+=== zequence_ is now known as zequence
+[19:55] <jtaylor> when doing an sru that build depends on another sru do I have to add versioned depends?  e.g. jcc (>= 2.11-3ubuntu0.1)
+[20:17] <micahg> jtaylor: if the version is required for functionality, yes
+[20:18] <jtaylor> its only the build
+[20:18] <jtaylor> runtime doesn't matter
+[20:18] <micahg> yes, I mean if it's required to make the build work properly, it should be versioned
+[20:18] <jtaylor> k
+[21:01] <cjwatson> wendar: Does the new goffice render the old (other packages) uninstallable?
+[21:02] <cjwatson> wendar: If so, the simplest way is to put it into raring-proposed (where everything's staged anyway) and then it'll automatically stay there until we fix everything else up - and it'll be easier to test-build them once the new goffice is in raring-proposed
+[21:03] <cjwatson> wendar: if the new goffice changes library package names or similar, that's good enough for this purpose
+[21:29] <wendar> cjwatson: I'm getting FTBFS on gnumeric and gnome-chemistry-utils when I rebuild locally on the new goffice
+[21:30] <wendar> cjwatson: so, yes going ahead and syncing the new goffice into raring-proposed would work
+[21:31] <wendar> cjwatson: I can watch and fix any errors until all the dependencies are straight
+[21:34] <wendar> cjwatson: (the library package names are different for the new goffice, all 0.10 instead of 0.8)
+[21:35] <cjwatson> wendar: done on your behalf, then
+[21:35] <cjwatson> I'll have a poke at gnumeric tomorrow
+[21:35] <wendar> cjwatson: thanks!
+[21:36] <wendar> I did the merge for gnumeric
+[21:36] <cjwatson> http://people.canonical.com/~ubuntu-archive/proposed-migration/ should tell you what's still blocking it (in a bit)
+[21:36] <cjwatson> point me to a source package and I'll start from that, then
+[21:36] <cjwatson> though the Ubuntu changes weren't complicated
+[21:36] <wendar> cjwatson: https://bugs.launchpad.net/ubuntu/+source/gnumeric/+bug/1099027
+[21:36] <ubottu> Ubuntu bug 1099027 in gnumeric (Ubuntu) "Please merge gnumeric 1.12.0-1 (universe) from Debian unstable" [Wishlist,New]
+[21:37] <cjwatson> ok, ta
+[21:37] <wendar> aye, the changes were light
+[21:37]  * cjwatson not a major fan of attempting to sponsor UDD merges anyway
+[21:37] <cjwatson> fine for other things, but there are a few too many directions to compare for merges
+[21:37] <cjwatson> so glad you just gave a debdiff
+[21:38] <cjwatson> anyway, -> tv, will look tomorrow
+[21:38] <wendar> enjoy :)

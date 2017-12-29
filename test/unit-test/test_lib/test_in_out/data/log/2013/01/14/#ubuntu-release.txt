@@ -1,0 +1,78 @@
+=== popey_ is now known as popey
+[07:45] <infinity> cjwatson: Oh, to be clear on the d-i versus omap4 kernels thing, the ABI referenced in that upload *does* exist in -proposed, but it's currently buggy, so waiting on today's PPA upload to land would be good before we accept it (but please do review).
+=== henrix_ is now known as henrix
+=== doko_ is now known as doko
+=== soren_ is now known as soren
+=== henrix is now known as henrix_
+=== henrix_ is now known as henrix
+=== Ursinha is now known as Ursinha-afk
+=== Ursinha-afk is now known as Ursinha
+=== Ursinha is now known as Ursinha-afk
+=== Ursinha-afk is now known as Ursinha
+[14:23] <Daviey> ugh, we don't get a useful c-m anymore due to using -proposed?
+[14:29] <tseliot> cjwatson: can you promote these sources from NEW and move them to main (in raring), please? nvidia-settings-304 nvidia-settings-304-updates nvidia-settings-310 nvidia-settings-310-updates
+=== yofel_ is now known as yofel
+[14:35] <cjwatson> Daviey: It's on Ursinha's to-do list
+[14:35] <Ursinha> hello Daviey :) yes, it is
+[14:35] <cjwatson> tseliot: Looking
+[14:38] <cjwatson> tseliot: What's going to deal with installing all these differently-versioned tools packages?
+[14:39] <tseliot> cjwatson: there are packages which recommend them: e.g. nvidia-310 recommends nvidia-settings-310
+[14:39] <cjwatson> What's going to deal with installing those? :-)
+[14:40] <cjwatson> I guess I don't care that much; it just seems like a step backwards to have to have multiple different versions of userspace tools, rather than a single master thing that can configure any of the possibilities
+[14:41] <tseliot> cjwatson: the main problem is that drivers can break the interface nvidia-settings deals with
+[14:41] <cjwatson> Ah.  Sucky
+[14:41] <cjwatson> Well, not my problem I guess
+[14:41] <tseliot> :)
+[14:41] <cjwatson> Accepted - they'll probably fall back into multiverse or something after moving out of -proposed and have to be fixed up due to that known bug, so remind me if I forget
+[14:42] <tseliot> cjwatson: ok, I will, thanks
+[14:43] <Daviey> Ursinha: Great :)
+[15:54] <cjwatson> Hmm.  Looking at oversizedness.  Would it make sense to switch ubuntu-desktop in precise-proposed to Recommends: linux-headers-generic-lts-quantal rather than linux-headers-generic [amd64], linux-headers-generic-pae [i386]?
+[15:55] <cjwatson> It would have the effect of installing linux-headers-generic-lts-quantal for upgraders, but would (I think) drop linux-headers-generic{,-pae} and dependencies off images.
+[15:56] <tseliot> cjwatson: can you please reject the following sources from precise-proposed (I need to commit one more change)?: fglrx-installer-experimental-9 (2:9.010-0ubuntu0.3 and 2:9.010-0ubuntu0.4), fglrx-installer-updates (2:9.000-0ubuntu0.3 and 2:9.000-0ubuntu0.4), nvidia-graphics-drivers-experimental-310 (310.14-0ubuntu0.3)
+[16:00] <cjwatson> tseliot: Done
+[16:00] <tseliot> cjwatson: thanks again
+[16:11] <cjwatson> doko: Is that ready yet?  Neil's latest blog post suggested that he was part-way through a refactor that would make it all a lot saner
+[16:12] <doko> well, I was hoping to use it for the cross build just for perl for now
+[16:12] <doko> but I can use a local copy too
+[16:12] <cjwatson> It just seems to me that we could easily end up doing chunks of work several times.
+[16:13] <cjwatson> But whatever ...
+[16:13] <doko> so feel free to reject it
+[16:14] <doko> however he seems to build his own arm64 toolchain first
+[16:16] <cjwatson> meh, you can have it, I'm not that worried :)
+[16:21] <cjwatson> Hmm, not clear that the new livecd-rootfs is doing a stellar job of resolving things properly
+[16:21] <cjwatson> cmap-adobe-japan1 shouldn't be here
+[16:24] <cjwatson> Hmm, I think that Recommends: cmap-adobe-japan2 is insufficient to resolve an alternative Depends
+[16:24] <cjwatson> When using only metapackages, anyway
+=== henrix is now known as henrix_
+=== henrix_ is now known as henrix
+[16:30] <cjwatson> And I'm not sure it's possible to get rid of notification-daemon again without SRUing some other things to add notify-osd as a preferred alternative
+[16:31] <cjwatson> Tasks definitely have their advantages
+[17:04] <infinity> cjwatson: In raring, I dropped linux-headers recommends entirely from the desktop metapackage, since they're pulled in by installing linux-$(flavour) anyway.
+[17:04] <infinity> cjwatson: Not sure if you feel we can get away with that in precise, but if the installer DTRT, I don't see why not.
+[17:07] <ogra_> is that true for arm as well ?
+[17:07] <infinity> ogra_: Yes.  It fixed the silly situation where the nexus7 images had omap4 headers. :P
+[17:08] <ogra_> yeah
+[17:08] <ogra_> well, not only nexus7 ... the omap4 ones were seeded in -desktop iirc
+[17:08] <infinity> Exactly.
+[17:08] <infinity> That was just an example.  ac100 had the same problem.
+[17:08] <ogra_> yup
+=== tyhicks` is now known as tyhicks
+[17:42] <ogra_> oh, even on chromebook !
+[17:42] <ogra_> update-manager just removed the omap4 headers with this upgrade
+=== henrix is now known as henrix_
+=== henrix_ is now known as henrix
+[18:32] <cjwatson> Moving cmap-adobe-japan2 to ubuntu-desktop's Depends causes cmap-adobe-japan1 not to be installed.  OTOH moving libqt4-sql-sqlite similarly makes no difference to libqt4-sql-mysql.
+[18:32] <cjwatson> Sigh.
+[19:09] <infinity> cjwatson: I'm working with apw right now to fix the linux-generic deps.  Do we really need to switch the -desktop recommends, rather than just dropping it?
+[19:09] <infinity> cjwatson: (It'll bring in the wrong headers on upgrade for people still using the 3.2.0 kernel, will it not?)
+[19:15] <apw> infinity, ack, am going to do the 4 you mentioned for me
+[19:15] <infinity> apw: My hero. :)
+[19:16] <infinity> ARGH, WHY DHCLIENT, WHY?!
+[19:17]  * infinity changes his IP on his PPC machine to static, so dhclient stops complaining about it being 1930.
+[19:18] <infinity> Oh, or maybe I can use the fixrtc hack.
+[19:22] <infinity> # It will probably fail, but we won't have made the situation any worse.
+[19:22] <infinity> ^-- Best comment I've read all week.
+=== Ursinha is now known as Ursinha-afk
+=== Ursinha-afk is now known as Ursinha
+=== henrix is now known as henrix_
+=== jrgifford is now known as Guest83669

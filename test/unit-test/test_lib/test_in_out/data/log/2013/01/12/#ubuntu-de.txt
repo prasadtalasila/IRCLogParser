@@ -1,0 +1,407 @@
+[00:05] <maredebianum> Hm, habe mich eingeloggt, dazu eine guest session (auf Ctrl-Alt-F8/tty8), dann guest session beendet (ausloggen), hier bleibt man dann auf tty8/Login-screen. Zurück zu user (C-A-F7), herunterfahren: kein login-screen auf tty7, kein herunterfahren. Im syslog steht gnome-session: unable to stop system: authorization required. Die wird aber nicht erfragt, und sollte auch nicht nötig sein?!?
+[00:06] <maredebianum> PS.: In tty8 läuft noch der Login-screen.
+[00:07] <ppq> dann liegt es wohl am DM, der noch auf tty8 läuft
+[00:07] <ppq> buggiges verhalten, imho
+[00:07] <ppq> probier mal ob es geht wenn du den dm beendest
+[00:07] <k1l> welcher desktop läuft da denn?
+[00:08] <maredebianum> lightdm und gnome-classic 2D
+[00:12] <maredebianum> ppq: kann den dm nicht beenden. Es gibt dann im syslog (unter tty3 offen) meldungen von acpid: client disconnected etc., aber keine Fehlermeldung o.ä.  guest account ist lightdm/unity. Nochmal guest einloggen und shutdown -> authorization Meldung wie oben im syslog.
+[00:14] <maredebianum> OK, das war jetzt wohl wegen dem gleichzeitigen login auf tty3, exit dort, dann kann man runterfahren aus lightdm (der inzwischen auf tty7 liegt ?!?)
+[00:22] <bekks> X liegt schon seit Urzeiten auf tty7 :)
+[00:24] <maredebianum> Wo loggt denn gnome-session hin? Da steht vielleicht mehr alsnur: gnome-session[2293]: WARNING: Unable to stop system: Authorization is required
+[00:26] <maredebianum> bekks: die session war aber vorher auf tty8 (additional guest session), dann nach erneutem login/logout auf tty7. Das fand ich verwirrend (OK, ich finde das, aber erklär das mal einem gewöhnlichen Nutzer...)
+[00:27] <bekks> Aktuell ist nur die Guest Session angemeldet?
+[00:28] <maredebianum> Ja, die war noch 'übrig', der user logout hat auch den dm verlassen (auf tty7, war daher 'frei')
+[00:31] <maredebianum> Ich halte es für einen Bug, dass der DM einer zusätzlichen Session nicht beendet wird nach logout. Wie seht ihr das? also: user angemeldet (tty7), dann + guest (auf tty8), logout, dm auf tty8 immer noch da.
+[00:31] <bekks> Weil die guest session nicht beendet wurde durch den Gast.
+[00:32] <bekks> Ich sehe da keinen Bug.
+[00:33] <maredebianum> Aber die anderen Optionen sind Bereitschaft und Herunterfahren, beides will man nicht.
+[00:34] <maredebianum> Das war früher auch mal anders, da kam man direkt zu dem anderen tty zurück
+[00:35] <ppq> wenn du zeit und lust hast, könntets du einen bug filen
+[00:36] <maredebianum> GIbts shocn ;) https://bugs.launchpad.net/ubuntu/+source/gnome-session/+bug/660120/
+[00:36] <kubine> Title: Bug #660120 “[Maverick] Cannot shutdown when multiple users are ...” : Bugs : “gnome-session” package : Ubuntu (at bugs.launchpad.net)
+[00:52] <maredebianum> bäh, und mit gdm funzt das leider nicht, eine zweite Session aufzumachen. gnome und gdm spielen nicht zusammen, na toll.
+[00:54] <maredebianum> Na ja, ich versuche dann mal, runterzufahren ;) gute nacht
+=== beaver74_ is now known as beaver74
+=== IzzyGhost is now known as Izzy
+=== joor_ is now known as Joor
+=== germanstudent is now known as germanstudent^af
+=== germanstudent^af is now known as germanstudent
+=== germanstudent is now known as germanstudent^af
+[06:47] <fjodor_> hi, macht es sinn snapshot backups von notebook 120gb ssd ext4 auf 3TByte btrfs einzuspielen mit rsync? oder würd das nur was bringen wenn auch root platte btrfs wäre
+[07:21] <bullgard4> fjodor_: Backups werden von menschen mit unterschiedlichen Zielen angefertigt. Wenn Du dieses ursprüngliche Ziel und Dein neues Ziel nicht nennst, ist es schwer, Deine Frag zu beantworten.
+[07:21] <bullgard4> +e
+[07:57] <kakapo1> guten morgen, habe ein problem. netbook. dualboot. grub kaputt. mit ext hd altes 10.04 gestartet aber ohne pwd. 
+[08:00] <kakapo1> pwd änderung im netroot gescheitert
+[08:21] <kakapo1> brauche hilfe. system über ext hd gestartet. keine authentifizierung möglich da pwd vergessen.kein zugriff auf int hd.
+[08:22] <daswort> kakapo1: recoverymodus?
+[08:24] <kakapo1> ich bin hier grafisch auf jeden fall im recoverymodus. bin aber nicht sicher.
+[08:27] <kakapo1> bei orte wechselmedien steht eine liste sich immer wieder wiederholender partitionen ... 
+[08:28] <kakapo1> die kann ich aber mangels pwd nicht einhängen
+[08:33] <kakapo1> gibt es eine möglichkeit grub zu entfernen und das windows os zu booten. hab schon ein pendrive mit xp erstellt aber bootloader wird nicht erkannt
+[08:38] <bekks> Boote eine LiveCD und setz das Passwort zurück.
+[09:23] <fjodor_> bullgard4: ich wollte einfach nur wissen welche vorteile man hat wenn man rsync snapshots auf btrfs statt bspw. ext4 spielt ohne dabei das rootfs zu verändern
+[09:23] <bekks> fjodor_: Keine.
+[09:24] <fjodor_> ah k
+[09:25] <bekks> Abgesehen davon, dass man mit btrfs snapshots erzeugen kann, was man mit rsync nicht kann (bzw. nur wenn das FS nicht in Benutzung ist).
+[09:27] <gert> Guten Tag. Ich bin neuling. Habe ubuntu 12.04 installiert und kann keine youtube videos spielen. Habe versucht plugin zu installieren. Einmal gings. Dann nicht mehr.
+[09:29] <bullgard4> gert: Wahrscheinlich steht eine relevante Fehlermeldung dafür in ~/.xsession-errors.
+[09:30] <fjodor_> bekks: ah ich les grad, dass das sinnvoll ist wenn man alte inkrementelle backups löscht
+[09:31] <gert> bullgard4, Da stehen jede menge gtk+ fehler. (software-center:4928): Gtk-CRITICAL **: gtk_icon_set_render_icon_pixbuf: assertion `icon_set != NULL' failed
+[09:32] <gert> da wo normalerweise das video kommt ist ein schwarzes großes Viereck.. keine Playsymbol oder dergleichen
+[09:33] <bullgard4> gert: Das snd andere Fehler und haben wenig oder nichts mit Deinem Problem zu tun. (Solltest Dich aber gelegentlich auch darum kümmern.)
+[09:35] <bullgard4> gert: Vielleicht hilft Dir weiter http://wiki.ubuntuusers.de/Flash_vermeiden
+[09:35] <kubine> Title: Flash vermeiden › Wiki › ubuntuusers.de (at wiki.ubuntuusers.de)
+[09:38] <bekks> fjodor_: Das was sinnvoll ist?
+[09:38] <fjodor_> man kann schneller alte snapshots löschen dauert nur ein paar sekunden egal wie groß das alte backup ist
+[09:39] <bekks> fjodor_: Wenn man was tut?
+[09:39] <fjodor_> btrfs+rsync
+[09:39] <IchGuckLive> morgen ,Kann ich mir den $PATH mit bewechtigungen anzeigen lassen 
+[09:39] <bekks> fjodor_: Vergiss rsync wenn du btrfs nutzt.
+[09:40] <gert> Mit der hier hat es nichts zu tun (Display controller: Advanced Micro Devices [AMD] nee ATI RV350 AP [Radeon 9600])?
+[09:40] <fjodor_> ne wenn man von ext4 auf btrfs backuped mit rsync...
+[09:40] <gert> habe keine Treiber oder dergleichen installiert. Hardware zeigt auch keine Treiber an, die installierbar wären.
+[09:40] <bekks> fjodor_: Was völliger Irrsinn ist.
+[09:41] <fjodor_> wieso? ist halt wie mit ganz normalem rsync nur mit dem vorteil dass sich alte snapshots scheinbar schneller löschen lassen
+[09:42] <bekks> fjodor_: Nur ist btrfs als nicht so stabil wie ext4 anzusehen - und damit unbrauchbar für ein Backup.
+[09:43] <fjodor_> joar, es gab jetzt seit jahren keinen bekannten fall wo daten abhanden gekommen wären....
+[09:44] <bekks> fjodor_: Es wird nur dauernd am Code geschraubt, aber ansonsten... :P
+[09:48] <X421> Moin. Hat jemand ne Idee, ob ich einen URL-Handler bauen kann, der mir youtube-links in minitube öffnet?
+[09:49] <X421> (oder einem anderem programm wie vlc)
+[10:15] <IchGuckLive> Guten morgen  nautilus stürzt bei /usr/bin ab  nur bei dem verzeichniss 
+[10:15] <IchGuckLive> es sind 2 Dateien drinn die im Terminal mit Weiser Schrift auf rotem grund hinterlegt sind 
+[10:18] <IchGuckLive> alles ander lässt sich öffnen 
+[10:19] <IchGuckLive> in /usr 
+[10:22] <dududa> hallo, sasal7 hier. versuche meinen aao521 zu retten bzw. wieder flott zu machen. brauche support.
+[10:23] <sdx23> Izzy: Etwas genauer bitte. Was sagt `ls -al` zu den Dateien?
+[10:26] <dududa> wie kann ich im terminal partitionen abfragen? cat /proc/partitions bringt mir 239 meist dubletten
+[10:27] <sdx23> dududa: fdisk -l
+[10:28] <dududa> sdx23: was bewirkt das?
+[10:30] <X421> dududa, man fdisk...
+[10:31] <sdx23> dududa: Es listet Partitionen auf - wolltest du doch.
+[10:32] <dududa> sdx23: ja, irgendwie will ich so 220 partitionen löschen 
+[10:33] <sdx23> dududa: bitte was?
+[10:34] <X421> Selbst wenn da ne 2 zu viel ist, ist das extrem. :D
+[10:36] <dududa> sdx23: ich komm nicht weiter. ich hab auf meinen rechner w7 daneben mint12 und darüber xubuntu und lubuntu installiert und jetzt ist so ziemlich alles durcheinander. 
+[10:36] <X421> Am besten einfach neu installieren und somit Ordnung schaffen mMn.
+[10:37] <dududa> es ist ein netbook ohne opt. laufwerk und mit bootstick geht nix - killed kernel panic usw.
+[10:37] <k1l> dududa: über und unter und neben ist bei partitionen eher unpassend.  pack mal das "sudo fdisk -l" in einen nopaste
+[10:38] <X421> dududa, wie hast du denn die anderen Systeme installiert?
+[10:39] <helmut_> hi
+[10:40] <dududa> X421: einfach drüber. lubuntu ging erst wunderbar bis ich die partitionen verbinden wollte und das grub nicht mehr ging
+[10:41] <X421> Ich meinte eher optisches Laufwerk und Bootstick.
+[10:42] <dududa> X421
+[10:42] <dududa> afk
+[10:42] <X421> Ja?
+[10:42] <dududa> entschu7ldigung
+[10:42] <X421> Sinn?
+[10:42] <X421> o.0
+[10:42] <dududa> telefon
+[10:43] <Sysopa> moin, ich brauche bitte mal ganz dringend Hilfe bei einem kaputten mysql-Server paket, das mir die ganze Paketverwaltung blockiert: http://thomas.schattenlauf.de/apt-get.txt
+[10:43] <Sysopa> meinetwegen kann mysql-server komplett deinstalliert werden - solange das Paketsystem wieder heile ist
+[10:44] <Sysopa> nur ich bekomm das nichtmal mehr deinstalliert
+[10:46] <dududa> X421: mit bootstick komm ich nicht weiter. rechner startet nicht. 
+[10:48] <X421> -.-"
+[10:49] <dududa> mit cat /proc/partitions bekomme ich sda0 bis sda255
+[10:50] <X421> und mit fdisk?
+[10:50] <k1l> dududa: gibt es einen grund, warum du die hilfe ausschlägst und trotzdem dauernd wieder fragst?
+[10:51] <dududa> bei fdisk -l passiert jetzt gar nichts mehr.
+[10:51] <dududa> k1l: ich versuche ja
+[10:51] <k1l> Sysopa: hmm. ich würde mal spontan mal apt cache löschen und das paket neu runterladen lassen
+[10:52] <k1l> <k1l> dududa: über und unter und neben ist bei partitionen eher unpassend.  pack mal das "sudo fdisk -l" in einen nopaste  << hinten ein kleines L
+[10:53] <dududa> u.a. sagt er Warnung: Lasse Partition hinter #60 aus.
+[10:54] <dududa> Platte /dev/sda: 250.1 GByte, 250059350016 Byte
+[10:54] <dududa> 255 Köpfe, 63 Sektoren/Spur, 30401 Zylinder
+[10:54] <dududa> Einheiten = Zylinder von 16065 × 512 = 8225280 Bytes
+[10:54] <dududa> Sector size (logical/physical): 512 bytes / 512 bytes
+[10:54] <dududa> I/O size (minimum/optimal): 512 bytes / 512 bytes
+[10:54] <dududa> Disk identifier: 0x000b8949
+[10:54] <bekks> !paste > dududa 
+[10:54] <kubine> dududa: Nicht selbst geschriebener Text wird im IRC sehr unleserlich und unhandlich. Deshalb sollten mehr als 3 Zeilen immer in einen sogenannten Nopaste-Service wie z.B. http://paste.ubuntuusers.de/ abgelegt werden. Nach dem Speichern kannst du dann die URL der Seite kopieren und sie statt des Textes hier im Channel posten.
+[10:54] <Sysopa> k1l: hab ich...  und selbst dpkg-reconfigure debconf schmeißt mir Fehler raus
+[10:54] <sdx23> dududa: alles in einen Nopaste bitte - und die Ausgabe von dmesg auch gleich dazu - da ist definitiv etwas kaputt.
+[10:56] <Sysopa> k1l: ich weiß inzwischen, daß es wohl damit zusammen hängt, daß ich /var/cache im tmpfs habe - aber nach Spezifikation des Ordners müssen Programme (also auch apt-get dpkg etc.) damit klar kommen
+[10:56] <dududa> http://paste.ubuntuusers.de/412712/
+[10:56] <kubine> Title: dududa fdisk -l › Ablage › ubuntuusers.de (at paste.ubuntuusers.de)
+[10:57] <dududa> ich hoffe das ist jetzt richtig.
+[10:59] <k1l> Sysopa: hmm, dann weiß ich es spontatn auch nicht
+[11:03] <dududa> http://paste.ubuntuusers.de/412717/
+[11:03] <kubine> Title: dududa dmesg › Ablage › ubuntuusers.de (at paste.ubuntuusers.de)
+[11:13] <Sysopa> Für alle die es interessiert: dpkg braucht -entgegen der Spezifikation - zwingend ein persistentes /var/cache, sonst kann man sich mit einigen Paketen (namentlich z.B. mysql-server) das ganze System zerschießen...
+[11:16] <sdx23> Sysopa: woher die Info?
+[11:17] <Sysopa> sdx23: weil ich /var/cache in ein tmpfs gelegt habe und mir prompt mit mysql-Server Installation das System fast zerblasen habe...
+[11:17] <Sysopa> sdx23: hab /var/cache aus einem Backup wiederhergestellt
+[11:19] <ppq> Sysopa: der FHS ist eine richtlinie, keine spezifikation. und: auch apt braucht einige verzeichnisse in /var/cache, nämlich /var/cache/apt/partial und /var/cache/apt/archives/partial
+[11:19] <sdx23> Sysopa: Also nur eigene Erfahrung? Sicher, dass nichts schief gelaufen ist? I.a. geht das schon, man muss nur Unterverzeichnisse erstellen.
+[11:19] <ppq> joa, erstellen reicht damit es wieder geht
+[11:19] <Sysopa> ppq: bist Du sicher? ich hab die Verzeichnisse händisch versucht zu erzeugen - ohne Erfolg
+[11:20] <ppq> Sysopa: was geht denn bei dir schief?
+[11:21] <Sysopa> ppq: z.B. das: http://thomas.schattenlauf.de/apt-get.txt
+[11:21] <Sysopa> (wie gesagt: ist inzwischen repariert)
+=== daku is now known as DaKu
+=== Willi_ is now known as Fremd
+=== IzzyGhost is now known as Izzy
+[12:14] <apollo13> Sysopa: du hast die FHS imo so oder so falsch gelesen
+[12:15] <apollo13> Sysopa: dort steht dass die applikation mit fehlenden dateien umgehen können muss, aber nicht dass du das mal komplett nuken kannst (eg dir-structure)
+[12:16] <apollo13> außerdem: " The data must remain valid between invocations of the application and rebooting the system. "
+[12:16] <Sysopa> hm...
+[12:17] <Sysopa> dann sollte man sich nochmal ernsthaft überlegen, warum an allen möglichen - sogar ubuntuspezifischen - Stellen empfohlen wird, /var/cache bei SSDs ins tmpfs zu verlegen (übrigens unter Gentoo noch nie Probleme damit gehabt)
+[12:17] <apollo13> wobei das irgendwie nicht ganz sinning ist wenns nen reboot überleben muss aber gegen händisches löschen immun sein muss ;)
+[12:18] <Sysopa> apollo13: eben!
+[12:18] <casaper> hallo
+[12:18] <apollo13> Sysopa: aber der umkehrschluss dass du es damit einfach komplett nuken kannst ist deshalb auch falsch! ich würde dir raten tmpfs nur für das /run zeugs zu verwenden
+[12:19] <Sysopa> apollo13: ich habs nur noch für /tmp und /var/tmp jetzt
+[12:20] <Sysopa> ./run ist bei 12.10 automatisch im tmpfs
+[12:20] <ppq> ich kenne keine seriöse doku die ernsthaft empfiehlt, /var/cache als tmpfs auszulagern
+[12:20] <bekks> Symlink für /var/tmp anlegen und /tmp ins tmpfs legen.
+[12:20] <apollo13> ich sehe den sinn von /tmp/ als tmpfs auch nicht
+[12:20] <ppq> bei /var/cache/apt geht es mit workaround ganz gut, aber shcön ist das auch nicht
+[12:23] <apollo13> randnotiz: /tmp wird beim booten geleert, somit bringt ein tmpfs wirklich nur fürn speed was, warum /tmp/ schnell sein muss muss mir aber noch einer erklären^^
+[12:23] <apollo13> abgesehen davon dass es sicher nett ist wenn dir ne app über /tmp/ das ram vollschreibt^^
+[12:23] <Sysopa> ppq: Google nach "ubuntu" und "ssd" und klick die ersten Links: http://wiki.ubuntuusers.de/SSD/Auslagerung
+[12:23] <kubine> Title: Auslagerung › SSD › Wiki › ubuntuusers.de (at wiki.ubuntuusers.de)
+[12:23] <apollo13> gerade mysql-server is ein kandidat der gegen ein /tmp/ im ram spricht
+[12:24] <casaper> Ich hab hier an meinem Heimserver ein Sleep problem mit einer externen Firewire und USB2 platte. Egal an welchem interface sie hängt, verschwindet sie nach einer Weile komplett aus /dev/ und Samba und netatalk etc spucken natürlich Fehlermeldungen. Das Sleep Feature habe ich an meinem Mac sowohl aktivier als auch deaktiviert. Mit beiden Einstellungen hab ich das problem an beiden Interfaces (USB/Firewire).  Setup: Ubuntu 12.10 serve
+[12:24] <casaper> auf einem MacBook Pro Early 2008, Externe Festplatter: Western Digital My Passport 2.5" Firewire 800& USB2. 
+[12:25] <ppq> Sysopa: "Die Verlagerung von /var/cache, /var/games und /var/tmp ins RAM sollten abgewogen und den persönlichen Bedürfnissen angepasst werden. Bei Zweifeln sollte man die Verzeichnisse belassen wo sie sind."
+[12:25] <casaper> ich hab hier dazu mal das hier gestöbert: http://lwn.net/Articles/253587/ Es scheint aber schon älteren Datums zu sein
+[12:25] <kubine> Title: Documentation for USB power management [LWN.net] (at lwn.net)
+[12:26] <apollo13> Sysopa: mit mysql würde ich weder /var/log noch /tmp ins ram tun
+[12:27] <Sysopa> ppq: zwischen "abwägen" und "schrotte Dir Dein System" (wenn man keinen sauberen incrementellen Backup hätte) - liegt aber noch wieder ein Unterschied...
+[12:27] <apollo13> Sysopa: it's a wiki, fix it
+[12:27] <Sysopa> apollo13: war log sowieso nicht...
+[12:27] <Sysopa> Var
+[12:27] <Sysopa> *arg*
+[12:27] <Sysopa> Logs ins Ram legen ist extrem... semioptimal
+[12:28] <apollo13> Sysopa: ja aber /tmp/ is genauso wichtig, mysql: update wiki_text set html_render_instructions=NULLL und du hast zb bei datenbanken wie ubuntuusers plötzlich 10GB im /tmp/
+[12:28] <apollo13> und jetzt zeig mir wie dein ram das schafft ;) zusätzlich nochmal einiges an binlogs in /var/log :/
+[12:29] <ppq> Sysopa: joa, der einwand ist berechtigt. wäre nett wenn du eine entsprechende warnung einfügst à la "mach das nur wenn du backups hast und genau weißt was du tust"
+[12:29] <Sysopa> thomas@laptop:~$ free -h
+[12:29] <Sysopa> total used free shared buffers cached
+[12:29] <Sysopa> Mem: 63G 15G 48G 0B 35M 9,1G
+[12:29] <Sysopa> -/+ buffers/cache: 6,2G 9,4G
+[12:29] <Sysopa> Swap: 0B 0B 0B
+[12:29] <vlt> apollo13: Was genau spricht bei mysql-server denn dagegen?
+[12:29] <apollo13> vlt: dass der dir mal eben ohne weiteres /tmp vollnagelt
+[12:30] <apollo13> und da platten im normalfall ne größere kapazität haben als ram ist das sinnbefreit
+[12:30] <apollo13> Sysopa: sag ich ja, zu wenig platz
+[12:30] <Sysopa> Oo
+[12:30] <vlt> apollo13: Ach so. Ich dachte, die Performance litte.
+[12:30] <apollo13> vlt: tut sie auch
+[12:30] <Sysopa> 48 GByte frei (!) sind zu wenig, wenn schon 3 VMs laufen?
+[12:30] <apollo13> ein mysql server ist dann effizient wenn du alles im ram hast, wenn du dann sachen wie /tmp auch rein tust bleibt weniger für mysql
+[12:31] <apollo13> Sysopa: ich sehe dort 9.4G frei
+[12:31] <vlt> apollo13: Danke, das ergibt Sinn.
+[12:33] <apollo13> so, zeit fürs essen, cy
+=== X421 is now known as kaffeebohne
+[13:01] <Winnie^> hallo zusammen :)
+[13:12] <floogy> Hi, ich habe Probleme mit meinem teac BD-W512S-A. wodim fixiert nicht beim Brennen eines iso images auf eine DVD. Danach reagiert das Laufwerk nicht mehr.
+[13:13] <floogy> Es scheint mit diesem Bug etwas zu tun zu haben: https://launchpad.net/ubuntu/+source/cdrkit/+bug/82082
+[13:13] <kubine> Title: Bug #82082 “wodim couldn't be set suid.” : “cdrkit” package : Ubuntu (at launchpad.net)
+[13:14] <floogy> Das Laufwerk wird erst wieder Ansprechbar nach einem Hardreset.
+[13:14] <floogy> Beim Neustart hängt das BIOS (warmstart).
+[13:17] <floogy> Sorry, eher dieser bug hat etwas damit zu tun, jedenfalls bekomme ich die Meldung beim Brennen: https://bugs.launchpad.net/ubuntu/+source/cdrkit/+bug/316248
+[13:17] <kubine> Title: Bug #316248 “K3b wodim Cannot raise RLIMIT_MEMLOCK limits” : Bugs : “cdrkit” package : Ubuntu (at bugs.launchpad.net)
+[13:18] <floogy> http://paste.ubuntu.com/1523554/ http://paste.ubuntu.com/1523569/
+[13:18] <kubine> Title: Ubuntu Pastebin (at paste.ubuntu.com)
+=== nils_2_ is now known as nils_2
+[13:26] <jabba_> hallo
+[13:28] <jabba_> i versuche grade mein system davon abzuhalten ohci_hcd, ehci_hcd und xhci_hcd davon abzuhalten beim booten zu laden. habe sie in /etc/modpobe.d/blacklist angefügt und update-initramfs -u ausgeführt. trotzdem sind sie geladen, wenn ich boote.
+[13:29] <jabba_> hintergrund ist, dass ich vermeiden will , dass sich eines dieser 3 module beim booten vor xen-pciback die usb-hardware schnappt.
+[13:31] <jabba_> gibt es da bei ubuntu irgenwas besonderes zu beachten? ist ein eintrag in die blacklist.conf nicht "ziemlich" eindeutig?
+[14:03] <dolphin> Hey, gibts nen wiki-artikel zum dolphin emulator?
+[14:03] <dolphin> oder ist der in den quellen?
+[14:04] <ppq> es gibt anscheinend ein ppa
+[14:05] <dolphin> hast du dan ein namen?
+[14:05] <bekks> http://ubuntuusers.de/search/?query=dolphin&area=wiki und http://packages.ubuntu.com/search?keywords=dolphin&searchon=names&suite=all&section=all
+[14:05] <kubine> Title: Ergebnisse für „dolphin“ › Suche › ubuntuusers.de (at ubuntuusers.de)
+[14:06] <dolphin> ich glaube das bezieht sich auf den dateimanager dolphin
+[14:07] <dolphin> ich will aber den ngc- bzw. wii emulator
+[14:07] <ppq> https://startpage.com/do/search?query=dolphin+ppa&cat=web&pl=chrome&language=deutsch
+[14:07] <bekks> Das sind die Suchergebnisse für "dolphin".
+[14:07] <kubine> Title: dolphin ppa - Startpage Web Suchen (at startpage.com)
+[14:10] <dolphin> hab ihn, danke
+[14:10] <dolphin> ppa:glennric/dolphin-emu
+=== daniel is now known as Guest80057
+[14:23] <dreamon> Habe hier einen Multifunktionsdrucker Samsung SCX-3200 (Drucker u. Scanner). Der Scanner mag mich nicht. Er meldete das kein Scanner angeschlossen sei. Habe dann das hier gemacht -> http://askubuntu.com/questions/88700/how-do-i-get-a-samsung-scx3200-multifunction-printer-scanner-working 
+[14:23] <kubine> Title: printing - How do I get a Samsung SCX3200 multifunction printer/scanner working? - Ask Ubuntu (at askubuntu.com)
+[14:24] <dreamon> Also die /lib/udev/rules.d/40-libsane.rules -> angepasst und anschließend noch die /etc/sane.d/xerox_mfp.conf -> reboot. Scanner wird erkannt. Aber beim Sannen kommt ein Fehler scanvorgang kann nicht gestartet werden. 12.04 ist installiert.
+[14:28] <dreamon> lsusb bestätigt mir die "0x04e8:0x3441".. bin amEnde
+[14:39] <jokrebel> dreamon: Vielleicht http://forum.ubuntuusers.de/topic/samsung-scx-3205-wird-nicht-als-scanner-erkann/#post-5125537
+[14:39] <kubine> Title: Samsung SCX 3205 wird nicht als Scanner erkannt › Drucken, Scannen, Faxen › Forum › ubuntuusers.de (at forum.ubuntuusers.de)
+[14:41] <jokrebel> dreamon: Da ist im drittletzten Beitrag von Deiner ID die Rede und hört sich vielversprechend an.
+[14:43] <dreamon> jokrebel, Ja, Danke. Aber es hört sich fast so an wie in der Seite von mir, mit den beiden einträgen. Aber ich werde jeden Grashalm probieren. ;)
+[14:51] <dreamon> Der Original Samsung Treiber meldet bei Installation folgendes: "The components listen below are necessary for proper Unified Linux driver operation. Click Cancel now, install these components from your linux distrubtion CD or from Linux vendor and run Unified Linux driver installer again. Er zeigt dann weiter unten an -> -SANE- "Scanner Access Now Easy" - Scanner Api
+[14:52] <dreamon> Frage welche Paket meint er? Sane hab ich installiert.
+[14:57] <TheInfinity> dreamon: devel pakete mit dabei?
+[14:59] <dreamon>  TheInfinity, es gäbe höchstens noch eine libsane-dev die ist noch nicht installiert. 
+[14:59] <TheInfinity> dreamon: würd ich versuchen, wenn der treiber sich gegen die im system vorhandene sane lib compilieren will braucht er build-essential und libsane-dev
+[15:03] <dreamon> TheInfinity, libsane-dev und libsane-extras installiert. Das installationsprogramm meldet aber immer noch das Englische Zeug
+[15:03] <TheInfinity> dreamon: dann gib mal ganz genaue fehlermeldungen.
+[15:03] <TheInfinity> und englisches zeugs musste übersetzen und verstehen ;)
+[15:04] <dreamon> Environment components necessary for the Unified Linux Driver are listed below. The components listed below are necessary for proper Unified Linux Driver operation. Click Cancel now, install these components from your Linux distribution CD-ROM or from Linux vendor Web site and then run Unified Linux Driver Installer again. You may click Install Anyway to continue installation, but the result would be unpredictable. - SANE - „Scannner Acces Now
+[15:04] <dreamon>  Easy“ - scanner API
+[15:05] <dreamon> Im Prinzip, auch das was der hier schreibt. -> http://forum.ubuntuusers.de/topic/samsungdrucker-treiber-tar-installieren/2/
+[15:34] <subz3r0> hi
+[15:34] <dreamon> TheInfinity, Was meint dein Englisch? kannst du mehr daraus lesen?
+[15:35] <subz3r0> ist openjdk auch von der viel diskutierten sicherheitslücke betroffen? Hab die letzten tage bissel verpennt =)
+[15:38] <apollo13> ist doch egal, java plugin abdrehen und gut ist
+[15:38] <subz3r0> das sowieso. 
+[15:39] <subz3r0> mich interessiert es nur ob openjdk auch davon betroffen ist. hab bissel research betrieben, aber nicht wirklich was dazu gefunden
+[15:44] <apollo13> subz3r0: laut VU betrifft das nur oracle/sun
+[15:44] <subz3r0> danke apollo13. hast du ggf. nen link?
+[15:44] <apollo13> CVE-2013-0422
+[15:44] <subz3r0> danke
+[15:59] <dreamon> sers must also be added to the "lp" group to access the scanner, and then will have to logout/reboot. (Add using a graphical tool, or in the terminal "sudo usermod -G lp -a ", replacing as needed.) -> kriege da aber Meldung über die nötigen Optionen. Was läuft da Falsch?
+[15:59] <Jumper_Thunder> nabend #ubuntu-de. bräuchte dringend hilfe. muss eine beschädifgte 2tb festplatte mit dd klonen. das ganze hat jetzt aber mittendrin aufgehört. weiß nicht welche zahl ich bei skip angeben soll.. hier das paste: http://pastebin.com/Z2y9eTcx
+[15:59] <kubine> Title: [14:43]:sudo dd if=/dev/sdc bs=100M | pv | sudo dd of=/dev/sdb bs=100M dd: „/ - Pastebin.com (at pastebin.com)
+[16:00] <dreamon> Jumper_Thunder, Für sowas brauchst du dd_rescue
+[16:00] <dreamon> Das kopiert auch defekt HDDs
+[16:00] <Jumper_Thunder> dreamon: okay. kann ich trotzdem mit dd_rescue da angfangen wo es aufgehört hat?
+[16:01] <bekks> Jumper_Thunder: Ja, du kannst dem ja sagen wieviel Bytes skipped werden sollen.
+[16:01] <dreamon> Jumper_Thunder, Ja dd_rescue setzt auf dd auf.. Das springt nur weiter wenns biestig wird.
+[16:02] <dreamon> Jumper_Thunder, dd_rhelp gibts auch noch.. 
+[16:02] <Jumper_Thunder> bekks: und da ist das problem.. ich bin mir nciht sicher welche bit zahl die korrekte ist :/
+[16:02] <bekks> Byte, nicht Bit.
+[16:03] <Jumper_Thunder> welche zahl eben. mir egal welche einheit das ist solange ich an meine Daten komme ^^
+[16:04] <bekks> "732291952640 Bytes (732 GB) kopiert"
+[16:04] <Jumper_Thunder> war mein fehler pv dazwischen zu schalten.
+[16:04] <Jumper_Thunder> sollte ich dann wohl bei beiden instanzen angeben, was?
+[16:05] <dreamon> Jumper_Thunder, Bedenke wenn du mit dd weiterkopierst und es kommt nochmal ein Fehler, dann kannst wieder neu Parameter eintragen.. bei 88Fehler.. viel spaß
+[16:05] <k1l_> lass pv mal weg
+[16:06] <Jumper_Thunder> ... der skip parameter erwartet blöcke nicht bytes.
+[16:06] <k1l_> nimm nur dd_rescue
+[16:07] <Jumper_Thunder> die manpage von ddrecue verrät mir keinen skip parameter, k1l_ 
+[16:08] <k1l_> was für einen skip parameter?
+[16:08] <k1l_> http://wiki.ubuntuusers.de/gddrescue  kennst du?
+[16:08] <kubine> Title: gddrescue › Wiki › ubuntuusers.de (at wiki.ubuntuusers.de)
+[16:09] <Jumper_Thunder> k1l_: ich habe jha bereits 732gb erfolgecih kopiert. ich will nicht wieder von vorne anfangen.
+[16:10] <Jumper_Thunder> manpage sagt dazu nix
+[16:10] <Jumper_Thunder> na geil
+[16:10] <k1l_> also bei einem notfall backup wäre mir das egal. 
+[16:11] <Jumper_Thunder> 2tb
+[16:11] <Jumper_Thunder> trotz usb3.0 und esata dauert es dann nochmal 5 stunden
+[16:11] <Jumper_Thunder> und die platte geht nur wenn sie kühl ist. und die kühlakkus schmelzen dahin
+[16:12] <Jumper_Thunder> ach ich hab ja keine wahl ._.
+[16:13] <dreamon> dd_rescue ist langsamer als dd .. nur als info
+[16:13] <Jumper_Thunder> ich geh mal kühlakkus ins gefrierfach nachlegen
+[16:14] <k1l_> Jumper_Thunder: http://wiki.ubuntuusers.de/Shell/dd da ist skip=BLOCKS erwähnt
+[16:14] <kubine> Title: dd › Shell › Wiki › ubuntuusers.de (at wiki.ubuntuusers.de)
+=== Tero21_ is now known as Tero21
+[16:16] <Jumper_Thunder> k1l_: korrekt. hab ich doch auch gesagt.von bekks kam dann aber der bytes wert. ist jetzt auch egal ich machs nochmal mit ddrescue
+[16:16] <Jumper_Thunder> trotzdem wäre das für anfänger recht blöd geworden wenn ihnen völlig falsche werte empfohlen werden.
+[16:16] <dreamon> http://www.tivocommunity.com/tivo-vb/archive/index.php/t-298508.html
+[16:16] <kubine> Title: Copying drives with errors, dd_rescue [Text View] - TiVo Community (at www.tivocommunity.com)
+[16:17] <dreamon> Da ist ein beispiel.. die setzen das.. 
+[16:17] <k1l_> Jumper_Thunder: das ganze ist kein thema für anfänger :/
+[16:26] <dreamon> k1l_, Hoffentlich hat er quelle und ziel richtig rum.. bei dd_rescue gibts ja kein if= und of=
+[16:36] <vectory> na klar, man liest doch zuerst das man
+[16:43] <IchGuckLive> guten tag  in welcher datei steht der $PATH 10.04 
+[16:43] <IchGuckLive> bad miss :/usr/games:.:/home/sammel/linuxcnc
+[16:43] <IchGuckLive> das stimmt was nicht da sitzt ein punkt 
+[16:50] <k1l_> IchGuckLive: mal in deine .profile geguckt?
+[16:50] <IchGuckLive> da bin ich gerade drann 
+[16:51] <IchGuckLive> die variable zeigt ca 10 pfade und da steht nur einer drinn den es nicht gibt O.O 
+[16:51] <k1l_> oder halt inder .bash_profile oder .bash_login oder .bashrc
+[16:52] <k1l_> systemweit dann in /etc/bash.bashrc , /etc/profile oder /etc/enviroment
+[16:52] <k1l_> je nach system
+[16:52] <IchGuckLive> ok
+[16:53] <IchGuckLive> Danke 
+[16:54] <drizzto> wenn ich beim libre writer den assisten auf mache is das fenster zu hälfte oben links auserhalb des sichbaren bereicht. wie bekomme ich das fenster in die mitte?
+[16:55] <PBeck> drizzto: alt gedrückt halten und dann in das fenster klicken
+[16:55] <daswort> alt+linke maustaste drizzto 
+[16:57] <drizzto> super dankeschön
+[16:57] <MikatCan> Guten Abend
+[17:12] <MikatCan> Ich habe da einen ubuntu Rechner der als Samba Datenserver 24/7 an ist.
+[17:12] <MikatCan> Nun würde ich gerne etwas energie sparen indem ich die angeschlossenen HDD nach xmin nichtnutzung abschalten lasse.
+[17:12] <MikatCan> Wie bekomme ich das hin? Kann mir das einer Erklären?
+[17:14] <bekks> Das würde ich im Interesse der Lebensdauer der Platte eher nicht tun.
+[17:15] <MikatCan> Warum?
+[17:15] <MikatCan> ich habe da mehrere HDD drin, und bis auf die System platte werden die teilweise stundenlang nicht genutzt
+[17:18] <bekks> Mit steigender Anzahl der Einschaltvorgänge verkürzt sich auch die Lebensdauer.
+[17:18] <k1l_> MikatCan: mit hdparm
+[17:19] <MikatCan> habe darüber auch schon was gelesen.
+[17:19] <MikatCan> Allerdings werden die HDD nie abgeschaltet
+[17:19] <k1l_> -S für standby oder sowas wars
+[17:19] <k1l_> dann guck mit lsof nach, was da noch drauf zugreift
+[17:20] <MikatCan> oO der befehl ist mir neu :-)
+[17:20] <MikatCan> danke ich schau gleich mal nach
+[17:36] <MikatCan> grade nochmal getestet. die HDD (sdb1) wird nirgends in der Auflistung angezeigt
+=== Fremd is now known as F|oFF
+[18:04] <kuckuck> hi
+[18:04] <k1l_> !away > F|oFF 
+[18:04] <kubine> F|oFF: Bitte verzichte auf Away-Nicks wie paul|essen, paul|afk, etc und automatische oeffentliche Bekanntgabe deiner Abwesenheit - viele im IRC finden es stoerend. Verwende doch einfach die Standard-Funktion im IRC: /away Grund der Abwesenheit
+=== DaKu is now known as daku
+[18:14] <kuckuck> kann das einer deuten ? http://nopaste.me/paste/47757977450f1a7f1aa1c0
+[18:14] <kuckuck> wie das wohl wieder zu beheben ist -.-
+[18:15] <kuckuck> python installieren?
+[18:16] <ring0> kuckuck, wohl kaum. keiner weiß, was du gemacht hast, um das zu provozieren oder woher dieser output kommt
+[18:16] <kuckuck> ring0,  also die eingabe steht ganz oben
+[18:16] <kuckuck> gemacht habe ich bisher nichts :/
+[18:19] <ring0> kuckuck, es wäre wohl trotzdem ratsam zu erzählen, was du überhaupt vor hast und nicht nur einen paste hier reinzuklatschen
+[18:19] <kuckuck> tastatur pairen
+[18:20] <kuckuck> über hidd --connect geht das nicht ...  , ein scann zeigt mir die Tastatur zwar an, aber verbinden geht nicht... kack apple
+[18:23] <ring0> !bluetooth_einrichtung mal probiert? > kuckuck 
+[18:24] <ring0> !bluetooth_einrichtung > kuckuck
+[18:24] <kubine> kuckuck: Informationen zu Bluetooth/Einrichtung finden sich im Wiki unter http://wiki.ubuntuusers.de/Bluetooth/Einrichtung
+[18:25] <kuckuck> geht leider nur über console
+[18:27] <ring0> kuckuck, kann das dort erwähnte hcitool kein pair?
+[18:32] <kuckuck> ring0,  so wie ich das seh nur über das applet?
+[18:32] <ubuntupp> Hey, sollte man verstorbene Personen auf Facebook melden?
+[18:33] <ring0> !ot > ubuntupp 
+[18:33] <kubine> ubuntupp: Dies ist ein Ubuntu-Supportchannel! Fuer Offtopic- und Stammtischgespraeche bitte #ubuntu-de-offtopic nutzen. Danke! ;)
+[18:33] <ubuntupp> bin ich doch...
+[18:33] <ubuntupp> http://webchat.freenode.net/?channels=#ubuntu-de-offtopic
+[18:33] <kubine> Title: freenode Web IRC (qwebirc) (at webchat.freenode.net)
+[18:33] <ubuntupp> steht in meiner adresszeile
+[18:33] <ring0> ubuntupp, nein, du bist in #ubuntu-de nicht #ubuntu-de-offtopic
+[18:34] <kuckuck> ne mach mal ein ./join #ubuntu-de-offtopic
+[18:34] <ring0> kuckuck, das applet heißt bluetooth-applet, hcitool ist fürs terminal
+[18:35] <kuckuck> richtig
+[18:42] <kuckuck> ring0,  mir fehlen irgendwelche pakete...  "import gobject"
+[18:43] <ring0> kuckuck, ich hätte gedacht hcitool kann auch pair. hab aber selbst bisher nicht mit bluetooth basteln müssen. vielleicht hat jemand anderes hier einen tip
+[18:44] <kuckuck> für hcitool  habe ich bisher nichts gefunden7
+[18:46] <ring0> kuckuck, was ist denn der konkrete fehler bei "hidd --connect xy"?
+[18:46] <ring0> muss man wohl wirklich mit hidd machen
+[18:52] <kuckuck> ring0,  hidd ist aber kein pairing...  kann dir den fehler gerade nicht nennen, aber ist wohl ne art timeout
+[19:04] <ring0> kuckuck, ich habe nicht behauptet es wäre pairing, sondern nach dem fehler gefragt
+[19:14] <kuckuck> wie mounte ich ein DateiSystem vor dem einloggen eines users ?
+[19:15] <kuckuck> für das netzwerk
+[19:15] <kuckuck> Freigabe wird mit NFS bewerkstelligt
+[19:15] <bekks> Mit pam_mount
+[19:18] <kuckuck> puhh sieht nicht einfach aus oder ich hab bisher nicht das richtige gefunden
+[19:19] <bekks> Vor alem brauchst du einen LDAP Server dafür.
+[19:23] <kuckuck> na gut
+[19:23] <kuckuck> vergessen wird das :D
+[19:23] <kuckuck> dann doch einfach in fstab eintragen
+[19:49] <Eike3> abned
+[19:49] <vlt> Hi
+[19:50] <Eike3> welche möglichkeiten habe ich, wenn gnome-shell --replace unbeantwortet bleib ich aber kein interesse daran habe daten aus einem laufenden programm zu verlieren
+[19:51] <Eike3> (ja, rechtzeitig abspeichern... hilft mir momentan aber nicht mehr.)
+[19:52] <Eike3> okay, nach nun ewigkeiten bekomme ich due snt
+[19:54] <Eike3> sorry, handytastatur. nach ewigkeiten bekomme ich die antwort das :0.0 bereits einen fensterverwalter hast und log level 8: g_source_remove: assertion `tag > 0' failed
+[20:44] <rhagu> hi ich habe einen 12.04er server am laufen und darauf mediatomb, leider wird der immer gestartet, bevor die netzwerkkarten initialisiert wurden, deshalb bricht er ab. Was kann ich da tun?
+[21:27] <TheInfinity> rhagu: init script position ändern
+[21:27] <TheInfinity> rhagu: und ne dependency zum netzwerk einbauen
+[21:28] <ppq> !upstart
+[21:28] <kubine> ppq: Informationen zu Upstart finden sich im Wiki unter http://wiki.ubuntuusers.de/Upstart
+[21:28] <ppq> da steht, wie das geht
+[21:29] <ppq> start on (net-device-up [...] )
+[21:29] <ppq> sowas in der richtung
+[21:33] <nepo> hallo. test...
+[21:34] <ppq> hi
+[21:34] <ppq> hm.
+[21:41] <rhagu> TheInfinity wie geht das?
+[21:42] <TheInfinity> rhagu: steht in dem link von kubine
+[21:42] <rhagu> aso super, schau ich mir gleichmal an danke
+=== k1l_ is now known as k1l
+[22:10] <cronon> Hallo.
+[22:10] <bekks> Hallo.
+[22:11] <cronon> GRUB meldete beim Starten, dass ein Fehler auf einer meiner Partitionen vorliege. Allerdings wurde dies so schnell wieder ausgeblendet, dass ich nicht alles lesen konnte. Kann ich diese Fehlermeldung in einem Log nachlesen?
+[22:11] <apollo13> nein
+[22:12] <BtbN> Moin, ich versuche gerade, ein Ubuntu-Chroot aufzusetzen mit precise drin. Allerdings scheitert er beim (dist-)upgrade an udev, upstart und noch ein paar anderen dingen. Deinstallieren kann ich die aber auch nicht, weil irgendwie alles davon abhängt. Gibts da irgend ne bekannte lösung für, um das in nem chroot zu betreiben?
+[22:15] <rhagu> TheInfinity Ok, ich habe jetzt im Skript geändert, dass er nicht mehr auf lo sondern auf bond0 warten soll, muss ich upstart die inits jetzt erst neu einlesen lassen, oder reicht ein neustart?
+[22:19] <cronon> Gibt es eine Möglichkeit, GRUB so einzustellen, dass ich die Fehlermeldung lesen kann?
+[23:18] <azrael_> guten abend ich habe xubuntu 12.10 und mein autostart macht nicht das was er soll bluefish dokument-betrachter und firefox öffnen sich obwohl kein eintrag vorhanden ist..hoffe mir kann geholfen werden
+[23:57] <outcast> hallo ich habe eine kurze frage zu den Eckigen klammern in bash: wenn ich zb tar --usage eingebe, dann kommt eine liste von argumenten die immer in eckigen klammern eingefasst sind. Wie interpretiere ich so was. muss ich die dann beim eingeben des befehls weglassen ? was haben sie fuer eine bedeutung?
+[23:58] <outcast> diese schreibweise habe ich schon in vielen --helps gesehen und das hat mich immer schon verwirrt

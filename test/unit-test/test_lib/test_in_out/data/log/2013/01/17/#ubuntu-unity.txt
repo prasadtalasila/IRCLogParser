@@ -1,0 +1,435 @@
+[00:26] <smspillaz> duflu: I think you have a really old version of xorg-gtest installed. See the bug report
+[00:26] <duflu> smspillaz: It's raring's
+[00:26] <duflu> How much newer can I get?
+[00:26] <smspillaz> duflu: git
+[00:26] <duflu> Not realistic
+[00:26] <smspillaz> yes, realistic
+[00:26] <duflu> I just won't flag it when building
+[00:27] <duflu> But how did it work before ?
+[00:27] <duflu> Did you only ever use git?
+[00:27] <smspillaz> I probably updated the client code for the git version when it stopped working some time ago :)
+[00:27] <smspillaz> yeah, it wasn't even packaged until very recently
+[00:27] <smspillaz> gotta run
+[00:28] <duflu> smspillaz: Ok well I don't need to block it if it's not built, and unbuildable for most
+[00:28] <smspillaz> its a good thing to keep around in any case
+[00:28] <smspillaz> dunno what the opposition is to just building it -.-
+[00:29] <smspillaz> duflu: the reason why I use the git version is because most of the older versions have a bug that causes tests to fail randomly
+[00:29] <smspillaz> because there was a race condition between the client going away and the server process being terminated or something
+[00:29] <smspillaz> anyways, gotta run have a class
+[00:41] <smspillaz> yeah, the version in raring is like 7 months old :P
+=== jono is now known as Guest3379
+[01:42] <duflu> bschaefer: I will try to make a video of the bug. But rebuilding first
+[01:42] <duflu> Also, it seems I can only stay connected to freenode reliably when sleeping/resuming
+[01:42] <bschaefer> duflu, alright, im messing around with moving all the opacity changes into the animation class
+[01:42] <bschaefer> that sounds about right for me as well
+[01:43] <duflu> bschaefer: Not fading out properly might be solved by removing the curve
+[01:43] <duflu> (will)
+[01:43] <bschaefer> duflu, so the animation would have an inverse opactiy and normal opacity, so when they disable the window stretching atm the glow is still inverse the curve
+[01:44] <duflu> bschaefer: Yes, 1.0 - progress
+[01:44] <bschaefer> duflu, hmm well it gets down to about 0.028 before it stops drawing the window
+[01:44] <bschaefer> which is pretty low, but I can still notice a pop when the window goes away
+[01:45] <duflu> bschaefer: Hmm sounds like we're just missing the final step. So not really a bug that needs fixing in reality at normal speed
+[01:45] <bschaefer> duflu, well the step at the end (atm) is when the timer reaches 0.0f stop drawing the window
+[01:46] <bschaefer> which the curve is at about 0.028f, so it doesn't keep going down to zero
+[01:46] <duflu> bschaefer: Yeah ignore the fadeout cos it's invisible at normal speed. But the second texture indicates something worth fixing. Trying to build and video now
+[01:46] <bschaefer> duflu, it actually looks pretty cool if you keep drawing the window like that
+[01:46] <bschaefer> duflu, that would be awesome, as I only see 1 texture, unless I hit another edge but that should happen
+[01:47] <bschaefer> as the fade out is still going on, on the first animation
+[01:48] <bschaefer> duflu, o and removing the alpha * color[0..2] and the box turns into an ugly box
+[01:48] <bschaefer> http://i.imgur.com/70keg.jpg
+[01:49] <duflu> bschaefer: Yeah the calculation is wrong but would change the appearance now :P
+[01:49] <bschaefer> haha yeah, I can go in and fix it later, as it would nice to remove some of the magic number in there atm
+[01:49] <duflu> bschaefer: Nah, you'd have to choose the default colour as the dark inside and brighten for the border. Requires config changes so we can't do it
+[01:50] <bschaefer> oo
+[01:50] <bschaefer> i see, well I want to remove the 65535.0f and use OPAQUE
+[01:50] <duflu> bschaefer: What we have is configuration of the border colour and darken for the inside
+[01:50] <duflu> Oh
+[01:51] <bschaefer> well the OPAQUE is a double but ... if it needs to be casted to a float so be it, we shouldn't use the hard coded number
+[01:51] <duflu> bschaefer: Or better yet calculate alpha once and reuse
+[01:51] <bschaefer> duflu, o yes, that would be better
+[01:52] <duflu> bschaefer: But don't now. we want a small diff
+[01:52] <bschaefer> duflu, also something is add with if (!animating)
+[01:52] <bschaefer> that statement is never true
+[01:52] <bschaefer> duflu, yeah, ill save it for later
+[01:52] <bschaefer> on line ~523
+[01:54] <bschaefer> the only time it ever gets set to false is after the glPaintOutputSetEnabled gets set to false...so it will never be false while it is drawing
+[01:54] <duflu> bschaefer: Can't reproduce dual textures after rebuilding/restarting
+[01:55] <bschaefer> yay
+[01:55] <bschaefer> hopefully
+[01:55] <bschaefer> duflu, i even turned my nivida card on to test :)
+[01:56] <duflu> At least it will keep you warm
+[01:56] <bschaefer> haha yeah, its been a bit cold around here lately
+[01:56] <bschaefer> duflu, hows SF weather?
+[01:56] <duflu> bschaefer: No idea. Doesn't change inside
+[01:57] <bschaefer> well thats nice
+[10:41] <bobweaver> hello to all hope all are good !  Is there anyone here that use to work on Unity 2d that would like to talk to me about easing.type:  and why canonical or Ubuntu made the choice to use a certain easingtype. I am making a phone app and starting to tie in animations and easing so I want it to be like Ubuntu but I would also like to know the reasons behind why they where using things like Easing.OutQuint or Quad thanks
+=== _salem is now known as salem_
+=== dandrader is now known as dandrader|afk
+=== dandrader|afk is now known as dandrader
+=== MacSlow is now known as MacSlow|lunch
+[13:09] <rye> mandel: that will do too
+[13:10] <mandel> :)
+[13:11] <rye> Hi all, unity-team/staging ppa has all packages built but compiz does not seem to be loading unityshell for me - the only thing it prints is compiz (core) - Info: Unity is fully supported by your hardware. - twice and then nothing. ccsm does not list unityshell either, am I missing something big?
+[13:11] <sil2100> Hello
+[13:11] <rye> unity, unity-common are installed (and I am on Raring)
+[13:12] <sil2100> rye: ok, do you have the latest unity and compiz installed from staging?
+[13:12] <sil2100> Since there might have been an inside ABI break between unity and compiz, so you need to have both as the newest versions
+[13:12] <rye> sil2100: yes, yes and yes - everything is fresh from staging ppa
+[13:12] <rye> the second yes is for unity-common
+[13:13] <rye> http://paste.ubuntu.com/1541527/
+[13:13] <rye> sil2100: ^ for package versions
+[13:15] <rye> LOL
+[13:15] <rye> compiz (core) - Info: Unity is fully supported by your hardware.
+[13:15] <rye> compiz (core) - Info: Unity is not supported by your hardware. Enabling software rendering instead (slow).
+[13:15] <rye> mandel: is this what you are getting ^'
+[13:16] <mandel> rye, yep
+[13:16]  * rye tries to relogin after resetting /org/compiz
+[13:17] <rye> ok, now i have these two lines in a different order
+[13:18] <sil2100> heh
+[13:19] <rye> sil2100: I know these packages haven't passed acceptance tests, should I file a bug?
+[13:20] <sil2100> rye: you can, but I'll try looking into this in a moment - looks like another ABI break again
+[13:20] <sil2100> rye: can you pastebin me your whole .xsession-errors ?
+[13:21] <rye> sil2100:  http://paste.ubuntu.com/1541543/
+[13:29] <sil2100> huh
+[13:29] <sil2100> rye: is this the whole file?
+[13:30] <sil2100> Since from the looks of it, it doesn't even *attempt* to load unityshell
+[13:30] <rye> sil2100: yup
+[13:30] <sil2100> So it looks as if it's not in compizconfig loading configuration
+[13:30] <mandel> sil2100, I can confirm i have the same issue as rye
+[13:30] <sil2100> Could you open up ccsm and check if it's enabled?
+[13:30] <sil2100> Unity, that is
+[13:30] <rye> sil2100: it is not there, there is no Unity module in ccsm
+[13:30] <rye> ah
+[13:31] <sil2100> Could you check `echo $COMPIZ_CONFIG_PROFILE` ?
+[13:31] <rye> sil2100: wait, something is wrong locally
+[13:31] <sil2100> It's strange that it's not there, this would mean unity is not installed - could you check dpkg -L unity to see if it installed unityshell.so into /usr/lib/compiz ?
+[13:32] <rye> sil2100: ok, I can't understand why, but all the plugins were disabled
+[13:32] <sil2100> rye: check what $COMPIZ_CONFIG_PROFILE you have on your system
+[13:32] <sil2100> It should be 'ubuntu'
+[13:33] <rye> sil2100: it is ubuntu, I re-enabled unity (by going to the config panel, there is no checkbox outside and i got unity shell
+[13:33] <sil2100> rye: ok, so hm, so it's a configuration corruption
+[13:34] <sil2100> mandel: is it the same for you?
+[13:34] <sil2100> I wonder if the packages do the corruption, or something else is modifying/overriding/messing with compiz config
+[13:35] <mandel> sil2100, yes, exact same problem
+[13:35] <mandel> sil2100, AFAIK we both had it working and then after the update boom!
+[13:36] <rye> sil2100: I guess this was caused by unity not being present at some time after compiz was already present in the PPA. I wonder whether this could have disabled unityshell plugin. Then unity got rebuilt but we still kept running w/o unityshell enabled
+[13:36] <rye> mandel: just re-logged into unity and it works
+[13:39] <rye> sil2100: ok, so sorry about the hassle, compiz (core) - Info: Unity is not supported by your hardware. Enabling software rendering instead (slow). is still being printed but it does not seem to affect anythin
+[13:39] <rye> g
+[13:41] <sil2100> Yes, I noticed it being a bit misinforming - the 'Unity is not supported' thing
+[13:43] <mterry> Hello all!  I notice that unity.tests.test_hud.HudBehaviorTests.test_closes_then_focuses_window_on_mouse_down is failing
+[13:43] <mterry> https://jenkins.qa.ubuntu.com/view/PS/job/ps-indicators-autopilot-release-testing/77/label=autopilot-intel/testReport/junit/unity.tests.test_hud/HudBehaviorTests/test_closes_then_focuses_window_on_mouse_down/
+[13:55] <sil2100> mterry: yes, I saw that - but the test seems fine, it looks more like a bug in unity
+=== MacSlow|lunch is now known as MacSlow
+[13:55] <sil2100> mterry: since from the movie I clearly saw that autopilot is clicking on the fullscreen charmap, but calculator gets the focus (huh?)
+[13:56] <sil2100> mterry: although I can't reproduce it here on my system
+[13:58] <mterry> sil2100, maybe a timing thing, where the autopkgtest goes faster than a human?
+[14:09] <sil2100> mterry: maybe, I noticed that strangely the mouse moves faster on that movie than on my system when using autopilot, hmm
+=== rye_ is now known as rye
+=== rsalveti_ is now known as rsalveti
+=== dandrader is now known as dandrader|lunch
+[15:38] <sil2100> mterry: new indicator autopilot build - 2 failures, again new ones
+[15:38]  * sil2100 sighs
+[15:38] <sil2100> Again random failures
+=== dandrader|lunch is now known as dandrader
+[16:11] <didrocks> hey hey
+[16:11] <didrocks> sil2100: trying to catch up before your EOD, how is it going? :)
+[16:14] <sil2100> didrocks: heya!
+[16:15] <didrocks> how is the weather in Europe? SFO is quite cold surprinsingly :)
+[16:15] <sil2100> didrocks: we retried the indicators and again completely different failures, 2 this time - still trying to find out what the heck is going on
+[16:15] <sil2100> Since sometimes the failures look more like regressions than AP problems
+[16:15] <sil2100> For instance, with the 78'th build, undo failed again
+[16:15] <sil2100> (only on ati)
+[16:15] <didrocks> sil2100: are there anything new in Unity?
+[16:16] <didrocks> sil2100: because there are two kinds of runs
+[16:16] <didrocks> sil2100: one, having unity-stack raring (not the ppa)
+[16:16] <didrocks> sil2100: and we can retry "with the whole ppa"
+[16:16] <didrocks> so unity ppa + indicators ppa
+[16:16] <didrocks> instead of just indicators ppa
+[16:17] <didrocks> sil2100: do you think mterry can be of help (hey mterry!)
+[16:17]  * mterry reads
+[16:18] <didrocks> mterry: to sum up, we have intermittant failure on autopilot for the indicator integration tests
+[16:18] <didrocks> mterry: this is blocking daily release since Monday
+[16:18] <mterry> Yeah, sil2100 mentioned he was looking at them
+[16:18] <didrocks> yeah, but as we didn't get any progress since Monday
+[16:18] <mterry> But looks like we can't reproduce
+[16:18] <didrocks> I think we can help him
+[16:19]  * mterry puts on his reproducing gloves
+[16:19] <didrocks> mterry: sil2100: I'll be online back in 40 minutes
+[16:19] <sil2100> Ok!
+[16:19] <didrocks> mterry: sil2100: I can help you on the jenkins side, running the tests you want
+[16:20] <didrocks> mterry: sil2100: do you want that I retrigger the tests with the whole ppa content?
+[16:20] <didrocks> so indicator stack + unity stack?
+[16:20] <sil2100> didrocks: please do, it's always good to have the latest one even now
+[16:20] <didrocks> ok
+[16:21] <didrocks> sil2100: mterry: run 79 on ps-indicators-autopilot-release-testing
+[16:22] <didrocks> ok, back in 40 minutes ;)
+[16:22] <sil2100> The other failure, well, this one looks more like a failure, trying to help with that one too
+[16:22] <sil2100> didrocks: thanks!
+[16:22] <didrocks> sil2100: I'm sure mterry always can retrigger issues
+[16:22] <didrocks> seems he has some good karma!
+[16:22] <didrocks> thanks sil2100, mterry ;)
+[16:22] <sil2100> hehe
+[16:23] <sil2100> mterry: what worries me the most is ;p Why are only HUD tests failing?
+[16:31] <sil2100> hm, I see something strange
+[16:36] <mterry> sil2100, I can get the gedit test to fail
+[16:36] <mterry> sil2100, but the dash emblem one passes locally
+[16:38] <mterry> Though...  the gedit test fails differently
+[16:39] <sil2100> mterry: oh! How?
+[16:39] <mterry> sil2100, the gedit window isn't focused at the end
+[16:39] <mterry> sil2100, dash doesn't give it back focus
+[16:40] <sil2100> Ah, hm, I remember a failure like that in the past
+[16:40] <mterry> (no window has visible focus)
+[16:41] <sil2100> But still good to know you can make it fail! Not sure how you're doing this magic ;)
+[16:43] <mterry> :)
+[16:44] <mterry> sil2100, the one failing test in 77 (different from 2 failing tests in 78) has my error
+[16:44] <mterry> let me see if I can repro that too
+[16:45] <mterry> No, that passes for me
+[16:45] <mterry> Sigh
+[16:45] <mterry> But at least it's similar error around hud behavior
+[16:47] <sil2100> This is strange indeed, looks like some strange race condition with focus
+[16:47] <sil2100> Since many random failures are caused by wrong application focus
+[16:47] <sil2100> Let me check if there's anything suspicious
+[16:58] <mterry> sil2100, these feel like more uninitialized variables (hard to reproduce)
+[16:58] <sil2100> Indeed, that's what I'm looking for now again ;)
+[17:01] <didrocks> sil2100: mterry: so, again a random failure on one arch
+[17:02] <sil2100> didrocks: mterry was able to more-or-less reproduce one issue - as mterry mentioned, 'somehow' it might be an uninitialized variable related to focusing applications again
+[17:04] <mterry> didrocks, not completely random.  That's the same single failure from 77
+[17:06] <mterry> sil2100, doesn't gcc spit out warnings about uninitalized vars like that?
+[17:52] <didrocks> sorry, connexion is quite flacky here
+[17:52] <didrocks> sil2100: mterry: any help needed?
+[17:53] <mterry> As far as I can tell, we have a set of focus-related hard-to-reproduce failures.  sil2100 is investigating for possible uninitialized variables
+[17:54] <didrocks> ok, keep me posted, daily release doesn't happen since Monday because of that one, not sure if we should just raise the trigger to 1 temporarly
+[17:55] <bschaefer> sil2100, mterry hello, there is another focus issue? Is it with unity?
+[17:56] <mterry> bschaefer, seems like it.  See https://jenkins.qa.ubuntu.com/view/PS/job/ps-indicators-autopilot-release-testing/78/ for example
+[17:56] <mterry> bschaefer, I can reproduce the gedit test failure locally, but not the other
+[17:56] <bschaefer> mterry, and gcc will try to spit out warnings about uninitialized vars, but being able to detect 100% accuracy you would need a solution to the halting problem
+[17:57] <bschaefer> mterry, hmm the hud one
+[17:57]  * bschaefer start up the vpn
+[17:57]  * mterry files bug for PS to solve halting problem
+[17:57] <bschaefer> haha
+[17:57] <mterry> :)
+[17:57] <didrocks> mterry: assign it to bschaefer, with priority critical :p
+[17:57] <didrocks> (and next close milestone ;))
+[17:58] <bschaefer> mterry, sil2100 oo hmm, I think I was able to reproduce losing focus from the hud at one point
+[17:58] <bschaefer> didrocks, haha, if only, I've tried before
+[17:58] <didrocks> ;)
+[17:58]  * bschaefer was a naive CS student 
+[17:59] <bschaefer> mterry, sil2100 so i've noticed with the hud, it loses focus when you have to windows on workspace 1, and start in workspace 0 (which has a window)
+[17:59] <bschaefer> then move to workspace 1
+[17:59] <bschaefer> and open the hud
+[17:59] <bschaefer> open/close
+[17:59] <bschaefer> sorry, I missed an alt+tab after the switching of workspaces
+[17:59] <mterry> bschaefer, when I reproduce locally, I only have one workspace.  so maybe those are two separate bugs
+=== dandrader is now known as dandrader|afk
+[18:00] <bschaefer> mterry, could possibly be a different issue
+[18:00] <bschaefer> mterry, how are you reproducing it locally?
+[18:00] <mterry> bschaefer, with autopilot running in a shell
+[18:01] <bschaefer> o nice
+[18:01]  * bschaefer goes to run the test
+[18:01] <bschaefer> mterry, actually if you have 1 workspace...there was this old bug
+[18:01] <bschaefer> mterry, where the gtk-window decor was being counted as window
+[18:03] <bschaefer> Hmm never mind, I just reproduced it on more then one workspace
+=== dandrader|afk is now known as dandrader
+[19:39] <sil2100> didrocks: bschaefer and me (with a less specialised eye) are trying to find the root cause of the problem, since it seems compiz is the problem here, as Brandon noticed it seems not to focus sometimes when asked to
+[19:40] <didrocks> sil2100: great to see it can trigger real issues \o/
+[19:40] <bschaefer> yeaah, it seems when you mix workspace switching/alt+tab/hud I can get it to not focus often, but still figuring out if its a different problem or the same :)
+[19:41] <didrocks> good luck bschaefer ;)
+[19:41] <bschaefer> didrocks, thanks!
+[19:42] <sil2100> huh, I think I reproduced the issue you mentioned bschaefer
+[19:42] <sil2100> Strange things are happening in compiz/unity ;p
+[19:42] <bschaefer> sil2100, yeeah
+[19:43] <bschaefer> sil2100, im hoping its the same problem :)
+[19:44] <sil2100> bschaefer: when I look at it, hm, if it can be *somehow* triggered without switching workspaces, it might be actually the problem that for instance made the test_closes_then_focuses_window_on_mouse_down test to fail
+[19:44]  * didrocks crosses fingers
+[19:44] <bschaefer> sil2100, well I was kind of wonder if we could link the test that happened before and after each test
+[19:44] <sil2100> Still, the undo failure is different ;p Damn you undo!
+[19:45] <bschaefer> that way we can see what test was ran before which could have possibly done something to the state of the system
+[19:45] <sil2100> I wonder how are the tests ran in jenkins exactly
+[19:45] <bschaefer> as maybe a test before we doing heavy alt+tabing + workspace switching which caused a problem with the undo test
+[19:45] <bschaefer> sooo it can still possibly be the same problem
+[19:46] <bschaefer> sil2100, im not 100%, I know there is no order...
+[19:46] <bschaefer> it would be nice if each test had an ID that was based on the order it went
+[19:47] <sil2100> To me it looks as if each test is ran on a clean session, at least that was my understanding in the past
+[19:48] <didrocks> sil2100: apparently, it's not totally true
+[19:48] <didrocks> sil2100: check with mmrazik, but the tests are ran by batch
+[19:49] <sil2100> didrocks: ok, that makes more sense now then
+[19:49] <bschaefer> sil2100, each arch is run on a clean session
+[19:49] <bschaefer> so intel, amd, etc
+[19:49] <bschaefer> opps
+[19:50] <bschaefer> ati, nividia
+[19:50] <bschaefer> yay http://10.97.0.1:8080/job/ps-indicators-autopilot-release-testing/80/
+[19:50] <bschaefer> haha
+[19:50] <sil2100> Ok, but we still need to fix that ;p
+[19:50] <bschaefer> yes we do :p
+[19:51] <didrocks> yeah, I just published with that
+[19:51] <didrocks> ironically, I put the trigger to 2% of failure
+[19:51] <sil2100> didrocks: look look! It's all ok ;p
+[19:51] <didrocks> and for the first time, after 15 runs… all pass
+[19:51] <didrocks> sil2100: no no no no no ;)
+[19:51] <sil2100> didrocks: we fixed it by not fixing anything! :D
+[19:51] <sil2100> :(
+[19:51] <sil2100> ;p
+[19:51] <didrocks> sil2100: well, thanks my retrial :p
+[19:52] <didrocks> but yeah, those kinds of $random is ackward
+[19:52] <sil2100> I know, that's why it's still bothersome
+[19:53] <sil2100> Maybe in the meantime bschaefer tries to find the focus issue, he has more experience so he'll be able to find it faster - I'll concentrate on the sometimes-failing gedit undo, which might be an HUD issue
+[19:53] <bschaefer> sounds good
+[20:12] <bschaefer> sil2100, one thing you should check (if you can reproduce that hud/gedit problem) is to figure out what window has focus
+[20:12] <bschaefer> when the panel is empty, as I just checked with the focus problem im looking into, and it is actually focusing the window behind the one it should...
+[20:12] <bschaefer> ie. a window does have focus
+[20:13] <sil2100> bschaefer: but with the gedit problem, hm, actually gedit has the focus, so I think that it *might* be unrelated
+[20:14] <sil2100> But of course, it might not have focus when doing the HUD command
+[20:14] <bschaefer> sil2100, o gedit still has focus after hitting undo?
+[20:14] <bschaefer> and the panel has an empty title?
+[20:14] <bschaefer> i've also noticed that it sometimes focuses a window on a different workspace...
+[20:14] <sil2100> bschaefer: yes, but the panel has the title 'Text Editor' and the gedit command flies into nothingness
+[20:15] <bschaefer> sil2100, o I though the last time I saw the video, after the undo command was enter the panel title became empty
+[20:15]  * bschaefer watches the new one
+[20:15] <sil2100> So the right window seems focused, just the command ignored
+[20:15] <sil2100> bschaefer: the new one has focus after the hud is dissolved
+[20:15] <sil2100> bschaefer: since in the past I think the reason was the switcher stealing focus ;p
+[20:15] <sil2100> Check build 78
+[20:15] <bschaefer> sil2100, oo, that is why I was thinking it was the same problem haha
+[20:16] <bschaefer> yeah I believe that was a bug I did :)
+[20:16] <bschaefer> or introduced
+[20:17] <bschaefer> sil2100, hmm im getting a 404 error on the video :(
+[20:19] <sil2100> bschaefer: you using apview?
+[20:19] <bschaefer> yup
+[20:20] <sil2100> bschaefer: there is a thing that changed... use my version of apview
+[20:20] <sil2100> https://code.launchpad.net/~sil2100/+junk/apview
+[20:20] <bschaefer> oo cool
+[20:20]  * bschaefer is using thomis' old one
+=== salem_` is now known as _salem
+[20:20] <sil2100> Since I had the same thing, and I fixed it temporarily today
+[20:21] <bschaefer> cool, yeah it also said the video was unsupported, so I went to the direct link
+[20:21] <bschaefer> and the link was a 404 not found error
+[20:24] <bschaefer> o wow, thats a different failure...odd!
+[20:24] <bschaefer> also that is a lot better video support
+[20:43] <bschaefer> sil2100, haha...im thinking the focus bug im running into is a unity bug
+[20:43] <bschaefer> compiz does focus the correct window its told
+[20:44] <bschaefer> the problem is the switcher saves the current focused window before going into the switcher and if you don't cancel the switcher it will focus a new window
+[20:44] <bschaefer> but the problem is the _last_focus_window is set to the incorrect window...
+[20:44] <bschaefer> so when you open then close the hud, it thinks the _last_focused_window is the window you used before the alt+tab
+[20:49] <bschaefer> yay, that seems to be the problem...now for a correct fix....
+[20:57] <sil2100> huh
+[20:57] <sil2100> That's unexpected!
+[20:57] <sil2100> But hm, so maybe indeed it's caused by previous switcher usage?
+[20:58] <bschaefer> yeeah, I think it could actually be because the Hud isn't saving the current focused window before it becomes the active window
+[20:58] <bschaefer> (possibly)
+[20:58] <bschaefer> possibly!
+[20:58] <bschaefer> so it could be a UBUS race condition, but when I saved the input of the window after switcher didn't restore the window everything worked correctly
+[20:58] <bschaefer> sooo ill check to see if its a race condition
+[21:02] <didrocks> fginther: btw, you probably saw all the latestsnapshot MP, some are failing due to g_type_init
+[21:02] <didrocks> fginther: if you want to test the "rapid merge" of those, please do…
+[21:03] <fginther> didrocks, thanks, I will
+[21:07] <bschaefer> sil2100, yup, the Hud does not save input before going into the hud, but it attempts to restore the last focused window (oddly...))
+[21:07] <bschaefer> so no race condition...
+[21:23] <bschaefer_> sil2100, soo the fix is just to have the Hud save input focus before it opens the hud :)
+[21:24] <bschaefer_> (which I thought it was...)
+=== bschaefer_ is now known as bschaefer
+[21:24] <sil2100> \o/
+[21:24] <bschaefer> sil2100, was this causing AP test failures?
+[21:24] <bschaefer> or do I need to write one haha
+[21:26] <bschaefer> though the test should just be...open 2 programs, alt tab, open hud, assert w2 has focus
+[21:26] <sil2100> heh ;) It was *probably* causing some failures, but it would be nice to have an explicit test written
+[21:26] <sil2100> Is there a bug for this? Or should I fill one?
+[21:26] <sil2100> Thanks for finding the cause!
+[21:27] <bschaefer> sil2100, no problem :), if you feel like filing one
+[21:27] <bschaefer> sil2100, I can also make a bug
+[21:27] <sil2100> bschaefer: I don't think we had an explicit test like this, no - I'll fill  the bug then in the meantime!
+[21:27] <bschaefer> sil2100, alright, ill go prepare the branch!
+[21:27] <bschaefer> and make the test, thanks!
+[21:27] <sil2100> That's the least I can do to help ;)
+[21:28] <bschaefer> haha, well we still need to fix that hud gedit problem as well :)
+=== kenvandine is now known as ken[torture]
+[21:31] <sil2100> bschaefer: this fix might be even good for backporting to quantal and precise! Since probably those stacks also suffer from the same problem ;)
+[21:31] <sil2100> https://bugs.launchpad.net/ubuntu/+source/unity/+bug/1100962
+[21:31] <ubot5> Launchpad bug 1100962 in Unity "HUD does not save the current input focus correctly" [Low,In progress]
+[21:32] <bschaefer> sil2100, awesome, yeah, its a one liner as well :)
+[21:32] <bschaefer> well that AP tests makes it a little longer
+[21:32] <sil2100> You can edit the title if you think it's not correct ;)
+[21:32] <bschaefer> nope sounds perfect
+[21:45] <bschaefer> sil2100, https://code.launchpad.net/~brandontschaefer/unity/lp.1100962-fix-hud-focus-problem/+merge/143780
+[21:46] <bschaefer> sil2100, also how would I also add 6.0 on that bug report? I seem to not have the correct permission to edit bugs...
+[21:47] <sil2100> bschaefer: ok, will add! And review the branch ;)
+[21:47] <bschaefer> sil2100, alright :), Ill make a 6.0 branch
+[21:47] <sil2100> bschaefer: strange, I thought you have all the power ;p
+[21:47] <bschaefer> sil2100, so did I! I guess im still not apart of the Ubuntu-BugSquad
+[21:47] <bschaefer> im just waiting to be approved...
+[21:53] <sil2100> bschaefer: hah! Excellent, I just was able to reproduce the problem with your autopilot test ;) (without unity with your fix of course) Awesome!
+[21:53] <bschaefer> sil2100, :)
+=== ChrisTownsend1 is now known as ChrisTownsend
+[21:54] <bschaefer> yeah I was surprised how easy it was to reproduce once you understood what was going on
+[21:54] <bschaefer> its a nice small AP test as well
+[21:59] <bschaefer> sil2100, https://code.launchpad.net/~brandontschaefer/unity/lp.1100962-fix-hud-focus-problem-6.0
+[21:59] <bschaefer> :)
+=== ken[torture] is now known as kenvandine
+[22:07] <didrocks> sil2100: bschaefer: rocking!
+[22:08] <bschaefer> didrocks, :), though the gedit/undo problem still exist as far as I know
+[22:08]  * bschaefer can't reproduce that
+[22:08] <didrocks> yep, but sil2100 is on it, right?
+[22:09] <bschaefer> yup!
+[22:10] <bschaefer> sil2100, isn't it getting late for you?
+[22:11] <didrocks> I think it is late :)
+[22:12] <sil2100> zZzzZ ;)
+[22:13]  * bschaefer needs to eat some food
+[22:21] <didrocks> fginther: any luck on the latestsnapshot branches not merged into trunk?
+[22:23] <didrocks> bregma: bschaefer: I think you saw that the nux branch failed to biuld (the one fixing the g_type_init())
+[22:23] <didrocks> because of an unused variable
+[22:23] <didrocks> andyrock shouldn't be around, maybe it worth taking over the branch?
+[22:26] <andyrock> didrocks, failed to build?
+[22:26] <didrocks> andyrock: yep, https://code.launchpad.net/~andyrock/nux/deprecated-glib-fun/+merge/143755
+[22:27] <andyrock> didrocks, it works here
+[22:27] <didrocks> see the FAILURE in jenkins
+[22:27] <andyrock> http://paste.ubuntu.com/1542848/
+[22:27] <andyrock> let me see
+[22:27] <fginther> didrocks, no real progress, fighting with jenkins at the moment
+[22:28] <didrocks> fginther: ok, some branches are stuck, can you push them manually if no solution in the nex 30 minutes?
+[22:28] <didrocks> fginther: are stuck or seems to :)
+[22:28] <didrocks> fginther: because this will prevent next daily release, those components will be "stuck"
+[22:28] <andyrock> didrocks, oh "make" does not build tests?
+[22:28] <didrocks> (ignored/put on shelf)
+[22:29] <didrocks> andyrock: can it be a regression of the precompiled header?
+[22:29] <fginther> didrocks, yes, I will try plan B and give you an update
+[22:29] <didrocks> fginther: thanks!
+[22:29] <andyrock> didrocks, does nux use precompiled header?
+[22:29] <didrocks> andyrock: I'm unsure, I think not in fact
+[22:35] <didrocks> gtest-nuxcore-logger.cpp:336:14: warning: unused variable 'the_func' [-Wunused-variable]
+[22:35] <didrocks> andyrock: is that the case? I didn't look at the code
+[22:37] <andyrock> didrocks, copy-paste + typo issue :( #else is not #endif
+[22:37] <didrocks> andyrock: they should be equivalent! :-)
+[22:37] <bregma> andyrock, tests should only be built by 'make check'
+[22:37] <didrocks> andyrock: ok, at least easy fix, can you push and I'll approve :)
+[22:37] <didrocks> or bregma
+[22:37] <didrocks> even better ;)
+[22:37] <bregma> not me, I have to head out for a few hours
+[22:37] <didrocks> andyrock: btw, thanks for this fix!
+[22:37] <didrocks> ok, will do then
+[22:38] <didrocks> bschaefer: btw, I think the "make check" for building tests will interests you ^
+[22:39] <andyrock> didrocks, np :)
+[22:40] <andyrock> bregma, yeah nux just builds test on 'make check'
+[22:46] <andyrock> didrocks, pushed
+[22:46] <andyrock> but i get: "Fatal error: Features.h: No such file or directory
+[22:46] <andyrock> compilation terminated."
+[22:46] <andyrock> with or without my branch
+[22:47] <andyrock> so it should be fine
+[22:52]  * bschaefer as arrived back
+[22:52] <bschaefer> didrocks, I compiled that nux branch and it worked for me
+[22:54] <andyrock> bschaefer, yeah but nux does not build test with 'make'
+[22:54] <andyrock> unity does
+[22:54] <bschaefer> andyrock, opps, yeah I just compiled and ran it
+[22:54] <andyrock> bschaefer, me too ;)
+[22:54] <bschaefer> andyrock, :), do you have a fix for it?/
+[22:54] <andyrock> fixed
+[22:55] <bschaefer> awesome!
+[22:55] <andyrock> stupid typo :)
+[22:55] <bschaefer> haha, well I missed it as well
+[22:55] <bschaefer> it looked correct, if/else haha
+[22:56] <andyrock> yeah my fault :)
+[22:56] <bschaefer> haha, well yay for jenkins catching it
+[23:07] <didrocks> bschaefer: andyrock: nice work!
+[23:08] <bschaefer> didrocks, it was all andyrock :)
+[23:11] <fginther> didrocks, I manually merged nux, compiz merged on it's own and indicator-power is in the build queue
+[23:11] <didrocks> fginther: sweetness! Thanks :)
+[23:12] <fginther> yw

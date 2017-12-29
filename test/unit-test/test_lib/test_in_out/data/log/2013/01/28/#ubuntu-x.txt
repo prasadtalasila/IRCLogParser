@@ -1,0 +1,130 @@
+=== yofel_ is now known as yofel
+[13:12] <mlankhorst> hm why do we still build the xserver udebs on ubuntu, do we actually use them anywhere?
+[13:12] <jcristau> no
+[13:18] <tjaalton> mlankhorst: do they bother you :)
+[13:18] <mlankhorst> tjaalton: only in the sense it takes unnecessary build time..
+[13:19] <tjaalton> well, d-i does build the gtk version too which uses them
+[13:19] <tjaalton> http://archive.ubuntu.com/ubuntu/dists/raring/main/installer-amd64/current/images/netboot/gtk/ etc
+[13:19] <mlankhorst> aw :(
+[13:20] <tjaalton> the official iso's don't use them
+[13:20] <mlankhorst> so that's a yes then, ah well
+[13:20] <tjaalton> how many seconds does it take building them?-)
+[13:21] <mlankhorst> not on my main system, but waiting on arm builders in ppa's for example
+[13:22] <tjaalton> ah
+=== chiluk_away is now known as chiluk
+[14:19] <mlankhorst> hm looks like we could just pull some patches to make reverse optimus work on xserver 1.13
+[14:19] <mlankhorst> eg intel driving output on nouveau or radeon
+[14:21] <tjaalton> so my t420s could use displayport (owned by nvidia)?
+[14:22] <tjaalton> hmm no, that's normal optimus?-)
+[14:22] <mlankhorst> nah 'normal' optimus would let you switch to the nvidia card for rendering the internal display if you plug something in
+[14:24] <tjaalton> of course..
+[14:25] <mlankhorst> but yeah looks like we need to pull some patches from fedora xserver for that
+[14:26] <mlankhorst> airlied also updated the autobind patch for it
+[14:27] <tjaalton> I think we'd want some commits from the latest -modesetting to fix some race bugs..
+[14:27] <tjaalton> also for quantal/precise
+[14:27] <tjaalton> just that it's hard to verify they actually fix a race
+[14:29] <mlankhorst> yeah :(
+[14:31] <mlankhorst> sru's are so annoying for x, mostly because a lot of the upstream development on those drivers is just bugfixes. You kind of want all of them even if not directly affected by them.
+[14:50] <mlankhorst> mm i did get the hdmi output to show up on the eee
+[14:54] <mlankhorst> actually using it caused x to crash, I suspect I have to grab the f18 patches :/
+[15:18] <mlankhorst> hm still crashes
+=== jono is now known as Guest10241
+[17:52] <seb128> does xorg default to mirror or span for multimonitor configs?
+[17:57] <bryce> seb128, it mirrors by default but that doesn't matter, since gnome-randr sets its own defaults
+[18:00] <seb128> bryce, g-s-d's xrandr default is "don't do anything, let xorg handle it", which is what should happen at least in the greeter and for new users
+[18:01] <seb128> then g-s-d write a config and overwrite that once you use the xrandr panel in system settings
+[18:04] <bryce> seb128, hmm, I thought it did override things
+[18:04] <bryce> seb128, anyway if it isn't, then it should be coming up as mirrored by default.
+[18:05] <seb128> bryce, that was changed some cycle ago, http://git.gnome.org/browse/gnome-settings-daemon/commit/data/org.gnome.settings-daemon.plugins.xrandr.gschema.xml.in.in?id=75e052127eeb022d83b7a744b110d8bde5b7280c
+[18:05] <bryce> seb128, aha that explains it
+[18:06] <seb128> bryce, the key description states "'do-nothing' will use the default Xorg behaviour (extend the desktop in recent versions)"
+[18:06] <seb128> is that wrong/do we patch Xorg?
+[18:14] <Sarvatt> seb128: thats only true in fedora as far as I can see.. lovely
+[18:14] <Sarvatt> aka http://pkgs.fedoraproject.org/cgit/xorg-x11-server.git/tree/xserver-1.6.99-right-of.patch
+[18:17] <bryce> although I do note there's been a lot of change of this code in current git recently 
+[18:55] <bryce> seb128, so, testing this on precise with HW.  when I hotplug a new monitor (no monitor.xml present), with gnome running the external monitor shows up to the right of my lvds.
+[18:56] <bryce> seb128, when I start up a raw X session with no gnome running, then do the same, the monitor does not turn on by default when hotplugged, and when I do turn it on, it's mirrored.
+[18:57] <bryce> Sarvatt, does this match what you're seeing?
+[19:03] <bryce> seb128, did you file a bug report for jason?
+[19:08] <Sarvatt> bryce: hotplug under gnome, extended, bare xinit I get mirrored, and gnome is mirrored after killing that X and restarting lightdm
+[19:09] <bryce> Sarvatt, ok, same as me
+[19:33] <seb128> bryce, not yet, I was trying to figure out if there is a bug and what component is to blame for it first
+[19:33] <seb128> bryce, Sarvatt: seems like a g-s-d issue then?
+[19:33] <bryce> seb128, yep
+[19:34] <seb128> bryce, thanks
+[19:35] <bryce> seb128, see the 'Handling of hotplug' section on https://live.gnome.org/RandR
+[19:37] <seb128> bryce, ok, I guess we need to backport http://git.gnome.org/browse/gnome-settings-daemon/commit/?id=32f7a938fca072e14bad1928b492e29ba0e3090c
+[19:37] <seb128> "Despite the name, the "default-monitors-setup" key is only used at boot time. After hot-plug of an external monitor, the "xinerama" setup is always used."
+[19:37] <seb128> bryce, thanks for the help tracking it down ;-)
+[19:38] <bryce> seb128, I think that does the opposite of what's wanted
+[19:38] <bryce> maybe, let me look closer
+[19:39] <seb128> + case GSD_XRANDR_BOOT_BEHAVIOUR_DO_NOTHING:
+[19:39] <seb128> + config = make_xinerama_setup (manager, priv->rw_screen); 
+[19:39] <seb128> is weird
+[19:39] <seb128> I think it's based on the fact that upstream assumes xinerama is the default xorg behaviour
+[19:40] <bryce> yeah
+[19:40] <seb128> which is likely because upstream is using fedora, and they are patching their xserver...
+[19:40] <bryce> seb128, hum, yes that could be
+[19:40] <seb128> I will comment on that bug and check with them
+[19:41] <bryce> so yeah I think that patch might end up doing the "right" thing accidentally, but I think it might end up just forcing all multi-head to mirrored, which isn't quite what we want
+[19:41] <seb128> I think otherwise the patch makes change if the make_xinerama_setup in that case is changed to make_mirror_setup instead
+[19:41] <seb128> well, that's the default behaviour
+[19:42] <seb128> if you use the panel you end up with a monitors.xml config and that's used
+[19:42]  * bryce nods
+[19:44] <bryce> seb128, ok so with this patch it looks like the CONF_KEY_DEFAULT_MONITORS_SETUP key would let us control what our policy is, separate from fedora, yes?
+[19:45] <bryce> seb128, well, aside from that here's my thought:
+[19:45] <seb128> bryce, yes, that's a gsettings key, we can change the default in our override (where we set the theme, wallpaper, etc)
+[19:45] <bryce> in make_xinerama_setup() it iterates through the outputs, and lays them out one to the right of the next
+[19:46] <bryce> we could have that code check the physical dimensions of the screen, and if it is 0mm x 0mm, don't increment x in that case.
+[19:46] <bryce> hrm, although that will  overlay rather than clone, that's not quite right either
+[19:47] <bryce> seb128, anyway, my thinking is that there needs to be some logic somewhere that detects if the output is a projector, and in that case clone, but in all other cases extend
+[19:47] <seb128> bryce, do you see that logic to be an xorg thing or a GNOME thing?
+[19:48] <seb128> doing it at the server level would make it work for all desktops, but I guess the xserver is not really the place to make such decisions on behaviours?
+[19:49] <tjaalton> don't think there's any reliable way to detect projectors..
+[19:49] <bryce> seb128, well, to my knowledge, it's not something we're going to be correct 100% of the time.  (There isn't an EDID property that says "I'm a projector".)  So it feels like something that should be on the client end, so it can be configured by the user when it's wrong
+[19:50] <seb128> ok
+[19:50] <tjaalton> well, what's worse is seemingly random behaviour
+[19:50] <seb128> well, I will backport a tweaked version of the gsd fix as a first fix
+[19:50] <seb128> we can try to be smarter then, though I'm not sure either how to guess that a projector is in use
+[19:50] <jcristau> hrm
+[19:51] <jcristau> why would you want to clone for a projector?
+[19:52] <tjaalton> so you can see the presentation from your laptop screen, so no need to strain your neck trying to see the big screen :)
+[19:52] <tjaalton> I guess that's why..
+[19:52] <bryce> jcristau, it's in the specification to do it that way
+[19:53] <jcristau> "the specification"?
+[19:53] <bryce> "Connecting to a Projector or TV
+[19:53] <bryce> When connecting to a projector or TV (heuristic evaluation of the EDID can determine with reasonable certainty whether the display is a projector or TV), the default behaviour is to mirror displays, and presentation mode is checked by default"
+[19:53] <bryce> https://docs.google.com/a/canonical.com/document/d/1aHvJ-iIw-59bXTYBmIhQqEx0za2h9jpFE_RhZ2VOvJc/edit?authkey=CJO5wPkH&hl=en_GB
+[19:53] <tjaalton> restricted
+[19:53] <jcristau> that's not a rationale..
+[19:54] <tjaalton> maybe the presentation app should clone it's window :)
+[19:54] <jcristau> usually when using a projector i want to have notes or something on the laptop, not a clone.  maybe it's just me...
+[19:54] <bryce> tjaalton, what if the user is presenting things using several apps?
+[19:56] <tjaalton> bryce: he can tick 'mirror' :)
+[19:56] <bryce> jcristau, it's just you. ;-)
+[19:57] <tjaalton> actually what jcristau said it's how powerpoint/impress works
+[19:57] <tjaalton> or one mode of it
+[19:58] <bryce> tjaalton, that's not what they're asking for though
+[19:58] <tjaalton> probably misused by 95% of it's users :)
+[19:58] <tjaalton> they?
+[19:58] <bryce> TPTB
+[19:59] <bryce> Chris Kenyon & co., etc.
+[20:07] <tjaalton> so they didn't get proper feedback :)
+[20:13] <bryce> tjaalton, lack of understanding has never stopped a manager from making a decision ;-)
+[20:13] <JanC> tjaalton: LibO has a presentation mode like that too
+[20:13] <tjaalton> JanC: yep, that's what I meant by 'impress' :)
+[20:14] <JanC> I was reading a bit too fast and only saw the first  ☺
+[20:16] <JanC> but I remember people were begging for it in Impress for a long time, so I assume it's something that people really want and should work  ☺
+[20:16] <tjaalton> bryce: :)
+[20:17] <JanC> of course, when doing presentations using Evince, maybe clone is better
+[20:18] <JanC> and don't call it "mirror", the last thing you want is a *mirrored* image :p
+[20:18] <tjaalton> right :)
+[20:20] <JanC> it's like that funny feature of Intel's drivers where you can turn somebody's screen upside down with a shortcut  :p
+[20:20] <JanC> in Windows
+[22:41] <bryce> tjaalton, think it's worthwhile to look at displaylink on the nexus7 again?  we're still basically screwed with too-old kernel and too-new X.org right?  Have you had any other ideas?
+[23:10] <bjsnider> displaylink? is that like displayport?
+[23:14] <tjaalton> bryce: right, not worth it imo
+[23:14] <tjaalton> bjsnider: no, graphics over usb
+[23:15] <tjaalton> erm
+[23:15] <tjaalton> the adapter is behind usb, the display connector can be whatever
+[23:18] <bryce> tjaalton, yeah sounds good

@@ -1,0 +1,53 @@
+[04:33] <micahg> cjohnston: which patch?
+=== Quintasan_ is now known as Quintasan
+[07:17] <siretart> Adri2000: fixed libav arrived in experimental, please try again
+[07:27] <Quintasan> \o
+[13:10] <Adri2000> siretart: the dependency problems with libavcodec54 disappeared, libavutil51 and 52 are still both installed, and it fails for the same reason in the end :( http://adrishost.net/~adri2000/debian/actionaz-experimental-libav-ftbfs2-buildog.txt
+[13:11] <siretart> Adri2000: uh sh*t. i guess you found something serious here. let me investigate more
+[13:16] <siretart> Adri2000: what package is this?
+[13:21] <siretart> Adri2000: I don't get this. there is no occurance of  ff_sqrt_tab in libavcodec53. still your build log bitches about this. please investiage what exactly requires ff_sqrt_tab@LIBAVUTIL_51.
+[13:24] <Adri2000> siretart: package is actionaz, and I'm trying to build the version in http://anonscm.debian.org/gitweb/?p=collab-maint/actionaz.git;a=summary (latest master)
+[13:24] <Adri2000> (or latest commit in 'debian' branch, rather)
+[13:27] <Adri2000> # objdump -T /usr/lib/x86_64-linux-gnu/libavcodec.so.53 | grep sqrt
+[13:27] <Adri2000> 0000000000000000      DO *UND*	0000000000000000  LIBAVUTIL_51 ff_sqrt_tab
+[13:28] <Adri2000> siretart: that's what I have in my pbuilder-experimental, after installing libavcodec53
+[13:31] <siretart> Adri2000: uh right, now I see what's going on
+[13:31] <siretart> Adri2000: the problem is  libavutil51_6:9~beta1-1
+[13:31] <siretart> that version is known to be broken, and has been superseeded by libavutil52
+[13:32] <siretart> fortunately, the is also NBS, so ftp-master can safely remove it. your package should be able to build again once that happened
+[13:32] <siretart> Adri2000: please poke debian's ftp-master to NBS libavutil51_6:9~beta1-1 in experimental. that should do the trick
+[13:36] <Adri2000> siretart: ok, will do that, thanks for the help
+=== nigelb is now known as Lord_Nigelb
+=== Lord_Nigelb is now known as nigelb
+[23:36] <mikodo> Can we please have Potamus back in the repos. I have it in 10.04 very nice. It is not in 12.04  Here it is  http://offog.org/code/potamus.html     Thanks!
+[23:44] <TheLordOfTime> mikodo, research shows it was removed in Debian: http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=615644
+[23:44] <ubottu> Debian bug 615644 in ftp.debian.org "RM: potamus -- RoQA; orphaned, unused, alternatives exist" [Normal,Open]
+[23:45] <TheLordOfTime> MOTU want to shed light on whether the same reason was why its not in Ubuntu?
+[23:45] <TheLordOfTime> (and AFAICT, it does have alternatives in the repos, and a good number of them)
+[23:46] <ajmitch> same reason, removals from debian are usually done in universe as well
+[23:46] <TheLordOfTime> that's what i thought, but i wasn't sure ;)
+[23:46] <ajmitch> you can see it on https://launchpad.net/ubuntu/+source/potamus/+publishinghistory
+[23:46] <TheLordOfTime> E: timeout :/
+[23:46] <ajmitch> wfm
+[23:47] <TheLordOfTime> ah there it is.
+[23:47] <TheLordOfTime> Removal requested on 2011-05-05. | Deleted on 2011-05-05 by Steve Langasek | (From Debian) RoQA; orphaned, unused, alternatives exist; Debian bug (see above lines here on IRC)
+[23:48] <ajmitch> basically it got no love in debian & noone stepped up to maintain it
+[23:48] <TheLordOfTime> makes sense to me :P
+[23:48] <TheLordOfTime> and they are right though: there's a TON of alternatives
+[23:48] <TheLordOfTime> s/TON/lot/
+[23:51] <mikodo> Hey guys thanks for the info. I have never compiled. Should I try, or by it not being maintained does it mean it might be buggy now and might not be worth the effort?
+[23:51] <TheLordOfTime> mikodo, upstream seems maintained...
+[23:52] <mikodo> TheLordOfTime,  So, might be worth my effort then. Thanks
+[23:52] <TheLordOfTime> potamus-14.tar.gz	06-Dec-2012 13:52 	159K <-- latestupload on thier site
+[23:52] <TheLordOfTime> and yes, they have directory listing on
+[23:52] <TheLordOfTime> i should slap them for that...
+[23:52] <TheLordOfTime> since that's insecure...
+[23:52] <TheLordOfTime> mikodo, i'd just build it from source by hand, i agree with the debian bug that there's a good number of alternatives which exist.
+[23:53] <TheLordOfTime> and since its kinda not in debian, well... :P)
+[23:53]  * TheLordOfTime shifts attention back to figuring out why apt-mirror's timing out on mirroring from the regional archive.
+[23:53] <TheLordOfTime> s/regional archive/regional mirrors/
+[23:53] <mikodo> TheLordOfTime, I like it and I am going to build for the learning exp.
+[23:54] <zequence> 26
+[23:54] <TheLordOfTime> have fun mikodo
+[23:54] <mikodo> TheLordOfTime, Thx. buddy
+[23:55] <TheLordOfTime> hmm.... i should probably ask in -server, but have any of you ever had apt-mirror fail to mirror from a regional mirror, whereas the system its on is able to apt-get update/apt-get upgrade from the same server that apt-mirror's trying to mirror?

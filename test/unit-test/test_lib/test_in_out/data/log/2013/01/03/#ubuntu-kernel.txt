@@ -1,0 +1,226 @@
+=== chiluk_away is now known as chiluk
+=== rsalveti_ is now known as rsalveti
+[06:10] <infinity> bjf: Those SRU kernels should all finish up sometime tonight, I'll copy them and do the archive overrides in the morning.
+=== yofel_ is now known as yofel
+[12:48] <apw> ogasawara, rtg, fyi i have fixed and reneabled aufs in raring
+[12:48] <apw> ogasawara, rtg, i have also uploaded a test kernel to a PPA so that we can test the binary drivers against it
+[12:49] <rtg> apw, just pushed -rc2 rebase with your changes. now my repo is auto packing.......
+[12:49] <apw> when did that drop, i didn't see it this morning, odd
+[12:49] <rtg> apw, dunno, just saw the mainline build email
+[12:49] <apw> odd indeed
+[12:50]  * apw gets that one uploaded too as well
+[12:51] <rtg> my autopack has been running for 15 minutes. i guess I've accu,ulated a lot of cruft
+[12:51] <apw> :) now that is a long pack
+[12:52] <rtg> apw, I'm think I'm gonna go through today and fold in some of the noise commits
+[12:52] <apw> rtg, yep, seems reasonable to me, but note there is a (nosquash) or similar hint for things which folding in just makes life difficult for
+[12:52] <apw> the aufs base patches for instance 
+[12:53] <rtg> apw, so you're saying you don't want me to smash everything down into one commit :)
+[12:53] <apw> thats the one
+[12:53] <apw> there are only a few which are a royal pain when lost, those are a couple, makes updating aufs much harder
+[12:54] <apw> (no-squash) seems to be the thing
+[12:54] <rtg> I'll be careful
+[12:54] <apw> but otherwise have at it, squashing redundant things is a now thing for sure
+[12:55] <apw> i'll get the config review up and running on it shortly
+[13:40] <ogasawara> apw: which PPA did you upload the test kernel too?  I can sync with tseliot to test dkms bits
+[13:40] <apw> ogasawara, i have pushed it to my signing PPA, i'll copy in the binary drivers sans binary packages once it is built
+[13:40] <ogasawara> apw: ack
+[13:41] <apw> ogasawara, it'll be an hour or two before it is ready
+[13:41] <apw> oh that doesn't help, they don't build when buidling anyhow, doh
+[13:41] <apw> i'll let him know when it is built
+[13:41] <ogasawara> apw: ok thanks
+[13:42] <apw> i mostly chose that PPA cause it has signing enabled on it, so i can test the -signed packages
+[13:47] <apw> bjf, is it true you can test against a PPA version of a kernel as well as the archive?
+[13:48] <apw> (or perhaps i mean, that i can do that in our stuff?)
+=== lamont` is now known as lamont
+[16:04] <apw> http://ppa.launchpad.net/apw/signing/ubuntu/pool/main/l/linux/linux-image-3.8.0-0-generic_3.8.0-0.1~apw2_i386.deb and the extra in the same place
+[16:05] <apw> bjf, there is always a pool assocated with an archive
+[16:06] <bjf> apw, ok, i'll check but i think i'm assuming that the url is a directory and that directory only contains the debs for a single version and it contains the header debs as well as the kernel binary debs for amd64 and i386 for that one version
+[16:07] <apw> bjf, ahh ok, well i am happy to slurp them out if you tell me how it needs to look
+[16:08] <bjf> apw, ack
+[16:08] <apw> bjf, it is not worth doing any engineering
+[16:08] <bjf> apw, i can see that as a valid use case however. so i will eventually support that.
+[16:11] <apw> bjf, being able to use a PPA somehow would be nice
+[16:12] <bjf> apw, i agree
+=== chiluk is now known as chiluk_away
+[16:33] <apw> rtg, signed modules, you only do those for amd64 right ?
+[16:34] <rtg> apw, on the backport kernel ? I think thats right.
+[16:34] <apw> rtg, on raring
+[16:34] <rtg> apw, never mind. was thinking of something else
+[16:35] <rtg> apw, ebian.master/config/armhf/config.flavour.omap:# CONFIG_MODULE_SIG is not set
+[16:35] <rtg> debian.master/config/armhf/config.flavour.highbank:CONFIG_MODULE_SIG=y
+[16:35] <rtg> debian.master/config/amd64/config.common.amd64:CONFIG_MODULE_SIG=y
+[16:35] <rtg> debian.master/config/i386/config.common.i386:CONFIG_MODULE_SIG=y
+[16:35] <apw> ok, odd, but ok
+[16:36] <rtg> apw, not sure why its turned off on OMAP
+[16:36] <apw> it may have to have arch support in the kernel
+[16:37] <rtg> apw, highbank and omap are same arch
+[16:38] <apw> rtg, ok i have just pushed a fix to build-dep on openssl across the board, as we depend on it :)
+[16:39] <apw> rtg, although it will build on a buildd by luck, it won't in a clean chroot nor an sbuild environment
+[16:39] <rtg> apw, ok, got it
+[16:40] <kamal> dobey: note that apw just fixed the missing openssl build-dep in raring ^^^ .   thanks for reporting it!
+[16:41] <apw> dobey, indeed, thanks :)
+[16:42] <brendand> there seems to be an anomoly in the 12.04.2 images
+[16:42] <apw> dobey, will be fixed in the next upload anyhow
+[16:42] <brendand> amd64 image has 3.5 kernel and i386 one has 3.2
+[16:43] <apw> brendand, both are desktop?  there was talk of -server differing but otherwise i would be expecting the versions to be the same
+[16:44] <brendand> apw - yeah, this is here: http://cdimage.ubuntu.com/precise/daily-live/current/
+[16:44] <apw> brendand, then no i don't think i would be expecting that, we should bring this up on #ubuntu-release i recon
+[16:47] <brendand> apw - asked. not sure if you know the best person to answer?
+[16:47] <brendand> apw, we already asked cjwatson but he's occupied
+[16:47] <apw> cjwatson normally would know, we shall see
+[16:47] <apw> slangasek often has an ear as well
+[16:48] <brendand> apw - a more important question from our point of view is which is the 'wrong' one?
+[16:49] <brendand> apw - they should both have 3.5 right?
+[16:49] <apw> my expectation is we have the 3.5 kernel as that has 1) secure boot support, and 2) new hardware support
+[16:49]  * slangasek passes the ear jerky
+[16:49] <slangasek> yes, that's correct
+[16:49] <apw> that said 1) does not affect 32 bit i believe
+[16:50] <rtg> but the new hardware support is important
+[16:50] <apw> slangasek, it is correct they should be 3.5, or correct they differ 32/64 bit :)
+[16:50] <apw> rtg, concur 2) applies still
+[16:51] <slangasek> correct they should be 3.5
+[16:52] <apw> slangasek, ok i386 seems to be 3.2 still according to the manifests
+[16:52] <slangasek> yep, seeing
+[16:52] <slangasek> should we #ubuntu-release?
+[16:52] <apw> bjf, http://people.canonical.com/~apw/3.8-rc2-raring/ should be what you wanted i think
+[16:52] <apw> slangasek, yep
+[16:53] <bjf> apw, looking
+[16:53] <bjf> apw, ack
+[16:57] <bjf> apw, You've Got Mail  :-)
+=== ppetraki is now known as ppetraki-busy
+[17:08] <dobey> kamal, apw: cool, thanks
+[17:16] <infinity> bjf: *nudge*
+[17:17] <infinity> bjf: Am I missing something about why the bot hasn't moved https://bugs.launchpad.net/ubuntu/+source/linux/+bug/1095351 to promote-to-proposed?
+[17:17] <ubot2> Launchpad bug 1095351 in linux (Ubuntu) "linux: 3.2.0-36.56 -proposed tracker" [Medium,In progress]
+[17:17] <bjf> infinity, let me guess, hwe backports
+[17:17] <bjf> infinity, looking
+[17:20] <ricotz> happy new year
+[17:20] <ricotz> infinity, hi
+[17:21] <infinity> ricotz: I know what you're going to ask, and it's happening with the 2.17 release.
+[17:22] <ricotz> infinity, alright ;) , but it would have been better to say so in the first place
+[17:23] <infinity> ricotz: In the first place, I intended to backport, and then settled on having a vacation on my vacation instead.
+[17:23] <ricotz> infinity, i am still hoping for some pointer to a prerelease (2.17) snapshot somewhere
+[17:24] <ricotz> infinity, ok, understandable. but you were quite convincing to working on it and having it within a few days
+[17:26] <ricotz> i had a look at it, but the amount of patches is a pain :\
+[17:26] <infinity> ricotz: Yeah, I know.  Then life happened.  And pie.  Anyhow, 2.17 will be in experimental by the end of the week, and in raring after the current test rebuild is done (to avoid changing too many things while that's going on)
+[17:26] <arges> rtg, I have the redone bug 922906 fsnotify locking patches based on upstream. I did a rebase -i to remove the old SAUCE patches, should I revert instead before sending out a pull request?
+[17:26] <ubot2> Launchpad bug 922906 in linux (Ubuntu) "Kernel Oops - BUG: unable to handle kernel NULL pointer dereference at 0000009c; EIP is at __ticket_spin_lock+0x8/0x30" [High,Fix released] https://launchpad.net/bugs/922906
+[17:26] <infinity> ricotz: The backport itself isn't too painful, but I had a bunch of other stuff lined up too, most of which is just redundant busywork when we should just be moving to 2.17 instead, hence the decision to just go that way and eat pie.
+[17:27] <rtg> arges, do the revert and let me do the cleanup when I apply them
+[17:27] <Jef91> So I'm trying to compile to nexus 7 kernel found here -> https://launchpad.net/ubuntu/+source/linux-nexus7/3.1.10-8.19 , but towards the end of the compile the build always fails for me with this error message -> http://paste.debian.net/221410/
+[17:27] <arges> rtg, ok will do
+[17:27] <ricotz> infinity, alright, looking forward to it
+[17:29] <infinity> Jef91: Is that a native build with dpkg-buildpackage?  It works fine in the archive.
+[17:30] <infinity> Jef91: Well, and more importantly, what have you changed? :P
+[17:31] <Jef91> infinity: I'm compiling on an ARM device
+[17:31] <Jef91> haven't changed anything in the package sources yet
+[17:31] <infinity> bjf: And clues on the precise tracking bug?
+[17:31] <Jef91> I always like to simply unpack and then try to build them fresh
+[17:31] <Jef91> just to see if it will build
+[17:31] <Jef91> and this time it doesn't
+[17:31] <rtg> raring toolchain ?
+[17:32] <infinity> Jef91: If you're building on armhf/raring, it should work fine, unless you've run into random data corruption.
+[17:32] <infinity> (And random corruption does happen.  Did you look at debian/control to see if it's garbled?)
+[17:32] <bjf> infinity, still looking
+[17:34] <Jef91> I'm actually trying to compile those kernel sources on Debian wheezy infinity. Could a version issue of something be the conflict then?
+[17:34] <infinity> Well, you didn't mention you were on a different distro. :P
+[17:35] <infinity> Still, have you had a look at the thing it's complaining about?
+[17:35] <infinity> Is debian/control malformed?
+[17:35] <bjf> infinity, the bot is smarter than i am, the -meta i uploaded isn't the right version (checking)
+[17:35] <Jef91> It doesn't look like it. Let me pastebin it infinity
+[17:35] <infinity> bjf: Oh, heh.
+[17:36] <infinity> bjf: It sure isn't.  Oops.
+[17:36] <Jef91> here is the top chunk of that control file infinity -> http://paste.debian.net/221421/ looks fine to me unless I am missing something
+[17:37] <infinity> Jef91: Erm, no, it has exactly the issue that dpkg-gencontrol is complaining about.
+[17:37] <infinity> dpkg-gencontrol: error: syntax error in debian/control at line 13: first block lacks a source field
+[17:37] <ogra_> its missing a lot it seems
+[17:38] <rtg> Jef91, nothing substantive has changed in the N7 kernel sources for several versions. if you've built previously, then I'd have to say the problem is on your system.
+[17:38] <Jef91> ogra_: you said that file is generated by dpkg-buildpackage ?
+[17:39] <ogra_> i thought it is 
+[17:39] <ogra_> but the guys here know more about the build scripts :)
+[17:39] <ogra_> thats why i pointed you here
+[17:39] <infinity> Jef91: That paste was from your failed build tree, I assume?
+[17:39] <infinity> (Cause a fresh unpack has a much saner debian/control)
+[17:41] <Jef91> infinity: that is the control file
+[17:41] <Jef91> after I run dpkg-buildpackage
+[17:41] <Jef91> in the untared sources
+[17:42] <infinity> Mmkay.  Could be some slight difference in toolchain (kernel-wedge, maybe?) between Ubuntu and Debian.  Dunno.
+[17:42] <infinity> If I were you, I'd try building in an Ubuntu chroot on your machine, make sure that works, then sort out what needs changing. :P
+[17:42] <infinity> (Since building Ubuntu kernels on Debian is somewhat out of scope here)
+[17:42] <bjf> infinity, just uploaded a correctly versioned -meta
+[17:43] <infinity> bjf: Danke.
+[17:45] <Jef91> infinity: thanks for the nudge in the right direction. Might also try building/using Ubuntu's kernel wedge on debian then.
+[17:53] <apw> infinity, we do carry a delta for kernel-wedge indeed
+[17:54] <apw> Jef91, ^^
+[18:20] <apw> ogasawara, rtg, well so far brcmwl and fglrx both fail with 3.8
+[18:20] <rtg> apw, FTBS, or just won't load ?
+[18:20] <apw> fails to build against it (dkms stylee)
+[18:21]  * apw goes and files some bugs with the details for tseliot's delectation and delight
+[18:22]  * infinity read that as delactation, and wasn't sure exactly what that meant.
+[18:23]  * rtg is not sure its really a word
+[18:24] <infinity> delactation /de·lac·ta·tion/ (de″lak-ta´shun). 1. weaning. 2. cessation of lactation.
+[18:24] <rtg> apw is known to abuse the queen's english
+[18:25] <apw> delectaui
+[18:26] <apw> delectation: delight; enjoyment
+[18:27]  * rtg -> lunch
+[18:27] <apw> like that huh
+[18:27] <infinity> Yes, same (obvious) root as delectable.
+[18:27] <infinity> Still.  The mental image when I misread it was unpleasant.
+[18:27] <apw> heh
+[18:28] <Jef91> infinity: using the ubuntu version of kernel wedge appears to have gotten me past that error message
+[18:28] <Jef91> lets see if it builds OK now :)
+[18:29] <apw> ogasawara, well nvidia does seem to build at least but i have nothing to test with
+[18:31] <ogasawara> apw: I don't have any nvidia kit here either
+[18:31] <Jef91> What kernel is 13.04 going to ship with?
+[18:32] <infinity> Jef91: Linux.
+[18:32]  * infinity ducks.
+[18:32] <Jef91> Damn infinity. I'd been hoping a shift to BSD was planned.
+[18:35] <apw> ogasawara, dropped tseliot a summary you are copied
+[18:35] <ogasawara> apw: awesome, thanks
+[19:06] <rtg> apw, have a look at git://kernel.ubuntu.com/rtg/ubuntu-raring.git master-next. I've pretty much squashed all debian.master commits into one
+[19:06] <apw> rtg will do
+[19:09] <rtg> apw, there is also a commit 'Revert "mmc: fix all hangs related to mmc/sd card insert/removal during suspend/resume"' that looks bogus.
+[19:09] <rtg> i.e., it done't do nothing
+[19:10] <apw> i assume that the original patch got wacked to nothing, over time as we rebased
+[19:10] <apw> it can be dropped for sure
+=== chiluk_away is now known as chiluk
+[19:10] <rtg> apw, thats what I think
+[19:11] <apw> rtg, looks fine, there are a couple more in there that could be squashed i suspect
+[19:11] <apw> UBUNTU: ubuntu: overlayfs and its revert likely would zap each other
+[19:12] <rtg> apw, yeah, I'm already looking at the few revert pairs that there are
+[19:12] <apw> but it looks cleaner cirtainly
+[19:13] <rtg> apw, I couldn't think of any reason to keep history on debian.master commits as they are largly irrelevant once we start 3.8
+[19:13] <apw> rtg indeed
+[19:13] <apw> just noise, and we usually squash them when we move release to release, doing so again at 3.7-3.8 is as appropriate
+=== ppetraki-busy is now known as ppetraki
+[19:24] <dobey> kamal: i got the check disabled and kernel package built on my own. thanks for the help last night.
+[19:24] <kamal> dobey: spectacular!  my pleasure.
+[19:25] <infinity> bjf: Also, I assume you're aware of this, but shankbot seems to have completely failed to produce all the derivative tracking bugs...
+[19:26] <bjf> infinity, hmm
+[19:26] <infinity> bjf: For every release, looks like.
+[19:27] <infinity> bjf: (At least it helpfully mentions that in the bug comments when it fails)
+[19:27]  * bjf takes a deep breath and looks for his happy place
+[19:27] <dobey> unfortunately the patch doesn't seem to fix my issue. i really wish i knew which patch danvet was talking about (and i wish #intel-gfx didn't require authed nicks to chat in it)
+[19:29] <bjf> infinity, the bot is now puking on something
+[19:29] <infinity> bjf: Its shoes?
+[19:52] <Tuxkalle> you got a pm ogasawara :-)
+[19:52]  * apw calls it a day ...
+[20:19] <bjf> infinity, if you get some extra "noise" from the precise tracking bug, please ignore it. i'm trying to debug the bot.
+[20:20] <infinity> bjf: Mmkay.
+[20:30]  * rtg -> EOD
+[20:54] <user82> hello! Can i get the ubuntu specific kernel patches as single patch files somewhere? i only know about the huge patch in the mainline kernel dir
+[20:54] <xnox> user82: there are git repositories on kernel.ubuntu.com
+[20:55] <xnox> user82: all are rebased, e.g. it's linear commits on top of mainline
+[20:56] <user82> xnox, can you help me a little more. where would i find the patches made for the 3.7.0 kernel, only the ones that are ubuntu specific?
+[20:56] <user82> that would be _all_ patches as i can see here? http://kernel.ubuntu.com/git?p=ubuntu/ubuntu-raring.git;a=summary
+[21:00] <user82> nevermind xnox i think i found what i need..
+[21:00] <user82> thanks
+[21:02] <bjf> infinity, i think all derivative tracking bugs have now been created, the bot is feeling better if still a little hung over
+[21:04] <infinity> bjf: Huzzah.
+[21:25] <Jef91> infinity: that kernel built on debian with the Ubuntu kernel wedge
+[21:25] <Jef91> thanks for the help
+[21:35] <hggdh> bjf: any issues if I start poking the kernels promoted to *-proposed?
+[21:35] <bjf> hggdh, no, you should feel free
+[21:35] <hggdh> thanks
+=== chiluk is now known as chiluk_away
+[23:51] <bjf> sforshee, i did get that acer aspire1 you shipped

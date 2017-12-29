@@ -1,0 +1,125 @@
+[14:02] <pmatulis> i have 'finish-install/reboot_in_progress       note' in my preseed file (and no lines containing 'exit') and i find my new machines in a shutdown state.  i want them to reboot upon installation
+[14:03] <cjwatson> I assume you have "d-i " at the start of that line, or it will have no effect
+[14:04] <cjwatson> In any case, that only controls whether a dialog is shown just before exiting the installer
+[14:05] <cjwatson> Rebooting is the default if you haven't preseeded otherwise.  If the installer hasn't rebooted then it must not be able to ...
+[14:05] <cjwatson> As in, it will have been calling the "reboot" command
+[14:10] <pmatulis> yes, i have the d-i part.  i figured reboot is the default.  these are kvm guests so i guess they can't reboot for some reason
+[16:00] <bdmurray> xnox: bug 1100694 is regarding UbuntuKylin and appears to have a patch
+[16:00] <ubot2> Launchpad bug 1100694 in ubiquity (Ubuntu) "display OS in existing partitions" [Undecided,Confirmed] https://launchpad.net/bugs/1100694
+[16:00] <xnox> interesting. let me look.
+[16:02] <cjwatson> if you accept that, please remove the useless start/end comments, and advise them not to include them in future patches ...
+[16:04] <xnox> cjwatson: yeah. I'm not sure what it displays and how... given that one OS can span multiple disks and partitions.
+[16:05] <cjwatson> os-prober results, perhaps?  Or maybe they actually mean partition type?
+[16:06] <cjwatson> OMG what
+[16:06] <xnox> they display strings from misc.grub_options()
+[16:06] <cjwatson> So, uh
+[16:06] <cjwatson> Not quite
+[16:07] <cjwatson> They look up the device name for the partition, and try to match that against misc.grub_options()
+[16:07] <cjwatson> device path I mean, e.g. /dev/sda1
+[16:08] <cjwatson> That AT BEST needs a big comment explaining what it's doing, but I can't see how it makes sense; the described purpose would be better served by something involving os-prober
+[16:08] <cjwatson> But I'll let you figure it out properly and talk to them :-)
+[16:08] <xnox> =))))))
+[16:09] <xnox> yeah, but it will print nothing for "D:/" or like separate "/home", "/var" partitions....
+[16:09] <xnox> "D:\" that is.
+[16:09] <infinity> I don't think trying to say anything useful for non-system partitions is worth the effort.
+[16:10] <infinity> But os-prober -> icon mappings (or something) would be friendly for the normal "This is your Windows boot partition, doofus".
+[16:11] <xnox> infinity: I really don't want ooohhh i have this partition with windows and this one says nothing and i can reuse it, OMG i just formatted by D:\ with all of my Documents&Settings =(((( boo-hoo
+[16:11] <infinity> Well, you already display labels, right?
+[16:12] <infinity> (I'll admit, I haven't looked at this UI in a while)
+[16:12] <infinity> If you didn't give your D:\ an NTFS label of "Data" or "Storage" or "DON'T DELETE ME, ARGH", I'm not sure we can help you.  What's there to detect?
+[16:12] <infinity> "We scanned all the files on your partition and noticed some pretty compelling porn, are you sure you want to delete that?"
+[16:15] <infinity> xnox: In the modern world where Linux installers default to a single partition (not counting swap), and Windows is always on a single partition, anyone who has multiple partitions/disks did it on purpose, so they really should know.
+[16:15] <infinity> xnox: But my parents would probably find "Windows is installed here, no deletey" pretty handy.
+[16:16] <cjwatson> Saying "data" or "NTFS" or something is better than looking like it's empty.
+[16:16] <xnox> oem preinstalls with recovery partitions, excluded.
+[16:16] <xnox> true.
+[16:17] <cjwatson> Yeah, you have recovery partitions, separate Windows boot partitions sometimes, EFI specials, all sorts of little oddities
+[16:17]  * xnox over christmas "Dad, why did you wipe all data from your external hard disk?" "it asked me something & I click ok. There was no "D-E-L-E-T-E" in the prompt. It said something about "F-O-R-M-A-T" which is like defrag, right?!"
+[16:19] <infinity> Heh.
+[16:20] <infinity> Don't recovery partitions have a special type anyway?
+[16:20] <infinity> I vaguely recall they show differently in the Windows partitioner.
+[16:21] <kentb> cjwatson, I tested this morning's raring server iso for that 4k sector problem.  Still crashes in parted_server.   The right dosftstools deb is in the build, but, not the udeb...do I need the udeb, too?  bug 1065281
+[16:21] <ubot2> Launchpad bug 1065281 in partman-basicfilesystems (Ubuntu Quantal) "Installer crashed when trying to partition 4k/4k sector hard disks" [High,Triaged] https://launchpad.net/bugs/1065281
+[16:21] <infinity> Or maybe they just get the hidden flag set, usually.
+[16:21] <xnox> they do have magic files on them for windows to treat them "hidden" (that's what I saw), but it was just a normal NTFS/FAT partitions. But that's from ~XP era.
+[16:21] <cjwatson> kentb: Test this afternoon's, please :)
+[16:21] <kentb> cjwatson, doh! ok. will do :)
+[16:21] <cjwatson> kentb: I rebuilt recently for exactly that problem
+[16:21] <cjwatson> And yes, you need the udeb
+[16:21] <kentb> cjwatson, ok. cool
+[16:22] <infinity> xnox: Are you sure they're not type 17 instead of type 07?
+[16:22] <cjwatson> It went missing due to an LP snafu
+[16:22] <cjwatson> I was going to wait for the respin before asking you to retest ...
+[16:22] <xnox> infinity: that was like more than 8 years ago, I had to deal with that..... i don't have my parted logs handy.
+[16:22] <infinity> Anyhow, this all sounds like stuff that os-prober partially knows and could learn to be much smarter about.
+[16:23] <xnox> treu.
+[16:23] <cjwatson> Anyway, we don't have to do Kylin's work for them - get back to them, lay out the problems and invite them to do better
+[16:23] <infinity> Duplicating the logic elsewhere would be madness.
+[16:23] <xnox> ack.
+[17:46] <cjwatson> kentb: Thanks.  Nearly out of time for today - will probably have to return to it on Monday
+[17:48] <cjwatson> kentb: I think I may need the same trick with a desktop installation in order to get a traceback
+[17:49] <cjwatson> kentb: But you'd need to apply http://paste.ubuntu.com/1546175/ to /lib/partman/commit.d/50format_basicfilesystems by hand first
+[17:50] <kentb> cjwatson, ok. np.
+[17:50] <kentb> cjwatson, thanks for your help and have a good weekend
+[17:50] <cjwatson> Ah, hmm, I thought mkdosfs would autodetect logical sector size but it doesn't look like it
+[17:51] <cjwatson> That might explain it
+[17:57] <cjwatson> http://paste.ubuntu.com/1546203/ would help, but I think I'll leave that for now and just do it with blockdev
+[17:58] <kentb> cjwatson, ok. I'm pulling down the desktop iso now and will apply the basicfilesystems mods and see what I get
+[18:00] <cjwatson> kentb: actually, before that
+[18:01] <cjwatson> kentb: Would you mind trying a repeat of the server installation, but before you get to the partitioner, switch to tty2 and use nano to apply http://paste.ubuntu.com/1546211/ to /lib/partman/commit.d/50format_basicfilesystems?
+[18:01] <cjwatson> then save and exit, return to tty1, and continue
+[18:01] <kentb> cjwatson, ok. I'll try that right now.
+[18:02] <cjwatson> great
+[18:03]  * kentb whistles while the server reboots
+[18:03] <bdmurray> cjwatson: I looked into bug 1093819 and did not find /var/lib/dpkg/arch in the image
+[18:04] <ubot2> Launchpad bug 1093819 in Wubi "Wubi installed 12.10 amd64 without configuring i386" [Undecided,New] https://launchpad.net/bugs/1093819
+[18:05] <cjwatson> how strange, I'll have to look into that (next week)
+[18:15] <infinity> Oh, hrm.  That could be because the dpkg postinst only adds i386 as an arch on fresh installs, but dpkg is never a fresh install.
+[18:15] <infinity> (Since debootstrap unpacks it without running postinsts, then reinstalls it, IIRC)
+[18:15] <infinity> We paper over that in both d-i and ubiquity by explicitly adding the arch, I believe.
+[18:17] <infinity> Assuming my theory about debootstrap is right, I can't think of a sane way to fix that other than having wubi also do the requisite papering over.
+[18:17] <cjwatson> ah, yeah, or have live-build do it
+[18:17] <infinity> Or live-build, sure.
+[18:17] <infinity> live-build probably makes more sense.
+[18:17] <cjwatson> makes the livefs bigger due to the extra Packages files
+[18:17] <infinity> Though, if...
+[18:17] <cjwatson> so probably better not do it across the board
+[18:17] <infinity> Was just going to say that.
+[18:17] <cjwatson> maybe do it in livecd-rootfs just for wubi?
+[18:18] <infinity> Could do it as the step right after the final apt-get update.
+[18:18] <kentb> cjwatson, those modifications didn't make a difference :(
+[18:18] <kentb> cjwatson, so, I'll continue with the desktop iso and get trace
+[18:18] <cjwatson> kentb: can I have the new syslog?
+[18:18] <kentb> cjwatson, sure.
+[18:19] <cjwatson> infinity: right before ...
+[18:19] <cjwatson> infinity: we don't want to do it after for wubi, because then people don't have i386 indexes until they update
+[18:19] <cjwatson> wubi is a special case here due to the ghost-y nature of its installation
+[18:20] <infinity> cjwatson: Oh, I meant in the general case, but sure, could just do it very late for wubi-only.
+[18:20] <infinity> (And the apt-get update again)
+[18:20] <infinity> s/the/then/
+[18:22] <infinity> cjwatson: Conversation above saved in the bug for posterity (and so one of us remembers later :P)
+[18:22] <cjwatson> ta
+[18:23] <kentb> cjwatson, attached to bug
+[18:27] <cjwatson> hmm, I really wasn't expecting that ...
+[18:27] <cjwatson> kentb: do you still have it booted?
+[18:28] <cjwatson> Oh
+[18:28] <cjwatson> I'm an idiot
+[18:28] <cjwatson> partman-efi is the bit that's actually crashing
+[18:29] <cjwatson> kentb: OK, so never mind about the desktop CD, let me just go round and upload some more stuff and you'll get something a bit more sensible in the next build
+[18:29] <kentb> cjwatson, ok sounds good
+[18:29] <cjwatson> kentb: Can you just run two commands for me to confirm ...
+[18:29] <kentb> cjwatson, sure
+[18:29] <cjwatson> cat /var/lib/partman/devices/=dev=sdb/device
+[18:29] <cjwatson> blockdev --getss /dev/sdb
+[18:31] <kentb> cjwatson, first command outputs /dev/sdb~     second command outputs 4096
+[18:31] <cjwatson> excellent
+[18:32] <cjwatson> the ~ there is just an artifact of that file not having a newline at the end
+[18:42] <cjwatson> kentb: Just as well you didn't go through the code path I thought you did.  My previous paste was dangerously incorrect
+[18:44] <kentb> cjwatson,  ah! ok. got it.
+[18:54] <cjwatson> kentb: OK, uploaded another set of changes - though the number of brown-paper-bag uploads I've made just now suggest that I need to call it EOW
+[18:55] <cjwatson> in any case the next server build should be worth testing against
+[19:07] <infinity> cjwatson: We can just get more bags and expense them.
+[19:18] <kentb> cjwatson, ok. thank you!
+[23:30] <xnox> wallpaper "app" is borked in raring, even launching it directry via xinit doesn't paint, yet gnome-settings-daemon (which we are running) can paint the background fine.
+[23:31] <xnox> but gnome-settings-daemon is not available on flavours and may remove desktop painting code in the future.
+[23:31] <xnox> poking lightdm to see if it's possible to fix wallpaper "app"

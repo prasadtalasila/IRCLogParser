@@ -1,0 +1,131 @@
+[00:01] <StevenK> steven@undermined:/tmp/summit% bzr grep dependencies
+[00:01] <StevenK> requirements.txt:# Non-standard dependencies
+[00:01] <StevenK> wgrant: ^
+[00:02] <wgrant> StevenK: great
+[00:02] <StevenK> Now I just need the webservice test to pass
+[00:05] <StevenK> ValueError: No value for required parameter 'user'
+[00:05] <StevenK> But it uses @call_with! Which is the whole point!
+[00:06] <wgrant> StevenK: What does the definition in the interface look like?
+[00:07] <StevenK> wgrant: http://pastebin.ubuntu.com/1567621/
+[00:07] <wgrant> StevenK: operation_parameters shouldn't be there, I don't think
+[00:08] <StevenK> Oh, that might be fighting with call_with?
+[00:08] <wgrant> Yes
+[00:08] <wgrant> operation_parameters specifies the parameters for the operation
+[00:08] <wgrant> Not necessarily the method
+[00:08] <StevenK> Ah
+[00:09] <StevenK> I thought you needed both. :-(
+[00:10] <cjwatson> I've pre-QAed r16450 on mawson this time, by way of a cowboy.  If it seems plausible to roll it out over the UK night, that would be cool.
+[00:10] <cjwatson> QueueInconsistentStateError: cjwatson QA bodge: refusing upload to copy archive
+[00:11] <cjwatson> 2013-01-25 00:07:48 DEBUG   Building recipients list.
+[00:11] <cjwatson> 2013-01-25 00:07:48 DEBUG   No recipients on email, not sending.
+[00:11] <cjwatson> (I couldn't get the actual QueueInconsistentStateError seen in the previous instances of this bug to happen on mawson.  I'm not sure whether it's gone away or I just wasn't trying hard enough.)
+=== slank is now known as slank_away
+[00:12] <wgrant> cjwatson: It might rely on the binary never making it into the primary archive
+[00:12] <wgrant> So there were no overrides to inherit
+[00:13] <cjwatson> Well, except it was in the primary archive on production ...
+[00:14] <cjwatson>        lha | 1.14i-10.4 | quantal/multiverse | source, amd64, armel, armhf, i386, powerpc
+[00:14] <cjwatson> Though it was removed from raring; I suppose that might matter
+[00:14] <cjwatson> Ah yes, the removal hadn't happened yet on dogfood
+[00:14] <cjwatson> I'll try that next time :)
+[00:14] <cjwatson> That would certainly explain a lot
+[00:15] <wgrant> Yeah, that'd be why it hasn't been noticed much before
+[00:19] <cjwatson> Indeed, all the other upload failures on http://people.ubuntuwire.org/~wgrant/rebuild-ftbfs-test/test-rebuild-20121221-raring.html were ones I removed in the same process-removals run on 2013-01-08
+[00:20] <wgrant> cjwatson: Great
+[00:21] <cjwatson> Good call
+[00:24] <wgrant> cjwatson, StevenK: Any objections to updating qastaging's DB over the weekend?
+[00:24] <wgrant> Will take qas down for about a day
+[00:25] <cjwatson> I'll be on leave and don't care
+[00:25] <cjwatson> I mean, physically away
+[00:25] <wgrant> Aha
+[00:27] <StevenK> It's what, 11 months out of date?
+[00:28] <wgrant> April, I think
+[00:28] <wgrant> So not quite
+[00:29] <StevenK> wgrant: However, no objections.
+[00:46] <plomme> hey wgrant. I know you're very busy so no pressure, I just wanted to know how far back you recon bug 1100164 would be pushed
+[00:46] <_mup_> Bug #1100164: Private projects are forbidden from having releases when only files are problematic <privacy> <private-projects> <releases> <Launchpad itself:Triaged> < https://launchpad.net/bugs/1100164 >
+[00:48] <wgrant> plomme: I will hopefully be working on that this afternoon
+[00:48] <wgrant> it's a small fix.
+[00:48] <wgrant> I'd hope to work on it on Mon/Tue, but a lot of production issues have come up this week, sorry :(
+[00:48] <wgrant> hoped
+[00:48] <plomme> ok great thanks a lot =)
+[00:49] <plomme> yeah I know how that goes haha
+[00:49] <wgrant> Everything likes to fall apart at once :)
+[00:51] <plomme> yeah tell me about it. I've had a manic week as well. Issues never come alone
+[01:14] <StevenK> wgrant: https://blueprints.dogfood.launchpad.net/production-auditor/+spec/spec-c
+[01:14] <StevenK> wgrant: What do you see, if anything for the Dependency tree ?
+[01:25] <wgrant> StevenK: c → b → a
+[01:32] <StevenK> Hm, then you have access to B
+[01:35] <StevenK> wgrant: I thought I had removed you from seeing B, though :-(
+[01:38] <wgrant> StevenK: :(
+[01:38] <wgrant> I might be god at the moment
+[01:38] <wgrant> Though blueprints don't respect godpowers, do they...
+[01:38] <StevenK> Nope
+[01:39] <StevenK> I removed your APG on production-auditor
+[01:39] <wgrant> I can see B
+[01:39] <wgrant> But maybe that's because I'm an admin
+[01:39] <wgrant> Can I list B...
+[01:39] <wgrant> \Yes
+[01:40] <wgrant> StevenK: ~canonical has an APG
+[01:41] <StevenK> Ah ha
+[01:41] <wgrant> "permissions": {"PROPRIETARY": "ALL"}}
+[01:42] <StevenK> wgrant: ~canonical's APG is kaput, has B disappeared?
+[01:43] <wgrant> I AM BLIND
+[01:43] <wgrant> a and b are no longer on the graph
+[01:43] <StevenK> Right, that's what I expected
+[01:44] <StevenK> And it fixes danilos' Critical
+[01:50]  * StevenK marks r16450 as qa-ok
+[01:56] <danilos> StevenK, woohoo, cheers (though I am not here ;)
+[01:56] <StevenK> danilos: Haha! :-)
+[01:56] <wgrant> StevenK: Methods named 'dependencies' and 'blocked_specs' aren't a thing
+[01:57] <StevenK> Can't make them properties ...
+[01:57] <wgrant> Also, you uncached a few things -- deliberate?
+[01:57] <wgrant> StevenK: Sure
+[01:57] <wgrant> You can rename them :)
+[01:57] <StevenK> Bleh, I meant to revert back to cachedproperty
+[01:57] <wgrant> At the moment they look exactly like properties
+[01:57] <wgrant> Very confusing
+[01:58] <StevenK> wgrant: What would you suggest?
+[01:58] <wgrant> getDependencies, or something like that
+[01:58] <wgrant> Methods are verbs
+[02:00] <wgrant> StevenK: Hm, to retain webservice compatibility I guess you could leave dependencies as an unfiltered SQLRelatedJoin
+[02:00] <wgrant> lazr.restful will automatically filter out invisible things
+[02:00] <wgrant> (although the count will be wrong)
+[02:00] <wgrant> Not sure which is worse
+[02:02] <StevenK> Hmmm, neither
+[02:06] <lifeless> its all worse
+[02:51] <StevenK> lifeless: Thanks for your support. :-P
+[03:40] <StevenK> wgrant: https://code.launchpad.net/~stevenk/launchpad/use-visibility-filter-spec-depends/+merge/144836 is updated
+[04:05] <StevenK> wgrant: Can haz review nao?
+[04:09] <wgrant> StevenK: r=me
+[04:12] <StevenK> wgrant: Thanks
+=== almaisan-away is now known as al-maisan
+=== al-maisan is now known as almaisan-away
+[06:18] <wgrant> StevenK: https://code.launchpad.net/~wgrant/launchpad/bug-1100164/+merge/144856
+[07:12] <StevenK> 385+ tal:condition="context/information_type/enumvalue:PUBLIC"
+[07:13] <StevenK> wgrant: ^ Can that make use of the can_have_release_files that the other template uses?
+[07:13] <wgrant> StevenK: Sadly not, since that's an attribute on ProductRelease
+[07:13] <wgrant> I could move it to product, but meeeeh
+[07:13] <StevenK> That is my only niggle, r=me
+[07:14] <wgrant> Thanks
+[07:15] <StevenK> Curses, the blueprints on qas have one children
+[07:15] <StevenK> *child
+[07:16] <StevenK> And staging is in little pieces
+[07:22] <StevenK> Hmmmm, how do I find specs that have grandchildren
+=== yofel_ is now known as yofel
+[08:50] <adeuring> good morning
+=== almaisan-away is now known as al-maisan
+=== al-maisan is now known as almaisan-away
+=== Ursinha_ is now known as Ursinha
+=== almaisan-away is now known as al-maisan
+=== slank_away is now known as slank
+=== al-maisan is now known as almaisan-away
+=== matsubara is now known as matsubara-lunch
+=== matsubara-lunch is now known as matsubara
+[17:59] <gmb> benji, Do you think you'll get a chance to take a peek at https://code.launchpad.net/~gmb/lp2kanban/encode-annotations-with-json/+merge/144372 today, or is that too much to ask for?
+[18:00] <gmb> Ooh, that sounded a bit bitchy.
+[18:00] <gmb> What I meant was "or have you got too much on your plate?"
+[18:00] <gmb> Sorry benji :)
+[18:01] <benji> gmb: heh; sure, I can look at it in just a moment
+[18:06] <gmb> benji, Thanks :)
+[18:48] <benji> gmb: review done; looks great; I thought it might be nice to allow multi-line JSON so I sketched out some code to enable that
+[18:49] <gmb> benji, awesome, thanks.

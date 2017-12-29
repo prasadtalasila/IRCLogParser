@@ -1,0 +1,80 @@
+=== glebihan_ is now known as glebihan
+[03:28] <micahg> TheLordOfTime: what were you asking about removals before?
+=== amithkk_ is now known as amithkk
+[08:43] <micahg> anyone available to review a python mutliarch patcg?
+[09:00] <micahg> vibhav: would you mind preparing a merge  for java-package (or I can do it if you like), I think it'll fix Bug #1096546
+[09:00] <ubottu> bug 1096546 in java-package (Ubuntu) "Failed to work with jdk7u10. No matching plugin was found" [Undecided,New] https://launchpad.net/bugs/1096546
+[09:00] <micahg> vibhav: from experimental I mean
+=== Quintasan_ is now known as Quintasan
+[14:50] <TheLordOfTime> micahg, jtaylor, sorry ended up out of the home all day, and part of this i'll have to follow up with SpamapS about, but what's with replacing the php5-imap, php5-mcrypt, etc. with versions in Universe, which are actually *behind* the normal php5 package in raring?
+[14:50] <TheLordOfTime> makes backporting (even in PPAs for special-use cases on one of my servers) such packages that much harder
+[14:53] <TheLordOfTime> as well, the modules that are in universe replacing the 5.4.9 php5-built ones are built against 5.4.6 (if their version numbers can be trusted)
+[14:55] <TheLordOfTime> micahg, as for "removals", the only thing i'm still pretty adamant about getting dropped from the repos is 'supybot' which is not updated, but we've already discussed that before that a lot of people use it, including the ubuntu bots team.
+=== zequence is now known as zequence_
+=== zequence_ is now known as zequence
+[16:51] <TheLordOfTime> debdiff prepping - two questions: (1) packaging version changing for updates is outlined where?  and (2) do you prefer that debdiffs include a changelog entry increasing the revision number.
+[16:57] <vibhav> micahg: there?
+[16:57] <vibhav> micahg: Sorry for responding late, I will try to do that
+[17:22] <vibhav> micahg: Sorry, I cant prepare a merge ATM (No time, studies)
+[17:57] <micahg> vibhav: do you mind if I do it then?
+[17:58] <micahg> TheLordOfTime: any chance of getting it updated in Debian?  we can surely backport it
+[18:58] <sao> Hello all. I am the upstream Developer of Diodon a clipboard manager with Unity integration. Currently I am working to create a package for the official Ubuntu repository and wanted to ask whether there would be anyone who could mentor/sponsor me on the way? More details see here https://bugs.launchpad.net/ubuntu/+bug/808464
+[18:58] <ubottu> Ubuntu bug 808464 in Ubuntu "[needs-packaging] diodon -- Clipboard manager for GNOME and Unity" [Wishlist,In progress]
+=== almaisan-away is now known as al-maisan
+=== al-maisan is now known as almaisan-away
+=== Tonio_aw is now known as Tonio__
+=== ajmitch_ is now known as ajmitch
+[21:29] <TheLordOfTime> micahg, only if we drop it in Raring from universe, and have SpamapS undo his revisions allowing php5-mcrypt to build from php5 source
+[21:29] <TheLordOfTime> which is how it was in quantal
+[21:29] <TheLordOfTime> or at the very least, Precise
+[21:30] <TheLordOfTime> or do you mean supybot?
+[21:30] <TheLordOfTime> (if you mean supybot, i've heard "rumors" it'll be updated in Debian)
+[21:30] <micahg> TheLordOfTime: hrm?  I was referring to supybot
+[21:30] <TheLordOfTime> (but only rumors)
+[21:30] <TheLordOfTime> micahg, we had a 30 minute discussion about 2 months ago about supybot
+[21:30] <TheLordOfTime> i may still be saying it should be removed, but i'm not pushing that
+[21:30] <TheLordOfTime> i'm more concerned about php5
+[21:31] <TheLordOfTime> which is why i pinged jtaylor yesterday
+[21:31] <TheLordOfTime> micahg, consider supybot a "non-issue"
+[21:31] <TheLordOfTime> i wasn't the one here pushing for a package removal yesterday, TAsn was
+[21:31] <TheLordOfTime> for already-released things, which AIUI is not possiblew
+=== Tonio__ is now known as Tonio_aw
+[21:31] <jtaylor> TheLordOfTime: updating the php things should be trivial
+[21:32] <TheLordOfTime> jtaylor, you're the last commit on php-mcrypt source package, but mind me asking *why* it was placed in universe and  dropped from the php5 source?
+[21:32] <jtaylor> some main reason
+[21:32] <jtaylor> I forgot it again
+[21:33] <jtaylor> I don't care about php, did the update because it was required for security and ftbfs
+[21:33] <micahg> libmcrypt is in universe
+[21:33] <TheLordOfTime> micahg, php5 is in main, and previously built php5-mcrypt, is the reason it was manually separated from php5 because the underlying library is in universe?
+[21:34] <jtaylor> I think because they are plugins not officially supported by pgp
+[21:34] <jtaylor> php
+[21:34] <TheLordOfTime> jtaylor, OK, then i am safe in that if the php-mcrypt package says '5.4.6-something' then its built from 5.4.6's code base?
+[21:35] <jtaylor> yes
+[21:35] <jtaylor> it should be in README.source how to update them
+[21:35] <jtaylor> I'd wait until feature freeze
+[21:38] <TheLordOfTime> jtaylor, is the universe package released under the same license as php5?
+[21:38] <TheLordOfTime> (i.e. can i take the code, update it, fork it, rebuild it to the  needs with changes,  etc. in a PPA)
+[21:38] <jtaylor> probably I think its in the same tarball
+[21:40] <micahg> if it's all one shared tarball, maybe we should make it php5-universe and be done with it
+[21:40] <TheLordOfTime> micahg, that'd imply you'd have to incorporate php5-imap as well
+[21:40] <jtaylor> or wait until the reorg ;)
+[21:40] <TheLordOfTime> which is in the same boat as php5-mcrypt
+[21:41] <micahg> like I said, if it's in the same upstream tarball, let's make it one source
+[21:41] <micahg> like fftw3, boost, libav...
+[21:42] <jtaylor> that would be good
+[21:43] <TheLordOfTime> last i checked the code's in php5 upstream, wouldn't making that build a universe package imply that the entirety of php5 would become universe?
+[21:43] <jtaylor> but I'm not going to do it, I last used php ~10 years ago
+[21:43] <TheLordOfTime> or am i misinterpreting the statement you made, micahg?
+[21:43] <jtaylor> no, you just duplicate the source
+[21:43] <jtaylor> one for main which builds php
+[21:43] <jtaylor> the other for universe which builts the exxtensions
+[21:43] <TheLordOfTime> ahhh, i see.
+[21:43] <jtaylor> see e.g. fftw and fftw-mpi both the same source
+[21:44] <jtaylor> just build different things
+[21:55] <micahg> jtaylor: can you look at a python multiarch patch for me?
+[22:00] <jtaylor> sure
+[22:01] <micahg> jtaylor: http://paste.ubuntu.com/1504567/
+[22:04] <jtaylor> looks fine
+[22:05] <micahg> thanks, I"m still new at this python multiarch stuff
+[22:07] <jtaylor> thats another option: https://github.com/cython/cython/pull/158/files
+[22:08] <micahg> jtaylor: right, the wiki suggests that when get_python_inc is used

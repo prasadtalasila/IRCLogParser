@@ -1,0 +1,110 @@
+=== Makyo is now known as Makyo|out
+[12:10] <bac> morning frankban and teknico
+[12:10] <teknico> bac, good morning
+[12:11] <frankban> hi bac 
+[12:12] <teknico> bac, do you see anything wrong with this diff? ;-) https://bazaar.launchpad.net/~juju-gui/juju-gui/trunk/revision/334
+[12:12] <frankban> teknico: a typo: unrelEased
+[12:13] <bac> i can't spell
+[12:13] <teknico> yep :-)
+[12:13] <bac> oops
+[12:13] <teknico> I mean, yep to the typo, not to bac's statement :-)
+[12:14] <teknico> wow, the release tarball is 25MB, and it expands to 160MB :-)
+[12:34] <bac> hazmat: ping
+[12:50] <hazmat> bac, pong
+[12:52] <hazmat> teknico, wow.. that's kinda of silly
+[12:53] <teknico> hazmat, well, good compression ratio, I'd say :-)
+[12:57] <hazmat> node_modules - 127mb
+[12:57] <hazmat> yui 38m yuidocjs 47m
+[12:57] <hazmat> silly
+[12:58] <hazmat> ah.. yuidoc recursively includes yui
+[13:13]  * bac bounced lp2kanban
+[13:47] <teknico> bac, frankban, how much time does the "FINAL=1 make dist" command take to complete? is it normal that it hangs in there for dozens of minutes?
+[13:47] <bac> teknico: depending on your upload speed it could take a while
+[13:47] <bac> you can check the project on LP to see that the release has been made
+[13:48] <bac> if so, then you're just waiting while the tarball is uploaded
+[13:48] <gary_poster> bac, I think you told me it took like 10 ir 15 minutes for you last time?
+[13:48] <teknico> bac, oh right, it's uploading 25M :-( yep, I'm watching LP staging
+[13:49] <bac> gary_poster: no, last time it took a really long time for me as my internet was being usurped and i didn't know it
+[13:49] <bac> hence those two nice bugs.  :)
+[13:50] <gary_poster> :-)
+[13:51] <teknico> bac, yep, given the upload bandwidth I have available, it's going to take 13 minutes at full "speed" :-P
+[13:51] <teknico> frickin' asymmetric lines
+[13:51] <bac> teknico: you have 1 up?
+[13:51] <teknico> bac, what's 1 up?
+[13:52] <bac> teknico: 1mb/s upstream bandwidth
+[13:52] <gary_poster> bac lp2kanban still not working for some reason.  (thank you for being lp2kanban doctor btw)
+[13:52] <teknico> bac, I have about 300kb/s upstream :-/
+[13:53] <gary_poster> (and feel free to request that you gain an apprentice)
+[13:53] <bac> gary_poster: first attempt to relaunch resulted in an unnoticed canonistack startup failure.
+[13:53] <gary_poster> oh ok
+[13:53] <bac> gary_poster: a new instance is now alive and coming up
+[13:53] <gary_poster> cool thank you
+[13:53] <bac> this whole cloud fad can't pass fast enough
+[13:53] <bac> oh, forgot the smiley
+[13:53]  * benji imagines a dirty villager yelling "Help! Help! My internet is being usurped!"
+[13:54] <teknico> where's round-robin hood when you need him?!?
+[13:55] <gary_poster> heh
+[14:04] <teknico> does anyone else want to look at the release on staging, before I make it final? https://staging.launchpad.net/juju-gui/stable/0.2/+download/juju-gui-0.2.tgz
+[14:07] <hazmat> teknico, we can probably trim the size of the download by getting rid of extraneous node_modules before upload
+[14:08] <teknico> hazmat, I'll try, but if compressing a tar archive works as it should, it won't shed much
+[14:08] <hazmat> the only node_modules we need are runtime app deps afaics (d3, yui), the rest aren't useful for binaries, and can be regen'd for source builds
+[14:08] <hazmat> the big win being dropping yuidocjs
+[14:08] <hazmat> teknico, true
+[14:08] <teknico> hazmat, also, the yui docs are not going to work that way, though
+[14:09] <hazmat> teknico, oh the output links to the node module?
+[14:12] <teknico> hazmat, apparently the yui doc is in node_modules/yuidocjs/output, and uses the redundant libraries in node_modules/yuidocjs/node_modules
+[14:12] <goodspud> gary_poster, thanks for you comments!
+[14:12] <teknico> I don't think we're pointing to it right now, however
+[14:13] <gary_poster> cool goodspud, thank you :-)
+[14:14] <hazmat> teknico, but the question is why we need it at all, its not linked from its doc output
+[14:14] <hazmat> so in the release tarball its not doing anything useful
+[14:14] <hazmat> teknico, ie make yuidoc -> yuidocs directory.. is not linked to node_modules/yuidoc
+[14:15] <teknico> hazmat, right
+[14:15] <teknico> hazmat, after nuking the whole node_modules/yuidocjs subtree, the archive size goes down to 19MB, 6MB less
+[14:15] <hazmat> that's a nice quick win, and 47MB for the extract
+[14:16] <teknico> hazmat, yep
+[14:19] <hazmat> if we can rid of yui in the tarball we can get under 10Mb easily i'd guess. afaics the only thing using it is the node-simulate in build-debug
+[14:21] <hazmat> hmm.. or not app/ass/js/yui links to node_modules.. i guess for debug using the yui cdn seed would do it though
+[14:23] <teknico> hazmat, since I already uploaded to staging, let's do this release as is, and refine the release process afterwards
+[14:26] <hazmat> teknico, sure just thinking of how to cut the chafe/fat from the land
+[14:26] <hazmat> future work indeed
+[14:27] <teknico> gary_poster, the release checklist says "This is a final release. Consider asking others to verify the package on staging."
+[14:27] <teknico> gary_poster, what if there's need for changes? what's the process then?
+[14:28] <gary_poster> teknico, do it again.  Staging is irrelevant
+[14:28] <teknico> gary_poster, do we delete the release on staging and reuse the same version number?
+[14:28] <gary_poster> In the sense that it is wiped out
+[14:28] <gary_poster> yes teknico if that is possible and easy then that would be what to do
+[14:30] <benji> I feel compelled to add that once a release is made to non-staging, then it should not be replaced.  There might be an argument for removing it, however.
+[14:30] <teknico> gary_poster, ok, I see how to do that
+[14:30] <gary_poster> benji +1
+[14:30] <gary_poster> thanks teknico 
+[14:31] <teknico> benji, totally agreed, only considering doing it while it's not final
+[14:32] <teknico> and agreed on the difference between replacing and removing too
+[14:32] <benji> cool; it's really nice that we have the LP staging environment.  It makes life so much easier being able to avoid non-reversable things.
+[15:00] <bac> benji: when you can get staging to not timeout...
+[15:00] <benji> well, there's that
+=== Makyo|out is now known as Makyo
+[15:29] <gary_poster> bac bcsaller benji frankban goodspud hazmat Makyo teknico call in 1
+[16:18] <teknico> is adding discussion cards during the weekly call to be considered cheating? :-)
+[16:36] <gary_poster> bcsaller, Makyo I moved our calls to today.  1PM bcsaller, and..I think you are two hours behind me Makyo, in which case it would be 2:30 for you.  On your calendar in any case.  Do those work for you?
+[16:36] <bcsaller> gary_poster: sounds good
+[16:36] <Makyo> gary_poster, Yep.  Thanks
+[16:37] <gary_poster> thank you both
+[17:13] <frankban> guihelp: it seems the latest release is missing read permission to all for build-debug/juju-ui/assets/javascripts/yui/ . As a consequence, nginx returns a 403 forbidden error.
+[17:14] <teknico> frankban, oops, really? let me check
+[17:17] <teknico> frankban, confirmed :-( there are quite a few directories with that problem in node_modules/, I wonder why
+[17:18] <frankban> teknico: if I run make distfile, the resulting tarball seems correct
+[17:20] <teknico> frankban, my umask is 0022, I don't get it
+[17:20] <teknico> and root's umask is 0022 too
+[17:21] <gary_poster> teknico, could you delete the tarball from the series please?  The charm should go back to working then.  The next release should have a different release number
+[17:22] <teknico> gary_poster, yes, doing it
+[17:22] <gary_poster> thank you
+[17:23] <teknico> done on both production and staging
+[17:25] <frankban> thanks teknico 
+[17:25] <teknico> sorry about this
+[17:35]  * gary_poster realizes he has 25 minutes for lunch
+[17:36] <gary_poster> biab
+[18:10] <teknico> people may want to review and land this before making a release: https://codereview.appspot.com/7227065
+[18:10] <teknico> if noone gets around to it, I'll have another shot at a release tomorrow
+[18:26] <bac> gary_poster: i am through poking at lp2kanban.  please, PLEASE, clean up done:done.  :)
+[22:02]  * Makyo walkinates the dogalope.

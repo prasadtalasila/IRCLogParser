@@ -1,0 +1,71 @@
+=== Noskcaj is now known as Noskcaj_afk
+[13:22] <cjwatson> Woo
+[13:23] <cjwatson> So, I fixed sru-report to check all the .changes files between release/updates and the current version in proposed
+[13:26] <cjwatson> Hmm, but bug closure is *not* working
+[13:26] <cjwatson> (I used duplicity/quantal as a test case)
+[13:27] <cjwatson> https://lists.ubuntu.com/archives/quantal-changes/2013-January/012917.html and the earlier bugs weren't closed
+[13:27] <cjwatson> Guess I need to fix LP
+[13:28] <infinity> cjwatson: Hrm.  I could have sworn I saw a closure work on a skipped changelog entry.  Then again, that was on a bug with some really effed up tasks, so maybe I was mistaken.
+[13:29] <infinity> (Oh how I want someone to fix that "ha, ha, you deleted a series from one of your tasks, now you can't ever use it on any others, sucks to be you" bug)
+[13:30] <infinity> But the odds of me every looking at Malone's code are pretty slim, so I guess I'll just be pointlessly whiney instead.
+[13:32] <cjwatson> Yeah, so the copier does calculate the right close_bugs_since_version internally
+[13:32] <cjwatson> But it uses that on the upload_changesfile of the SPR it's copying
+[13:33] <cjwatson> I think it just needs to use a different one of the family of bug-closing functions in processaccepted
+[13:35] <infinity> Say, while you're keen on fixing bugs.  I'm reminded of the copy/delete override race every time I do a new kernel ABI dance.
+[13:35] <infinity> I've gotten remarkably good at re-overriding between when britney does the copy and when the publisher publishes, so they're never wrong on disk. :P
+[13:35] <cjwatson> Yeah, I know, it's in the top three of my LP to-do list
+[13:36] <cjwatson> Which consists of that, bug 1100748, and this bug-closure glitch, in some order
+[13:36] <ubot2> Launchpad bug 1100748 in Launchpad itself "Support phased updates via Phased-Update-Percentage control field" [High,In progress] https://launchpad.net/bugs/1100748
+[13:38] <cjwatson> I'm puzzled by the announcement only having the latest version, though.  The notify stuff seems to do spr.aggregate_changelog in this case ...
+[13:39] <cjwatson> I'll have to set up something in the test suite and see what happens
+[14:32] <cjwatson> ogra_: nexus7 builds are failing due to xrotate moving into xdiagnose; perhaps ubuntu-defaults-nexus7 needs to drop xrotate and xdiagnose needs to replace ubuntu-defaults-nexus7 (<< first-version-without-it)?
+[14:34] <smartboyhw> cjwatson, ping
+[14:34] <cjwatson> pinging me when I've *just* been talking is a bit daft :) just ask what you want to ask
+[14:35] <smartboyhw> cjwatson, you said you fixed the 12.04.2 x86 builds, but no build comes up
+[14:35] <cjwatson> have you checked the logs?
+[14:35] <smartboyhw> cjwatson, where are the logs?:P
+[14:35] <cjwatson> http://people.canonical.com/~ubuntu-archive/cd-build-logs/
+[14:35] <cjwatson> (also livefs-build-logs for earlier in the process)
+[14:36] <smartboyhw> cjwatson, thx
+[14:36] <cjwatson> anyway, looks like my problem somehow
+[14:36] <cjwatson> mv: cannot stat `/srv/cdimage.ubuntu.com/scratch/ubuntustudio/precise/dvd/tmp/precise-i386/CD1/casper/filesystem.kernel-lowlatency-pae': No such file or directory
+[14:37] <smartboyhw> cjwatson, yep
+[14:38] <cjwatson> I've never actually asked.  Does Ubuntu Studio want to use the 3.2 kernel or the 3.5 kernel for 12.04.2?
+[14:39] <smartboyhw> cjwatson, erm the problem is: We don't have such things as linux-lts-quantal-lowlatency...
+[14:39] <cjwatson> Oh, true
+[14:39] <cjwatson> OK, I'll flip you back properly then
+[14:39] <smartboyhw> cjwatson, thx
+[14:39] <infinity> smartboyhw: There's nothing stopping your lowlatency people from doing a backport kernel if they wanted it.
+[14:39] <infinity> (But yeah, you definitely don't have one right now)
+[14:40] <smartboyhw> infinity, we ARE planning to have one I think
+[14:40] <smartboyhw> But then we haven't done it
+[14:40] <infinity> Given how trivial it is to do a backport build after the quantal rebase (which they're already doing), it might be worth poking apw or rtg for a quick howto.
+[14:41] <infinity> linux-lts-quantal is an entirely automated process after linux/quantal is done.
+[14:41] <smartboyhw> infinity, ok
+[14:41] <infinity> (automated, with human review and intervention, but automated nonetheless)
+[14:41] <smartboyhw> I will tell our kernel guy to poke apm
+[14:41] <smartboyhw> *apw
+[14:42] <cjwatson> smartboyhw: OK, should be fixed for real now - kicking off a quick ISO-only rebuild
+[14:43] <smartboyhw> cjwatson, thx
+[14:43] <zequence> cjwatson: I'm sort of the man to ask about kernel stuff for Ubuntu Studio. I think we'll want to follow Ubuntu on that
+[14:44] <cjwatson> Right, so maybe for .3 then
+[14:44] <cjwatson> (Since we're nearly out of time for .2)
+[14:44] <zequence> cjwatson: We aren't currently maintaining a 3.5 version for precise. I'll need to talk to UTK about that
+[14:45]  * cjwatson curses
+[14:46] <cjwatson> Ubuntu Studio for *precise*, idiot boy Watson
+[14:46] <smartboyhw> !?
+[14:46] <cjwatson> Never mind, you'll just get a spare raring build as well :)
+[14:46] <smartboyhw> cjwatson, ah LOL
+[14:48] <zequence> cjwatson: I'll gladly answer any other questions on behalf of Ubuntu Studio in the future as well, if you can't get a hold of Scott. I'll try to be more up to date on what is written in mail lists, etc as well.
+[14:51] <smartboyhw> zequence, hmm you better resend your message
+[14:52] <zequence> cjwatson: Did you get my message at 15:48? cjwatson: I'll gladly answer any other questions on behalf of Ubuntu Studio in the future as well, if you can't get a hold of Scott. I'll try to be more up to date on what is written in mail  lists, etc as well.
+[14:52] <cjwatson> I didn't
+[14:52] <cjwatson> I may or may not remember ;-)
+[14:53] <zequence> I'm logged in here most of the time anyway
+[14:53] <cjwatson> But I shall try
+[14:53]  * cjwatson <- bear of very little brain today
+[14:54] <cjwatson> smartboyhw: should be happier now, once it finishes syncing out to the cdimage public site
+[14:54] <smartboyhw> cjwatson, :D
+=== rsalveti_ is now known as rsalveti
+=== Ursinha_ is now known as Ursinha
+[14:59] <smartboyhw> Thanks cjwatson the images are back!

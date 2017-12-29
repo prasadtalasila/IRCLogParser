@@ -1,0 +1,579 @@
+[04:23] <desrt> xnox: https://bugs.launchpad.net/ubuntu/+source/icu/+bug/1037588 :(
+[04:23] <ubot2> Ubuntu bug 1037588 in icu (Ubuntu Quantal) "Provide pkg-config pc files" [Wishlist,Incomplete]
+[04:23] <desrt> bad attitude, dude
+[04:25] <desrt> particularly considering the bug is in our packaging...
+[04:26] <micahg> I don't see why we wouldn't ship a .pc file if present
+[04:26] <desrt> micahg: it was a simple packaging error
+[04:27] <micahg> ah, fixed in raring
+[04:27] <micahg> yeah, so SRUing that might not be possible unless it's needed by something in the archive that won't build otherwise (and won't break anything else)
+[04:28] <desrt> ya.  i grok that.
+[04:28]  * desrt doesn't grok the bad attitude, though
+[04:28] <desrt> (particularly since the comment is factually incorrect)
+[04:32] <micahg> desrt: which comment specifically?  (I'm a little tired ATM)
+[04:32] <desrt> the last one
+[04:32] <micahg> yeah, doesn't seem right
+[04:33] <desrt> i'm building a patched icu to try to see if it fixes the issue here before i comment
+[04:33] <desrt> least we could do is to get that into the desktop team ppa or something
+[04:33] <micahg> yeah, I"m a little reluctant to backport icu
+[04:33] <desrt> ya.  don't blame you
+[04:40] <desrt> huh... looks like our libsoundtouch and liboauth packages suffer from exactly the same issues
+[04:43] <desrt> or not.  two different unrelated issues there.
+[04:49] <desrt> jbicha: hey.  can you upload to desktop team ppa?
+[05:04] <jbicha> desrt: yes
+[05:05] <desrt> jbicha: got a few minutes for a favour?
+[05:06] <jbicha> sure
+[05:06] <desrt> specifically: can you grab the icu source from quantal, apply https://launchpadlibrarian.net/118048821/icu-pkg-config.diff, bump the version, add an appropriate log message and upload it to the ppa?
+[05:06] <desrt> https://bugs.launchpad.net/ubuntu/+source/icu/+bug/1037588 is the bug reference...
+[05:06] <ubot2> Ubuntu bug 1037588 in icu (Ubuntu Quantal) "Provide pkg-config pc files" [Wishlist,Incomplete]
+[05:07] <desrt> it's not a new vendor patch... just a packaging fix...
+[05:08] <jbicha> I can't remember hearing of icu before :)
+[05:08] <desrt> it's a pretty widely used unicode support library
+[05:08] <desrt> jhbuild has been complaining about the missing .pc for ages
+[05:09] <desrt> but it's been safe to ignore
+[05:09] <desrt> except now harfbuzz is broken
+[05:09] <jbicha> oh a one-liner, those are the best :)
+[05:09] <desrt> someone just forgot the .pc files in the -dev.install
+[05:10] <desrt> probably because it didn't used to have them and then when upstream added them we didn't update the packaging properly
+[05:24] <jbicha> desrt: uploaded and building now
+[05:27] <bizhan_> HI
+[05:28] <bizhan_> I am trying to install 32 bit 12.04 LTS on my HP mini, and during installation I got the following error: "Executing 'grub-install/dev/sdb' failed. What more I can to fix this issue? Thx
+[05:30] <desrt> jbicha: great.  thanks.
+[05:30] <desrt> jbicha: icu is a bit of a beast so it should be done by tomorrow morning :p
+[05:30] <jbicha> desrt: any idea why I can't jhbuild gtk? http://paste.ubuntu.com/1578983/
+[05:31] <desrt> jbicha: probably got deprecated.  pick option 6
+[05:37] <jbicha> I wonder if option 8 would have worked, only 25% downloaded so far :(
+[05:37] <bochecha_> jbicha: usually you can do something like "git clean -fdx"
+[05:38] <bochecha_> it resets everything to the same stage you'd be right after a clone (i.e drop all changes, remove all untracked files, etc..)
+[05:50] <jbicha> cool that worked
+[06:10] <pitti> Good morning
+[06:10] <pitti> argh, I lost my workspaces today! what changed?
+[06:11] <pitti> org.gnome.desktop.wm.preferences num-workspaces 4
+[06:12] <jbicha> pitti: they finally "fixed" bug 868423
+[06:12] <ubot2> Launchpad bug 868423 in unity (Ubuntu) "Launcher - Workspace switcher should not be in the Launcher by default" [Critical,Triaged] https://launchpad.net/bugs/868423
+[06:13] <pitti> jbicha: well, I don't care whether or not it's in the launcher
+[06:13] <pitti> I care about having them and being able to switch between them
+[06:14] <pitti> so downgrading compiz should help?
+[06:14] <micahg> wow, I would think removing them on upgrade is a regression...
+[06:14] <jbicha> pitti: did you check System Setttings>Appearance>Behavior ?
+[06:15] <jbicha> micahg: I don't know, it's a new default
+[06:15] <pitti> jbicha: ah, thanks; that's off indeed
+[06:15] <pitti> but there are my gsettings that it should be on
+[06:16] <pitti> jbicha: *phew*, thank you
+[06:38] <mitya57> micahg: that bug explicitly says "both on fresh installs and upgrades"...
+[06:42]  * mitya57 thinks it's still a bug that it doesn't honor gsettings
+[06:43] <mitya57> and that it's impossible to have workspaces but not have useless launcher item
+[06:45] <pitti> yeah, I'd rather they didn't touch gsettings and just removed that icon
+[06:46] <pitti> it already got crippled down to "not usable" a long time ago, so we can just as well drop it
+[09:00] <Laney> hey
+[09:05] <seb128> hey Laney, hey desktopers
+[09:07] <Laney> hey seb128
+[09:07] <Laney> good weekend?
+[09:08] <seb128> excellent, thanks
+[09:08] <seb128> yours?
+=== tkamppeter_ is now known as tkamppeter
+[09:08] <Laney> was my birthday ;-)
+[09:08] <Laney> so yeah!
+[09:10] <seb128> Laney, oh, happy birthday! did you organize a party or something? ;-)
+[09:10] <Laney> a few of us went to the pub
+[09:21] <xnox> desrt: I originally asked for pkg-config files in icu upstream in the first place & was helping them to split and get them right.
+[09:23] <xnox> and well one can patch a gnome module in jhbuild to not use pkg-config and instead use the old-style icu-config.
+[09:23] <czajkowski> Laney: lose any jumpers :)
+[09:24] <Laney> my girlfriend knitted me a hat for my birthday
+[09:24] <Laney> it has a little loop so that I can tie it to my coat
+[09:24] <Laney> for loss prevention ... :(
+[09:24] <czajkowski> Laney: awwww
+[09:24] <czajkowski> she knows you so well
+[09:25] <czajkowski> :)
+[09:25] <xnox> desrt: I'd rather see pointers to which gnome pieces rely on pkg-config for icu and re-add fallback to use icu-config as they have been for many years.
+[09:25]  * xnox even will write a patch.
+[09:30] <pitti> seb128: do you know the component du jour that is drawing the background? unity, g-s-d background plugin, nautilus?
+[09:31] <ogra_> pitti, g-s-d iirc
+[09:31] <ogra_> unless you have icons on the desktop, then nautilus takes over
+[09:31] <pitti> I thought thatw as some kind of fallback, if unity/shell/nautilus don't draw it
+[09:31] <ogra_> (at least thats what was explained to me at UDS)
+[09:35] <chrisccoulson> good morning everyone
+[09:36] <mitya57> fwiw, the nautilus code is being removed in gnome bug 686549
+[09:36] <ubot2> Gnome bug 686549 in background "background: remove code that deals with nautilus drawing the desktop" [Normal,Unconfirmed] http://bugzilla.gnome.org/show_bug.cgi?id=686549
+[09:36] <chrisccoulson> does the g-s-d fallback for drawing wallpaper even work anymore? if i kill nautilus, i get a blank desktop
+[09:38] <pitti> chrisccoulson: hm, not here; I still get my wallpaper when killing nautilus, but I don't think that's a valid method to determine what drew it in the first place
+[09:40] <seb128> chrisccoulson, hey, how are you?
+[09:41] <chrisccoulson> seb128, yeah, not too bad thanks. how are you?
+[09:41] <seb128> chrisccoulson, I'm good thanks
+[09:41] <seb128> chrisccoulson, pitti: nautilus renders the background for us
+[09:41] <seb128> g-s-d has code to do it as well, but I don't think it picks that up dynamically
+[09:42] <pitti> seb128: so Unity doesn't do it?
+[09:42] <seb128> it checks when starting if nautilus is doing it (where "doing it" might be reading the nautilus gsettings key)
+[09:42] <seb128> pitti, no
+[09:42] <seb128> pitti, we had discussion about moving that to unity though, it would probably make sense there...
+[09:46] <seb128> pitti, quick ubuntukylin-default-settings' question for you, the template command added a ubiquity-slideshow directory (which is not covered by the manpage) ... are those slides added to the normal ubuntu set or do they replace it?
+=== vrruiz_ is now known as rvr_
+[09:48] <xnox> seb128: hmmm.... there was a good blog post explaining how slideshow customization works (it was changed in quantal cycle)
+[09:49] <seb128> xnox, I'm reading https://bugs.launchpad.net/ubuntu/+source/ubuntu-defaults-builder/+bug/1035806
+[09:49] <ubot2> Ubuntu bug 1035806 in ubuntu-defaults-builder (Ubuntu) "Please support customization of ubiquity-slideshow through defaults builder" [Undecided,Fix released]
+[09:49] <xnox> as far as I recall correctly it replaces them...... (ubiquity depends on a package that provides ubiquity-slideshow)
+[09:50] <seb128> xnox, http://www.dylanmccall.com/blog/ I guess?
+[09:50] <xnox> seb128: ah yeah, extras works now. And it's an overlay. E.g. you can just drop translations or localised screenshots, or complete slides.
+[09:50] <xnox> seb128: yes, that blog!
+[09:50] <seb128> xnox, thanks ;-)
+[09:50] <pitti> seb128: I didn't write that part; whoever did forgot to document it then
+[09:51] <seb128> pitti, yeah, I just found who wrote it, and he did document it... on his blog
+[09:51] <pitti> seb128: that ought to go into the manpage and test cases, though
+[09:52] <seb128> xnox, ^ you are the one that merged that in
+[09:53] <xnox> seb128: i merged the ubiquity bits as far as I can remember correctly.
+[09:53] <xnox> seb128: dylan wrote it all =) so maybe he should make patches for manpages & test cases ;-)
+[09:53] <seb128> xnox, https://bugs.launchpad.net/ubuntu/+source/ubuntu-defaults-builder/+bug/1035806/comments/4 has your name on the ubuntu-defaults-builder  upload as well
+[09:54] <ubot2> Ubuntu bug 1035806 in ubuntu-defaults-builder (Ubuntu) "Please support customization of ubiquity-slideshow through defaults builder" [Undecided,Fix released]
+[09:54] <xnox> ok. I probably did all of them simultaniously as otherwise the next build of ubiquity would have been broken.
+[10:21] <ogra_> hmpf
+[10:21]  * ogra_ sees a new bug in 12.04 since that latest update of the desktop ... 
+[10:21] <ogra_> does anyone else have the panels around above the screensaver when locking ?
+[10:21] <ogra_> (and the notification bubbles seem to be behind the panel as well)
+[10:24] <popey> ogra_: I've seen that in the past, before this update
+[10:24] <ogra_> funny, for me it started a few days ago
+[10:24] <popey> can you back out the update (probably bamf?) and see if it behaves?
+[10:26] <ogra_> yeah, not right now though, i need this machine today
+[10:26] <ogra_> but i'll check bamf, it misbehaves anyway
+[10:27] <ogra_> (firefox doesnt use its icon in the launcher but starts a new one with the question mark pic)
+[10:28] <popey> ogra_: restarted since the update
+[10:28] <popey> ?
+[10:28] <ogra_> several times, yes
+[10:28] <seb128> stacking issues...
+[10:28] <ogra_> yep
+[10:28] <Laney> hmm, pointer barrier problems again
+[10:29] <ogra_> i seem to not be the only one
+[10:29] <ogra_> https://lists.ubuntu.com/archives/ubuntu-users/2013-January/267103.html
+[10:29] <ogra_> lovely that the support ML suggests installing xscreensaver as the solution :P
+[10:50] <xnox> popey: mhr3: I think I can port some lenses from python to vala, for speed & memory usage improvements. E.g. the photo lens?
+[10:56] <davidcalle> xnox, IMHO that would be great, I was planning on doing it this cycle but I probably won't have the time. Also, API changes for scopes are about to land, you might want to wait for that.
+[10:56] <mhr3> xnox, would be great, but we're changing the scope api, it'd be better to wait
+[10:57] <xnox> I see.
+[10:57] <xnox> Do we have any vala scopes already?
+[10:58] <davidcalle> xnox, Files, Applications, Gwibber, Music (Rbox and Banshee scopes)
+[10:58] <xnox> davidcalle: awesome, thanks.
+[10:58] <xnox> davidcalle: mhr3: can I see / run the new-style API yet?
+[11:02] <mhr3> xnox, nope, sorry
+[11:23] <Laney> respect syntax highlighting; it could save your CPU some wasted work
+[11:23]  * Laney grimaces
+[11:54] <psivaa> seb128: just curious if bug 1105102 is being taken care of, the issue happens quite frequently and appears to affect a lot of users
+[11:54] <ubot2> Launchpad bug 1105102 in glib2.0 (Ubuntu) "dconf-service crashed with SIGSEGV in g_variant_builder_add_value()" [High,Confirmed] https://launchpad.net/bugs/1105102
+[12:06] <Laney> psivaa: Do you have an e.u.c page for that crash?
+[12:11] <psivaa> Laney: i dont see for this crash, may be it's low down the order, but 30+ people have marked the bug as affecting
+[12:11] <chrisccoulson> hi jibel. do you need to enable anything so that https://jenkins.qa.ubuntu.com/job/raring-ppa-adt-ubuntu_mozilla_daily_ppa-firefox-trunk/ picks up new builds?
+[12:11] <chrisccoulson> i did some fixes last week which should hopefully fix the failures
+=== jhernandez is now known as jhernandez|lunc
+=== jhernandez|lunc is now known as jhernandez|lunch
+[12:51] <jibel> chrisccoulson, hey, it should have start with a new upload, I'll look into it. I launched the test manually
+[12:51] <jibel> and it failed with E: Unable to locate package fonts-nanum-core
+[12:55] <chrisccoulson> jibel, oh, i made a typo there :)
+[13:11] <seb128> psivaa, isn't that fixed with https://launchpad.net/ubuntu/+source/glib2.0/2.35.4-0ubuntu5 ?
+[13:15] <chrisccoulson> awesome, jo made me a pork and stuffing sandwich for lunch :)
+[13:28] <rickspencer3> hey Sweetshark I notice my FF on raring is crashing as lot the last couple of days
+[13:29] <ogra_> raring is in development ...
+[13:29] <ogra_> (ooops, i'm not allowed to claim that anymore, right ?) :)
+[13:30] <ogra_> rickspencer3, it works fine on my nexus7, you should just switch to a sane architecture ;)
+[13:30] <ogra_> (it is dog slow though)
+[13:30] <Laney> FF?
+[13:30] <ogra_> yeah
+[13:30] <Laney> also, I believe Sweetshark is away this week
+[13:30] <Laney> but if you mean Firefox I'm not sure why you ping him
+[13:30] <ogra_> i didnt, rick did
+[13:31] <Laney> yep, different you
+[13:31] <ogra_> heh
+[13:31] <Laney> :P
+[13:32]  * xnox ponders how did chrisccoulson got FF ppa to do adt, and yet upstart is not added yet (we also want to test our ppa)
+[13:32] <chrisccoulson> xnox, i asked jibel :)
+[13:33] <Laney> do we need the goa recommends from g-c-c for Ubuntu?
+[13:33] <seb128> rickspencer3, no Sweetshark for the next 10 days, he skiing
+[13:33] <seb128> he's*
+[13:33] <rickspencer3> seb128, hmm, ok
+[13:33] <seb128> rickspencer3, did you mean LO?
+[13:33] <rickspencer3> seb128, no, I meant FF
+[13:33] <rickspencer3> so, err, not Sweetshark
+[13:33] <seb128> rickspencer3, because FF is chrisccoulson's
+[13:33] <rickspencer3> lol
+[13:33]  * chrisccoulson hides
+[13:33] <chrisccoulson> :)
+[13:33] <rickspencer3> how soon they forget
+[13:33] <Laney> heh
+[13:33] <seb128> lol
+[13:34] <chrisccoulson> rickspencer3, have you got a crash ID? (about:crashes)
+[13:34] <seb128> but he will likely blame it on the webapps team ;-)
+[13:34] <rickspencer3> chrisccoulson, nah, I let the crash dialog do it's thing
+[13:34] <chrisccoulson> rickspencer3, yeah, if you let the crash dialog submit it, you should have an ID in about:crashes :)
+[13:34] <chrisccoulson> (hopefully)
+[13:34] <chrisccoulson> then i can go and find the report
+[13:35] <chrisccoulson> seb128, i don't blame everything on webapps ;)
+[13:35] <chrisccoulson> some things i blame on compiz too
+[13:35]  * ogra_ doesnt blame webapps ... but blames FF 
+[13:36] <chrisccoulson> lol
+[13:36] <ogra_> scrolling in G+ on the nexus7 is nearly impossible
+[13:36] <ogra_> with no webapp in use
+[13:36] <chrisccoulson> ogra_, i looked at some firefox memory leaks last week, and all of the biggest ones were of our own making
+[13:36] <chrisccoulson> (ie, dbusmenu)
+[13:36] <ogra_> well, it seems to be only on heavy javascript sites that it gets so slow
+[13:37] <ogra_> gmail, G+ etc
+[13:37] <ogra_> i can actually see it drawing triangles inside the page when scrolling
+[13:37] <ogra_> on other sites that dont use javascript its breezingly fast
+[13:40] <chrisccoulson> i can't see how javascript would have anything to do with painting when scrolling. it's likely just a coincidence, and that it's actually the layout of those sites trigger things that are slow
+[13:40] <chrisccoulson> (eg, scrolling text over fixed backgrounds, etc)
+[13:41] <ogra_> might be, i didnt dig deeper
+[13:41] <chrisccoulson> but i don't use the gmail interface, and i've not been on G+ for months :)
+[13:41] <ogra_> well, it is clearlyx two pages where you can easily see it on the nx7
+[13:43] <xclaesse> When a running "make" in a folder shown by a GtkFileChooser (like opening file dialog in gedit), the app crash
+[13:43] <xclaesse> it has been like that for months now
+[13:43] <xclaesse> I can't find the bug in lp though, but I'm sure I reported it
+[13:43] <xclaesse> it looks like to be ubuntu specific, can't reproduce on other distro
+[13:44] <xclaesse> or am I the only one to suffer from that bug?
+[13:45] <xclaesse> actually my bug report just had his 1year anniversary: https://bugs.launchpad.net/ubuntu/+source/gedit/+bug/920326
+[13:45] <ubot2> xclaesse: Error: ubuntu bug 920326 not found
+[13:45] <seb128> xclaesse, can you give us the bug id from the one you reported?
+[13:46] <xclaesse> that one got closed invalid because back then I was using custom packages IIRC
+[13:46] <xclaesse> but I sure there are others
+=== jhernandez|lunch is now known as jhernandez
+[13:46] <seb128> xclaesse, is there any way you could get a stacktrace using gdb?
+[13:46] <xclaesse> I still click report daily in apport for the same thing, but it does not seems to report anymore
+[13:48] <xclaesse> seb128, http://pastebin.com/NVsGyc56
+[13:48] <seb128> xclaesse, likely http://git.gnome.org/browse/gtk+/commit/?h=gtk-3-6&id=fa3d04e556a704d3fada72254ff9f2b8e1d01946
+[13:49] <xclaesse> seb128, sound like that, yes
+[13:49] <seb128> xclaesse, which we got fixed upstream, the fix is in GTK 3.6.2 ... the issue is that quantal GTK is still 3.6.0 since they broke stuff in the stable updates
+[13:49] <xclaesse> seb128, that commit is not in quantal's package?
+[13:49] <seb128> no
+[13:50] <seb128> they refactored all the css code between 3.6.0 and 3.6.1 so we couldn't update in a SRU
+[13:50] <seb128> we should probably backport that specific fix though
+[13:50] <seb128> well, the bug happens when the directory content change while the fileselector is open on it
+[13:51] <seb128> which in practice for "normal users" is not that often
+[13:51] <seb128> so we didn't get lot of requests for the backport
+[13:51] <seb128> but your "run make" usecase will easily run into it
+[13:55] <xclaesse> seb128, I can understand it won't happen to normal users
+[13:55] <xclaesse> seb128, but as developer I hit it daily
+[13:56] <xclaesse> seb128, if you can package that commit, I'll be happy to test it :)
+[14:00] <seb128> xclaesse, yeah, I was not trying to dismiss the issue, it's just why it didn't raise high on our tracker
+[14:00] <seb128> xclaesse, I will add it to my to-SRU-list
+[14:00] <xclaesse> seb128, great, thanks :)
+[14:00] <seb128> yw ;-)
+[14:00] <xclaesse> seb128, I'm pretty sure it is somewhere in lp, but can't find it anymore :)
+[14:01] <seb128> xclaesse, 851843
+[14:01] <seb128> xclaesse, that's the bug we used to track the issue/closed in raring
+[14:10] <cyphermox> good morning!
+[14:10] <cyphermox> gah,
+[14:11] <kenvandine> good morning cyphermox
+[14:11] <cyphermox> kenvandine: good morning
+[14:12] <cyphermox> Mimiko^_^: please fix your client!
+=== Mimiko is now known as Guest81896
+[14:13] <cyphermox> seb128: do you have any special shiny channel access to fix his?
+=== VD is now known as Guest39710
+[14:16] <seb128> cyphermox, let's see if that works
+=== vrruiz_ is now known as rvr_
+[14:17] <cyphermox> that was basically my plan -- then we can drop the ban in an hour or so, assuming he'll have fixed it then
+[14:22] <cyphermox> ogra_: so I'm reflashing my Nexus7 right now just to be very sure I got the lastest possible image, and I'll update immediately after -- but then I'll work on fixing the wakeups on tty, as well as bluetooth
+[14:22] <cyphermox> eeep, there's pretty bad corruption in the background for the oem thingy
+[14:26] <ogra_> cyphermox, blame xnox
+[14:26] <ogra_> :P
+[14:26] <cyphermox> really?
+[14:26] <cyphermox> why?
+[14:28] <xnox> cyphermox: our tiny little app in ubiquity call wallpaper doesn't paint the background as one would expect. compiz/unity don't paint wallpaper either. g-s-d does, but only if you set it's settings twice.
+[14:28] <xnox> (and g-s-d is not running on !gnome derivatives)
+[14:28] <cyphermox> pwahha
+[14:29] <cyphermox> xnox: couldn't you paint it twice kind of like what g-s-d does?
+[14:43] <xnox> cyphermox: hmm... I should look into g-s-d code.
+[14:45] <seb128> g-s-d is supposed to display the wallpaper if nautilus is not
+[14:46] <xnox> seb128: there is no nautilus, and the way ubiquity starts g-s-d it tries to show backgrounds of Adwaita.xml.
+[14:46] <xnox> (that's for the ubiquity-only mode, not the try-ubuntu-session) the wallpaper is fine in the try-ubuntu-session.
+[14:46] <seb128> xnox, hum, it should get the wallpaper to use from gsettings...
+[14:47] <xnox> seb128: well that's the gsettings that are available in that session....
+[14:47]  * xnox will give another try setting those keys before & after launching g-s-d and see if it improves.
+[14:48] <seb128> xnox, isn't ubuntu-settings installed?
+[14:48] <seb128> 10_ubuntu-settings.gschema.override has
+[14:48] <seb128> "[org.gnome.desktop.background]
+[14:48] <seb128> show-desktop-icons=true
+[14:48] <seb128> picture-uri='file:///usr/share/backgrounds/warty-final-ubuntu.png'
+[14:48] <seb128> "
+[14:48] <ogra_> is that from casper ?
+[14:48] <ogra_> of from ubiquity itself
+[14:49] <ogra_> (note the preinstalled images dont have casper)
+[14:49] <xnox> ogra_: well, non-overwridden uri is in dekstop images (so from casper), I didn't check preinstalled image.
+[14:50] <xnox> seb128: something is not getting loaded right, because I also have to manually set overlay-scrollbars module to be loaded.
+[14:50] <desrt> xnox: i think it's appropriate for upstream to use pkg-config if the version they require has pkg-config files, upstream
+[14:52] <desrt> xnox: although if we are nervous to SRU a fix (which i understand) then having an icu-config check could be nice
+[14:52] <xnox> desrt: sure. i also think it's unwise to change api in an sru (e.g. it makes icu-*.pc files not available in release & security, but available in updates and/or backports) or diverge from debian on this.
+[14:52] <xnox> the three wishes are incompatible with each other =/
+[14:52] <desrt> xnox: i think having the package backported in the desktop team PPA (as jbicha did last night) is a good compromise
+[14:52] <xnox> desrt: which packages / jhbuild modules break?
+[14:52] <desrt> xnox: it's complicated... webkit depends on the icu support of harfbuzz
+[14:53] <desrt> but if you don't have the icu .pc, then harfbuzz configures itself without icu support
+[14:53] <desrt> then webkit breaks later
+[14:53] <xnox> desrt: yeah, PPA upload would be good, since those who need it can find/enable it, and there is no hidden stones. Cause adding a ppa is an explicit action.
+[14:53] <xnox> hmm...
+[14:53] <xnox> let me look at harfbuzz.
+[14:54] <desrt> i think we could fix it to require icu
+[14:54] <desrt> at least it would fail sooner that way
+[14:54] <desrt> in the middle of a webkit build is an annoying spot to fail :(
+[14:54] <xnox> true.
+[14:54] <ogra_> only on arm
+[14:54] <ogra_> :P
+[14:55]  * xnox is surprised to hear HarfBuzz for the first time. But it sounds like it was a good flamewar that I missed leading to a fork.
+[14:56] <desrt> no.  not at all like that.
+[14:56] <desrt> it was written by the maintainer of pango
+[14:56] <desrt> to replace half of pango....
+[14:57] <xnox> sounds like a very good maintainer ;-)
+[15:14] <tjaalton> chrisccoulson: intel upstream would like us to drop server_side_gradients.patch from cairo since "majority of drivers (!nouveau, !radeon) accelerate them"
+[15:15] <tjaalton> chrisccoulson: oh and cairo upstream as well
+[15:20] <seb128> tjaalton, what would be the performance impact for radeon/nouveau?
+[15:20] <tjaalton> seb128: I don't know
+[15:21] <seb128> tjaalton, https://bugs.launchpad.net/ubuntu/+source/cairo/+bug/595845/comments/16
+[15:21] <ubot2> Ubuntu bug 595845 in cairo (Ubuntu) "libcairo2 1.9.10 makes Ubuntu 10.10 slow" [Medium,Fix released]
+[15:21] <seb128> tjaalton, can you get that https://bugs.launchpad.net/ubuntu/+source/cairo/+bug/595845/+attachment/1470628/+files/lala.py run on a nouveau and a radeon card with and without that patch?
+[15:22] <seb128> the numbers from mvo by then:
+[15:22] <seb128> " It takes 1.4s to run on my ati card on maverick and up to 3s on my nvidia card (with nouveau)."
+[15:22] <seb128> which seems 10 times slower than the unpatched version
+[15:24] <tjaalton> seb128: oh that's the origin, missed the "remaining changes" part..
+[15:25] <Laney> hmm
+[15:26] <Laney> now why isn't nvidia loading? & unity/nouveau doesn't start
+[15:26] <seb128> tjaalton, we might want to make that patch smarter and toggle settings depending of the driver
+[15:26] <tjaalton> seb128: if possible, yes
+[15:26] <Laney> http://paste.ubuntu.com/1582244/ http://paste.ubuntu.com/1582245/
+[15:27] <seb128> tjaalton, patches are welcome... ;-)
+[15:27] <tjaalton> chrisccoulson: nevermind, it wasn't a new patch..
+[15:27] <tjaalton> as always :)
+[15:28] <Laney> mlankhorst: ↑ any ideas perchance?
+[15:28] <Laney> it just started after a reboot this afternoon — I think I autoremoved some kernels earlier in the day
+[15:29] <mlankhorst> Laney: messed around with binary drivers?
+[15:29] <Laney> not manually
+[15:29] <mlankhorst> [    10.445] (EE) NVIDIA: Failed to load the NVIDIA kernel module. Please check your
+[15:29] <mlankhorst> [    10.445] (EE) NVIDIA:     system's kernel log for additional error messages.
+[15:29] <mlankhorst> [    10.445] (II) UnloadModule: "nvidia"
+[15:29] <mlankhorst> [    10.445] (II) Unloading nvidia
+[15:30] <Laney> grep -i nvidia /var/log/syslog or dmesg doesn't show anything
+[15:30] <mlankhorst> what happens if you modprobe nvidia?
+[15:30] <Laney> compiz (core) - Info: Unity is not supported by your hardware. Enabling software rendering instead (slow).
+[15:30] <Laney> compiz (core) - Info: Starting plugin: opengl
+[15:30] <Laney> is tahat normal?
+[15:30] <Laney> Xlib:  extension "GLX" missing on display ":0".
+[15:31] <Laney> module nvidia not found
+[15:31] <mlankhorst> you have nvidia drivers but nvidia failed to load, I'm guessing you're on vesa probably
+[15:31] <Laney> it got nouveau according to Xorg.0.log
+[15:32] <mlankhorst> remove nvidia drivers then, it's probably using nvidia opengl
+[15:32] <Laney> concerning that it stopped working though
+[15:34] <mlankhorst> yeah sounds like something messed up there :/
+[15:34] <tjaalton> the nvidia module didn't get built for your kernel
+[15:34] <tjaalton> probably because of missing headers
+[15:34] <tjaalton> or such
+[15:34] <tjaalton> check the dkms lgo
+[15:34] <tjaalton> log
+[15:35] <Laney> I just dpkg-reconfigure nvidia-current and it seems to have built fine
+[15:35] <Laney> http://paste.ubuntu.com/1582320/
+[15:36] <Laney> still modprobe fails though
+[15:36] <mlankhorst> do we rename the nvidia module?
+[15:37] <ricotz> mlankhorst, yes
+[15:37] <ricotz> either nvidia_current or nvidia_304 in this case
+[15:38] <Laney> ERROR: could not insert 'nvidia_current': No such device
+[15:38] <mlankhorst> Laney: nouveau is already loaded, need to reboot probably :/
+[15:38] <ricotz> Laney, you should use nvidia-304
+[15:38] <Laney> unload nouveau
+[15:38] <Laney> aha
+[15:38] <ricotz> the package i mean (if you want nvidia blob)
+[15:38] <Laney> what's the difference?
+[15:38] <ricotz> https://launchpad.net/ubuntu/+source/nvidia-graphics-drivers-304
+[15:39] <ricotz> Laney, you are using an older version
+[15:39] <ricotz> nvidia-current-304.43
+[15:39] <tjaalton> seb128: right now it's intel & nvidia users who suffer from the same sort of performance drop, so the options could be to detect the dri2 driver being used, or add support in X for exposing the driver name for a screen..
+[15:39] <Laney> isn't current the recommended one?
+[15:40] <ricotz> Laney, not anymore, after the new packages in raring-proposed
+[15:40] <tjaalton> right, it's nvidia-310
+[15:40] <Laney> still fails to load after a reboot
+[15:40] <ricotz> Laney, your current package isnt suppose to work with kernel 3.8
+[15:41] <tjaalton> indeed
+[15:41] <Laney> shouldn't that be expressed in packaging?
+[15:41] <ricotz> Laney, if you are a gefore8 or higher use the nvidia-310 package
+[15:41] <ricotz> are/have
+[15:42] <ricotz> Laney, the 304 proposed package has transitioning packages
+[15:42] <Laney> would jockey have installed nvidia-current for me or do you think I did that manually?
+[15:42] <Laney> let me try 310
+[15:43] <Laney> looks promising - plymouth text frontend is a sign of nvidia (and no kms)
+[15:43] <Laney> works
+[15:44] <ricotz> good
+[15:44] <tjaalton> why are the drivers still in proposed?
+[15:44] <Laney> so why hasn't that transitioned for 11 days?
+[15:44] <Laney> trying: nvidia-graphics-drivers-304
+[15:44] <Laney> skipped: nvidia-graphics-drivers-304 (18 <- 9) got: 103+0: i-103 * i386: nvidia-current
+[15:44] <Laney> you need to get that removed if it's supposed to go away
+[15:46] <Laney> the transitional package should be Section: oldlibs btw so that apt-get autoremove can remove it
+[15:46] <ricotz> tseliot, ^
+[15:47] <tseliot> ricotz: I need to ask the archive admins again
+[15:47] <Laney> tseliot: if you want it removed then file a removal bug and subscribe ubuntu-archive
+[15:48] <tseliot> Laney: ok, thanks
+[15:48] <Laney> np
+[15:48] <Laney> it won't move to the release until this happens
+[15:48] <Laney> which seems fairly urgent if it breaks on new kernels
+[15:49] <Laney> Actually perhaps it's not really a transitional package if it's always supposed to pull in the newest driver?
+[15:49] <xnox> desrt: http://paste.ubuntu.com/1582422/ finds and compiles with icu.
+[15:50] <xnox> desrt: and that patch should be trivial to add to jhbuild module set, or you can push it upstream if you like.
+[15:50] <xnox> desrt: tested on quantal, works like a charm.
+[15:52] <desrt> xnox: would need to talk to behdad
+[15:52] <desrt> xnox: but it's more complicated than that... the jhbuild sysdep checks are based on pkgconfig files
+[15:52] <desrt> so you'd need to patch jhbuild as well
+[15:52] <xnox> desrt: ok.
+[15:52] <desrt> then maybe other modules too -- harfbuzz is only the first that failed
+[15:52] <xnox> true.
+[15:52] <xnox> desrt: why are you building on quantal instead of raring though?
+[15:53] <xnox> raring is stable enough to build jhbuild.
+[15:53] <desrt> because we support jhbuild on the latest stable ubuntu release
+[15:53] <desrt> someone has to be testing that :)
+[15:53] <xnox> oh, ok.
+[15:54] <xnox> infinity: what do you think about SRUing pkg-config files for icu, just to please jhbuild users on Quantal?
+[15:56] <xnox> desrt: harfbuzz is like brand new (only in raring), I am expecting other established softwares that come pre-icu-having-pkg-config to know how to use icu-config.
+[15:56] <xnox> unless somebody went and killed all of those configure.ac parts everywhere.
+[15:57] <xnox> desrt: if you have jhbuild src dir unpacked, can you grep "icu-uc" (means uses pkg-config) vs "icu-config" (uses legacy config)
+[15:57] <xnox> to check the scope of impact.
+[15:58] <infinity> xnox: Context?
+[15:58] <xnox> jhbuild didn't used to check system pkg-config, but I may be out of date with jhbuild.
+[15:59] <xnox> infinity: icu historically didn't ship pkg-config files, now it does, we dropped the ball and forgot to add them to debian/libicu-dev.install in quantal. Now jhbuild, builds $GNOME from git and fails to build webkit on quantal, because packages in the chain started to rely on icu-*.pc being shipped.
+[15:59] <xnox> (since hay-ho, the icu $MINVER upstream does ship them)
+[16:00] <infinity> xnox: So, it's in the quantal source package, just not shipped in the binaries?
+[16:00] <xnox> yes.
+[16:00] <infinity> Yeah, that seems like a reasonable thing to SRU for, if you file a decent bug and explain how it's not going to break any rdeps that suddenly find a .pc where there wasn't one before.
+[16:01] <xnox> ack.
+[16:01] <infinity> tseliot: Are we getting rid of nvidia-current*?
+[16:02] <tseliot> infinity: yes, in raring, I already have transitional packages in place
+[16:02] <Laney> seb128: WDYT about swapping goa recommends from g-c-c to the gnome remix seeds? Does anything else other than that capplet use it?
+[16:02] <infinity> tseliot: So, how to people stay current, then?
+[16:03] <tseliot> infinity: they will be transitioned to nvidia-304 (which is a legacy driver). Others will have to install nvidia-310
+[16:03] <tseliot> infinity: and we also have their -updates flavours
+[16:03] <Laney> What happens when -304 goes away?
+[16:04] <infinity> tseliot: What I mean is, if there's not longer a non-versioned current package, how do people continue to stay, well, current?
+[16:04] <infinity> s/not/no/
+[16:06] <tseliot> infinity: well, "current" doesn't mean much anyway. We decided to switch to versioned names before UDS IIRC
+[16:07] <infinity> tseliot: Okay.  But did that decision have a plan for keeping people up to date?
+[16:08] <tseliot> infinity: I think the policy is: upgrade users to releases that do not drop hardware support as much as possible. And this is not easy to do
+[16:08] <infinity> tseliot: But without an unversioned package, how do you proposed to enact this policy?
+[16:09] <tseliot> infinity: we have transitional packages
+[16:09] <infinity> tseliot: You get what I'm driving at, right?  If we installed "linux-image-3.8.0" on your machine, but not "linux-image", you'd never get a new kernel.  Same story with these drivers.
+[16:09] <infinity> tseliot: Obviously your transitional packages aren't called "nvidia-current", or this migration would have happened without my intervention. :P
+[16:10] <tseliot> infinity: if you have nvidia-current installed, you'll get nvidia-304
+[16:10] <tseliot> infinity: yes, they are
+[16:10] <tseliot> infinity: or they never got in?
+[16:12] <infinity> Oh, hrm.  I see what's happened.  Kay.  Previous conversation led me to believe you'd dropped that package.
+[16:14] <tseliot> infinity: no. I was just talking about removing an experimental driver flavour
+[16:14] <tseliot> Laney: when nvidia-304 goes away, there's nouveau
+[16:15] <ricotz> tseliot, while 310 and 313 caught up with x 1.14, do you if 304 will get some "final" update too?
+[16:15] <jbicha> seb128: chrisccoulson: joss said last week in #debian-gnome that there's some sort of plan for a gnome-settings-daemon-fallback maintained on git.gnome.org to contain all the "extra" pieces GNOME dropped this cycle
+[16:16] <Laney> So I wouldn't want to upgrade to, say, the next nvidia-3xx?
+[16:16] <tseliot> Laney: well, if your card is still supported, then yes
+[16:16] <tseliot> ricotz: is there a new release of 304?
+[16:17] <Laney> Yeah. That's what I'm getting at - ensuring this migration happens.
+[16:17] <ricotz> tseliot, oop, i meant "do you know if ..."
+[16:17] <infinity> tseliot: Oh, hah.  It would help if your packages weren't internally inconsistent.
+[16:17] <infinity> The following packages have unmet dependencies:
+[16:17] <infinity>  nvidia-304 : Conflicts: nvidia-current
+[16:17] <infinity> E: Unable to correct problems, you have held broken packages.
+[16:18] <infinity> tseliot: That's going to need to be a versioned conflict, to keep conflicting against the old one, but not the new one.
+[16:18] <tseliot> infinity: err... right, I'll fix that
+[16:18] <infinity> tseliot: ie: (<< 304.64-0ubuntu4)
+[16:18] <infinity> Or whatever.
+[16:19] <tseliot> infinity: right
+[16:19] <infinity> tseliot: Pro tip, if update_output is whining that your package can't be installed with other packages.  Hit a chroot, enable proposed, and "apt-get install your_package your_package broken_package broken_package" and see what happens.
+[16:20]  * tseliot nods
+[16:41] <dobey> ugh. pygtkcompat doesn't make porting easier. it just makes breaking obvious.
+=== sil2100_ is now known as sil2100
+[16:43] <dobey> and is making my life hell right now
+[16:44] <seb128> Laney, yeah, if we can run without goa it would be good, I was considering building e-d-s without it but I guess the GNOME remix wouldn't like that
+[16:44] <seb128> ideally e-d-s shouldn't spaw a goa running for ever if there are not account configured
+[16:45] <seb128> jbicha, right for g-s-d ... what did they drop this cycle?
+[16:50] <Laney> I'm running with goa removed now and stuff seems to work
+[16:50] <bcurtiswx> kenvandine, in online accounts, when I first turn on empathy, I get facebook requires authorisation, but facebook connects and show no issues
+[16:50] <Laney> I'll upload it
+[16:54] <kenvandine> bcurtiswx, i haven't seen that, please file a bug
+[17:00] <bcurtiswx> kenvandine, OK will do
+[17:05] <kenvandine> bcurtiswx, thx
+[17:08] <jbicha> seb128: the power plugin is pretty broken without systemd (auto-suspend doesn't work, I think the suspend media-key is broken) and some issues with the fallback status icons (like keyboard)
+[17:08] <jbicha> it's going to be a lot more work to get gnome-control-center to support external panels
+[17:11] <jbicha> I guess g-s-d itself shouldn't be too bad for Ubuntu as the 2 issues I mentioned are already known and will be taken care of
+[17:11] <seb128> jbicha, yeah, let's see for g-c-c
+[17:11] <seb128> we might just stay on the current version until the LTS if really needed and then figure out what to do
+[17:12] <seb128> likely renaming it u-c-c so g-c-c can be updated
+[17:12] <seb128> having both conflicting
+[17:12] <seb128> which means you will have to pick GNOME or Unity as a desktop but can't have both selectable
+[17:12] <seb128> but we are heading there anyway
+[17:12] <seb128> so..
+[17:12] <jbicha> seb128: yeah gnome shell 3.8 needs the new g-c-c to work optimally
+[17:12] <seb128> ...
+[17:15] <jbicha> the new sharing & privacy panels are pretty cool but it's a different approach than Unity's Privacy panel design
+=== Ursinha is now known as Ursinha-afk
+[17:40] <psivaa> seb128: the crash on bug 1105102 occurs even with https://launchpad.net/ubuntu/+source/glib2.0/2.35.4-0ubuntu5 installed. Occurs with today's images (during live session and after the installation)
+[17:40] <ubot2> Launchpad bug 1105102 in glib2.0 (Ubuntu) "dconf-service crashed with SIGSEGV in g_variant_builder_add_value()" [High,Confirmed] https://launchpad.net/bugs/1105102
+[17:40] <seb128> desrt, ^
+[18:01] <Laney> uploading g-c-c without the recommends
+[18:02] <seb128> Laney, thanks
+[18:33] <desrt> seb128: neat!!
+[18:33] <desrt> new dconf be buggy :)
+[18:33] <seb128> desrt, know how to keep busy in the plane ;-)
+[18:33] <desrt> it'll give me something to look at on the plane
+[18:33] <desrt> :)
+[18:33] <desrt> flight is delayed :(
+[18:34] <seb128> oh?
+[18:34] <desrt> not long... just like an hour
+[18:34] <desrt> snow
+[18:34] <desrt> sure glad i arrive domestic in the US
+[18:34] <desrt> otherwise it would be a pretty tight connection
+[18:44] <desrt> seb128: can i get a trace?
+[18:45] <seb128> desrt, https://launchpadlibrarian.net/129495621/Stacktrace.txt
+[18:46] <seb128> desrt, https://bugs.launchpad.net/ubuntu/+source/d-conf/+bug/1105440
+[18:46] <ubot2> Ubuntu bug 1105440 in d-conf (Ubuntu) "dconf-service crashed with SIGSEGV in g_variant_is_trusted()" [Medium,Confirmed]
+[18:46] <seb128> desrt, tj
+[18:46] <desrt> hmm
+[18:46] <desrt> i bet it gets a critical before it gets that far
+[18:46] <seb128> desrt, the retracers marked it dup from that one, I will set the tag so it gets a new stacktrace with the next report
+[18:47] <czajkowski> Laney: you in this week ?
+[18:47] <desrt> seb128: i think i understand the bug
+[18:48] <desrt> i love this:
+[18:48] <desrt> #3  0x00007fa6b48095b7 in g_variant_new_va (format_string=0x40b5dc "s)", endptr=0x0, app=0x7fffba5c7708) at /build/buildd/glib2.0-2.35.4/./glib/gvariant.c:4702 value = <optimized out>
+[18:48] <desrt> format_string being pass-by-reference gets the pointer moved along so you find out about exactly which part of the format string it was trying to deal with when it crashed
+[18:48] <desrt> gdb win
+[18:48] <desrt> anyway... that's the tag field of a notification... i bet it's just NULL in some cases, should be an easy enough fix
+[18:49] <desrt> seb128: can you upstream me a bug?  this is definitley a separate issue, fwiw
+[18:49] <seb128> desrt, ok, glib or dconf report?
+[18:50] <desrt> would be dconf
+[18:50] <desrt> service...
+[18:50] <desrt> robru: hey... i'm on your flight to london
+[18:51] <robru> desrt, sweeeet
+[18:51] <robru> desrt, attente as well?
+[18:51] <desrt> i think so
+[18:51] <robru> partay!
+[19:00] <desrt> jasoncwarner: i'm just gonna leave this here.... http://www.timeout.com/london/restaurants/hawksmoor-seven-dials
+[19:01] <achiang> kenvandine: did you upload the xchat-indicator SRU to precise-proposed?
+[19:08] <kenvandine> achiang, i did
+[19:08] <achiang> kenvandine: i can't find it in LP, can you hook me up?
+[19:09] <kenvandine> achiang, it's still in the unapproved queue
+[19:09] <achiang> kenvandine: ah, i see
+[19:09] <kenvandine> need someone from ubuntu-sru to do their thing
+[19:10] <achiang> yup, and i think they're fairly busy atm
+=== Ursinha-afk is now known as Ursinha
+[20:03] <robru> hey desktoppers, what's going on here? http://ubuntuone.com/50XWtoHgAIFXocRqJTkjP6 trying to install latest raring image onto my n7, first of all the background is messed up like that, secondly onboard stopped working right at that point and wouldn't let me input any further than what you see there.
+[20:07] <notgary> Once upon a time I heard tell of a plan to make checking out and building the entire Unity stack a one-command operation. Has anything come of that?
+[20:08] <seb128> robru, the background issue is known and is an ubiquity/livecd issue (it was discussed earlier today), not sure about the onboard one...
+[20:09] <seb128> notgary, some people adapted jhbuild for the unity stack, not sure what's the current state
+[20:09] <robru> seb128, actually, hooking up a keyboard didn't allow me to type into ubiquity either, so most likely ubiquity has stopped accepting kb input, regardless of source (so most likely onboard is fine)
+[20:09] <seb128> notgary, they also got a daily ppa and daily landing in ubuntu, which should reduce the need for a stack build
+[20:09] <seb128> robru, ok, can you switch to a vt and type there?
+[20:11] <notgary> seb128: Is this what you're talking about? https://launchpad.net/unity-jhbuild
+[20:11] <notgary> It doesn't seem to have been updated since the middle of November
+[20:12] <seb128> notgary, yes, try asking in #ubuntu-unity though...
+[20:12] <notgary> seb128: Will do, thanks for the pointers :)
+[20:13] <robru> seb128, oh, good idea. hang on...
+[20:14] <seb128> notgary, yw ;-)
+[20:15] <robru> seb128, Ctrl+Alt+F1 just makes the screen go blank. doesn't show me a VT at all (and doesn't echo any of my typing back at me either). but F7 does bring ubiquity back...
+[20:17] <seb128> hum, reading you say that I think there is a driver bug that makes the vt not being displayed as it should...
+[20:20] <robru> seb128, seems I'm finding lots of bugs today ;-)
+[20:29] <chrisccoulson> hey rickspencer3, you around?
+[20:29] <chrisccoulson> any luck with that crash ID? :)
+[21:10] <bizhanMona> HI I have observed a strange behavior, when I install ubuntu on any of my system later on if I want to install RHEL/Fedora after successful installation I get grub failure, and system stops at grub rescue prompt,not sure why? Thx
+[21:19] <dobey> bizhanMona: #ubuntu is the channel to ask for help in
+[21:21] <bizhanMona> dobey: Thanks I did that now.
+[21:26] <attente> desrt: ping
+[21:49] <desrt> attente: pong
+[21:50] <attente> desrt: so inkscape generates its menu items by explicitly sticking GtkLabels in their GtkImageMenuItems
+[21:51] <desrt> nice....
+[21:51] <desrt> remember i told you you'd find weird programs doing weird things? :)
+[21:51]  * attente cries
+[21:52] <chrisccoulson> that's awesome
+[23:31] <robru> any vala experts around?

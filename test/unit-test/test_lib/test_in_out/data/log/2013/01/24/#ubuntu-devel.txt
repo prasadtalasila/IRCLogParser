@@ -1,0 +1,471 @@
+=== slank is now known as slank_away
+=== k-s is now known as k-s[AWAY]
+[00:16] <EagleScreen> hello, we have *again* bluetooth obex broken in gvfs in quantal and raring, please fix it
+[00:18] <TheMuso> EagleScreen: Please file a bug.
+[00:18] <EagleScreen> TheMuso: there are two bugs filled
+[00:19] <TheMuso> Ok then thats fine.
+[00:22] <EagleScreen> TheMuso: quantal was released with this bug, and I do not see activity to fux it before raring, I think having a working bluetooth is an important feature nowadays
+[00:25] <sladen> EagleScreen: what are the bug numbers?
+[00:26] <EagleScreen> Bug #1103253 and Bug #899858
+[00:26] <ubottu> Error: Launchpad bug 1103253 could not be found
+[00:26] <ubottu> bug 899858 in gvfs "regression in gvfs to connect/browse using obex" [Medium,Confirmed] https://launchpad.net/bugs/899858
+[00:31] <sarnold> EagleScreen: probably 1103253 is dead because your packages were out-of-date and the retracer only supports tracing on current.. I doubt there will be any movement there. You should update the old packages, re-create the crash, and file a new bug as the robot asks...
+[00:31] <EagleScreen> sarnold: I amon it
+[00:41] <EagleScreen> I have reported it again in Bug #1103770
+[00:41] <ubottu> Error: Launchpad bug 1103770 could not be found
+[00:42] <sarnold> woot. now just wait for the retracer...
+[01:26] <wjtaylor_> Is touch fully supported in 12.04. I started using it and my cursor jumps all over now. Didn't want to fill out a bug report, if it's not supported.
+[01:28] <sladen> wjtaylor_: if it doesn't work, it's a bug.  Please file it.  The most important bit is which /exact/ hardware you're using and which programme(s)
+[01:30] <wjtaylor_> yeah, np.  Dell XT2 and  whatever the stock Document Viewer (pdf view) in 12.04
+=== cpg is now known as cpg|away
+[02:25] <Snow-Man> pitti: around..?
+[02:26] <Snow-Man> pitti: was hoping to chat w/ you about possibly having a per-cluster directory under /var/run for sockets and then modifying pg_lsclusters (and friends) to add and support listen_addresses which might not overlap.
+[02:27] <Snow-Man> pitti: in an ideal world, I'd like to be able to run 2 clusters on the same physical box, both using the default port of 5432 but with different IPs
+[02:27] <Snow-Man> pitti: and still have psql --cluster x.y/whatever and friends work.
+[02:27] <Snow-Man> and not error out when there are conflicting ports for two clusters, when they have different IPs.
+[02:43] <TheMuso> Snow-Man: pitti is not likely to be on for another few hours.
+[02:43] <Snow-Man> np
+[02:43] <Snow-Man> I expect he reads scrollback. :)
+=== cpg|away is now known as cpg
+[02:48] <lifeless> are dates for UDS Q available yet ?
+[02:48] <lifeless> even approx ?
+[02:50] <lifeless> grr, I mean 'S'
+[02:52] <sladen> wjtaylor_: Evince is the PDF viewer.  please could you file a bug with exactly what actions (gestures)
+[03:11] <infinity> lifeless: Approximately a week after release, if history is anything to go by, but nothing officially announced yet.
+[03:12] <lifeless> infinity: thanks
+[03:12] <infinity> lifeless: Well, a week and a half, since release is a Thursday.  But you know what I meant, I assume.
+[03:13] <lifeless> indeed :)
+=== cpg is now known as cpg|away
+=== cpg|away is now known as cpg
+[04:43] <pitti> Good morning
+[04:44] <infinity> pitti: Yo.
+[04:45] <infinity> pitti: When do we plan on doing langpacks for precise.2 (or do you at all)?
+[04:45] <pitti> Snow-Man: hm, that requires psql to iterate through the server configs and map IP/port ranges to find out which one it really wants to talk to?
+[04:45] <infinity> pitti: And, if you do, shall we escalate that "upgrade the chroot, pleeeease" ticket first?
+[04:45] <pitti> Snow-Man: with unix ports that's easier of course, but that pretty much is guaranteed to break client apps which are not using p-common (i. e. pretty much all of them), as they can't find the socket any more
+[04:46] <pitti> infinity: ah, for that I'm pretty much in "poke me when you need it" mode
+[04:46] <pitti> infinity: yeah, I guess we should do some escalation there
+[04:46] <pitti> infinity: when is precise.2 due?
+[04:46] <infinity> pitti: Kay.  I'll apply some pressure from a few angles.
+[04:47] <infinity> pitti: Freeze was meant to be (and nominally still is) today, though we're delaying the release by two weeks, so we have some wiggle room on the freezy bit too.
+[04:47] <pitti> infinity: ah, ok; I requested a full langpack export from Launchpad now
+[04:48] <infinity> pitti: Alright, but we'll hold off on magically turning that into source packages while we escalate the ticket?
+[04:48] <pitti> infinity: the next regular one will arrive on Jan 28, so that we could build/upload the packs on Jan 29; is that enough, or do we need to poke webops to do a manual export?
+[04:48] <infinity> pitti: (I assume this could be done in any chroot, is there a reason it's on that specific host?)
+[04:49] <pitti> infinity: it's not very host specific, it just needs some space to run this stuff
+[04:49] <pitti> infinity: but as this will be a fresh -base rebuild, I don't even need the previous packages
+[04:49] <infinity> pitti: The 29th still gives us ~2w before freeze, so that would be fine.
+[04:49] <infinity> Err, before release.
+[04:49] <pitti> infinity: so in theory I could even build them at a porter box
+[04:49] <infinity> Brain no workie tonight.  Too much glibc.
+[04:50] <infinity> pitti: Yeah, that's what I was thinking, given that porter boxes have lucid/precise/raring chroots (whatever you want to use, precise probably makes mose sense), and a reasonable chunk of space and bandwidth.
+[04:50] <pitti> glibc? eek, that suppurates out of your brain only very slowly
+[04:51] <pitti> infinity: macquarie just has all the "langpack group ACL"/"space for permanently storing the files" etc. set up, that's all
+[04:51] <infinity> Well, we can and should escalate the ticket too.
+[04:51] <infinity> So, if I can get that done before the 29th, you're golden.
+[04:52]  * pitti adds the 29th to his calendar
+[04:52] <infinity> Log for successful build of eglibc_2.17-0experimental0 on i386
+[04:52] <infinity> Well, this is promising.
+[04:52] <infinity> If only I hadn't thought of three more things to fix while it was building.
+[04:56] <pitti> infinity: OOI, does that already include the magic patch which makes gstreamer apps not be sad and hang most of the time?
+[04:57] <pitti> (no, I never watch videos during lunch break, this is is totally not an egoistic question)
+[04:57] <pitti> *cough*
+[04:59] <infinity> pitti: Yes, you can upgrade from my PPA right now and tell me if it solves that bug for you.
+[04:59] <infinity> https://launchpad.net/~adconrad/+archive/ppa/+packages
+[05:00] <pitti> https://launchpad.net/~adconrad/+archive/ppa/+packages ?
+[05:00] <pitti> ah, that very
+[05:00] <infinity> There are a few small multiarch-related bugs in that, but nothing that affects x86.
+[05:00] <infinity> Just fixing up some armhf/armel stuff right now, and nailing down something that affects cross-machine multiarch while I'm in there.
+[05:05] <pitti> infinity: that seems to work beautifully!
+[05:05] <infinity> pitti: Oh wow.  The bug is THAT reproducible that you can tell it's fixed that quickly?
+[05:05] <infinity> pitti: I don't think the severity of it was quite made clear to me, then.
+[05:06] <pitti> infinity: I usually had to open a video two or three times before totem would stop hanging and star playing
+[05:06] <infinity> pitti: Anyhow, one or two more fixes, and mulling over if I want to rewrite a patch from doko or save that for later, and I'll be uploading to experimental and raring tonight/tomorrow.
+[05:06] <pitti> infinity: I could usually search within music or a video once, but it would again hang when doing it multiple times
+[05:07] <infinity> pitti: Ouch.  That's pretty rough.
+[05:07] <infinity> pitti: Glad to hear it's all gooder with those packages, then.
+[05:07] <pitti> thanks!
+[07:17] <dholbach> good morning
+[07:21] <ritz> Hi, How do I instruct debuild to use "-j3" for build process
+[07:21] <ritz> for build on smp system
+[07:22] <slangasek> ritz: DEB_BUILD_OPTIONS=parallel=3
+[07:22] <slangasek> however, the majority of packages don't honor this
+[07:22] <pitti> you can actually call "debuild -j3"
+[07:23] <pitti> that will additionally parallelize dh_builddeb and perhaps some others
+[07:23] <slangasek> ah, hmm
+[07:23] <ritz> slangasek++ pitti++ thanks
+[07:24] <pitti> that sets above D_B_O option plus MAKEFLAGS=-j3
+[07:24] <pitti> actually, D_B_O will already parallelize dh_builddeb, sorry
+[07:37] <SpamapS> hallyn: FYI, had to reject your qemu-kvm upload to quantal-proposed. No bug reference, and the version has been superseded by security.
+[07:39] <SpamapS> tkamppeter_: FYI, had to reject cups upload to quantal-proposed because it has no bug reference.
+[07:52] <tkamppeter_> SpamapS, the cups upload is also not rlevant any more. I have proposed a better approach and I am waiting for user feedback, if no user reacts there will be no SRU att all.
+[07:55] <SpamapS> tkamppeter_: great, thanks for the clarification.
+=== smb` is now known as smb
+=== yofel_ is now known as yofel
+[08:56] <Sweetsha1k> slangasek: yes, heard that from seb128. I uploaded a new package on http://people.canonical.com/~bjoern/precise/ and a ppaified version was build in https://launchpad.net/~bjoern-michaelsen/+archive/libreoffice-oneirictest-20110718?field.series_filter=precise. I have to smoketest that one and then it should be good for review. the changes are minimal and described in bug 1037111 and should address all concerns.
+[08:56] <ubottu> bug 1037111 in libreoffice (Ubuntu Precise) "[SRU] LibreOffice 3.5.7 for precise" [High,In progress] https://launchpad.net/bugs/1037111
+=== Sweetsha1k is now known as Sweetshark
+[09:43] <psivaa> bdmurray: there is no single script to do the set up for the auto -upgrade testing. I have now given the automation set-up information in the bug description.
+=== Ivanka_ is now known as Ivanka
+=== henrix_ is now known as henrix
+=== cpg is now known as cpg|away
+[11:12] <rbasak> grab-merge is giving me a conflict in debian/patches/series. This I understand. But the working directory it gives me to resolve this conflict seems to have patches applied but no .pc directory. Is this expected? I can fix this up by hand but don't understand the expected workflow here. What am I missing, and how does everyone else deal with this?
+[11:13] <toabctl> someone familiar with pulseaudio? see #1103948
+=== _salem is now known as salem_
+[11:13] <seb128> bug #1103948
+[11:13] <ubottu> bug 1103948 in pulseaudio (Ubuntu) "Rhythmbox hangs in pa_threaded_mainloop_wait () from /usr/lib/x86_64-linux-gnu/libpulse.so.0" [Undecided,New] https://launchpad.net/bugs/1103948
+[11:14] <seb128> TheMuso, ^
+[11:14] <toabctl> seb128, thx
+[11:14] <seb128> toabctl, yw
+[11:16] <Laney> seb128: toabctl: that's bug #1085342 in eglibc
+[11:16] <ubottu> bug 1085342 in totem (Ubuntu) "Pulseaudio applications hang (Totem, GNOME Shell etc.)" [Undecided,Confirmed] https://launchpad.net/bugs/1085342
+[11:16] <seb128> Laney, thanks
+[11:17] <Laney> pthread_cond_wait at the top of the trace is the clue for that one
+[11:18]  * Laney dupes a few
+[11:18] <toabctl> Laney, thx!
+[12:18] <jemadux> i have dual boot ubuntu lts and ubuntu daily .. i am using chroot to update the 13.04 but now i cant .. .any way to do that?
+=== salem_ is now known as _salem
+=== MacSlow is now known as MacSlow|lunch
+=== tkamppeter_ is now known as tkamppeter
+=== _salem is now known as salem_
+=== k-s[AWAY] is now known as k-s
+[13:50] <ogra_> @pilot in
+=== udevbot changed the topic of #ubuntu-devel to: Ubuntu 12.10 released | Archive: Open | Dev' of Ubuntu (not support or app devel) | build failures -> http://qa.ubuntuwire.com/ftbfs/ | #ubuntu for support and discussion of hardy -> quantal | #ubuntu-app-devel for app development on Ubuntu http://wiki.ubuntu.com/UbuntuDevelopment | See #ubuntu-bugs for http://bit.ly/lv8soi | Patch Pilots: ogra_
+[13:51] <k-s>  /wc
+=== MacSlow|lunch is now known as MacSlow
+[14:07] <OdyX> tkamppeter: can you hint me about Debian #697970 and LP #872483 ? A proper fix would be a quirk in backend/libusb*, right ?
+[14:07] <ubottu> Debian bug 697970 in cups "cups: printing gets wrong after some pages on Epson Stylus Photo 750" [Important,Open] http://bugs.debian.org/697970
+[14:07] <ubottu> Launchpad bug 872483 in cups (Ubuntu Oneiric) "laser printer only prints first job correct" [Medium,Fix committed] https://launchpad.net/bugs/872483
+=== Ursinha-afk is now known as Ursinha
+[14:25] <tkamppeter> OdyX, yes, the printers need quirk rules in th usb backend.
+[14:26] <tkamppeter> OdyX, the user needs to supply the USB VID/PID from libusb and also the usb backend option which solves the problem for him.
+=== slank_away is now known as slank
+[14:28] <OdyX> tkamppeter: that's in the Debian bugreport
+[14:29] <tkamppeter> OdyX, with this info it is easy to add the new rule to the backend.
+[14:43] <hallyn> SpamapS: i have no idea waht that was about, will have to look at the diff in the rejected queue, thanks
+[14:47] <hallyn> oh, that one
+[14:53] <ogra_> hmm, do we have a versioning policy for package SRUs where the debian version didnt change over several releases but SRUs have to be uploaded to multiple of them ?
+[14:54] <ogra_> s/multiple of them/multiple releases/
+[14:54] <cjwatson> ogra_: https://wiki.ubuntu.com/StableReleaseUpdates links to https://wiki.ubuntu.com/SecurityTeam/UpdatePreparation#Update_the_packaging for that
+[14:55] <ogra_> cjwatson, heh, that doesnt really solve my issue
+[14:55] <Laney> 2.0-2ubuntu1 in two releases  2.0-2ubuntu1.11.10.1 and 2.0-2ubuntu1.12.04.1
+[14:56] <cjwatson> ogra_: it doesn't?
+[14:56] <cjwatson> "2.0-2 in two releases         2.0-2ubuntu0.11.10.1 and 2.0-2ubuntu0.12.04.1"
+[14:56] <cjwatson> e.g.
+[14:56] <ogra_> cjwatson, release 1+2 have $package_0.1-0ubuntu1.debian.tar.gz ... the dev release has ubuntu2 ... now an SRU to release 1+2 having exactly the same content as ubuntu2 cant be named ubuntu2 for the SRUs
+[14:56] <cjwatson> (and following one for if it already has ubuntuN)
+[14:57] <ogra_> simply because the ubuntu1.debian.tar.gz differs in the changelog entry
+[14:57] <ogra_> err ubuntu2, sorry
+[14:57] <ogra_> oh, i see
+[14:57] <cjwatson> um, so then it should be ubuntu1.12.04.1 and ubuntu1.12.10.1 if ubuntu2 is in raring - I don't see the problem here
+[14:58] <ogra_> yeah, sorry, missed the bottom line of the table
+[15:09] <barry> mitya57: i'm going to look at your mp again today.  thanks for updating it
+[15:13] <mitya57> barry: thank you!
+[15:14]  * mitya57 will probably also announce pybuild to ubuntu-devel
+[15:14] <dholbach> stgraber, highvoltage: I just found out that the hangout we planned will conflict with UDW :-/
+[15:14] <dholbach> stgraber, highvoltage: would it be OK if we move a week later?
+[15:16] <barry> mitya57: +1!
+[15:18] <stgraber> dholbach: A week later is fine for me, assuming we keep it on the same day and time
+[15:18] <dholbach> stgraber, yep
+[15:18] <dholbach> thanks a bunch!
+[15:23] <ogra_> jtaylor, looks like merge 141288 was long merged, could you cancel the request (or target it to the -updates branch, i guess that would auto close it)
+[15:23] <ogra_> it still shows up in the sponsoring queue
+[15:40] <xnox> what was the name of a package with useful little utilities, like `runone`?
+[15:40] <xnox> bikeshed, watershed or something....?!
+[15:40] <micahg> bikeshed
+[15:42] <xnox> micahg: thanks.
+[15:42] <xnox> although there also is watershed...
+[15:43] <micahg> xnox: it's actually its own source, run-one
+[15:44] <xnox> micahg: now i wonder the difference between run-one and watershed packages....
+[15:45] <micahg> xnox: NIH syndrome?
+[15:45] <xnox> micahg: =Dunno
+[15:45] <xnox> NIH vs :Dustin
+[16:17] <ogra_> urgh, do we have the basics of merging a new upstream releases written down somewhere ?
+[16:18]  * ogra_ glares at a 19MB debdiff that patches 3 new upstream releases on top of orig.tar.gz
+[16:19] <psusi> lol
+[16:19] <Laney> doesn't look like the packaging guide has that for non-UDD
+[16:19] <psusi> debian packaging guide?
+[16:20] <Laney> http://developer.ubuntu.com/packaging/html/
+[16:23] <roaksoax> bdmurray: howdy! DO you mind taking care of bug #1049177 (Precise SRU). It'
+[16:24] <ubottu> bug 1049177 in maas (Ubuntu Precise) "isc-dhcp-server apparmor profile should have include ".d" " [Undecided,New] https://launchpad.net/bugs/1049177
+[16:24] <roaksoax> bdmurray: howdy! DO you mind taking care of bug #1049177 (Precise SRU). It's been sitting in the queue for a loooooooong time!!. Thank you :)
+=== chiluk is now known as chiluk_away
+=== ricotz_ is now known as ricotz
+[16:34] <Snow-Man> pitti: I was thinking some kind of 'default' value for the socket location which would point to the 'primary' instance on the system
+[16:34] <Snow-Man> pitti: but p-common using apps could override that with --cluster
+[16:38] <highvoltage> dholbach: regarding the postponement, +1
+[16:38] <dholbach> highvoltage, gracias!
+=== pcarrier_ is now known as pcarrier
+[17:05] <mpt> ev, https://wiki.ubuntu.com/ErrorTracker#extra-info
+=== chiluk_away is now known as chiluk
+[17:06] <ev> thanks mpt!
+[17:10] <ogra_> @pilot out
+=== udevbot changed the topic of #ubuntu-devel to: Ubuntu 12.10 released | Archive: Open | Dev' of Ubuntu (not support or app devel) | build failures -> http://qa.ubuntuwire.com/ftbfs/ | #ubuntu for support and discussion of hardy -> quantal | #ubuntu-app-devel for app development on Ubuntu http://wiki.ubuntu.com/UbuntuDevelopment | See #ubuntu-bugs for http://bit.ly/lv8soi | Patch Pilots:
+=== ximion is now known as ximion-afk
+[17:27]  * dholbach hugs ogra_
+[17:27] <dholbach> can somebody please moderate my u-d-a mail?
+[17:28]  * ogra_ hugs dholbach back
+=== ximion-afk is now known as ximion
+[17:31] <cjwatson> dholbach: done
+[17:31] <Sweetshark> slangasek: bug refs cleaned on http://people.canonical.com/~bjoern/precise/
+[17:31] <dholbach> thanks cjwatson
+[17:32] <cjwatson> Most of the half of the world you're looking at is pandabox relocation.
+[17:32] <cjwatson> Err
+[17:32] <cjwatson> ECHAN
+=== henrix is now known as henrix_
+[18:01]  * mlankhorst tries to guess context, fails
+=== henrix_ is now known as henrix
+[18:15] <jtaylor> mterry: pycurl, https://github.com/facebook/tornado/issues/671#issuecomment-12635147
+[18:17] <mterry> jtaylor, oh nice
+[18:36] <slangasek> gema: ping
+[18:36] <gema> slangasek: pong
+[18:38] <slangasek> gema: hey - so stgraber and xnox are telling me that on the boot speed profiling box that's having install problems, there's an intermittent X hang, unrelated to the installer itself
+[18:38] <slangasek> gema: have you (QA) talked to the desktop team about this at all yet?
+[18:38] <slangasek> I think we need to bring their expertise to bear
+[18:38] <gema> slangasek: they told us we had to get some logs and reproduce the problem for them to be able to fix
+[18:38] <slangasek> hmm
+[18:38] <gema> can they fix this hang, it may be what's killing the machines
+[18:39] <xnox> there was full syslog in the bug with x hang in it....
+[18:39] <xnox> i'm not sure if xerrors or other interesting things got into it as well or not.
+[18:39] <gema> xnox: can you fix the hang?
+[18:40] <slangasek> gema: we need someone on bryce's team to look at the hang
+[18:40] <doko> bryce, tjaalton: are you planning a xserver upload? want to make xvfb m-a foreign
+[18:41] <tjaalton> doko: got a diff?
+[18:41] <gema> bryce: could you have an engineer look at a hang we have on one of the testing machines that may be killing bootspeed and other HW testing?
+[18:41] <doko> tjaalton, well, it's a one liner
+[18:42] <tjaalton> doko: ah, I can add it
+[18:42] <doko> tjaalton, estimated upload?
+[18:42] <tjaalton> gema: what kind of a hang? I suspect there is an issue with lightdm and the way it interacts with plymouth..
+[18:42] <tjaalton> doko: in a hurry?
+[18:42] <tjaalton> :)
+[18:43] <doko> no, but next week would be nice
+[18:43] <gema> tjaalton: it hangs a ubiquity install as far as we can tell, not sure if we even get to lightdm
+[18:44] <stgraber> tjaalton: the screen completely stops refreshing after a few minutes (which usually ends up being the middle of an install)
+[18:44] <gema> tjaalton: https://bugs.launchpad.net/ubuntu/+source/ubiquity/+bug/1096943
+[18:44] <ubottu> Ubuntu bug 1096943 in ubiquity (Ubuntu) "Ubiquity freezes during nfs-based desktop install from recent live destkop images on physical hardware" [High,Confirmed]
+[18:44] <stgraber> tjaalton: none of the two heads show any change even though the machine is still responsive and clearly doing things
+[18:44] <stgraber> tjaalton: attaching with x11vnc to X shows me the same stuck video output, so X isn't completely dead either
+[18:44] <tjaalton> gema: ah, so it's not a boot issue..
+[18:45] <gema> tjaalton: it could be if we managed to get the system installed, but it is not yet
+[18:45] <slangasek> gema: so this causes install failures /consistently/?  I understood it was intermittent
+[18:46] <gema> slangasek: we have all sorts of intermittent issues, this is one hitting bootspeed hardware and PS HW
+[18:46] <gema> slangasek: clearing this would help us make some progress
+[18:46] <slangasek> gema: yes - but you said "if we managed to get the system installed", which I thought was possible
+[18:46] <slangasek> just not reliable
+[18:46] <gema> slangasek: it was at some point
+[18:46] <slangasek> ok
+[18:47] <gema> slangasek: one install out of 7 or 8 will succeed
+[18:47] <slangasek> ah
+[18:47] <slangasek> those are not quite the ratios I was led to understand
+[18:47] <gema> slangasek: some other jobs fail when it reboots randomly
+[18:47] <gema> which can also be due to this bug
+[18:47] <gema> slangasek: 5th boot, 17th boot, 18th boot
+[18:47] <gema> it depends
+[18:48] <gema> slangasek: I hadn't considered before now that it could be X hanging those times also
+[18:48] <gema> slangasek: so we were exploring HW overheating and/or fsck getting on the way
+[18:49]  * slangasek nods
+[18:51] <gema> slangasek: https://bugs.launchpad.net/utah/+bug/1099519
+[18:51] <ubottu> Ubuntu bug 1099519 in UTAH "Bootspeed completes 16-17 runs and then fails to connect to machine" [High,Fix released]
+[18:52] <gema> it's not really fixed, we put togehter a workaround that cannot verify without reliable installs
+[18:52]  * slangasek nods
+=== chiluk is now known as chiluk_away
+[18:56] <tjaalton> gema, stgraber: ok.. can't really look into it now, I'll check it out tomorrow
+[18:56] <gema> tjaalton: ack, thanks
+[19:20] <mterry> @pilot in
+=== udevbot changed the topic of #ubuntu-devel to: Ubuntu 12.10 released | Archive: Open | Dev' of Ubuntu (not support or app devel) | build failures -> http://qa.ubuntuwire.com/ftbfs/ | #ubuntu for support and discussion of hardy -> quantal | #ubuntu-app-devel for app development on Ubuntu http://wiki.ubuntu.com/UbuntuDevelopment | See #ubuntu-bugs for http://bit.ly/lv8soi | Patch Pilots: mterry
+[19:23] <roadmr> infinity: hello! I finished verifying the bugs for checkbox 0.13.9 (remember?) but the SRU is only 5 days old. Should we wait until it reaches 7 days in -proposed?
+[19:27] <infinity> roadmr: What about http://pad.lv/1061198 ?
+[19:27] <ubottu> Launchpad bug 1061198 in checkbox (Ubuntu) "Candidate revision checkbox_0.13.8" [Undecided,New]
+[19:27] <infinity> roadmr: Oh, which I guess is just a meta-bug, now that I look at it.  Still should have a v-done. :P
+[19:28] <roadmr> infinity: yep, metabug, 0.13.8 failed verification for one of the bugs :/
+[19:28] <roadmr> infinity: which is why we superseded it with 0.13.9
+[19:29] <infinity> roadmr: Yeahp, I remember.  I'm not THAT old.  Yet.
+[19:29] <infinity> roadmr: Anyhow, releasing it now.  Thanks.
+[19:29] <roadmr> infinity: on the contrary, thank you for helping!
+[19:56] <stgraber> kees: had any luck with that seccomp testsuite failure?
+[20:12] <kees> stgraber: yeah, already fixed and sent upstream
+[20:13] <kees> stgraber: http://sourceforge.net/mailarchive/forum.php?thread_name=20130123221333.GN26411%40outflux.net&forum_name=libseccomp-discuss
+[20:13] <kees> stgraber: http://sourceforge.net/mailarchive/forum.php?thread_name=20130123225538.GP26411%40outflux.net&forum_name=libseccomp-discuss
+[20:13] <stgraber> kees: nice!
+[20:25] <hallyn> slangasek: adam_g and jamespage have both noticed /dev/kvm perms not being updated...  and it is seeming to me like i need to do 'restart udev' before the udevadm trigger --action-change in qemu-kvm.postinst.  Do i understand right that inotify should be causing udev to see the new config file without a 'restart udev'?
+[20:27] <infinity> hallyn: Are they running the most recent SRU kernels for precise or raring, by any chance?
+[20:27] <stgraber> kees: doing a quick test build with your patches applied here. If that succeeds on both i386 and amd64, I'll push that to Ubuntu and sync from Debian once you have those there too.
+[20:27] <kees> stgraber: if you want to wait a few hours, -2 should be in Debian unstable once my build finishes.
+[20:27] <stgraber> kees: that'd work too :)
+[20:28] <stgraber> I can certainly wait a few more hours
+[20:28] <kees> cool :)
+[20:28] <slangasek> hallyn: I'm not certain if it's inotify or not, but it's certainly always been the case before that udev picks up new rules automatically.  You should absolutely /not/ be calling 'restart udev'
+[20:28] <infinity> hallyn: (I only ask because inotify's kinda slightly busted right now, and there's a new SRU coming to fix that)
+[20:28] <slangasek> (restarting udev considered harmful)
+[20:29] <stgraber> "restart udev" is clearly wrong, "udevadm control --reload-rules" will do what you want if inotify fails
+[20:31] <hallyn> infinity: ok, *i* am seeing it on very latest raring kernel, yes
+[20:32] <hallyn> jamespage: was on quantal, maybe quantal-proposed
+[20:32] <hallyn> slangasek: stgraber: ok then i won't add that :)
+=== slank is now known as slank_away
+[20:33] <Snow-Man> pitti: so, yea, using a symlink for the current 'primary' cluster per-port would work fine, imv.
+=== slank_away is now known as slank
+=== henrix is now known as henrix_
+=== chiluk_away is now known as chiluk
+[20:56] <stgraber> cjwatson, hallyn: I just got that one when upgrading a desktop from 12.10 to 13.04 in LXC. Isn't that the one the grub upload was supposed to fix? http://paste.ubuntu.com/1567189/
+[20:57] <hallyn> stgraber: i don't think so
+[20:57] <hallyn> oh.   yes :)
+[20:58] <stgraber> well, doesn't look like it's completely fixed :)
+[20:59] <hallyn> i bet you broke it.  on purpose.
+[20:59] <hallyn> stgraber: d'oh,
+[20:59] <hallyn> it looks like the latest merge from debian may have dropped the fix
+[21:01] <hallyn> no, there it is, in postinst.in
+[21:07] <infinity> stgraber: Is this a container issue, or...?
+[21:07] <infinity> /usr/sbin/grub-probe: error: failed to get canonical path of /dev/mapper/castiana-home
+[21:08] <hallyn> infinity: yes, grub is not supposed to try to install in a continer (not safe)
+[21:08] <infinity> ^-- Surely, that shouldn't happen.
+[21:08] <hallyn> and yes, /dev/mapper isn't set up in the containers :)
+[21:08] <hallyn> but even if it resovled to /dev/dm*, it would still fail update-grub
+[21:08] <infinity> hallyn: Okay, then whatever logic was added to postinst.in needs to be elsewhere, since zz-update-grub doesn't use that. :P
+[21:08] <hallyn> infinity: doh! :)
+[21:09] <hallyn> what is zz-update-grub
+[21:09] <stgraber> yeah, I think we cover it for the case where we just install grub-pc but not for when upgrading kernels which is what I was doing here (12.10 -> 13.04 dist-upgrade)
+[21:09] <infinity> hallyn: /etc/kernel/postinst.d/zz-update-grub
+[21:09] <hallyn> yeah under debian/kernel.  pshaw
+[21:10] <stgraber> so it sounds like we'll need another round of SRUs to get rid of the problem for good
+[21:10] <hallyn> well, is zz-update-grub a new thing in raring?
+=== salem_ is now known as _salem
+[21:10] <infinity> hallyn: No.
+[21:10] <hallyn> nope
+[21:11] <hallyn> S i g h
+[21:11] <hallyn> stgraber: have you filed the bug?
+[21:11] <stgraber> hallyn: not yet, but I can do that now
+[21:11] <hallyn> stgraber: was this an ubuntu-cloud-based container?
+[21:11] <hallyn> just twondering why you had a kernel image installed otherwise
+[21:12] <stgraber> hallyn: I was working on the auto-dist-upgrader which does Ubuntu Desktop dist-upgrade testing (and so has a kernel and grub installed)
+[21:12] <hallyn> stgraber: it looks like taking a full ubuntu desktop iso install and upgrading it might oughta be a regular lxc test
+[21:12] <stgraber> hallyn: well, once I have the dist-uprader running again with LXC, it'll be doing a dozen of those a day on my box, so we'll catch any regression for sure ;)
+[21:13] <infinity> stgraber: The problem here is that if we skip update-grub altogether, your grub config will be wrong.
+[21:13] <hallyn> stgraber: cool :)
+[21:13] <infinity> stgraber: So, if you use a container to do your upgrade, then reboot that into a VM or bare metal, it... Won't.
+[21:14] <hallyn> well we could try to get fancy and (a) (as discusssed before) set up /dev/mapper entries inthe container at startup and (b) let apparmor/userns be the one to stop update-grub from writing to the host's /
+[21:15] <infinity> In the update-grub case, it's not actually trying to write anything to boot records, just probe values to update the config.
+[21:15] <stgraber> hallyn: I don't know why, but I'm not fond of the idea of having /dev/mapper in my container, even if apparmor is supposed to prevent me from accessing it :)
+[21:15] <hallyn> but that has the problem,
+[21:16] <hallyn> stgraber: right, and we'd be accomodating a veyr rare special case while making update-grub fail and break upgrades in the common case
+[21:16] <hallyn> (common case being /var/lib/lxc/r1/rootfs is jsut a directory on host's /)
+[21:17] <stgraber> infinity: In my case I don't expect the container to ever be bootable in a VM without re-running update-grub anyway as the container is just a directory on my laptop and so doesn't have a partition which means no real UUID
+[21:18] <stgraber> infinity: so as far as I'm concerned, it's fine skipping update-grub entirely in this case and the weird case of people booting a VM image in a container, then dist-upgrading in the container and finally booting in the VM, well, they'll just get the old kernel, that should still be bootable
+[21:18] <infinity> stgraber: Well, we could make update-grub exit 0 at the top for containers, I'm just trying to determine if that's a good or a bad thing for all usecases.  As a non-container-user, I have no idea.
+[21:19] <hallyn> infinity: i think cjwatson had in the past rejected that, but i could be wrong or, if i'm not, don't recall why
+[21:22] <stgraber> one fix would be to check if the backing device exists and is writable. If it's, then go ahead, if it's not, then skip it. That should work fine with any container and non-container paths and if someone really wants grub to read/write to the partitions and MBR, then they just have to create those entries, update apparmor and update the device cgroup settings.
+[21:24] <infinity> stgraber: That's kinda broken for grub-probe's obviously useful failure mode of "your system is actually broken, doofus".
+[21:24] <infinity> stgraber: (eg: a desktop system with a broken /dev, or other such possibilities)
+[21:25] <infinity> stgraber: Papering over the failure because some systems are broken by design feels wrong.
+[21:25] <stgraber> hmm, indeed. Though if that specific check was done only for containers, it'd be half-decent I guess
+[21:25] <hallyn> empowered by design
+[21:26] <infinity> stgraber: Well, that goes back to the "if it's a container, just exit" thing. :P
+[21:26] <hallyn> <chuckle>
+[21:26] <hallyn> right.
+[21:26] <infinity> stgraber: But yeah, I guess probe itself could learn about containers and... I don't know what.  Return bogus info?
+[21:26] <hallyn> i think 'if it's a container, just exit' is ok until we have device namespaces (or something like it)
+[21:27] <hallyn> after all, once we have device ns, we can run udev in the container and /dev/mapper will be there
+[21:28] <infinity> I assume flask-kernel in ARM containers suffers similar pain.
+[21:28] <infinity> s/flask/flash/
+[21:28] <infinity> Obviously, I need a drink.
+[21:28] <mterry> @pilot out
+=== udevbot changed the topic of #ubuntu-devel to: Ubuntu 12.10 released | Archive: Open | Dev' of Ubuntu (not support or app devel) | build failures -> http://qa.ubuntuwire.com/ftbfs/ | #ubuntu for support and discussion of hardy -> quantal | #ubuntu-app-devel for app development on Ubuntu http://wiki.ubuntu.com/UbuntuDevelopment | See #ubuntu-bugs for http://bit.ly/lv8soi | Patch Pilots:
+[21:29] <hallyn> minor slip :)
+[21:29] <stgraber> bug 1104463
+[21:29] <ubottu> bug 1104463 in grub2 (Ubuntu) "/etc/kernel/postinst.d/zz-update-grub triggers a grub update in lxc containers" [Undecided,New] https://launchpad.net/bugs/1104463
+[21:34] <infinity> stgraber: Alright, expanded on your summary of the discussion a bit.
+[21:34] <stgraber> infinity: thanks
+[21:44] <bdmurray> bryce: do you have an opinion on removing xserver-xorg-video-intel from oneiric -proposed?
+[21:48] <bryce> bdmurray, huh, that's the old libreoffice start screen fix, jeez that's ancient
+[21:51] <bryce> bdmurray, that was an easy fix, and quite safe, and very straightforward to reproduce/verify, but it's just a minor cosmetic problem.  If no one is complaining about it, it probably doesn't matter.  It's hard to care much about oneiric issues at this point.
+[21:51] <bryce> bdmurray, sort of a shame to toss the sru after all the work that went into it though.
+[21:52] <bryce> it annoys me we lose so many X SRUs because people don't verify them.  :-(
+[21:52] <infinity> bryce: If it's easy to reproduce/verify, someone should have done so.
+[21:53] <sarnold> it feels like I see an SRU expiry every day or two. tat feels like an astonishing amonut of work to lose..
+[21:53] <infinity> I might have to actually document this somewhere other than the heads of me, cjwatson, and wgrant, but we can actually rescue deleted SRUs (binaries and all).
+[21:53] <infinity> So, if someone suddenly feels the urge to verify something, we don't need to redo the work.
+[21:54] <infinity> We can just copy it back in over itself.
+[21:54] <infinity> But having stuff sitting in proposed for a year isn't doing anyone any favours.
+[21:54] <bryce> infinity, yes someone should have; that was a trivially easy one to reproduce.  I did the verification myself for precise IIRC.
+[21:55] <sarnold> infinity: nice to know it isn't immediately fatal :) but still... *sniff*
+[21:55] <infinity> bryce: I tend to try to verify most of my own uploads these days, just to avoid the frustration of others not doing so.
+[21:55] <bryce> infinity, I'm tempted to install an oneiric build just to do the same here, but not a great use of a couple hours...
+[21:55] <infinity> (I realize as I say this that I currently have an unverified SRU in precise that I need to do something about...)
+[21:55] <bryce> infinity, yeah me too where I can.  With X, so many problems are HW-specific though
+[21:55] <bdmurray> I guess with X bugs its harder to verify them yourself
+[21:56] <hallyn> infinity: though i thought technically the rules, uh, 'encouraged' the bug fixer not doing the verifications?
+[21:56] <infinity> Yeah, X and kernel are both problematic that way.
+[21:56] <hallyn> still i try to give it a week and then go and verify
+[21:56] <infinity> hallyn: I have zero issues with the fixer actually verifying.  I have issues with the fixer rubber-stamping it without actually testing the binaries.
+[21:57] <hallyn> infinity: that's good to know
+[21:57] <infinity> hallyn: The latter case is the reason I *prefer* the submitter verifying, only because he has a vested interest in actually testing it instead of lying.
+[21:57] <bryce> infinity, also in solving the bugs we often identify some work around for the user to test, and often the user is just fine sticking with that workaround, so we lose them for testing the "real" fix.
+[21:57] <infinity> hallyn: But it comes down to trust, to a certain degree.  And I trust some uploaders not to lie to me or cut corners. :P
+[21:57] <hallyn> infinity: haha, given the embarassment of the fix not fixing it, i do feel like as fixer i ahve a vested interest :)  but i understand
+[21:58] <infinity> hallyn: It's generally a combination of laziness and hubris.  If you're *sure* your change was correct, you'll feel like you can totally fudge the paperwork and no one will notice.
+[21:58] <infinity> hallyn: And then when you're wrong, well.  Grr.
+[21:58] <infinity> hallyn: So, just don't do that (which I'm pretty sure *you* don't), and it's all good.
+[22:00] <infinity> bryce: Yeah, the workaround thing can be doubly problematic, if you get them to mangle a conffile or something, and they forever are unable to correctly test the upgraded package against an unmodified setup due to a subsequent communication failure.
+[22:01] <infinity> bryce: But, such is life.  Oh how I wish we had a massive community QA team who could independently repro/verify half these bugs.
+[22:02] <infinity> (On the other hand, I'd also like to see fewer SRUs, so...)
+[22:02] <infinity> I do think the knee-jerk of "I fixed a bug in release X, and I must not backport it to A, B, and C is just not scaleable at all.
+[22:02] <infinity> s/C/C"/
+[22:03] <infinity> I don't have issues with us adding a ton of polish to LTS releases, but we could do with a lot fewer SRUs to interim releases for non-critical bugs, IMO.
+[22:03] <infinity> s/must not/must now/ up there.  Man, I can't type today.
+[22:04] <hallyn> infinity: actually openstack and juju are making that worse i think - everyone wants the fixes backproted to precise so it'll work in juju.  Which is understandable, but more work.
+=== cr3_ is now known as cr3
+[22:05] <infinity> hallyn: Well, like I said, I don't mind the precise SRUs, per se.  But we have a ton of quantal ones, and even a fair few oneirics still, and the reason is because uploaders say "well, this patch applies cleanly to all three releases, it's almost zero effort for me to SRU them all".
+=== cr3 is now known as Guest95022
+[22:06] <infinity> hallyn: And that's true.  But they're not thinking of the burden of post-upload verification and release for what is, 99% of the time, not a critical bug.
+[22:06] <infinity> IMO, for non-LTS releases, if it install, boots, doesn't blow up your hardware, and gets security fixes, we're more or less done.
+[22:06] <infinity> (Yes, there are ciritcal bugs that don't fit in that broad scope, but you get the idea)
+[22:08] <hallyn> infinity: yeah
+[22:09] <infinity> hallyn: Now, we don't want to cause massive regressions when upgrading through releases, of course, but "this image is a bit less pretty than I think it should be" or "there's a typo in this thing over here" or whatever isn't really much of a regression.  And the answer is always "well, upgrade to the next release, then, it's fixed there, because all SRUs have to be fixed in our current devel release".
+[22:11] <infinity> All of this is probably just me accidentally arguing for getting rid of interim releases altogether and only doing LTSes, but let's pretend I didn't say that out loud, cause we're not even ready to discuss that sort of thing yet, and I'm also not sure which side of that fence I'm personally on. :P
+[22:11] <slangasek> or better yet: "hey, you know we have a constantly-usable trunk in our devel release now"
+[22:11] <infinity> slangasek: Jinx.  Ish.
+[22:12] <infinity> A curious side-effect of ditching interim releases (if we were to do so) is that LTSes might get better support from the usual SRU overachievers.
+[22:13] <infinity> Cause the people who currently feel they need to SRU to quantal/precise/oneiric would instead look into backporting to precise/lucid/hardy.
+[22:14] <dobey> 2 years is a very long time; some of the differences are just not reconcilable with simple SRUs
+[22:15] <infinity> dobey: Sure, and that's almost a positive.  Cause many bugs aren't worth SRUing back to old LTSes when the answer should be "sorry, upgrade to precise if you want that fixed".
+[22:15] <dobey> shipping unity on lucid would be fun though
+[22:15] <infinity> dobey: But there are also a lot of bugs that probably SHOULD be fixed in older LTSes that get ignored in favour of people fixing things in oneiric for very little benefit.
+[22:16] <dobey> probably
+[22:16] <infinity> dobey: So, meh.  It's hard to debate how it would actually turn out.  But I suspect less focus on interim releases would both reduce the SRU workload and accidentally produce a few more fixes for old LTSes in the process.
+[22:16] <dobey> but i wouldn't say that is entirely becuase interim releases exist
+[22:17] <infinity> dobey: No.  There are any number of reasons people don't fix bugs in older releases.  Sometimes, it's too hard, sometimes it's easy but they just don't personally see the value, etc, etc.
+[22:17] <infinity> But hey, I don't see the value in fixing anything but hardware-exploding critical bugs in oneiric either, and people do it.
+[22:17] <dobey> there'd probably be a few more fixes making it back, but i wouldn't guess that it would be a significantly useful increase
+[22:17] <infinity> If those same people had oneiric taken away from them, they'd need an outlet, right? :)
+[22:18] <infinity> dobey: Anyhow, all just random stream of consciousness faff.  It's not like we're planning to announce the end of the 6 month release cycle any time soon.
+[22:18] <dobey> yeah i know
+[22:18] <infinity> (Though, I suspect you'll hear more discussion about it off and on leading up to 14.04)
+[22:19] <dobey> have heard plenty of faffing about it over the past several cycles already as well :)
+[22:19] <bryce> infinity, I'm coming to be of the same opinion vis a vis SRUs for interim releases, although usually once you've sorted out the backport for A (stable) and C (LTS), the fix for B is almost for free anyway.
+[22:21] <slangasek> bryce: the uploading is almost for free, the verification is a huge cost
+[22:21] <dobey> although i'd also presume that if we do kill off interim releases and only do LTS, that we'll end up just doing LTS every 12 or 6 months, and have similar problems with getting more fixes backported; especially with LTS being 5 years across the board now
+[22:22] <slangasek> "LTS every 12 or 6 months" - certainly not :)
+[22:22] <hallyn> lts every 6 months?
+[22:22] <hallyn> :)
+[22:22] <hallyn> phew
+[22:22] <bryce> slangasek, exactly - the verification cost is why I'm coming to this opinion.
+[22:24] <dobey> 18-24 month releases are nice for having more development time, but also a huge drain. spending a year doing a bunch of work and then having all your requirements change for the release, is not fun :)
+=== cr3_ is now known as cr3
+=== ximion1 is now known as ximion-afk
+=== ximion-afk is now known as ximion1
+=== zequence_ is now known as zequence
+=== zequence_ is now known as zequence
+=== cpg|away is now known as cpg
+[23:18] <bdmurray> roaksoax: isc-dhcp has been sitting in precise-proposed for a long time because bug 974284 and bug 727837 are unverified
+[23:18] <ubottu> bug 974284 in isc-dhcp (Ubuntu Precise) "invoking dhclient3 with -1 causes issue if no dhcp server available" [High,Fix committed] https://launchpad.net/bugs/974284
+[23:18] <ubottu> bug 727837 in dhcp3 (Ubuntu Hardy) "dhcp3-server fails to drop privileges properly" [Undecided,Confirmed] https://launchpad.net/bugs/727837
+[23:19] <cjwatson> stgraber,hallyn,infinity: this is all already fixed in Debian/experimental/bzr and precise-proposed, just not yet in raring
+[23:21] <Kano> hi, who works on secure boot? just got a board with it but kubuntu did not boot but fedora did
+[23:23] <stgraber> bdmurray: I guess I can confirm those two if you want. But I'm the author for both patches and the uploader, so not ideal :)
+[23:24] <bdmurray> stgraber: I thought infinity was just saying that was fine
+[23:25] <stgraber> bdmurray: yeah, I tend to self-verify my SRUs when nobody else does it and I actually care about the fixes, those two I really don't care about so didn't bother verifying :)
+[23:26] <stgraber> bdmurray: marked both verification-done
+[23:27] <infinity> cjwatson: Ahh, I think stgraber's assumption was that raring and precise-proposed had the same behaviour, if that's not true, yay.
+[23:28] <stgraber> infinity: that was my assumption based on the, upload to dev before sruing habit, I didn't actually diff the scripts to check :)
+[23:29] <cjwatson> Right, I make sure it's committed *somewhere* so it doesn't get lost, but I consider "repository that will definitely end up in raring at some point before release" as acceptable
+[23:29] <cjwatson> I'm doing an experimental build now anyway
+=== chiluk is now known as chiluk_away

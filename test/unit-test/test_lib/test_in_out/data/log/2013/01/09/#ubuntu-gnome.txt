@@ -1,0 +1,59 @@
+[08:16] <darkxst> ricotz, sorted out the e4x thing
+[08:16] <darkxst> and now just failing 1 test
+[08:16] <darkxst> gnome-shell runs, albeit with a few minor issues
+[08:31] <ricotz> fantastic ;)
+[09:58] <ricotz> darkxst, do you have a new patch-stack based on gjs master?
+[09:58] <darkxst> ricotz, just rebased and cleaning it up a
+[09:58] <darkxst> bit
+[09:58] <ricotz> darkxst, oh, i see, take your time
+[10:43] <darkxst> ricotz, https://www.dropbox.com/s/gxhzh6qkc3sak92/gjs188-r1.patch
+[10:43] <darkxst> might still be a few misplaced hunks but mostly cleaned up.
+[10:47] <ricotz> darkxst, thanks
+[10:47] <ricotz> just a minor, there are some of those faulty alignments
+[10:47] <ricotz> -                  jsid       id,
+[10:47] <ricotz> +                  JSObject  **obj,
+[10:53] <ricotz> darkxst, #define JSVAL_IS_OBJECT(obj) !JSVAL_IS_PRIMITIVE(obj)
+[10:53] <ricotz> this is not the same as the original method
+[10:53] <ricotz> it will miss the NULL case
+[10:54] <ricotz> meaning NULL will be handled as not an object
+[10:55] <ricotz> #define JSVAL_IS_OBJECT(obj) ( JS_IS_NULL(obj) || !JSVAL_IS_PRIMITIVE(obj))
+[11:19] <darkxst> hmm right, I missed that somehow ;)
+[11:22] <ricotz> darkxst, are you still seeing tests failing?
+[11:22] <darkxst> localeCompare fails
+[11:22] <ricotz> assertRaises(function() { "\ud800".localeCompare("a"); });
+[11:22] <ricotz> is suppose to fail
+[11:22] <ricotz> so you can ignore those
+[11:25] <darkxst> but it aborts the other tests? that doesnt seem right
+[11:26] <ricotz> it runs through for me while commenting those two
+[11:27] <darkxst> yeh everything else passes, although some things are probably missing tests
+[11:27] <ricotz> yes, running g-s is the actual test ;)
+[11:28] <darkxst> g-s runs, but not 100% right
+[11:28] <darkxst> dash is broken
+[11:28] <darkxst> overview search is a bit strange
+[11:30] <darkxst> I suspect I could have some JSPropertyOP's somewhere
+[11:31] <darkxst> They only segfault if the they use 'id'
+[11:31] <darkxst> other wise they just fail silently with priv == NULL
+[11:31] <darkxst> ^^could have missed
+[11:34] <ricotz> hmm, you should avoid changing the functions interface
+[11:34] <darkxst> mozilla changed it
+[11:35] <ricotz> typedef JSBool (*JSPropertyOp)(
+[11:35] <ricotz>     JSContext *cx, JSObject *obj, jsid id, jsval *vp);
+[11:35] <ricotz> you are expecting **obj, ...
+[11:36] <darkxst> typedef JSBool
+[11:36] <darkxst> (* JSPropertyOp)(JSContext *cx, JSHandleObject obj, JSHandleId id, JSMutableHandleValue vp);
+[11:37] <ricotz> ah i see
+[11:37] <darkxst> the JSHandle* things are pointers rooted objects
+[11:37] <darkxst> upstream are planning on changing most of jspai to use them directly
+[11:37] <darkxst> but currently onlt the callbacks do
+[11:38] <ricotz> ok
+[11:43] <darkxst> some way to scan for all callback functions would be nice
+[11:45] <ricotz> look for gjs_*et_prop_verbose_stub
+[11:45] <ricotz> gjs_add_prop_verbose_stub gjs_delete_prop_verbose_stub
+[11:46] <ricotz> jsapi-util.c/h
+[11:48] <darkxst> hmm
+[11:50] <darkxst> and how to use that? short of plugging it into the class definitions
+[11:50] <ricotz> was just looking to similar interfaces
+[11:51] <ricotz> i guess i will try to run it later to maybe see some failure outputs
+[11:58] <darkxst> maybe could check from within priv_from_js()
+[13:52] <ricotz> darkxst, didnt really get to look into it
+[13:54] <ricotz> darkxst, it seems to run stable despite the broken dash

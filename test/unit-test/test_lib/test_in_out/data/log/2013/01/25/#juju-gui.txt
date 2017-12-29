@@ -1,0 +1,56 @@
+=== Makyo is now known as Makyo|out
+[02:48]  * benji suspects gary_poster just got back from dinner.
+[02:48] <gary_poster> benji, heh, about half hour ago, yes :-)
+[02:49] <gary_poster> well, 21 minutes
+[02:49] <benji> I hope it was good.  Probably not as good as beef tongue in Copenhagen, but what is?
+[02:52] <gary_poster> benji, heh, thanks. It was Texas chili from a very local-seeming place.  Very hot.  Good.
+[02:52] <benji> sounds good
+=== rogpeppe1 is now known as rogpeppe
+[14:20] <benji> guihelp: has anyone seen this before?  I am trying to do a view.set('container', container);
+[14:20] <benji> in a test but it is ignored
+[14:21] <benji> I have tried tracing through the morass that is YUI's idea of how to treat object attributes but I don't yet understand why
+[14:21] <benji> it is not a "writeOnce" attribute, I have eliminated that
+[14:25] <hazmat> benji, js debugger, or try setting other attributes, most likely i'd guess something else is setting it after your set
+[14:26] <benji> hazmat: nope, immediately after the call a subsequent .get returns undefined
+[14:52] <frankban> benji: what is container? a string? YUI uses Y.one as setter
+[14:52] <benji> frankban: an object
+[14:52]  * benji meditates upon "YUI uses Y.one as setter"
+[14:54] <frankban> benji: what is returned, in your code, if you do "Y.one(container)" ?
+[14:54] <benji> let me see...
+[14:55] <benji> frankban: both before and after the .set Y.one('container') returns null
+=== Makyo|out is now known as Makyo
+[14:58] <frankban> hum, benji, in node_modules/yui/view/view.js, Y.View defines this attr: http://pastebin.ubuntu.com/1569972/
+[14:58] <frankban> so, the setter is Y.one, and it's writeOnce too
+[14:58] <benji> frankban: ah, that is a nice clue; Y.one seems to be a very odd setter to me
+[14:59] <benji> I suspect that means that no one can ever set it (without using the "force" option or digging around in the guts of YUI)
+[15:00] <benji> that's a bit irritating for testing
+[15:01] <teknico> benji, I seem to have the exact same problem you had yesterday when installiing phantomjs globally
+[15:01] <frankban> benji: maybe Y.one is a no-op if you pass an Y.Node instance, I am not sure, but if so, it could eliminate some irritation
+[15:01] <benji> teknico: I hope the note I added to HACKING helped/will help
+[15:01] <teknico> benji, mocha-phantomjs did install, but I still have the Error 127 when running "make test-debug" or "make test-prod"
+[15:01] <teknico> looking
+[15:02] <frankban> teknico: have you installed phantomjs itself?
+[15:03] <teknico> frankban, I run "sudo npm -g install phantomjs"
+[15:03] <teknico> which tries to get the 1.8.0 version, which apparently is not there
+[15:04] <teknico> benji, I'll try doing that, and also add to HACKING a link to the archive to be downloaded :-)
+[15:04] <benji> teknico: good idea
+[15:09] <benji> ooh, the YUI "setter" really isn't a setter; it is a pre-processor called before the value is stored
+[15:09] <benji> therefore Y.one makes sense, that way "container" can be set with either a DOM node or a CSS selector, either of which will be turned into a YUI Node before storing
+[15:10] <benji> "getters" are similarly not really getters, they are a way to post-process a stored value (or override it, I assume) before returning the value to the caller
+[15:17] <teknico> look at that! tests running in terminal, what a beautiful sight ;-)
+[15:19] <benji> indeed
+[15:19] <benji> well, I figured it out, but it's not pretty: view._state.data.container.getter = function() {return 99;}
+[15:21] <teknico> what a not-so-beautiful sight :-)
+[15:29] <teknico> bcsaller1, benji, frankban, Makyo, daily/weekly call in one minute
+[15:31] <teknico> frankban, starting without you
+[17:47] <Makyo> guihelp: All console logging appears to be off in 'devel' mode.  Was this an intended change?
+[17:55] <bcsaller1> Makyo: no, it should still log, though many of the messages were removed 
+[17:55] <goodspud> Thanks for the tidy up off the controls in the bottom bar.
+[17:56] <Makyo> bcsaller1, ah, alright.
+[17:56] <Makyo> Will try again.
+[20:15] <benji> new branch up for review: https://codereview.appspot.com/7196056
+[20:20] <Makyo> benji, Thanks.  Will review in a few.
+[20:21] <Makyo> Assuming no gary_poster calls this week, what with the sprint.
+[20:21] <benji> that is my assumption too
+[23:16] <hazmat> benji, did you ever get your phantom issues sorted?
+[23:18] <benji> hazmat: yep; I ended up manually extracting the archive and putting the phantomjs executable on my path

@@ -1,0 +1,70 @@
+[14:06] <mlankhorst> tjaalton: shall I push newer pixman + inputproto to raring? allows me to build xserver git
+[14:07] <tjaalton> mlankhorst: how crazy is the new pixman? if it doesn't regress badly, go for it
+[14:10] <mlankhorst> well the inputproto is rc1, but xserver 1.14 already released rc1 too, new video abi yay
+[14:10] <tjaalton> yeah
+[14:10] <tjaalton> pixman seems to improve some cairo-perf tests
+[14:14] <mlankhorst> we want x1.14 in raring right?
+[14:15] <tjaalton> that's what we decided
+[14:15] <mlankhorst> ah k
+[14:16] <mlankhorst> I could handle all the video driver bumps then
+[14:16] <tjaalton> don't push that just yet :)
+[14:16] <mlankhorst> nah
+[14:16] <mlankhorst> still gathering courage to do that
+[14:16] <tjaalton> we could prepare the branch though
+[14:17] <mlankhorst> I wanted to do some testing against airlied's reverse prime stuff, that's why I was starting on testing x1.14 in the first place
+[14:18] <tjaalton> there's ubuntu+1 branch for playing with that
+[14:18] <tjaalton> but first maybe push 1.13.1 to raring
+[14:18] <mlankhorst> I'll upload some recent pixman/inputproto which would allow me to test
+[14:18] <tjaalton> or what's the current rc for 1.13.2
+[14:18] <tjaalton> sure
+[14:19] <tjaalton> you'll also get rid of patch 500_* :)
+[14:19] <mlankhorst> pointer barriers?
+[14:19] <tjaalton> yeah
+[14:19] <mlankhorst> the sad part is that I didn't even have to look that one up, just from memory :P
+[14:19] <tjaalton> or a subset of it? not sure
+[14:20] <tjaalton> dunno if it could regress unity.. I can test that though
+[14:32] <mlankhorst> yeah should be easy to test
+[14:32] <tjaalton> i'll update the ubuntu branch to 1.13.1.901 and push to raring
+[14:37] <mlankhorst> ok
+[14:49] <tjaalton> mlankhorst: installing libqt4-dev with the backport stack installed reverts to the old one, since there's no renamed libglu1-mesa-dev?
+[14:49] <mlankhorst> very sure mesa9 dumped libglu1 out of the repository
+[14:50] <tjaalton> libqt4-opengl-dev
+[14:50] <tjaalton> oh right
+[14:50] <mlankhorst> old libglu1 should still install though
+[14:50] <tjaalton> it does, and reverts to the old version
+[14:50] <tjaalton> or something like that
+[14:51] <mlankhorst> hm waitoh right, the libglu1-mesa-lts-quantal was from 8.0.4
+[14:52] <mlankhorst> try this
+[14:52] <mlankhorst> # apt-get install libglu1-mesa-dev libgl1-mesa-dev-lts-quantal
+[14:53] <tjaalton> that works
+[14:53] <tjaalton> but should libglu get renamed as well? it's a separate package now
+[14:55] <mlankhorst> old libglu1 works and barely got updated, didn't see the point
+[14:55] <tjaalton> because of dependencies..
+[14:56] <tjaalton> libqt4-opengl-dev depends on it
+[14:56] <tjaalton> trying to install it removes the backport stack :/
+[14:56] <mlankhorst> yeah that's a bug in mesa, need to fix that there
+[14:56] <tjaalton> how is it a bug in mesa?
+[14:57] <mlankhorst> actually it's just a conflict resolution fail
+[14:57] <mlankhorst> Depends: libglu1-mesa (= 8.0.2-0ubuntu3), libgl1-mesa-dev | libgl-dev
+[14:57] <tjaalton> in mesa?
+[14:57] <tjaalton> ah, I see now
+[14:58] <tjaalton> or I think so :)
+[14:59] <mlankhorst> but installing libgl1-mesa-dev wipes out everything, I was considering changing mesa so the old -dev packages will work on the new stack
+[14:59] <mlankhorst> so what you describe will not happen then
+[14:59] <tjaalton> ok
+[15:07] <tjaalton> mlankhorst: gimme a debdiff for review when ready :)
+[15:08] <mlankhorst> still testing x11proto/pixman :P
+[15:08] <tjaalton> sure
+[15:09] <mlankhorst> ok inputproto done
+[15:25] <mlankhorst> ricotz: did you do the symbols for pixman?
+[15:30] <ricotz> mlankhorst, you mean in edgers? yes
+[15:31] <ricotz> as the changelog indicates
+[15:40] <mlankhorst> argh why not simply track down the correct versions :P
+[15:40] <mlankhorst> now i had to do it
+[15:41] <ricotz> i guess you are bored?
+[15:41] <mlankhorst> nah pushing to debian, they'd probably get annoyed if I didn't
+[15:42] <ricotz> i see, please sort the symbols correctly, irc they werent
+[15:42] <mlankhorst> I just added the new ones to the correct place and moved the pixman_format ones
+[15:43] <ricotz> there were some put at the end where they werent suppose to be
+[15:47] <mlankhorst> yeah got those
+=== yofel_ is now known as yofel

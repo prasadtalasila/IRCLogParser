@@ -1,0 +1,90 @@
+[00:18] <shadeslayer> :S
+[00:19] <shadeslayer> quassel has a huge diff
+[00:20] <yofel> it does o.O?
+[00:21] <shadeslayer> http://paste.kde.org/656684
+[00:22] <shadeslayer> ignore the changelog bits ofcourse
+[00:24] <yofel> wth, we *never* merged that so far it seems o.O
+[00:24] <shadeslayer> O_O
+[00:24] <shadeslayer> because we use compat 7 and what not maybe?
+[00:25] <shadeslayer> even the copyright files are different xD
+[00:37] <shadeslayer> there's stuff in the build-deps that makes no sense
+[00:37] <shadeslayer> for eg. libnice-dev
+[00:38] <shadeslayer> whereas from what I can tell by grepping, quassel does not use any of libnice's API
+[00:38] <shadeslayer> ( this is in the debian package )
+[00:40] <shadeslayer> apachelogger: Riddell http://csstardis.co.uk/
+[00:49] <shadeslayer> yofel: pointless to merge this
+[00:50] <yofel> ack
+[00:51] <shadeslayer> my inbox is full of interesting threads
+[00:51] <shadeslayer> "Has INTEL been taken over by m$ or is it a market-manipulation tie-up ??"
+[00:51] <shadeslayer> "Ubuntu and derivatives (Re: Ubuntu.com Download Page)"
+[00:55] <Darkwing> Do you know of a way to use Virt to boot up an install of windows that is dual booted within Linux?
+[00:55] <Darkwing> So, I have a dual boot (Games and school) But, I want to multitask but still have access for my school stuff in windows. I can reinstall windows in a virtbox *Gags* but, I want to be able to boot my installed Windows within Linux.
+[01:00] <shadeslayer> yofel: we have a problem
+[01:01] <yofel> huh?
+[01:01] <shadeslayer> I'm rebuilding libkolab and got this make[3]: *** No rule to make target `/usr/lib/libboost_system-mt.so', needed by `lib/libkolab.so.0.4.1'.  Stop.
+[01:01] <yofel> needs libboost-system1.49-dev
+[01:01] <shadeslayer> ah
+[01:01] <shadeslayer> you added it
+[01:01] <shadeslayer> I have the old on
+[01:01] <shadeslayer> *one
+[01:01] <yofel> that should *really* be a dep of libkolabxml-dev
+[01:01] <yofel> but I'm too lazy
+[01:01] <shadeslayer> xD
+[01:03] <shadeslayer> yofel: the thing is, it worked fine
+[01:03] <shadeslayer> the last time I tried it
+[01:03] <yofel> it worked with old libkolabxml
+[01:03] <yofel> the new one nees that ^
+[01:03] <shadeslayer> I see
+[01:03] <yofel> and I guess the cmake file implies that it's there later
+[01:03] <yofel> s/implies/assumes/
+[01:03] <kubotu> yofel meant: "and I guess the cmake file assumes that it's there later"
+[02:46] <shadeslayer> yofel: so I got some stuff fixed upstream
+[02:46] <shadeslayer> wrt kolab
+[02:46] <shadeslayer> see http://git.kolab.org/libkolab/log/?h=libkolab-0.4
+[02:46] <shadeslayer> however
+[02:47] <shadeslayer> I seem to have hit some sort of bug in ctest 
+[02:47] <shadeslayer> http://paste.kde.org/656726/
+[02:47] <shadeslayer> where the build does not proceed even if the test fails
+[02:47] <shadeslayer> see http://paste.ubuntu.com/1571583/
+=== jono is now known as Guest22113
+=== SteveRiley_ is now known as SteveRiley
+[10:21] <yofel_> shadeslayer: it seems like calendaringtest doesn't finish now... there's no result status for #4
+[10:21] <yofel_> wtf...
+=== yofel_ is now known as yofel
+[10:21] <yofel> good morning btw. ^^
+[10:21] <shadeslayer> I think I know why
+[10:22] <shadeslayer> <jmeeuwen> this is for Debian Wheezy, so we ship and build against libcalendaring
+[10:22] <shadeslayer> <jmeeuwen> because there is no KDE 4.9 in Debian, as i'm sure you're well aware
+[10:22] <shadeslayer> <jmeeuwen> so we provide the bare minimum of what we need from kde 4.9 through a library of our own called libcalendaring
+[10:22] <shadeslayer> maybe calendaringtest needs libcalendaring ?
+[10:22] <yofel> oh, fun
+[10:25] <shadeslayer> I can't say for sure though
+[10:27] <shadeslayer> could be another bug in ctest
+[10:27] <shadeslayer> as for the test failing, I was told it seems like an UTF issue
+[10:27] <shadeslayer> any ideas if we should export some var for UTF stuff?
+[10:35] <yofel> no :/
+[10:38] <shadeslayer> :)
+[10:41] <shadeslayer> yofel: oh ... maybe calendaringtest is what's blocking
+[10:42] <shadeslayer> maybe formattest fails properly, but the build is stuck waiting for calendaringtest to finish
+[10:42] <shadeslayer> ( I was under the impression that formattest was blocking the build )
+[10:43] <yofel> that's what I said...
+[10:43] <yofel> the weird thing is that it passed before
+[10:45] <shadeslayer> right
+[10:45] <shadeslayer> I didn't notice that
+[14:06] <BluesKaj> Howdy folks
+[14:28] <afiestas> There are a bunch of complains about "kubuntu missing debug symbols" in reddit
+[14:28] <afiestas> how are they done? do you know where we fail?
+=== mck182 is now known as mck182|afk
+[15:11] <sheytan> apachelogger:  Hey! 
+[15:44] <sheytan> http://www.youtube.com/watch?v=e9esojVZcTg
+=== mck182|afk is now known as mck182
+[16:17] <apachelogger> sheytan: lovely
+[16:17] <apachelogger> did you talk to nuno?
+[16:21] <apachelogger> afiestas: I probably fail at making drkonqi making sure they can be installed
+[16:22] <apachelogger> what with it being a problem of continous bandwith and disk space use vs. insanely high bandwith and disk access when needed
+[19:23] <kubotu> ::runtime-bugs:: [1106271] systemsettings does not start @ https://bugs.launchpad.net/bugs/1106271 (by piotrekw1)
+[19:26] <yofel> apachelogger: add bug 1105968 to the missing debug info list. I don't get why it doesn't find the workspace debug symbols though
+[19:26] <ubottu> bug 1105968 in Kubuntu PPA "missing debug information for plasma-desktop" [Undecided,New] https://launchpad.net/bugs/1105968
+[20:27] <apachelogger> yofel: broken database qapt or something
+[20:28] <apachelogger> yofel: kill -s SIGILL `pidof plasma-desktop`
+[20:28] <apachelogger> see if you can reproduce it

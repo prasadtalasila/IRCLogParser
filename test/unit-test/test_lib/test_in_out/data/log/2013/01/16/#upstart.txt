@@ -1,0 +1,95 @@
+[00:00] <slangasek> I'm trying to think through why that's not simply a bug in the current importer, fixable by having richer annotations in the loom data
+[00:00] <xnox> bug 911496
+[00:00] <xnox> http://pad.lv/911496
+[00:01] <xnox> because given one source package in can now have one or many states (the debian one or the ubuntu one) for each version =/ and it all gets hairy.
+[00:02] <slangasek> ah right, because then you're trying to do a merge from the Debian branch into the Ubuntu branch, and use the looms for it, but the Debian branch's loom doesn't actually represent what you'd be merging
+[00:02] <xnox> =) yeap.
+[00:03] <xnox> i think it was a bad idea to introduce series.vendor
+[00:04] <xnox> anyway =) i want tea and need to send in patch pilot report.
+[00:05] <slangasek> :)
+[11:55] <jodh> xnox/stgraber: comments please - https://wiki.ubuntu.com/FoundationsTeam/Specs/RaringUpstartUserSessions#Shutdown_Details
+[14:30] <stgraber> jodh: looking
+[14:35] <stgraber> jodh: wow, we end up with a pretty complex logout sequence but I guess it makes sense ;) We'll need to restrict the shutdown command to --user for now to avoid people trying to use it against PID 1.
+[14:36] <jodh> stgraber: It might need some tweaks, but it's as fair as I could make it whilst also having reasonable performance.
+[14:36] <jodh> stgraber: agreed - this is for Session Inits only for this cycle :)
+[14:38] <jodh> stgraber: an alternative could be that we handle the entire shutdown from a job, but I'm not particularly in favour of that as we don't have sufficient control over the other jobs.
+[14:45] <jodh> stgraber: do you know the desktop suspend path? That's the only scenario not covered in that section.
+[14:46] <stgraber> jodh: I think the desktop suspend path is pretty much a direct call to pm-suspend, I'm not sure gnome-session is really involved there
+[15:02] <jodh> stgraber: ack. I wonder if adding a pm-suspend hook that emits a 'resumed' event would be useful?
+[15:19] <stgraber> jodh: yeah, I guess having suspend/resume events would be nice and will be easy enough to do
+[15:22] <xnox> jodh: do we not have those system wide? or we just come back and assume the laptop is still in the same country connected to the same Heathrow airport wifi hot spot?
+[15:24] <xnox> is this point were I am being pressed for :: events?! =)
+[15:25] <jodh> xnox: we don't have such events atm, but yeah, it should be at the :sys: level.
+[15:26] <stgraber> jodh: just saw your e-mail, looks like that branch isn't based on the right upstream branch, let me fix that :)
+[15:27] <stgraber> (I didn't modify any .conf in my branch, so I must have messed up its base yesterday when debugging upstart)
+[15:27] <jodh> stgraber: ok, np.
+[17:38] <addisonj> looking at this post: http://serverfault.com/questions/128605/have-upstart-read-environment-from-etc-environment-for-a-service, is this still the best way to properly source an environment?
+[17:44] <xnox> addisonj: yes, but tbh it's best to only source the only environemt variable you want / need like guested in the second answer.
+[17:45] <addisonj> xnox: so setuid/setgid doesn't do anything PAM? just runs the daemon with that uid/gid set?
+[17:45] <xnox> yes.
+[17:45] <addisonj> xnox: yeah, problem is, we inject config into our application servers through env vars and don't want to maintain that list elsewhere...
+[17:45] <xnox> I believe, you can check the source code should be easily done.
+[17:46] <xnox> addisonj: but you do have that list somewhere right?!
+[17:46] <addisonj> chef writes it out to /etc/environment
+[17:46] <xnox> addisonj: on debian/ubuntu systems it is typical to have /etc/defaults/mydaemon which is user editable file for configs.
+[17:47] <xnox> addisonj: chef can also write out /etc/init/mydaemon.overrides which includes partially the stanzas you need with environmental variables you need.
+[17:47] <xnox> s/overrides/override/
+[17:47] <xnox> which upstart will apply on top of the .conf file.
+[17:47] <xnox> (patch-style replacing individual stanzas)
+[17:47] <addisonj> oh, cool, didn't know that
+[17:47] <xnox> see cookbook
+[17:48] <xnox> http://upstart.ubuntu.com/cookbook/
+[17:48] <addisonj> right now, we just use su and run it as our non-privileged user with env sourced, which has worked
+[17:48] <addisonj> but now I am trying to do a reload but the SIGHUP isn't getting through to me process
+[17:49]  * xnox wonders if upstart is tracking su pid, instead of daemon pid.
+[17:49] <addisonj> i believe it is
+[17:49] <xnox> does $ status mydaemon matches the pid of the daemon queried via ps?
+[17:50] <addisonj> oh, lemme check, never thought of doing that
+[17:51] <xnox> cuase if it doesn't upstart is sending SIGHUP to something else =))))
+[17:51] <xnox> (also see cookbook on establishing fork count)
+[17:51] <addisonj> yeah, the pid is the su process
+[17:52]  * xnox recommends to avoid su / sudo in upstart jobs
+[17:52] <addisonj> so I just need to do expect fork 2 or something and it should work I imagine?
+[17:52] <xnox> http://upstart.ubuntu.com/cookbook/#expect-daemon
+[17:52] <xnox> expect daemon
+[17:52] <addisonj> yeah... thats why I was asking about proper PAM support so I could avoid that, maybe I shall hack something up to properly source env as part of the job
+[17:55] <addisonj> on another note however, upstart is quite awesome :) I much prefer it to init.d
+[17:56] <xnox> addisonj: http://paste.ubuntu.com/1538257/
+[17:57] <xnox> example of script stanza that sources config file with envrionment variables and then executes fork.
+[17:57] <xnox> you can have setuid/setguid stanzas up there if you need to change user.
+[17:58] <xnox> this way you track "expect fork" & don't need su
+[18:00] <addisonj> hrm, interesting, I think the only problem with that is that /etc/environment vars don't do an export :\ but I think ican make it work with someting like that
+[18:06] <xnox> . /etc/environment
+[18:06] <xnox> export $PATH
+[18:06] <xnox> export $socks_proxy
+[18:06] <xnox> or whichever you need.
+[18:07] <xnox> or make chef write out sourcable / exportable /etc/environment
+[18:08] <addisonj> yeah, I shall figure something out, but you have been quiet helpful, many thanks
+[18:21] <xnox> np.
+[19:33] <stgraber> jodh: ping
+[19:41] <stgraber> jodh: ping?
+[20:43] <depesz> hi. first of all - i never had to write init scripts for upstart. but today is the day. So, I have a program, pgbouncer, that I can start, or stop, and it works fine.
+[20:44] <depesz> but. this program has also full online restart mode. where I run it using special parameters, and it takes over job of previously running copy. but the new copy has different pid, and upstart doesn't knwo it's still running
+[20:44] <depesz> do you know of any way to let upstart know that pid of a service has changed ?
+[21:05] <JanC> depesz: I suppose you mean it does a handover between 2 instances of the program so that there is no "gap" during the restart?
+[21:06] <JanC> no availability gap
+[21:07] <depesz> i am not sure about how it works internally, but as far as I understand - there is no gap as in "moment in time when there is no pgbouncer"
+[21:07] <depesz> there is always some pgboucner running, but it can online restart/upgrade
+[21:09] <JanC> maybe you could do some trickery by only using pre- & post- scripts but no main exec/script
+[21:09] <JanC> but it's certainly something where upstart could improve
+[21:25] <xnox> depesz: JanC: in this case you should use instances and restarting actually should stop one instance and start another.
+[21:25] <xnox> this way you can achieve & monitor the overlap as well.
+[21:25] <depesz> xnox: but i don't want to use restart.
+[21:25] <depesz> as restart does stop+ start.
+[21:26] <depesz> the built-in (in pgbouncer) is much better
+[21:26] <xnox> depesz: you can override in pre-stop script what actually happens during stop+start combo.
+[21:26] <xnox> depesz: detect that restart was requested and perform the pgbouncer handover.
+[21:27] <xnox> I am giving you a method how to use the built-in pbuilder restart & let upstart track the new pid.
+[21:27] <depesz> hmm .. ok
+[21:28] <JanC> xnox: that's more or less what I suggested, but there should probably be a more user friendly way to express that in upstart
+[21:30] <xnox> 90% things are trivial 10% are easy enough to achieve ;-) pre-stop scripts are unusual but it's not the end of the world.
+[21:55] <JanC> xnox: still, having syntax for it makes it easier to understand what the config does
+[22:02] <JanC> that's why sysvinit scripts have a semantic difference between restart & reload, for example
+[22:05] <xnox> JanC: so does upstart. it has both reload and restart
+[22:06] <JanC> except reload & restart are still (mostly) hardcoded
+[22:10] <JanC> and reload breaks if it causes the daemon to "switch" to another PID

@@ -1,0 +1,245 @@
+=== rsalveti_ is now known as rsalveti
+[10:50] <tjaalton> there's no d-i upload using the backport stack for 12.04.2 yet?
+[10:54] <cjwatson> should be in -proposed ...
+[10:56] <tjaalton> oh
+[10:57] <tjaalton> yeah there it is.. didn't think to check -proposed
+[10:58] <tjaalton> I think there is a newer kernel available now (-35), so maybe a rebuild is in order?
+[10:58] <tjaalton> uh
+[10:58] <tjaalton> -21
+[10:59] <cjwatson> I'd like to finish landing the SB stack first please
+[10:59] <tjaalton> sure, just thinking out loud :)
+[10:59] <cjwatson> stgraber: Did you ever manage to test precise images on non-SB systems of any kind?
+[10:59] <cjwatson> (Or anyone else?)
+[11:08] <tjaalton> cjwatson: you mean like the -proposed netboot image? I can give it a go
+[11:12] <cjwatson> I meant CD images
+[11:14] <tjaalton> I've installed it on a haswell system, no secure boot
+[11:14] <tjaalton> before the holidays
+[11:14] <cjwatson> BIOS or UEFI?
+[11:15] <tjaalton> good question.. I'll check. could be bios
+=== mmrazik is now known as mmrazik|afk
+[11:41] <tjaalton> cjwatson: bios..
+[11:45] <cjwatson> OK, thanks
+[11:45] <cjwatson> Anyone done a non-SB UEFI test with current precise imageS?
+[11:45] <cjwatson> *images
+[11:45] <tjaalton> i'll try that next
+[11:46] <cjwatson> Brilliant, thanks
+[11:46] <tjaalton> hmm, maybe I should try some other image than this oem one...
+[11:47] <tjaalton> and not on the beta hw :)
+[11:47] <tjaalton> has issues with booting uefi it seems
+=== doko_ is now known as doko
+[11:54] <tjaalton> cjwatson: is it the precise/dvd/current image on cdimages.u.c?
+[11:55] <tjaalton> it says 12.04.2
+[11:56] <cjwatson> Yeah
+[11:56] <tjaalton> ok, takes a while to download
+=== yofel_ is now known as yofel
+=== mmrazik|afk is now known as mmrazik
+[13:13] <tjaalton> cjwatson: I get "error: couldn't read file; error: you need to load the kernel first" after the grub menu
+[13:14] <cjwatson> Any difference with the desktop image?
+[13:14] <cjwatson> precise/daily-live/current/
+[13:14] <cjwatson> and this is amd64 I presume
+[13:15] <tjaalton> downloading, and yes
+[13:16] <tjaalton> the oem image had the same problem
+[13:16] <tjaalton> from mid-december with the new stuff on it
+[13:18] <cjwatson> I'm not going to debug the OEM image since some of this stuff can depend on fine details of image construction
+[13:20] <tjaalton> right, but it could be something related to the haswell firmware too. I'll ask around just to be sure
+[13:21] <cjwatson> It's possible, although an outside chance
+[13:27] <cjwatson> Also possibly worth comparing with 12.04.1 to see whether this is a regression
+[13:42] <tjaalton> hm, the amd64+mac image I had doesn't even seem to load grub
+[13:42] <cjwatson> Why are you using amd64+mac?
+[13:42] <cjwatson> Its purpose is not to have UEFI support.
+[13:42] <tjaalton> it's the only cd-sized image there was
+[13:43] <cjwatson> It's not a valid test for this.
+[13:43] <tjaalton> and I had that already
+[13:43] <tjaalton> this was .1
+[13:43] <tjaalton> .2 just finished downloading
+[13:43] <cjwatson> http://askubuntu.com/questions/37999/what-is-different-about-the-mac-iso-image
+[13:44] <cjwatson> ^- explains that amd64+mac does not have UEFI support
+[13:44] <cjwatson> Does this brand-spanking-new system really have a CD-only drive?
+[13:45] <tjaalton> no :)
+[13:45] <tjaalton> s/cd-sized/reasonably sized/
+[13:46] <tjaalton> booting off a usb stick didn't work the last time I tried
+[13:46] <cjwatson> eh, the amd64 image is very similar in size to the amd64+mac image
+[13:46] <cjwatson> to within noise, basically
+[13:46] <tjaalton> http://cdimages.ubuntu.com/releases/12.04.1/release/
+[13:47] <cjwatson> http://releases.ubuntu.com/12.04/
+[13:47] <tjaalton> besides, it was just what I had on the system readily available, I'll try .2 now while .1 dvd is downloading
+[13:47] <tjaalton> bah
+[13:47] <tjaalton> confusing :)
+[13:47] <cjwatson> (and see the link at the top of that page ...)
+[13:47] <tjaalton> hah
+[13:48] <tjaalton> bad/old habit of using cdimages.u.c..
+[13:48] <cjwatson> current precise-desktop-amd64 works fine in kvm/uefi for me
+[13:49] <cjwatson> well, gets to grub and boots the kernel
+[13:50] <cjwatson> I'll do a full test install in kvm
+[13:51] <cjwatson> working in kvm seems to eliminate this being an image construction bug, so I think a firmware problem has become more likely
+[13:52] <tjaalton> yeah
+[13:52] <tjaalton> or firmware setting bug
+[13:52] <cjwatson> admittedly I've not tried the DVD yet; it'll take a couple of hours to download
+[13:53] <cjwatson> the fact that grub got as far as it did for you indicates that efidisk is at least somewhat working, since it read its configuration file
+[13:54] <cjwatson> check that the problem's repeatable, too
+[13:55] <tjaalton> same thing with the desktop image.. trying with the usb stick now
+[13:55] <tjaalton> could be a brazero issue on quantal
+[13:55] <cjwatson> I use growisofs for burning DVD images
+[14:04] <tjaalton> cjwatson: ha, booted fine off the usb stick, installing now
+[14:07] <cjwatson> OK, good; I'd still like to know that it isn't a regression, but that's helpful
+[14:07] <stgraber> cjwatson: I did one before the holidays by accident (forgot to enable SB) and it worked fine
+[14:07] <tjaalton> I'll try with the growisofs-burned image next
+[14:08] <cjwatson> infinity: Do you remember anything else we wanted to check before dropping in the whole lot?
+[14:11] <cjwatson> I still have two other grub2 patches I want to squeeze in for .2 (one customer-requested), and am running out of time ...
+=== lamont` is now known as lamont
+[14:47] <tjaalton> cjwatson: not a regression, getting the same with .1
+[14:47] <tjaalton> something wrong with the machine
+[14:48] <tjaalton> but usb worked, installed and boots afterwards
+[14:48] <cjwatson> phew (from my pov)
+[14:48] <tjaalton> :)
+[14:51] <tjaalton> the .2 image doesn't seem to use the xorg backport stack yet?
+[14:51] <cjwatson> no, just the kernel backports
+[14:51] <cjwatson> not worked out what we need to do for xorg yet
+[14:53] <tjaalton> a new meta package for ubuntu-desktop, and the desktop task that installs it?
+[14:55] <tjaalton> mlankhorst should know, I'll ask..
+[14:57] <cjwatson> task changes are troublesome
+[14:57] <cjwatson> I think we're actually going to have to switch to the metapackage; but if we change the metapackage then that upgrades existing users ...
+[14:57] <cjwatson> the kernel was easier since that's already handled specially
+[14:58] <tjaalton> so there's xserver-xorg-lts-quantal, but the current archive version would remove ubuntu-desktop
+[14:58] <tjaalton> and there's a new version that fixes that, but not accepted yet
+=== Ursinha-afk is now known as Ursinha
+[15:00] <cjwatson> let's see about that
+[15:00] <tjaalton> on the proposed queue I'm told..
+[15:00] <cjwatson> no bug ref, makes it hard to coordinate validation?
+[15:01] <tjaalton> hmm
+[15:01] <cjwatson> there are occasional very routine things we do without that, but not sure this counts as routine
+[15:01] <mlankhorst> hey
+[15:01] <tjaalton> mlankhorst: 17:00 < cjwatson> no bug ref, makes it hard to coordinate validation?
+[15:01] <tjaalton> for the xorg upload
+[15:02] <mlankhorst> hm would have to check
+[15:03] <mlankhorst> don't know if it had a bug or not
+[15:03] <cjwatson> if not, could you create an artificial one, please?
+[15:03] <cjwatson> I just want some way of ensuring that this all works together nicely
+[15:04] <cjwatson> and somebody is going to have to recommend a set of installer/metapackage/whatever changes, bearing in mind upgrade effects
+[15:04] <mlankhorst> so far most communication goes through me
+[15:04] <mlankhorst> so felt like having a bug was confusing
+[15:04] <cjwatson> for SRUs it needs to be in bugs
+[15:04] <cjwatson> please
+[15:05] <cjwatson> it will make things better since there'll be clear status right there on the SRU report
+[15:05] <cjwatson> can't do much about the existing xorg updates; right now they're all sitting there with no way to indicate whether they're good for promotion to -updates :-/
+[15:06] <cjwatson> so, the spec says that upgraders won't be pulled into the new enablement stack
+[15:06] <tjaalton> right
+[15:07] <mlankhorst> yeah the xorg package just allows the lts-quantal version to be coinstalled
+[15:07] <cjwatson> this means we somehow need to get the images changed without touching metapackages
+[15:07] <tjaalton> but the .2 image needs to have some way to pull xorg-lts-quantal
+[15:07] <tjaalton> which then provides 'xorg' for ubuntu-desktop
+[15:07] <cjwatson> this is kind of horribly out of spec for the image building tools - but there may be some ways to achieve it
+[15:08] <mlankhorst> erm
+[15:08] <mlankhorst> xorg can install just fine
+[15:08] <mlankhorst> it's just the xserver-xorg that will conflict with xserver-xorg-lts-quantal
+[15:08] <cjwatson> I can't really do anything until the SB stack lands, at risk of entangling the two
+[15:08] <cjwatson> sure, but that doesn't address the image building problem
+[15:09] <cjwatson> it makes it possible to do something without breaking upgraders, yes
+[15:10] <cjwatson> but I think we're going to need to SRU at least livecd-rootfs and possibly pkgsel to manually arrange to install -lts-quantal
+[15:10] <cjwatson> actually I'd rather leave pkgsel alone and only support installing the enablement stack from desktop images ...
+[15:10] <cjwatson> (and DVD)
+[15:10] <cjwatson> and there's the question of things like the Chinese edition
+[15:12] <cjwatson> kind of unfortunate nobody arranged for anyone cdimagey to have a work item for this ...
+[15:12] <tjaalton> :)
+[15:13] <cjwatson> so, if I can have an xorg reupload with a bug ref, I'll accept that, and then we can get going on the image building changes after the SB changes are in -updates
+[15:14] <mlankhorst> ok
+[15:14] <mlankhorst> could you look at the video blobs in the meantime?
+[15:15] <cjwatson> specific package names?
+[15:15] <mlankhorst> nvidia-* and fglrx whatever, that are still in the proposed queue
+[15:15] <cjwatson> mkay
+[15:18] <mlankhorst> do you want a bug specific about xorg, or just generic 'xorg quantal in precise' bug
+[15:19] <cjwatson> the latter's fine
+[15:20] <cjwatson> sigh, at least one of these fglrx uploads is busted
+[15:20] <cjwatson> is tseliot on IRC anywhere?
+[15:20] <mlankhorst> should be
+[15:20] <mlankhorst> but not online atm
+[15:20] <tjaalton> probably on holiday
+[15:24] <cjwatson> in that case perhaps one of you could upload new fglrx-installer-experimental-9 and fglrx-installer-updates packages in line with comments #31 and #32 in bug 1080588 (i.e. drop the xserver-xorg-core deps and upload with appropriate -v)?
+[15:24] <ubot2> Launchpad bug 1080588 in jockey (Ubuntu Precise) "jockey suggests not installable packages on renamed stack" [High,In progress] https://launchpad.net/bugs/1080588
+[15:33] <mlankhorst> cjwatson: hm should I bump version of xorg as well or can you delete the current one from -proposed?
+[15:33] <cjwatson> mlankhorst: I've rejected it
+[15:34] <mlankhorst> ah k
+[15:36] <tjaalton> cjwatson: so can I reuse 2:9.010-0ubuntu0.2 and squash both changes there?
+[15:37] <cjwatson> In this case, since there's an additional change, I'd rather you used a new version number
+[15:37] <cjwatson> (actual source change rather than just changelog)
+[15:37] <tjaalton> so 0.4?
+[15:37] <cjwatson> Yeah
+[15:38] <tjaalton> ok I'll deal with those
+[15:43] <mlankhorst> cjwatson: https://bugs.launchpad.net/ubuntu/+source/xorg/+bug/1095686 good enough?
+[15:43] <ubot2> Launchpad bug 1095686 in xorg (Ubuntu) "xorg needs to be updated to allow quantal xserver stack to be installed" [Critical,In progress]
+[15:43] <tjaalton> jeez, fglrx is huge..
+[15:44] <cjwatson> mlankhorst: yes, thanks, now that I've targeted it to precise :)
+[15:44] <mlankhorst> ah right
+[15:44] <mlankhorst> uploading
+[15:46] <mlankhorst> oops
+[15:46] <cjwatson> oops?
+[15:46] <mlankhorst> raced with your bug changes :)
+[15:47] <cjwatson> not a problem ...
+[15:47] <mlankhorst> but it's there now, I'm uncertain about the fglrx changes, tjaalton are you working on it?
+[15:48] <cjwatson> yeah, I'll review it once the queue gets a debdiff
+[15:48] <tjaalton> mlankhorst: yeah, trying to figure out what to actually change :)
+[15:49] <mlankhorst> how are those maintained btw?
+[15:50] <tjaalton> in git somewhere I think, but pulled them from the rejected queue
+[15:50] <tjaalton> https://launchpad.net/ubuntu/precise/+queue?queue_state=4&queue_text=
+[15:50] <mlankhorst> yeah I was just curious if we had a central repo or something, similar to other xorg things
+[15:51] <tjaalton> nothing we can touch
+[15:51] <tjaalton> it's on github or such
+[15:51] <mlankhorst> ah
+[16:08] <tjaalton> fglrx-installer-experimental uploaded
+[16:08] <tjaalton> -updates after dinner
+[16:22] <tjaalton> cjwatson: the nvidia-96 upload you accepted failed to upload (after build) on amd64, should I just kick a rebuild?
+[16:24] <cjwatson> sure, if it looks transient
+[16:27] <tjaalton> yup, built fine
+[16:34] <mlankhorst> ok now xorg should work? :)
+[16:34] <tjaalton> hmm, so fglrx-updates in precise doesn't even support the new backport stack, is there any point in updating that version for that bug?
+[16:34] <mlankhorst> nah
+[16:35] <tjaalton> ok, so it may wait for the other sru to pass
+[16:35] <tjaalton> although, it has the same bug as the experimental one
+[16:42] <mlankhorst> yay
+[16:46] <brendand> anyone know why in 12.04.2 the kernel versions vary between the amd64 and i386 builds?
+[16:46] <brendand> http://cdimage.ubuntu.com/precise/daily-live/current/precise-desktop-i386.manifest
+[16:46] <brendand> linux-image-generic-pae	3.2.0.35.40
+[16:46] <brendand> http://cdimage.ubuntu.com/precise/daily-live/current/precise-desktop-amd64.manifest
+[16:46] <brendand> linux-image-generic-lts-quantal	3.5.0.21.28
+[16:47] <apw> oh ... are the boot kernels on i386 non-pae i wonder
+[16:49] <apw> hmm no, that is a pae kernel on there, so not that
+[16:52] <cjwatson> brendand: ara already asked about that on #ubuntu-devel
+[16:52] <cjwatson> and yes it probably is something to do with pae
+[16:52] <cjwatson> it's on my list
+[16:53] <brendand> cjwatson, ok. a fix isn't an emergency from our perspective. mainly we just needed to know whether it was in fact a bug
+[16:53] <brendand> cjwatson, we wanted to make sure that 3.5 was the kernel that was supposed to be included
+[16:54] <cjwatson> it is a bug and is something I need to fix for .2
+[16:55] <tjaalton> cjwatson: both fglrx packages uploaded, but the other sru's still block them
+[17:01] <infinity> cjwatson: I'm sure we have a lot more misfeatures to shake out on images, but I can't think of anything else SB-specific that needed testing.  I've been mostly not getting in the way of you, slangasek, and stgraber testing, mind you. :P
+[17:10] <cjwatson> infinity: OK.  Do you have any objection if I just promote the lot now, then?
+[17:14] <infinity> cjwatson: Nope.
+[18:43]  * cjwatson copies all the things
+=== TheLordOfTime is now known as LordOfTime
+=== LordOfTime is now known as TheLordOfTime
+[19:44] <infinity> cjwatson: The patch to debian/* in grub doesn't match the behaviour you patched into grub itself.
+[19:45] <infinity> cjwatson: (That is, the debian bits will ignore grub.d if /etc/default/grub doesn't exist, while grub will still use grub.d even if default/grub isn't there)
+[19:46] <infinity> cjwatson: Not sure which behaviour is most desirable, but they should probably be consistent.
+[19:48] <cjwatson> fair point; I'll fix that later (and in experimental/raring too)
+[19:49] <cjwatson> feel free to reject/hold/whatever
+[19:51] <infinity> cjwatson: I'd probably lean toward the way you did grub, so one could break out default/grub to .d snippets and delete the file entirely, but your call.  I'll reject for now.
+[19:54] <infinity> cjwatson: Something like http://paste.ubuntu.com/1492918/ perhaps.
+[19:55] <infinity> (And a similar munging of postinst)
+[20:00] <infinity> cjwatson: Tested the above locally, seems to work as I'd expect.
+[20:04] <bdmurray> Can the release of Precise SRUs proceed as usual?  If so until when?
+[20:06] <infinity> bdmurray: Yes, until the 17th, ish.
+[20:07] <xnox> ah. just a week left.
+[20:08] <bdmurray> infinity: thanks!
+[20:08] <infinity> xnox: Your weeks are 14 days long?
+[20:11] <bdmurray> that'd make for less weekends :-(
+[20:12] <infinity> cjwatson: Oh, hey, I have commit access to grub in Debian, don't I?  Maybe I'll just commit this directly, unless you'd rather I didn't?
+[20:15] <xnox> infinity: 1 week to upload & accepted in -proposed + 1 week of baking , to be release on time.
+[20:16] <infinity> xnox: Final freeze for 12.04.2 is the 24th, I was giving the 17th as the last possible day to accept things (barring emergencies).
+[20:16] <xnox> oh, ok.
+[20:16] <infinity> Not that I have problems with people thinking the deadline is a week earlier.  Last minute panic sucks.
+[20:34] <bdmurray> I just verified bug 1008225 if somebody wants to release it - its been in -proposed for some time.
+[20:34] <ubot2> Launchpad bug 1008225 in vm-builder (Ubuntu Precise) "vmbuilder fails using tmpfs due to upstart restarting cron in the tmpfs" [High,Fix committed] https://launchpad.net/bugs/1008225
+[20:43] <infinity> bdmurray: Done.
+[21:20] <bdmurray> I've made an ubuntu-archive-tools merge proposal - https://code.launchpad.net/~brian-murray/ubuntu-archive-tools/comment-date/+merge/141818 - nothing too exciting though
+[22:06] <infinity> bdmurray: I object.  The diff has more green than red, and I hate green.
+[23:52] <cjwatson> infinity: that's fine to commit directly, but isn't it needed in postinst.in too?
+[23:53] <cjwatson> infinity: (definitely to experimental though, not to the unstable/wheezy branch)

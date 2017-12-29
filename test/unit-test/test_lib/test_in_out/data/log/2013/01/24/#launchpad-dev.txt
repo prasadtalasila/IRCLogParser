@@ -1,0 +1,96 @@
+[00:03] <StevenK> cjwatson: r=me
+[00:04] <cjwatson> Great, thanks
+=== slank is now known as slank_away
+[00:04] <StevenK> cjwatson: Do you want to cowboy it onto mawson while it plays through buildbot, or what is your plan?
+[00:05] <cjwatson> If you have bright ideas on disentangling the underlying cause (notes in the bug), that'd be lovely, or else I'll try to mock something up in tests
+[00:05] <cjwatson> StevenK: I was about to go to bed, TBH
+[00:06] <StevenK> cjwatson: If you want to crash, I can land it for you
+[00:06] <cjwatson> Will it be a problem if I don't QA it until tomorrow afternoon?  I'm going to be out tomorrow morning (hence wanting to go to bed)
+[00:06] <cjwatson> Well, I can land it
+[00:06] <StevenK> cjwatson: We have one revision waiting, and nothing urgent, so it should be fine
+[00:06] <cjwatson> Just QA will be with slightly less alacrity than usual
+[00:07] <wgrant> Given that we still have no builders and the change is isolated and trivial, QA on that seems less than essential.
+[00:07] <cjwatson> As I suggested in the MP, we can QA this without builders by injecting a production upload
+[00:07] <cjwatson> Probably quicker too
+[00:08] <wgrant> True
+[00:08] <cjwatson> Though I guess we need to mock up the build id in the directory name or something to get it into the right archive, but that's easy enough
+[00:09] <cjwatson> Anyway, it's on its way into buildbot, so I'll deal with that tomorrow; feel free to revert if it causes a problem, obviously
+[03:37] <StevenK> wgrant: How goes the BFJO murder?
+[03:38] <wgrant> I think all the failures are fixed
+[03:38] <wgrant> Another ec2 run is 3/4 done
+[03:38] <StevenK> Ah, how bad was the ec2 carnage?
+[03:38] <wgrant> Only about 60 failures.
+[03:39] <StevenK> Not bad.
+[03:47] <wgrant> StevenK: Looking
+[03:50] <wgrant> StevenK: Does the context of that specificationdependency.py change reveal another place that needs to respect privacy?
+[03:52] <StevenK> Unsure
+[03:53] <wgrant> Also, have you confirmed that this actually fixes the blocking issue?
+[03:54] <StevenK> I've confirmed it passes tests
+[03:54] <StevenK> Shall I cowboy it onto mawson?
+[03:55] <wgrant> If you can reproduce it on mawson today, that would indeed be a good idea
+[03:55] <StevenK> Reproduce the problem?
+[03:55] <wgrant> But the existing tests do not catch the blocking issue
+[03:55] <wgrant> Yes
+[04:04] <lifeless> 16:09 < ajmitch> heh
+[04:04] <lifeless> *Bah* copy-paste fail.
+[04:05] <ajmitch> quite
+[04:48] <StevenK> wgrant: https://blueprints.dogfood.launchpad.net/production-auditor/+spec/spec-c
+[04:50] <StevenK> I think I need to revert the change to make use of all_deps, rename dependencies to _dependencies, and write a method called dependencies that filters by visibility
+[04:50] <wgrant> StevenK: Why not just make dependencies filter by visibility?
+[04:51] <StevenK> 1) You need a user, and 2) dependencies is a SQLRelatedJoin
+[04:51] <wgrant> Sure
+[04:51] <wgrant> Does dependencies need to be an SQLRelatedJoin?
+[04:52] <wgrant> Hm, but if it's an SQLRelatedJoin then it shouldn't recurse
+[04:52] <wgrant> So how's it relevant?
+[04:52] <StevenK> We don't want it to recurse for the dep tree
+[04:52] <wgrant> Oh, does it only show immediate deps?
+[04:52] <StevenK> That is exactly what is causing bug 1095235
+[04:52] <_mup_> Bug #1095235: Bogus dependencies in Blueprint graph <lp-blueprints> <regression> <specifications> <Launchpad itself:Triaged> < https://launchpad.net/bugs/1095235 >
+[04:53] <StevenK> Yeah, dependencies and blocked are immeadiate children and parents
+[04:53] <wgrant> Sure, but I thought the graph showed more than that
+[04:53] <StevenK> r16333 changed the dep tree to use all_deps and all_blocked, which is the entire tree
+[04:54] <StevenK> wgrant: It uses dependencies and blocked for each node
+[04:54] <StevenK> spec-c all_blocked shows 'spec-a' and 'spec-b' since it's recursive
+[04:54] <StevenK> spec-b all_blocked shows 'spec-a'
+[04:54] <wgrant> StevenK: So it just uses the recursive query to grab all the nodes, and then queries them all anyway?
+[04:55] <wgrant> If not, then what's the recursive query for in the first place?
+[04:55] <StevenK> I'm not sure, but the deptree didn't used to use them
+[06:05] <StevenK> OH
+[06:05]  * StevenK finally figures out this traceback
+[06:06] <StevenK> lib/lp/_schema_circular_imports.py, I will DESTROY you
+=== almaisan-away is now known as al-maisan
+=== al-maisan is now known as almaisan-away
+=== yofel_ is now known as yofel
+[08:51] <adeuring> good morning
+[08:52] <czajkowski> adeuring: morning
+[08:52] <adeuring> hi czajkowski!
+[08:54] <czajkowski> adeuring: cold and snowing over there?
+[08:55] <adeuring> czaqright, we have snow :) But "cold" is more a question of peception. It's not like in sebreia here ;)
+[08:56] <adeuring> s/sebreia/siberia/
+[08:56] <czajkowski> lol
+[08:56] <czajkowski> we have snow too :)
+[08:56] <czajkowski> poxy snow :(
+[08:59] <StevenK> czajkowski: It's currently 29 here ...
+[09:00] <czajkowski> SWAP
+[09:01] <lifeless> czajkowski: it was 45 a week ago
+[09:02] <czajkowski> tad warm :)
+=== matsubara-afk is now known as matsubara
+=== almaisan-away is now known as al-maisan
+=== Ursinha-afk is now known as Ursinha
+=== Ursinha-afk is now known as Ursinha
+=== slank_away is now known as slank
+=== matsubara is now known as matsubara-lunch
+[15:32] <cjwatson> wgrant,StevenK: Review of https://code.launchpad.net/~cjwatson/launchpad/avoid-copy-archive-spam-2/+merge/144727 would be good when you have a chance (and now I'm glad I bothered to QA that)
+=== matsubara-lunch is now known as matsubara
+=== al-maisan is now known as almaisan-away
+=== benji___ is now known as benji
+=== almaisan-away is now known as al-maisan
+=== al-maisan is now known as almaisan-away
+=== matsubara is now known as matsubara-afk
+[19:11] <plomme> hey
+[19:21] <plomme> I was wondering if there was anything new regarding bug 1100164 . I know you guys are crazy busy, just curious how far back this has been pushed.
+[19:21] <_mup_> Bug #1100164: Private projects are forbidden from having releases when only files are problematic <privacy> <private-projects> <releases> <Launchpad itself:Triaged> < https://launchpad.net/bugs/1100164 >
+=== almaisan-away is now known as al-maisan
+=== slank is now known as slank_away
+=== slank_away is now known as slank
+=== al-maisan is now known as almaisan-away

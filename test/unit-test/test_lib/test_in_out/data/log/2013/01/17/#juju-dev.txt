@@ -1,0 +1,527 @@
+[07:45] <TheMue> Morning.
+[07:53] <rogpeppe> mornin' all
+[07:56] <fwereade_> rogpeppe, TheMue: heyhey
+[07:56] <rogpeppe> fwereade_: hiya
+[08:01] <TheMue> fwereade_, rogpeppe: Heyhey.
+[08:01] <rogpeppe> TheMue: yo!
+[08:12] <TheMue> Btw, TestAttemptTiming in trivial seems to have a failure. The final test loop traverses 'want' and then compares the wanted values with the wanted values. ;)
+[08:13] <TheMue> Found it yesterday when adding interval behaviours (static, linear, exponential).
+[08:24] <rogpeppe> TheMue: oops
+[08:24] <rogpeppe> TheMue: i'll have a look
+[08:26] <TheMue> rogpeppe: It'll be fixed with my CL.
+[08:27] <rogpeppe> TheMue: cool. i should've broken the test first!
+[08:29] <TheMue> rogpeppe: But the test itself is cool, I use the same pattern for the behaviour tests.
+[08:30] <rogpeppe> TheMue: yes, when it's fixed, the test still passes :-)
+[08:30] <TheMue> rogpeppe: +1
+[08:31] <TheMue> rogpeppe: Only change is that I now work with x * time.Millisecond etc. instead of simple fixed values.
+[08:32] <rogpeppe> TheMue: seems reasonable. athough i actually found the 0.5e9 idiom quite readable - ignoring the e9, it's just seconds.
+[08:33] <TheMue> rogpeppe: Indeed, keeping the time base in mind.
+[09:17] <TheMue> rogpeppe, fwereade_: Anyone got a "301 response missing Location header" when doing juju status --debug ?
+[09:18] <rogpeppe> TheMue: i haven't used juju status --debug, i don't think.
+[09:18] <rogpeppe> TheMue: i'll give it a go
+[09:18] <TheMue> rogpeppe: Thx
+[09:18] <fwereade_> TheMue, don't think I've ever run it with --debug :)
+[09:18] <TheMue> rogpeppe: Last time it worked. I'm trying it on ap-southeast-1
+[09:19] <TheMue> fwereade_: Dave showed it in his bug, it logs the reconnection tries.
+[09:20] <rogpeppe> TheMue: you're trying to reproduce dave's bug?
+[09:21] <TheMue> rogpeppe: Yes, I once had a solution where he said he would like a different one. Now I'm trying it and get this error by EC2.
+[09:21] <TheMue> rogpeppe: It's not Daves bug, he only entered it: https://bugs.launchpad.net/juju-core/+bug/1084867
+[09:21] <_mup_> Bug #1084867: conn: conn connections should pause between retry attempts <juju-core:In Progress by themue> < https://launchpad.net/bugs/1084867 >
+[09:22] <fwereade_> TheMue, rogpeppe: btw, https://codereview.appspot.com/7095059/ has a couple of changes and some discussion on death-and-destruction.txt; I would be most grateful for your thoughts
+[09:22] <TheMue> fwereade_: Will take a look.
+[09:23] <fwereade_> TheMue, rogpeppe: also: https://codereview.appspot.com/7095049/ is a 50-line text document with one LGTM already, if anyone fancies taking a quick look at that
+[09:23]  * TheMue detects some kind of review beggin'. ;)
+[09:29] <rogpeppe> fwereade_: i think that using string consts rather than ints "because someone may want to log something sometime" is perhaps misguided. if i see a string, i generally assume it's because of some external constraint (e.g. it's going into a database or something). iota consts work well.
+[09:29] <rogpeppe> fwereade_: and they involve less code (runtime and bytes of source)
+[09:29] <fwereade_> rogpeppe, heh, when I see int constants I assume that overwhelming efficiency considerations demand the use of opaque identifiers ;p
+[09:30] <rogpeppe> fwereade_: naah, they're just the natural thing to use in Go
+[09:30] <fwereade_> TheMue, I'm trying not to overdo it ;p
+[09:31] <rogpeppe> fwereade_: they're only opaque if you print 'em (and even then, it's trivial to work out which one is which)
+[09:34] <TheMue> fwereade_: NP
+[09:34] <TheMue> rogpeppe: IMHO numbers are for calculations :)
+[09:35] <rogpeppe> TheMue: what's an if statement if not a calculation? :-)
+[09:35] <rogpeppe> fwereade_: when i queries "maintain the service" i thought it was a typo. doesn't endpointRemoveOps return the operations necessary to remove an endpoint?
+[09:36] <rogpeppe> fwereade_: "the operations that are needed to maintain the service" doesn't mean much to me
+[09:36] <TheMue> rogpeppe: It's a kind of consideration, like human beings do.
+[09:36] <fwereade_> rogpeppe, it's the operations that apply ot the given endpoint in the course of removing the relation
+[09:36] <fwereade_> rogpeppe, to the endpoint's service, rather
+[09:38] <rogpeppe> fwereade_: so do you mean: "returns the operations that are needed to maintain the service identified by the supplied endpoint when removing a relation" ?
+[09:38] <rogpeppe> fwereade_: i look at that comment, and it doesn't seem to tell me anything about what the returned operations are for
+[09:38] <rogpeppe> fwereade_: i can try to guess from the function name, but i'm not sure i'm guessing right
+[09:39] <fwereade_> rogpeppe, yeah, the "when removing..." will help, thanks
+[09:45] <fwereade_> rogpeppe, still not convinced that iota gains us anything beyond a few bytes, or that the gain is worth the cost in clarity
+[09:46] <rogpeppe> fwereade_: i don't see any clarity gain. only that you can print out a slightly nicer debug message if you're debugging this code.
+[09:46] <fwereade_> rogpeppe, that is what I am referring to
+[09:46] <rogpeppe> fwereade_: how is that "clarity"?
+[09:47] <rogpeppe> fwereade_: the code becomes slightly simpler
+[09:47] <rogpeppe> fwereade_: the executable slightly smaller. and if you're debugging that code, seeing 0, 1 or 2 in that context will probably be just fine.
+[09:47] <fwereade_> rogpeppe, it is clarity for the maintainer logging wtf goes on there, and not making him have to look up what 0, 1, or 2 mean
+[09:49] <rogpeppe> fwereade_: if i'm adding a debug print there, i know i'm printing a removeMode and it's utterly trivial to find the definition.
+[09:49] <fwereade_> rogpeppe, ISTM that you are repeatedly explaining why strings are superior
+[09:51] <fwereade_> rogpeppe, are you seriously concerned that "destroy-service" is unclear, or that the executable size will balloon unacceptably?
+[09:51] <fwereade_> rogpeppe, those are the negative consequences of using strings, and I don't really feel they carry much weight in our situation
+[09:51] <fwereade_> rogpeppe, the negative consequence of using an iota is that it becomes slightly harder to debug the code
+[09:52] <rogpeppe> fwereade_: i think it's a visceral reaction to unnecessary executable size bloat
+[09:52] <rogpeppe> fwereade_: plus the source becomes a little smaller too
+[09:55] <TheMue> rogpeppe: Do we have a source size problem? ;)
+[09:57] <rogpeppe> fwereade_: ok, i do realise that the gains are minute (42 bytes on executable size and 80 in the source), y'know, death by a thousand cuts. hmm, i'm not really sure why i get such a strong reaction.
+[09:57] <rogpeppe> TheMue: actually we do, but it won't be solved in this kinda way
+[09:57] <rogpeppe> TheMue: not source size, sorry, binary size, yeah
+[09:58] <TheMue> rogpeppe: Oh, we have a binary size problem? Good to know. In which way?
+[09:58] <rogpeppe> TheMue: it takes ages to upload the binaries.
+[09:58] <fwereade_> rogpeppe, I do understand the feeling but in my own mind this battle played out a long while ago and I went with "always use strings for constants unless there is an overriding reason not to"
+[09:58]  * TheMue comes from a world running fat binary 24/7
+[09:59] <TheMue> rogpeppe: OK, sounds reasonable.
+[09:59] <rogpeppe> TheMue: we can easily cut the executable size by at least a third, by combining jujuc and jujud
+[10:00] <rogpeppe> TheMue: it's on my todo list on the kanban...
+[10:00] <TheMue> rogpeppe: Fine, so it is covered.
+[10:01] <TheMue> rogpeppe: It's a different kind of problem than in my former jobs, where software is only deployed once per release over a local network.
+[10:01] <rogpeppe> fwereade_: in general i'd use int constants, and possibly add a String method if i needed to debug 'em.
+[10:01] <rogpeppe> fwereade_: i've been meaning to hack up a quick automatic String method generator for constants actually
+[10:02] <rogpeppe> fwereade_: then if you need to debug, you just run it to generate the necessary source code, and remove when done.
+[10:02] <fwereade_> rogpeppe, yeah, if something like that was easy to add I'd be fine with it -- but doing it by hand pushes me over to "just use strings" ;)
+[10:03] <fwereade_> rogpeppe, but I generally prefer to keep my source code modifications to an absolute minimum when debugging things
+[10:03] <fwereade_> rogpeppe, so I think it'd only really work for me if it were a code-generation step
+[10:03] <fwereade_> rogpeppe, that was always applied
+[10:08] <rogpeppe> fwereade_: i think it's probably my experience with the go core. there, you never get symbolic string constants - constants of that nature are always iota ints. and that works pretty well.
+[10:14] <fwereade_> rogpeppe, "always code as though the maintainer will be an angry lunatic who knows where you live" ;)
+[10:15] <rogpeppe> :-)
+[10:17] <fwereade_> rogpeppe, TheMue: addressed https://codereview.appspot.com/7137044 I think
+[10:31] <rogpeppe> fwereade_: LGTM
+[10:38] <rogpeppe> fwereade_: and on doc-entity-creation too
+[10:39] <fwereade_> rogpeppe, awesome, tyvm
+[11:04] <TheMue> Ah! It's working. One should use the EC2 console right.
+[11:24] <TheMue> rogpeppe, fwereade: https://codereview.appspot.com/6949044/ is in for review again.
+[11:24] <TheMue> fwereade: Now I'll continue with your reviews.
+[11:27] <fwereade> TheMue, thanks
+[11:28] <niemeyer> Morning all
+[11:28] <fwereade> TheMue, https://codereview.appspot.com/7137044/ should be quick and easy if you haven't started the others yet
+[11:28] <fwereade> niemeyer, heyhey
+[11:28] <TheMue> niemeyer: Hiya.
+[11:29] <fwereade> niemeyer, thanks for the comments on death-and-destruction, I think your points are now addressed or justified
+[11:29] <TheMue> fwereade: Started with the ...5059, but will now do this one first.
+[11:30] <fwereade> niemeyer, btw, you know all the stateful table-based watcher tests we have?
+[11:30] <niemeyer> fwereade: Cool, thanks, I'll have a look
+[11:30] <niemeyer> fwereade: Yeah
+[11:31] <fwereade> niemeyer, I think I've convinced myself that they'e just entirely Bad, and should be replaced with literate inline tests (broken out into separate scenarios where possible)
+[11:31] <fwereade> niemeyer, and also that many of them are just testing way two much -- "add two services", "add three services", etc
+[11:32] <fwereade> niemeyer, general agreement?
+[11:32] <niemeyer> fwereade: Yeah, definitely
+[11:33] <fwereade> niemeyer, I don't want to spend too much time on it but I have to take an axe to machine_test.go to finally get rid of AddUnitSubordinateTo, so I think that at least will just get a full rewrite
+[11:34] <mgz> fwereade: was dimitern having more internet woes?
+[11:34] <fwereade> mgz, not that I know of
+[11:34] <niemeyer> fwereade: Ah, makes sense
+[11:35] <TheMue> fwereade: LGTM (and lunchtime ;) ).
+[11:35] <fwereade> TheMue, <3
+[11:35] <fwereade> mgz, although now I think of it he did mention having an engineer come round; shall I text him?
+[11:36] <mgz> fwereade: not urgent, but hopefully he gets online again :)
+[11:36] <fwereade> mgz, I'll ping him but will be off for lunch in a mo myself
+[11:39] <mgz> wallyworld: looks like bug 1091669
+[11:39] <_mup_> Bug #1091669: GET Public-readable container's object with another user credentials is raising 403(Forbidden) exception <OpenStack Object Storage (swift):New> < https://launchpad.net/bugs/1091669 >
+[11:40] <mgz> which looks like a dupe of bug 1020722
+[11:40] <_mup_> Bug #1020722: swift_auth middleware disallows access to public Swift URLs <OpenStack Object Storage (swift):In Progress by dan-prince> < https://launchpad.net/bugs/1020722 >
+[11:43] <mgz> jam: want to hop on mumble?
+[11:45] <rogpeppe> fwereade, TheMue, niemeyer: a small CL: https://codereview.appspot.com/7128047
+[11:46] <fwereade> rogpeppe, gtg lunch I'm afraid, will be slightly extended today
+[11:46] <rogpeppe> fwereade: np
+[12:22] <rogpeppe>  niemeyer: trivial? https://codereview.appspot.com/7137048
+[12:25] <niemeyer> rogpeppe: LGTM
+[12:25] <rogpeppe> niemeyer: thanks
+[12:30] <wallyworld> fwereade: g'day, i've pushed some changes to the mp we have been discussing, are you able to take another look?
+[13:06] <niemeyer> fwereade: Provided another partial review on https://codereview.appspot.com/7095059/
+[13:22] <niemeyer> fwereade: Hopefully not too off track..
+[13:30] <rogpeppe> niemeyer: there's a discussion about the juju-core API about to happen, if you fancy joining in
+[13:31] <rogpeppe> hazmat: is it happening?
+[13:32] <hazmat> rogpeppe, its happening
+[13:33] <hazmat> mramm, rogpeppe https://plus.google.com/hangouts/_/7eba46242c127e6b2d38ec9e3db2a8a5898dece9
+[13:33] <rogpeppe> hazmat: ok, joining now
+[14:18] <fwereade> niemeyer, responded
+[14:18] <niemeyer> fwereade: Cool, will see after the meeting, thank you
+[14:18] <fwereade> niemeyer, cheers
+=== slank_away is now known as slank
+=== TheRealMue is now known as TheMue
+[14:31] <niemeyer> fwereade: ping
+[14:32] <fwereade> niemeyer, pong
+[14:32] <niemeyer> fwereade: Hey
+[14:32] <niemeyer> fwereade: Just going over your review now
+[14:32] <TheMue> fwereade: Thx for the LGTM.
+[14:32] <fwereade> niemeyer, cool, thanks
+[14:32] <fwereade> TheMue, yw :)
+[14:32] <niemeyer> fwereade: Some of it is mainly doc it seems
+[14:33] <fwereade> niemeyer, yeah, clearly I've failed to explain endpointRemoveOps well
+[14:33] <niemeyer> fwereade: Some of it seems pretty subjective, requiring knowledge of the whole plan to extract the true meaning
+[14:33] <TheMue> Sh**, build a KVM VM for MAAS failed.
+[14:33] <fwereade> niemeyer, that has been on my mind; the trouble is I'm not sure how to do it without smearing multiple copies of the same information through half a dozen places
+[14:34] <niemeyer> fwereade: Imagine I say something like this: "Hey William, would you mind to implement a method that returns the operations that are needed to maintain global consistency with respect to the service identified by the supplied endpoint during the relation's removal?
+[14:34] <niemeyer> "
+[14:34] <niemeyer> fwereade: :)
+[14:34] <fwereade> niemeyer, of *course* I would -- what magnificent wordsmith created that wonderful prose!?
+[14:34]  * fwereade kids
+[14:35] <fwereade> niemeyer, it may be that I've picked the wrong structure for the code
+[14:35] <fwereade> niemeyer, hmm, a thought
+[14:36] <niemeyer> fwereade: I think it'd simplify matters in that specific case to drop the logic that checks mode and service name from within the method
+[14:37] <niemeyer> fwereade: Have you considered the use of (leavingScope bool, destroyService string) instead of mode?
+[14:37] <niemeyer> Or destroyingService, rather
+[14:37] <fwereade> niemeyer, destroyingService is misnamed in that case
+[14:37] <niemeyer> fwereade: You actually already opted for the latter in one case
+[14:38] <fwereade> niemeyer, when that var means "this is the service that's being destroyed", that is indeed what I named it
+[14:38] <fwereade> niemeyer, in endpointRemoveOps it means "the service that is relevant to the supplied mode"
+[14:38] <fwereade> niemeyer, which, in the case of modeLeaveScope, is the service of the departing unit (ie the service that does not need to be removed)
+[14:39] <fwereade> niemeyer, would it maybe help if mode and serviceName were packed into a strcut with documentation right there?
+[14:39] <niemeyer> fwereade: Gosh.. it's worse than I thought then :-(
+[14:40] <niemeyer> fwereade: serviceName is a wildcard variable that refers to *a* service name.
+[14:40] <fwereade> niemeyer, I was not explicit that mode was modified by serviceName, but I feel that was expressed a touch robustly ;)
+[14:40] <fwereade> niemeyer, yes: a service name whose actual meaning is determined by mode
+[14:41] <niemeyer> fwereade: Yeah.. this is super confusing
+[14:41] <fwereade> niemeyer, the obvious answer is to duplicate the common operations in the various places we need to remove relations
+[14:41] <fwereade> niemeyer, I'm not quite sure that's an actual improvement though
+[14:42] <niemeyer> fwereade: I'm not suggesting duplication.. I'm just looking for ways to clarify what is actually going on there
+[14:42] <niemeyer> fwereade: I obviously got a few things wrong in an honest attempt to understand what was written
+[14:42] <fwereade> niemeyer, what do you think of the struct idea?
+[14:43] <niemeyer> fwereade: Yeah, that seems like an improvement for sure
+[14:43] <fwereade> niemeyer, I wondered about tying mode and serviceName together but worried that it would be dismissed as premature fancification :)
+[14:43] <fwereade> niemeyer, clearly it's not though
+[14:43] <niemeyer> fwereade: One of the core points is that it shouldn't be "serviceName"
+[14:43] <niemeyer> fwereade: It doesn't make sense to have leaveScope.serviceName, for example
+[14:43] <fwereade> niemeyer, even if it's always the name of a service?
+[14:43] <niemeyer> fwereade: and that's one of the issues
+[14:44] <fwereade> niemeyer, it identifies the service that cannot be removed as a result of the change
+[14:44] <niemeyer> fwereade: Yes, and what the heck that means again? :-)
+[14:44] <niemeyer> What's a service that "cannot be removed" as a result of which change?
+[14:45] <fwereade> niemeyer, I had hoped that death-and-destruction.txt made this stuff clearer than it managed to
+[14:45] <fwereade> niemeyer, when removing a relation during a destroy operation, we know that both services are Alive
+[14:46] <fwereade> niemeyer, when leaving scope, we don't
+[14:46] <fwereade> niemeyer, but when leaving scope we know that a unit is leaving scope; and hence we know its service has at least one unit; and hence we know we can't ever need to remove it
+[14:47] <fwereade> niemeyer, we have no such guarantees re the service on the other side of the relation, so we need to check its state to see whether it's Dying and only referenced by the relation being removed
+[14:48] <fwereade> niemeyer, this is not the biggest deal ever -- we could just check both services just the same when leaving scope -- but it's an extra roundtrip that seemed like a bad idea
+[14:49] <niemeyer> fwereade: Thanks for the explanation
+[14:49] <niemeyer> fwereade: I don't think I made myself clear regarding in the previous point, sorry
+[14:49] <niemeyer> fwereade: The point is that there's a specific meaning for that service name
+[14:49] <niemeyer> fwereade: In the context of the caller
+[14:49] <rogpeppe> lunch
+[14:49] <niemeyer> fwereade: It doesn't make sense to call that leaveScope.theServiceThatCantBeRemove
+[14:50] <niemeyer> d
+[14:50] <niemeyer> fwereade: You see what I mean?
+[14:50] <niemeyer> fwereade: THere's a lot of implicit knowledge that must be distilled into something tangible when we reach the code
+[14:50] <niemeyer> fwereade: The death-and-destruction document is great as reasoning for what and how things must be put in place
+[14:51] <niemeyer> fwereade: We just need to be careful to implement it in a way we'll still understand when we come back in two weeks
+[14:52] <fwereade> niemeyer, hmm: I thought we were talking about something like `type relationRemoval struct {mode removeMode; info string}`
+[14:52] <niemeyer> fwereade: Stuff like lack of docs, unnamed results, magic variables that mean completely different things based on caller context, etc, will make this process very painful
+[14:53] <niemeyer> fwereade: Hmm.. I don't think that helps much
+[14:53] <niemeyer> fwereade: You're just putting the exact same parameters in a struct
+[14:54] <niemeyer> fwereade: And what's "info string"?
+[14:54] <fwereade> niemeyer, or "payload", or whatever
+[14:54] <niemeyer> fwereade: What's that?
+[14:54] <niemeyer> fwereade: What's a payload of a relationRemoval?
+[14:55] <fwereade> niemeyer, its meaning depends on the value of the mode -- are you implacably opposed to this technique, or are you just pointing out that the names I have so far come up with are rubbish?
+[14:55] <niemeyer> fwereade: I think you're moving in good direction, but the underlying structure still needs some clarification.. I don't think the change is big, btw
+[14:56] <fwereade> niemeyer, sure -- I am as keen as you are to find ways to simplify this
+[14:56] <niemeyer> fwereade: Cool, just a sec
+[14:57] <fwereade> niemeyer, would you expand on your leaveScope.something idea?
+[14:58] <niemeyer> fwereade: Yeah, I'm just writing down some sample
+[14:59] <fwereade> niemeyer, (incidentally -- the unnamed result is sometimes useful but not always, and so it's left unnamed in the cases where it's not used; more than oneperson has flagged this, and I'm somewhat baffled by it)
+[15:01] <niemeyer> fwereade: Okay, I had another pass at the code, and here is another proposal
+[15:02]  * fwereade listens
+[15:02] <niemeyer> fwereade: As far as the local logic is concerned, and as long as I'm not missing something else (possibly I am), there are only two factors that distinguish what these methods are doing:
+[15:02] <niemeyer> fwereade: 1) A service is being destroyed
+[15:02] <niemeyer> fwereade: 2) A service is necessarily alive
+[15:03] <niemeyer> fwereade: Is that correct?
+[15:03] <fwereade> niemeyer, I think that is a reasonable way of looking at it, yes
+[15:04] <niemeyer> fwereade: Can we express this as f(survivingService, destroyingService string)?
+[15:05] <fwereade> niemeyer, I don't think it quite works
+[15:05] <niemeyer> fwereade: Okay, let's see then
+[15:06] <fwereade> niemeyer, I think the problem is in (2)
+[15:06] <fwereade> niemeyer, trying to express the cases in relevant terminology
+[15:06] <fwereade> niemeyer, actually no
+[15:07] <fwereade> niemeyer, thinking, don't wait for me to type ;)
+[15:07] <niemeyer> fwereade: Hehe :)
+=== meetingology` is now known as meetingology
+=== _mup__ is now known as _mup_
+[15:09] <fwereade> niemeyer, there are sometimes services we never want to modify; all other services always need to be decreffed; sometimes a decreffed service may need to be removed
+[15:09] <fwereade> niemeyer, so actually we *can*, but we need to fix the names
+[15:09] <fwereade> niemeyer, ignoreService, maybeDestroyService?
+[15:10] <fwereade> niemeyer, or perhaps destroyingService, leavingScopeUnit (ha, eww) is cleanest
+[15:11] <fwereade> niemeyer, departingUnit
+[15:11] <fwereade> (btw are we doing the kanban review?)
+[15:12] <fwereade> niemeyer, I worry that those won;t make the call sites very clear though
+[15:12] <niemeyer> fwereade: Hmm, that looks good
+[15:12] <fwereade> niemeyer, definitely worthy of further investigation though
+[15:12] <niemeyer> fwereade: So what would departingUnit be/
+[15:12] <niemeyer> ?
+[15:12] <fwereade> niemeyer, the unit whose departure from scope caused the removal of the relation
+[15:13] <niemeyer> fwereade: The actual *Unit
+[15:13] <niemeyer> ?
+[15:13] <fwereade> niemeyer, I was expecting a name
+[15:13] <niemeyer> fwereade: Can we have just that?
+[15:13] <fwereade> niemeyer, all I need from it is the service name
+[15:13] <fwereade> niemeyer, maybe cleaner to pass in the unit
+[15:14] <niemeyer> fwereade: So departingUnit is a service name? That's confusing.
+[15:14] <fwereade> niemeyer, no... it's a unit name, from which I will extract a service name
+[15:14] <niemeyer> fwereade: Might as well be the *Unit, if we have that in the call sites
+[15:14] <niemeyer> fwereade: (that need to provide it)
+[15:15] <fwereade> niemeyer, yeah, it's available
+[15:15] <niemeyer> fwereade: Cool, that'll be a lot clearer
+[15:16] <fwereade> niemeyer, ok, fantastic -- might even let me write removeOps such that I don't need endpointRemoveOps
+[15:16] <fwereade> maybe
+[15:16] <niemeyer> fwereade: Woot
+[15:16] <niemeyer> fwereade: Okay, a parenthesis just for a second now that we're good on that front:
+[15:16] <niemeyer> fwereade: <fwereade> niemeyer, (incidentally -- the unnamed result is sometimes useful but not always, and so it's left unnamed in the cases where it's not used; more than oneperson has flagged this, and I'm somewhat baffled by it)
+[15:17] <fwereade> niemeyer, ah yes
+[15:17] <niemeyer> fwereade: I *think* I was talking about something else, since hopefully it was uncontroversial
+[15:17] <niemeyer> fwereade: By unnamed result I meant in the method signature
+[15:17] <fwereade> niemeyer, ahhh ok, sorry, I completely misunderstood
+[15:18] <niemeyer> fwereade: func f() (A, B, bool, error) isn't great
+[15:18] <niemeyer> fwereade: Since the bool is completely unreadable
+[15:18] <niemeyer> fwereade: All one can tell is that there's something being returned that is true or false :)
+[15:18] <fwereade> niemeyer, I write doc comments with the expectation that people will read them ;p
+[15:19] <niemeyer> fwereade: Funny enough, the parameter was *also* undocumented in that case :-)
+[15:19] <niemeyer> fwereade: Well, or maybe it was and I just can't read
+[15:20] <niemeyer> fwereade: Yeah, "and whether"
+[15:20] <fwereade> niemeyer, I think we're talking about the bool documented as "whether those operations will lead to the relation's removal"
+[15:20] <niemeyer> fwereade: Cool, my bad
+[15:20] <fwereade> niemeyer, np
+[15:20] <niemeyer> fwereade: Still, the name would be useful for folks like me that can't read ;-)
+[15:21] <fwereade> niemeyer, good idea, chers
+[15:21] <niemeyer> fwereade: I hope you're okay with the piecemeal reviews I've been providing
+[15:21] <fwereade> niemeyer, absolutely
+[15:21] <niemeyer> fwereade: The logic is so dense that I find tricky to sustain attention for too long
+[15:22] <fwereade> niemeyer, I am not unfamiliar with that feeling myself ;)
+[15:22] <fwereade> niemeyer, and it's useful besides
+[15:22] <fwereade> niemeyer, so np at all
+[15:22] <niemeyer> fwereade: Neat, thanks
+[15:22] <niemeyer> fwereade: I'll provide more pieces today
+[15:22] <fwereade> niemeyer, lovely, thanks
+[15:23] <niemeyer> Some food first, though!
+[15:23] <niemeyer> biab
+[15:23] <fwereade> niemeyer, enojy
+[15:45] <rogpeppe> back
+[15:50] <rogpeppe> oops, did i miss the kanban meeting? or didn't it happe?
+[15:50] <rogpeppe> n
+[15:51] <TheMue> rogpeppe: it didn't happen, right now niemeyer is at lunch
+[15:52] <rogpeppe> TheMue: cool. i went for a lunchtime walk and totally forgot about it.
+[15:52]  * TheMue usus this time to shrink his vmware image, gone too large during testing for maas
+[16:02] <rogpeppe> TheMue: have you actually verified that your retry changes fix the problem?
+[16:03] <rogpeppe> TheMue: that is, have you tried running live tests with your branch?
+[16:03] <TheMue> rogpeppe: yep, on southeast and east with --debug, looks good
+[16:04] <rogpeppe> TheMue: did you run it with -gocheck.vv and see the attempts get more infrequent?
+[16:04] <rogpeppe> TheMue: i have a suspicion that the changes you've made won't change the usual redial case
+[16:04] <TheMue> rogpeppe: not that way, but i can do it once my image is up again
+[16:05] <rogpeppe> TheMue: the place you've changed (in juju.NewConn) is very rarely hit
+[16:05] <TheMue> rogpeppe: i have been able to see it like in the lp bug before, that is now gone
+[16:05] <TheMue> rogpeppe: Dave suggested it
+[16:05] <rogpeppe> TheMue: i'm pretty certain that the place that needs an exponential backoff is actually the mgo package
+[16:06] <TheMue> rogpeppe: there I've placed it before (but linear). you've seen Daves comments?
+[16:07] <rogpeppe> TheMue: looking
+[16:08] <rogpeppe> TheMue: i don't believe dave has it right
+[16:09] <rogpeppe> TheMue: the problem is that mgo.DialWithInfo continually retries with no delay
+[16:10] <TheMue> rogpeppe: yes, that's why I first placed it there
+[16:10] <rogpeppe> TheMue: i didn't see a CL on the mgo package
+[16:10] <rogpeppe> TheMue: can you point me to it?
+[16:10] <TheMue> rogpeppe: earlier changes in the same cl
+[16:11] <rogpeppe> TheMue: the correct fix would be in the mgo package itself
+[16:11] <TheMue> rogpeppe: so you say we have three nested retry loops?
+[16:11] <rogpeppe> TheMue: i think we've only got two, and one in the usual case.
+[16:12] <mramm> rogpeppe: I had a doctors appointment so I had to miss the kanban meeting
+[16:12] <rogpeppe> mramm: ah, nice coincidence!
+[16:13] <rogpeppe> TheMue: mgo has a redial loop and juju.Conn has a redial loop, but only in the ErrUnauthorized case, which only happens for as long as juju bootstrap takes to run, which is about 0.5s usually
+[16:13] <rogpeppe> TheMue: 60s is vast overkill there
+[16:14] <rogpeppe> TheMue: but it's there to cater for VM scheduling variance
+[16:15] <rogpeppe> TheMue: BTW it's nice to see an exponential backoff AttemptStrategy, but given that the usual point of exponential backoff is to avoid thundering herds, i'd be tempted to add a random element too.
+[16:16] <TheMue> rogpeppe: as own behaviour?
+[16:16] <rogpeppe> TheMue: ?
+[16:17] <TheMue> rogpeppe: the random element. do you think of a random time behaviour or a random factor inside the exponential behaviour? and if so than in which way?
+[16:18] <rogpeppe> TheMue: i'd start with a random delay, then multiply that by a constant factor, adding or subtracting a smallish random delta each time
+[16:19] <rogpeppe> TheMue: you might want to google for best practice in this area though - the above is just a guess
+[16:19] <TheMue> rogpeppe: what's the motivation behind it?
+[16:20] <rogpeppe> TheMue: if a state server goes down and we've got 10000 clients, each client is going to see the server go down at the same time, then initiate the same redial loop.
+[16:20] <rogpeppe> TheMue: so we'll get a pattern of huge surges, when we want the redials spread out over time
+[16:21] <rogpeppe> TheMue: but as i said, juju isn't doing the redial in this case, so the right fix is in mgo, and you'll have to ask niemeyer what his preferred method is there.
+[16:23] <TheMue> rogpeppe: ok, randomize the initial delay and then also a random base number to get a more shallow or more steep exponential behavior, sounds good
+[16:25] <rogpeppe> TheMue: no, i think the exponent should probably be constant. but if we perturb the numbers each time, the different clients will tend to diverge (although i'd have to think hard if i wanted to show that mathemetically :-])
+[16:26] <rogpeppe> TheMue: but for the time being, i think this CL isn't helping anything. i'd leave the exponential backoff alone for now, we don't need it.
+[16:26] <TheMue> rogpeppe: all with the same random seed based on the same utc. ;)
+[16:26] <rogpeppe> TheMue: i wouldn't seed based on the utc
+[16:27] <TheMue> rogpeppe: /me too, just a joke
+[16:31] <TheMue> rogpeppe: could you please enter your thoughts into the cl as a comment so that we can update Dave?
+[16:31] <rogpeppe> TheMue: will do
+[16:31] <TheMue> rogpeppe: great, tyvm
+[16:33] <rogpeppe> TheMue: here's a fun way of generating a seed without using time or importing crypto/rand: http://play.golang.org/p/Bd2cIFoJ-L
+[16:38] <niemeyer> fwereade: I didn't know "white lie" was an international term, btw :)
+[16:39] <fwereade> niemeyer, heh, nor did I
+[16:58] <niemeyer> fwereade: ping
+[16:58] <fwereade> niemeyer, pong
+[16:59] <niemeyer> fwereade: Yo
+[16:59] <fwereade> niemeyer, how goes?
+[16:59] <niemeyer> fwereade: Trying to understand the logic in Service.destroyOps that builds the relation removal ops
+[16:59]  * fwereade looks at it
+[17:00] <niemeyer> fwereade: It looks like the way in which the ops are prepared is only guaranteed by a count
+[17:01] <niemeyer> fwereade: But there's apparently no guarantee that the count, being the same, refers to the right relations
+[17:01] <fwereade> niemeyer,     asserts := D{{"life", Alive}, {"txn-revno", s.doc.TxnRevno}}
+[17:01] <fwereade> niemeyer, ah, no, that's not necessarily enough is it...
+[17:02]  * fwereade thinks
+[17:02] <niemeyer> fwereade: It might be
+[17:02] <niemeyer> fwereade: Since an inc or dec must touch it
+[17:02] <fwereade> niemeyer, yeah, I'm trying to remember ;)
+[17:02] <niemeyer> fwereade: But then what's the role of the relation count there?
+[17:03] <fwereade> niemeyer, not sure what the question is exactly, but let me try:
+[17:03] <dimitern> fwereade: can you take a look at this: https://codereview.appspot.com/7133043/ - if you think it's fine to land this it'll simplify my branch on bootstrapping
+[17:04] <fwereade> niemeyer, if getting the service's relations gets us the "wrong" number, we should definitely refresh and retry
+[17:04] <fwereade> dimitern, soon :)
+[17:04] <dimitern> fwereade: 10x
+[17:04] <fwereade> niemeyer, if we have the right number, that's enough reason to speculatively go ahead
+[17:05] <fwereade> niemeyer, but we can only determine whether it's ok to remove the service by counting the relations we need to remove and seeing whether it's the same as the relations we know we have
+[17:05] <fwereade> number of relations we know we have^^
+[17:06] <fwereade> niemeyer, if it isn't, then at least one relation is left Dying, and we can't remove the service until the relation is removed
+[17:06] <fwereade> niemeyer, not sure if I've covered what you're asking...
+[17:07] <niemeyer> fwereade: Yeah, I think so
+[17:07] <fwereade> niemeyer, still not sure about whether there's a hole, though, need to think about that separately
+[17:08] <niemeyer> fwereade: I'll recommend a comment in that location
+[17:08] <niemeyer> fwereade: and a second one on removeCount == RelationCount
+[17:08] <fwereade> niemeyer, ok, sgtm
+[17:08] <niemeyer> fwereade: Explaining how we can reach that state
+[17:09] <niemeyer> fwereade: This is the first one:
+[17:09] <niemeyer> / This is just an early bail out. The relations obtained may still be wrong,
+[17:09] <niemeyer> / and that'll be asserted by the txn-revno comparison below.
+[17:10] <niemeyer> Actually, I'll reword slightly, but that's the idea
+[17:10] <fwereade> niemeyer, (I have thus far been unable to construct a sequence of events that screws up the relations without also hitting txn-revno)
+[17:10] <fwereade> niemeyer, yep, sounds sane
+[17:12] <rogpeppe> dimitern: looking
+[17:13] <fwereade> (ty rogpeppe, sorry dimitern, still a bit distracted by this conversation)
+[17:16] <dimitern> fwereade: np :)
+[17:17] <dimitern> rogpeppe: 10x, and the other one closely related is https://codereview.appspot.com/7086055/ - I really'd like to have these landed soon
+[17:18] <niemeyer> fwereade:
+[17:18] <niemeyer> / Relations that aren't Alive won't have been removed because
+[17:18] <niemeyer> / they're already on their way to death by other means.
+[17:18] <niemeyer> / If that's the case, do not remove the service either,
+[17:18] <niemeyer> / and let it be dealt with together with the dying relations.
+[17:18] <niemeyer> fwereade: Is that it
+[17:18] <niemeyer> ?
+[17:19] <fwereade> niemeyer, yeah, well put
+[17:19] <niemeyer> fwereade: Supa
+[17:20] <fwereade> niemeyer, just reproposed with nicer Relation.removeOps
+[17:21] <fwereade> niemeyer, endpointRemoveOps did disappear :)
+[17:22] <niemeyer> fwereade: Woohay!
+[17:27] <fwereade> niemeyer, btw, I think we can drop the txn-revno check on service destroy, it's an awfully heavy stick to use
+[17:29] <niemeyer> fwereade: Oh
+[17:29] <fwereade> niemeyer, we can just add a D{{"life", Dying}} assert for each relation that isn't removed
+[17:29] <niemeyer> fwereade: and how do we tell that there are no new relations?
+[17:29] <fwereade> niemeyer, in that case, for the relation count to match but the relations to be wrong, the missing relation is guaranteed to fail a txn
+[17:30] <rogpeppe> dimitern: both reviewed
+[17:30] <dimitern> rogpeppe: tyvm
+[17:30] <fwereade> niemeyer, (we can't hit that situation without an equal number of adds and removes)
+[17:30] <fwereade> niemeyer, (we also need to assert unitcount in that case ofc)
+[17:30] <niemeyer> fwereade: Well, yes.. and?
+[17:30] <niemeyer> fwereade: I mean, that's a real situation
+[17:31] <fwereade> niemeyer, right, and if we have an assert for the state of every initially-known relation we're fine, because any of those that are removed will fail an assert and we'll retry
+[17:32] <fwereade> niemeyer, right?
+[17:32] <niemeyer> fwereade: Sounds sane.. thinking
+[17:32] <fwereade> niemeyer, I'd really like to drop the txn-revno check, it changes at the drop of a hat ;p
+[17:34] <niemeyer> fwereade: Yeah, that should be sane.. assert on obtained relation count == service relation count, plus asserts on all individual relations not removed
+[17:35] <fwereade> niemeyer, cool
+[17:35] <niemeyer> fwereade: The only thing that could blow that scenario up is  a relation added without being perceived, and that can't happen in that case
+[17:35] <fwereade> niemeyer, yeah, I think so
+[17:36] <fwereade> niemeyer, (I'm *really* coming to appreciate mgo/txn :))
+[17:36] <niemeyer> fwereade: Neat, that's a relief :)
+[17:36] <niemeyer> fwereade: Btw, I've just sent the notes on service.go
+[17:37] <fwereade> niemeyer, lovely, thanks
+[17:37] <fwereade> niemeyer, let me know what you think of the relation.go changes :)
+[17:38] <niemeyer> fwereade: state/service.go:422 is the only thing that is perhaps worth of a sync up
+[17:38] <niemeyer> fwereade: Cool, will refresh and look again
+[17:38] <fwereade> niemeyer, just saw that one, thinking a mo
+[17:40] <fwereade> niemeyer, heh, let me hunt around a mo, I think that's addressed in the followup...
+[17:40] <fwereade> niemeyer, yeah, you're absolutely right, I forgot to backport that one
+[17:42] <fwereade> niemeyer, although actually I think it should maybe assert D{{"life", Dying}, {"unitcount", 1}, {"relationcount", 0}}
+[17:43] <fwereade> niemeyer, just because txn-revno is less stable than those
+[17:43] <niemeyer> fwereade: Which unit is that 1?
+[17:43] <niemeyer> fwereade: Well, I suppose there will be asserts on the unit itself on the same transaction
+[17:43]  * niemeyer looks again
+[17:43] <fwereade> niemeyer, that's the unit being removed
+[17:44] <fwereade> niemeyer, it's in removeUnitOps
+[17:44] <niemeyer> fwereade: Yeah, DocExists, ool
+[17:44] <niemeyer> cool
+[17:47] <fwereade> (heh, laura is asking cath for a "darky-light black pen")
+[17:48] <fwereade> (apparently, what she meant was a "brown pencil")
+[17:49] <niemeyer> fwereade: ROTFL
+[17:50] <niemeyer> fwereade: darky-light is a much nicer name than brown, FWIW
+[17:50] <niemeyer> :-)
+[17:50] <niemeyer> fwereade: The new removeOps is great
+[17:51] <fwereade> niemeyer, yeah, thanks for pressing me on that one
+[17:51] <niemeyer> fwereade: np
+[17:52] <niemeyer> fwereade: Okay, those were the big chunks it seems.. I'll do a pass on everything else now
+[17:52] <fwereade> niemeyer, sweet
+[18:09] <niemeyer> fwereade: The test changes makes it pretty obvious that the changes performed are an API improvement
+[18:10] <niemeyer> fwereade: Besides making things right
+[18:10] <fwereade> niemeyer, cool, glad you like it :)
+[18:10] <fwereade> niemeyer, bah, supper is on the table, I should stop
+[18:11] <fwereade> niemeyer, I'll pop back on later for a final check/propose if I can
+[18:11] <niemeyer> fwereade: Beautiful.. you'll probably have a LGTM with minor comments if any
+=== mthaddon` is now known as mthaddon
+[18:13] <rogpeppe> i have to go now.
+=== negronjl` is now known as negronjl
+[18:13] <niemeyer> rogpeppe: Have a good one
+[18:14] <rogpeppe> niemeyer: i think i've finally arrived at a good idea of how the API architecture will work
+[18:14] <rogpeppe> niemeyer: it'd be good to have a discussion about it to see if i'm on crack or not.
+[18:14] <rogpeppe> niemeyer: tomorrow, perhaps
+[18:14] <niemeyer> rogpeppe: Ah, great
+[18:14] <niemeyer> rogpeppe: Certainly up for the talk
+[18:15] <niemeyer> fwereade: Okay, reviewed everything
+[18:15] <rogpeppe> niemeyer: in particular, i think i finally understand how things can work with multiple state servers (both mongo and API)
+[18:15] <rogpeppe> niemeyer: so we have something to aim towards, even if we don't go all the way immediately
+[18:16] <niemeyer> fwereade: All good.. will just wait for the service.go repropose
+[18:16] <rogpeppe> g'night all
+[18:16] <niemeyer> rogpeppe: Cool, night!
+[18:17] <niemeyer> fwereade: There's one trivial on a test too, optional
+[18:46] <fwereade> niemeyer, good point re test, proposed, bbiab
+[18:59] <niemeyer> fwereade: Please ping when you're back
+[18:59] <niemeyer> fwereade: Just want to run a quick idea by you before we're over with this
+[19:13] <fwereade> niemeyer, back
+[19:14] <niemeyer> fwereade: I was wondering if we actually need the Dying relations at all
+[19:14] <fwereade> niemeyer, oh, yes, go on?
+[19:14] <niemeyer> I mean, the assert on the Dying relations
+[19:15] <niemeyer> fwereade: The alive case has an assert on {"relationcount", D{{"$gt", removeCount}}, which means it must necessarily be alive anyway
+[19:16] <niemeyer> fwereade: Because it has relations to justify it, whether it was the relations we've seen or not
+[19:16] <niemeyer> fwereade: Oh, wait, nope.. that's not it
+[19:16] <fwereade> niemeyer, no -- the relation count only goes down when the relation is removed
+[19:16] <niemeyer> fwereade: If there are other relations, we must check those
+[19:16] <fwereade> niemeyer, yes, I think so
+[19:16] <niemeyer> fwereade: So the relationcount should be the one we've seen, sholudn't it?
+[19:17] <niemeyer> fwereade: Exactly, that is
+[19:17] <fwereade> niemeyer, yes, you're completely right
+[19:17] <fwereade> niemeyer, curse that crack
+[19:18] <fwereade> niemeyer, units can have $gt, relations must be exact
+[19:18] <niemeyer> fwereade: Cool
+[19:21] <niemeyer> fwereade: It's slightly suboptimal that there's a hidden requirement in that logic
+[19:22] <niemeyer> fwereade: destroyOps must necessarily have an assertion on the existence of the relation document for it to be reliable
+[19:22] <niemeyer> fwereade: If len(ops) > 0
+[19:23] <fwereade> niemeyer, I wondered about adding an assertDying bool param there
+[19:23] <fwereade> niemeyer, to get the relation to generate the assert itself
+[19:24] <fwereade> niemeyer, seemed slightly less good, especially since we're already using len(ops) == 0 as a test for already-dying elsewhere
+[19:24] <fwereade> niemeyer, I'd be open to arguments that errAlreadyDying would work just as well and maybe be clearer
+[19:24] <niemeyer> fwereade: Yeah, that'd be much better
+[19:25] <fwereade> niemeyer, ok, cool
+[19:25] <niemeyer> fwereade: The point is that we won't foolishly change destroyOps to not return that error without seeing the consequences
+[19:25] <niemeyer> fwereade: But it's easy to change what len(ops) == 0 means
+[19:25] <niemeyer> fwereade: Unintendedly
+[19:25] <fwereade> niemeyer, yep, consider me convinced
+[19:42] <fwereade> niemeyer, proposed again :)
+[19:42] <niemeyer> fwereade: Awesome, looking
+[19:44] <niemeyer> fwereade: There's a len(ops) == 0 in Service.Destroy.. does that have to change?
+[19:44] <niemeyer> fwereade: Or perhaps not change, but a new case added?
+[19:44] <fwereade> niemeyer, I didn't think of that, but you're quite right again
+[19:44] <niemeyer> fwereade: hmm.. I guess not
+[19:44] <niemeyer> fwereade: That's service.destroyOps, though
+[19:45] <fwereade> niemeyer, yeah, but the same arguments apply
+[19:45] <fwereade> niemeyer, I should just be explicit
+[19:45] <niemeyer> fwereade: Cool
+[19:45] <fwereade> niemeyer, I'll just make the errAlreadyDying message non-entity-specific
+[19:45] <niemeyer> fwereade: Sounds good
+[19:45] <niemeyer> fwereade: a pre LGTM on this
+[19:46] <niemeyer> fwereade: The branch seems ready, thanks a lot for all the work
+[19:46] <fwereade> niemeyer, sweet :D
+[19:46] <fwereade> niemeyer, tyvm
+[22:35] <davecheney> mramm: ping
+[22:35] <mramm> davecheney: pong
+[22:35] <mramm> I'm available in skype, and am in the google hangout
+[22:38] <davecheney> mramm: that google hangout is fine
+[22:38] <davecheney> but you still haven't invited me
+[22:38] <davecheney> just some other david cheney

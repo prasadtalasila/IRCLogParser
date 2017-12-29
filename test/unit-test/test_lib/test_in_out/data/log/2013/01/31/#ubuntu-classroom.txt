@@ -1,0 +1,953 @@
+=== Denny_ is now known as Guest59033
+=== megha is now known as gia
+=== dustu-sick is now known as dustubot
+=== Quintasan_ is now known as Quintasan
+=== yofel_ is now known as yofel
+=== sniper is now known as Guest90514
+=== Guest38915 is now known as DaZ
+=== emil is now known as Guest86518
+=== amithkk is now known as Guest8601
+[14:00] <pitti> !m
+[14:00] <ubot2> Factoid 'm' not found
+[14:01] <pitti> (sorry, just trying https://wiki.ubuntu.com/Classroom/ClassBot before I mess up stuff during the actual session)
+[14:01] <pitti> seems the bot isn't active yet
+[14:02] <pitti> ah, ClassBot, got it
+[14:07] <IdleOne> I believe classbot commands are sent to it via PM
+[14:11] <wei2912> pitti: hosting a session soon? :D
+[14:13] <pitti> wei2912: yeah, in 45 mins
+[14:13] <pitti> IdleOne: confirmed
+[14:13] <wei2912> yep
+[14:14] <wei2912> pitti: good luck and have fun :)
+[14:14] <wei2912> and please answer our queries :)
+[14:14] <pitti> wei2912: don't tell me, tell whoever will listen :)
+[14:16] <wei2912> pitti: I bet loads will
+[14:17] <wei2912> Yep, automated testing :)
+[14:34] <dholbach> balloons, I blogged about the hackfest - maybe we should mention it in a couple more other places as well?
+[14:38] <pitti> dholbach: I'll mention it, too
+[14:42] <dholbach> pitti, oops, wrong channel, yes :)
+[14:42] <dholbach> thanks!
+[14:58] <JoseeAntonioR> WELCOME EVERYBODY!
+[14:58] <JoseeAntonioR> This is day 3 (yes, our last day :( ) of Ubuntu Developer Week and if you're completely new to the the event, you might want to check out https://wiki.ubuntu.com/UbuntuDeveloperWeek to review the schedule. This is also the place where logs and links to videos will be posted after the sessions.
+[14:58] <JoseeAntonioR> If you want to ask questions and join the conversation about the sessions, please make sure you also join #ubuntu-classroom-chat
+[14:59] <JoseeAntonioR> When you ask questions, please make sure you prefix them with QUESTION: otherwise they will not be picked up.
+[14:59] <JoseeAntonioR> Up next, we have an 'Automated testing in Ubuntu' session with pitti. Have fun today!
+[14:59]  * pitti waves hello
+[15:00] <pitti> please wave in #chat if you are listening in, to get an impression who and how many people are interested in this
+=== ChanServ changed the topic of #ubuntu-classroom to: Welcome to the Ubuntu Classroom - https://wiki.ubuntu.com/Classroom || Support in #ubuntu || Upcoming Schedule: http://is.gd/8rtIi || Questions in #ubuntu-classroom-chat || Event: Ubuntu Developer Week - Current Session: Automated Testing in Ubuntu - Instructors: pitti
+[15:01] <ClassBot> Logs for this session will be available at http://irclogs.ubuntu.com/2013/01/31/%23ubuntu-classroom.html following the conclusion of the session.
+[15:01] <pitti> hm, nobody?
+[15:01] <pitti> anyway, let's start
+[15:01] <pitti> Hello everyone!
+[15:01] <pitti> I'm Martin Pitt, working as an upstream QA engineer in the Ubuntu Platform team.
+[15:01] <pitti> Until some 1.5 years ago the development paradigm of Ubuntu has mostly been a, let's call it "opportunistic"/"crossing fingers" approach which was mostly driven by things like feature freeze, bug reports, and human testing.
+[15:02] <pitti> However, we realized that this was not practicable, sustainable, and good enough any more for a multitude of reaons, and that we need a more rigorous, automated, and preemtive approach to ensure that regressions are avoided and developers of (and also on) Ubuntu can have a much more stable system.
+[15:02] <pitti> So over time we have developed various kinds of automated tests which help us to eventually get there.
+[15:02] <pitti> I want to give an overview about what we currently do as well as what we have planned, and some pointers where you can look at the details of each test and where to go if you want to help with improving them.
+[15:03] <pitti> This will take some 20 minutes, so that we'll have 10 minutes at the end for questions and/or a break.
+[15:03] <pitti> == Daily images ==
+[15:03] <pitti> Since 12.04 LTS the Ubuntu Platform team set itself the goal to produce a working installation image every day; an image which fails to build or install for whatever reason is being considered as a major fault which shall cause developers to drop what they are doing and fix it immediately.
+[15:04] <pitti> This helps to prevent a "too much to do, we'll fix it by the next milestone" attitude, and also makes it a lot easier to identify and fix the regression as the knowledge what changed in the last 24 hours is still fresh in everyone's mind.
+[15:04] <pitti> To make this possible, we run "smoke tests" of the installation images whenever there is a new one on http://cdimage.ubuntu.com/ .
+[15:04] <pitti> The iso is being automatically installed (through pre-seeding) into a virtual machine in various modes such as "default", "encrypted home", "LVM", "OEM mode", or the various tasks for the server images such as "Samba server", "Print server", or RAID 1.
+[15:05] <pitti> After that the VM will be rebooted and checked if it ends up in a running Unity (for desktop images), or you can ssh into it (for server images), plus a few more general tests.
+[15:05] <pitti> If you are interested in the details, you can have a look at https://code.launchpad.net/ubuntu-test-cases which hosts all the relevant branches.
+[15:06] <pitti> In the same vein we also test that dist-upgrades work from the previous stable release and, if we are currently developing a new LTS release, from the previous LTS. The scripts are at https://code.launchpad.net/~auto-upgrade-testing-dev/auto-upgrade-testing/trunk/ .
+[15:06] <pitti> All of those tests run in Canonical's QA lab in Jenkins. We have a public mirror for it here:
+[15:06] <pitti>    https://jenkins.qa.ubuntu.com/view/Raring/view/Smoke%20Testing/
+[15:07] <pitti> There you can see all the image and upgrade tests that are run every day, their recent stability, and which ones currently fail.
+[15:07] <pitti> You can also click on the individual jobs, see their recent history, and for every run see the installer/upgrade logs that were produced so that you have immediate access to debugging information.
+[15:07] <pitti> I'm giving everyone half a minute to click around and get a first impression, in case you have further questions.
+[15:08] <pitti> there is also this view: http://reports.qa.ubuntu.com/smoke/raring/flat/ (thanks gema)
+[15:09] <pitti> Parameswaran Sivatharman (psivaa on IRC) is watching the results every day, and filing bugs for problems and regressions; so if you have some questions about all those or want to discuss a particular installation problem that you are seeing, you can talk to him.
+[15:09] <pitti> Javier Collado (jcollado on IRC) is the main developer of the tests themselves these days. If you have an idea and a branch with new or improved tests for images or upgrades, please go talk to him.
+[15:09] <pitti> This has already helped us a great deal to have a much less crazy milestone/beta/final release process and ensure that everybody can test Ubuntu every day without having to fear a complete failure.
+[15:09] <pitti> But of course any automated testing only gets you so far; in particular, installer UI oddities and bugs will not be discovered by this, and neither will bugs which affect the installed system and particular applications.
+[15:10] <pitti> So manual testing is still necessary and appreciated, but with this it should be a lot more enjoyable.
+[15:10] <pitti> == Packages ==
+[15:10] <pitti> Until 12.04 LTS, using the development release has always required a certain knowledge about the packaging system and, most importantly, caution when doing the daily dist-upgrade dance.
+[15:10] <pitti> In a lot of situations packages would build on some architectures but failed on others, causing apt to want to remove half of your system; or a missing dependency or half-done library transition caused the upgrade to not work at all.
+[15:11] <pitti> So since 12.10, uploads do not go directly into the development release any more, but are instead put into a staging area. Only when they are built on *all* architectures (including ports), and do not cause any uninstallability they are propagated into the development release.
+[15:11] <pitti> For you as user of the development release this means that it is now safe at all times to run apt-get dist-upgrade without having to manually double-check, and there should never be any half-done library or package renaming transitions.
+[15:11] <pitti> For you as a developer this means that it is now required to immediately fix up all consequences when you encounter a build failure or start a library transition, as otherwise your work won't land.
+[15:12] <pitti> This ensures a much smoother experience for everyone, and avoids building up a heap of "to fix later by someone else" liabilities, as we had had in the past.
+[15:12] <pitti> That settles the "dist-upgrade will not completely break my packaging system and OS" part, but we really want to do much more: not only should the package install, it should also actually work and not break other packages.
+[15:12] <pitti> For example, if we upload a new glib version, this might break something in gedit, pygobject, or the installer.
+[15:12] <pitti> Ideally we would have a set of automated tests for each package which we would then run against new uploads of that package, as well as whenever any of the package's dependency changes.
+[15:13] <pitti> So if the new glib breaks gedit, we want glib to stay in the staging area until the problem has been fixed (in glib or gedit), and only when everything is green again it should be promoted to the devel release.
+[15:13] <pitti> A lot of packages run existing upstream tests during package build. That's useful for many things, but is not enough to ensure above "does not break other package" property, as we don't rebuild gedit everytime we update any of its dependencies such as glib or GTK.
+[15:14] <pitti> That's what "autopkgtests" do.
+[15:14] <pitti> These are automatic tests which are shipped in many of our source packages and get run against the *installed version* of that package.
+[15:14] <pitti> So they can be run at any time, and also check that the packaging is correct (i. e. that the gedit package actually ships all the files that gedit needs, as opposed to just building them during package build).
+[15:15] <pitti> Debian has a defined standard how to ship and declare such tests (http://dep.debian.net/deps/dep8/) as well as an existing implementation which we refined quite a lot to work (http://packages.debian.org/autopkgtest)
+[15:15] <pitti> You can see the list of packages that have tests, and their status at https://jenkins.qa.ubuntu.com/view/Raring/view/AutoPkgTest/
+[15:15] <pitti> Again you can click through each of those and see all the logs and history, so that it should be quite obvious what failed and why.
+[15:16] <pitti> As you notice, there are currently quite a lot of failures. Some of them just have never succeeded in our test environment, but some of them are actual regressions.
+[15:16] <pitti> Right now we do not yet enforce a succeeding autopkgtest for a package to get promoted to the devel release, but we are working on getting this for raring still.
+[15:16] <pitti> At that point developers will hopefully pay more attention to when their tests start failing. :-)
+[15:16] <pitti> So any help with fixing the failing ones, as well as adding new ones is again greatly appreciated.
+[15:16] <pitti> Tomorrow (and every couple of weeks) we will have an "autopkgtest hackfest" in #ubuntu-quality where some of us will take time to guide you with creating and fixing tests, reproducing failures, etc. But of course you are welcome to show up and ask at any time.
+[15:17] <pitti> See dholbach's announcement at http://daniel.holba.ch/blog/2013/01/automated-testing-hackfest-2/
+[15:17] <pitti> All the scripts are publicly available at https://code.launchpad.net/+branch/auto-package-testing/.
+[15:17] <pitti> In essence this provides a script "prepare-testbed" which builds a virtual machine for running tests in, and a "run-adt-test" script which exercises a package's tests in that built VM, either from the archive, a branch, a PPA, or a locally built source package.
+[15:17] <pitti> So creating and running tests is really easy these days. You can read all the steps for it in the packaging guide:
+[15:17] <pitti>   http://developer.ubuntu.com/packaging/html/auto-pkg-test.html
+[15:18] <pitti> == Upstream (4') ==
+[15:18] <pitti> So now we are at a conceptual point where we avoid regressions to land in Ubuntu.
+[15:18] <pitti> However, that's not the end of wisdom:
+[15:18] <pitti> Even with this the feedback cycle between upstream making a change, then doing a release, someone packaging the release for Ubuntu, and noticing that it causes a regression somewhere else can still take several months.
+[15:18] <pitti> We want to apply our "continuous integration test" principle to our key upstreams such as GNOME or LibreOffice, and ideally tighten that feedback cycle to a by-commit granularity with getting test results within minutes.
+[15:18] <pitti> This consists of three major parts:
+[15:19] <pitti>  (1) Writing tests
+[15:19] <pitti>  (2) Running them regularly, and
+[15:19] <pitti> (3) Notify the relevant people if something goes wrong.
+[15:19] <pitti> We do very little of this at a production level yet, most of this is still in the experimental/planning stage.
+[15:19] <pitti> For (1), some components such as LibreOffice and some GNOME libraries already have an extensive test suite.
+[15:19] <pitti> For others we have contributed some tests, such as GNOME's power management or gvfs (GNOME's handling of remote sftp/ftp/samba file systems or removable devices).
+[15:20] <pitti> These new tests already have served to identify and fix quite a lot of bugs.
+[15:20] <pitti> For GNOME power management in particular I'm really happy to see that my initial "seed" of 5 tests now has led upstream (Bastien Nocera in particular) to add a lot more, and going wild on fixing the bugs that got discovered with those. :-)
+[15:20] <pitti> That's actually where we want to go with this, as we can't possibly maintain and develop tests for all upstreams out there.
+[15:20] <ClassBot> There are 10 minutes remaining in the current session.
+[15:20] <pitti> But we want to develop and provide technology to create tests, maybe provide the resources for running them regularly, and help upstream with setting up initial tests.
+[15:21] <pitti> As usual, finding a way to create a test bed and write the first few test is the hardest part; adding a tenth test to an existing suite is usually rather easy and fun.
+[15:21] <pitti> If it's not, we have done something wrong and need to go back to the drawing board :)
+[15:21] <pitti> But writing tests for user interface or hardware related things is still inordinarily hard or even impossible, so we first need some better research and technology there. I'll explain more about this in the next talk.
+[15:21] <pitti> For (2), we have built the current LibreOffice git head and run its tests for some time (https://jenkins.qa.ubuntu.com/job/quantal-pkg-libreoffice_git/); this is going to be resurrected for Raring eventually.
+[15:21] <pitti> We are also experimenting with building the current GNOME git trees on every commit and running tests: https://jenkins.qa.ubuntu.com/view/Raring/view/JHBuild%20Gnome/
+[15:22] <pitti> But again, this needs more time to stabilize the builds, working with upstream to keep them succeeding.
+[15:22] <pitti> For (3), there is currently only one mailing list which aggregates all state changes (pass→ fail or vice versa), which obviously isn't very useful.
+[15:22] <pitti> We will sit down with our key upstreams to discuss how to design a notification system, which is always a compromise between spamming people and telling them early that a real problem has arisen.
+[15:22] <pitti> As you can see there is still lots of work to be done in this area. Please ping me if you are interested in any of this!
+[15:23] <pitti> A good example for this is Canonical's product strategy team, who managed to completely automate the landing of new code, regression-testing it, and rolling out new packages into the distribution.
+[15:24] <pitti> That might not be applicable to _all_ our upstreams of course, but it gives some nice inspiration what is already possible these days.
+[15:24] <pitti> == Q&A ==
+[15:24] <pitti> Thank you for your attention so far! We have some 10 minutes left for questions and discussion, so please fire away!
+[15:24] <pitti> (well, actually more like 6 now)
+[15:24] <pitti> !q
+[15:24] <pitti> sorry
+[15:25] <ClassBot> There are 5 minutes remaining in the current session.
+[15:25] <pitti> wei2912: for a "newbie to tests", I recommend to join an autopkgtest hackfest, as there are some classes of tests which are rather easy to write, but still very useful
+[15:26] <pitti> manavakos: depends on what kind of test you want to work on really; you should have a general understanding of how the thing that you want to test is supposed to work, and some understanding how to create testbeds for various situations
+[15:26] <pitti> but in a lot of regards it's much like programming itself
+[15:26] <ClassBot> wei2912 asked: for a newbie to tests, what would you recommend to start helping out?
+[15:27] <ClassBot> manavakos asked: basic skills and knowledge for writing tests?
+[15:27] <pitti> (sorry, figuring this out)
+[15:27] <ClassBot> jderose asked: is it possible for in-development apps (not yet in the archive) to get their autopkgtest-defined tests run? say for every new build that lands in their daily PPA?
+[15:28] <pitti> jderose: in principle yes, but in practice it's a resource limitation; if you have something like that, please talk to me and jibel in #ubuntu-quality
+[15:28] <pitti> jderose: we are doing this for e. g. Firefox
+[15:29] <pitti> so, thanks again everyone! next talk in 1 minute
+[15:30] <ClassBot> wei2912 asked: is there a specific procedure for submitting tests?
+=== ChanServ changed the topic of #ubuntu-classroom to: Welcome to the Ubuntu Classroom - https://wiki.ubuntu.com/Classroom || Support in #ubuntu || Upcoming Schedule: http://is.gd/8rtIi || Questions in #ubuntu-classroom-chat || Event: Ubuntu Developer Week - Current Session: Automated Testing Technologies - Instructors: pitti
+[15:30] <pitti> wei2912: in general I'd start with the usual sponsoring procedure, especially for autopkgtests; but it's all in above autopkgtest documentation
+[15:30] <ClassBot> Logs for this session will be available at http://irclogs.ubuntu.com/2013/01/31/%23ubuntu-classroom.html following the conclusion of the session.
+[15:31] <pitti> Another "welcome" from me to any potential newcomers who haven't been here at the previous slot yet.
+[15:31] <pitti> In the last talk I gave an overview about WHAT we test in Ubuntu, WHERE that happens, and where to see daily logs and failure information.
+[15:31] <pitti> Now I want to drill down to the HOW, i. e. what technologies are available to write tests for particular application/problem classes.
+[15:31] <pitti> For automatic testing, the most "approachable" things are functions and libraries which are pure logic, or only affect the file system and the network, such as glibc, coreutils, PostgreSQL, or Apache.
+[15:31] <pitti> I don't want to cover these, as from a perspective of how to build test beds they are very obvious and well understood.
+[15:31] <pitti> I rather want to show methods for testing things which talk to hardware or the plumbing stack, where ordinarily you need root privileges, do intrusive changes to the system, and where putting your actual system to be in the condition that you want to test is hard to impossible.
+[15:32] <pitti> Another interesting case is testing graphical applications, which has very little precedent at least in the Open Source world.
+[15:32] <pitti> == Interaction with D-BUS services ==
+[15:32] <pitti> The modern desktop world usually splits the actual user interface and policy from the parts that accesses hardware and needs privileged (root) access. The latter usually sits on the session or system D-BUS and provides objects that the desktop interacts with.
+[15:32] <pitti> For example, the NetworkManager daemon controls the actual hardware and things like wpasupplicant, and exports available devices and networks as D-BUS objects. On the desktop there are various things that use those, such as nm-applet, indicator-network, or GNOME Shell plugins.
+[15:33] <pitti> Another example is UPower, a system daemon which exports all power providing devices (batteries, ACs) as D-BUS objects and provides methods for suspending or hibernating the machine.
+[15:33] <pitti> A non-hardware related example are the Telepathy daemons which provide a view of your chat accounts (Jabber, GTalk, etc.) and conversations on D-BUS.
+[15:33] <pitti> Now, suppose you want to write tests for those:
+[15:33] <pitti> - nm-applet: verify the behaviour when the current wifi network gets out of range
+[15:33] <pitti> - gnome-settings-daemon's power plugin: ensure the user gets notified and an emergency suspend gets done when the battery goes critical
+[15:33] <pitti> - empathy pops up a new window when someone sends you a Jabber message, and the message indicator should notify you about this
+[15:33] <pitti> In the first two cases it is rather impractical to actually replicate that situation on hardware, and in the telepathy case it would be a lot of unnecessary work to set up a fake Jabber server just for testing the GUI.
+[15:34] <pitti> What you really want to do is to build a hardware/network independent "sandbox" which provides the same D-BUS APIs than the real NM, upower, or telepathy and enough of its behaviour for what you want to test.
+[15:34] <pitti> This gives you the flexibility to set up arbitrary scenarios, while not touching and damaging your actually running system.
+[15:34] <pitti> I wrote a project called "python-dbusmock" for this some months ago: http://pypi.python.org/pypi/python-dbusmock
+[15:35] <pitti> This provides an API to construct arbitrary mocks, and also already ships a number of "templates", readymade mocks for common services that are needed in a lot of tests such as notification-daemon, upower, NetworkManager, or gnome-screensaver.
+[15:35] <pitti> It is most convenient to use from Python; you just need to derive your tests from dbusmock.DBusTestCase instead of unittest.TestCase, and with literally 2 lines you can start a mock system bus and load a template with customized properties:
+[15:35] <pitti>     self.start_system_bus()
+[15:35] <pitti>     self.spawn_server_template('upower', {'OnBattery': True, 'HibernateAllowed': False})
+[15:36] <pitti> However, you can also use python-dbusmock from any other programming language as all of its functionality is controlled via D-BUS.
+[15:36] <pitti> Above web page has some examples how to do it in plain shell with using the "gdbus" command.
+[15:36] <pitti> python-dbusmock is the right choice if you want to effortlessly set up a couple of plumbing APIs but don't need a lot of actual behaviour from them.
+[15:36] <pitti> As an example you can look at the tests for gnome-settings-daemon's power plugin which recently landed in upstream git:
+[15:36] <pitti>   http://git.gnome.org/browse/gnome-settings-daemon/tree/tests/gsdtestcase.py
+[15:36] <pitti>   http://git.gnome.org/browse/gnome-settings-daemon/tree/plugins/power/test.py
+[15:37] <pitti> (not now please, though  :) )
+[15:37] <pitti> That uses mocks for systemd's logind, upower, and notification-daemon.
+[15:37] <pitti> The first is created "from scratch" with AddMethod(), AddProperty() and so on, the other two are templates.
+[15:37] <pitti> There is a second very interesting project called "Bendy Bus": http://gitorious.org/bendy-bus
+[15:37] <pitti> It takes a lot more effort to set up a mock, but it allows the mocks to have very rich behaviour:
+[15:37] <pitti> you can write complete state machines, and Bendy Bus provides automatic fuzzing of responses for smoketesting your application's responses to unexpected answers which usually finds a lot of crashers.
+[15:38] <pitti> == Interaction with hardware ==
+[15:38] <pitti> But what if you want to test the D-BUS (or other) daemons themselves?
+[15:38] <pitti> Then you need to mock the hardware on the API level that these daemons are talking to, which is usually /sys, /dev/, uevents, and ioctls
+[15:38] <pitti> sometimes there are also specific kernel APIs and direct hardware access through mapped memory, most notably for network and graphic devices.
+[15:39] <pitti> A very robust tool that has been around for a long time is the "scsi_debug" kernel module. When you load it, it adds a virtual SCSI drive and partition which is backed entirely by RAM.
+[15:39] <pitti> Unlike a simple loop device (which is actually quite sufficient in many cases) these look like a "real" drive (/dev/sdb) which you can partition, eject, and so on.
+[15:39] <pitti> You can create arbitrarily many of those, can also tell it to act as a CD-ROM, can configure it to return random read/write errors or return data with a particular delay.
+[15:40] <pitti> "modinfo scsi_debug" shows all the parameters, and http://sg.danny.cz/sg/sdebug26.html provides a nice HOWTO.
+[15:40] <pitti> scsi_debug is being used in the tests of udisks (http://cgit.freedesktop.org/udisks/tree/src/tests/integration-test) and gvfs (https://bugzilla.gnome.org/show_bug.cgi?id=691336).
+[15:40] <pitti> The main drawback is that it requires root privileges, so it is a bit difficult to integrate into the usual "make check". But there is no other real alternative these days.
+[15:41] <pitti> For cases where your application only looks at sysfs, but doesn't do "write" access to the device, you can create a sysfs-like directory/file tree yourself, and set $SYSFS_PATH to it, so that libudev (the standard library for hardware discovery) will look into your sandbox instead of the real /sys.
+[15:41] <pitti> That's the approach which upower had used for a long time (http://cgit.freedesktop.org/upower/tree/src/linux/integration-test), as devices like batteries, UPSes, and ACs fall into that category.
+[15:41] <pitti> However, this stopped working with recent udev/systemd versions, as $SYSFS_PATH is not supported any more. Ubuntu still has an older udev which still supports that, though.
+[15:42] <pitti> It also doesn't work if your application doesn't use libudev but looks into /sys directly, and doesn't help you for mocking /dev nodes, uevents (hardware change notifications that the kernel sends out on hotplug events), or ioctls.
+[15:42] <pitti> For this I am currently developing a tool called "umockdev" (https://github.com/martinpitt/umockdev) which provides all those.
+[15:42] <pitti> It has been able to mock a /sys tree and uevents for quite some time, and recently grew support for mocking /dev/.
+[15:42] <pitti> Just two days ago I got it to successfully mock devices like PtP cameras and MTP media players, i. e. USB devices which use the "usbdevfs" protocol over ioctls.
+[15:43] <pitti> It does not need any particular privileges, as it does all the mocking through an LD_PRELOAD library, so it does not disturb the running system in the slightest.
+[15:43] <pitti> It provides an API to add or change individual devices to the mock /sys, synthesize arbitrary uevents for it, and an "umockdump" tool to create a text file representation of the sysfs attributes, udev properties, and ioctl responses of an actual device.
+[15:43] <pitti> You can later load that text file into an umockdev sandbox and run a program in that, such as mtp-files or gphoto2 --get-all-files or the gvfs daemons.
+[15:44] <pitti> It does not have a release yet as it is still a research project, but if you are interested in this please talk to me.
+[15:44] <pitti> For the case of userspace programs talking directly to the hardware or have custom kernel APIs, such as network devices or graphic cards there is no mocking solution right now.
+[15:44] <pitti> For the time being it is probably best to use complete system virtualization like qemu/kvm.
+[15:45] <pitti> == Graphical Applications ===
+[15:45] <pitti> By nature, this is the least approachable class from an automation perspective.
+[15:45] <pitti> There has been a number of attempts to create a generic UI testing framework, but unfortunately none of them has matured enough to be called "the standard".
+[15:45] <pitti> Also, for full disclosure I don't have personal experience with most of these, as I'm primarily a "backend" guy, but I want to at least introduce the most common ones.
+[15:45] <pitti> Some test frameworks record and replay the precise user actions (mouse moves and key strokes), take a screenshot of the manipulated screen area, and compare it against an expected value.
+[15:46] <pitti> where "value" means "image"
+[15:46] <pitti> An example is https://launchpad.net/xpresser, and I've also heard from e. g. VMWare's UDS presentation that they use that approach, too to test successful installation of VM clients.
+[15:46] <pitti> This approach is the only choice that you have if you have no control at all about what is being tested, and you just have a bitmap to test against.
+[15:46] <pitti> But tests written in that way are very sensitive against any kind of toolkit, theme, screen resolution difference, and of course force you to update half of your tests with every UI change or new feature of your program.
+[15:47] <pitti> So the cost-benefit ratio of this approach is prohibitively high for most use cases.
+[15:47] <pitti> A much better approach is to disregard the actual pixels and instead inspect the widget tree.
+[15:47] <pitti>  I. e. you find an "action" widget in your tree, such as a button, your test triggers a synthetic "clicked" event, and you wait for an expected action to happen, expressed in terms of structural and property changes of the widget tree.
+[15:47] <pitti> This is very toolkit (GTK, Qt, etc.) specific, but results in tests which are robust against feature changes, independent from each other, and independent of the actual presentation in terms of themes, resolution, or icons.
+[15:48] <pitti> The most prominent examples for those are the Linux Desktop Testing Project (http://ldtp.freedesktop.org) and dogtail, with its successor "strongwind" (http://medsphere.org/community/project/strongwind).
+[15:48] <pitti> Both of these rely on accessibility being enabled in your desktop (which is now the default, though) and the application, as they identify widgets and their properties through the AT-SPI framework.
+[15:48] <pitti> A number of projects, and Ubuntu itself (http://mago.ubuntu.com/) has/had used this approach for a long time, but Ubuntu gave up mago some cycles ago because the approach has some inherent race conditions that lead to too much instability, and AT-SPI does not export enough interesting properties of widgets.
+[15:49] <pitti> But I haven't used strongwind nor LDTP personally yet, so I'm afraid I cannot say much more about it.
+[15:49] <pitti> Ubuntu's currently preferred framework is "autopilot" (http://unity.ubuntu.com/autopilot/).
+[15:49] <pitti> This has originally been created to write tests for Unity (which are in the unity-autopilot package), but has since then been extended to work for Qt and GTK as well.
+[15:49] <pitti> It uses the XTest framework for injecting events, which look like
+[15:49] <pitti>   self.keyboard.press_and_release('Ctrl+a')
+[15:49] <pitti>   self.mouse.move_to_object(my_button)
+[15:50] <pitti> and uses plugins for the toolkits to directly export the widget tree to D-BUS, so that AT-SPI is not necessary.
+[15:50] <pitti> It also provides temporal comparison operators like
+[15:50] <pitti>   self.assertThat(my_button.visible, Eventually(Equals(True)))
+[15:50] <pitti> which help a lot in avoiding race conditions due to hardcoded sleep() statements.
+[15:50] <pitti> I played around with autopilot-GTK a bit, which is unfortunately the least supported autopilot module and still has some bugs.
+[15:50] <ClassBot> There are 10 minutes remaining in the current session.
+[15:51] <pitti> That's partially because Unity itself does not use GTK, and also because GTK in particular doesn't expose the widget identifiers that you define in the GtkBuilder files, so it's rather inconvenient to find the desired widget.  That's something which eventually needs to be fixed in GTK itself. If you use Qt, it should work much better.
+[15:51] <pitti> But even without that, it works relatively well already even for GTK based programs, as you can see in some example tests that community members created:
+[15:51] <pitti>   http://bazaar.launchpad.net/~ubuntu-testcase/ubuntu-autopilot-tests/trunk/files
+[15:51] <pitti> == Q&A ==
+[15:51] <pitti> Thank you for your attention so far!
+[15:52] <pitti> We have 9 minutes left for questions and discussion, so please fire away!
+[15:55] <pitti> (conversation apparently has moved to -chat as there hasn't been an official question yet)
+[15:55] <ClassBot> There are 5 minutes remaining in the current session.
+[15:56] <pitti> ok, so thanks everyone! Enjoy the other sessions!
+[15:59] <ClassBot> lorddelta asked: I'm generally interested in cross development (in fact I must admit I'm on Windows 7 at this moment for various reasons, although I generally prefer Ubuntu), how easy is it to port/find these sort of mockup frameworks cross platform? E.g. if I want to simulate DBUS in Windows/Mac? Or is most of what you talked about today Ubuntu specific. Sorry if this question is off topic.
+[15:59] <pitti> lorddelta: none of this is ubuntu specific, but e. g. umockdev is highly Linux specific
+[16:00] <pitti> lorddelta: mocking d-bus services is possible in windows as well, but presumably you'll need wholly different services that you emulate
+[16:00] <pitti> as windows doesn't use d-bus natively
+=== ChanServ changed the topic of #ubuntu-classroom to: Welcome to the Ubuntu Classroom - https://wiki.ubuntu.com/Classroom || Support in #ubuntu || Upcoming Schedule: http://is.gd/8rtIi || Questions in #ubuntu-classroom-chat || Event: Ubuntu Developer Week - Current Session: Syncing your app's data with u1db - Instructors: aquarius
+[16:00] <ClassBot> Logs for this session will be available at http://irclogs.ubuntu.com/2013/01/31/%23ubuntu-classroom.html following the conclusion of the session.
+[16:01] <aquarius> thanks, pitti!
+[16:01] <aquarius> go use autopilot; it is very cool :)
+[16:02] <aquarius> Hi! I'm Stuart Langridge, and I'm here to talk about u1db.
+[16:02] <aquarius> This talk is called "syncing your app's data with u1db", and that's exactly what u1db is for.
+[16:02] <aquarius> This will be a fairly simple overview of what u1db is, why it's cool, and what you might want to use it for, along with how
+[16:03] <aquarius> You build an app, and use u1db to store its data, and you can then sync that data to your app on other machines and other devices and other platforms.
+[16:03] <aquarius> So if you built an Ubuntu mobile app, you could have the same data sync to your Ubuntu laptop, meaning that your data is everywhere.
+[16:04] <aquarius> You could also sync to other platforms, so an Android app could share the same data, and so on.
+[16:04] <aquarius> Imagine your shopping lists and your notes and your movie watching habits and your music ratings in your Ubuntu phone and desktop and on the web available from anywhere.
+[16:05] <aquarius> So far, this is just syncing, like Ubuntu One file sync: why have a database?
+[16:05] <aquarius> U1DB is good at dealing with data; file sync, not so much.
+[16:05] <aquarius> Some people have thought in the past "hey, my app stores things in SQLite; I'll just use U1 to sync my app's data folder and then my data is synced everywhere, woo!"
+[16:05] <aquarius> This is great, until it isn't.
+[16:06] <aquarius> If you make changes to your SQLite database on two different machines, they'll conflict, because SQLite isn't designed for syncing.
+[16:06] <aquarius> So you'll get a conflict from Ubuntu One file sync, which you'll have to resolve.
+[16:06] <aquarius> U1DB is cleverer than that; changes to your data won't conflict unless they really, really need to, so it's much more suitable for syncing.
+[16:07] <aquarius> You probably have questions at this point, but let's see some code first and then we can discuss.
+[16:07] <aquarius> First, you'll need u1db, of course.
+[16:07] <aquarius> For this talk, you'll need to get u1db from launchpad, with "bzr branch lp:u1db"
+[16:07] <aquarius> (U1DB itself is of course available in Ubuntu 12.10, but for this demo please get the Launchpad version because it contains the example app as well!)
+[16:08] <aquarius> For this demonstration, we'll use the Python version of U1DB.
+[16:08] <aquarius> It is available in C, Python, and soon as part of the Ubuntu SDK for Ubuntu mobile apps based on QML.
+[16:08] <aquarius> Once you have u1db, this should work and not throw errors: PYTHONPATH=u1db python -c "import u1db"
+[16:08] <ClassBot> jincreator asked: Simple one. Is u1db acronym for Ubuntu One DataBase?
+[16:08] <aquarius> Not really. "U1DB" is just a name.
+[16:09] <aquarius> It's built by the Ubuntu One team, and Ubuntu One provides a server that you can sync to
+[16:09] <aquarius> but it's just a name: you can use U1DB to store data without ever using Ubuntu One if that's what you prefer.
+[16:10] <aquarius> So, those of you following along at home should have the Python version of u1db working, from Launchpad so you've got the example app :)
+[16:10] <aquarius> Let's try a simple example of a working app first: the u1db distribution comes with an example app called "cosas", which is a small todo list.
+[16:10] <aquarius> (you might need to apt-get install python-qt4 if you don't have it to run cosas)
+[16:11] <aquarius> (Everyone writes a todo list now: it's like the Hello World of the 21st century)
+[16:11] <aquarius> cd u1db/cosas
+[16:11] <aquarius> PYTHONPATH=.. python ui.py
+[16:12] <aquarius> and you should see a todo list window pop up, looking like http://ubuntuone.com/7aOvtpIljWwbwB1FEFbs5L
+[16:13] <aquarius> Add a couple of tasks, tick a couple
+[16:13] <aquarius> Then from the app menu, do File > Synchronize
+[16:13] <aquarius> and choose Ubuntu One and Synchronize Now
+[16:14] <aquarius> (this demo is for people who have an Ubuntu One account; if you don't have one, just skip doing this and take my word for it. You can sync u1db without using Ubuntu One at all by running your own server)
+[16:14] <aquarius> Your little todo list is now synced with your U1 account!
+[16:15] <aquarius> You can prove this: quit cosas and then delete the file ~/.local/share/cosas/cosas.u1db, as if you're a second machine
+[16:15] <aquarius> If you now restart cosas you'll have no todo list items... just File > Synchronize again and they'll be synced to you!
+[16:16] <aquarius> Obviously you could be running cosas on many different Ubuntu machines and the data could be synced to all of them.
+[16:18] <ClassBot> jsjgruber-l85-q asked: How does u1db differ from the couchdb service Ubuntu One started with?
+[16:18] <aquarius> jsjgruber-l85-q, they have some things in common, and a bunch of things different.
+[16:18] <aquarius> U1DB is designed to be implemented, and implementable, in many different environments
+[16:19] <aquarius> and U1DB explicitly has client and server separation, so that a U1DB-using app can be a client without being a server: that is, your app syncs to other places, but you don't have to allow other places to sync to you
+[16:20] <aquarius> That makes it simpler to implement a U1DB-using app in environments like the client-side web, or smartphones, which really only want to consume data and sync it but not be a server for other clients.
+[16:21] <aquarius> And it's possible to build a whole new U1DB implementation in a language and environment of your choice relatively easily; so one does not try and bring up the U1DB client/server architecture on a new platform, but instead write a new U1DB implementation for that platform in that platform's way
+[16:22] <aquarius> so, for example, to have U1DB available to apps on Android, use the Android Java implementation of U1DB, which will be a from-scratch reimplementation, tested for compliance with the comprehensive compliance test suite that u1db provides.
+[16:23] <aquarius> Also, U1DB is in-process. It's not a separate daemon running a server; it's basically implemented as a library that your app includes.
+[16:23] <aquarius> so there's no separate daemon.
+[16:24] <aquarius> jsjgruber-l85-q, hope that answers the question!
+[16:24] <aquarius> So, let's see how this actually works. I'll show using U1DB from Python on Ubuntu, but as mentioned it's also available in other platforms and languages too, which I'll talk about later.
+[16:24] <aquarius> Start with some simple examples, taken from the documentation at http://packages.python.org/u1db/
+[16:24] <aquarius> Start a python interpreter with "python"
+[16:24] <aquarius> >>> import u1db
+[16:24] <aquarius> )>>> db = u1db.open("mydb.u1db", create=True)
+[16:25] <aquarius> We've now created a U1DB database named mydb.u1db.
+[16:25] <aquarius> Next, we'll create a document in it. U1DB is a document-based database: you save JSON documents into it. So, a simple document naming a person:
+[16:25] <aquarius> >>> content = {"name": "Alan Hansen"}
+[16:25] <aquarius> >>> doc = db.create_doc(content)
+[16:25] <aquarius> And the Document is saved in the database.
+[16:25] <aquarius> You can still see the Document's content:
+[16:25] <aquarius> >>> doc.content
+[16:26] <aquarius> {'name': 'Alan Hansen'}
+[16:26] <aquarius> We can edit the content of that document, of course:
+[16:26] <aquarius> >>> doc.content = {"name": "Alan Hansen", "position": "defence"}
+[16:26] <aquarius> After changing the content, we need to save that updated Document:
+[16:27] <aquarius> >>> rev = db.put_doc(doc)
+[16:27] <aquarius> And now the updated document is saved in the DB, ready to be retrieved or queried or synced.
+[16:27] <aquarius> Let's create a couple more documents:
+[16:27] <aquarius> >>> doc2 = db.create_doc({"name": "John Barnes", "position": "defence"})
+[16:27] <aquarius> (and we'll change the content before saving: Document.content is a dictionary)
+[16:27] <aquarius> >>> doc2.content["position"] = "forward"
+[16:28] <aquarius> >>> db.put_doc(doc2)
+[16:28] <aquarius> >>> doc3 = db.create_doc({"name": "Ian Rush", "position": "forward"})
+[16:29] <aquarius> Retrieving documents from the database with a query is done by creating an "index".
+[16:29] <aquarius> To create an index, give it a name, and the field(s) in the document that you want to query on:
+[16:29] <aquarius> >>> db.create_index("by-position", "position") # create an index by passing a field name
+[16:29] <aquarius> And now we can query that index for a particular value. If we want to get everyone with position="forward" in our list of people:
+[16:29] <aquarius> >>> results = db.get_from_index("by-position", "forward")
+[16:30] <aquarius> And our results is a list of two Documents:
+[16:30] <aquarius> >>> len(results)
+[16:30] <aquarius> 2
+[16:31] <aquarius> And you can manipulate that list just like a standard Python list, which is what it is:
+[16:31] <aquarius> >>> data = [result.content for result in results]
+[16:31] <aquarius> >>> names = [item["name"] for item in data]
+[16:31] <aquarius> >>> sorted(names)
+[16:31] <aquarius> [u'Ian Rush', u'John Barnes']
+[16:33] <aquarius> That's the very basics of using u1db: saving data, loading it, and querying for it, same as any database.
+[16:33] <aquarius> The documentation at http://packages.python.org/u1db/ goes into much, much more detail.
+[16:33] <aquarius> In particular, the tutorial at http://packages.python.org/u1db/tutorial.html walks through cosas, the example todo list app, and explains how it structures its data and how to sync a U1DB with other places, like Ubuntu One.
+[16:34] <aquarius> As I said right at the beginning, U1DB is designed to work everywhere.
+[16:34] <aquarius> This means that there will be, or could be, a U1DB implementation for any choice of platform and language.
+[16:34] <aquarius> What I've shown above is the Python implementation, which should work on any platform where you have Python (so Ubuntu, other Linuxes, Windows, Mac, N9, etc).
+[16:34] <aquarius> You'll be able to use U1DB directly in Ubuntu mobile apps; it'll be a standard part of the SDK, and it'll be the easiest way to save any data you have if you're writing a QML application.
+[16:35] <aquarius> And you can work with U1DB data, declaratively, from pure QML -- no C++ required!
+[16:35] <aquarius> This Ubuntu mobile support for U1DB in QML and Qt is being developed as part of the "skunkworks" project, which is pretty cool.
+[16:36] <aquarius> U1DB data does not *have* to be synced. It's a good idea to use U1DB anyway, because then if later on you decide you *want* to sync this data between all platforms, you can just flip a switch to turn it on.
+[16:37] <aquarius> And U1DB's very easy to use to put data in and get it out again, especially if you're using QML.
+[16:37] <aquarius> There is also a C implementation, so if you're writing apps in C or some other C-bound language you can use the C version.
+[16:38] <aquarius> At U1 we're also building an Android Java version and an iOS Objective-C version, in time.
+[16:38] <aquarius> There's also a command line client (u1db-client, and u1db-serve to run a simple server).
+[16:39] <aquarius> Members of the U1DB team are also bringing U1DB to Vala, Go, and in-browser JavaScript.
+[16:39] <aquarius> So apps using all those languages on all those platforms will be able to sync data: imagine your app on Ubuntu desktop and a mobile version on your Ubuntu phone or an Android phone and a web version, all able to sync data between themselves.
+[16:39] <aquarius> U1DB is in Ubuntu 12.10 and later, so your apps can depend on it.
+[16:40] <aquarius> That's a brief summary of U1DB
+[16:40] <aquarius> There were a few questions during it, but I'm happy to take others if anyone has any, because I've got a little more time than I expected :)
+[16:41] <aquarius> LocalHero mentions Vala: I should be clear hat the Vala implementation of U1DB (which is at lp:shardbridge) isn't finished; it was a part-time project by someone here on the U1 team.
+[16:42] <aquarius> I'm sure they'd be interested in having a conversation about picking it up again if someone wanted to help, though :)
+[16:42] <ClassBot> jsjgruber-l85-q asked: Except for import statements, this looks a lot like the old Ubuntu One database. (I guess because they both used JSON.) Is there anything other than import statements that need to change for applications that once used the old implementation?
+[16:43] <aquarius> It's similar in concept but not in implementation. The old approach, using CouchDB and desktopcouch.records, is not the way U1DB works.
+[16:43] <aquarius> So porting an application from one to the other is more than just changing the import statements
+[16:43] <aquarius> but the *mindset* of working with JSON documents is still similar, so that will help,
+[16:43] <ClassBot> bobweaver asked: you said that you all are working on Qml plugin for the Phone?  DO you have XMLListModels and what not some where so I can tie into other software ?
+[16:44] <aquarius> that's the idea. A U1DBQuery will be a ListModel, so you can just declare a query and then directly use it as the model for a ListView or similar.
+[16:44] <aquarius> Exactly what that API looks like is still being worked out, but rest assured it'll be properly declarative
+[16:45] <aquarius> I'm personally really excited by that; I've been working with the early versions of the SDK to build Ubuntu mobile apps in pure QML, and I want U1DB available to those apps :)
+[16:45] <ClassBot> jsjgruber-l85-q asked: For using with Ubuntu One, how well will the server scale? I seem to remember that there were problems with this with the old approach.
+[16:46] <aquarius> That's one of the reasons why we've moved to U1DB. It's extensively tested to make the server scalable even at very large loads.
+[16:46] <aquarius> Some of the assumptions underlying how U1DB works and why it is the way it is are partially driven by making it possible to make the server scale a long way.
+[16:46] <aquarius> There's a page discussing those assumptions in the documentation, called "philosophy".
+[16:48] <aquarius> bobweaver says: "I would love to get my hands on that so I can start synching everything to my Ubuntu TV"... and I agree, and you can do that, today :) Build apps which use U1DB right now, with Ubuntu 12.10, and use them on Ubuntu TV :)
+[16:50] <ClassBot> There are 10 minutes remaining in the current session.
+[16:51] <ClassBot> johnhamelink asked: how would you go about syncing with other DBs if you have a large system and want to output to mobile? Would u1db be appropriate?
+[16:53] <aquarius> I'm not sure I understand the question. If you're thinking about storing data in a different kind of database -- for example, you've got a PostgreSQL server, and you want to sync that with a U1DB -- then you can't do that, I'm afraid. U1DB is designed to be syncable; other DBs, not so much :)
+[16:54] <aquarius> I've got about five minutes left for final questions
+[16:54] <aquarius> If you're interested in using U1DB, then as mentioned it'll be part of the SDK for great Ubuntu mobile apps, and you can find out lots more from the U1DB documentation
+[16:55] <aquarius> abou tthe different implementations and so on
+[16:55] <aquarius> you can find the u1db team in #u1db on freenode
+[16:55] <ClassBot> JoseeAntonioR asked: Are there any upcoming improvements/bug fixes in u1db?
+[16:55] <ClassBot> There are 5 minutes remaining in the current session.
+[16:55] <aquarius> bugs? there are no bugs. Just... improving features ;)
+[16:56] <aquarius> The U1DB API is roughly stable. We've fixed various bugs, but it's in a pretty good state right now
+[16:58] <aquarius> Cool, I think that's all the questions: if you have others, have a chat to us in #u1db, or ping me directly if you prefer
+[16:58] <aquarius> next on your list is tumbleweed talking about interacting with the Debian BTS
+[16:58] <aquarius> so thank you for your time :-)
+[16:58] <aquarius> ooh, one quick one
+[16:58] <ClassBot> lorddelta asked: Are there plans for a U1DB nodejs package?
+[16:59] <aquarius> not immediately, but the existing JavaScript implementation, while built primarily for client-side JS usage, would be very easy to make nodeable by someone who was familiar with node.
+=== ChanServ changed the topic of #ubuntu-classroom to: Welcome to the Ubuntu Classroom - https://wiki.ubuntu.com/Classroom || Support in #ubuntu || Upcoming Schedule: http://is.gd/8rtIi || Questions in #ubuntu-classroom-chat || Event: Ubuntu Developer Week - Current Session: Interacting with Debian's Bug Tracking System - Instructors: tumbleweed
+[17:00] <ClassBot> Logs for this session will be available at http://irclogs.ubuntu.com/2013/01/31/%23ubuntu-classroom.html following the conclusion of the session.
+[17:01] <tumbleweed> thanks aquarius
+[17:01] <tumbleweed> Hello again Ubuntu Developer Week!
+[17:01] <tumbleweed> Hope everyone has had a good week
+[17:01] <tumbleweed> Please say hi in the chat channel - #ubuntu-classroom-chat
+[17:01] <tumbleweed> that is also the place to ask questions
+[17:02] <tumbleweed> if you want me to answer a qusestion, please start it with QUESTION: so the bot can pick them up
+[17:02] <tumbleweed> If you have any questions with any of this, when you go home and do this, afterwards
+[17:02] <tumbleweed> I suggest sticking your nose into #ubuntu-motu and asking there
+[17:02] <tumbleweed> so, I'm Stefano Rivera, an Ubuntu Developer and a Debian Developer
+[17:02] <tumbleweed> I'm in sunny (and today, rather windy) Cape Town, South Africa
+[17:02] <tumbleweed> (in fact, at the pub, with a beer)
+[17:02] <tumbleweed> And today, I'm here to talk about interacting with Debian, specifically Debian's bug tracking system
+[17:02] <tumbleweed> Let's first cover some basics: source and binary packages:
+[17:02] <tumbleweed> Every binary package in Debian/Ubuntu is built from a source package
+[17:03] <tumbleweed> Sometimes they have the same name, but not always.
+[17:03] <tumbleweed> this can be pretty confusing, if you haven't seen this before
+[17:03] <tumbleweed> e.g. the beautifulsoup source package builds a binary package called python-beautifulsoup:
+[17:03] <tumbleweed> You can see that on the Debian Package Tracking System: http://packages.qa.debian.org/beautifulsoup
+[17:03] <tumbleweed> or Launchpad: https://launchpad.net/ubuntu/+source/beautifulsoup
+[17:03] <tumbleweed> or by running apt-cache showsrc beautifulsoup
+[17:03] <tumbleweed> or apt-cache show python-beautifulsoup
+[17:03] <tumbleweed> (from the other side)
+[17:04] <tumbleweed> that enough? get the idea? :)
+[17:04] <tumbleweed> Some source packages build multiple binary packages, e.g. beautifulsoup4 builds python-bs4, python3-bs4, and python-bs4-doc
+[17:04] <tumbleweed> http://packages.qa.debian.org/beautifulsoup4
+[17:04] <tumbleweed> etc.
+[17:04] <tumbleweed> So, when we are developing on Debian/Ubuntu, we mostly think in terms of source packages
+[17:04] <tumbleweed> Those are what we apply packages to, and build
+[17:04] <tumbleweed> They are also how we organise our bugs
+[17:05] <tumbleweed> e.g. https://bugs.launchpad.net/ubuntu/+source/beautifulsoup
+[17:05] <tumbleweed> and http://bugs.debian.org/src:beautifulsoup
+[17:05] <tumbleweed> (see how both of those URLs have the source package name, not the binary package names)
+[17:05] <tumbleweed> In Ubuntu, we only organise bugs by source package
+[17:05] <tumbleweed> but the Debian bug tracker understands the relationship between source and binary packages
+[17:05] <tumbleweed> So, I can also go to http://bugs.debian.org/python-beautifulsoup
+[17:05] <tumbleweed> and I'll see the same bugs.
+[17:06] <tumbleweed> you can see that for the BTS, src: means "source package"
+[17:06] <tumbleweed> Well, actually that is the subset of src:beautifulsoup bugs that were reported against python-beautifulsoup
+[17:06] <tumbleweed> If you look at the bug reports, you'll see they start with Package: python-beautifulsoup
+[17:07] <tumbleweed> that's how it knows which binary package they were reported against
+[17:07] <tumbleweed> we actually have something fairly similar in Launchpad, for Ubuntu bugs. But launchpad doesn't do anything with them
+[17:07] <tumbleweed> One can also report Debian bugs against the source package itself (that's often the best thing to do for packaging bugs)
+[17:07] <tumbleweed> But then they will only show up on the source package's bug page, not any of it's binary pages.
+[17:07] <tumbleweed> Hopefully that wasn't too confusing, but it should show you how to find the bugs for a Debian package
+[17:07] <tumbleweed> http://bugs.debian.org/src:SOURCE_PACKAGE
+[17:08] <tumbleweed> is almost always what you want
+[17:08] <tumbleweed> (and I've probably lost half my audience by now...)
+[17:08] <tumbleweed> Now that you know how to find bugs, let's talk about interacting with the bug tracking system
+[17:08] <tumbleweed> The Debian BTS is entirely e-mail driven
+[17:08] <tumbleweed> that may sound crazy, but it actually works fairly well, you just have to learn the commands
+[17:08] <tumbleweed> there's no sign-up or anything like that, you just send e-mails to it, and it'll do stuff for you
+[17:09] <tumbleweed> Filing a bug is done by sending a specially formatted e-mail to submit@bugs.debian.org
+[17:09] <tumbleweed> Most of the time, you don't do that by hand, but you use the reportbug tool to do so for you
+[17:09] <tumbleweed> But it needs to know how to send e-mail, so create a ~/.reportbugrc that looks like http://paste.debian.net/230791/
+[17:09] <tumbleweed> (if you run a working mailserver on your machine, that can send to the outside world, you don't need to do anything)
+[17:10] <tumbleweed> (that example I pastebinned there comes from submittodebian - which makes it easy to submit bugs to debian, if you've perpared an Ubuntu upload)
+[17:10] <tumbleweed> Commenting on a bug is doen by e-mailing BUG_NUMBER@bugs.debian.org (and CC-ing anyone relevant from the bug's discussion)
+[17:10] <tumbleweed> I find the easiest way to do that is to run: bts show --mbox BUG_NUMBER
+[17:10] <tumbleweed> This downloads an mbox of all the comments on this bug, and opens it in my mail reader
+[17:10] <tumbleweed> Then I can easily reply to the appropriate message
+[17:10] <tumbleweed> If you don't use a local mail client, this probably isn't something you'll find useful :)
+[17:11] <tumbleweed> real example time:
+[17:11] <tumbleweed> Let's look at all the rest of the things you can do. Here's a bug about mercurial: http://bugs.debian.org/698634
+[17:11] <tumbleweed> First, we can see the bug has already been fixed. It says "Done" at the top
+[17:11] <tumbleweed> and if you scroll down, you can see a comment on the bug, saying it was done
+[17:12] <tumbleweed> that comment was automatically generated by uploading a package to Debian that fixed the bug
+[17:12] <tumbleweed> (it was closed from the changelog)
+[17:12] <tumbleweed> we have a similar mechanism in Ubuntu
+[17:12] <tumbleweed> in Debian, one closes bugs with Closes: #XXXX
+[17:12] <tumbleweed> we close Launchpad bugs with LP: #XXXX
+[17:13] <tumbleweed> yuo can even close Launchpad bugs from Debian uploads, but let's not go there right now
+[17:13] <tumbleweed> We can alse see that it was found in version 2.2.2-1
+[17:13] <tumbleweed> Yes, the Debian BTS tracks versions
+[17:13] <tumbleweed> This is also something we don't really do in Ubuntu
+=== LocalHero is now known as LocalHero|lunch
+[17:13] <tumbleweed> In Ubuntu, we may target a bug to a release series, if we want to fix it in a stable release
+[17:13] <tumbleweed> but we track this kind of thing manually, not automatically like Debian
+[17:14] <tumbleweed> The bug was marked as being fixed in 2.2.2-2, 2.2.3-1, and 2.3-1.
+[17:14] <tumbleweed> And you can see from the graph on the right which releases that applies to
+[17:14] <tumbleweed> 2.2.2-1 is still in testing, so it's broken in testing
+[17:14] <tumbleweed> 2.2.2-2 fixed the bug in unstable
+[17:14] <tumbleweed> but that hasn't migrated to testing yet
+[17:14] <tumbleweed> it was also fixed in experimental (before this bug was even filed)
+[17:15] <tumbleweed> let's go back a bit
+[17:15] <tumbleweed> How did it know it was found in 2.2.2-1?
+[17:15] <tumbleweed> Look at the satrt of the e-amil from Neil
+[17:15] <tumbleweed> Those first 3 lines (the pseudo-headers) provide information about the bug to the BTS
+[17:15] <tumbleweed> http://www.debian.org/Bugs/Reporting#additionalpseudoheaders (for all the gory details about pseudo-headers)
+[17:15] <tumbleweed> They can be changed in existing bugs by sending messages to the control bot: control@bugs.debian.org
+[17:15] <tumbleweed> http://www.debian.org/Bugs/server-control for the commands
+[17:15] <tumbleweed> You can see Julien and Javi did so a bunch of times (click Full text to see those messages)
+[17:16] <tumbleweed> The easy way to send messages like that is to use the bts command line tool
+[17:16] <tumbleweed> (but it needs a working mail server locally, or configured in ~/.devscripts)
+[17:16] <tumbleweed> but of course: you can just write the e-mail by hand, and send it to the bug bot
+[17:17] <tumbleweed> it's fairly common to send an e-mail to the bug, and CCing the control bot. Then one starts the e-mail with commands fro the bot, say thanks, to mark the end of the commands, then continue with the comment
+[17:17] <tumbleweed> More recently, one can include those control commands in a reply to the bug, using a Control pesudo-header.
+[17:17] <tumbleweed> if you use the Control pseudo-header, you don't need to CC the bot
+[17:18] <tumbleweed> (it's a great new feature)
+[17:19] <tumbleweed> I think I've done a whirlwind coverage of the basics
+[17:19] <tumbleweed> let's do questions, yes
+[17:19] <ClassBot> kermit666 asked: where can we find the control command syntax?
+[17:19] <tumbleweed> it's the same syntax as messages to the control bot
+[17:19] <tumbleweed> http://www.debian.org/Bugs/server-control
+[17:20] <tumbleweed> to reassign a bug to the python-beautifulsoup package I'd do
+[17:20] <tumbleweed> Control: reassign -1 python-beautifulsoup
+[17:20] <tumbleweed> -1 is a special bug number meaning "this bug", for Control: pseudo-header messages
+[17:20] <ClassBot> There are 10 minutes remaining in the current session.
+[17:21] <ClassBot> jsjgruber-l85-q asked: So when you report a bug you should cc the package maintainer as you send to the bts?
+[17:21] <tumbleweed> it's a good question
+[17:21] <tumbleweed> generally, maintainers are subscribed to bugs for their packages
+[17:21] <tumbleweed> in particular, anyone in the Maintainer field of the source package is automatically subscribed to incoming bugs
+[17:22] <tumbleweed> but people in Uploaders aren't
+[17:22] <tumbleweed> they have to subscribe themselves manually
+[17:22] <tumbleweed> so, it's often not a bad idea to CC a maintainer
+[17:22] <ClassBot> geryon6 asked: Isn't this quite a steep learning curve for interaction with a BTS?
+[17:23] <tumbleweed> absolutely :)
+[17:23] <tumbleweed> but that's only if yo uwant to do fancy things with it
+[17:23] <tumbleweed> if someone CCed you about a bug, you can just "reply to all" and your reply will go into the bug log
+[17:24] <tumbleweed> and if you want to file a bug, you can just send an e-mail with two special lines at the beginning, and it'll do everything else for you
+[17:24] <tumbleweed> so, for most interactions, you don't to know all the crazyness
+[17:24] <tumbleweed> but it is useful to know what's going on, and how to see what releases a bug affects
+[17:25] <tumbleweed> is that it? in that case I'll go into one more feature I didn't cover
+[17:25] <tumbleweed> when you use submittodebian to file a bug, you'll see that it adds "Usertag" pseudo-headers
+[17:25] <ClassBot> There are 5 minutes remaining in the current session.
+[17:25] <tumbleweed> usertags a way for people to collect related bugs
+[17:25] <tumbleweed> for example, for Ubuntu bugs, we have tracked all the bugs filed by submittodebian
+[17:26] <tumbleweed> http://udd.debian.org/cgi-bin/bts-usertags.cgi?tag=ubuntu-patch&user=ubuntu-devel%40lists.ubuntu.com
+[17:26] <tumbleweed> (one can also see that in the BTS, but I've forgotten the URL syntax...)
+[17:27] <tumbleweed> turns out we track a few Ubuntu-related things: http://udd.debian.org/cgi-bin/bts-usertags.cgi?user=ubuntu-devel%40lists.ubuntu.com
+[17:27] <tumbleweed> another example is a python team I'm involved in
+[17:27] <tumbleweed> tracks particular classes of bugs: http://udd.debian.org/cgi-bin/bts-usertags.cgi?user=python-modules-team%40lists.alioth.debian.org
+[17:28] <tumbleweed> anyone can create any tags they want, under their own e-mail address
+[17:28] <tumbleweed> and tag bugs with it
+[17:28] <tumbleweed> ok, I'm out of time
+[17:29] <tumbleweed> have a good evening everyone. Maybe I'll check back later, after my pub quiz
+=== ChanServ changed the topic of #ubuntu-classroom to: Welcome to the Ubuntu Classroom - https://wiki.ubuntu.com/Classroom || Support in #ubuntu || Upcoming Schedule: http://is.gd/8rtIi || Questions in #ubuntu-classroom-chat || Event: Ubuntu Developer Week - Current Session: Building Ubuntu Images - Instructors: ogra
+[17:30] <ClassBot> Logs for this session will be available at http://irclogs.ubuntu.com/2013/01/31/%23ubuntu-classroom.html following the conclusion of the session.
+=== ogra_ is now known as ogra
+[17:34] <ogra> ok, seems i managed to get along with the bot
+[17:34] <ogra> so this is a quick overview of the ubuntu image build infrastructure, how we roll them and what their specifics are ...
+[17:35] <ogra> i prepared some text i will paste here, taking a break after each paragraph, so if you have questions, shout in the gap between the pastes :)
+[17:35] <ogra> so lets get started ....
+[17:35] <ogra> The Software:
+[17:35] <ogra> The Ubuntu build infrastructure is an integrated system consisting of several tools for the
+[17:35] <ogra> different tasks happening during an image build and one "glue" wrapper that cares for the
+[17:35] <ogra> interaction between them.
+[17:35] <ogra> Tools:
+[17:35] <ogra>  * ubuntu-cdimage is a wrapper around the build process and also responsible for the publishing
+[17:35] <ogra>    (publishing includes the proper naming of images as well as creation of the html download pages
+[17:35] <ogra>    for cdimage.ubuntu.com). It also manages the interaction of the tools below.
+[17:35] <ogra>  * livecd-rootfs - A wrapper and set of configuration for live-build, historically this was our
+[17:35] <ogra>    rootfs creation tool (a 200 line shell script) before we switched to live-build
+[17:35] <ogra>    (see the live-build subdir in the source package for configurations and function enhancements)
+[17:35] <ogra>  * live-build - Used to create rootfs tarballs and filesystem images
+[17:36] <ogra>  * debian-cd - assembles rootfs and bootloader bits into an image, creates alternate images
+[17:36] <ogra>    with a full package pool and debian-installer on them
+[17:36] <ogra> Getting sources for the tools:
+[17:36] <ogra>  * ubuntu-cdimage - bzr branch lp:ubuntu-cdimage
+[17:36] <ogra>  * livecd-rootfs - bzr branch lp:livecd-rootfs
+[17:36] <ogra>  * live-build - bzr branch lp:live-build
+[17:36] <ogra>  * debian-cd - bzr branch lp:ubuntu/debian-cd
+[17:36] <ogra> In case you want to help with the tools, fix a bug or so, pull the above source and send a merge
+[17:36] <ogra> request to the ubuntu-cdimage team who will review and process it. Most of the members of this team
+[17:36] <ogra> are residents in the #ubuntu-release channel, feel free to talk to us there.
+[17:36] <ogra> hmm, sorry, i thought the formatting would come a cross a bit better
+[17:37] <ogra> any questions about the software stack ? if so, ask away :)
+[17:37] <ogra> well, seems not (i didnt expect any anyway) :)
+[17:38] <ogra>  
+[17:38] <ogra> The Hardware:
+[17:38] <ogra>  
+[17:38] <ogra> A central build server (nusakan) coordinates the whole build process. On this machne the ubuntu-cdimage
+[17:38] <ogra> scripts run on a scheduled base. The root filesystems used in the images get built natively on the
+[17:38] <ogra> image target architecture by so called livefs builders. Packages used to build the images come from
+[17:38] <ogra> a central non-public mirror for these builds. There is at least one livefs builder for each
+[17:38] <ogra> architecture. These machines run a minimal rootfs (ubuntu-core) that has livecd-rootfs and
+[17:38] <ogra> live-build installed. Builds on these machines are triggered by ssh from nusakan. Nusakan also promotes
+[17:38] <ogra> the file and directory structure for cdimage.ubuntu.com, where they get mirrored to regulary.
+[17:38] <ogra>  
+[17:39] <ogra> any questions about the hardware setup ? feel free to ask
+[17:40] <ogra> so lets get to the actual build process now that we know the SW and HW used ...
+[17:40] <ogra>  
+[17:40] <ogra> The Process:
+[17:40] <ogra>  
+[17:40] <ogra> Depending on the image type the images are built in either one or two runs.
+[17:40] <ogra>  
+[17:40] <ogra> Alternate images simply require runining the "for-project" tool wrapper from ubuntu-cdimage. This sets some global
+[17:40] <ogra> variables and triggers debian-cd to create a package pool, add debian-installer and finally merge these bits into a bootable image.
+[17:40] <ogra>  
+[17:41] <ogra> Unlike alternate images the live images require a two step process. Ubuntu live images use a rootfs
+[17:41] <ogra> filesystem image to boot instead of booting into a minimal system like debian-installer which then installs
+[17:41] <ogra> the single .deb packages.
+[17:41] <ogra> In live images the installation of deb's happens at build time during the creation of the filesystem image.
+[17:41] <ogra>  
+[17:41] <ogra> For this step, ubuntu-cdimage has the tool "buildlive". This tool determines for which architecture the
+[17:41] <ogra> build is, connects to the respective livefs builder via ssh and calls the "BuildLiveCD" script from livecd-rootfs
+[17:41] <ogra> which in turn executes live-build with the right options and settings.
+[17:41] <ogra>  
+[17:41] <ogra> A chroot is created and all needed packages are installed into this chroot. Then the chroot is packaged as
+[17:41] <ogra> a rootfs image, initrd and kernel are extracted and all bits are sent back to the master build server.
+[17:41] <ogra>  
+[17:42] <ogra> On the central build server another "for-project" run happens which then assembles the above bits into a
+[17:42] <ogra> bootable image.
+[17:42] <ogra>  
+[17:42] <ogra> so this is the process ...
+[17:43] <ogra> it is relatively easy to understand once you looked at the tools and infrastructure around it ... it is nontheless not trivial to set up at home without experience ...
+[17:43] <ogra> i.e. in case you want to build your own ubuntu :)
+[17:44] <ClassBot> kermit666 asked: so how long does it last to build one image?
+[17:44] <ogra> that totally depends on the architecture and on the image type
+[17:45] <ogra> for an alternate x86 or amd64 image this is fairly quick since most of the prcess means copying bits to the /pool directory and at the end run mkisofs on them
+[17:46] <ogra> for a live image it really depends on the architecture ... an ARM livefs builder is simply slower than a powerful x86 or amd64 machine and during the live build process all debs get installed step by step
+[17:46] <ogra> current average ARM images  take around 90min for a livefs build
+[17:47] <ogra> an x86 alternate can be done in 30min
+[17:48]  * ogra sees no more questions and moves on 
+[17:48] <ogra>  
+[17:48] <ogra> Booting:
+[17:48] <ogra>  
+[17:48] <ogra> Even though this talk is supposed to be focused on the image creation, i will say some words about the boot
+[17:48] <ogra> and installation process of the different image types.
+[17:48] <ogra>  
+[17:48] <ogra> Generally all installations from Ubuntu images happen via a customized initramfs. The initramfs of alternate
+[17:48] <ogra> images contains debian-installer which is an extremely cut down environment designed to run in very limited
+[17:48] <ogra> environments. To get functionality and features into this environment (partitioning, formatting, selecting
+[17:48] <ogra> packages for installation etc etc) debian-installer offers the capability to load so called udeb packages
+[17:48] <ogra> which provide the desired function. As mentioned above images of this type will install every single package
+[17:48] <ogra> step by step in the target system. this is indeed a time consuming process.
+[17:48] <ogra>  
+[17:49] <ogra> Live images use a different approach using an initramfs extension called casper. Similar to the alternate
+[17:49] <ogra> images you are dropped into a customized initrd which instead of running debian-installer executes the casper tool.
+[17:49] <ogra> Casper then scans teh boot media for a filesystem image, creates a tmpfs and mounts it, mounts the readonly rootfilesystem
+[17:49] <ogra> image and merges these two mountpoints into a writable "copy on write" union mount as / of the booting system.
+[17:49] <ogra>  
+[17:49] <ogra> The installation from a live image unlike the alternate install actually copies the content of the readonly
+[17:49] <ogra> filesystem image into the target and then removes all unneeded bits. This is significantly faster than the package by
+[17:49] <ogra> package approach used in alternate CDs but indeed you are tied to the content of the filesystem image and can not do as
+[17:49] <ogra> fine grained installs as you can with debian-installer images.
+[17:49] <ogra>  
+[17:49] <ogra> Up to quantal these were the two standard image types Ubuntu produced (server installs were generally alternate ones
+[17:49] <ogra> while desktop installs generally were live images (though indeed you can install a desktop from an alternate server CD))
+[17:49] <ogra>  
+[17:49] <ogra> On DVDs both methods have been made available and selectable through a boot menu.
+[17:49] <ogra>  
+[17:49] <ogra> With quantal the server guys got tired of having to handle slow installations because every single deb had to be
+[17:49] <ogra> installed in the process so a new hybrid mechanism using debians "live-installer" udeb was added to debian-installer.
+[17:49] <ogra> This offers teh opportunity to actually install a filesystem image from a debian-installer session and then use the
+[17:49] <ogra> traditional debian-installer way if installing single deb packages on top of it. This is now teh default setup for
+[17:49] <ogra> server images.
+[17:49] <ogra>  
+[17:50] <ogra> i see a question ...
+[17:50] <ClassBot> There are 10 minutes remaining in the current session.
+[17:50] <ClassBot> xnox asked: Can one "cross-build" livefs bit? E.g. use an amd64 builder to create armhf livefs
+[17:51] <ogra> you should be able to use a foreign chroot through i.e. qemu-user-static to actually run live-build in there
+[17:52] <ogra> i'm not sure that is used much in practice yet, it might be that the canonical PES team uses it in this context though
+[17:52] <ogra> (they have their own build system)
+[17:52] <ogra>  
+[17:52] <ogra> Other image types:
+[17:52] <ogra>  
+[17:53] <ogra> There are a few other images types, created for specific ways of booting or for specific HW limitations (specifically
+[17:53] <ogra> for ARM or even cloud images). The ARM variants will be handled in the nexus7 image talk in the next slot.
+[17:53] <ogra>  
+[17:53] <ogra> Documentation for customizing images on the ubuntu wiki:
+[17:53] <ogra>  
+[17:53] <ogra> https://help.ubuntu.com/community/LiveCDCustomization
+[17:53] <ogra> https://help.ubuntu.com/community/InstallCDCustomization
+[17:53] <ogra> https://help.ubuntu.com/community/LiveCDCustomizationFromScratch
+[17:53] <ogra>  
+[17:53] <ogra> thats all i had to paste :)
+[17:53] <ogra> and yes, i suck if it comes to the vs the
+[17:54] <ogra> bah
+[17:54] <ogra> xchat corrects it :P
+[17:55] <ogra> the whole talk above is supposed to get thrown on a wikipage the next days, the image build system is very badly documented and i though i should take the opportunity of this talk to start some documentation :)
+[17:55] <ClassBot> xnox asked: how are cloud images build?
+[17:55] <ClassBot> There are 5 minutes remaining in the current session.
+[17:55] <ogra> this is a question i have to defer to #ubuntu-server sadly
+[17:56] <ogra> i know they are using their own initramfs tool replacing casper thouugh
+[17:57] <ogra> well, if there are no more questions happy idling until the hour :) and thanks for listening (my next talk isnt prepared and will be way more chaotic, so enjoy the silence for a moment :) )
+=== ChanServ changed the topic of #ubuntu-classroom to: Welcome to the Ubuntu Classroom - https://wiki.ubuntu.com/Classroom || Support in #ubuntu || Upcoming Schedule: http://is.gd/8rtIi || Questions in #ubuntu-classroom-chat || Event: Ubuntu Developer Week - Current Session: The Ubuntu Nexus 7 Images - Instructors: ogra
+[18:00] <ogra> heya
+[18:00] <ClassBot> Logs for this session will be available at http://irclogs.ubuntu.com/2013/01/31/%23ubuntu-classroom.html following the conclusion of the session.
+[18:01] <ogra> so unlike in the last talk i have no prepared text and will try to type freely ...
+[18:02] <ogra> additionally to the image types i explained in the last session, we have some very specific customized images
+[18:02] <ogra> i will focus the arm ones here ...
+[18:03] <ogra> many arm devices have either restrictions of how they boot or restrictions on where the rootfs can live, to manage these restrictions we developed some very special image types
+[18:04] <ogra> as iu explained in the former talk all ubuntu installs use some kind of special initramfs
+[18:05] <ogra> the special arm images we have are all based on the live images, this has some advantages like being able to build images from universe (debian-installer expects the kernel package to be in main and fully supported for example, a fact we cant necessarily fulfill with some of the arm kernels)
+[18:06] <ogra> devices like the pandaboard can also only boot from SD card (or in case of the nexus from eMMC)
+[18:07] <ogra> and some devices can not use one media (SD card) to install to another media (USB disk) ... i.e. the nexus7 only has that single MMC inside and no easy way to attach a USB disk
+[18:08] <ogra> so for the panda images we developed a tool called jasper-initramfs that actually re-uses the existing filesystem image on the SD card, expands the rootfs partition to the full device size and grows the filesystem in that partition
+[18:09] <ogra> so the full install actually happened at build time and all you see during the physical installation is a short decompression ... you can immediately boot into this system and are greeted with the oem-config setup screen from our ubiquity installer
+[18:10] <ogra> for the nexus7 the world is actually even more different, i explained the panda images above because we base on that setup for the nexus though
+[18:11] <ogra> the nexus7 image comes actually in two parts ...
+[18:11] <ogra> we re-use the existing partitioning on the MMC
+[18:12] <ogra> this partitioning provides a "flash" like kernel/boot partition (raw and no mountable filesystem here)
+[18:12] <ogra> and we (ab)use the userdata partition for the root filesystem
+[18:12] <ogra> our special initramfs tool in this setup is called ac100-tarball-installer
+[18:13] <ogra> when you install to the nexus7 you need another computer ... and need the fastboot tool ...
+[18:13] <ogra> with this tool you write the two parts of the image (bootimg and img files) to the respective places on the MMC
+[18:14] <ogra> on booting now, once you enter the initrd, the tarball installer is fired up (the img file actually only contains a tarred up rootfs) and looks for a matching tarball on the target partition
+[18:15] <ogra> it then extracts the tarball, removes itself and re-generates the initrd without a tarball installer :)
+[18:15] <ogra> after that it moves on with the boot and dumps you into a oem-config session where you can personalize the device
+[18:17] <ogra> if you want to modify the installation you can just apt-get source ac100-tarball-installer the code is very easy (its a shell script and the nexus7 bits are small)
+[18:18] <ogra> the images themselves are created (so that fastboot can hadle them) by using make_ext4fs from the fastboot-fsutils package
+[18:18] <ogra> this package also ships the simg2img tool to extract such images into a mountable format
+[18:19] <ogra> so imagine you want to replace the tarball with your own rootfs
+[18:20] <ogra> you create a chroot with your installation inside ... tar it up and copy it to an empty dir
+[18:20] <ClassBot> There are 10 minutes remaining in the current session.
+[18:21] <ogra> then you run make_ext4fs -l 6G -s my-imageext4.img your_temporary_dir/
+[18:21] <ogra> this will get you an img file the installer can handle ... oh and the tarball needs to be named rootfs.tar.gz
+[18:22] <ogra> an alternative (if you dont want to replace the whole thing) is to use simg2img and turn the img file into a mountable image
+[18:22] <ogra> then loop mount it and just dump your stuff in there
+[18:23] <ogra>  the / of the img will also be the / of your final install so you can just add a directory structure and files to it (as long as the untrarring doe not overwrite them indeed)
+[18:23] <ogra> ok, i think thats it so far ... and i see questions :)
+[18:23] <ClassBot> xnox asked: Is the same set of software used to create nexus7 images as the desktop images? (e.g. livebuild build-live and the rest of them as presented before)
+[18:24] <ogra> yes, we use live-build and livecd-rootfs as explained in the former session
+[18:24] <ogra> if you look at the source of live-build you will see some nexus7 (just grep for it) code in live-build/auto/build and live-build/auto/config
+[18:24] <ClassBot> kermit666 asked: Is something similar to a dual-boot possible on a Nexus 7? E.g. for Android and Ubuntu. Will there be some sort of (semi-)official support for this?
+[18:25] <ogra> yes and no :)
+[18:25] <ClassBot> There are 5 minutes remaining in the current session.
+[18:25] <ogra> yes, there exists a dual boot option https://wiki.ubuntu.com/Nexus7/Installation links to it
+=== LocalHero|lunch is now known as LocalHero
+[18:26] <ogra> but our focus is to run ubuntu natively and standalone on the nexus7 so this wont get support from our side
+[18:26] <ogra> (indeed nobody with support questions is sent away in #ubuntu-arm, but there wont be any official images
+[18:27] <ogra> the dual boot requires some hackery that even in the linked install setup hasnt been properly solved yet
+[18:27] <ogra> (kernel updates fail in the dualboot img for example)
+[18:27]  * ogra sees no more questions 
+[18:28] <ogra> so thanks all, i hope the unprepared nature of the second session wasnt to bad :)
+[18:28] <ClassBot> kermit666 asked: Unrelated to building images, but you seem to know your way around chroot - is it worth doing daily Ubuntu development in a chroot environment? I heard it's a bit hard to get the desktop running. Or should I use a VM or a LXC?
+[18:29] <ogra> i personally use chroots but a VM or LXC container will also serve the purpose
+[18:29] <ogra> i guess thats based on personal preference, try out the different methods and find your favorite ;)
+[18:30] <ogra> thanks for listening !
+=== ChanServ changed the topic of #ubuntu-classroom to: Welcome to the Ubuntu Classroom - https://wiki.ubuntu.com/Classroom || Support in #ubuntu || Upcoming Schedule: http://is.gd/8rtIi || Questions in #ubuntu-classroom-chat || Event: Ubuntu Developer Week - Current Session: Fixing packages to cross-build - Instructors: xnox
+[18:30] <ClassBot> Logs for this session will be available at http://irclogs.ubuntu.com/2013/01/31/%23ubuntu-classroom.html following the conclusion of the session.
+[18:31] <xnox> Hello all!
+[18:31] <xnox> This is my first time doing a session at a Developer Week =) Hope it goes well!
+[18:31] <xnox> ..
+[18:31] <xnox> == Fixing packages to cross-build ==
+[18:31] <xnox> Back at UDS-R in Copenhagen there were a few sessions [1] essentially
+[18:31] <xnox> targetting to impove cross-compilation of debian packages.  This was
+[18:31] <xnox> done in the context of mobile platforms & upcomming aarch64
+[18:31] <xnox> architecture.
+[18:31] <xnox> [1] foundations-r-aarch64 foundations-r-aarch64-porting foundations-r-improve-cross-compilation
+[18:32] <xnox> Typically when compiling debian packages one would compile .deb for
+[18:32] <xnox> the same architure one is running. E.g. if I'm running amd64 machine
+[18:32] <xnox> (64-bit intel) the packages created after running debuild will be
+[18:32] <xnox> *_amd64.deb. On some architectures it is possible to use multilib or a
+[18:32] <xnox> chroot to compile natively for a compatible instruction set. For
+[18:32] <xnox> example I can have an i386 chroot on my amd64 machine and compile
+[18:32] <xnox> *_i386.deb packages.
+[18:32] <xnox> ..
+[18:32] <xnox> But what about amd64 -> armhf? One can use qemu to create an armhf
+[18:32] <xnox> chroot with qemu-static installed, such that one can execute armhf
+[18:32] <xnox> binaries via qemu emulation layer. Such chroots can be automatically
+[18:32] <xnox> be created using mk-sbuild's --arch option. But... it's slow. As one
+[18:32] <xnox> is emulating execution when one doesn't need to: e.g. sh, make,
+[18:32] <xnox> autoconf, etc. Here is where multiarch comes into play.
+[18:33] <xnox> ..
+[18:33] <xnox> Thanks to multiarch [2], we can declare and mix & match architectures
+[18:33] <xnox> of our build-dependencies.
+[18:33] <xnox> ..
+[18:33] <xnox> [2] https://wiki.ubuntu.com/MultiarchSpec#Binary_package_control_fields
+[18:34] <xnox> Any questions so far?
+[18:35] <xnox> To cross-build a package one would typically need: a cross-compiler,
+[18:35] <xnox> target architecture dependencies (libfoo-dev:armhf) and any
+[18:35] <xnox> architecture auxiliary tools (e.g. pkg-config, debhelper etc).
+[18:36] <xnox> Now in Raring, we have made a massive progress to simplify and
+[18:36] <xnox> automate this. The landing page for this project is here [3].
+[18:36] <xnox> [3] https://wiki.ubuntu.com/CrossBuilding
+[18:36] <xnox> ..
+[18:36] <xnox> (this page should have like anything & everything up to date with respect to cross-building, definatly bookmark worthy)
+[18:37] <xnox> First of all, mk-sbuild gained --target option to create a chroot
+[18:37] <xnox> setup with correct cross-compiler. Many libraries are multiarched to
+[18:37] <xnox> allow co-installation (in case you both need native and target
+[18:37] <xnox> architecture at the same time). Many tools are now marked as
+[18:37] <xnox> Mutli-arch: foreign. And the coolest thing we have automatic
+[18:37] <xnox> cross-builder running and publishing the restults. [4]
+[18:37] <xnox> [4] http://people.canonical.com/~cjwatson/cross/armhf/raring/
+[18:38] <xnox> ..
+[18:38] <xnox> If you navigate to that page, you can see that it's a fairly simple table of a good subset of packages in main
+[18:39] <xnox> together with their cross-building status, last tried version and plausible reason for failure.
+[18:39] <xnox> Clicking a package should give you a more detailed log.
+[18:39] <xnox> ..
+[18:40] <xnox> The onces that are in state "build-attempted" usually means that their dependencies are satisfied and it should be possible to cross-build a package, but it failed to do so. And hence needs to be modified in some way.
+[18:41] <xnox> So why do packages fail to cross-compile?
+[18:41] <xnox> There are 4 main reasons:
+[18:41] <xnox> * Trying to execute compiled binaries
+[18:41] <xnox> * Making wrong assumptions in configure scripts
+[18:41] <xnox> * Not using correct compiler
+[18:41] <xnox> * Uninstallable build-dependencies
+[18:41] <xnox> ..
+[18:42] <xnox> Each one of them has simple solutions.
+[18:42] <xnox> * One should not execute compiled binaries. Typically that means
+[18:42] <xnox>   skipping running compiled test-suites when cross-compiling. If this
+[18:42] <xnox>   is required as part of configure tests, we instead ship autoconf
+[18:42] <xnox>   caches with known/correct/guessed values.
+[18:42] <xnox> ..
+[18:42] <xnox> * Sometimes configure scripts try to poke the kernel or the installed
+[18:42] <xnox>   system & end up making wrong assumption, e.g. that target is
+[18:42] <xnox>   amd64. Those simply need fixing to be sensitive to --target option
+[18:42] <xnox>   or to DEB_HOST_ARCH variable from dpkg-architecture.
+[18:42] <xnox> ..
+[18:43] <xnox> * Not using correct compiler - simply set correct compiler in
+[18:43] <xnox>   ./debian/rules
+[18:43] <xnox> ..
+[18:43] <xnox> * Well - troubleshoot why they are uninstallable and make them
+[18:43] <xnox>   installable one way or the other.
+[18:43] <xnox> ..
+[18:43] <xnox> Do these important points make sense to everyone?
+[18:45] <xnox> Ok. I have a few examples to go through & how they were fixed.
+[18:45] <xnox> ..
+[18:45] <xnox> * ed - is a text processing utility some packages build-depend on. It
+[18:45] <xnox>   simply needs to be marked Multi-Arch foreign, since the host needs
+[18:45] <xnox>   to simply execute it.
+[18:45] <xnox> ..
+[18:45] <xnox>   Fix: https://launchpadlibrarian.net/128824103/ed_1.6-2_1.6-2ubuntu1.diff.gz
+[18:45] <xnox> Essentially it's a one line of
+[18:45] <xnox> +Multi-Arch: foreign
+[18:46] <xnox> simply some packages depended to run `ed` command (which is the standard text editor)
+[18:47] <xnox> naturally it should be for the host sysmtem (amd64 when cross-compiling for amd64 -> armhf). Instead of making _all_ packages to change their build-dependency to "ed:any" we can mark it as foreign and then voila the native one will be used everywhere.
+[18:47] <xnox> ..
+[18:47] <xnox> (i really should have would which packages build-depend on ed, but I didn't. This is left as an excercise to the readers for later ;-) )
+[18:47] <xnox> ..
+[18:47] <xnox> Next example?!
+[18:48] <xnox> ..
+[18:48] <xnox> * bsd-mailx doesn't have any fancy configuration system, it simply
+[18:48] <xnox>   uses $CC compiler by default. Well, to make it cross-compile the
+[18:48] <xnox>   solution was to export cross-compiler in the debian/rules
+[18:48] <xnox> ..
+[18:48] <xnox>   Fail: http://people.canonical.com/~cjwatson/cross/armhf/raring/bsd-mailx_8.1.2-0.20111106cvs-1build1_armhf-20121207-0217
+[18:48] <xnox>   Fix: https://launchpadlibrarian.net/126375751/bsd-mailx_8.1.2-0.20111106cvs-1build1_8.1.2-0.20111106cvs-1ubuntu1.diff.gz
+[18:48] <xnox>   Pass: http://people.canonical.com/~cjwatson/cross/armhf/raring/bsd-mailx_8.1.2-0.20111106cvs-1ubuntu1_armhf-20121219-0219
+[18:48] <xnox> ..
+[18:49] <xnox> Looking at the Fail log you notice (down at the bottom) that "gcc" (native) compiler is used, instead of the correct "arm-linux-gnueabihf-gcc" (cross-compiler from native to armhf)
+[18:49] <xnox> After spotting this, the fix was simple.
+[18:50] <xnox> You can see at the very bottom of the fix, where debian/rules is modified to check:
+[18:50] <xnox>  - if host != build (that means crosscompiling)
+[18:50] <ClassBot> There are 10 minutes remaining in the current session.
+[18:51] <xnox>  - set CC compiler to $(DEB_HOST_GNU_TYPE)-gcc (which will be the correct cross-compiler)
+[18:51] <xnox> ..
+[18:51] <xnox> Questions?
+[18:52] <xnox> Last example.
+[18:52] <xnox> ..
+[18:52] <xnox> * zsh had a couple of problems. It was using native strip, objcopy
+[18:52] <xnox>   instead of cross-utilities. It was trying to execute just built zsh
+[18:52] <xnox>   to zcompile scripts. It also had pessimistic fallbacks in it's
+[18:52] <xnox>   compiled autoconf macros, and hence building only half the modules
+[18:52] <xnox>   and finally it was missing a dependency on libelf-dev.
+[18:52] <xnox> ..
+[18:52] <xnox>   (well there were multiple fail logs, as after fixing each issue I
+[18:52] <xnox>   was discovering next one)
+[18:52] <xnox>   Fail: http://people.canonical.com/~cjwatson/cross/armhf/raring/zsh_5.0.0-2ubuntu2_armhf-20121202-0125
+[18:52] <xnox>   Fix: https://launchpadlibrarian.net/126425777/zsh_5.0.0-2ubuntu2_5.0.0-2ubuntu3.diff.gz
+[18:52] <xnox>   Pass: http://people.canonical.com/~cjwatson/cross/armhf/raring/zsh_5.0.0-2ubuntu3_armhf-20130103-1406
+[18:52] <xnox> ..
+[18:52] <xnox> There are a few fixes there. If you want commentry on particular pieces of the fix, just ask in -chat.
+[18:53] <xnox> ..
+[18:53] <xnox> So how to get involved?
+[18:53] <xnox> Step 1: follow local setup from https://wiki.ubuntu.com/CrossBuilding
+[18:53] <xnox> ( I recommend using mk-sbuild from lp:ubuntu-dev-tools )
+[18:53] <xnox> Step 2: Spot a problem in http://people.canonical.com/~cjwatson/cross/armhf/raring/
+[18:53] <xnox> Step 3: Fix it & submit a patch/branch
+[18:53] <xnox> Final Questions????????
+[18:54] <xnox> everyone seems a bit quite =) I'm not sure if I lost some people along the road or not =/
+[18:55] <xnox> The point is that for most packages that use good autoconf principles and use `dh` or `cdbs` style debian/rules they all should just correctly cross-build.
+[18:55] <ClassBot> There are 5 minutes remaining in the current session.
+[18:55] <xnox> And when some packages don't, it's quite trivial to fix them.
+[18:55] <xnox> (most of the time0
+[18:55] <xnox> (most of the time)
+[18:58] <xnox> If you need help, just ping me here or chat on #ubuntu-devel or #ubuntu-motu a few people on those channels work on cross-compiling packages.
+[18:58] <xnox> Thank you all for your time!
+[18:59] <xnox> Next up will be bdrung & geser with Developers Roundtable =))))))))
+[18:59] <xnox> in a few moments.
+=== ChanServ changed the topic of #ubuntu-classroom to: Welcome to the Ubuntu Classroom - https://wiki.ubuntu.com/Classroom || Support in #ubuntu || Upcoming Schedule: http://is.gd/8rtIi || Questions in #ubuntu-classroom-chat || Event: Ubuntu Developer Week - Current Session: Developers Roundtable - Instructors: bdrung, geser
+[19:00] <bdrung> hi, welcome to the Developers Roundtable.
+[19:00] <geser> Hi
+[19:01] <ClassBot> Logs for this session will be available at http://irclogs.ubuntu.com/2013/01/31/%23ubuntu-classroom.html following the conclusion of the session.
+[19:01] <bdrung> It is a open session where you can ask questions.
+[19:02] <bdrung> You can ask your question in this channel.
+[19:03] <bdrung> Until the first question arise, let us introduce ourselves.
+[19:07] <geser> My name is Michael Bienia and I've been a MOTU for almost 6 years now (I'm surprised it's so long already)
+[19:08] <geser> I've been working mostly on trying to keep the archive (mostly packages from universe) in an installable and buildable state (fixing unmet dependencies and build failures)
+[19:09] <geser> it's a task where you have to deal with many different packages (and also different packages styles) and also different errors
+[19:10] <bdrung> My name is Benjamin Drung. I am born in 1985 and am currently writing my master thesis in computer engineering. I have been core-dev and Debian Developer for years (time flies by).
+[19:11] <bdrung> My involvement changed over time.
+[19:11] <bdrung> Now I am maintaining a bunch of packages in Debian (e.g. VLC, Audacity, development tools like devscripts) and doing sponsoring.
+[19:12] <bdrung> And I have been a member of the Developer Membership Board (DMB) for nearly two years.
+[19:15] <ClassBot> JumpLink asked: Ubuntu Online Accounts is forked from MeeGo, right?
+[19:16] <JoseeAntonioR> so, UOA was first developed for MeeGo
+[19:16] <JoseeAntonioR> and it was used on the Nokia N9
+[19:16] <JoseeAntonioR> but then, it became UOA
+[19:19] <ClassBot> kermit666 asked: how stable is UDD at the moment? When somebody new is starting, would you recommend to use it or is the old patch mechanism still preferred?
+[19:20] <bdrung> UDD is usable in most cases, but there are a few packages that have no up-to-date bzr branches. In these cases falling back to traditional way is required.
+[19:21] <bdrung> You probably want to know how to work with packages outside of UDD if you want to collaborate with Debian.
+[19:21] <bdrung> Most of my Debian package use git as version control system.
+[19:22] <bdrung> UDD has some advantages, but some rough edges. I recommend to try both ways and use the one that you like more.
+[19:22] <ClassBot> jsjgruber-l85-q asked: How should applications be changed to be compatible with new devices?
+[19:25] <JoseeAntonioR> so basically, if you're talking about the phone
+[19:25] <JoseeAntonioR> it's all about screen size, battery life, and limited resources
+[19:26] <JoseeAntonioR> taking libreoffice as an example, you can run it on the phone, but it wouldn't look good as it's not designed for that screen size
+[19:26] <JoseeAntonioR> battery life is another constraint as it may run off pretty quickly if the app is not designed to use low resources
+[19:27] <JoseeAntonioR> and respecting limited resources, the RAM, you need to take in count that you have the apps, the radios, some push services running, etc.
+[19:27] <JoseeAntonioR> so, that's it
+[19:27] <JoseeAntonioR> now guys, I'd like to know what were your impressions about the Ubuntu Developer Week for this cycle
+[19:27] <JoseeAntonioR> you can answer in this channel if you like
+[19:27] <xnox> with respect to UI, the native applications will most often use the announced QML touch SDK with specific touch components it ships.
+[19:27] <JoseeAntonioR> what did you enjoy the most? did you feel you can get a bit more involved into devel now?
+[19:31] <gruber> Seems like there were some new things covered, which is very helpful, along with some sessions covering the usual basics we need each time for beginners.
+[19:34] <LocalHero> I only joined the Developer Week for today, but I can't wait to dig in to U1DB.
+[19:35] <JoseeAntonioR> it's good to see that you guys liked it
+[19:35] <JoseeAntonioR> and are there any sessions you'd like to see in upcoming events, or even on the next UDW?
+=== AlanChicken is now known as alanbell
+=== alanbell is now known as AlanBell
+=== Rcart_ is now known as Rcart
+[19:39] <JumpLink> (note: you can not write with lerid here)
+[19:40] <JoseeAntonioR> JumpLink: yep, I'm also readin -chat in case there's someone with lernid
+[19:40] <ClassBot> kermit666 asked: Should people join the main #ubuntu-classrom channel now?
+[19:40] <bdrung> yes, please.
+[19:41] <ClassBot> Rcart asked: bdrung, would you please talk to us a bit about MoM and manual syncing?
+[19:42] <bdrung> MoM is https://merges.ubuntu.com/
+[19:42] <bdrung> ubuntu-dev-tools ships a script called grab-merge.
+[19:43] <bdrung> "grab-merge gxine" would pull the files for merging gxine.
+[19:44] <bdrung> MoM tries to automatically merge the new package from Debian and will report if some merges failed.
+[19:45] <bdrung> My merging style is a little different.
+[19:45] <Rcart> what is it?
+[19:45] <kermit664> ok, anyway, as I was saying on the -chat channel "I'd like to see some tutorials reviewing the source code of some important programs where people might contribute"
+[19:45] <bdrung> I start by visiting the Debian PTS page:  http://packages.qa.debian.org/g/gxine.html
+[19:45] <kermit664> I think that would help people out in contributing to some places, as big open source programs are usually a lot more complex than the stuff that people do at their universities etc.
+[19:46] <bdrung> there is a link for the Ubuntu change: http://patches.ubuntu.com/g/gxine/gxine_0.5.905-4ubuntu7.patch
+[19:46] <bdrung> Then I get the new package from Debian: pull-debian-source gxine
+[19:47] <bdrung> After reviewing the Ubuntu diff, I try to apply it and fix debian/changelog: patch -p1 < ../gxine_0.5.905-4ubuntu7.patch
+[19:47] <JumpLink> I liked the UDW well! In my opinion, it should give breaks between sessions or more time to ask.
+[19:48] <Rcart> bdrung: that is for keeping ubuntu changes right?
+[19:48] <bdrung> Instead of touching many package, I concentrated one a few ones and try to reduce the diff between Debian and Ubuntu.
+[19:49] <bdrung> Yes, this approach is used if there are remaining changes for Ubuntu.
+[19:49] <kermit664> also, I liked the approach in some of the developer hangouts where dholbach was fixing some bugs live. I think that such a hands-on approach would be nice in one or two sessions - maybe to lead people through the whole process of finding the bug cause, fixing it etc.
+[19:49] <bdrung> In case we can use the Debian package without modifications, we call it a sync.
+[19:50] <bdrung> We use the script "syncpackage" from ubuntu-dev-tools to sync a package from Debian to Ubuntu.
+[19:50] <ClassBot> There are 10 minutes remaining in the current session.
+[19:51] <bdrung> You can use "requestsync" from ubuntu-dev-tools if you want to have a package synced, but have no upload rights for that package.
+[19:51] <bdrung> requestsync creates a bug report requesting the sync and it will appear on http://reqorts.qa.ubuntu.com/reports/sponsoring/
+[19:53] <bdrung> kermit664: Finding a bug to work on is easy: which bug annoys you the most? Then you find the corresponding source package.
+[19:53] <Rcart> bdrung: great. Thanks (:
+[19:54] <bdrung> you're welcome. :)
+[19:55] <kermit664> do you also open up bug reports for stuff you're fixing yourself that doesn't have an open report?
+[19:55] <ClassBot> There are 5 minutes remaining in the current session.
+[19:56] <bdrung> kermit664: in some cases, yes
+[19:57] <bdrung> The usual way for me is to: Find the source package corresponding to your bug. Check if it is a packaging bug or upstream bug. Check if it is fixed upstream.
+[19:58] <bdrung> File an upstream bug if it is not fixed upstream.
+[19:59] <bdrung> You could cherry-pick the fix from upstream or wait until the upstream fix is in the next upstream release.
+[20:00] <ClassBot> Logs for this session will be available at http://irclogs.ubuntu.com/2013/01/31/%23ubuntu-classroom.html
+=== ChanServ changed the topic of #ubuntu-classroom to: Welcome to the Ubuntu Classroom - https://wiki.ubuntu.com/Classroom || Support in #ubuntu || Upcoming Schedule: http://is.gd/8rtIi || Questions in #ubuntu-classroom-chat || No Sessions Currently in Progress
+[20:01] <JoseeAntonioR> So guys, that's been all the Developer Week for this cycle!
+[20:01] <JoseeAntonioR> I really hope you enjoyed it, and learned some things about Ubuntu Development
+[20:01] <kermit664> bdrung: I see. Thanks!
+[20:01] <JoseeAntonioR> Logs will be linked to the schedule in a whilw
+[20:01] <JoseeAntonioR> while*
+[20:01] <bdrung> kermit664: when you want to do a SRU, a bug report is needed
+[20:01] <JoseeAntonioR> Again, thanks so much to all of you for attending, we hope to see you soon!
+[20:02] <bdrung> You are welcome to ask more questions in #ubuntu-devel and #ubuntu-motu
+[20:02] <bdrung> Thanks for attending and asking questions.
+[20:02] <kermit664> thanks everybody!
+[20:03] <kermit664> Good night to those of you who are close to GMT!
+[20:03] <Rcart> thanks for the talks
+[20:04] <bdrung> it's UTC+1 here. so bed time is not that near. ;)
+[20:07] <JumpLink> thanks!
+[20:27] <wrbishop> Thanks!
+[20:28] <wrbishop> leave
+=== emma_ is now known as emma
+=== emma is now known as em
+=== [ESphynx] is now known as ESphynx

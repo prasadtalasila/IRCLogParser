@@ -1,0 +1,111 @@
+[06:51] <fwereade> jam, ping
+[06:51] <jam> hi fwereade
+[06:52] <fwereade> jam, I need to talk with you about constraints at some point
+[06:52] <fwereade> jam, I'm probably still a bit too tired to do so usefully today
+[06:53] <jam> fwereade: np. You're in EU time now, right?
+[06:53] <fwereade> jam, but I would be most grateful if you would think briefly about what was painful so we can have a productive chat tomorrow
+[06:53] <fwereade> jam, yeah
+[06:55] <fwereade> jam, my rough recollection is that juju-supplied defaults are bad, and the provider should be supplying those itself; this sounds sane, but if there's anything else I'll want to know :)
+[07:07] <fwereade> rogpeppe, ping
+[07:29] <fwereade> TheMue, heyhey
+[07:31] <TheMue> fwereade: Good morning, William. Had a good travel back?
+[07:31] <fwereade> TheMue, yeah, not bad
+[07:32] <fwereade> TheMue, frankfurt airport seems to have become nicer somehow
+[07:32] <fwereade> TheMue, maybe it's just that I was there at 5am on sunday and it seemed like nobody else was :)
+[07:32] <TheMue> fwereade: Hehe, yeah, a special time.
+[07:34] <TheMue> fwereade: A few days agon, on Monday, FRA was alost closed due to snow.
+[07:34] <TheMue> almost
+[07:35] <fwereade> TheMue, yeah, LHR and JFK were also both snowy, I was pretty lucky with all my travel tbh
+[07:44] <rogpeppe> fwereade: pong
+[07:44] <fwereade> rogpeppe, heyhey
+[07:44] <rogpeppe> morning all!
+[07:52] <fwereade> later guys, might be around off and on but don't count on it, basically calling today a swap day
+[08:58] <TheMue> re, back from dentist.
+[09:28] <TheMue> Hmm, somehow my editor dislikes me this morning. Package management for extensions like e.g. for Go fails.
+[09:49] <jam> dimitern: if you see mgz around, let him know I might be a little bit late for our 1:1
+[09:49] <dimitern> jam: sure
+[10:01] <dimitern> mgz: jam asked me to tell you he'll be a bit late for the 1:1
+[10:03] <mgz> dimitern: thanks
+[10:54] <jam> hi mramm, I'm chatting with mgz right now, but when we're done, I'd love to finally catch up with you
+[10:56] <mramm> jam: sounds good.
+[11:25] <jam> mramm: poke. I'm on mumble if you are
+[11:26] <mramm> I am
+[11:38] <TheMue> lunchtime
+[12:02] <niemeyer> Greetings
+[12:04] <TheMue> so, back
+[12:04] <TheMue> niemeyer: Hiya
+[12:05] <TheMue> niemeyer: Nice idea, the statistics for baby feeding. ;)
+[12:07] <niemeyer> TheMue: Cheers :)
+[12:30] <mgz> core guys, can someone look at my one-line change and confirm it's correct? <https://codereview.appspot.com/7233046/>
+[12:34] <TheMue> mgz: You've got a +1.
+[12:38] <fwereade> mgz, hell, sorry about that... we should probably have a trivial test on every package to stop things like this from happening
+[12:38] <fwereade> morning niemeyer
+[12:39] <fwereade> (not actually working today)
+[12:39] <mgz> fwereade: yeah, I'd like commands to have some "does --help" work thing, but haven't worked out a neat version of the python idiom for that yet
+[12:40] <niemeyer> fwereade: yo
+[12:40] <fwereade> mgz, good idea
+[12:40] <fwereade> niemeyer, how's it going?
+[12:40] <niemeyer> fwereade: Good, will start the week having a look at goamz
+[12:40] <fwereade> niemeyer, excellent
+[14:25] <rogpeppe>  fwereade: i've got a patch for gotest which complains if this happens
+[14:26] <fwereade> rogpeppe, sweet
+[14:27] <rogpeppe> fwereade: unfortunately i seem to remember it wasn't acceptable
+[14:28] <fwereade> rogpeppe, haha, ok
+[14:28] <fwereade> rogpeppe, go build ./... && go test ./... :-/
+[14:29] <rogpeppe> fwereade: isn't it working?
+[14:29] <fwereade> rogpeppe, I expect it is now, but it wasn't
+[14:29] <rogpeppe> fwereade: BTW i've got a workaround script for the fact that you can't do  go test -c ./...
+[14:30] <TheMue> fwereade: How about the still open idea of having a CI server?
+[14:31] <rogpeppe> fwereade: ah, that must've been your Conn changes. don't you always run go test ./... before submitting?
+[14:31] <fwereade> rogpeppe, ofc I do
+[14:31] <fwereade> rogpeppe, that doesn't help with the packages without tests ;p
+[14:31] <rogpeppe> fwereade: ha
+[14:31] <TheMue> fwereade: hehe
+[14:32] <rogpeppe> fwereade: i think go test should at least try to compile the package even if has no tests
+[14:32] <fwereade> TheMue, +1 on that, not sure when I'm going to get around to it though
+[14:32] <fwereade> rogpeppe, agreed
+[14:32] <rogpeppe> fwereade: i'll raise an issue
+[14:32] <fwereade> TheMue, wasn't davecheney working on that a while ago?
+[14:32] <fwereade> rogpeppe, cool
+[14:33] <TheMue> fwereade: dunno if already working, but imho thinking about it.
+=== slank_away is now known as slank
+[14:56]  * niemeyer => lunch.. biab
+=== slank is now known as slank_away
+=== slank_away is now known as slank
+[17:30] <niemeyer> mramm: Do you know if the consistency call is rolling today?
+[17:39] <mramm> niemeyer: I believe that it is not
+[17:39] <niemeyer> mramm: Cool
+[17:56] <rogpeppe> just run first tentative benchmark of rpc server, just for sanity check, and i get about 4000 requests a second (or 2000 rpc when round-tripping to mongo). i *think* that should be ok.
+[17:56] <rogpeppe> s/rpc/rps/
+[17:56] <rogpeppe> s/2000 rpc/2000 rps/ :-)
+[17:58] <TheMue> rogpeppe: Sounds nice.
+[18:00] <rogpeppe> TheMue: that's not fantastic really - it's an upper bound on how many requests we can expect to serve per second from a single api server instance.
+[18:00] <rogpeppe> TheMue: but i think we probably have some possibilities for optimisation
+[18:11] <TheMue> rogpeppe: I think it's ok as it is your first approach and e'thing runs on only one machine (calling and processing).
+[18:12] <rogpeppe> TheMue: yeah, but that means it's actually faster than it will be in real life, i think (we're doing almost no processing). we'll see.
+[18:14] <TheMue> rogpeppe: I'm optimistic that you may tune it a but.
+[18:14] <TheMue> bit
+[18:15] <rogpeppe> TheMue: we actually have the possibility of using a different protocol for agents (we could maybe use gob, for example)
+[18:16] <rogpeppe> TheMue: and that could be quite a bit more efficient than websockets+json, i think
+[18:16] <rogpeppe> TheMue: so we do have leeway
+[18:18] <TheMue> rogpeppe: gob may be nice as the volume is smaller. but how about clients in different langs then?
+[18:18] <rogpeppe> TheMue: all our agents are written in the same language :-)
+[18:18] <TheMue> rogpeppe: thankfully you don't use xml. :P
+[18:19] <TheMue> rogpeppe: the api is only inteded between the agents and the server? thought of the html client too.
+[18:19] <niemeyer> "test/plain"
+[18:19] <niemeyer> Interesting content-type to find in a test case..
+[18:19] <rogpeppe> TheMue: we could use a different protocol for agents vs html clients
+[18:19] <rogpeppe> niemeyer: ha
+[18:19] <TheMue> rogpeppe: ah, ic, that's in that case pretty nice.
+[18:19] <niemeyer> I almost don't want to fix it :-)
+[18:20] <rogpeppe> niemeyer: lol
+[18:20] <TheMue> niemeyer: :)
+[18:33] <rogpeppe> right, all tests passing, time to call it a night
+[18:33] <rogpeppe> g'night all
+[18:34] <rogpeppe> niemeyer: happy goamz sprinting!
+[18:34] <niemeyer> rogpeppe: Cheers
+[18:34] <TheMue> bye roger
+[18:34] <niemeyer> rogpeppe: Have a good time there
+[18:34] <rogpeppe> niemeyer: and you
+=== slank is now known as slank_away
+=== slank_away is now known as slank

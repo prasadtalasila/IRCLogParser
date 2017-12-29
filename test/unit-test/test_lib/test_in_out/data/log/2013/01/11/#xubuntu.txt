@@ -1,0 +1,423 @@
+[00:23] <mantfire> hi
+[00:24] <mantfire> i have some error upgrading from 12.04 to 12.10 with update manager
+[00:24] <mantfire> i found it here https://bugs.launchpad.net/ubuntu/+source/dpkg/+bug/1015567
+[00:24] <ubottu> Ubuntu bug 1015567 in dpkg (Ubuntu Quantal) "upgrade failed: mixed non-coinstallable and coinstallable package instances present" [Critical,Fix released]
+[00:24] <mantfire> but i cant find a solution or workaround
+[00:25] <mantfire> anyone know some how fix it?
+[00:25] <zodiak> anyone ever done any bash scripting using inotify ?
+[00:26] <zodiak> was wanting a sort of tripwire style of tool to run a custom command when a directory changes
+[00:26] <mantfire> ubottu i read that link but there are no solve
+[00:26] <ubottu> mantfire: I am only a bot, please don't think I'm intelligent :)
+[00:26] <mantfire> xD
+[00:27] <zodiak> burn
+[00:27] <zodiak> mantfire, since no-one else is around.. let me have a look see
+[00:28] <zodiak> mantfire, oh.. that's easy.. you have installed a 'non-ubuntu/xubuntu' package which clashes with an ubuntu/xubuntu one on upgrade
+[00:29] <zodiak> you probably want to pastebin up the actual apt-get dist-upgrade output
+[00:29] <mantfire> ok
+[00:29] <mantfire> i copy it here?
+[00:29] <zodiak> no.. pastebin
+[00:29] <zodiak> it's going to be HUUUUUUGE
+[00:29] <zodiak> so.. no.. not in here please :D
+[00:30] <mantfire> srry but what is pastebin? xD
+[00:30] <mantfire> i am little new
+[00:30] <pleia2> !pastebin
+[00:30] <ubottu> For posting multi-line texts into the channel, please use http://paste.ubuntu.com | To post !screenshots use http://imagebin.org/?page=add | !pastebinit to paste directly from command line | Make sure you give us the URL for your paste - see also the channel topic.
+[00:31] <mantfire> ok
+[00:31] <mantfire> thanks
+[00:31] <mantfire> i do it
+[00:31] <mantfire> exactly what file you need?
+[00:43] <zodiak> when you do apt-get dist-upgrade .. the output from that
+[00:44] <mantfire> ok
+[00:49] <mantfire> ok here http://paste.ubuntu.com/1518717/
+[00:50] <mantfire> srry
+[00:50] <mantfire> here http://paste.ubuntu.com/1518720/
+[00:51] <mantfire> tell me try apt-get -f install and i try that but get me another error
+[00:54] <holstein> mantfire: what packages have unmet dependencies?
+[00:54] <holstein> mantfire: try removing whatever you think might be "odd" and getting apt to work
+[00:54] <holstein> i might run "sudo apt-get auto-remove" and see what is in the list
+=== azeam is now known as azeam_afk
+[00:55] <Unit193> holstein: He hit ^C during apt-get update, so that didn't finish.
+[00:55] <mantfire> ok i try the autoremove and paste the exit
+[00:55] <holstein> Unit193: interesting...
+[00:55] <mantfire> i update it like six times try internet solutions but nothing work
+[00:56] <greenwolf> whatever update my computer just did screwed everything up and i had to re-install Xubuntu
+[00:57] <greenwolf> freaking weird...dont' understand y and how it broke my OS but it did
+[00:57] <mantfire> here the apt-get -f install paste
+[00:57] <mantfire> http://paste.ubuntu.com/1518732/
+[00:58] <mantfire> the apt-get auto-remove i get invalid operation
+[00:58] <holstein> greenwolf: i always read the list of what is going to happen
+[00:58] <mantfire> mantfire@Genesis:~$ sudo apt-get auto-remove
+[00:58] <mantfire> E: Operación inválida: auto-remove
+[00:59] <holstein> mantfire: sorry... sudo apt-get autoremove
+[00:59] <holstein> mantfire: use tab complete
+[00:59] <mantfire> ok
+[00:59] <Unit193> Or sudo dpkg --configure -a
+[01:00] <mantfire> mantfire@Genesis:~$ apt-get autoremove
+[01:00] <mantfire> E: No se pudo abrir el fichero de bloqueo «/var/lib/dpkg/lock» - open (13: Permiso denegado)
+[01:00] <mantfire> E: No se encontró un archivo de réplica «/var/lib/dpkg/»
+[01:00] <mantfire> mantfire@Genesis:~$ sudo dpkg --configure -a
+[01:00] <mantfire> dpkg: error: analizando archivo «/var/lib/dpkg/status» cerca de la línea 49064 paquete «libao-common»: mixed non-coinstallable and coinstallable package instances present
+[01:01] <holstein> mantfire: sudo
+[01:01] <mantfire> yes i see sorry
+[01:01] <mantfire> mantfire@Genesis:~$ sudo apt-get autoremove
+[01:01] <mantfire> Leyendo lista de paquetes... Hecho
+[01:01] <mantfire> Creando árbol de dependencias
+[01:01] <mantfire> Leyendo la información de estado... Hecho
+[01:01] <mantfire> Tal vez quiera ejecutar «apt-get -f install» para corregirlo.
+[01:01] <mantfire> Los siguientes paquetes tienen dependencias incumplidas: libc6-dev : Depende: libc6 (= 2.15-0ubuntu20) pero 2.15-0ubuntu10.3 está instalado
+[01:02] <mantfire> E: Dependencias incumplidas. Pruebe de nuevo usando -f.
+[01:02] <Unit193> holstein: Above would seem to be the issue.
+[01:02] <mantfire> i found the bug here https://bugs.launchpad.net/ubuntu/+source/dpkg/+bug/1015567
+[01:02] <ubottu> Ubuntu bug 1015567 in dpkg (Ubuntu Quantal) "upgrade failed: mixed non-coinstallable and coinstallable package instances present" [Critical,Fix released]
+[01:02] <mantfire> but they dont solve it
+[01:02] <mantfire> and have like six month
+[01:03] <mantfire> i try the script they put there but dont solve the problem
+[01:09] <holstein> Unit193: i agree
+[01:09] <holstein> mantfire: its not a bug though.. if you stopped an update
+[01:09] <magiK_> I've sudo apt-get install xubuntu-desktop and I gotta say this sucker is way faster than the default
+[01:09] <Unit193> It's fine to Ctrl+C a apt-get update, pretty much.
+[01:09] <holstein> mantfire: also, "they" is us... you and me. those bugs are public
+[01:10] <holstein> Unit193: i thought i had, and all was well. but is that what happened?
+[01:10] <Unit193> magiK_: Heh, nice.  Did you do a !purexfce type update?
+[01:10] <Unit193> holstein: That's what I read in the paste, but not sure if that's all.
+[01:11] <Unit193> While it's not English, I gather it has some unconfigured/configured 64bit and 32bit libs/programs.
+[01:11] <magiK_> Unit193, it's not a purexfce but I did sudo apt-get install xubuntu-desktop it has all the features but I can still use gnome or the regular unity if I want.
+[01:11] <holstein> mantfire: i might just fire up synaptic and try clicking the "fix broken packages" button
+[01:12] <holstein> it is an extra challenge translating properly
+[01:12] <mantfire> i do that
+[01:12] <mantfire> and get the same errors
+[01:12] <holstein> mantfire: in synaptic you mean?
+[01:12] <mantfire> i dont cancel the update
+[01:12] <mantfire> i leave it all night and find this bug in the morning
+[01:12] <mantfire> yes synaptic
+[01:13] <holstein> mantfire: what sources do you have enabled? i would clean that out
+[01:13] <mantfire> i try what you tell but get the same error
+[01:13] <magiK_> Unit193, I'm thinking about switching to pure xfce but I would have to completaly reinstall,  I heard this is the same as pure xfce except I can choose at the login screen which type of session I want.
+[01:13] <mantfire> xubuntu amd64
+[01:13] <mantfire> ?
+[01:13] <Unit193> !purexfce
+[01:13] <ubottu> If you want to remove all !KDE and !Gnome packages and have a default !Xubuntu system follow the instructions here « http://www.psychocats.net/ubuntu/purexfce »
+[01:13] <holstein> mantfire: PPA's.. extra sources
+[01:13] <holstein> !ppa | mantfire
+[01:13] <ubottu> mantfire: A Personal Package Archive (PPA) can provide alternate software not normally available in the offical Ubuntu repositories - Looking for a PPA? See https://launchpad.net/ubuntu/+ppas - WARNING: PPAs are unsupported third-party packages, and you use them at your own risk. See also !addppa and !ppa-purge
+[01:13] <Unit193> magiK_: I'd personally use tasksel rather than sudo apt-get install xubuntu-desktop
+[01:14] <magiK_> Unit193, to late I already used it...lol
+[01:14] <Unit193> holstein: If he didn't change much, install would be easier. :P
+[01:14] <holstein> Unit193: what does that tasksel command look like?
+[01:14] <holstein> mantfire: sure.. if this is a fresh install, just reinstall
+[01:14] <mantfire> i think i buy another hard disc, do some backup and do a fresh install
+[01:14] <magiK_> Unit193, Tommorow on a different computer I am going to install install Xubuntu fresh install
+[01:15] <Unit193> holstein: Pretty sure you can do tasksel type  but you can pick what type of system you want, web server, ssh server, the different desktops, etc.
+[01:15] <magiK_> Unit193, but for this computer I am going to keep it where I can choose which I want to use at login because I have plenty of extra space for the other's as well on this computer.
+[01:15] <Unit193> magiK_: Nice, that seems to be the best way to get a clean system.
+[01:15] <Unit193> Coolio.
+[01:16] <magiK_> Unit193, If I get bored with Xubuntu I can switch to regular Ubuntu, the new GNOME or GNOME classic
+[01:16] <mantfire> by the way, you know if xubuntu have the same amazon extra in ubuntu?
+[01:16] <Unit193> mantfire: It doesn't use lenses, so doesn't have the amazon lense.
+[01:17] <mantfire> nice ^^
+[01:17] <mantfire> thanks
+[01:17] <mantfire> ok i want to thanks all the help ^^
+[01:17] <magiK_> Unit193, using this Xubuntu my system resources show that I am saving 600mb of free ram as opposed to 300 with regular ubuntu
+[01:18] <magiK_> I'm really impressed,  I click it, it loads gotta love linux.
+[01:19] <mantfire> i am thinking if i power off my pc it can restart? whit this bug
+[01:20] <fruney> hello!
+[01:20] <mantfire> hi
+[01:21] <fruney> im brand-new linux user and have got a problem. can you spare me a minute?
+[01:22] <mantfire> yeah sure but i am new too
+[01:22] <fruney> it's very basic
+[01:23] <fruney> i had my very first contact with linux today :D
+[01:23] <fruney> so, the thing is
+[01:24] <fruney> i fixed my old notebook by using portable xubuntu, formatting hard disk and then installing linux. it works perfectly and i got that grubb thing to choose, how do i want to run my computer
+[01:24] <fruney> that's fine
+[01:25] <fruney> i decided to get xubuntu on my new notebook, but i want to use both win7 and linux on it
+[01:25] <fruney> so i've just installed it on another partition, everything went well
+[01:26] <holstein> fruney: it?
+[01:26] <fruney> xubuntu
+[01:26] <mantfire> him have two partition, one with win7 and the other with xubuntu
+[01:26] <holstein> i dont think so.. not if the drive was formatted
+[01:27] <fruney> but wait, here's the thing
+[01:27] <holstein> if the hard disk was formatted, and xubuntu was installed, then there is only xubuntu now
+[01:27] <fruney> but wait a second :D
+[01:27] <mantfire> xD
+[01:27] <fruney> when i boot my comp
+[01:27] <fruney> i don't get any grubb menu
+[01:27] <fruney> just win7 running
+[01:27] <fruney> how do i get to my xubuntu? :D
+[01:28] <holstein> fruney: did you reinstall win7? after installing xubuntu?
+[01:28] <mantfire> maybe your notebook new have efi bios
+[01:28] <holstein> https://help.ubuntu.com/community/RecoveringUbuntuAfterInstallingWindows
+[01:28] <mantfire> uefi*
+[01:28] <fruney> nope, i didnt reinstall windows
+[01:28] <holstein> fruney: then you have no windows
+[01:28] <fruney> i'm on windows now :D
+[01:29] <holstein> fruney: if you formatted the hard drive containing windows.. and installed xubuntu, then you have only xubuntu
+[01:29] <mantfire> you tell xubuntu install only in the non formating partition?
+[01:29] <holstein> fruney: then start over and say what you have, and what you want
+[01:29] <fruney> yeah
+[01:29] <fruney> then again:
+[01:29] <fruney> i have my notebook with win7
+[01:30] <fruney> i divided hard disk into few partitions to suit my needs
+[01:30] <fruney> i wanted one of them to be the one for xubuntu
+[01:30] <holstein> fruney: elaborate about "deviding partitions"
+[01:30] <holstein> fruney: you used something like gparted and shrank your ntfs partition?
+[01:31] <fruney> yeah, like that
+[01:31] <holstein> fruney: like that? or is that what you did? you made empty space on your hard drive?
+[01:31] <fruney> nope
+[01:32] <holstein> fruney: open a terminal and run "sudo fdisk -l" and pastebin that
+[01:33] <fruney> i didnt make empty space
+[01:33] <fruney> i made another drives, like D, E, etc
+[01:34] <holstein> fruney: so, from windows, you shrank your ntfs partition, and added another ntfs partition?
+[01:35] <fruney> yeah, added few more ntfs partitions
+[01:35] <holstein> fruney: few more?
+[01:35] <holstein> fruney: maybe just open a terminal and run that command so we can see what you have
+[01:36] <holstein> fruney: are you running from a live CD?
+[01:36] <fruney> again: im on my regular, original win7 now
+[01:37] <holstein> fruney: share with me whatever information about your hard drive you can... from a live CD you can run "sudo fdisk -l"
+[01:38] <holstein> fruney: you dont see xubuntu listed when trying to boot?
+[01:38] <fruney> i got my xubuntu installed on one of those partitions, chosen xt4 for it, chosen another small partition for swap
+[01:38] <fruney> yeah, i dont get any list
+[01:38] <fruney> just win7 running
+[01:38] <fruney> exacly as before
+[01:38] <holstein> fruney: did id ever boot?
+[01:38] <holstein> did xubuntu ever boot..
+[01:38] <fruney> nope
+[01:38] <fruney> i've just installed it
+[01:38] <holstein> fruney: i would do this...
+[01:38] <fruney> rebooted a few times
+[01:39] <fruney> and still win7
+[01:39] <holstein> blow out whatever is on the machine.. in the free space
+[01:39] <holstein> fruney: put the installer disk in, and install to the empty space
+[01:39] <holstein> otherwise, if you have a fuctional install, you should be able to follow that "recover grub" link i gave above
+[01:39] <holstein> !grub
+[01:39] <ubottu> GRUB2 is the default Ubuntu boot manager since 9.10 (Karmic). Lost GRUB after installing Windows? See https://help.ubuntu.com/community/RestoreGrub - For more information and troubleshooting for GRUB2 please refer to https://help.ubuntu.com/community/Grub2 - See !grub1 for releases before Karmic (9.10)
+[01:40] <holstein> i would just reinstall letting the installer use the empty space and set up grub properly
+[01:40] <fruney> so, you mean i should delete my linux partition, leaving empty space there
+[01:40] <fruney> and setting this empty space as my new linux
+[01:40] <fruney> '"partition"
+[01:40] <fruney> ?
+[01:41] <holstein> fruney: i suggest one of 2 things
+[01:41] <holstein> fruney: assuming you have a functional install, then recover grub using that link i gave above earlier, or just now
+[01:42] <holstein> alternatively, you can just remove the current partitions for linux.. leaving emtpy space.. boot the installer and select "use empty space" and resintall xubuntu there on that emply space where the install will configure grub properly
+[01:42] <fruney> ok then
+[01:42] <fruney> thank you very much
+[01:43] <fruney> i will get some sleep and try :)
+[01:43] <holstein> sure.. enjoy
+[01:43] <fruney> i will get better, i promise ;)
+[01:43] <fruney> good night and thank you again!
+[02:10] <c2tarun> is Firefox 18 in repos?
+[02:11] <Unit193> For quantal it is.
+[02:11] <c2tarun> Unit193, not for 12.04?
+[02:11] <Unit193> !info firefox precise
+[02:12] <ubottu> firefox (source: firefox): Safe and easy web browser from Mozilla. In component main, is optional. Version 18.0+build1-0ubuntu0.12.04.3 (precise), package size 23119 kB, installed size 48580 kB
+[02:12] <Unit193> c2tarun: Precise too.
+[02:12] <c2tarun> Unit193, I am not seeing it in updates :(
+[02:12] <c2tarun> !info firefox repository
+[02:12] <ubottu> 'repository' is not a valid distribution: extras, hardy, hardy-backports, hardy-proposed, kubuntu-backports, kubuntu-experimental, kubuntu-updates, lucid, lucid-backports, lucid-proposed, medibuntu, oneiric, oneiric-backports, oneiric-proposed, partner, precise, precise-backports, precise-proposed, quantal, quantal-backports, quantal-proposed, raring, raring-backports, raring-proposed, stable, testing, unstable
+[02:13] <Unit193> precise-updates should be where it is.
+[02:13] <c2tarun> Unit193, let me update once again.
+[02:14]  * c2tarun gottcha :)
+=== bazhang_ is now known as bazhang
+[02:46] <xubuntu> hello
+=== xubuntu is now known as Guest22063
+[02:48] <Guest22063> Hello all I am having a problem connecting a Cisco Aironet CB21 to xubuntu 12.10, can anyone help me please. It cant be seen from the wirless connect list. Thank you in advance
+[02:49] <holstein> Guest22063: it being the ssid? do you see any access points? do you have a way to test that the machine isnt seeing *any* access points? then we can remove that router from the eqution and test the wifi device
+[02:49] <Guest22063> the machine is not seeing any access points.
+[02:50] <holstein> Guest22063: ok.. then the router is irrelevant.. what wifi device do you have?
+[02:50] <holstein> is that it? the cisco?
+[02:50] <Guest22063> I have a Cisco Aironet cb21
+[02:50] <holstein> Guest22063: and that is what? usb?
+[02:51] <Guest22063> I get a green light when I plug it in. No it is pci i am guessing. Its in a Panasonic toughbook cf-72
+[02:51] <holstein> Guest22063: have you plugged in wired?
+[02:52] <Guest22063> Is there a command that will update the drivers? I can pull up the command lspci -nn and it will show that it is plugged in. And yes I have plugged in wired and the internet works
+[02:52] <holstein> http://www.linlap.com/panasonic_toughbook_72 lists it as a broadcom device
+[02:53] <Guest22063> Is that why it will not connect?
+[02:53] <holstein> Guest22063: are you prompted for "restricted drivers" ?
+[02:53] <holstein> Guest22063: its likely you dont have drivers installed for it at all yet
+[02:53] <holstein> Guest22063: in lspci, what is the line describing the hardware?
+[02:56] <Guest22063> it says, subsystem: Cisco Aironet Wireless Communications CB21 802.11a/b/g cardbus adapter
+[02:57] <Guest22063> Interrupt: pin A routed to IRQ 9: Region 0
+[02:57] <Guest22063> Capabilities <access denied> : kernel modules ath5K, does this help?
+[02:58] <holstein> Guest22063: ath5k should support that device
+[02:59] <holstein> Guest22063: i might install ndisgtk and try the windows XP driver
+[02:59] <Guest22063> anyway I could do a sudo apt-get install update of some sort?
+[03:00] <holstein> sudo apt-get install ndisgtk for example
+[03:00] <holstein> that would install the ndiswrapper gui where you can try pointing to a windows driver for that device
+[03:01] <Guest22063> okay I will give it a try. Thank you Holstein for helping if you can  think of anything else it would be greatly appreciated
+[03:01] <holstein> Guest22063: the driver included in the kernel should support that hardware
+[03:02] <holstein> Guest22063: cisco, and any other manufacturer is always welcome to create a driver for your hardware
+[03:02] <holstein> Guest22063: what would i do? search for bugs relating to that hardware, or just try the windows driver
+[03:03] <Guest22063> I will try the windows driver in the mean time thanks again
+[03:03] <holstein> Guest22063: cheers.. good luck
+[09:37] <MoL0ToV> exist a possible to configure ubuntu to automagically place in /media all the smb shares of the local net? as usb sticks and cdrom...
+[09:54] <baizon> MoL0ToV: https://help.ubuntu.com/community/MoveMountpointHowto
+[10:06] <MoL0ToV> i know how to move mountpoints, the question is another
+[10:09] <moetunes> !fstab | MoL0ToV
+[10:09] <ubottu> MoL0ToV: The /etc/fstab file indicates how drive partitions are to be used or otherwise integrated into the file system. See https://help.ubuntu.com/community/Fstab and http://www.tuxfiles.org/linuxhelp/fstab.html and !Partitions
+[10:09] <MoL0ToV> i know how fstab works,
+[10:09] <MoL0ToV> the question is another
+[10:09] <moetunes> that should mention network mounts too
+[10:10] <MoL0ToV> yes i know i'm able to mount a smb share via fstab
+[10:11] <baizon> MoL0ToV: example sudo smbmount //192.168.2.28/projects /media/projects
+[10:11] <MoL0ToV> yes, i know
+[10:12] <baizon> MoL0ToV: https://wiki.ubuntu.com/MountWindowsSharesPermanently
+[10:12] <MoL0ToV> but i want something that browse the lan and automount al shares
+[10:12] <baizon> this should help
+[10:12] <MoL0ToV> so the shares changes dinamically, are auto updated
+[10:12] <baizon> MoL0ToV: then you need a script :)
+[10:12] <baizon> and that wasnt your question =)
+[10:12] <baizon> now i know what you mean
+[10:12] <MoL0ToV> ok thankyou!
+[10:13] <baizon> MoL0ToV: http://asturio.gmxhome.de/software/sambascan2/i.html
+[10:13] <baizon> that would be something your looking for
+[10:13] <MoL0ToV> pretty! ill try
+[10:13] <MoL0ToV> thankyou
+[10:13] <baizon> np
+=== john__ is now known as __j0hn__
+[12:17] <ruslan_osmanov> Hi. Is there a deb package for SphinxSE(SPHINX) plugin for MySQL/MariaDB?
+[12:36] <MoL0ToV> W: Impossibile recuperare bzip2:/var/lib/apt/lists/partial/it.archive.ubuntu.com_ubuntu_dists_quantal-updates_main_source_Sources  Somma hash non corrispondente
+[12:36] <MoL0ToV> W: Impossibile recuperare bzip2:/var/lib/apt/lists/partial/it.archive.ubuntu.com_ubuntu_dists_quantal-updates_universe_source_Sources  Somma hash non corrispondente
+[12:36] <MoL0ToV> howto fix?
+[12:53] <MoL0ToV> W: Impossibile recuperare bzip2:/var/lib/apt/lists/partial/it.archive.ubuntu.com_ubuntu_dists_quantal-updates_universe_source_Sources  Somma hash non corrispondente
+[12:53] <MoL0ToV> howto fix?
+[13:06] <koegs> MoL0ToV: what does it mean in english?
+[13:08] <MoL0ToV> W: inposssible get bzip2:/var/lib/apt/lists/partial/it.archive.ubuntu.com_ubuntu_dists_quantal-updates_universe_source_Sources bad hash sum
+[13:09] <koegs> MoL0ToV: try to change to the international servers "archive.ubuntu.com" in /etc/apt/sources.list
+[13:10] <koegs> then "sudo apt-get update"
+[13:10] <MoL0ToV> ok thanks
+[13:35] <qasim> HI
+[13:35] <qasim> any c++ expert around?
+[13:36] <koegs> qasim: you could ask in #xubuntu-offtopic
+[13:36] <qasim> koegs, thanks
+[14:14] <{-Dark-}> hi all
+[14:16] <{-Dark-}> somebody have good knowledge about x11vnc server?
+[14:17] <koegs> just ask {-Dark-}
+[14:17] <{-Dark-}> yes
+[14:18] <{-Dark-}> I have some trouble to have x11vnc running always in background and also start before login
+[14:18] <{-Dark-}> I'm running xubuntu 12.04
+[14:20] <koegs> This look promising: http://askubuntu.com/questions/83824/how-can-i-start-a-vnc-server-before-log-on
+[14:32] <xubuntu521> harro
+[14:34] <{-Dark-}> thanks koegs
+[14:34] <{-Dark-}> I will try in that way
+[14:38] <xubuntu521> hello
+[14:39] <koegs> hello xubuntu521
+[14:39] <xubuntu521> i have a quick question; is there any noticable difference between xubuntu standard and alternate?
+[14:39] <xubuntu521> desktop and alternate*
+[14:40] <koegs> xubuntu521: installer is a bit different, but in the end you will have a normal xubuntu desktop with both of them
+[14:41] <xubuntu521> why would you need 2 different installers?
+[14:41] <koegs> some PCs are not able to boot the live cd out of the box or in the past the alternate installer was used for installations with fully encrypted partitions, etc.
+[14:41] <{-Dark-}> xubuntu521 The alternate install CD allows you to perform certain specialist installations of Xubuntu
+[14:42] <xubuntu521> alright, i'm a complete novice with linux
+[14:42] <xubuntu521> so its better if i download the desktop version
+[14:42] <xubuntu521> ?
+[14:42] <koegs> xubuntu521: yes
+[14:42] <koegs> from 12.10 there is no alternate cd any more
+[14:43] <xubuntu521> oh alright
+[14:43] <xubuntu521> thanks for the quick answer!
+[14:43] <{-Dark-}> alternate usually is also used for old pc with low memory or poor resources
+[14:44] <{-Dark-}> go ahed with normal cd :)
+[14:44] <{-Dark-}> koegs
+[14:44] <{-Dark-}> about x11vnc
+[14:44] <{-Dark-}> the post is not working well, strange
+[14:45] <{-Dark-}> but i fixed but simply putting x11vnc script inside /etc/rc.local
+[14:46] <{-Dark-}> seems to work, I will do some more test
+[14:46] <koegs> good to know
+[14:52] <AALMEIDA> I'm a new user of xbuntu
+[14:53] <AALMEIDA> I intal Xubuntu 12.04 in laptop centrino with 495 Mb of ram
+[14:53] <AALMEIDA> I instal Xubuntu 12.04 in laptop centrino with 495 Mb of ram
+[14:54] <AALMEIDA> it works
+[14:54] <{-Dark-}> good
+[14:54] <AALMEIDA> the monitor defenition is 1280x800
+[14:55] <AALMEIDA> when i start up the bottom bar disapears
+[14:55] <koegs> just move your mouse down the screen, then it will show
+[14:55] <AALMEIDA> only apears when i force the defenition to 1280x800
+[14:57] <AALMEIDA> I try to find some issues obout this but I can't find any thing
+[16:28] <_helios_> I just installed a fresh copy of Xubuntu 12.10 64bit everything seems to be working really smooth.
+[16:29] <baizon> nice to hear
+[16:31] <_helios_> baizon, it's an older system with only 800mb of RAM and it's flying
+[17:04] <c2tarun> Hi friends, I want to buy a wireless Keyboard Mouse combo. I was looking at Logitech site, but none of there combos has Linux support. Can anyone please suggest me any?
+[17:05] <greenwolf> i used a wireless logitic mouse and works perfect on linux desktop
+[17:05] <greenwolf> says no linux support on  the package but works just fine now
+[17:05] <c2tarun> greenwolf, which model?
+[17:05] <greenwolf> linux willl pick it up usually
+[17:06] <greenwolf> dont kno for sure i dont have it on me its at my desktop im on my laptop now and out the office
+[17:06] <greenwolf> theres no drivers for it so it should just plug-n-play
+[17:06] <greenwolf> mine did atleast
+[17:07] <greenwolf> and it says right on the package no linux support...so but it does work i can assure you of that...buy it and save the receipt
+[17:07] <greenwolf> if it works keeps it if not..no biggie send it back
+[17:07] <c2tarun> greenwolf, thanks :) any idea about keyboards? Reviews at many places say that in most cases multimedia keys dont work.
+[17:07] <greenwolf> but im telling you there's no drivers for those things they just plug in and linux picks it right up
+[17:08] <greenwolf> yea thats what i was just gunna say the only thing u might have problems with are the multimedia keys
+[17:08] <greenwolf> everything else will work just fine because its a basic keyboard US input
+[17:08] <greenwolf> so anything will work
+[17:09] <crond> I have a logitech with multimedia keys, worked out of the box
+[17:09] <c2tarun> greenwolf, thanks a lot :) I dont use multimedia keys of my laptop much, but still was thinking about other keys. :)
+[17:09] <c2tarun> crond, which model?
+[17:09] <crond> sometimes xubuntu is a bit more finicky than gnome about such things
+[17:09] <crond> uhh
+[17:09] <crond> k360
+[17:09] <crond> wireless
+[17:09] <greenwolf> c2tarun: you should be fine...if not return it no problem just keep your recipet
+[17:10] <c2tarun> ok, thanks a lot guys :)
+=== greenwolf is now known as n2tech
+[17:55] <rejven> hello, can someone help me, i accidentaly deleted panel with volume control in tray, and i cant put it back
+[18:00] <jeoj> my display's native resolution 1920x1080 isn't showing up in the display menu
+[18:00] <jeoj> is there some known cure? already tried one, but it did nothing
+[18:00] <jeoj> http://www.bingshui.org/tech/defining-display-resolutions-in-xubuntu-12-04/ <- this is what i tried
+[18:02] <ochosi> jeoj: that could mean that your driver doesn't support it (while your display might support it
+[18:03] <ochosi> )
+[18:04] <jeoj> hmm..
+[18:05] <jeoj> is there something to do to fix it?
+[18:06] <ochosi> jeoj: well, first off: did it work in previous/other versions of x/ubuntu?
+[18:06] <jeoj> this is a fresh install on a new computer i got today
+[18:06] <jeoj> but hold on, i went to the additional drivers section
+[18:07] <jeoj> it looks promising
+[18:07] <ochosi> ok good
+[18:31] <jeoj> oh man
+[18:32] <jeoj> now there's a "AMD - unsupported hardware" -watermark at the lower right corner
+[18:36] <holstein> jeoj: ?
+[18:37] <holstein> jeoj: i usually fire up arandr as a GUI tool for trying to find resolutions
+[18:37] <holstein> jeoj: i try whatever drivers are available.. and sometimes i use a knoppix or a puppy live CD to configure and grab the xorg.conf from there
+[18:38] <holstein> jeoj: keep in mind, the best way to "fix" this is for your vendor to provide support for you device with the operating system you are trying to use
+[18:39] <holstein> jeoj: other than that, i find i can usually experiment around and find an acceptable use case.. or if its a desktop, i just pop in a more (arguably better) supported card
+[18:40] <jeoj> i think i'll head to their website next.. i can now choose the appropriate resolution
+[18:40] <jeoj> the card's so new it's not supported yet i suppose
+[18:42] <holstein> jeoj: in something like puppy, you can easily try the vesa driver and whatever resolution
+[18:43] <holstein> jeoj: sometimes i just like too see if its possible
+[18:59] <jeoj> downloaded the driver from amd and it works perfectly now
+[18:59] <jeoj> thanks for the help guys!
+[20:06] <iLogical> how do I get volume settings?
+[20:08] <recon_lap> can you see a speaker on a panel?
+[20:08] <iLogical> i can see a speaker when I fn + volume up down keys
+[20:12] <iLogical> recon_lap,
+[20:14] <recon_lap> iLogical: been a while, but try add the indicator applet to your panel
+[20:15] <iLogical> i've just found xfce4-mixer on the software center
+[20:18] <recon_lap> iLogical: ok, this might help http://askubuntu.com/questions/186205/how-to-reset-notification-area-settings , but I'm on LTS, not sure what changed in last update
+[21:03] <Glitchd> hello all=)
+[21:04] <Glitchd> trying to figure out how to add "x11vnc" to the autostart apps so it starts at boot and i can access the desktop from somewhere else, however, i am unable to figure it out. Help?
+[21:05] <baizon> Glitchd: https://help.ubuntu.com/community/UbuntuBootupHowto
+[21:06] <Glitchd> thx baizon
+[21:06] <Glitchd> ill check it out
+[21:06] <baizon> np
+[22:59] <ChrisWere> I've found yet another bug in xubuntu. My c15 logitech cam doesn't work in guvciew. Anyone know how to fix this? I gotta say I'm getting pretty bored of spending most of my time working out these issues.
+[23:05] <TheSheep> !bugs | ChrisWere
+[23:05] <ubottu> ChrisWere: If you find a bug in Ubuntu or any of its derivatives, please file a bug using the command « ubuntu-bug <package> » - See https://help.ubuntu.com/community/ReportingBugs for other ways to report bugs.
+[23:09] <ChrisWere> I'd like to know how to get it working
+[23:11] <knome> ChrisWere, have you googled whether the camera is known to work in linux generally?
+[23:18] <ChrisWere> Yes it is supported
+[23:19] <knome> ok, so can you elaborate what "does not work" means? does it work in other applications? is it recognized by the system?
+[23:19] <ChrisWere> it's recognise by the system, it works on vlc and other software. Obviously because of that dumb bug every has in flash I don't know if flash will pick it up. But I know it's detected
+[23:21] <knome> if it's a bug in guvciew, i don't know if there are better ways to get it fixed than searching if there are fixes for that and filing a bug if one isn't filed yet
+[23:22] <ChrisWere> why are there so many buggy things in ubuntu? I feel I'm always here.
+[23:22] <ChrisWere> I've been googling for ages. I think I might have to ditch this and go back to windoze, which sucks i know.
+[23:24] <knome> trying to put it simply and shortly: developers can only fix bugs they know of, and if it's hardware related, they might need more input than usual from reporters. since many are volunteers, it's not always said that they have the motivation to fix every bug, even if they were relatively trivial.
+[23:25] <ChrisWere> Bug reporting isn't relly going to help me know though is it?
+[23:26] <knome> no, it's not going to help you *right now* - but if you don't file the bug, it's probable the developer will never know you had the bug, and it won't be fixed ever.
+[23:27] <knome> filing a bug in windows isn't going to help you *right now* either, is it? :)
+[23:28] <ChrisWere> It works in windows
+[23:28] <knome> that's not what i was talking about
+[23:29] <ChrisWere> Can you help me or not?
+[23:29] <knome> file a bug.
+[23:29] <knome> no, i can't fix it right now, i'm not a guvciew developer, nor do i own that hardware to see how it could be fixed
+[23:30] <knome> if it's recognized by the system, maybe you can find an alternative for guvciew
+[23:31] <pleia2> might try something that's in the ubuntu archives, that software tends to be better supported and has testers in the ubuntu community
+[23:32] <ChrisWere> I'm actually updating from 12.04 to 12.10 at the moment hoping that'll fix it.

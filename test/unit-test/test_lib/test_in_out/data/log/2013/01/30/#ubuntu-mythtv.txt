@@ -1,0 +1,79 @@
+=== yuki-onna_ is now known as yuki-onna
+[00:59] <qwebirc33471> l
+=== dale is now known as luckyphuq
+[20:38] <James2> hey guys, having a problem with one of my frontends... its remote has disappeared
+[20:38] <James2> i have tried removing the remote through mcc, which removed lirc
+[20:39] <James2> then added it again, which reinstalled lirc, and i choose auto button mappings
+[20:39] <James2> i then tried irw with lird running and stopped, which shows no remote activity
+[20:40] <James2> irw /dev/lirc0 throws an error connect: connection refused
+[20:40] <James2> any ideas what i should try next?
+[20:40] <rhpot1991> James2: what kind of remote
+[20:41] <rhpot1991> and have you upgraded the system lately?  (from one version of ubuntu to another)?
+[20:41] <James2> mce usb remote
+[20:41] <James2> and yes was updated earlier using apt-get, but apparantly it wasnt working before that
+[20:41] <James2> but was just an update of 12.04 0.26
+[20:41] <James2> a load of stuff was held back
+[20:42] <rhpot1991> a few versions ago lirc was replaced with an in kernel option for generic mce remotes
+[20:42] <rhpot1991> if you didn't upgrade from an older version you shouldn't be hitting that though
+[20:43] <rhpot1991> I;d look at what is being held back, sudo apt-get dist-upgrade to get them
+[20:43] <James2> ok i was upsing apt-get upgrade earlier
+[20:44] <James2> dist-upgrade gives a whole different list of updates
+[20:54] <James2> ok backend is rebooting after a dist upgrade and new kernel
+[20:54] <James2> will do the frontend with a problem in a mo
+[21:30] <James2> ok frontend is now fully up to date on 12.04 and 0.26
+[21:30] <James2> lirc is not installed, and i still have no remote.. what to do?
+[21:34] <rhpot1991> James2: I'd configure your remote via mythbuntu-control-centre
+[21:34] <rhpot1991> which will install lirc
+[21:35] <James2> ok its installing atm
+[21:38] <James2> ok all done via mcc, and still no remote
+[21:43] <James2> irw still shows 0 activity from the reciever
+[21:56] <James2> any clues?
+[22:06] <rhpot1991> James2: lsmod |grep mceusb
+[22:06] <rhpot1991> run that
+[22:07] <James2> mceusb                 18143  0
+[22:07] <James2> rc_core                26412  13 ir_lirc_codec,ir_mce_kbd_decoder,ir_sony_decoder,ir_jvc_decoder,ir_rc6_decoder,rc_imon_pad,ir_rc5_decoder,imon,ir_nec_decoder,rc_rc6_mce,mceusb
+[22:08] <rhpot1991> actually I'm seeing that on one of my boxes too, hmmm
+[22:08] <rhpot1991> I was expecting to not get a hit
+[22:09] <James2> you have the same issue, its just dead remote, light on reciever flashes, but irw doesnt show up any input
+[22:09] <James2> (for any remote)
+[22:09] <James2> if so let me know how you fix yours :P
+[22:11] <rhpot1991> James2: sudo apt-get install evtest
+[22:12] <rhpot1991> mine is fine, but I supect you might have the kernel grabbing your keystrokes and not lirc
+[22:12] <rhpot1991> in which case you don't really need lirc
+[22:19] <James2> incidentally i have 2 boxes, this frontend, and its backend/frontend upstairs
+[22:19] <James2> same configs, same remotes, etc
+[22:19] <James2> the one upstairs is fine
+[22:20] <James2> and change to no additional remote in mcc so it removes lirc?
+[22:21] <James2> and reboot? and?
+[22:22] <rhpot1991> well use evtest to verify first
+[22:22] <rhpot1991> James2: same IR receiver on both
+[22:23] <rhpot1991> James2: I'm a little confused here, I thought that the in kernel lirc only worked for the generics and that the official ones were not used with that
+[22:23] <James2> slightly different versions
+[22:23] <rhpot1991> but I seem to have both the old lirc driver and the in kernel one on my system
+[22:23] <James2> yeah both of mine were using lirc afaik
+[22:23] <rhpot1991> superm1 played with the in kernel stuff for the official ones lately, so I'm hoping he can shed some light on it
+[22:23] <James2> the frontend also has an lcd panel
+[22:25] <rhpot1991> James2: gotta head home, I'll check back in later tonight
+[22:25] <rhpot1991> James2: you can read up about lirc's devinput
+[22:25] <rhpot1991> if it is using the in kernel driver then you can use devinput to access it in lirc
+[22:25] <rhpot1991> but I think you don't really need lirc in that event as long as the remote matches up to what you want mythtv to see
+[22:25] <rhpot1991> if you need a translation in between then you still need lirc
+[22:26] <James2> well the crucial thing is having the same button mappings on both remotes
+[22:26] <rhpot1991> so for instance if you wanted up on the remote to send the letter d to mythtv
+[22:26] <James2> in case customer decides to walk between rooms holding one :P
+[22:27] <rhpot1991> well in theory as long as the remote is seen by both then your lirc configuration can be differnt
+[22:27] <rhpot1991> ok heading out, good luck
+[22:45] <superm1> James2: did you isolate whether this was caused by the kernel update?
+[22:45] <superm1> try booting into an older kernel?
+[22:53] <James2> it stopped working before the kernel update
+[22:54] <James2> i can see the reciever, but i cant see where (if anywhere) it is sending notifications
+[22:55] <James2> this machine also has a
+[22:55] <James2>  ID 15c2:0038 SoundGraph Inc. GD01 MX LCD Display/IR Receiver
+[22:56] <James2> if i could configure that reciever with the mce_usb remote that would be wicked
+[22:56] <James2> and just do away with the mce_usb reciever
+[22:59] <superm1> do you know if that device is able to receive rc6 remote protocol?
+[22:59] <superm1> good to know it wasn't busted by the kernel update though
+[23:00] <superm1> i think the imon actually can receive rc6 according to http://www.mythtv.org/pipermail/mythtv-users/2012-August/338196.html
+[23:00] <superm1> so you probably could do away with the mceusb receiver and do it all through imon
+[23:03] <James2> yeah im just looking into that
+[23:03] <James2> would be nicer to lose the reciever

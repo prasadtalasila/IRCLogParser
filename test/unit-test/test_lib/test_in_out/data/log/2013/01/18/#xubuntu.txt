@@ -1,0 +1,512 @@
+[00:00] <ubu> bernz, "df -h" used is 52K and use% is 6%
+[00:00] <bernz> anyway, i think David-A is on the right track... you're probably almost out of space on your /tmp volume (you can see where it's mounted with "cat /etc/mtab")
+[00:00] <bernz> ah
+[00:00] <bernz> maybe it's a very tiny volume, if 52K represents 6% of the volume! :-D
+[00:02] <ubu> i see these 2 lines when i do "cat /etc/mtab"
+[00:02] <ubu> tmpfs /run tmpfs rw,noexec,nosuid,size=10%,mode=0755 0 0
+[00:02] <ubu> overflow /tmp tmpfs rw,size=1048576,mode=1777 0 0
+[00:03] <ubu> i've ran updates before that requires 100s of MB with no problem...everything was working great until now
+[00:04] <bernz> hmm, okay, it's a tmpfs system, and we can't see the size that way as it's only a percentage
+[00:05] <bernz> oh, wait, when you do "df -h", what size is the tmpfs volume?
+[00:05] <bernz> (mine is, for example, listed as "741M")
+[00:06] <ubu> the only tmpfs line i see is...
+[00:06] <ubu> tmpfs                                                                        812000       968    811032   1% /run
+[00:06] <bernz> ah yes
+[00:06] <bernz> your tmpfs is only 812Ko!
+[00:06] <bernz> ish
+[00:07] <David-A> ubu: i suspect you have /tmp in a ram-filesystem, and only allow it 1MB (52k/6% is almost 1MB). what kind of computer you have? how much ram? how did you install xubuntu?
+[00:07] <bernz> it's mostly empty, but still tiny... did installing or running something cause its definition to change?
+[00:08] <bernz> (oh yes... i've been assuming an installed system, not a "live session")
+[00:08] <ubu> 812 kilobytes? then how was i able to download updates that are 100s of megabytes in the past?
+[00:08] <bernz> it might have been larger in the past
+[00:09] <bernz> its size is defined somewhere, and that is modifiable, but system updates, malware, user error, etc, if your permissions are sufficiently lax
+[00:09] <bernz> but -> by
+[00:09] <ubu> yes, it's an installed system..i did not knowing do anything to cause the size to change
+[00:10] <ubu> so how do i fix this without having to reinstall the system?
+[00:11] <bernz> well, i'm not super good at these details, but... is your whole system installed on a single volume ("partition")? if so, what's its size? is 812000 about 10% of the volume's size?
+[00:11] <David-A> ubu: we don't know what has gone wrong yet. how much ram do you have?
+[00:12] <bernz> David-A, perhaps we should find where "/" is mounted, and see if it's an actual disk or not?
+[00:13] <bernz> oh, sorry, David-A, i see where you're going with this
+[00:13] <ubu> i have 4GB ram
+[00:14] <bernz> the percentage (10%) represents 10% of your RAM
+[00:14] <David-A> ubu: can you paste the entire output of "df -h" to a paste bin site and post a link to it here?
+[00:14] <ubu> how do i do that, bin site
+[00:14] <David-A> !pastebin
+[00:14] <ubottu> For posting multi-line texts into the channel, please use http://paste.ubuntu.com | To post !screenshots use http://imagebin.org/?page=add | !pastebinit to paste directly from command line | Make sure you give us the URL for your paste - see also the channel topic.
+[00:16] <David-A> ubu: go to http://paste.ubuntu.com and copy paste from terminal to there. OR. run the command "df -h | pastebinit" (without quotes) and copy the resulting url in this chat.
+[00:17] <ubu> http://paste.ubuntu.com/1543096/
+[00:19] <David-A> ubu: your /tmp is a separate device, and I don't know what an "overflow" device is, but I can google. wait
+[00:24] <recon_lap> ubu: have you checked for CD's or USB sticks in your computer? but look like /tmp is mounted on a really small partition
+[00:24] <David-A> ubu: you are not the only one having had this problem :). have you changed your /etc/fstab manually lately? can you paste bin it?
+[00:25] <ubu> no CD's or USB sticks...i have never touched /etc/fstab
+[00:27] <ubu> http://paste.ubuntu.com/1543116/
+[00:27] <bernz> found some claims that 'overflow' is mounted instead of your normal tmp mount if normal tmp is too full... from your "df -h", it looks like they are both mostly empty now, but maybe /tmp got cleared after overflow was already mounted. this means ensuring they are both mostly empty, and then rebooting, could fix you (at least)
+[00:27] <bernz> (at least for now)
+[00:28] <bernz> (from here: http://blog.cone.be/2009/08/31/overflow-tmpfs-on-tmp/ )
+[00:29] <David-A> the Internets suggests an "overflow" device is automatically created for /tmp when the disk is full. I think the real problem is the 99% fullness of "/" (a few % is reserved for root so that may be this happen slightly before 100%)
+[00:29] <bernz> yeah, David-A, that makes sense
+[00:30] <David-A> ubu: ^^
+[00:31] <ubu> i will free up some more space and reboot...thanks
+[00:31] <David-A> ubu: try free some space with "sudo apt-get clean" or "sudo apt-get autoclean"
+[00:33] <ubu> ran both apt-get's...freeing up disk space and will reboot..thanks again
+[00:33] <recon_lap> ubu reboot?
+[00:34] <bernz> probably don't need to reboot, as David-A pointed out that overflow is managed automatically
+[00:35] <David-A> ubu: your /home/ubu is exactly like /, and it is not in /etc/fstab. i suspect that you have encryption. it's alright with me, but I dont know much about it.
+[00:36] <ubu> u r correct, the hard drive is encrypted
+[00:36] <David-A> ubu: anyway, if so, freeing up space (removing unneeded files) in /home/ubu can be a good idea.
+[00:38] <David-A> ubu: there is a tool "fdupes" that can find copies of files if you suspect you have multiple copies of videos and such laying around
+[00:39] <ubu> rebooting...thanks again
+[00:53] <David-A> ubu: all good?
+[00:53] <ubu> system is back to normal, i can run update now...thanks you guys, much appreciate it
+[00:55] <David-A> ubu: do you know about Disk Usage Analyzer? (to find dirs with large files you'd forgot about) (command "du -k | sort -n" is about the same thing)
+[00:56] <ubu> DUA is in the software center?
+[00:57] <David-A> ubu: should be. isn't it installed already?
+[00:58] <ubu> it's not installed...i'll look into it.. thanks for all your help
+[00:59] <David-A> ubu: for me (lucid 10.04) it is in package gnome-utils
+[02:27] <ncm> does anyone know how to set up a sub domain in apache2?
+[03:09] <acegiak> Hey guys, I'm using the xubuntu live cd and I can't mount any disks using the gui and when I mount them in terminal they're all read only?
+[03:09] <acegiak> any help? I just want to back up my home directory before installing
+=== bazhang_ is now known as bazhang
+[04:05] <holstein> acegiak: did you get sorted?
+[04:19] <acegiak> holstein, i didnt solve it but i worked around it
+[04:19] <holstein> cool.. i would just sudo mv what i want... or gksudo open a filemanager..
+[04:20] <Unit193> Or mount with -o uid=999,gid=999  If I remember, live has that as UID and GID.
+[04:21] <holstein> Unit193: cool... i havent used that
+[04:22] <Unit193> Pretty handy, syntax is slightly different for fstab.
+[04:32] <xubuntu813> xubuntu
+[04:32] <xubuntu813> pwd
+[04:32] <knome> hello.
+[04:34] <acegiak> Unit193: Yeah I'd get an error doing that, and an IO error on trying to sudo mv
+[04:35] <Unit193> Oh nice. :P
+[05:31] <kharnov> hello, question. is there a repository for the more recent versions of the proprietary radeon driver? the one in the xubuntu repos is out of date
+[05:33] <well_laid_lawn> this might have a clue
+[05:33] <well_laid_lawn> !ati
+[05:33] <ubottu> For Ati/NVidia/Matrox video cards, see https://help.ubuntu.com/community/VideoDriverHowto
+[05:35] <kharnov> ah, okay, thanks
+[05:35] <kharnov> one more thing: is there a way to get a more recent version of the kernel than the one already present in the repositories?
+[05:36] <well_laid_lawn> you can build it yourself or search for a ppa
+[05:36] <well_laid_lawn> check the backports too
+[05:36] <kharnov> are you aware of any particularly good PPAs?
+[05:36] <kharnov> there's quite a few of them and some look dodgy
+[05:37] <well_laid_lawn> not offhand I just build stuff I want myself
+[05:37] <well_laid_lawn> !ppa
+[05:37] <ubottu> A Personal Package Archive (PPA) can provide alternate software not normally available in the offical Ubuntu repositories - Looking for a PPA? See https://launchpad.net/ubuntu/+ppas - WARNING: PPAs are unsupported third-party packages, and you use them at your own risk. See also !addppa and !ppa-purge
+[05:37] <well_laid_lawn> there's a link there ^
+[05:38] <kharnov> maybe i should consider compiling the kernel myself
+[05:39] <kharnov> how safe is it to use backports?
+[05:39] <well_laid_lawn> backports should be fine
+[05:39] <well_laid_lawn> it's not hard to build a kernel - just takes a little bit of practise
+[05:39] <well_laid_lawn> !compile
+[05:39] <kharnov> hm, odd
+[05:39] <ubottu> Compiling software from source? Read the tips at https://help.ubuntu.com/community/CompilingSoftware (But remember to search for pre-built !packages first). Also read !checkinstall
+[05:39] <kharnov> i already have backports enabled
+[05:39] <kharnov> it's proposed that isn't enabled
+[05:40] <well_laid_lawn> there might not be a backported kernel yet
+[05:45] <Lump|AFK> well looks like I got 10.04 to submit to the G5 but upgrading to 12.04 I get an invalid image error
+[05:45] <Lump|AFK> such is and so be it
+[05:46] <well_laid_lawn> you are typing and have afk in your nick
+[05:47] <well_laid_lawn> ;)
+[06:35] <bjr222> has anyone tried running xubuntu on an android phone?
+[06:36] <bjr222> anyone here?
+[06:37] <knome> !patience
+[06:37] <ubottu> Don't feel ignored and repeat your question quickly; if nobody knows your answer, nobody will answer you. While you wait, try searching https://help.ubuntu.com or http://ubuntuforums.org or http://askubuntu.com/
+[06:37] <knome> well, you waited for a minute...
+[06:37] <knome> and i suppose not, because it's not supposed to work.
+[06:38] <bjr222> holy cow. im sorry
+[09:34] <xubuntu178> Hi, I am about to install xubuntu on an old desktop with  AMD Athlon 2000. Which CD should I downloead? My guess is that amd54 but I am not sure.
+[09:38] <TheSheep> xubuntu178: i386
+[09:38] <xubuntu178> TheSheep: Thanks
+[09:38] <TheSheep> xubuntu178: because it's a 32 bit processor, not 64 bit
+[09:40] <Ronalds_M> gbrainy doesn't seem to change language in xubuntu
+[09:40] <Ronalds_M> anybody knows how to change it?
+[09:43] <TheSheep> Ronalds_M: settings manager -> lanuguage support to install the languages you need, and choose your language at the login screen
+[09:43] <Ronalds_M> I have installed
+[09:43] <Ronalds_M> I restarted pc
+[09:43] <Ronalds_M> and it's changed
+[09:44] <Ronalds_M> I even removed gbrainy completely with synaptic
+[09:44] <Ronalds_M> and installed again
+[09:44] <TheSheep> no idea what gbrainy is, sorry, I thought you are asking how to change language in xubuntu
+[09:45] <Ronalds_M> it's an app, that has great language support, but I can't get it to change the language
+[09:46] <Ronalds_M> I read that it should change it if I change the defaults
+[09:46] <Ronalds_M> but nothing happened
+[14:20] <zoktar> i need to reinstall(and purge) all apport related packages and dependancys. can that be done via aptitude --purge reinstall , in some way?.
+=== azeaml is now known as azeam
+[14:59] <recon_lap> zoktar: apt-get remove <package> will un-install a package but  leave all of it's configuration files in place. If you re-install the  package later all your settings will still be intact. apt-get purge <package> does the same as above but also removes all of the configuration files.
+[15:01] <zoktar> yeah i was looking for a way to multilevel dependancy reinstallation thingy with aptitude.
+[15:01] <zoktar> aptitude reinstall can reinstall stuff without getting dep issues
+[15:02] <zoktar> was hoping to get it to follow the packages that are beeing reinstalled's dependancys and do the same for them untill all are met.
+[15:02] <recon_lap> zoktar: does apt-get not do that?
+[15:03] <zoktar> the reinstall command is unique to aptitude as far as i know
+=== nyRednek is now known as Barfolomew
+[15:04] <zoktar> gets around the "dep issues" when you want to just reinstall something
+[15:05] <zoktar> usefull with --purge aswel to get fresh cfg files
+[15:06] <recon_lap> zoktar: well not something I've ever needed, so best of look getting it sorted :) got to go so good luck
+[16:09] <lumpX> heyas
+[16:10] <lumpX> any one here know much about apple G5 sound in xubuntu
+[16:10]  * lumpX can't seem to record anything atm
+[16:10] <TheSheep> G5 is ppc?
+[16:10] <lumpX> yeah
+[16:10] <TheSheep> !ppc
+[16:10] <ubottu> PowerPC.  Formerly used by Apple for the Macintosh line of computers. Variants are now used in popular gaming consoles. PPC was a fully supported Ubuntu architecture up to and including edgy. It is now a community port, see https://wiki.ubuntu.com/PowerPCFAQ
+[16:11] <TheSheep> there is #ubuntu-ppc
+[16:11] <TheSheep> they may be able to help
+[16:11] <lumpX> i have managed to get xubuntu 10.04 running on it
+[16:11] <TheSheep> we are all Intel here
+[16:11] <holstein> !sound too
+[16:11] <holstein> !audio
+[16:11] <ubottu> If you're having problems with sound, click the Volume applet, then Sound Preferences, and check your Volume, Hardware, Input, and Output settings.  If that fails, see https://help.ubuntu.com/community/Sound - https://help.ubuntu.com/community/SoundTroubleshooting - http://alsa.opensrc.org/DmixPlugin - For playing audio files,  see !players and !mp3.
+[16:11] <holstein> should be similar
+[16:11] <lumpX> but when ever I try and record, i get a crackle pop through the headphones and speakers and then nothin
+[16:12] <holstein> alsa versions matter.. kernels too
+[16:12] <holstein> i gave up on running a desktop on my ppc hardware years ago
+[16:13] <lumpX> thanks holstein, i will look those links over
+[16:13] <lumpX> and, yeah, it does seem a tad of a challenge to get nix on this old beast
+[16:14] <lumpX> but now that it is installed, it does seem really fast compared to my other even more ancient hardware
+[16:15] <holstein> i found it underwhelming.. and these days, when i can dig PC hardware of that vintage literally out of the trash, i tend to just go with what works
+[16:16] <lumpX> well this one was basically such, traded an external drive for it
+[16:16] <lumpX> so under 100$
+[16:16] <holstein> thats how i got the G3 and G4 i used to play with.. i would expect support to get worse, not better
+[16:18] <lumpX> i agree with you there but, for now, this is a hardware upgrade for my under employed butt
+[16:19] <lumpX> and, worse case, (no recording) it will still make a great post production machine
+[16:22] <lumpX> so nothing shows up with the "lspci -v | grep -A7 -i "audio"" command
+[16:23] <lumpX> but I can see sound cards and such in the mixer
+[16:24] <holstein> try aplay -l
+[16:24] <lumpX> all kinds of drivers show up for that command
+[16:24] <lumpX> i am doing a purge and reinstall
+[16:25] <lumpX> i might have borked it installing jack
+[16:25] <lumpX> i wanted to see if the ppc would do realtime
+[16:25] <lumpX> and it did not like it when i tried to run jack
+[16:26] <lumpX> ntl, i will figure it out cause you guys are all brilliant and awesome
+[16:27] <holstein> lumpX: i would not expect JACK to work well
+[16:27] <holstein> lumpX: we dont make a kernel for PPC
+[16:27] <holstein> lumpX: if you are getting crack/pops with JACK, relax the settings... set the latency *very* high
+[16:27] <holstein> lumpX: try recording without jack.. with just pulse
+[16:29] <lumpX> i have tried with and without pulse
+[16:29] <lumpX> i usually exorcise pulse on my machines
+[16:29] <lumpX> i have tried it with and with out pulse on this machine
+[16:30] <holstein> lumpX: i said withouth *jack*
+[16:30] <holstein> without*
+[16:30] <holstein> lumpX: try without jack
+[16:30] <lumpX> i will holstein I dunno if i will have time before they finish loading my truck
+[16:30] <holstein> lumpX: ?
+[16:30]  * lumpX hears the truck idling in the shop below
+[16:31]  * lumpX is about to make a delivery run 
+[16:31] <holstein> lumpX: well, feel free to come here whenever you want to solve you issues and one of the volunteers will help :)
+[16:31] <lumpX> dropping off some stuff and picking up some stuff at an auction
+[16:31] <holstein> lumpX: i say you are pushing JACK to hard.. and not having realistic expectations
+[16:32] <lumpX> i know that holstein, you guys are really very helpful and i appreciate it
+[16:32] <lumpX> i was rather doubtful about jack on this machine
+[16:32] <holstein> i would remove JACK from the equation and simply record something
+[16:32] <lumpX> as you said no ppc support
+[16:32] <holstein> lumpX: JACK in pcc is going to be sketchy
+[16:32] <lumpX> i will try that
+[16:32] <holstein> lumpX: we dont have the lowlatency kernel for PPC
+[16:32] <lumpX> can idjc work without jack?
+[16:32] <holstein> lumpX: no one has ppc support anymore
+[16:33] <holstein> lumpX: you dont need low latency to use idjc
+[16:33] <holstein> lumpX: i would set the JACK settings *really* relaxed..and really high latency.. 90+ms and test
+[16:33] <lumpX> yeah but will it work without jack
+[16:33] <lumpX> i never tried it without jack
+[16:33] <holstein> lumpX: i dont know... but that is not going to be a deal breaker anyway
+[16:34] <lumpX> nope it won't
+[16:35] <lumpX> jack is a required
+[16:35] <lerner222> can anyone provide a link or instruct me on how to install applications. such as uTorrent and whatever else i might use? im new to linux file systems and im not understanding how to install executable applications.
+[16:35] <lumpX> so looks like this is a post production box
+[16:35] <lumpX> and tweaking it just got a whole lot simpler
+[16:35] <holstein> lerner222: most software comes from the official repos
+[16:35] <lumpX> thanks holstein
+[16:36] <holstein> lerner222: if its a package someone else is providing, the usually have instructions
+[16:36] <holstein> lerner222: there really is not, and cant be a definitive "how to install" for everything, since these cases are very specific to both the developer, and to the end users
+[16:36] <lumpX> you all have a great day
+[16:36] <holstein> lerner222: https://help.ubuntu.com/community/InstallingSoftware
+[16:36] <lumpX> ttyl
+[16:36] <lerner222> holstein: uTorrent website has a linux version. i downloaded and the files are in foldlers, but i dont know how to make it execute
+[16:36]  * lumpX waves
+[16:37] <holstein> lerner222: typically, i open a package manager, such as synaptic or the software center, and i search and i install
+[16:37] <holstein> if what i want is not there, i search for a ppa
+[16:37] <holstein> !ppa
+[16:37] <ubottu> A Personal Package Archive (PPA) can provide alternate software not normally available in the offical Ubuntu repositories - Looking for a PPA? See https://launchpad.net/ubuntu/+ppas - WARNING: PPAs are unsupported third-party packages, and you use them at your own risk. See also !addppa and !ppa-purge
+[16:37] <lerner222> ok, thanks for the help
+[16:38] <lerner222> you guys are much more kind and understanding then the population at 1am.
+[16:38] <holstein> if i dont find one, i might search for a .deb at the developers site.. then i search for how the developer expects me to install
+[16:38] <holstein> lerner222: some sites have specific install instructions for ubuntu, or .deb's right there
+[16:39] <lerner222> so .deb is the common extension needed for executables then?
+[16:40] <holstein> lerner222: i think you are looking for a equivalent to .exe in windows, and its not really that but similar
+[16:40] <lerner222> ya, gotchya. thanks again. can you tell i came from windows? :)
+[16:41] <torax> lerner222: just asking, why do you want to use utorrent?
+[16:41] <holstein> lerner222: i would also remember why you are using utorrent.. its what you used in windows
+[16:41] <holstein> maybe just try a native tool in ubuntu
+[16:41] <lerner222> its always a default program i like to have for just about anything
+[16:41] <holstein> http://forum.utorrent.com/viewtopic.php?id=108146
+[16:42] <holstein> lerner222: you can always open the software center and search "torrent" and find what is available by default
+[16:42] <holstein> lerner222: i would try and relax a bit, and remeber that the first week you were using and getting used to using windows, you were not running utorrent
+[16:43] <lerner222> good deal. its gonna be hard getting away from the default things im used to. i will probably be here finding ways. or searching the SC a lot
+[16:43] <lerner222> ture
+[16:43] <lerner222> *true
+[16:43] <torax> lerner222: There is nothing wrong about using utorrent, but there are lot better alternatives, transmission for example. utorrent, at least the windows version, contains adware and possibly spyware
+[16:43] <holstein> lerner222: you should see me on a windows box...
+[16:44] <holstein> tranmission is very nice.. i like the web server setup
+[16:44] <lerner222> lol
+[16:44] <lerner222> transmission can be found in SC?
+[16:44] <torax> yes
+[16:44] <torax> actually it should be installed by default
+[16:44] <holstein> lerner222: you can manager downloads or uploads in tranmission from a web browser on another machine.. very nice
+[16:45] <holstein> torax: if you download and click on a torrent, doesnt it just offer to run transmission?
+[16:45] <lerner222> very nice. can it be used remotely to find and begin downloads as well?
+[16:45] <lerner222> ignore that, u just answered it
+[16:47] <lerner222> im so unfamiliar with application names and what they do that xubuntu has transmission loaded stock on my version
+[16:48] <holstein> lerner222: no worries.. again, remember how long it was til you found and used "disk defrag" in windows
+[16:48] <torax> It is everybodys own business what software they use. I have trust issues with software that install toolbars and ads without asking. Im the guy with tinfoil hat but I dont want to push my "ideology" to others =)
+[16:48] <lerner222> so long that it took a week for it to defrag lol
+[16:48] <torax> Its a new system, takes some time to get used to it
+[16:49] <torax> the way linux works differes from windows quite a lot, but in the end it is way more logical
+[16:49] <lerner222> im getting that. i think i've been brainwashed by windows
+[16:50] <holstein> yup... also, test things live lerner222 ... as much as possible.. throw in the live CD and break that live setup.. reboot, and nothing is broken
+[16:50] <lerner222> good point
+[16:50] <holstein> lerner222: make a user called "test" and try configuring things there first (that a good tip for windows too)
+[16:50] <lerner222> do you have any experience  running ubuntu or similar on android phone?
+[16:51] <holstein> lerner222: run an instance in virtualbox and test install things.. test upgrades.. whatever
+[16:51] <holstein> lerner222: i have only used android on android phones so far..
+[16:52] <lerner222> im excited to see the "ubuntu for android" official mobile OS
+[16:52] <lerner222> anticipation sucks
+[16:53] <lerner222> do u know of a way to enable my "disable touchpad" option? i use a BT mouse and always brush the pad w/ my thumbs and its SO annoying
+[16:54] <lerner222> found it, nevermind. thanks again for the info. much abliged
+[16:55] <holstein> lerner222: cheers!
+[17:09] <norbert79> good evening
+[17:09] <norbert79> No idea if you have ever bumped into this, but after installing Xubuntu 12.10 to encrypted FS and LVM after the successful install it won't boot
+[17:10] <norbert79> it just gets stuck and drops me to initramfs
+[17:10] <norbert79> making a remark that my lvm doesn't exist and can't start, drops me to a shell
+[17:10] <norbert79> anyone any ideas what I might missing
+[17:12] <norbert79> the method for installing is : /boot seperate, unencrypted. targets are: 1 encrypted volume , inside 1 VG with 3 LV's: /home / and swap
+[17:13] <norbert79> it's12.10 amd64
+[17:18] <holstein> norbert79: i have seen that when i had bad hardware
+[17:18] <norbert79> holstein: Would wonder me as it's a brand new laptop
+[17:19] <norbert79> with a fully working HDD
+[17:19] <norbert79> so we can exclude hardware failure
+[17:19] <vitimiti> o/
+[17:21] <holstein> norbert79: is it?.. new hard drives are able to fail too.. they all will
+[17:21] <norbert79> holstein: Yes, it is working well.
+[17:21] <holstein> norbert79: you can exclude the hardware failure when you like, but i test, then exlude personally
+[17:21] <holstein> norbert79: we hardware is *often* bad
+[17:22] <norbert79> Skip on tha hardware part, will you? I can guarantee you it's working
+[17:22] <holstein> norbert79: nope.. but maybe one of the other volunteers can help you, and "assume" you tested the hardware
+[17:22] <norbert79> You aren't really helping here
+[17:22] <holstein> otherwise, you can look into the iso download
+[17:22] <holstein> !md5
+[17:22] <ubottu> To verify your Ubuntu ISO image (or other files for which an MD5 checksum is provided), see http://help.ubuntu.com/community/HowToMD5SUM or http://www.linuxquestions.org/linux/answers/LQ_ISO/Checking_the_md5sum_in_Windows
+[17:22] <norbert79> Did
+[17:22] <holstein> or grub
+[17:22] <holstein> !grub
+[17:22] <ubottu> GRUB2 is the default Ubuntu boot manager since 9.10 (Karmic). Lost GRUB after installing Windows? See https://help.ubuntu.com/community/RestoreGrub - For more information and troubleshooting for GRUB2 please refer to https://help.ubuntu.com/community/Grub2 - See !grub1 for releases before Karmic (9.10)
+[17:23] <norbert79> why don't you test it yourself?
+[17:23] <norbert79> With a VM
+[17:23] <norbert79> it seems the installer itself is faulty
+[17:23] <holstein> norbert79: https://help.ubuntu.com/community/Installation/MinimalCD you can try the minimal iso's and see if you can get an install booting as you want and add what you like
+[17:24] <norbert79> holstein: Sorry, but you are treating me like a rookie, sorry, not your regular user here
+[17:24] <norbert79> Check the installer, it goes into a fault after a luks+lvm install
+[17:24] <norbert79> after the first reboot
+[17:24] <holstein> norbert79: cool.. good luck.. i ned to run.. enjoy!
+[17:24] <bazhang> norbert79, lose the attitude
+[17:24] <holstein> need*
+[17:24] <norbert79> bazhang: really? is this really a support?
+[17:24] <norbert79> bazhang: I don't think so
+[17:24] <bazhang> norbert79, its volunteer.
+[17:25] <norbert79> Yeah, I can see that
+[17:25] <holstein> norbert79: im on my way out the door, but im sure someone can help you.. or, i will be glad to help you more and actually try the iso you tried in VM later
+[17:25] <bazhang> so enough with the complaints/accusations
+[17:25] <norbert79> holstein: The issue is that I wouldn't ask if I would know the answer and I need to deliver
+[17:25] <norbert79> otherwise i wouldn't be here
+[17:26] <holstein> norbert79: i might go for a simpler setup, or try the minimal iso's i linked to get setup from a different installer (if you would ike to take the installer out of the euquation)
+[17:26] <norbert79> chrooting doesn't help either, everything seems fine, it's like luks would be misssing from the initramfs
+[17:27] <holstein> norbert79: but, i must leave.. i have to drive across town, and i oppoligize for anything that i have done or am doing that you are finding offensive
+[17:28] <holstein> norbert79: you can also try the installer specific support channels, or main ubuntu.. since this should be not specific to xubuntu
+[17:28] <norbert79> holstein: unfortuantely it seems it is, regular Ubuntu works, but Xubuntu is the way the client wants to go
+[17:28] <norbert79> Which i can understand
+[17:28] <norbert79> but since specific settings are necessary which Xubuntu can handle during install
+[17:28] <norbert79> but not after reboot
+[17:29] <norbert79> makes me wonder
+[17:29] <holstein> norbert79: then install, and *then* install xfce, or xubuntu-desktop
+[17:29] <holstein> xubuntu is ubuntu
+[17:29] <norbert79> not really in the mood for cleaning up the mess
+[17:29] <holstein> then try the minimal and add what you like
+[17:29] <norbert79> apt-get purge hell is not really something I wish to do :9
+[17:29] <norbert79> minimal, well, I could try, still, it's very weird
+[17:39] <norbert79> Question: Why does the installer remove ecryptfs-utils after the install and can it cause the system not booting properly? I mean it's not even asking for the LUKS password for my volumes
+[17:39] <norbert79> Plymouth gets just stuck
+[18:29] <tmewett> hey
+[18:29] <tmewett> is there anywhere i can find a list of the pre-installed apps shipped with xubuntu?
+[18:31] <tmewett> no?
+[18:32] <skellat> tmewett: Hold on a sec
+[18:32] <skellat> tmewett: Which version were you thinking of?
+[18:32] <tmewett> the latest, preferably
+[18:33] <tmewett> i am indecisive about which linux distro to switch to
+[18:33] <tmewett> this would help greatly
+[18:33] <skellat> Where are you currently now?
+[18:33] <skellat> In terms of distro, that is
+[18:33] <tmewett> i'm running windows right now, if that's what you mean
+[18:34] <skellat> Okay
+[18:34] <tmewett> but currently i am thinking of either xubuntu or lubuntu
+[18:34] <skellat> What apps in particular are you focused on?
+[18:36] <skellat> Alrighty, here's the page for Xubuntu http://xubuntu.org/tour/ and here's the page for Lubuntu https://wiki.ubuntu.com/Lubuntu/Applications
+[18:37] <recon_lap> tmewett: make a live usb and try them out
+[18:37] <norbert79> be reminded, that these come out-of-the-box, you can also add any other application through the software center
+[18:37] <tmewett> yes, i am aware of that
+[18:37] <skellat> On any fresh install I usually toss Abiword and Gnumeric for LibreOffice instead
+[18:38] <tmewett> ok
+[18:38] <tmewett> and, any words on Xfce as a DM?
+[18:38] <norbert79> Xubuntu is XFCE
+[18:38] <tmewett> or should i just live boot? ^-^
+[18:38] <norbert79> yeah, easier
+[18:38] <tmewett> haha, fair enough
+[18:39] <skellat> I use Xfce and my parents use LXDE.  Xfce is great and I enjoy using it.
+[18:39] <norbert79> make up your own mind by taking a look
+[18:39] <tmewett> ok, well thanks for the help guys
+[18:39] <norbert79> I use XFCE as Mate isn't that perfect yet, and still comes close as Gnome2 alternative
+[18:39] <skellat> tmewett: You're welcome.  Have a great day
+[18:40] <tmewett> likewise :)
+[19:00] <SnoStorm> Can anyone help with a startup issue?
+[19:01] <SnoStorm> I have 12.04 and it is getting stuck right after "checking battery state"
+[19:01] <SnoStorm> battery state is okay and then just stops there
+[19:03] <norbert79> SnoStorm: Did you try using the lappy from regular power supply?
+[19:04] <norbert79> try doing that, if it gets stuck again, then it's not something related to your battery
+[19:05] <SnoStorm> trying right now......
+[19:06] <SnoStorm> Still stops....
+[19:06] <norbert79> well, we can exclude that at least
+[19:06] <norbert79> did you try checking for filesystem errors?
+[19:07] <SnoStorm> any help with that... pretty noob with anything linux and its the only thing that fits on this
+[19:07] <norbert79> well, I assume you have a working PC otherwise you won't be online
+[19:07] <SnoStorm> yes
+[19:08] <norbert79> so basically your system won't boot at all
+[19:08] <SnoStorm> correct
+[19:08] <norbert79> does your system have encrypted filesystems or did you install it as regular?
+[19:08] <SnoStorm> regular
+[19:08] <norbert79> What OS do you use atm?
+[19:09] <SnoStorm> xubuntu 12.04
+[19:09] <norbert79> No, on your working PC
+[19:09] <SnoStorm> oh windows 7
+[19:09] <norbert79> I assume you could create a Live USB
+[19:09] <norbert79> otherwise you won't have ubuntu installed
+[19:09] <norbert79> xubuntu
+[19:09] <SnoStorm> yeah or i have it on a cd
+[19:09] <norbert79> nice, you should boot that as start
+[19:10] <norbert79> we will need it for the fs check
+[19:10] <SnoStorm> okay its all loaded up
+[19:10] <SnoStorm> check disk for defects?
+[19:11] <norbert79> You can do that, no idea if it checks the CD-ROM itself or the hard drives too
+[19:11] <norbert79> I would skip that though
+[19:11] <norbert79> the lappy has the Xubuntu installed only, right?
+[19:11] <SnoStorm> already ran it lol...... shouldn't take long i think it was for the disc and not the hard disk
+[19:13] <SnoStorm> alright
+[19:13] <SnoStorm> yes only xubuntu
+[19:13] <norbert79> ok, start the live
+[19:13] <SnoStorm> it doesn't have live
+[19:13] <SnoStorm> it has
+[19:13] <SnoStorm> install
+[19:13] <SnoStorm> check disc
+[19:13] <SnoStorm> test memory
+[19:14] <SnoStorm> boot from first hard disk
+[19:14] <norbert79> You are using the alternate installer... eh, damn
+[19:14] <SnoStorm> or rescue a broken system
+[19:14] <SnoStorm> yeah i only have a 4gb hard drive in this little thing
+[19:14] <SnoStorm> ssd
+[19:14] <norbert79> the easiest way would be using a Live CD with terminal
+[19:14] <norbert79> like Systemrescuecd or anything small
+[19:15] <norbert79> or you could install Xubuntu live to a pendrive using unetbootin
+[19:15] <norbert79> unetbootin.sf.net
+[19:15] <SnoStorm> what if i try the rescue a broken system option
+[19:15] <norbert79> go for it, never used it :)
+[19:19] <SnoStorm> I think this happened with some other distros but i forgot how i fixed it
+[19:19] <SnoStorm> but it always seemed like after i installed updates
+[19:19] <norbert79> interesting
+[19:20] <SnoStorm> alright i got to a menu with a lot of options
+[19:21] <SnoStorm> "choose the next step in the install process"
+[19:21] <SnoStorm> one of them is "install the GRUB boot loader on a hard disk"
+[19:21] <SnoStorm> trying to find relevant ones
+[19:21] <norbert79> use check filesystem
+[19:22] <SnoStorm> not an option
+[19:22] <norbert79> open a terminal?
+[19:23] <SnoStorm> nope
+[19:23] <SnoStorm> there is a continue with rescue
+[19:24] <SnoStorm> and then that asks me which device to use as a root file system
+[19:25] <SnoStorm> sda1, sda2, sda5, assemble RAID arrray, do not use a root file system
+[19:26] <SnoStorm> any of those options?
+[19:26] <norbert79> sda1 probably, not sure
+[19:27] <SnoStorm> i think thats what my root system was on....
+[19:28] <SnoStorm> execute a shell in /dev/sda1, execute a shell in the installer environment, reinstall GRUB boot loader
+[19:28] <norbert79> second
+[19:29] <SnoStorm> installer environment?
+[19:29] <norbert79> yes
+[19:29] <SnoStorm> okay
+[19:29] <SnoStorm> gives me a prompt
+[19:30] <SnoStorm> Busybox v1.18.5 enter "help" for a list of built in commands
+[19:30] <norbert79> "mount"
+[19:30] <norbert79> check if any /dev/sda is mounted
+[19:31] <SnoStorm> sda1 on /target type ext4
+[19:31] <norbert79> umount /dev/sda1
+[19:32] <norbert79> fsck /dev/sda*
+[19:34] <SnoStorm> device is busy
+[19:36] <norbert79> did you umount it?
+[19:36] <SnoStorm> thats what happens when i umount
+[19:38] <SnoStorm> Should I just reinstall?
+[19:38] <SnoStorm> i'm reading a lot has to do with video drivers
+[19:38] <SnoStorm> and nvidia updating with update manager
+[19:38] <SnoStorm> but i'm pretty sure i don't have any nvidia gpus
+[19:48] <SnoStorm> is there any way to boot without graphics drivers?
+[19:52] <SnoStorm> I can get into the recovery menu but when I go to umount or anything it says the the file system is read only
+[20:18] <SnoStorm> nobert79 i fixed it by removing one of the programs I installed this morning
+=== toga_ is now known as toga
+[20:50] <vitimiti> hallo
+=== epzil0n is now known as Guest2461
+[21:13] <Goliat> Hi! I'm having some trouble with the audio on my laptop. My  volume controls are stuck on my hdmi output and i can't change it to my speakers. So I have to adjust the volume in pulseaudio at the moment. I've tried to change it but pulseaudio seems to be stubborn on my laptop.
+[21:25] <recon_lap> Goliat: have you changed "configuration" in sound settings
+[21:27] <Goliat> recon_lap: you mean in pulseaudio?
+[21:31] <recon_lap> Goliat: no, in the volume control of the indicator plugin
+[21:31] <recon_lap> best i can describe it without finding the bin.
+[21:35] <Goliat> recon_lap: the sounds settings in the indicator plugin just takes me to the pulseaudio volume control that i can find in the xfce menu -> multimedia
+[21:37] <ochosi> Goliat: there is a tab called "configuration" in pavucontrol (which is the pulseaudio-volume control that xubuntu uses by default)
+[21:37] <recon_lap> Goliat: so have you changed  "configuration" ?
+[21:38] <recon_lap> ochosi: thats the name i was looking for pavucontrol :)
+[21:38] <ochosi> recon_lap: np ;)
+[21:40] <Goliat> recon_lap: You mean change the profiles in the configuration tab?
+[21:40] <recon_lap> Goliat: yes, that probably why it's stuck on hdmi
+[21:44] <Goliat> recon_lap: I only started looking in there when the speaker control stopped working. I just turned them on and off. The only thing I remember changing in pulseaudio before that is that I had to change which output is set as fallback because I got audio sent to the hdmi.
+[21:45] <Goliat> when I changed the fallback I got sound to the speakers but after that the media keys stopped functioning.
+[21:52] <recon_lap> Goliat: cant think of anything , sry
+[21:53] <Goliat> recon_lap: no worries :)  I'm getting used to all the troubles this laptop gives me with linux, dell is not good with linux :p
+[21:54] <Goliat> the only other thing Iv'e thought about doing is to install a different volume manager.
+[21:55] <recon_lap> Goliat: only other cmd i use fault finding sound is alsamixer
+[21:56] <Goliat> recon_lap: where can I find alsamixer?
+[21:56] <recon_lap> Goliat: the command line
+[22:01] <Goliat> recon_lap: the alsamixer seems to control the speakers and I can select interface.
+[22:03] <recon_lap> Goliat: that it does.
+[22:04] <Goliat> so I can at least control the volume in an easier way than with pulseaudio
+[22:04] <Goliat> I just need to run a terminal :p
+[22:04] <recon_lap> Goliat: well you could fix your function keys
+[22:06] <Goliat> recon_lap: yeah but how? some script using alsa to change the volume instead?
+[22:14] <recon_lap> Goliat: http://ubuntuforums.org/showthread.php?t=1949210 the most relevant i can find, I think
+[22:18] <recon_lap> Goliat: reply #3 seems the quickest way
+[22:24] <Goliat> recon_lap: nothings happens with mute. I't notifies that the audio is muted but nothing happens
+[22:24] <recon_lap> Goliat: well, where you listing to anything!!!
+[22:25] <Goliat> Yes, Im playing a clip on youtube, they wont shut up.
+[22:26] <Goliat> I also tried the lower volume command and it does the same, notifies that it is lower the volume but it isnt.
+[22:27] <recon_lap> Goliat: you test with youtube!!!!!!
+[22:27] <recon_lap> Goliat: but I'm out of ideas then
+[22:28] <Goliat> yes? Is there a deathpenalty for that? :s
+[22:33] <Goliat> recon_lap: Ok. I tried with gmusicbrowser also, the same there. But atleast I can use alsamixer. It's much better than pulseaudio.
+[22:36] <Goliat> recon_lap: But thanks for your help. My situation is atleast better than before :)
+[23:45] <earthling_> hi, I was wondering what is the difference between ubuntu and xubuntu in terms of occasional program updates?
+[23:45] <Unit193> Same exact repos.
+[23:46] <earthling_> repository is where all the software is?
+[23:46] <earthling_> and updates?
+[23:47] <Unit193> That's the software, yep.  Now, as the default applications differ, may update differently.
+[23:48] <earthling_> I see
+[23:50] <earthling_> I wonder if xubuntu will stay with XFCE or go to Unity
+[23:51] <Unit193> ...The X in Xubuntu is Xfce, it "didn't go" to gnome when Ubuntu had that, nothing has changed since then.
+[23:51] <earthling_> are there any limitations of xfce?
+[23:52] <earthling_> compared with ubuntu/unity
+[23:52] <earthling_> just different styles of doing things?
+[23:56] <earthling_> I've been trying different live usbs
+[23:56] <Unit193> They are different, I haven't used Unity so I don't know how they compare.
+[23:56] <earthling_> messed up my laptop a bit, so I need to backup all my stuff now just in case
+[23:58] <wapiflapi> hi
+[23:59] <wapiflapi> Any way to make xubuntu work with two monitors? I'dd like to be able to switch workspaces independently on each one, is that possible ?

@@ -1,0 +1,172 @@
+=== slank_away is now known as slank
+=== slank is now known as slank_away
+[08:30] <Merwin> Hi ! Can I get a shelf as a patch I could apply ?
+=== yofel_ is now known as yofel
+[08:55] <vila> Merwin: From a clean tree: bzr unshelve ; bzr diff >my.patch
+[08:59] <Merwin> Ok, that's what I thought but I hoped for a way without unshelving ;)
+[08:59] <Merwin> Thanks
+[09:45] <Merwin> vila: How to do on windows ? ">my.patché doesn't work
+[09:45] <vila> >-/
+[09:45] <vila> I can't imagine why...
+[09:46] <vila> anything more specific than "doesn't work" ?
+[09:56] <Merwin> vila: Forget, I'm stupid. Thanks ;)
+[09:57] <vila> never thought you were stupid ;)
+=== mmrazik is now known as mmrazik|otp
+=== mmrazik|otp is now known as mmrazik
+[10:44] <xnox> vila: wasn't there like --preview?
+[10:44] <xnox> bzr unshelve --preview
+[10:45] <vila> xnox: doh ! indeed
+[10:45] <vila> Merwin: better ^
+[10:47]  * jelmer waves to Vila and xnox
+[10:52]  * mgz waves to jelmer
+[10:56] <jelmer> hi mgz
+[10:57] <Merwin> thx vila :)
+[10:58]  * vila waves to mgz and jelmer  ;)
+[10:58] <vila> Merwin: np and sorry, see who's the idiot now ? ;-)
+=== mmrazik is now known as mmrazik|lunch
+[11:03] <Merwin> vila: :-)
+[11:16] <vila> jelmer: got a sec ?
+=== mmrazik|lunch is now known as mmrazik
+[12:36] <jelmer> vila: I'm boarding a plane in 40 min, but should be around until then
+[12:36] <jelmer> what's upm
+[12:36] <jelmer> ?
+[12:42] <vila> jelmer: I think I found a bug in svn_canonicalize_path (deprecated by svn_uri_canonicalize still buggy): it can return an url where ( and ) are not quoted :-/
+[12:43] <vila> that triggers in a parameterized test..
+[12:48] <jelmer> vila: yeah, unfortunately svn doesn't expect them to be quoted
+[12:48] <jelmer> we hit other bugs where bzr was escaping them and svn expected them not to be escaped :-(
+[12:48] <vila> jelmer: quite amazing considering it *unquotes* them...
+[12:49] <jelmer> vila: it returns its canonical version of the URL, and that means parentheses aren't quoted
+[12:49] <jelmer> at least, that's my understanding of it.
+[12:49] <vila> jelmer: ok, so there are precedents, I was wondering if I was wrongly doing something, at least I know it's not me (and I ended up in svn_path_canon... after digging from bzr-svn, hence my first ping)
+[12:49] <vila> jelmer: huh ?
+[12:50] <vila> parens should be quoted according to ... (whatever, closed the page ;)
+[12:50] <jelmer> vila: not according to svn ;-)
+[12:50] <vila> ha, ok, makes sense ;-D
+[12:53] <vila> jelmer: enjoy your flight ;)
+[12:53] <jelmer> vila: thanks (-:
+[12:54] <jelmer> vila: anyway, so I think bzr-svn in general could use some work to make it consistently translate between svn URLs and bzr URLs - at the moment we sort of assume that they're interchangable
+[12:54] <jelmer> apart from the base, that is
+[12:56] <vila> right, so the full story is that there is an assertion checking with startswith but the compared urls are not coherent (one is quoted, not the other, so fail), commenting out that assertion leads to a failure later, so it *seems* bzr-svn can't work around it :-/
+[12:56] <jelmer> well, one is bzr-quoted, the other is svn-quoted presumably?
+[12:57] <vila> starting with a bzr quoted one, one stays correct, the other is unquoted in _ra.RemoteAccess by svn_path_canonicalize
+[12:58] <jelmer> vila: that's not really "unquoted". that's svn-quoted
+[12:59] <jelmer> tomato, tomato I guess :)
+[12:59] <vila> ha right, sorry, not accustoomed yet ;)
+[12:59] <jelmer> i.e. this only really matters for parentheses I think
+[13:01] <vila> ha found the page back http://en.wikipedia.org/wiki/Percent-encoding, haven't looked in detail at svn sources but there is more than parens (see url)
+[13:02] <vila> but well, you can hardly fix that in bzr-svn right ?
+[13:02] <jelmer> vila: sure, it can be fixed in bzr-svn
+[13:03] <jelmer> we just need to make sure to correctly re-quote stuff that comes back from svn
+[13:04] <vila> ha, right, but whack-a-mole may take more time than I want to spend here :-/ I came across it while refreshing my memory in bzr-gardener running the test suite there...
+[13:04] <jelmer> ah, yeah - I remember that test failure
+[13:05] <jelmer> that said, you should have hit a fair number of other issues if you ran the bzr-svn testsuite
+[13:05] <vila> no, only the gardener one but since it's parametrized it grabs some svn stuff via the formats
+[13:05] <jelmer> svn 1.7 breaks it fairly badly; it's probably useless as-is in raring :-(
+[13:05] <vila> ouch
+[13:06] <vila> ...and compiling subvertpy mention svn_pacth_canonicalize is deprecated
+[13:06] <vila> but I'm still in quantal here
+[13:08] <jelmer> hmm, it looks like quantal actually has 1.7 too
+[13:08] <jelmer> I guess it might be okay if you are just running some of the code that happens to be using bzr-svn
+[13:09] <jelmer> the bzr-svn testsuite itself triggers an abort IIRC
+[13:09] <vila> yeah, that's what I'm doing
+=== slank_away is now known as slank
+=== slank is now known as slank_away
+=== slank_away is now known as slank
+[16:45] <Luke-Jr> If I have a bzr repository, and I want to add revisions prior to its initial commit, how can I do that?
+[16:46] <Luke-Jr> I'm aware it will likely break compatibility with the pre-rebased branches, so I've avoided publishing them so far
+[18:28] <LeoNerd> Luke-Jr: Make a new branch with the new initial commit, then  bzr replay  the original branch on top of it..?
+[18:29] <mgz> yeah, new branch, make changes there, then replay or `bzr merge -r0..-1` the original branch on top
+[18:45] <paultag> (sorry for the phrasing, I'm a git user) -- anyone know how I can use bzr to branch a repo similar to git's "bare" mode (but have it branched from a remote location)
+[18:46] <mgz> explain what that does, so I don't have to google "git bare"?
+[18:46] <paultag> it's a mode similar to bzr repo-init
+[18:46] <paultag> basically, server bits for hosting, rather then a working tree
+[18:47] <paultag> sorry, init-repo
+[18:47] <mgz> `bzr branch --no-tree`?
+[18:47] <mgz> or just push to a remote location, which doesn't create a working tree
+[18:52] <paultag> ah, --no-tree might be good
+[18:52] <paultag> mgz: I'm using bzr-git :)
+[18:52] <paultag> I had to patch it, because Launchpad chokes on signed git tags
+[18:52] <paultag> so I'm just going to mirror on a cron
+[18:52] <paultag> let's see here
+[18:53] <paultag> ahha! Nice, thanks mgz
+[18:53] <mgz> upstreaming any bzr-git patches would be nice
+[18:53] <paultag> ACK, it's been orphaned by jelme[r], and my patches do the wrong thing (ignore it, rather then handle it with grace)
+[18:54] <paultag> but I'll see if I can't find a better long-term solution and see if it'll get upstream'd
+[18:54] <mgz> that would be ace.
+[18:54] <paultag> ruddy brilliant, thanks mgz.
+[18:54] <paultag> everything works nicely
+[19:04] <qengho> I seem to run into "different rich-root support" more than most people. I think something might be wrong.
+[19:06] <qengho> So, I have two local branches.  Both say "Standalone tree (format: unnamed)" with "bzr info" on bzr 2.6b2, but they have d r-r s. I'm not sure what to do.
+[19:08] <mgz> qengho: use `bzr info -v` in both?
+[19:11] <qengho> http://pastebin.ubuntu.com/1520703/    mgz, I see.  Different branch and repo formats.
+[19:12] <qengho> mgz: that higher version is the odd man out, so I think I want to downgrade its format.
+[19:13] <mgz> right, either upgrade everything, or make sure you use the same old format
+[19:13] <mgz> the thought of chromium not using 2a is somewhat terrifying
+[19:14] <qengho> It's just packaging.  They use Svn and some wrappers and some git thing somehow for the code.
+[19:14] <mgz> all those nice performance fixes to large-branches going unused...
+[19:15] <qengho> as the "bzr info" says, 71 files, in 800 revisions.
+[19:16] <mgz> ah, it's literally just the packaging?
+[19:16] <qengho> mgz: Yes.
+[19:17] <qengho> mgz: "bzr upgrade" takes an argument, but "bzr info" doesn't actually name a format.
+[19:17] <qengho> Or, it names four.
+[19:17] <qengho> if a numberis a name.
+[19:18] <mgz> qengho: you probably want to look on the bazaar mailing list for threads about this back from when the 2a switch was done :)
+[19:19] <qengho> Ew, email.
+[19:19] <fullermd> There isn't a way to backgrade to poor roots.
+[19:19] <mgz> fullermd: but you can bring the changes over to a old-format branch via one hack or another
+[19:22] <fullermd> Potentially, yeah, but the hacks get real grody real fast.  Gonna be simpler to just pile up some diff|patch-ery unless you're talking about hundreds of revs or something.
+[19:22] <jelmer> paultag: ignoring sigtag will almost certainly cause checksum errors at some point in the future
+[19:22] <fullermd> And if you are, it's time to catch up to 2009 and just move everything to non-ancient formats anyway   :p
+[19:22] <paultag> jelmer: erm, hurm.
+[19:22] <paultag> crap.
+[19:23] <jelmer> paultag: basically, whenever git has a delta base that is a commit object with gpgsig
+[19:23] <paultag> Ohhh, I see it now.
+[19:23] <paultag> Hurm, OK
+[19:23] <paultag> well I'll be sure not to do that ;)
+[19:23] <jelmer> paultag: as bzr-git won't be able to generate the right git object from the bzr data
+[19:23] <paultag> ACK
+[19:23] <paultag> jelmer: is this something I could patch around sanely if I spent some time on it, or is it a lost cause to fight that
+[19:23] <paultag> (and end up stripping git tags for the bzr branch import)
+[19:25] <paultag> (and here I thought I was being clever with a 2 line patch)
+[19:25] <jelmer> paultag: one sec, let me grab my laptop
+[19:25] <paultag> jelmer: don't spend too much time, on me it's a silly silly thing, I was just trying to get dput-ng nightlies, I can totally work around it
+[19:25] <jelmer> paultag: ok, back
+[19:26] <paultag> thanks jelmer, sorry!
+[19:26] <jelmer> (phones are terrible for non-trivial IRC conversations..)
+[19:26] <paultag> yeah, sorry, sorry
+[19:26] <paultag> I didn't mean to bug you
+[19:26] <paultag> (tried to avoid a ping)
+[19:26] <jelmer> paultag: I don't think there really is a way to fix this properly without spending a day or two on it
+[19:26] <jelmer> paultag: that's quite alright :) it would be nice if somebody fixed this, as it's going to be hitting more and more bzr-git users
+[19:27] <jelmer> paultag: but I don't think there is an easy fix like a two-liner :-/
+[19:27] <jelmer> paultag: another alternative is to actively strip the gpgsig data from the git repository involved (so the git sha1s change appropriately)
+[19:27] <paultag> I'd not mind fixing it, I know dulwich fairly well (used it for $WORK a few times to track DB changes), but is it going to involve going wrist-deep into bzr internals?
+[19:28] <paultag> (I'd also be happy to fold it into a QA upload against your package, which I see is now O'd)
+[19:28] <jelmer> it is going to involve a fair amount of bzr-git internals. you'll have to chuck the gpgsig data in a bzr revision property, and possibly deal with older bzr-git versions that handle that data well.
+[19:29] <jelmer> s/that handle/that don't handle/
+[19:29] <paultag> ack
+[19:29] <paultag> oh, I see.
+[19:29] <paultag> hurm.
+[19:31] <paultag> right, and trying to trick it into convering a signed → unsigned should (rightly) blow it up
+[19:31] <paultag> Oh, OK, I see where this would break.
+[19:31] <paultag> yikes.
+[19:31] <jelmer> paultag: yes, because that changes the commit SHA1
+[19:31] <paultag> right, ack
+[19:32] <paultag> ok, so the fact this is working now means I'm really, really, really lucky :)
+[19:32] <jelmer> well, bzr-git only generates the old git object text from the bzr data when it receives a delta with that data as base
+[19:33] <paultag> and since commits are based on the thing the git tag ref's, that's not been the case
+[19:33] <paultag> I see, I see.
+[19:34] <paultag> (still think it's more luck then anything else now ;) )
+[19:34] <jelmer> yes, luck is a big part of it (-:
+[19:34] <paultag> thanks jelmer, you've been a huge help :)
+[19:34] <paultag> sorry to keep bugging you with this!
+[19:35] <jelmer> paultag: sure, not a problem. sorry I couldn't give you better news on your 2-liner...
+[19:35] <paultag> nah, it's fine, I was shocked I could just drop an if / exception and not have everything blow up, so I was kinda expecting this
+[22:13] <iamvshal> hi I am trying to get this branch
+[22:13] <iamvshal> bzr branch lp:openobject-addons/6.1
+[22:13] <iamvshal> however it always gives and error after some time
+[22:14] <iamvshal> Write failed: Broken pipehing revisions:Inserting stream:Estimate
+[22:14] <iamvshal> 182361/182487
+[22:14] <iamvshal> bzr: ERROR: Connection closed: Unexpected end of message. Please check connectivity and
+[22:14] <iamvshal> permissions, and report a bug if problems persist.
+[22:14] <iamvshal> I did search but did not find anything usefull

@@ -1,0 +1,181 @@
+[00:55] <bobweaver> dcope,  hello
+[00:55] <bobweaver> tuner  support atm is with anything that will work in the kernel
+[00:56] <bobweaver> might have to fetch firmware here and there but alot of cards work
+[00:56] <bobweaver> dcope,  you do not need a cable box at all
+[00:56] <bobweaver> you just plug your cable line into you Ubuntu tv
+[00:56] <bobweaver> depending on where you live and the provider
+[01:17] <dcope> bobweaver: interesting
+[01:18] <dcope> i didnt' realize that you could plug the coax directly from the line-in to the tuner
+[01:22] <tgm4883> hmm
+[01:23] <tgm4883> it's a bit more compliated than that probably
+[02:08] <dcope> tgm4883: that's what i thought... i thought providers had some sort of authentication that the cable box performed.
+[02:16] <tgm4883> dcope, that is a part of it
+[02:17] <tgm4883> if you are in the US, it gets very dependent on who your provider is, what tuner you have, and what part of the country you live in
+[02:17] <tgm4883> and what channels you want to record
+[02:17] <dcope> oh wow
+[02:18] <dcope> well, ubuntu tv still looks pretty cool even if i can't get an epg & dvr
+[02:19] <tgm4883> The best is if you use a cable card tuner and your provider doesn't lock down the channels
+[02:19] <tgm4883> although an HDPVR can be said to be equally as good
+[02:29] <dcope> will the tv package be released to install upon an existing ubuntu instance?
+[02:30] <tgm4883> dcope, yes
+[02:30] <tgm4883> that is my understanding anyway
+[02:30] <dcope> awesome
+[14:46] <user82> are there ubuntu tv images ready for download?
+[15:38] <dcope> user82: not images, but you can install it
+[15:38] <user82> dcope, okay thanks..i have a set top box with arm(i think) but then it will not be easy
+[15:38] <dcope> user82: what settop to you have?
+[15:39] <user82> a "teufel mediastation". noone knows that thing but the update image was similar to other ones with custom firwares existent
+[15:39] <user82> linux kernel etc included...
+[15:46] <dcope> cool
+[15:46] <dcope> i have a roku now, but i am wanting to build a media center pc with ubuntu tv now
+[15:49] <user82> maybe that is clever..pc always keeps you flexible
+[15:50] <dcope> yep
+[16:46] <tgm4883> Saviq, is any of the remote control stuff you worked on regarding the issues with X?
+[19:24] <tgm4883> bobweaver, so I've got the guide data scope partially done, but I'm not sure I like the current implementation of it
+[19:24] <tgm4883> it takes way too long to query I think
+[19:24] <tgm4883> also, i haven't made it a lens yet
+[19:27] <tgm4883> jhodapp, mhall119, do you know if the scopes run all the time in the background?
+[19:27] <mhall119> tgm4883: currently yes
+[19:27] <tgm4883> currently?
+[19:27] <mhall119> you noticed that eh?
+[19:28] <mhall119> they're working on making the Dash smarter about starting and stopping scope processes
+[19:28] <tgm4883> mhall119, well, I think I need to have the guide data get pulled down periodically, even when the dash is closed
+[19:29] <mhall119> tgm4883: then you'll probably want that to run outside of the scope process, using cron or something
+[19:29] <tgm4883> otherwise it's too slow when it needs to retreive updates (which i've set to every 12 hours)
+[19:29] <tgm4883> hmm ok
+[19:30] <tgm4883> mhall119, so my second is regarding vala
+[19:30] <tgm4883> I'm told vala is faster than python?
+[19:30] <mhall119> I believe that's true, yes
+[19:30] <mhall119> Vala gets "compiled" into C, then compiled into a native binary
+[19:30] <tgm4883> currently, even with the guide data local, it takes 4-5 seconds to return a search result
+[19:30] <tgm4883> i'm thinking vala might make that faster
+[19:31] <mhall119> maybe, especially for large amounts of data
+[19:31] <Saviq> tgm4883, issues with X as in sequence IDs > 255?
+[19:31] <tgm4883> Saviq, yea
+[19:31] <tgm4883> mhall119, yea that is what I'm dealing with
+[19:31] <tgm4883> 14 days of guide data for all channels you have
+[19:31] <Saviq> tgm4883, there's workarounds, one of which is a patched evdev driver that lets you remap keys from the > 255 space to the <= 255 one
+[19:32] <Saviq> tgm4883, and the other is hidmapper, a small tool that talks to the USB HID interface directly
+[19:32] <Saviq> and lets you map HID calls to X11 keys (again, <= 255)
+[19:32] <tgm4883> Saviq, yea, we've (mythbuntu) got a ticket into the v4l guys hoping they will carry a patch to fix some stuff until X gets it all worked out
+[19:33] <Saviq> tgm4883, so it's http://forum.xbmc.org/showthread.php?tid=88560 or http://www.mythtv.org/wiki/Remapping_remote_control_key_codes_greater_than_255
+[19:33] <tgm4883> Saviq, yea that is pretty much what we were working with as well
+[19:33] <tgm4883> trying to drop lirc
+[19:33] <Saviq> tgm4883, looking at https://bugs.freedesktop.org/show_bug.cgi?id=11227 it's not promising
+[19:34] <Saviq> we might get wayland before then...
+[19:35] <tgm4883> :/
+[19:38] <tgm4883> mhall119, I don't suppose vala can talk to python directly
+[19:38] <mhall119> no
+[19:38] <tgm4883> bummer
+[19:38] <tgm4883> I'll need to figure out a way to do previews then without recoding a bunch of stuff
+[19:38] <mhall119> there's always dbus :)
+[19:39] <tgm4883> I'm not super familiar with doing stuff over dbus
+[19:39] <tgm4883> but it might be worth looking into I suppose
+[19:39] <Saviq> tgm4883, re python vs. vala, I wouldn't bet vala will get you anywhere close to "fast enough"
+[19:39] <Saviq> tgm4883, proper data storage will
+[19:40] <tgm4883> Saviq, proper data storage?
+[19:40] <tgm4883> it's all json atm
+[19:40] <Saviq> tgm4883, exactly
+[19:41] <tgm4883> Saviq, there is a better way to store that info in python?
+[19:41] <Saviq> tgm4883, I'd say there's many
+[19:41] <Saviq> tgm4883, re "if scopes run all the time" - yes, but data is only requested when the relevant scope is shown
+[19:42] <Saviq> tgm4883, i.e. only when the scope gets a viewType = Visible set
+[19:42] <Saviq> only then will the scopes be queried for data
+[19:42] <Saviq> that isn't to say that the scope might prepare that data in memory before then
+[19:42] <tgm4883> Saviq, currently, it pulls json guide data into memory on a search. The first search takes 30+ seconds, but a second search takes 4
+[19:43] <tgm4883> so the guide data is in memory at that point
+[19:43] <tgm4883> and from memory, it takes 4 seconds to search, which IMO is too long
+[19:43] <Saviq> tgm4883, yeah so here the biggest issue is that we transfer the whole set of data
+[19:43] <Saviq> tgm4883, instead of just the relevant part that's being shown
+[19:43] <Saviq> i.e. pagination
+[19:43] <mhall119> yeah, partitioning the data when you download it would help
+[19:43] <tgm4883> Saviq, as in, not 14 days of data?
+[19:44] <Saviq> mhall119, not even that
+[19:44] <mhall119> or throw it into an sqlite db or something?
+[19:44] <Saviq> tgm4883, yes, currently there's no way to paginate in the lenses/scope infrastructure
+[19:44] <Saviq> mhall119, there's basically multiple places that need fixing
+[19:45] <mhall119> tgm4883: also remember that anything you add to the search results model is being serialized and passed over dbus
+[19:45] <tgm4883> I don't think partitioning the data would work. For just viewing the guide yes, but searching would only see data in the loaded partition
+[19:45] <mhall119> doing that to 14 days worth of channel data is going to be slow in any language
+[19:46] <tgm4883> i'm kinda leaning toward syncing to a local sqlite table, then on search just querying that
+[19:47] <tgm4883> then I can do 1 day of data for the default "" search, although I'm wondering how much data was being passed over dbus for the searches
+[19:48] <tgm4883> because while it was 14 days of data, I'm not returning everything to the lens, just the relevant stuff
+[19:48] <tgm4883> which is maybe 20ish results
+[19:48] <tgm4883> so it sounds more like it takes way too long to search though 14 days of data
+[19:49] <Saviq> tgm4883, yeah, that's 'cause you don't have indexing, even if you have it all in memory
+[19:49] <Saviq> it just goes through all of that data to compare
+[19:49] <tgm4883> Saviq, sqlite should fix that, or is there a better way
+[19:50] <Saviq> it'll be faster, but I'd look at some proper free-text search engines like lucene
+[19:52] <Saviq> tgm4883, there's also http://voices.canonical.com/jussi.pakkanen/2012/12/03/introducing-libcolumbus-a-fast-online-approximate-matching-library/
+[19:53] <Saviq> which should help with the searching in memore
+[19:53] <Saviq> memory
+[19:58] <tgm4883> Saviq, is that something I would need to use explicitly, or is that making it's way into unity?
+[19:59] <Saviq> tgm4883, it can't really make its way into unity, it needs to be as close to the data as possible
+[19:59] <tgm4883> ok
+[19:59] <Saviq> tgm4883, so in your case you'd initialize libcolumbus when initially reading the data from json
+[19:59] <Saviq> or from whatever storage you choose
+[20:00] <Saviq> then at least searching will be faster - you'll just need to have an ID by which to identify a data record
+[20:14] <mhall119> tgm4883: libcolumbus needs to be pre-populated with a list of "correct" values that it uses to match a submitted "incorrect" value against
+[20:14] <mhall119> so you'd need to initialize it with a list of program names, then you can give it a search term with typos and it'll get you it's best match
+[20:17] <jhodapp_> tgm4883, I've got an example program written in C++ that uses libcolumbus if you're interested
+[20:49] <dcope> Wonder if anyone will integrate Google play (music) into ubuntu tv?
+[21:40] <mhall119> dcope: does it offer an API?
+[21:44] <dcope> mhall119: i'm not sure
+[21:44] <bobweaver> dcope,  what are you 2 talking about ?
+[21:45] <mhall119> dcope: if it does, someone can write a scope for it, and it'll be available in Ubuntu (desktop, TV, and phone)
+[21:45] <tgm4883> google music
+[21:45] <bobweaver> ahh
+[21:45] <tgm4883> IIRC, it has a non-public API
+[21:46] <mhall119> non-public?
+[21:46] <mhall119> meaning you have to authenticate using OAuth or something?
+[21:46] <bobweaver> yeah Unoffical
+[21:46] <dcope> https://github.com/simon-weber/Unofficial-Google-Music-API
+[21:46] <mhall119> oh, unofficial, that's different
+[21:46] <mhall119> requiring OAuth would be fine, we could make an Ubuntu Online Accounts provider
+[21:49] <dcope> i'm so ready to get ubuntu tv installed on something to contribute and test
+[21:50] <bobweaver> dcope,  I have a 3rd party ppa if you like
+[21:50] <bobweaver> for 12.04
+[21:50] <tgm4883> bobweaver, is that on the wiki
+[21:50] <bobweaver> Not this one
+[21:50] <dcope> bobweaver: sure
+[21:50] <bobweaver>  ~u2t/bleedingedge
+[21:50] <bobweaver> Must be 12.04
+[21:51] <dcope> i'll get it in a vm now and then put it on a dedicated machine once i get one
+[21:51]  * tgm4883 sees the irony in that
+[21:51] <dcope> tgm4883: ?
+[21:51] <bobweaver> https://launchpad.net/~u2t/+archive/bleedingedge
+[21:51] <tgm4883> bleedingedge
+[21:51] <tgm4883> <bobweaver> Must be 12.04
+[21:51] <dcope> oh
+[21:52] <bobweaver> what it is a move up from 11.10
+[21:52] <tgm4883> true
+[21:53] <bobweaver> tgm4883,  even has settings and loves you orig scope :)
+[21:53] <tgm4883> bobweaver, sweet
+[21:53] <bobweaver> tgm4883,  AORN http://www.youtube.com/watch?v=qb8s7pSBu30&feature=youtu.be
+[21:53] <tgm4883> is it running up to date scope?
+[21:54] <bobweaver> I just made that video 3 minutes ago or something like that
+[21:54] <tgm4883> bobweaver, I've been working on the guide data scope, but I've got some issues to work out
+[21:54] <tgm4883> too much data
+[21:54] <bobweaver> II will be finishing up the settings and making more and more myth  stuff
+[21:54] <bobweaver> tgm4883,  dont worry about the guide if it is giving you that much trouble
+[21:55] <tgm4883> bobweaver, nah, i've got it worked out I think with the help of mhall 119 jhod app and Sa viq
+[21:55] <bobweaver> I can write a html5 app that connects to myth backend and read from that and launch also
+[21:56] <tgm4883> I haven't done any lens work on it though, and IDK the status you got on the different layout
+[21:56] <bobweaver> I have 6 different layouts now
+[21:56] <bobweaver> only 3 are stable at this point
+[21:57] <bobweaver> I kinda got caught up doing opengl stuff last night and particals and shaders so that set me back a little
+[21:58] <tgm4883> bobweaver, ok, i'm going to work on speeding this thing up with the fixes we discussed today
+[21:58] <tgm4883> as it takes too long for search results right now
+[22:00] <mhall119> bobweaver: I like the way you did the lightdm options
+[22:01] <bobweaver> Yeah that is what I got all caught up in lol
+[22:01] <bobweaver> I am posting a video of some experamental stuff
+[22:02] <bobweaver> Turn down Volume
+[22:02] <bobweaver> http://www.youtube.com/watch?v=Acjb5fkiCB4
+[22:04] <bobweaver> btw that reads the weather outside and returns icons that are preset for weather
+[22:04] <bobweaver> I am going to remove it all
+[22:04] <bobweaver> well the weather part and what not and just have a weather app
+[22:05] <bobweaver> But yeah if it was sunny outside it would have shown little suns flaying around and not snow
+[22:06] <bobweaver> because you can only call api so may times a day it uses cache for ever 6 hours
+[22:07] <bobweaver> mhall119,  do you think that it is a good idea to scale the icons in lightdm settings menu ?  maybe even pulse them ?
+[22:19] <mhall119> bobweaver: I have no idea, maybe ask one of the design guys on G+?
+[22:27] <bobweaver> thanks I am mhall119  :)

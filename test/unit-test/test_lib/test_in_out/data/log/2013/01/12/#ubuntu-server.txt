@@ -1,0 +1,206 @@
+[00:03] <xnox> debian dropped clustered lvm2 support *sigh*
+[00:03] <xnox> do you want it?
+[00:03] <xnox> still
+[00:03] <patdk-lap> clustered lvm2?
+[00:04] <xnox> clvm
+[00:04] <xnox> patdk-lap: yeah, where lvm vg is spread across multiple machines.
+[00:04] <xnox> well pvs reside on nodes.
+[00:06] <patdk-lap> oh, kind of interesting
+[00:07] <patdk-lap> in a way, it's like a stripped down vmfs
+=== slank is now known as slank_away
+=== Guest53868 is now known as cpg
+[00:20] <hallyn> roaksoax: ivoks: ppetraki: did y'all see the email about clvm being dropped in debian?
+[00:22] <adam_g> just read about it ~15 lines above.
+[00:22] <adam_g> wheres the mail?
+[00:22] <hallyn> adam_g: heh, sorry
+[00:22] <adam_g> :)
+[00:23] <hallyn> adam_g: oh, it wasn't email per se, it was in bug 1075950
+[00:23] <uvirtbot> Launchpad bug 1075950 in libvirt "Starting clustered lvm vg pool fails with status 5" [Medium,Confirmed] https://launchpad.net/bugs/1075950
+[00:23]  * xnox waves to hallyn
+[00:23] <adam_g> yikes
+[00:24] <xnox> adam_g: hallyn: do we need/want/rely on clvm? and should I be fixing it or dropping it in ubuntu?!
+[00:24]  * xnox doesn't want to cause havoc.
+[00:24] <hallyn> xnox: I'm not sure.  In the past we've used it/relied on it...  but we wouldn't be dropping it for old LTSes, so not sure it's as big a deal
+[00:25] <hallyn> but I'd like to hear from ppetraki and ivoks first, they probably rely on it more than I :)
+[00:25] <adam_g> xnox: AFAIK its certainly a requirement of some clustered filesystem deployments
+[00:26] <xnox> i mean if cloud / customers rely on it, we should keep it.
+[00:27]  * xnox thinks debian is dropping it to just get wheezy out the door.
+[00:28] <hallyn> oops.  uh, please do disregard comment # 5 in that bug...  :)
+[00:29] <hallyn> xnox: let's discuss on monday with whoever cares;  i don't want to waste anyone's time, but yeah i do suspect we want to keep it.
+[00:30] <hallyn> xnox: is that particular bug one you'd want to work on?  (if not, i should put my time where my mouth is and look at it next week...  if we're not dropping it)
+[00:30] <hallyn> now to go figure out why my setuid bits aren't being maintained
+[00:31] <xnox> hallyn: i maintain lvm2, but I never setup clustered lvm2 myself. But I did want to play around with clvm. So I can do it, that's fine.
+[00:32] <xnox> hallyn: any particular list public or private where I can kick this a thread on? or are we just gonna do it on irc? (server team meeting?!)
+[00:33] <hallyn> xnox: I think it's fine to start right here
+[00:34] <xnox> hallyn: fair enough. =)
+[00:34] <xnox> I guess everyone was highlighted already =))) Daviey ^^^ =) do we want clvm or not, debian dropped it.
+[00:58] <ppetraki> hallyn, roaksoax: regarding clvm, that's news. Do we have many users? The last use case we did commercially was kinda old school.
+[01:08] <roaksoax> hallyn: i didn't see it, but i was expecting it would
+[01:32] <hallyn> ppetraki: roaksoax: ok, interesting.  if it doesn't rattle you folks, then i'm fine with it
+[02:45] <hallyn> victim of chown vs lchown
+[02:45] <adam_g> zul: Daviey http://people.canonical.com/~agandelman/g2_deps/ is the full set of no-change rebuild dependencies needed for grizzly-2.
+[02:47] <sarnold> hallyn: isn't lchown just on *BSDs?
+[02:48] <sarnold> .. or am I thikning of lchmod?
+[02:51] <adam_g> zul: Daviey a +1 on those and ill put them in the staging repo. some of he test* packages will fail to build if not built in correct order.
+[02:54] <hallyn> sarnold: actually, *i* meant lchmod, not lchown :)
+[02:54] <hallyn> ikeep typing one when i mean the other today
+[02:55] <sarnold> hallyn: hah, I never expected that. :)
+[02:55] <hallyn> mainly when looking for man pages, luckily, not int he code itself :)
+[03:08] <hallyn> stgraber: holy cow i've never seen patch mess up this many chunks, and so subtly, as my userns lxc patch today.  Apparently we've been moving code around in extra-sneaky ways lately!
+[03:08] <stgraber> hallyn: hehe ;)
+[03:34] <hallyn> stgraber: userns update.  mostly works, but (unlike a month or two ago) if I don't comment out /sys/fs/fuse/connections, /sys/kernel/debug and /sys/kernel/security from /lib/init/fstab, I hang at mountall from the failures (-EPERM) to mount those
+[03:35] <hallyn> I'll ignore that and send hte patch out to the m-l anyway.  now that at least uid mapping is in 3.8.
+[03:43] <stgraber> hallyn: yeah, I guess we can figure those out later
+[03:48] <hallyn> stgraber: it seems like there must be ar ecent change in raring's mountall to make it not handle failure as gracefully as it used to
+[03:49] <stgraber> hallyn: there might have been a bugfix causing that change in behavior. Would have to look at the upstream bzr.
+[03:50] <stgraber> hallyn: But yeah, mountall hanging isn't really optimal, I'll have to take a look.
+[03:50] <stgraber> the generic rule is that it won't attempt a mount of an fs that's not supported by the kernel (which doesn't apply to our case) and will ignore failures if nobootwait is set (which AFAIK it's not for those fs)
+[03:51] <stgraber> but there's a clear difference between being unable to find the source of a mount and having mount fail, the latter shouldn't prevent mountall from exitting as there's no change that the mount call will ever succeed (not that mountall actually retries anyway)
+[03:56] <hallyn> stgraber: the filesystems are all marked 'optional', but not 'nobootwait'.  i could try that one...
+[03:58] <hallyn> stgraber: haha, yeah, that works
+[03:59] <hallyn> stgraber: btw, if you look at /proc/$$/fd for the getty's, we are leaking fds
+[03:59] <hallyn> (rootfs.hold)
+[03:59] <hallyn> recon i can count that one my bad
+=== aarcane_ is now known as aarcane
+=== lickalott_ is now known as lickalott
+[06:35] <decci>  I have installed Ubuntu without RAID partitioning system. I have just one /dev/sda1,2,3 partiton I can see through fdisk. I added 3 more disk. How shall I create RAID out of my four disk
+[06:35] <decci> Is it possible to include /dev/sda too for RAID
+[06:35] <decci> I am looking for RAID 10 out of 4 HDD of 3TB each
+=== megha is now known as security
+=== security is now known as firewall
+[08:13] <sergey_099357> Народ, привет. Русские есть??
+[08:14] <sergey_099357> Помощь нужна срочно
+[08:14] <sergey_099357> !!!
+[08:14] <sarnold> privet, english? :)
+[08:15] <sarnold> sergey_099357: #ubuntu-ru  :)
+[08:15] <sergey_099357> russin?
+[08:15] <sergey_099357> Russian&
+[08:15] <sergey_099357> anybody speak russian
+[08:15] <sarnold> sorry, I didn't see "Русские" very quickly :)
+=== megha is now known as firewall
+[09:23] <werners> How does one install dkms when one performs a clean install of Ubuntu Server on a server without internet access? I can't find the package.
+=== freedomrun is now known as Guest97005
+[10:48] <NaGeL> hello. i Got a problem with Ubuntu with samba. samba sharing works perfectly with Windows XP and it worked fine with Window 7 yestrday. Today it doesnt work anymoreyet XP  still works
+[11:07] <RoyK> NaGeL: I guess we'll need a few more details - does \\ip.add.re.ss work? what is the error message? what does the samba logs say?
+[11:07] <NaGeL> RoyK, ijust tried the Ip adressand it works!
+[11:07] <NaGeL> and the rrors message last time i checked said nothing about even connection attempt
+[11:08] <RoyK> then something is fishy in the windows resolver, which is quite normal ;)
+[11:08] <NaGeL> and how can i resolve that shit?
+[11:20] <RoyK> NaGeL: well, I guess use dns or perhaps just fix windows <(
+[11:20] <RoyK> :)
+[11:20] <NaGeL> I'm trying to fix windows but i dont even know why the problem is here
+[11:21] <RoyK> dunno, but doubt it's an ubuntu question
+[11:21] <RoyK> or, have you set netbios name in smb.conf?
+[11:28] <NaGeL> RoyK, no i haventtouched that file.. thought i do stuff throught webmin
+[11:38] <NaGeL> RoyK, found the problem. windows only allows 1 connection to the server and it wasalready connected yet i could not use it
+[11:44] <RoyK> huh?
+=== motmot is now known as liva
+[11:44] <RoyK> !webmin
+[11:44] <ubottu> webmin is no longer supported in Debian and Ubuntu. It is not compatible with the way that Ubuntu packages handle configuration files, and is likely to cause unexpected issues with your system.
+[11:50] <TheBronx> hi!
+[11:51] <RoyK> !ih
+[11:52] <NaGeL> ...yet i use webmin.. is there an alternative to that?
+[11:53] <NaGeL> anyway i just installed xrdp for remote connections. andit immeadtly said that logn failed. do i need to reatea special user or the basic ubuntu user should be enough?
+[11:56] <RoyK> NaGeL: well, learning linux is a rather good alternative ;)
+[11:57] <NaGeL> Royk, i will in due time forst comes apache server
+=== cpg is now known as cpg|away
+[12:39] <sk1pper> hi all!
+[12:39] <sk1pper> i installed bind9 on 12.04 and i am trying to configure it from a ubuntu documentation that i have. the thing is that bind is resolving without me having set up a dns forwarder. why is that happening? can i somehow disable that? i would like bind to resolv just the addresses in my network
+[13:37] <jabba_> hello
+[13:37] <jabba_> just tried to prevent my system from loading ohci_hcd, ehci_hcd and xhcd_hcd at boot. so i added these modules to /etc/modprobe.d/blacklist.conf, did a update-initramfs -u and rebootet. but: modules where still loaded.
+[14:07] <Free99> hey everyone. If I'm trying to compile some source for a package from launchpad, and there is also a diff file included, how do I apply the diff?
+[14:09] <jabba_> i follwed this howto: http://wiki.debian.org/KernelModuleBlacklisting for blacklisting ohci_hcd, ehci_hcd, uhci_hcd and xhci_hcd. But they still seem to work, as the usb-stick plugged in is still visible under /dev after boot...
+[14:10] <jabba_> lspci -k shows the modules as used kernel drivers for the usb-hardware, but they are not visible by lsmod
+[14:10] <jabba_> wtf?
+[14:12] <jabba_> Free99: man patch
+[14:13] <Free99> jabba_: looking at that right now, but when I less the diff file, it looks like it applies to several different files.. I'll try to figure it out, thanks for the pointer
+[14:16] <Free99> jabba_ so I copy the file into the source's directory, then just run patch < blabla.diff ?
+[14:18] <Free99> *copy the diff file
+[14:18] <jabba_> i guess
+[14:22] <Free99> sweet! patch -p1 to get rid of that first component. Learned something new, thanks jabba_
+[14:24] <jabba_> you're welcome... any suuggestions to my "problem"?
+[14:27] <RoyK> jabba_: does lsmod list them?
+[14:28] <samba35> RoyK, hi ,how r u
+[14:29] <jabba_> RoyK: no
+[14:29] <jabba_> but they are usable
+[14:30] <jabba_> the usb-stick is visible under /dev/sdb
+[14:30] <jabba_> on the bootscreen i can even see that it's attached by usb-storage
+[14:34] <RoyK> what does lsusb have to say?
+[14:34] <RoyK> samba35: fine, thanks
+[14:46] <TheBronx> hi all!
+[14:46] <TheBronx> iptables question: http://askubuntu.com/questions/240360/is-there-a-rule-for-iptables-to-limit-the-amount-of-syn-packets-a-24-range-of-i
+[14:47] <TheBronx> it is probably not very difficult but I'm new to iptables and I it seems the problem is a bit weird
+[15:01] <RoyK> TheBronx: I guess something like iptables -I INPUT -s 192.132.209.0/24 -p tcp --syn -m limit (something)
+[15:05] <qman__> TheBronx, the answer is right there, just change the address to the ones yo uwant to block
+=== a|way is now known as alein
+[15:08] <TheBronx> yeah, but I want the blocks to be detected automatically hehe
+[15:08] <TheBronx> there are a lot of blocks during the attacks
+[15:08] <TheBronx> I can't block them manually
+[15:09] <qman__> then apply a broader limit, something like this
+[15:10] <qman__> now, this won't apply directly to you, but the setup does
+[15:10] <qman__> I use this to block SSH brute forcing
+[15:10] <RoyK> something like what?
+[15:10] <qman__> http://paste.ubuntu.com/1523916/
+[15:11] <qman__> basically, there are four levels of measurement and block time
+[15:11] <qman__> if you exceed the shorter threshold, you're blocked for a short time
+[15:11] <qman__> if you exceed the larger thresholds, you're blocked for longer periods of time
+[15:13] <qman__> you'd clearly want different numbers for syn packets, much more tolerant
+[15:14] <qman__> but you could configure it to say if you got flooded for three minutes flat, block for an hour
+[15:14] <RoyK> qman__: dropping all of ipv6?
+[15:14] <qman__> yeah, I'm not using it and that's my shell server
+=== alein is now known as a|way
+[15:14] <qman__> reduce the attack surface
+[15:15] <qman__> really I should have an input drop rule too, but I used to run more software and was lazy
+[15:15] <RoyK> looks like an iptables version of denyhosts/fail2ban
+[15:16] <qman__> pretty much
+[15:16] <RoyK> but good, though
+[15:16] <RoyK> qman__++
+[15:48] <mika__> Testing
+=== a|way is now known as alein
+=== Err404NotFound is now known as Error404NotFound
+[19:33] <lifeless> zul: testrepository 0.0.12 is out with a .testr.conf in the MANIFEST.in
+=== sw__ is now known as sw
+=== jnix is now known as jnix-work
+=== aarcane_ is now known as aarcane
+=== cpg|away is now known as cpg
+=== alein is now known as a|way
+[21:18] <scalability-junk> hey I looked into that issue twice in the last 6 weeks and still haven't found a real answer for the problem. I started out with kickstart files, but tried ubuntu autostart files after kickstartfiles seem to have issues on ubuntu.
+[21:19] <scalability-junk> I want to great a raid1 with encryption on top of it with lvm inside the encrypted volume.
+=== cpg is now known as cpg|away
+[21:19] <scalability-junk> any good way to do that?
+[21:35] <scalability-junk> I really have no idea to to it in an automated fashion. or is this something Maas is better suited for than using a config file?
+[21:36] <scalability-junk> maas seems to overkill for a 2-10 server setup especially maas needs another server etc...
+[21:40] <scalability-junk> any help would be appreciated I really don't want to switch to another os because of this
+[21:41] <freesbie> if its not that many servers what is the problem in doing disk setup manually ?
+[21:42] <freesbie> ive never tried crypt with kickstart, so I have no clue about it :)
+[21:42] <scalability-junk> freesbie, not as convenient when setting up a new server, not as automated as I would love to (love to learn new stuff) and setting up encryption lvm etc. is taking 30+ mins per server that seems fairly much even on 10 servers.
+[21:43] <freesbie> 30 mins ?? wow .. i did it in 5 on my laptop install ..
+[21:43] <scalability-junk> freesbie, crypt with kickstart is fine, but not on ubuntu it isn't supported :(
+[21:44] <scalability-junk> freesbie, clicking through raid1 + encryption + 4 partitions is a lot to click
+[21:44] <scalability-junk> could be 20 mins but more than 5 all together
+[21:44] <freesbie> clicking ? something is wrong here .. text installer doesnt support clicks :)
+[21:45] <scalability-junk> freesbie, true, but I still thought of it as clicking :D
+=== cpg|away is now known as cpg
+[21:46] <freesbie> but yeah, with more partitions it will take a while. on the laptop I only have boot, swap and / .. and only 2 of them crypted
+[21:47] <scalability-junk> yeah and with raid it is double the time ;)
+[21:47] <scalability-junk> or it feels like it :)
+=== cpg is now known as cpg|away
+[21:51] <scalability-junk> mhh seems like I really have to go the manual approach or use another distro with decent support of kickstart files :(
+[21:53] <scalability-junk> freesbie, I even tried to use the auto generated preseed file after manually setting up an installation, but that preeseed file is just horrible. non readable gibberish listing enter steps, which seems like breaking any minimal update :D
+[21:53] <freesbie> I will agree that the kickstart system needs some love in ubuntu
+[21:54] <freesbie> i did a fast setup without lvm, grub failed to install on the device. manual worked perfectly
+[21:56] <freesbie> so ive opted for kickstarting with manual disk setup, as it works best for different hardware platforms
+[21:58] <freesbie> when I get half a day of freetime I will look into it again .. but since were only doing 1-2 new installs every month its not that big a deal
+[21:59] <scalability-junk> yeah still fedora is much better in this sense, and I wonder how something like this is done via maas, probably not possible all together :D
+[22:10] <addicat> Does anyone have several minutes to help me mount an ubuntu-server NFS share from OS X 10.8? I'm pretty far along in the process and got stuck when google stopped offering help. I can view the export from my client terminal with show mount -e ser.ver.i.p
+[22:12] <addicat> My server's hosts files are set up to enable all connections (until I get it working)
+[22:27] <freesbie> addicat: how do you export it on the server ?
+[22:29] <addicat> freesbie, in /etc/exports: /export/music 192.168.1.*(rw,sync,no_subtree_check)
+[22:32] <freesbie> addicat: check the logs on the server and client, try to mount it on the client in a terminal that might give you a better message
+[22:38] <addicat> should I be looking at /proc/mounts?
+[22:42] <freesbie> addicat: logs is in /var/log, something should be written there when trying to mount .. I know nothing about OS X, but the export looks ok .. you could test it by mounting on the server itself in a different dir
+[22:43] <addicat> freesbie: I'm getting a little closer, thanks. It looks like it might not be mounted properly
+[23:57] <Super_Dog> I know this is server channel.  But since it's probably a Samba issue - thought I'd ask here.  Just upgraded my Ubuntu 10.04LTS to 12.04LTS.  Worked pretty well.  However, the share to my home directory on this system doesn't seem to work now... Any obvious fix I'm overlooking?
+[23:58] <Super_Dog> I hear horror stories about Samba 4 which I believe 12.04 LTS is running now.
+[23:59] <freesbie> samba 4 is too new for 12.04 .. so no its not running that
+[23:59] <Super_Dog> I thought I saw "Samba Alpha" when I was running through the install.  Maybe I'm wrong.  Let me check.

@@ -1,0 +1,536 @@
+=== slank is now known as slank_away
+[00:36] <adam_g> zul: jamespage Daviey just sent 4/5 merge proposals to folsom branches of lp:~ubuntu-cloud-archive. the cinder branch @ lp:~ubuntu-cloud-archive/ubuntu/precise/cinder/folsom doesn't seem to want to play. if you could approve, ill upload to staging and get precise-folsom/proposed in-sync with quantal-proposed. need to figure out whats up with the cinder branch ,or do it manually
+[00:39] <zul> adam_g:  merge propsal url?
+[00:53] <paco1> sarnold: thanks for the link
+[00:54] <sarnold> paco1: was it useful?
+[00:54] <sarnold> paco1: or was something else more useful in the end? :)
+[00:55] <paco1> i changed the value for 300s (5mn), but for the moment i dont see any change in my slave dns server
+[00:55] <sarnold> you'll have to wait at least until it's timed out its old data, right?
+[00:57] <paco1> the timed out before i changed the value?
+[00:58] <paco1> the value that i'have had was 604800 (7days), and i changed it for 300s(5mn)
+[01:05] <sarnold> paco1: soooo, in seven days, it ought to start slaving every five minutes.
+[01:05] <sarnold> paco1: maybe teardown and re-create the slave in the meantime? :)
+[01:05] <sarnold> paco1: (that _might_ be as easy as restarting the slave; I don't know that level of detail.)
+[01:06] <adam_g> zul: are you unable to branch from lp:~ubuntu-cloud-archive/ubuntu/precise/cinder/folsom too?
+[01:06] <zul> lemme check
+[01:07] <zul> adam_g: interesting....nope
+[01:09] <adam_g> lame
+[01:11] <paco1> sarnold: but i read that the "dig @server axfr" command from the master server, able to start the transfer immediatly...like it doesnt do....
+[01:12] <sarnold> paco1: do the acls allow it?
+[01:12] <paco1> sarnold: yes
+[01:12] <sarnold> paco1: is there anything interesting in the logs?
+[01:16] <paco1> in the master server log it says: "zone entreprise.com/IN/bd: loaded serial 2013010701" | zone entrprise.com/IN/bd: sending notifies (serial 2013010701)
+[01:16] <sarnold> cool, can the slave receive the notify?
+[01:18] <paco1> immediatly despues el rndc reload del master....no
+[01:20] <paco1> i you want, i can do named-checkconf -p of my 2 servers
+[01:25] <paco1> http://pastebin.com/zFyq9KG6 > master | http://pastebin.com/xqPzGtTh > slave | http://pastebin.com/RUsV7gDP > dig exemple.com | http://pastebin.com/3JpyL2VF > dig -x reverse
+[01:27] <paco1> sarnold: if you can see my config, to see if there is a problem, thanks!
+[01:31] <sarnold> paco1: sorry, I don't see anything that stands out.
+[01:33] <paco1> sarnold: my config countered well....
+[01:35] <syncsys> how can I change the port to 80 from 8080 in tomcat.? I have read many google results but I never find the .xml files in the said directories in ubuntu (latest version)
+[01:37] <sarnold> syncsys: dpkg -L tomcat7 | grep xml  ought to narrow down the options
+[01:38] <syncsys> thanks. works. but i wonder why $ sudo locate server.xml
+[01:38] <syncsys> locate: can not stat () `/var/lib/mlocate/mlocate.db': No such file or directory
+[01:40] <sarnold> your locate database never gets rebuilt, the cronjob (/etc/cron.daily/mlocate) appears to run only if you're on wall power if the powermgmt-base package is installed..
+[01:41] <sarnold> syncsys: sudo sh /etc/cron.daily/mlocate  ought to rebuild the database
+[01:43] <syncsys> thanks again.!    it was in /etc/tomcat7/server.xml       i changed port to 80. services tomcat7 restart        still opening on 8080 and not 80
+[01:44] <syncsys> sarnold, <Connector port="80" protocol="HTTP/1.1"
+[01:46] <sarnold> syncsys: hah, looks like tomcat7 doesn't report much in the way of errors if sometihng else has port 80 bound already. does netstat -anp | grep :80 show something else listening on 80?
+[01:47] <sarnold> syncsys: check /var/log/tomcat7/catalina* log files, I found this: java.net.BindException: Permission denied <null>:80
+[01:47] <syncsys> it should not as it is a fresh vps install. let me check
+[01:47] <sarnold> looks like tomcat7 drops privs before binding to port 80, perhaps that's a mistake in the config?
+[01:48] <syncsys> sarnold,  netstat -anp | grep :80 shows nothing
+[01:48] <sarnold> .. or perhaps the intention is to always use a proxy if you want it on 80?
+[01:50] <paco1> sarnold: I leave, I shall see the continuation tomorrow, thanks for your help
+[01:50] <syncsys> yes......Caused by: java.net.BindException: Permission denied <null>:80
+[01:50] <syncsys>         at org.apache.tomcat.util.net.JIoEndpoint.bind(JIoEndpoint.java:391)
+[01:50] <syncsys> why is that?
+[01:51] <sarnold> paco1: good luck :) if you've got time, I'd be curious to hear the solution...
+[01:51] <sarnold> syncsys: binding low ports (<1024) requires root privileges (capability CAP_NET_BIND_SERVICE)
+[01:52] <paco1> sarnold: ok, no problem ;)
+[01:52] <syncsys> sarnold,  I was aware but I nano the server.xml file by sudo and restarted tomcat by sudo also... I didnt grasped the privileg thing
+[01:53] <syncsys> sarnold,  tutorials say i need to AUTHBIND=yes
+[01:55] <sarnold> syncsys: yay, that's it!
+[01:55] <syncsys> sarnold,  i think on tomcat instal A new user "tomcat7" with primary group "tomcat7" will be created.
+[01:55] <syncsys> and everything is done by that user. which is not root
+[01:55] <sarnold> syncsys: edit /etc/default/tomcat7 -- you'll find AUTHBIND at the bottom. uncomment it, change it to "yes", and restart tomcat.
+[01:55] <syncsys> so no port allow. which is contrary to apache2
+[01:56] <syncsys> theres no default in /etc
+[01:57] <decci> I am facing an issue installing Ubuntu 12.04 on compellent SAN. I did it for CentOS 6.3 and it went fine. here is the complete picture: http://paste.ubuntu.com/1508279/
+[01:57] <decci> When I try to install ubuntu 12.04. The installation cannot see the SAN storage device as shown http://tracker.webtechnologyfocused.com.au/ehw/volumesnotdetected.jpg
+[01:57] <syncsys> sarnold,  do i need to install authbind first?
+[01:57] <decci> I have attached lscsci output too..any idea what could be the fix?
+[01:58] <sarnold> syncsys: probably; authbind was just installed for me when I ran "apt-get install tomcat7"
+[01:58] <syncsys> hm. so i need to do that manually
+[01:58] <syncsys> sarnold,  no it coundnt be. if you are using ubuntu
+[01:58] <syncsys> i did the same. apt install tomcat7
+[01:59] <sarnold> syncsys: http://pastebin.com/dSDst7n1
+[01:59] <syncsys> sarnold,  oh. i already have authbind. but no /etc/default folder
+[02:00] <sarnold> syncsys: and that's very odd...
+[02:01] <sarnold> roughly 38 packages on my system "own" /etc/default (dpkg -S /etc/default) -- not sure how yours went missing
+[02:01] <syncsys> strange. now i see default folder. i just did apt-get install authbind
+[02:01] <syncsys> Reading package lists... Done
+[02:01] <syncsys> Building dependency tree        Reading state information... Done  authbind is already the newest version.
+[02:02] <sarnold> syncsys: do you have an /etc/default/tomcat7 file?
+[02:05] <syncsys> yes. i do now.
+[02:05] <syncsys> not before. i think some configs messed up
+[02:05] <syncsys> now its ok. runingon  80
+[02:06] <sarnold> woot :)
+[02:07] <syncsys> my last mission , should I choose to accept, is to link the two websites domain dns with the vps and tomcat (each directory for each domain)  . I did that with apache2 httpd once. i think thats also called binding. but dont know how to do that in tomcat
+[02:09] <syncsys> sarnold,  am I correct?
+[02:11] <sarnold> syncsys: sorry, I don't know that much tomcat; it was easy to install and fiddle with ports, but actually configuring the thing is something else entirely :( sorry
+[02:11] <syncsys> oh ok
+[02:11] <syncsys> no problem
+[02:11] <syncsys> you helped alot already
+[02:12] <syncsys> thanks sarnold  :)
+[02:28] <decci> Hi Anyone who can help with Ubuntu 12.04 on Compellent SAN issue
+[02:28] <decci> When I try to install ubuntu 12.04. The installation cannot see the SAN storage device as shown http://tracker.webtechnologyfocused.com.au/ehw/volumesnotdetected.jpg
+[02:28] <decci> http://paste.ubuntu.com/1508279/
+[02:40] <decci> Hi
+[02:40] <sarnold> welcome back decci, you didn't miss any answers while ping-timing-out..
+[02:41] <decci> sarnold: ok thanks
+[02:41] <decci> sarnold: I wish I could get some response on this
+[02:41] <decci> I am struggling to get it work
+[02:42] <sarnold> decci: it might not hurt to try askubuntu.com or serverfault.com, too -- the fact that your macihne reports the names of the stupid thing just baffles me...
+[02:42] <sarnold> I'd feel happier if it didn't know anything about the san at all, you know? then it might just be "modprobe this magic" or something.
+[02:43] <decci> sarnold: ok
+[02:43] <Jeeves_> Hmm
+[02:43] <Jeeves_> not so handy typo
+[02:43] <Jeeves_> zpool add foobar disk
+[02:43] <Jeeves_> instead of zpool attach foobar disk
+[02:57] <decci> sarnold: Though it works for CentOS 6.3
+[03:32] <Jeeves_> ubuntu-installer--
+[03:32] <Jeeves_> df -h
+[03:32] <Jeeves_> Filesystem      Size  Used Avail Use% Mounted on
+[03:32] <Jeeves_> /dev/vda1       2.0G  1.2G  750M  61% /
+[03:33] <Jeeves_> free -m
+[03:33] <Jeeves_> Swap:         8188          0       8188
+[03:33] <Jeeves_> that's really clueless
+[03:40] <lifeless> Jeeves_: in what way?
+[03:42] <arrrghhh> Hey all.  I just got a shiny new 4tb drive... I don't want to boot from it, but how do I properly set it up so I can use all 4tb?
+[03:44] <lifeless> arrrghhh: partition it with gdisk, not fdisk.
+[03:44] <arrrghhh> ah ha
+[03:44] <lifeless> arrrghhh: it has to be a gpt partition table for > 2TB disks.
+[03:45] <arrrghhh> Yea, I was reading up on that... Just found gdisk as you mentioned it :)
+[03:45] <lifeless> arrrghhh: you -may- run into translation issues if you are plugging it into a non-native bus (e.g. USB)
+[03:45] <arrrghhh> nah.  going into my on-board sata6 controller
+=== dayangkun_ is now known as dayangkun
+[03:54] <arrrghhh> lifeless, bah.  I'm still doing something wrong.
+[03:54] <arrrghhh> Perhaps I need more "extents"?
+[03:55] <lifeless> arrrghhh: I don't know. Whats happening ?
+[03:56] <arrrghhh> Sorry, no segway lol
+[03:56] <arrrghhh> So I'm using LVM and it's saying "Insufficient free extents (39429) in volume group 4tb: 76800 required"
+[03:57] <arrrghhh> Hrm.  Maybe that's all that I actually get out of a 4tb disk
+[04:02] <arrrghhh> Isn't there some 'buffer' Linux creates for bad sectors or something?
+[04:02] <arrrghhh> and it's a little too generous, so on large drives you adjust it down ?
+[04:02] <lifeless> no
+[04:02] <arrrghhh> Damnit I can't think of the term...
+[04:02] <lifeless> you're thinking of the relocation map which is internal to the device (and similarly on SSD's)
+[04:03] <arrrghhh> Hrm
+[04:03] <arrrghhh> Yea, maybe it's not for bad sectors
+[04:03] <lifeless> there is a bad block layer driver around which /can/ be placed under lvm or as block stacking thing but very few folk use it.
+[04:03] <arrrghhh> I thought Linux had some sort of a buffer that I adjusted on my larger drives
+[04:04] <lifeless> there is a root only allocation group to prevent running out of space, but thats after you get a filesystem
+[04:04] <lifeless> I suggest that you gdisk it, make one partition, put ext4 on it and see how big it thinks it is.
+[04:04] <arrrghhh> hum.  Stupid hard disk manufacturers.
+[04:04] <arrrghhh> well after gdisk i have 3.6TiB
+[04:04] <lifeless> If it's 4TB, its all good, change the partition etc and go for lvm
+[04:05] <lifeless> so 3.6TiB - Thats TiB vs TB I suspect.
+[04:05] <arrrghhh> orly
+[04:05] <arrrghhh> that's how LVM reports too
+[04:05] <lifeless> You have: 4TB
+[04:05] <lifeless> You want: TiB
+[04:05] <lifeless>         * 3.6379788
+[04:05] <lifeless>         / 0.27487791
+[04:05] <lifeless> You have:
+[04:05] <arrrghhh> VG Size               3.64 TiB
+[04:06] <lifeless> looks like its all setup to me.
+[04:09] <arrrghhh> hum.  alrighty then.
+[04:30] <irv> i installed a LAMP stack and phpmyadmin from the repos, but i can't access the phpmyadmin page. any ideas? normal pages load fine on the lamp server
+[04:30] <irv> tried restarting apache
+[04:33] <irv> there she goes, had to manually copy the config file over
+[04:53] <irv> how can i configure apache2 to load index.php before index.html
+[04:57] <andol> irv: http://httpd.apache.org/docs/2.2/mod/mod_dir.html#directoryindex
+=== tedski- is now known as tedski
+=== pcarrier_ is now known as pcarrier
+=== Ursinha_ is now known as Ursinha
+=== FridgeB0xX is now known as FridgeBoxX
+=== tspxx is now known as tspx
+[07:16] <koolhead17> jamespage: morning
+[07:17] <koolhead17> is this bug fixed for precise https://bugs.launchpad.net/quantum/+bug/1069966
+[07:17] <uvirtbot> Launchpad bug 1069966 in quantum "rootwrap error with L3 agent" [Undecided,Confirmed]
+[07:17] <koolhead17> i see it is fixed for 12.10
+[07:35] <Kondor> How does one style directory listings via css javascript in apache
+[07:37] <Kondor> !@#$*&^%  this im asking google
+[07:37] <ubottu> Kondor: I am only a bot, please don't think I'm intelligent :)
+[07:39] <samba35> how do i add spice to my ubuntu .i have installed all packages for spice make changes as per doc still i dont see spice in virt-manager
+[08:55] <Sprocks> anyone able to help with an apparent grub issue?
+[08:57] <Sprocks> when I reboot/boot my ubuntu server the grub menu just sits there until I go to it and hit enter
+[09:02] <jamespage> koolhead17, its fixed commited so it in the SRU process for quantal
+[09:02] <jamespage> koolhead17, http://reqorts.qa.ubuntu.com/reports/ubuntu-server/cloud-archive/folsom_versions.html
+[09:02] <jamespage> would indicate that the minor release updates are in staging for the cloud archive but not yet accepted into proposed
+[09:04] <koolhead17> jamespage: so once it gets accepted it will go to cloud archive which means i can use it 4 folsom. Am i correct?
+[09:04] <jamespage> koolhead17, yes
+[09:05] <koolhead17> jamespage: also its been almost 2 months. Does it takes a lot of time for a bug to get fixed moved to testing and then to main cloud archive after fix?
+[09:06] <koolhead17> i see this a one of the blocker bug 4 running folsom with quantum
+[09:06] <uvirtbot> Launchpad bug 4 in launchpad "Importing finished po doesn't change progressbar" [Medium,Fix released] https://launchpad.net/bugs/4
+[09:10] <jamespage> koolhead17, 2012.2.1 was released at the end of november; its in process
+[09:10] <jamespage> see bug 1085255
+[09:10] <uvirtbot> Launchpad bug 1085255 in quantum "Meta bug for tracking Openstack 2012.2.1 Stable Update" [Undecided,Fix committed] https://launchpad.net/bugs/1085255
+[09:10] <jamespage> adam_g has been working on verification in the lab; there was some delay as we had to get quantum+cinder added to the minor release exception for openstack
+=== th0mz_ is now known as th0mz
+[09:12] <koolhead17> jamespage: so from cloud repo we have OpenvSwitch via quantum
+[09:12] <koolhead17> isn`t it
+=== smb` is now known as smb
+[09:13]  * koolhead17 bookmarks beta bug-tracker list
+[09:13] <jamespage> koolhead17, looking at that bug report I think the openvswitch agent is not impacted by that bug - its specific to the linux bridge agent
+[09:13] <koolhead17> jamespage: one was because of rootwrap
+[09:13] <jamespage> koolhead17, openvswitch + quantum works just fine - I've tested it *alot*
+[09:14] <koolhead17> jamespage: you have some doc you would like to share. i want to test/try/document it on our wiki
+[09:15] <jamespage> koolhead17, so I followed the quantum docs for 'shared provided gateway'
+[09:15] <koolhead17> jamespage: i have a blueprint to work on, remember
+[09:15] <jamespage> and used https://github.com/EmilienM/openstack-folsom-guide/blob/master/scripts/quantum-networking.sh
+[09:16] <jamespage> koolhead17, this is now all encapsulated in the nova-cloud-controller, nova-compute and quantum-gateway charms in the charm store
+[09:16] <jamespage> which is how we are testing quantum in the CI lab now
+[09:17] <koolhead17> jamespage: i would have used Juju if i had a way to use it inside proxy
+[09:18] <jamespage> koolhead17, on hardware using maas?
+[09:18] <jamespage> or virtually?
+[09:18] <koolhead17> jamespage:  standalone without MAAS
+[09:19] <koolhead17> i have some 8 GB server and wanted it to use 4 testing
+[09:19] <jamespage> koolhead17, which provider tho?
+[09:19] <koolhead17> jamespage: standllone
+[09:19] <koolhead17> *standalone
+[09:19] <jamespage> koolhead17, yeah - but thats not a provider for juju
+[09:19] <jamespage> do you mean LXC?
+[09:19] <jamespage> local provider
+[09:20] <koolhead17> ya
+[09:20] <koolhead17> local povider
+[09:20] <jamespage> OK - so quantum does not work on the local provider
+[09:20] <jamespage> neither do some of the other charms
+[09:21] <jamespage> koolhead17, its a squeeze but you might want to try using MAAS with KVM virtual machines in your server
+[09:21] <koolhead17> jamespage: have not tried MAAS+Juju yet.
+[09:21] <koolhead17> seems like i will have to give it a try
+[09:22] <jamespage> koolhead17, its not really for production but was used during development - there is a virsh power management option I think
+[09:22] <jamespage> koolhead17, you can then configure the squid-deb-proxy that maas will install to use you proxy infrastructure
+[09:22] <jamespage> juju will used that automatically
+[09:23] <koolhead17> jamespage: i will try to get whole openstack working in traditional way as of now
+[09:23] <koolhead17> to get hold of it
+[09:23] <jamespage> koolhead17, that is the best way to learn it of course!
+[09:23] <koolhead17> once i have idea about espacially quantum i will try it out
+[09:23] <koolhead17> juju/MaaS
+[09:24] <jamespage> koolhead17, if you want to ping me with quantum questions once you have had a go using the docs feel free
+[09:24] <jamespage> some of it was not obvious
+[09:24] <koolhead17> jamespage: i honestly feel there is document overload happening :)
+[09:25] <jamespage> koolhead17, meh - its complicated!
+[09:25] <jMCg_> Hello happy people!
+[09:25] <jMCg_> How do I tell do-release-upgrade that I wanna stick to LTS'es for now?
+[09:26] <koolhead17> jamespage: let me poke you if am stuck with quantum part, as of now am more interested in understanding the magic of it. I am up on networking to understand it. :P
+=== jMCg_ is now known as jMCg
+=== railsraider_ is now known as railsraider
+[10:27] <psivaa> jamespage: the ceph smoke tests are still hanging/ failing to execute. So please go ahead if you think its best to drop them for the time being.
+[10:28] <psivaa> jamespage: also, the runlists still have the old fetch_location in the new branch. that needs changing as well to fetch from the new branch
+=== cpg is now known as cpg|away
+=== Err404NotFound is now known as Error404NotFound
+=== security is now known as fire
+[11:11] <aFeijo_> I have this error in my new ubuntu server which I installed dovecot with mysql: Unsuported dictionary type mysql. I already installed dovecot-mysql package, what else do I need?
+=== aFeijo_ is now known as aFeijo
+=== funkyHat_ is now known as funkyHat
+[11:34] <mah454> Hello
+[11:34] <mah454> I run ltsp server
+[11:35] <mah454> chroot in /opt/ltsp/i386 and add new user with "useradd " command
+[11:35] <mah454> and then run ltsp-update-image
+[11:36] <mah454> but this user can not login in thin client !
+[11:36] <mah454> why ?
+[12:02] <Quest> I want to allocate (in simple terms) different folders for different website domains. e.g mysite2.com mysite1.com   . in apache2 httpd, i have to bind. how exactly do i do that in tomcat7 . I have also made some netbeans projects  (i guess i have to copy paste the war files somewhere) ?
+[12:12] <maruq> hi guys, I'm trying to boot ubuntu 12.04 on an AWS hi1.4xlarge instance (SSD)
+[12:13] <maruq> as far as I can tell, it's not giving me the SSD volumes, only a standard 8GB EBS volume at /
+[12:13] <maruq> I'm guessing it's something to do with the AMI, just wondering if anyone knows anything I need to specify to use that SSD
+[12:17] <rbasak> The extra volumes tend to be independent, don't they? Have you looked in /proc/partitions? Is it mounted in /mnt?
+[12:25] <maruq> rbasak: I think I found them at /dev/xvdb & /dev/xvdg
+[12:25] <rbasak> That sounds about right
+[12:59] <Quest> I want to allocate (in simple terms) different folders for different website domains. e.g mysite2.com mysite1.com   . in apache2 httpd, i have to bind. how exactly do i do that in tomcat7 . I have also made some netbeans projects  (i guess i have to copy paste the war files somewhere) ?
+[12:59] <Quest>  need help wit this http://stackoverflow.com/questions/14214440/tomcat7-domain-settings
+[13:27] <jMCg> Okay. Wtf. How do I configure all apps that link against libgnutls to correctly validate certificates against the correct CAs?
+[13:35] <jMCg> Or let me put this question differently: WHY DOES ANYTHING use GnuTLS?
+[13:41] <Magus_> hey guys, I'm having a bunch of mdadm trouble. Would anyone be able to help me?
+[13:44] <Guest30157> but yeah, any mdadm help i can get would be a life-saver
+[13:45] <Guest30157> oop
+=== Guest30157 is now known as TheMagus
+=== dayangkun_ is now known as dayangkun
+[13:58] <TheMagus> is anyone here that could help?
+[13:58] <smoser> hallyn, ping
+[13:58] <smoser> TheMagus, don't ask to ask, just ask. if someone is here that can and wants to help, they will.
+[13:58] <poddus> what's the problem?
+[13:58] <TheMagus> sorry
+[13:59] <TheMagus> I'm having a really bad mdadm issue; specifically, I posted this thread: http://ubuntuforums.org/showthread.php?p=12444348#post12444348
+[13:59] <smoser> hallyn, bug https://bugs.launchpad.net/bugs/1060404 question.
+[13:59] <uvirtbot> Launchpad bug 1060404 in upstart "update-grub runs and fails in containers" [Undecided,Confirmed]
+[14:00] <TheMagus> basically, trying to re-create/assemble a RAID array and it can't find my partition; possible I am not putting to together correctly or maybe I need to zero out the superblocks or something
+[14:02] <poddus> sorry, never dealt with RAID
+[14:02] <TheMagus> darn, ha
+[14:02] <TheMagus> really need help on this, so i'm trying to look around for any channels or resources possible.
+=== ppetraki_ is now known as ppetraki
+[14:07] <poddus> well I can at most try to help you brainstorm
+[14:10] <TheMagus> thanks :)
+[14:10] <TheMagus> i tried assembling the raid twice with --assume-clean, so I don't believe any of the data has been touched, just the superblock
+[14:10] <TheMagus> had a thought of wiping the superblock and assembling, but still uncertain as to the right move.
+[14:11] <TheMagus> my drive order was a bit odd, as well, but I am not sure if it can auto-detect that or if there's a way to specify.
+[14:12] <poddus> well for starters I would try to back the information up as it is now
+[14:12] <TheMagus> i can't even get any info since i can't mount it
+[14:13] <poddus> can you dd?
+[14:13] <TheMagus> possibly; not sure if i have the drive space around for that, though.
+[14:13] <poddus> well if this data is important I'd suggest you get some HDD space and copy it over
+[14:14] <poddus> at least if you screw up more now you can go back and start over
+[14:14] <TheMagus> yeah, I might try to grab a drive later.
+[14:15] <poddus> I don't really understand this RAID5 setup. is there redundancy? is the information from the failed drive somewhere on the others?
+[14:15] <TheMagus> yeah, it's a RAID5 across 4 drives.
+[14:16] <TheMagus> one drive failed, so I did a create, assume-clean which i thought would put it back together and it didn't?
+[14:16] <TheMagus> not sure why it didn't do it correctly but...
+[14:16] <TheMagus> that's why i am seeking out help
+[14:23] <hallyn> smoser: yeah?
+=== pgraner` is now known as pgraner
+[14:24] <hallyn> smoser: btw, i'll be asking you (if you don't mind) to upload two libcgroups for me, one to r and one to q, in a bit
+[14:24] <hallyn> actually,
+[14:24] <hallyn> stgraber: isn't libcgroup meant to be in the server set?
+[14:24] <hallyn> maybe not...  but I thought so
+[14:25] <smoser> hallyn, so you're saying all i have to do is have devtmpfs mounted and then 'apt-get upgrade' will work ?
+[14:25] <smoser> and its no danger of writing bootloader incorrectly to my host?
+[14:25] <hallyn> smoser: i think that if is aid that, i was wrong.
+[14:25] <hallyn> oh.  yeah.  we undid that
+[14:25] <hallyn> don't mount devtmpfs in container
+[14:26] <hallyn> lemme edit that.  (the SRU in fact was undone)
+[14:26] <smoser> i'm just curious, because i'd really like to be able to somehow get a cloud image, and install stuff into it without kvm
+[14:26] <poddus> TheMagus: what was the "wonky issue" you had a while back? if the hdd index goes to 5 and you only had 4 hdds then no wonder it isn't working
+[14:26] <stgraber> hallyn: libcgroup is an unseeded universe package, so can't see any reason to have it in the packageset
+[14:27] <hallyn> smoser: will the cloud iage have a blockdev?
+[14:27] <TheMagus> poddus: that was my thought. I had a similar issue (the drive popped out of the array)
+[14:27] <hallyn> stgraber: but if it hasn't been decided before it needs to go through an approval process i assume
+[14:27] <TheMagus> it's on my map to get new drives for this soon, but need it to survive until then
+[14:27] <smoser> hallyn, probably
+[14:27] <smoser> or , yes
+[14:27] <TheMagus> heck, I'll order the new ones tonight if I can get it to survive, ha
+[14:27] <hallyn> smoser: then all you need to is make sure that the root device's blockdev is in the container's /dev
+[14:28] <poddus> TheMagus: so did the HDD fail or is it a software bug?
+[14:28] <hallyn> (i think - i'm pretty sure)
+[14:28] <poddus> was it the same HDD?
+[14:28] <TheMagus> poddus: the drive "failed", i think the system overheated, honestly.
+[14:28] <TheMagus> i don't recall if it was or not
+[14:28] <smoser> hallyn, what is "the root device"
+[14:29] <hallyn> whatever device 'mount' says root is mounted from
+[14:29] <hallyn> i.e. /dev/dm-7
+[14:30] <poddus> TheMagus: so you rebuilt the RAID the same as you did now? why do you think the problem is related?
+[14:30] <smoser> hm...
+[14:30] <smoser> i dont think that is true.
+[14:30] <TheMagus> unsure, but I know the ordering of drives is a bit odd so I figured I'd mention it.
+[14:31] <TheMagus> rather give more information than not enough, you know?
+[14:35] <stgraber> hallyn: if it was a server related seeded package, it probably would be in the packageset (as cjwatson's script is supposed to do that) or we'd fix the script for it to be. But as I said, I can't see any reason why it'd be in the packageset in its current state.
+[14:37] <poddus> TheMagus: alright, this RAID5 is too complicated for me to wrap my head around right now. I definitely suggest, if you want to keep your data, to back it up before you do anything else. If you succeed, unless there's a really good reason why you're running a software RAID, I suggest you put your HDDs to better use with a normal rsync backup. or backup the RAID. in any case it's always good to have a backup! :P sorry I can't be of more help.
+[14:37] <TheMagus> yeah, I was already planning on my backups when it failed :T
+[14:37] <xnox> RAID is not a backup solution.
+[14:37] <TheMagus> wish i had more time, you know?
+[14:38] <TheMagus> xnox: yup
+[14:38] <hallyn> stgraber: oh, sorry, i misread your first response
+[14:38] <TheMagus> trying to recover mine so i CAN back it up :T
+[14:38] <hallyn> stgraber: i thought it once went into the packageset so that i could push updates to cgroup-lite when it was part of libcgroup :)
+[14:38] <hallyn> but maybe it just happened as a result of lxc depending on it at one time
+[14:38] <hallyn> smoser: meaning you don't think grub succeeds then?
+[14:39] <hallyn> smoser: you'll also need to give the container write perms to it in the container config's devices.cgroup.allow lines
+[14:39] <smoser> hallyn, well, my experience was with chroot, not lxc.
+[14:39] <smoser> but i woudl have thought if it didnt work in chroot, it wouldnt work in lxc either.
+[14:41] <smoser> hallyn, just so you know where i'mi coming from, i had this annoyance of not being able to 'apt-get upgrade' in a chroot of a image using 'mount-callback-umount'  at http://bazaar.launchpad.net/~smoser/+junk/backdoor-image/view/head:/mount-callback-umount .
+[14:41] <smoser> i thought it was not easily solved.
+[14:41] <poddus> TheMagus: if your data is worth anything to you, probably the worst thing to do now is to rush it. that never works. I've tried :)
+[14:41] <TheMagus> yeah
+[14:42] <smoser> then i saw your bug, and thought "Wonderful! someone has this fixsed for me!"
+[14:42] <TheMagus> otherwise i would have been up all night trying to fix it, poddus
+[14:42] <TheMagus> that's why when the two creates didn't work, i stopped and sought help
+[14:42] <stgraber> hallyn: was probably a one off kind of thing. I'm vaguely surprised that cgroup-lite isn't in the server packageset though
+[14:42] <TheMagus> in retrospect i should have backed up immediately before trying to repair the raid :/
+[14:42] <TheMagus> live and learn so far.
+[14:43] <poddus> hey, that's the only way I ever learned anything
+[14:43] <hallyn> smoser: in fact bug 1096984 suggests that it should work (the guy said it worked for him with lvm backed partition)
+[14:43] <uvirtbot> Launchpad bug 1096984 in lxc "Wrong device for the / mount point (dup-of: 1060404)" [Undecided,New] https://launchpad.net/bugs/1096984
+[14:43] <uvirtbot> Launchpad bug 1060404 in upstart "update-grub runs and fails in containers" [Undecided,Confirmed] https://launchpad.net/bugs/1060404
+[14:44] <stgraber> hallyn: nevermind, wasn't checking properly, cgroup-lite is in the server packageset
+=== slank_away is now known as slank
+[14:44] <hallyn> stgraber: ok, no big deal, i'll get the libcgroup updates sponsored, i just *thought* i remembered not having to
+[14:44] <stgraber> hallyn: oh, and I remember you saying something about qemu? what source packages would you need for qemu?
+[14:44] <stgraber> hallyn: it might be that libcgroup is in the packageset on older releases as packageset content is stored per series
+[14:45] <hallyn> stgraber: the source package is 'qemu'.  though it hasnt' made it into r yet.  (assume it's hung in NEW)
+[14:46] <hallyn> haha, oops, i guess q is 12.10, not 11.10
+[14:46] <stgraber> hallyn: ok, I'll wait for the new source to be accepted, then I'll poke Colin to update the script (or will myself if I can remember where it's)
+[14:46] <hallyn> stgraber: thanks
+[14:58] <TheMagus> hmm. one thought I am having is since my disk slot numbers are a bit wacky... doing a create with missing, drive 1, missing, drive 3; then adding drive 4 and 5.
+[14:59] <hallyn> smoser: you're coredev right?  would you mind sponsoring libcgroup updates at http://people.canonical.com/~serge/libcgroup-rm-inits for q and r?
+[15:11] <smoser> hallyn, yes, i am core dev. i will take a look.
+[15:25] <poddus> TheMagus: do you know the original configuration?
+[15:34] <TheMagus> poddus: yup. The e-mail my server sent me has it even
+[15:41] <poddus> so wait, your RAID was working without HDDs 0 and 2? which was originally a RAID of 4 HDDs?
+[15:44] <TheMagus> poddus: naw, it's a bit confusing, sorry. I have disks in slots 1,3,4, and 5
+[15:44] <TheMagus> they were all in active sync so i know it was working
+[15:48] <Daviey> m_3: Hey, are you chairing this meeting in 12 mins?
+[15:49] <poddus> active sync?
+[15:50] <poddus> never mind, it doesn't really matter
+[15:50] <TheMagus> sorry :)
+[15:51] <TheMagus> found this post http://serverfault.com/questions/447617/reusing-slot-numbers-in-linux-software-raid-arrays might be exactly what i was thinking of.
+[15:52] <poddus> why is your setup so complicated anyway
+[15:52] <TheMagus> not too sure, wish it wasn't of course ;)
+[15:55] <m_3> Daviey: whoops... was lost in email vortex
+[15:55] <m_3> yes
+[15:55] <m_3> really quite excited about it too
+[15:56] <Daviey> m_3: cool!
+[15:56] <Daviey> m_3: Will this be your first time?
+[15:56] <poddus> TheMagus: have you seen this: http://www.freesoftwaremagazine.com/articles/recovery_raid
+[15:57] <m_3> Daviey: not quite... but might as well be
+[15:58] <Daviey> m_3: heh, you are an old hand!
+[15:58] <TheMagus> poddus: nope, i'll take a look :) thank you!
+[15:58] <Daviey> SpamapS: Do you still want to be on the chair rota?
+[15:59] <Daviey> yolanda: can you add yourself please?
+[15:59] <m_3> #startmeeting ubuntu-server-team
+[15:59] <smoser> hallyn, i uploaded to raring for you.
+[15:59] <SpamapS> Daviey: no ;)
+[15:59] <smoser> m_3, that isn't going to work here.
+[15:59] <m_3> hmmm um... why not?
+[15:59] <smoser> (#ubuntu-meeting)
+[16:00] <m_3> oh... doh
+[16:00] <m_3> um... thanks smoser
+[16:00] <Daviey> SpamapS: might want to remove yourself :)
+[16:01] <zul> nah he can still run it if he wants to
+[16:02] <poddus> TheMagus: I'm heading out, good luck
+[16:16] <hallyn> smoser: thanks
+[16:23] <roaksoax> bbcmicrocomputer: what are you gonna look at for mysql and openstack ha?
+[16:25] <bbcmicrocomputer> roaksoax: sorry on a call
+[16:29] <bbcmicrocomputer> roaksoax: I haven't started any work on the MySQL charm yet.. need to take a look at the backlog of feature requests
+[16:30] <bbcmicrocomputer> roaksoax: a decent README wouldn't go amiss :)
+[16:30] <roaksoax>  bbcmicrocomputer ok, I'm working on getting HA support
+[16:30] <bbcmicrocomputer> roaksoax: if you need me to review anything..
+[16:33] <roaksoax> sure thing
+[16:33] <roaksoax> thanks ;)
+[16:39] <keithzg> Arghh, I cannot figure out why for a daily cron job that sends an e-mail, the same mail line works on my desktop and not the server.
+[16:40] <keithzg> It's literally just cat file | mail -s "subject" $MAILTO
+[16:40] <keithzg> How can something so simple be going wrong?
+[16:48] <greppy> keithzg: path to cat? or the path to the file or the path to mail?
+[16:53] <RoyK> keithzg: try full path to mail
+[16:54] <RoyK> keithzg: as in 'cat file | /usr/bin/mail ...'
+[16:55] <keithzg> Good idea; sadly still silently fails.
+[16:55] <keithzg> ...or not?
+[16:56] <keithzg> ah, no, it was the other thing I just did, heh. Installed postfix, which uninstalled exim4.
+[16:57] <RoyK> keithzg: is the cron job run? what does the logs say?
+[16:57] <keithzg> Whatever exactly that changed, that seems to have done it. Even just "cat file | mail -s "Subject" guy@place.com" works now
+[16:57] <RoyK> keithzg: I use postfix on most of my installations
+[16:57] <RoyK> ok, great
+[16:58] <keithzg> Yeah I had actually *assumed* that postfix was installed, considering that mail was just *silently* failing, not throwing an audible fit. But I guess it was using Exim4 in the background instead? Either way, works now!
+[17:10] <RoyK> keithzg: I've seen the same with exim, never tried to debug it - just found that I wanted postfix, with which everything worked :P
+[17:33] <keithzg> RoyK: heh
+=== yofel_ is now known as yofel
+[18:06] <paco1> hello masters!
+[18:06] <paco1> sarnold: are you there?
+[18:06] <sarnold> hey paco1 :) how's it going?
+[18:07] <paco1> i just checked my zone in the slave server....and it works
+[18:07] <paco1> /var/cache/bind/db.myzone.com > $TTL 300        ; 5 minutes
+[18:08] <sarnold> paco1: awesome :)
+[18:08] <paco1> like i put yesterday
+[18:08] <paco1> my reverse doesn't change yet, because i didn't change anything ;)
+[18:09] <paco1> i change the ttl of the reverse and i will see....
+[18:09] <paco1> thanks
+[18:11] <sarnold> paco1: heheh :)
+[18:11] <sarnold> it's easy to forget to change the reverse.. of course, when you're trying to get _something_ to work, it doesn't much matter. hehe.
+[18:11] <paco1> and it works within to delete the zone in the slave
+[18:12] <paco1> it replaced it
+[18:13] <paco1> well, now i'll see the tsig config
+[18:15] <paco1> sarnold: it's easy or hard tsig config?
+[18:16] <sarnold> paco1: sorry, I've never done that :/
+[18:16] <paco1> ok
+[18:30] <zul> Daviey: when you get a chance can you review python-ceilometerclient and python-pecan please?
+[18:50] <cgalati> Does anyone have some time to help me with server recommendations?
+[18:54] <cgalati> *Crickets chirping*  lol
+[18:56] <zul> hallyn: any fallout from the new qemu-kvm yet?
+[18:57] <hallyn> zul: it's not in the archive yet
+[18:57] <zul> hallyn: oh...then no :)
+[18:57] <hallyn> zul: i've emailed one of the debian maintainers with my git tree.  plenty of comments from him.
+[18:57] <hallyn> among whic his that there are cmdline changes between qemu and qemu-kvm.
+[18:58] <hallyn> so we might be breaking new ground for debian to figure out how to solve that - a kvm wrapper, or what
+[19:09] <Daviey> zul: can you ping me first thing tomorrow.. unless it's blocking work.. i'll do it now
+[19:09] <zul> Daviey: yep
+=== Guest1600 is now known as w0rmie
+[19:20] <pmatulis> having trouble joining #ubuntu-cloud . anyone know what's up with that?
+[19:22] <sarnold> haha, "Cannot join to channel #ubuntu-cloud (You must be invited)"
+[19:22] <w0rmie> the channel is restricted actually
+[19:22] <sarnold> someone's gone and set mode +i on the channel.
+[19:22] <pmatulis> strange
+[19:35] <hattorihanzo> Hey, I have a fresh 12.04.1 fully updated server
+[19:36] <hattorihanzo> and for some reason i dont see anything in my /var/log/syslog | messages
+[19:36] <hattorihanzo> anybody have an idea of whats going on
+[19:39] <sarnold> hattorihanzo: sometimes log-rotation races are lost and the syslogd keeps writing to the .0 file; check /var/log/syslog.0 to see if the logging is happening to the wrong file
+[19:42] <hattorihanzo> theres aa syslog.1 but its stopped reporting on the 31st
+[19:42] <hattorihanzo> also "logger MESSAGE" doesnt show up anywhere
+[19:45] <sarnold> hattorihanzo: hrm. that's odd. is /var/log full?
+[19:45] <hattorihanzo> na, this is a brandnew vps i setup over the holiday
+[19:46] <sarnold> very strange.
+[19:51] <hattorihanzo> http://pastebin.com/RkDUbYBj
+[19:54] <sarnold> hattorihanzo: oh that's odd. I don't have any of those "terminated on signal" in my logs...
+[19:55] <hattorihanzo> i did find something about commenting out the /dev/xconsole but that diddnt help
+[19:57] <sarnold> hattorihanzo: does it run alright once you restart it?
+[19:59] <LuizAngioletti> hello there.
+[19:59] <hattorihanzo> sarnold: nope :(
+[19:59] <sarnold> hattorihanzo: oh. that's interesting. why does it die?
+[20:00] <hattorihanzo> its not dead now, its just not logging.
+[20:00] <sarnold> !
+[20:00] <LuizAngioletti> I'm receiving the following message in /var/log/syslog, after a huge update yesterday: "ubuntu dovecot: auth: Fatal: Support not compiled in for passdb driver 'vpopmail'"
+[20:01] <sarnold> hunh. I wonder why I have _four_ rsyslogd processes. is that usual?
+[20:01] <LuizAngioletti> Is dovecot for ubuntu packaged with support to vpopmail?
+[20:12] <hattorihanzo> o_O https://bugs.launchpad.net/ubuntu/+source/rsyslog/+bug/940030
+[20:12] <uvirtbot> Launchpad bug 940030 in rsyslog "rsyslog stops working after logrotate until restarted" [Undecided,Confirmed]
+[20:13] <hattorihanzo> well, its not working even after a restart
+[20:24] <sarnold> hattorihanzo: be sure to reply if that proposed fix solves it for you
+[20:40] <hattorihanzo> it didnt :(
+[20:40] <sarnold> hattorihanzo: then be sure to report that, too! oof.
+[20:51] <ninjix> having a problem doing a direct kernel boot with libvirt
+[20:51] <ninjix> getting this error
+[20:51] <ninjix> error: internal error process exited while connecting to monitor: qemu: could not load PC BIOS '/home/libvirt/images/precise-server-cloudimg-amd64-loader'
+[20:51] <BaldFat> My problem > I decided it would be "fun" to run bind and my own dns for my next work. Now I can't update the server and have to stop dns and bind9 for my network to connect to the internet. How would I get it back to default?
+[20:54] <drocsid> so i have an amazon ec2 running ubuntu server. this may seem like a dumb quesion, but is it ok for me to reboot the session?
+[20:54] <ninjix> drocsid: you can reboot, just don't terminate
+[20:55] <ninjix> but why do you want to reboot, drocsid ?
+[20:55] <ninjix> easier to just restart services
+[20:59] <drocsid> ninjix: ubuntu server was telling me restart required
+[21:01] <ninjix> drocsid: ahh... you ran a dist-upgrade
+[21:01] <drocsid> ninjix: i guess i did ......
+[21:02] <drocsid> ninjix: don't remember recently. I'm just concerned about security updates
+[21:03] <drocsid> i beter backup my data
+[21:04] <ninjix> drocsid: you should be fine
+[21:05] <drocsid> backups are always good tho
+[21:07] <ninjix> new kernel images get loaded on reboot
+[21:09] <ninjix> aws manages all of the kernel/grub stuff for you unless you want to roll your own kernel and use their pv-grub
+[21:12] <drocsid> ninjix: whats the prefered way to upgrade security packages: 'aptitude upgrade' ?
+[21:14] <ninjix> drocsid: normally use 'apt-get upgrade' and then do a 'apt-get dist-upgrade'
+[21:15] <sarnold> apt-get update
+[21:15] <drocsid> sarnold: that updates the package lists, i do that first i believe
+[21:16] <sarnold> drocsid: yes, just ninjix made a typo in his advice :)
+[21:17] <ninjix> sanderj_:  thanks :) for the correction
+[21:17] <tasslehoff> testing email alerts from my raid via a python script with "sudo mdadm --monitor --scan --oneshot --test --program /data/scripts/smtpmail.py". It works, I get the mail, but mdam never returns. is that expected?
+[21:58] <ninjix> any Ubuntu cloud team around?
+[21:58] <ninjix> I'm still stuck on this libvirt not wanting to load my precise-server-cloudimg-amd64-loader
+[21:59] <ninjix> it works correctly when I launch the cloud image directly with kvm
+[21:59] <xsl> hello all
+[21:59] <xsl> in a ubuntu host i have the firewall loggin working ok and going to syslog or to whatever log i want... but wen i get the lxcontainers up ... the firewall logs randomly on each container and stops loggin on the host
+[21:59] <xsl> anyone knows why this happens, or a way to prevent this?
+[22:34] <alex88> hi guys, what can I use for running a memory check on a server?
+[22:34] <alex88> forgot the memory test when booting grub, I'm on a remote server running a rescue image
+[22:45] <Chorca> anyone else have issues on a supermicro X9SCM?
+[22:45] <Chorca> Can't get e1000 to detect the network interfaces
+[23:00] <Sprocks> anyone able to help with an apparent grub issue? when I reboot/boot my ubuntu server the grub menu just sits there until I go to it and hit enter
+[23:03] <patdk-lap> chorca, that could be alittle hard, as it uses the e1000e driver
+=== kentb is now known as kentb-out
+[23:19] <andygraybeal> i'm in ubuntu 10.04 .. my virtual machine manager is showing my LVM volume only  having 3GB left.. when pvdisplay shows that i have 107GiB out of 272GiB
+[23:19] <andygraybeal> how do i get the virtual machine manager to show the correct size of available data on this LVM?
+[23:19] <andygraybeal> it won't let me create a machine larger than 3GB
+[23:20] <andygraybeal> is there something about the physical extents being contiguous?
+[23:20] <andygraybeal> that i might be missing?
+=== cpg|away is now known as cpg
+[23:31] <andygraybeal> what does this mean:   Total PE              69835
+[23:31] <andygraybeal>   Free PE               27503
+[23:31] <andygraybeal>   Allocated PE          42332
+[23:32] <andygraybeal> ah pe size is 4.0 MiB
+[23:32] <andygraybeal> okay
+[23:41] <Chorca> ls

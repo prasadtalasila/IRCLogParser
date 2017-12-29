@@ -1,0 +1,148 @@
+[07:13] <infinity> bjf: Why did you reassign 960770 from linux-meta to linux?  It's a bug in (and being fixed in) -meta.
+[07:31] <ppisati> moin
+[07:32] <infinity> o/
+[07:45] <ppisati> reboot
+[08:06] <ppisati> and reboot (again)
+=== smb` is now known as smb
+[08:35] <ppisati> and reboot again
+[09:16] <smb> cking, not for you
+=== henrix_ is now known as henrix
+[10:26] <tjaalton> pulling 48e858340dae43 for quantal would fix a regression in 3.5.0-18, bug 1088271
+[10:26] <ubot2`> Launchpad bug 1088271 in linux (Ubuntu) "X startup fails with "failed to get resources" error after update to 3.5.0-18 " [High,Triaged] https://launchpad.net/bugs/1088271
+[10:35] <henrix> tjaalton: i took a look and this commit is already present in quantal
+[10:35] <tjaalton> really?
+[10:35] <tjaalton> it's not in the stable series
+[10:35] <tjaalton> yet
+[10:35] <tjaalton> the original commit is in quantal
+[10:35] <tjaalton> this reverts it
+[10:36] <tjaalton> at least -21 is still broken, is it in -22?
+[10:36] <henrix> let me check...
+[10:36] <henrix> it was added into 3.5.0-18.29
+[10:36] <tjaalton> yes, the original one
+[10:36] <tjaalton> which is brokne
+[10:36] <tjaalton> broken
+[10:36] <henrix> ah, you meant to revert 48e858340dae43?
+[10:36] <tjaalton> no
+[10:37] <tjaalton> this _is_ the revert :)
+[10:37] <henrix> yeah, right :)
+[10:37] <henrix> so, this sha1 was added into 3.5.0-18.29
+[10:38] <tjaalton> 47f80be7fc108d4 is the one you mean?
+[10:38] <tjaalton> this would revert that
+[10:39] <henrix> gah, you're right. sorry
+[10:39]  * henrix got confused :)
+[10:39] <tjaalton> :)
+[10:40] <henrix> tjaalton: i can submit a patch to SRU it next cycle
+[10:41] <tjaalton> ok, thanks
+[10:41] <henrix> np
+=== yofel_ is now known as yofel
+=== trijntje_ is now known as trijntje
+=== henrix is now known as henrix_
+=== henrix_ is now known as henrix
+[13:01]  * smb starts to move over
+[13:13] <cking> smb, have a good journey
+[13:21]  * henrix -> lunch
+=== rsalveti_ is now known as rsalveti
+=== zequence_ is now known as zequence
+[15:28] <ppisati> brb
+[15:52] <xnox> it's funny how with 3.8 kernel my usb2.0 ports sometimes stop working, but I am not complaining since the 3.0 usb port is working more reliably now =)
+[15:53] <jsalisbury> **
+[15:53] <jsalisbury> ** Ubuntu Kernel Team Meeting - Today @ 17:00 UTC - #ubuntu-meeting
+[15:53] <jsalisbury> **
+[15:55] <akgraner> jsalisbury, thank you again - my laptop seems to working well today
+[15:56] <jsalisbury> akgraner, that's great news.  
+[15:56] <akgraner> yes it is
+[15:57] <ppisati> rtg: tim, what do you use on your imx6? linaro? debian? ubuntu?
+[15:57] <jsalisbury> akgraner, you should be able to apply the latest updates again.  But maybe wait until the end of the day ;-)
+[15:57] <ppisati> rtg: and how do you boot it? u-boot on spi flash? or u-boot on sd?
+[15:58] <rtg> ppisati, I installed the linaro image, then built a raring chroot to do builds. I think it must be booting from SPI
+[15:58] <rtg> The raring chroot is on an external USB drive
+[15:58] <rtg> as is /home
+[15:59] <ppisati> rtg: ok, and do you know if you are using boot.scr? uenv.txt or do you boot straight from uboot env?
+[15:59] <ogra_> what a waste
+[15:59] <ogra_> use SATA !
+[15:59] <ogra_> USB is for pandas
+[15:59] <ogra_> :P
+[15:59] <akgraner> jsalisbury, ok I'll do it after I end my day
+[16:00] <rtg> ogra_, nm, it _is_ SATA
+[16:00] <ogra_> :)
+[16:00]  * ppisati wonder if ogra has some kind of irc filters because he shows up everytime an arm discussion sparks...
+[16:00] <jsalisbury> akgraner, or whenever you feel like it.  No need to rush.  It would just be good to confirm all goes well with applying updates.
+[16:00] <ogra_> haha
+[16:01] <ogra_> intuition ;)
+[16:01] <rtg> ppisati, IIRC it is booting from uboot env. I don't think I customized anything (but then its been awhile)
+[16:01] <ppisati> rtg: ok
+[16:01] <akgraner> jsalisbury,I'll let you know for sure
+[16:01] <ppisati> ogra_: do you have an imx6?
+[16:01] <ogra_> yes
+[16:02] <ppisati> ok
+[16:02] <ogra_> using an image cooloney gave me
+[16:02] <ppisati> i'm adding imx6 support to R/master as part of multiplatform
+[16:02] <ogra_> 3ith my own ubunt-coe based rootfs onSATA
+[16:02] <ppisati> but since we never had any official ubuntu img fr it
+[16:03] <ogra_> i might try it then
+[16:03] <ppisati> i was wondering which solution i should pursue for booting it
+[16:04] <ogra_> i would go for SD, easiest to modify
+[16:04] <ppisati> yep
+[16:04] <ppisati> but there's all kinds of config out there
+[16:04] <ppisati> booting from SPI flash
+[16:04] <ppisati> from u-boot on sd (dedicated partition)
+[16:04] <ogra_> iirc the first stage is in flash anyway
+[16:04] <ppisati> using u-boot env vs boot.scr vs uEnv.txt
+[16:05] <ppisati> yes, but some use it to jump to u-boot on sd (Linaro does that)
+[16:05] <ogra_> and thedefault is to boot from flash all the way
+[16:05] <ppisati> others jump straight from flash u-boot to mmcblk0pX/uImage
+[16:05] <ogra_> so you likely need to tweak that for SD
+[16:06] <ogra_> and then just provide a u-boot sd image
+[16:06] <ppisati> ogra_: actually, if i take an omap img and just change the kernel it shoud be ok, right?
+[16:07] <bjf> brendand, what's your ETA for having the precise and quantal testing done?
+[16:07] <ogra_> u-boot too indeed
+[16:07] <ogra_> but yeah
+[16:07] <ppisati> ogra_: yeah, u-boot of course
+[16:07] <ogra_> (and initrd if you need modules from there)
+[16:07] <ppisati> well
+[16:08] <ppisati> with multiplatform there's one kernel for many chips
+[16:08] <ogra_> ah, k
+[16:08] <ppisati> omap3, omap4 and imx6 now
+[16:08] <brendand> bjf - thursday latest
+[16:08] <ppisati> omap3/4 works
+[16:08] <ogra_> i forgot you said DT
+[16:08] <ppisati> imx6 not yet
+[16:08] <brendand> bjf - tomorrow would also be possible if earlier is strictly better
+[16:09] <ogra_> i want tegra2 and 3 more than imx
+[16:09] <ogra_> :)
+[16:09] <ogra_> (totally selfish indeed )
+[16:09] <ppisati> ogra_: that's the hw that i've handy, first let me make it work well :)
+[16:09] <bjf> brendand, sooner is always better than later
+[16:10] <ogra_> they need to gibe you a nexus7 !
+[16:10] <ogra_> :)
+[16:30] <jsalisbury> bjf, herton, henrix Just wanted to give you guys a heads up on bug 1098262  
+[16:30] <ubot2`> Launchpad bug 1098262 in linux (Ubuntu) "Precise crashes hard when HP array rebuilds" [High,Incomplete] https://launchpad.net/bugs/1098262
+[16:55] <bjf> jsalisbury, ack
+=== jsalisbury changed the topic of #ubuntu-kernel to: Home: https://wiki.ubuntu.com/Kernel/ || Ubuntu Kernel Team Meeting - Tues January 22nd, 2013 - 17:00 UTC || If you have a question just ask, and do wait around for an answer!
+=== Edgan_ is now known as Edgan
+=== hggdh is now known as hggdh_AFK
+[18:36]  * rtg -> lunch
+[19:34] <rtg> jsalisbury, having a look at bug #1099913
+[19:34] <ubot2`> Launchpad bug 1099913 in linux (Ubuntu) "Please consider applying upstream patches for mtip32xx" [High,Confirmed] https://launchpad.net/bugs/1099913
+[19:34] <jsalisbury> rtg, thanks
+[20:04] <rtg> jsalisbury, so I accidentally deleted your email about ^^. Could you forward it to bjf as well ?
+[20:04] <jsalisbury> rtg, sure
+[20:04] <rtg> I'm sure he'll have some thoughts about timing.
+[20:05] <jsalisbury> rtg, done
+[20:13] <vanhoof> rtg: talked with kentb on that one, its ok for SRU proposal post 12.04.2
+[20:13] <rtg> vanhoof, yeah, I didn't think it would make .2
+[20:13] <rtg> however, it'll be in the pipeline soon
+[20:14] <vanhoof> yeah, he ping'd me on that bug this morning, wanted to make sure it wasn't end of the world waiting for the next sru cycle
+[20:14]  * vanhoof doesnt want to derail the .2 train
+[20:14] <vanhoof> (if possible :))
+[20:14] <rtg> works for mwe
+[20:14] <rtg> me*
+[20:19] <bjf> rtg, i've talked to him as well, we are all good
+[20:19] <rtg> bjf, ack
+[20:29] <bjf> rtg, you mumbling today?
+[20:39]  * rtg -> EOD
+=== henrix is now known as henrix_
+[22:27] <hallyn> so for raring on a NVIDIA Corporation GT218 [GeForce 310M], what is the recommended nvidia package right now?  (right now i can't boot a raring kernel - using old quantal one - and jockey-text -l says none are installed)
+[22:27] <hallyn> i guess i'll try nvidia-current... 
+[23:23] <vanhoof> hallyn: might wana check w/ tseliot when he's up
+[23:23] <vanhoof> hallyn: i know he's been sorting some of that out last week/this week

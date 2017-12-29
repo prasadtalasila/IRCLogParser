@@ -1,0 +1,343 @@
+=== slank is now known as slank_away
+[01:11] <MrWGW-> hey there
+[01:12] <MrWGW-> I find it highly annoying that /bin/sh is symlinked to dash by default, because dash is not fully compatible with the Bourne Shell, let alone bash
+[01:12] <MrWGW-> what would the chances be of that being changed to a symlink to /bin/bash?
+[01:12] <MrWGW-> just symlinking it to bash would reduce the size of /bin slightly and improve compatibility with other distros and UNIX like OSes
+[01:13] <MrWGW-> if that's a bridge too far, perhaps ash could be used; ash implements most of bash and is also properly backwards compatible with Bourne
+[01:14] <infinity> MrWGW-: sudo dpkg-reconfigure dash
+[01:15] <xnox> MrWGW-: see past discusions and reasons why we switched to dash. It's faster and significantly decreases boot speed. Bashism is not compiant. Debian also uses dash. If you depend on bash the you should specify #!/bin/bash
+[01:15] <infinity> MrWGW-: dash is POSIX-compliant, which is all that one requires from /bin/sh so, no, we won't switch back.
+[01:15] <infinity> MrWGW-: The above dpkg-reconfigure will let you change it on your own systems, if you prefer.
+[01:16] <infinity> MrWGW-: But yes, as xnox states, if your scripts use bashisms, they're not /bin/sh scripts, and should specify #!/bin/bash
+[01:17] <infinity> MrWGW-: (As for your statements about ash, ash in Debian is just a package that ships a symlink to dash...)
+[01:17] <infinity> MrWGW-: dash was derived from ash.
+[01:20] <MrWGW-> infinity: in ash, echo -e and functions work properly
+[01:20] <MrWGW-> I have some Buffalo Linkstation NASes that use ash, and I have scripts that run correctly on that ash version, but not on your dash
+[01:20] <infinity> MrWGW-: I suspect you're wrong, and what you really mean is "in my version of ash, echo isn't a builtin".
+[01:21] <MrWGW-> I would propose that what you guys should have done, that would have been a better design: use dash during booting, but refer to it explicitly with the path /bin/dash in your scripts, but meh
+[01:21] <infinity> MrWGW-: If you rely on non-POSIX extension to echo, use /bin/echo
+[01:22] <infinity> MrWGW-: If you rely on non-POSIX shell functions, use the shell you want to use explicitly.
+[01:22] <MrWGW-> my script uses a POSIX compliant function declaration which is breaking on dash
+[01:23] <infinity> Really?
+[01:23] <infinity> MrWGW-: If you're using the keyword "function", that's not POSIX.
+[01:25] <infinity> MrWGW-: You want "funcname() { code; code; }" not "function funcname() { code; code; }".  The latter is a bashism.
+[01:25] <MrWGW-> I'm using funcname()
+[01:25] <infinity> Then what's breaking?
+[01:25] <MrWGW-> when executing the script I'm getting an /usr/bin/nssync: 5: Syntax error: "(" unexpected
+[01:25] <infinity> We have shell functions all over the place.
+[01:26] <infinity> That's exactly what you'd see if you prefaced the line with "function".
+[01:27] <MrWGW-> its not prefaced
+[01:27] <MrWGW-> maybe the dash executable file is corrupt
+[01:27] <MrWGW-> brb while I check this
+[01:27] <infinity> Could you show us the script?
+[01:27] <MrWGW-> btw one thing that I do appreciate, this dash business aside, is that you continue to ship upstart vs. systemd
+[01:27] <geofft> Can you write a small example that demonstrates the problem?
+[01:27] <geofft> foo() { echo hi; } appears to work for me, in dash.
+[01:28] <MrWGW-> yes, once I verify its not a problem on my machine
+[01:29] <MrWGW-> hmmm this is strange, the dash image file on this freshly provisioned 12.10 instance on Azure has a different md5 checksum than the same file on an ubuntu 12.10 system I have in the lab
+[01:30] <MrWGW-> I'm going to provision another 12.10 instance and see if the problem persists, and if not, we can chalk it up to Microsoft stupidity
+[01:30] <infinity> Both the same architecture?
+[01:30] <MrWGW-> yes, x86_64
+[01:31] <MrWGW-> do you guys have access for development purposes to a Windows Azure cloud account?   Its remotely possible there's an oddity with their image, but I've started the provisioning of another instance
+[01:31] <infinity> The error you pasted doesn't sound like something that would come from a corrupt dash, just a broken script.
+[01:31] <MrWGW-> its also remotely possible that someone somehow pwnt my 12.10 instance in between the time of its initial provisioning and my attempting to install this script on it
+[01:31] <infinity> -rwxr-xr-x 1 root root 105712 Aug 15 04:41 /bin/dash
+[01:31] <infinity> b0c9cf166a0a3051e1f1c359f3e50d17  /bin/dash
+[01:31] <MrWGW-> the line of code in the script is conf_transfer()
+[01:31] <infinity> ^-- This is what Q's dash should look like, though.
+[01:32] <MrWGW-> that matches the md5 checksum on my lab box but not on the azure one
+[01:32] <infinity> MrWGW-: Immediately followed by a {, I assume?
+[01:32] <geofft> Is there a bashism on the previous line of code?
+[01:32] <MrWGW-> infinity: yes
+[01:33] <infinity> Oh, it's quite possible you have a rootkit and that's not dash at all, yes.
+[01:33] <MrWGW-> that's my thought
+[01:33] <MrWGW-> especially since the other instance just came up and the md5 checksum is what it should be on that
+[01:33] <MrWGW-> weird though that it got pwnt in that manner, given that it only had ssh key based authentication
+[01:33] <MrWGW-> strange
+[01:33] <MrWGW-> fortunately it wasn't in production yet
+[01:33] <infinity> Yeah.  We build the Azure images, I'd like to think I'd know if they were broken.
+[01:34] <MrWGW-> I'm going to blow that instance away
+[01:34] <MrWGW-> I use azure as a backup for my colo servers because I get it with my bizspark subscription
+[01:34] <infinity> Makes a valid argument for doing security updates within seconds of initial install.  But still, ew.
+[01:35] <MrWGW-> on another matter, are there any semi-official or official derivatives planned featuring Mate?
+[01:35] <MrWGW-> I'd really like to see a Kubuntu or Lubuntu style derivative with Mate, designed to fit on a single CD ROM disc
+[01:36] <infinity> Nothing planned that I know about, but I certainly won't stand in the way of someone willing to do the work.
+[01:37] <MrWGW-> do you think if such a derivative were produced it could get recognized to the same extent as Kubuntu, Lubuntu, Xubuntu et al?
+[01:37] <MrWGW-> assuming it was of sufficient quality and so on
+[01:38] <infinity> Googling for Mubuntu (the obvious choice of name?) got me to http://sourceforge.net/projects/mubuntuproject/
+[01:38] <infinity> No idea how active that is, and it's not in the Ubuntu archive.
+[01:38] <MrWGW-> I myself miss the convenience of the single-CD live CD, as CD-Rs are a heck of a lot cheaper than DVD-Rs, the Mate vs Unity thing is less a big deal for me becauseI mainly use Ubuntu server-side, but a lot of the older guys at the LUGs I go to have been up and arms over Ubuntu, and are either not updating their systems or they're increasingly installing Mint or some other third-tier distro
+[01:38] <infinity> Certainly, if someone was willing to do the work as an Ubuntu developer in the archive, we've not stop them.
+[01:38] <MrWGW-> another good name for what I just proposed would be Ubuntu Classic Edition
+[01:38] <infinity> MrWGW-: I gave up on spinny media long ago, and just install from USB sticks.
+[01:39] <MrWGW-> infinity: USB sticks are good, but I own a vast collection of computers some of which lack boot from CD support
+[01:39] <MrWGW-> also I prefer to use my USB sticks for other things
+[01:39] <MrWGW-> so having a large array of disposable blank CD ROMs is useful as they're just dirt cheap
+[01:39] <MrWGW-> even the drives are dirt cheap
+[01:40] <MrWGW-> at fry's they're selling LG OEM blu ray disks for $10
+[01:40] <MrWGW-> BD-ROM units
+[01:40] <MrWGW-> so when my desktop systems have an optical drive failure, which is a fairly routine occurence, replacement is no big deal
+[01:40] <infinity> MrWGW-: MATE also appears to have a repository of packages built for Ubuntu, so one can do a minimal install, then slap MATE on.
+[01:40] <MrWGW-> its more of a headache on laptops and servers that use weird proprietary disk drives
+[01:40] <infinity> (I'd still definitely prefer to see this happen in the Ubuntu archive, but whatever)
+[01:41] <MrWGW-> infinity: well I'd love to roll a MATE variant which would feature MATE already on the syste, be sized to fit a single CD ROM, or smaller, and feature the Ubuntu font and desktop background
+[01:41] <MrWGW-> providing a polished experience similiar to that of Ubuntu 10.10 (which I personally consider to be the zenith of Ubuntu desktop releases thus far)
+[01:42] <infinity> 12.04 is pretty shiny.
+[01:42] <MrWGW-> and my enthusiasm for this is driven by the fact that your distro is sticking to upstart, which is a really nice init system IMO
+[01:42] <MrWGW-> I really like the GNOME 2.x interface that 10.10 featured, it was very nice, it also had the prettiest wallpaper IMO
+[01:43] <infinity> Heh.
+[01:43] <MrWGW-> I am looking forward to seeing some Ubuntu TVs and phones hit the market though
+[01:43] <infinity> Well, wallpaper can always be rescued.
+[01:43] <MrWGW-> I suspect we'll really start to see Unity shine on those systems
+[01:43] <MrWGW-> infinity: I use The Dawn of Ubuntu wallpaper on one of my systems, from 6.10
+[01:43] <infinity> I know I also had problems with the GNOME2->Unity transition, so much so that I used to run XFCE tailored to look just like old skool Ubuntu.  But, I eventually conformed.
+[01:43] <MrWGW-> Edgy Eft
+[01:43] <infinity> I now run a stock Unity setup on raring.
+[01:44] <MrWGW-> as far as I'm concerned systems like Unity are optimized for tablets and should be used on them, but for workstation use something else is needed
+[01:44] <MrWGW-> MS is making an even bigger mistake with the Metro UI
+[01:44] <infinity> http://lucifer.0c3.net/~adconrad/xubuntu.png <-- My old XFCE desktop, before I switched to Unity.
+[01:44] <MrWGW-> which is completely inappropriate for desktop or workstation use
+[01:45] <MrWGW-> now if you don't care about workstation use then this is a moot point, but for a technical power user like myself, a different style of interaction is required
+[01:45] <MrWGW-> at that, a lot of workstation guys like to use an even more minimal X system running blackbox or something of that nature
+[01:45] <MrWGW-> but that's just a bit too spartan for me
+[01:45] <infinity> I've become even more keyboard-driven since forcing myself to switch to Unity.  This isn't a bad thing.
+[01:45] <MrWGW-> I do like having a nice pretty background and transparent menu bars
+[01:45] <MrWGW-> I use ThinkPads and on my desktop, Thinkpad style USB keyboards, which feature trackpoint mice
+[01:45] <infinity> Ditto.
+[01:46] <MrWGW-> these reduce the overhead of moues usage
+[01:46] <MrWGW-> I'm right hnaded, but I can maneuver the trackpoint with my left index finger
+[01:46] <MrWGW-> (I also use Sun Type 7 UNIX layout keyboards on some of my workstations, and I have a few other keyboard varieties of a more conventional nature
+[01:46] <MrWGW-> a Unicomp M series clone, a pair of keytronics keyboards, and so on
+[01:46] <MrWGW-> I am a keyboard afficianado
+[01:46] <MrWGW-> there's a really pretty $75 gaming keyboard at fry's that I want
+[01:47] <MrWGW-> so I'm going to in the next few weeks look into the possiblity of doing the MATE variant we just discussed
+[01:47] <MrWGW-> and if conditions permit, I'll start working on it
+[01:47] <MrWGW-> I have a relative in the hospital now
+[01:47] <MrWGW-> so that's the only real variable
+[01:48] <MrWGW-> but if it can be done, it would be pretty cool, and it would also have the effect of silencing some of the anti-Ubuntu people who are whining about Unity or the other changes you've made
+[01:48] <MrWGW-> changes which I should add are superficial and irrelevant
+[01:48] <MrWGW-> the important thing is that you guys have avoided making unpleasant changes to the underlying system, i.e. systemd
+[01:48] <MrWGW-> and I hope you keep it that way
+[01:49] <infinity> We'll never silence all the detractors.  They could easily run Xubuntu, Lubuntu, or Kubuntu, but they choose to focus on what the "official Ubuntu CD" has on it.
+[01:49] <MrWGW-> I have historically been a heavy CentOS/Scientific Linux user, but the new changes in the most recent Fedora builds that will be going into RHEL 7 are...unpleasant
+[01:49] <infinity> And if it's not exactly what they want, complaints.  Such it life.
+[01:49] <MrWGW-> infinity: having a Mubuntu or Ubuntu classic edition would silence the more legitimate detractors
+[01:49] <MrWGW-> or rather
+[01:49] <MrWGW-> it would keep them happy and in the fold
+[01:49] <MrWGW-> and take marketshare away from Linux Mint
+[01:50] <MrWGW-> you have a bunch of customers who use your product and like it, but odn't like some, but not all, of the new changes, so it makes sense to allow for a community-developed variant to meet their needs
+[01:50] <infinity> I have no interest in sticking it to Mint.  But I also don't mind if MATE ends up in Ubuntu's archive.  So, whatever happens.
+[01:50] <MrWGW-> that way they can be happy, you can be happy and so on
+[01:50] <MrWGW-> the only Linux distro I really want to stick it to right now is Fedoera heh
+[01:51] <MrWGW-> the arrogance of their engineering steering committee is astonishing
+[01:51] <infinity> I thought there was an effort to get MATE into Debian.  If that's still ongoing, that would be the obvious first place to contribute.
+[01:51] <infinity> Cause if it's in Debian, Ubuntu gets it (nearly) for free.
+[01:51] <MrWGW-> the changes they've made have the effect of breaking compatibility with other distro, with other Unices, with sysv, with POSIX
+[01:51] <MrWGW-> and brekaing everyone's management scripts and software
+[01:51] <infinity> And building images based on that wouldn't be rocket surgery.
+[01:51] <MrWGW-> I believe MATE is already in Debian
+[01:52] <MrWGW-> but I'll check on that
+[01:53] <mbiebl> MrWGW-: it isn't
+[01:54] <infinity> But there's a lively debate in the ITP bug: http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=658783
+[01:54] <ubottu> Debian bug 658783 in wnpp "ITP: mate-common -- common scripts and macros to develop with MATE" [Wishlist,Open]
+[02:00] <MrWGW-> I'll take a look
+[02:00] <infinity> Seems like the general concensus is "not while MATE still ships a bunch of duplicate old skool code".
+[02:00] <infinity> But they're working hard on moving from gconf to gsettings, dropping old libs, moving to GNOME3 libs on the backend, etc.
+[02:01] <infinity> So, may be more favourable soon.
+[02:02] <MrWGW-> gah if the Debian developers block MATE I'm going to hate that project even more than I do already
+[02:03] <infinity> I don't see any blocking going on.
+[02:03] <infinity> There's a freeze in Debian right now anyway.
+[02:03] <infinity> And pre-1.6 MATE was a no-go for a variety of good reasons.
+[02:03] <infinity> Things may be shaping up now.
+[02:04] <mbiebl> infinity: forking gconf was pointless in the first place
+[02:04] <mbiebl> gconf is still maintained upstream
+[02:05] <mbiebl> if they switch to gsettings fully, then hopefully this won't matter
+[02:06] <Bluefoxicy> ughhhhh
+[02:07] <Bluefoxicy> Find the person that decided it was a good idea to un-highlight when highlighting in the Rhythmbox search box or Playlist name (when editing the playlist name) and hang him.
+[02:07] <Bluefoxicy> I can't believe somebody exerted positive energy to add this behavior.
+[02:07] <Bluefoxicy> Omissions of stuff that really needs to be done yes.  Why would you take a perfectly round wheel and plaster corners onto it?
+[02:08] <infinity> MrWGW-: I just commented on the Ubuntu bug, BTW: https://bugs.launchpad.net/ubuntu/+bug/876675
+[02:08] <ubottu> Ubuntu bug 876675 in Ubuntu "[needs-packaging] MATE" [Wishlist,Confirmed]
+[02:08]  * Bluefoxicy complain.  Should file bugs.  Should git blame and file bugs.
+[02:08] <MrWGW-> infinity: by the way
+[02:08] <MrWGW-> you might just port over the Linux Mint repo
+[02:08] <MrWGW-> since they're binary compatible with Ubuntu anyway
+[02:08] <MrWGW-> at least in theory
+[02:08] <infinity> MrWGW-: That's not going to happen. :P
+[02:09] <MrWGW-> why not just fork their repo?
+[02:09] <MrWGW-> if it works
+[02:09] <MrWGW-> and would save time...
+[02:09] <infinity> The "if it works" part is the important bit there.  And my experience with Mint's packaging quality hasn't been stellar.
+[02:09] <MrWGW-> I'll take a look
+[02:09] <infinity> Either way, I have no interest in packaging MATE.  It will need an active maintainer in Debian and/or Ubuntu, or it's really not going to happen.
+[02:09] <MrWGW-> hmm and you know I tihn ktheir standard Mate is slightly modified
+[02:10] <MrWGW-> they use a SUSE style taskbar with a start menu if I recall
+[02:10] <MrWGW-> so yeah
+[02:10] <MrWGW-> so suppose, if my relative is OK and I can commit the time, I become the maintainer of Mate and the shipper of the Mate variant we've discussed
+[02:10] <MrWGW-> would that be alright with you?
+[02:10] <MrWGW-> Mate would I presume live in the "universe" repo right?
+[02:10] <infinity> Are you an Ubuntu developer?
+=== cpg|away is now known as cpg
+[02:11] <MrWGW-> not at present
+[02:11] <MrWGW-> i am a sysadmin who runs about 200 Ubuntu server systems though
+[02:11] <infinity> Well, that's something you might want to work on if you want to seriously commit to maintaining an etire DE.
+[02:11] <Bluefoxicy> that's different than maintaining a package
+[02:11] <infinity> But you're not signing up for a simple/minimal task there, either.
+[02:11] <Bluefoxicy> maintaining a package involves having a clue about what's going on around you, which is really the hard part since nobody e-mails you when a new version of your stuff is out.
+[02:11] <infinity> Desktop environments take a ton of work.
+[02:12] <Bluefoxicy> figuring out the packaging stuff is a one-off thing.
+[02:12] <Bluefoxicy> when I tried to maintain the pax-utils package, every 6 or 7 versions the lead developer would poke me and ask why I didn't update the package in ubuntu
+[02:12] <MrWGW-> I do understand the time commitment; that's why I have to wait to see how my relative is doing before I can commit
+[02:12] <infinity> (Not trying to discourage, just warn... DE maintainers are grumpy people... Except for Riddell, nothing seems to get him down)
+=== cpg is now known as cpg|away
+[02:17] <MrWGW-> I do get that
+[02:17] <MrWGW-> and given the surge in popularity MATE is experienceing its also possible someone better qualified will rise to the occasion and do this
+[02:17] <MrWGW-> but within the next few weeks I'll decide
+[02:18] <MrWGW-> the other question I would have is if Ubuntu plans on introducing systemd in the next three years
+[02:19] <MrWGW-> because what I'm really seeking for myself is to maintain a system that preserves the classic sysV init compatible upstart system, fits on a single CD, supports a wide range of Linux filesystmes for the root and boot partition, and has MATEand right now Ubuntu fits the bill
+[02:19] <infinity> It's not in our current plans, no.  It would likely only happen if it ended up forced on us by outside influences.
+[02:19] <MrWGW-> what about the fact that udevd and systemd are now developed from the same codebase?
+[02:19] <infinity> Like, if all Linux systems become dependent on systemd and we have no choice.  But I don't see that happening, as much as the systemd guys want it to.
+[02:19] <MrWGW-> could that force your hand to any extent?
+[02:19] <infinity> Nah.
+[02:19] <infinity> It can still be built independently.
+[02:20] <MrWGW-> if that happened I'd just say screw it and switch all my stuff to OpenBSD and freeBSD
+[02:20] <MrWGW-> I already use those OSes on half of my server systems
+[02:20] <MrWGW-> all of my filers are FreeNAS systems and OpenBSD runs on all of my firewalls and network managemnet devices
+[02:20] <MrWGW-> but as you of course know
+[02:20] <MrWGW-> there are some things that are still more ocmfortable and pleasant to do on a Linux system
+[02:21] <MrWGW-> Im of the opinion that Linux first took off in the 1990s because it was generally compatible with other UNIX systems, it of course had the GPL license, and it was also the leanest, most bloat-free UNIX system available in that timeframe
+[02:21] <MrWGW-> even now some aspects like the Linux kernel's use of a generic task structure to represent both threads and processes set it apart from other more complicated systems
+[02:22] <MrWGW-> so  Ithink the trick for Linux to remain relevant is to stick to these values on which its success was built
+[02:22] <MrWGW-> as opposed to following in the footsteps of AIX and Solaris and OS X to unlimited bloat and ugliness and proprietary, incompatible extensions
+=== cpg|away is now known as cpg
+=== cpg is now known as cpg|away
+=== cpg|away is now known as cpg
+=== cpg is now known as cpg|away
+=== cpg|away is now known as cpg
+=== cpg is now known as cpg|away
+=== Quintasan_ is now known as Quintasan
+=== cpg|away is now known as cpg
+=== cpg is now known as cpg|away
+[12:42] <bdrung> Sweetshark: when will libreoffice 3.5.7-0ubuntu2 be available in precise-proposed? i am hit by bug #585910
+[12:42] <ubottu> bug 585910 in libreoffice (Ubuntu Quantal) "[Upstream] Impress Font fuzzy in presentation mode when Use hardware acceleration enabled" [Undecided,Triaged] https://launchpad.net/bugs/585910
+[12:44] <bdrung> Sweetshark: it would be nice to have at least libreoffice 3.6.4 in raring
+[12:45] <bdrung> Sweetshark: can we sync 3.6.4-1 from debian experimental?
+[12:46] <ricotz> bdrung, if you want you can use the quantal version in the libreoffice ppa with raring
+[12:47] <bdrung> ricotz: i don't want i fix for myself. i want a fix in the archive.
+[12:48] <ricotz> bdrung, raring will get 4.0 and he don't want to spent time on 3.6.x then
+[12:49] <ricotz> bdrung, syncing is not possible due the missing ubuntu specific patches
+[12:49] <mitya57> I don't think we can sync 3.6.4-1 because of unitymenus patch
+[12:50] <bdrung> okay, i will look into merging 3.6.4-1 when i have time instead of waiting for 4.0 to arrive
+[12:53] <ricotz> bdrung, i would recommend to forward port https://launchpad.net/~libreoffice/+archive/ppa/+sourcepub/2835951/+listing-archive-extra
+[12:55] <ricotz> didnt have time for it, but the obvious problem was the recognizing python in raring
+[14:03] <melodie> hello
+[14:05] <melodie> does someone know what must be done to get a normal color background in Ubiquity frontend gtk please ? not around the window but inside ? Here is what I get (a remix project I try to put up) : http://meets.free.fr/debian/images/ubiquity-frontend-gtk-look.png
+[14:05] <melodie> is xnox here ? :)
+=== Ursinha_ is now known as Ursinha
+=== yofel_ is now known as yofel
+=== burlak_ is now known as burlak
+=== chiluk is now known as chiluk_away
+=== chiluk_away is now known as chiluk
+[18:36] <streulma> hello, is the Evolution-calendar bug already fixed in 12.10?
+[18:41] <melodie> streulma, what is this bug ?
+[18:43] <streulma> melodie: many of the people I know have the calendar bug in Ubuntu 12.10
+[18:43] <streulma> Evolution is not used
+[18:43] <melodie> streulma, and what does this bug do ?
+[18:45] <streulma> melodie: see here: https://bugs.launchpad.net/ubuntu/+source/evolution-data-server/+bug/1064136
+[18:45] <ubottu> Ubuntu bug 1062068 in evolution-data-server (Ubuntu Quantal) "duplicate for #1064136 evolution-calendar-factory crashed with SIGFPE in g_hash_table_lookup_node()" [High,Confirmed]
+[18:49] <Aeyoun>  Hi. I have a problem with deb packaging. Every file in debian/* is copied over to the build-area *except* for the upstart file so it fails to be detected by dh_installinit and is not included in the package.
+[18:49] <Aeyoun> I have studied other deb packages and cannot see that any of them are doing anything different from what I am doing.
+[18:50] <Aeyoun> Have verified that the upstart file is not copied over by monitoring the file system. Have also placed debug code in dh_lib and made sure it would have worked if the file was copied into the build-area correctly.
+[18:51] <Aeyoun> What process is responsible for copying over files from src/debian/* to build-area/package-name/debian/?
+[18:51] <infinity> Is it named <package>.upstart?
+[18:51] <Aeyoun> infinity, I have tried with upstart and <package.upstart>
+[18:51] <Aeyoun> and <package>.foo.upstart
+[18:52] <infinity> It would be dh_installinit that's meant to install it.  Which should Just Work, if you're using dh(1), but if you're using old skool debhelper (by calling each one manually), you may be missing _installinit.
+[18:52] <Aeyoun> The verbose output says shows that dh_installinit runs but it does not output anything. Debugging it shows that it does not find the file and this is skipped.
+=== chiluk is now known as chiluk_away
+[18:52] <infinity> From here, I'd probably need to see the source package in question.
+[18:52] <Aeyoun> The Ubuntu packaging guide learned me to package using `bzr builddeb -- -us -uc`
+[18:53] <Aeyoun> infinity, I would be grateful if you could assist me. :-) I'll upload the source.tar and my debian/ now.
+[18:53] <infinity> Oh, wait.  You mean bzr bd isn't exporting it?
+[18:54] <infinity> That could be as simple as you needing to bzr add the file.
+[18:54] <Aeyoun> if by "not exporting" you mean does not copy it from source/debian/ to ../build-area/packagename/debian, than yes.
+[18:54] <infinity> (I assumed you meant it was in debian/ in the source package, but not getting installed into the binary package)
+[18:55] <infinity> But if you mean it's in your source REPO, but not making it into the source PACKAGE, that sounds like maybe it's just not actually in the repo. :P
+[18:55] <infinity> (ie: needs a bzr add, or a commit)
+[18:55] <Aeyoun> Oh. I did not know that. o.O
+[18:55] <Aeyoun> (Sorry for pasting directly)
+[18:55] <Aeyoun> bzr status
+[18:55] <Aeyoun> modified:
+[18:55] <Aeyoun>   debian/control
+[18:55] <Aeyoun>   debian/rules
+[18:55] <Aeyoun> unknown:
+[18:55] <Aeyoun>   debian/upstart
+[18:55] <Aeyoun>   debian/watch
+[18:55] <Aeyoun>   debian/source/format
+[18:56] <infinity> The first step in bzr bd is to export the repo, so you have a clean source package.  Export (in any VCS) won't export files that aren't tracked.
+[18:56] <infinity> So, "bzr add debian/upstart debian/watch debian/source/format" and try again.
+[18:56] <Aeyoun> The Ubuntu Packaging guide should probably have mentioned that I needed to do that.
+[18:57] <infinity> This is a mistake I make about 5 times a week when exporting from Debian glibc SVN to my source package and wondering where my new patches went. :P
+[18:57] <Aeyoun> infinity, please kiss yourself and dance happily around on the floor with yourself from me! :-D You solved my eight day mystery problem!! :-D
+[18:59] <Chipzz> make sure you also commit debian/control and debian/rules, because the package you build may not have these changes
+[19:02] <infinity> Chipzz: Committing isn't necessary for test-building with bzr bd.
+[19:02] <infinity> Chipzz: Export will catch modified files, just not untracked ones (to avoid cruft)
+[19:03] <Chipzz> infinity: ah k. not used to bzr, slightly more familiar with git
+[19:03] <Chipzz> different mindset :P
+[19:04] <infinity> Well, git would behave the same if you did a git add, then export.  That's just not most people's git workflow (most people do "git commit -a" and just add the world, if random tutorials are to be believed)
+[19:09] <Aeyoun> I am also more familiar with git. Never used bazar for anything.
+[19:09] <Chipzz> I tend to stage/commit my changes with vim and gitv/fugitive ;)
+[19:09] <Aeyoun> I assumed it would use my working directory and not the repo.
+[19:10] <infinity> Aeyoun: It does use your working copy, but new files aren't actually part of your working copy without adding them, that's all.
+[19:10] <infinity> Fairly classic behaviour inherited from CVS and SVN, among others.
+[19:10] <Aeyoun> I really wish it would give me a warning. "These files are untracked or have uncommitted changes: $list"
+[19:11] <Aeyoun> or some other indication that would have made the last few days more productive. :-P
+[19:11] <infinity> You could file a wishlist bug on bzr-builddeb to warn about untracked changes on invocation.  Might be handy.
+[19:12] <infinity> (Personally, I don't use any of the foo-builddeb packages, so I have a pretty low care-factor)
+[19:17] <Aeyoun> https://bugs.launchpad.net/bzr-builddeb/+bug/1096433
+[19:17] <ubottu> Ubuntu bug 1096433 in bzr-builddeb "warn about untracked changes" [Undecided,New]
+[19:20] <infinity> Aeyoun: Danke.  Added a distro task to the bug as well.
+[19:22] <Aeyoun> Another question, am I supposed to use the 0ubuntu1 tag to packages I upload to ppas? or is that just for "official" packages?
+[19:22] <infinity> You can version PPA packages however you want.  BUT.  If you plan to upload to the archive later, and want smooth upgrade paths, I'd recommend something like:
+[19:22] <infinity> Debian: 1.2.3-1
+[19:23] <infinity> Ubuntu: 1.2.3-1ubuntu1 (or 1.2.3-0ubuntu1, if ours is a newer upstream)
+[19:23] <infinity> PPA: 1.2.3-1ubuntu1~ppa (or 1.2.3-0ubuntu1~ppa, see above)
+[19:24] <infinity> The "~ppa" on the end will make sure that version sorts just before the "real" -0ubuntu1, which would be what you'd want to upload to the archive.
+[19:24] <infinity> And you can rev those (~ppa1, ~ppa2, ~ppa3, etc) ad nauseum, and still be able to use the proper version number for the archive later, with a sane upgrade path.
+[19:25] <Aeyoun> thanks again, that makes sense.
+[19:26] <infinity> (The string there doesn't matter, it's the ~ that's the magic "just before the previous bit" sorting, so you could use 1.2.3-0ubuntu1~aeyoun1, if you want them more personalised and easier to track when people whine about a specific version)
+[19:27] <maxb> You might also see things like 1.2.3-0ppa1 or 1.2.3-0ubuntu0ppa1 which are accomplishing more or less the same thing - the important thing is how the version comparisons turn out compared to versions in Debian and Ubuntu official archives.
+[19:27] <maxb> -0ppa1 is taking gratuitous advantage of the fact that 'p' comes before 'u'
+[19:28] <infinity> maxb: Yeah, lots of schemes work.  I like the realversion~ppaversion thing because it denotes "I plan for this to eventually be released as 'realversion' some day".
+[19:28] <infinity> But to each their own.
+[19:28] <infinity> It doesn't even matter if PPAs sort lower than the archive (or clash, even) except, as I mentioned, giving users sane upgrade paths.
+[19:29] <infinity> Which is always a nice thing to do.
+[19:29] <maxb> I like the realversion~ppaversion thing too, when that is actually what is being denoted :-)
+=== Ursinha_ is now known as Ursinha
+=== rsalveti_ is now known as rsalveti
+[20:04] <WONDERFULWONDER> #join
+[20:08] <Deborah_Meltrozo> Hello
+[20:09] <WONDERFULWONDER> hi
+[20:09] <Deborah_Meltrozo> Can anyone recommend me a tool, framework, etc for Unit Testing, if its GUI-based is better
+[20:09] <Deborah_Meltrozo> on Python
+[20:26] <WONDERFULWONDER> quit
+[20:26] <WONDERFULWONDER> #quit
+[20:32] <WONDERFULWONDER> try download quickly but it is not downloading pls help
+[20:34] <dkessel> WONDERFULWONDER, how do you try to download, and what is the error you get?
+=== cpg|away is now known as cpg
+[20:50] <melodie> could someone help me with the ubiquity theme setup for a remix ?
+[20:51]  * melodie annoyed after several days seeking the web docs and wikis
+=== cpg is now known as cpg|away
+[22:27] <Aeyoun> Hi again. I ran into another problem. This time with pbuilder-dist quantal mypackage.dsc. "amd64" has snuck in at the end of the CFLAGS. Resulting in ""cc: error: amd64: No such file or directory" error.
+[22:28] <infinity> Aeyoun: Can you point me at the sources?
+[22:28] <infinity> (Also, I can't believe we still recommend pbuilder... Should really talk to someone about fixing that)
+[22:29] <Aeyoun> the upstream makefile has $(ARCH) after $(CFLAGS). This is not a problem when running  `make build` nor `bzr builddeb`. pbuilder, however, sets this variable.
+[22:30] <infinity> That seems like a goofy thing for the upstream Makefile to do unless it's meant to be setting it to something.
+[22:31] <Aeyoun> it is set on OS X but no other platform. :-)
+[22:32] <infinity> Set to what, though?
+[22:32] <Aeyoun> fatbinary.
+[22:32] <infinity> Anyhow, you could just explicitly unset it.
+[22:32] <Aeyoun> 32+64 bit
+[22:33] <infinity> "unexport ARCH" in your debian/rules might tidy that up.
+[22:37] <infinity> A more correct fix to forward to upstream would be for them to explicitly set it to an empty string on all platforms, then twiddle it on OSX to whatever weird thing they want.

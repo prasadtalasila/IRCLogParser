@@ -1,0 +1,78 @@
+[08:37] <bryce> I'll be afk tomorrow morning; reviewing son's preschool.
+[08:38] <tjaalton> don't be too hard on them ;)
+=== yofel_ is now known as yofel
+[08:53] <tjaalton> bryce: btw, looks like the workqueue bug search doesn't show bugs that have other packages listed as affected
+[08:53] <tjaalton> was wondering why some -intel bugs don't show up on the list, no matter what the bug status is
+[09:05] <tjaalton> hmm not that simple
+[10:41] <mlankhorst> tjaalton: but we have a MRE for mesa? \o/
+[10:43] <mlankhorst> oh still need to run piglit for that.. yikes
+[10:48] <tjaalton> provisional mre, but I guess we could apply for a standing one
+[10:48] <tjaalton> how's 9.0.2 shaping up?
+[11:13] <xnox> mlankhorst: have you seen the mini-mailing-list bug #993187 ?
+[11:13] <ubottu> bug 993187 in plymouth-theme-int2mil-ubuntu-11.04 (Ubuntu Precise) "ubuntu 12.04 completely freezes frequently." [Undecided,Fix released] https://launchpad.net/bugs/993187
+[11:13] <xnox> (never mind the bogus plymouth package in it)
+[11:13] <mlankhorst> tjaalton: uploaded to raring
+[11:13] <xnox> it's a linux/x bug with a lot of angy people in it.
+[11:14] <xnox> Maybe somebody from X team can respond saying what users can try to resolve their issues or like point them to the quantal enablement stack.
+[11:14] <xnox> ?
+[11:14] <mlankhorst> what's stopping you from recommending to install xserver-xorg-lts-quantal to test? :P
+[11:15] <mlankhorst> sounds more like this 1. either has nothing to do with x, 2. has been overloaded to all kinds of hang bugs that may have the same symptons but different underlying causes..
+[11:58] <tjaalton> xnox: yeah that bug is just hopeless..
+[12:00] <xnox> mlankhorst: tjaalton: yeah it is hopeless, i am naive enough to think experts can redirect useless rants into useful bug reports =)
+[12:00] <tjaalton> I tried to bang some sense to it earlier, but it didn't help
+[12:00] <mlankhorst> now you know!
+[12:02] <tjaalton> hmm what if it's marked private? :)
+[12:02] <mlankhorst> don't bother
+[12:02] <tjaalton> would that stop the useless comments?
+[12:02] <mlankhorst> best you can do is let it die out..
+[12:02] <tjaalton> it doesn't seem to :)
+[12:02] <mlankhorst> then leave it active and ignore, any effort on it is wasted..
+[12:04] <tjaalton> well, a pointer to the backport stack and then mark it private :)
+[12:04] <mlankhorst> they'll just find another place to vent..
+[12:04] <xnox> i don't think marking it private will help.
+[12:04] <xnox> just another spark of "hiding _gasp_ critical bugs"
+[12:40] <tjaalton> mlankhorst: what is the "correct" way to enable the backport stack btw, install the kernel & xserver manually?
+[12:40] <mlankhorst> install xserver-xorg-lts-quantal (and maybe libgl1-mesa-dri-lts-quantal:i386 if you're on 64-bit to help out apt)
+[12:41] <tjaalton> does the xserver pull the new kernel too?
+[12:42] <mlankhorst> yeah it has a recommends on it
+[12:42] <tjaalton> ok
+[12:55] <tjaalton> but folks with dkms modules need the new headers too, unless it recommends linux-generic-lts-...
+[12:55] <tjaalton> ?
+[12:55] <mlankhorst> yeah but that's probably a kernel problem :P
+[12:56] <tjaalton> not really
+[12:59] <mlankhorst> I guess when you load from the cd it will install those too
+[12:59] <tjaalton> yes
+[12:59] <tjaalton> so whenever someone suggests the backport stack, it should be linux-generic-lts-.. + the xserver
+[12:59] <mlankhorst> Package: linux-generic-lts-quantal
+[12:59] <mlankhorst> Depends: linux-image-generic-lts-quantal, linux-headers-generic-lts-quantal
+[12:59] <tjaalton> ah
+[12:59] <tjaalton> that's fine then :)
+[13:00] <tjaalton> didn't bother checking myself :)
+[13:00] <tjaalton> i guess someone would've complained already..
+[14:32]  * mlankhorst fighting piglit
+=== chiluk is now known as chiluk_away
+[16:26] <mlankhorst> surprisingly, no lockup yet
+=== ricotz_ is now known as ricotz
+[16:45] <mlankhorst> bryceh: I'm not getting any lockup on piglit atm on mesa-master with my fermi, though some traps  so it's probably not completely correct, but still :)
+=== chiluk_away is now known as chiluk
+[17:09] <stgraber> hey there, anyone who has some time to help me debug some DisplayPort problems on Intel graphics? :)
+[17:11]  * mlankhorst points at topic
+[17:13] <stgraber> fine, I'll do that, not that you'll find anything interesting in the logs (otherwise I'd have fixed the problem myself)
+[17:14] <stgraber> (the problem is that DisplayPort daisy-chaining doesn't appear to work at all, to the point where the second display doesn't show up anywhere on the system)
+[17:23] <stgraber> bug 1104230
+[17:23] <ubottu> bug 1104230 in xorg (Ubuntu) "DisplayPort 1.2 MST support seems to be broken in the Intel driver" [Undecided,New] https://launchpad.net/bugs/1104230
+[17:29] <mlankhorst> could try to bug the intel devs in #intel-gfx, see what they think :)
+[17:38] <stgraber> mlankhorst: I'll do that in a bit. Just waiting for a friend with the same laptop but running Windows to confirm that my setup works fine on Windows :)
+[17:58] <tjaalton> also try this kernel for fun http://kernel.ubuntu.com/~kernel-ppa/mainline/drm-intel-nightly/current/
+[18:28] <Sarvatt> stgraber: in order to do triple head on ivybridge 2 of the monitors need to be identical and use the same type of connection, you might want to try disabling the internal display
+[18:28]  * Sarvatt has to run for a bit
+[18:29] <stgraber> I'm starting to suspect that the DP cable I got today is bad as Windows doesn't see anything more than Linux and plugging the DP-DP cable in my laptop (with a DP to mini-DP adapter) doesn't find anything (using a mini-DP to DP to that screen works though)
+[18:30] <stgraber> so I marked my bug as incomplete for now. I was expecting another DP cable next week anyway, so I'll retest then
+[18:31] <stgraber> (I know I'll need to turn off the LVDS to have the two others work, but DP2 should at least show up before that ;))
+[18:32] <stgraber> it's really weird how difficult it's to find a standard DP-to-DP cable these days, seems like people just want DP-to-anything-else...
+=== chiluk is now known as chiluk_away
+=== chiluk_away is now known as chiluk
+[20:54] <chiluk> not sure if this is the right place, but I love the new unity dash icon in raring that was pushed in recently whoever did it kudos.
+[21:12] <tjaalton> someone in #ubuntu-unity perhaps
+[21:16] <chiluk> thanks tjaalton 
+=== chiluk is now known as chiluk_away

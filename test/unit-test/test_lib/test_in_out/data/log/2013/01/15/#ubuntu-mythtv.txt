@@ -1,0 +1,204 @@
+=== Seeker`_ is now known as Seeker
+[14:26] <sabhain> Shadow_X: I'm using Schedules Direct, and the data provided is complete.  I have a test backend that is populating everything correctly, but for some reason my production backend has one channel which shows no guide data for a few days and then picks back up.
+[14:26] <sabhain> all of my efforts (--refresh-all, dd-file ...) etc have thus far gone unrewarded.
+[14:52] <sabhain> one other thing .. any HD-PVR users in the house?
+[16:48] <tgm4883> sabhain, does the XMLID of the channel match between your test system and production system?
+[17:02] <sabhain> tgm4883, yes it does.  It's really strange.  It feels similar to the problem that occurs if you don't kick the backend after a DST time shift.
+[17:02] <sabhain> just sorts itself out a few days down the road.
+[17:02] <tgm4883> sabhain, I don't have to kick my backend after a DST time shift
+[17:03] <sabhain> I do always, but only for 2 or 3 of my digital channels.  Most of them sync correctly, but theres a few of the OTA digital channels which stay an hour off until I restart the backend.
+[17:03] <sabhain> restart mythtv-backend .. I never have to actually restart the server
+[17:03] <tgm4883> weird
+[17:04] <tgm4883> and there isn't anything in the mythfilldb log?
+[17:06] <sabhain> that is an oddity.  doesn't appear that log has been touched in a long time.  Did it move from /var/log/mythtv?
+[17:06] <tgm4883> sabhain, nope. Were you talking to upstream about this a few days ago?
+[17:08] <sabhain> tgm4883, nope .. other than dropping a ticket on SchedulesDirect, I haven't done much.
+[17:08] <tgm4883> interesting
+[17:08] <sabhain> why would my log be completely empty for the past 14 months?
+[17:09] <tgm4883> sabhain, are you on 0.25 or 0.26?
+[17:11] <sabhain> tgm4883, I believe I'm on .24.1+fixes
+[17:11] <tgm4883> hmm ok
+[17:11]  * sabhain has been putting upgrades off for a long time (it just works!)
+[17:11] <tgm4883> not sure why it doesn't list anything in that log then
+[17:12] <tgm4883> you could check /etc/rsyslog.d/40-mythtv.conf
+[17:12] <tgm4883> see if it's going somewhere special
+[17:13] <sabhain> 40-mythtv.conf not in that location
+[17:14] <sabhain> file not on the system
+[17:14] <tgm4883> ok, we must have added that after 0.25 then
+[17:14] <sabhain> is an upgrade path from 10.04 LTS to 12.04 LTS feasible?
+[17:14] <tgm4883> so running 'mythfilldatabase --dd-grab-all' doesn't fix it?
+[17:14] <sabhain> tgm4883: no
+[17:15] <tgm4883> sabhain, but it prints to the screen right? you could pipe it to a log file 'mythfilldatabase --dd-grab-all > sdgrab.log'
+[17:15] <tgm4883> then see if there is any issues in there
+[17:16] <sabhain> ok, I'll try that now
+[17:30] <sabhain> tgm4883: so that time, it populated everything fine.  the log is pretty minimal and there's no warnings or errors.
+[17:34] <tgm4883> sabhain, hmm, what options are you using with mythfilldatabase normally?
+[17:37] <sabhain> tgm4883 I had been doing a --refresh-all when I did any CLI hacking.  Not sure what the standard options are (I wouldn't have changed them from the distribution settings).
+[17:37] <sabhain> but I'm quite certain I ran the --dd-grab-all yesterday, with no luck.
+[17:38] <tgm4883> sabhain, the defaults are now --dd-grab-all, but they weren't before (in 10.04). I recommend using it as it downloads the full schedule every run.
+[17:38] <tgm4883> sabhain, the channel in question, you mentioned that is an OTA channel?
+[17:38] <sabhain> it's available as OTA, but I happen to be grabbing it over clear QAM via cable.
+[17:39] <sabhain> tgm4883 is that setting in the backend setup then?
+[17:39] <tgm4883> sabhain, yea it's in the backend setup. Also check if you have EIT enabled for that card
+[17:40] <sabhain> tgm4883, EIT should be disabled for any card using schedules direct, right?
+[17:40] <tgm4883> yep
+[17:44] <sabhain> tgm4883, thanks so much for your help.  One more thing I can cross off the list.  Do you have any opinion on upgrading from 10.04 to 12.04 or fresh install?
+[17:45] <tgm4883> sabhain, I ususally do a fresh install myself. Backing up the database and restoring it
+[17:45] <sabhain> it's an older installation (operating 6+ years I think) and I've upgraded at least once before
+[17:45] <tgm4883> all my recordings etc are on my NAS, so it's pretty easy for me
+[17:46] <sabhain> but I'm getting a few compounding issues (multiple second delay at the top & bottom of the hour) .. this now solved schedule issue
+[17:47] <sabhain> I'm just not certain I'm ready to give up on diskless frontends .. and from what I read, that's not a working item any longer
+[17:48] <tgm4883> sabhain, at some point, I'd try to get to 12.04. We aren't doing 0.26 builds for 10.04 (technical reasons) and 12.04 is the next LTS
+[17:48] <sabhain> tgm4883, and you'd recommend skipping from 0.24 right to 0.26?  No database issues?
+[17:49] <tgm4883> 0.26 should be able to upgrade a 0.24 db without issues.
+[17:49] <tgm4883> still, i always recommend a DB backup
+[17:49] <sabhain> are the mythbuntu faq's on DB backup/restore up to date?
+[17:50] <tgm4883> sabhain, we've got mythbuntu faq's on that?
+[17:50] <sabhain> I think there used to be .. maybe I'm wrong
+[17:51] <tgm4883> if we did, we just linked to the mythtv wiki
+[17:51] <tgm4883> http://www.mythtv.org/wiki/Database_Backup_and_Restore
+[18:05]  * sabhain wants to be laga in his next life and restore the diskless stuff to its awesomeness of 10.04
+[18:14] <tgm4883> sabhain, then the first step, would be joining #ubuntu-mythtv-dev
+[18:17] <sabhain> tgm4883, lol then step 0 would be to have time and learn programming beyond F90
+[18:19] <tgm4883> sabhain, possibly. I didn't know python though before I started helping out
+[19:42] <superm1> sabhain: more than anything if you want to help get diskless into great shape again it's shell and python and patching packages.  it's achievable just by reading code out there and trying to understand how it works and where you can fit in patches
+[19:56] <sabhain> superm1 & tgm4883: I'm interested to do this.  It may be some weeks before I can pick it up.  I think I have the pieces of hardware available to debug without totally borking my production system.
+[19:57] <sabhain> superm1 & tgm4883: I need to navigate through the upgrade to 12.04 and finish out the addition of an HD-PVR to my setup (that is done once I sort out why the HD-PVR can't tune channels after recording a show).
+[19:59] <sabhain> superm1 & tgm4883: about that time, my wife should be heading back to work and our schedule will be getting back to normal, including being able to have the system in various states of disrepair during the daytime.
+[19:59] <superm1> cool, well whenever you get time, we're around
+[19:59] <superm1> we're not doing another release until 14.04, so that's where this work you do will land
+[20:00] <superm1> (other than point releases with extra hardware support)
+[20:00] <tgm4883> well it's diskless, so it would be in all releases since it's a MCC plugin
+[20:00] <sabhain> superm1 & tgm4883: one question I do have is how / where to maintain what I have working now for comparison.  In 10.04 anyway, the hardest part about diskless was getting the DHCP arguments (PXE ... etc.) correct.  Once you had that, it "just worked."
+[20:01] <sabhain> so since I have a fully working 10.04 with diskless, do I need to maintain that, or is having access to the old scripts sufficient?
+[20:01] <superm1> sabhain: well i think that depends on what exactly you have in mind of doing
+[20:01] <superm1> you can easily capture everything in /etc if you want to refer back to settings
+[20:02] <sabhain> my understanding in what I've been playing with the past couple of weeks is that the ltsp setup is the altered pipe that may need to be restored.
+[20:02] <superm1> but everything else in /usr and such should be available in packages
+[20:03] <sabhain> superm1: I think the value add here would be to get back to the point where building the images with the --mythbuntu argument works.  But that might be with ltsp and not mythbuntu?
+[20:03] <superm1> well that's doable, the ltsp packages would probably need patching
+[20:04] <superm1> mythbuntu exists within the ubuntu archive, there's plenty of stuff we don't directly ship but that needs patching to work for how we want to use it though
+[20:04] <superm1> i think if you could get it to the point that it's a command or two to deploy a mythbuntu specific LTSP setup that would be ideal
+[20:04] <superm1> ltsp-build-client --mythbuntu or something like that
+[20:04] <sabhain> if we could get that functioning again, I think it'd restore the diskless frontends in 12.04, which to my tinkering isn't quite workable.
+[20:05] <sabhain> agree entirely on that.  I'll try and start setting aside the time to read.
+[20:05] <superm1> cool
+[20:05] <tgm4883> and I'm sure that if you want to work on that, we've got developers in the dev channel that can answer any mythbuntu specific questions you have
+[20:05] <tgm4883> not sure any of us use the ltsp stuff though
+[20:06] <superm1> i used to use it
+[20:07] <tgm4883> "used to"
+[20:07] <superm1> well i mean i used to have an LTSP frontend setup
+[20:07] <sabhain> right .. but there do appear to be a handful of people snooping around on the forums about it, and there was someone here last week right when I started coming back in.
+[20:07] <superm1> it worked out really well actually
+[20:08] <sabhain> it's awesome.  I know it's really easy (and now cheap) to do something on a jump drive .. but the ltsp really made my home setup sing.
+[20:09] <sabhain> a guy here .. whyzzard?? .. last week was trying to figure out how to upgrade his diskless frontend w/ a slave backend.  That hadn't even occured to me to try.
+[20:56] <qwebirc21299> quick question...how do I change logging back to /var/log/mythtv instead of syslog with myth 0.26?
+[20:58] <superm1> qwebirc21299: it should have transitioned you, but you need to reboot after upgrade or restart rsyslogd
+[20:59] <qwebirc21299> I've rebooted a bunch of times since upgrading to 0.26...but I'm still seeing myth messages in syslog
+[21:00] <qwebirc21299> looks like mythbackend is started with --syslog local7 --user mythtv
+[21:01] <superm1> qwebirc21299: and there should be a bunch of files that configure rsyslog to log to /var/log/mythtv
+[21:01] <superm1>  /etc/rsyslog.d/40-mythtv.conf
+[21:02] <qwebirc21299> I see that file on my server....should I look for something specific inside?
+[21:03] <superm1> well that's the file that we ship that should cause it to log to /var/log/mythtv files
+[21:04] <superm1> what are the permissions on the files in /var/log/mythtv?
+[21:04] <superm1> they should all be owned by syslog:adm
+[21:04] <qwebirc21299> looks like maybe it's only mythlogserver messages that I'm seeing in syslog
+[21:04] <superm1> that's possible, we might be missing something to log those out to /var/log/mythtv
+[21:05] <qwebirc21299> I don't see an entry in 40-mythtv.conf for mythlogserver...I think my confusion is also just learning the new system
+[21:07] <qwebirc21299> maybe my question should be how do I turn on logging for mythcommflag....I just assumed it was going to syslog
+[21:09] <superm1> i think it can only be turned on for manual runs http://www.mythtv.org/wiki/Mythcommflag
+[21:09] <superm1> so if you run it on a program by hand you can run it with logging flags
+[21:11] <qwebirc21299> ah...so the same --syslog local7 should send to a file?
+[21:14] <superm1> i think so
+[21:16] <whyzzyrd> evening. Please can someone suggest how to upgrade 11.10 mythbuntu diskless frontend/slave backends to 12.04 LTS, whilst keeping them diskless.
+[21:16] <tgm4883> sabhain, ^
+[21:17] <whyzzyrd> spoke to sabhain before, a week or so back
+[21:18] <tgm4883> whyzzyrd, I'm going to say he is the expert on it, only because none of the developers use diskless
+[21:18] <sabhain> whyzzyrd .. hope you're well.  I've been slugging through some of those links we exchanged.  Not much luck here yet, I'm afraid.
+[21:19] <whyzzyrd> I've been farking about with ltsp fat clients, to find that so much has changed, that unless I build an entire test setup, I can't keep my old stuff working alongside anything I'm trying
+[21:19] <whyzzyrd> which means that it's annoying swmbo
+[21:19] <sabhain> hoping to dig deeper into things in a few weeks .. that's the earliest I can get around to this.  I'm in need of maintaining the WAF on the production end of things also.
+[21:19] <whyzzyrd> indeed
+[21:20] <sabhain> i'm determined to keep diskless .. and to adopt your setup of diskless slave backends
+[21:20] <whyzzyrd> I looked at minimyth, but I'd really rather have the overlay model of being able to log into the client, edit a file, and not have it disappear over a reboot
+[21:20] <sabhain> ^ this
+[21:21] <sabhain> very important to me .. seems to me it's the way it should always be.
+[21:21] <whyzzyrd> I suppose I've got used to it being that way too, and I'm not sure why anyone would want to "unsupport" that..
+[21:22] <sabhain> my read of it is that no one elected to "unsupport" as much as the mythbuntu frontend thing wasn't moving quickly to stay with the LTSP as it was iterating.
+[21:23] <whyzzyrd> I got the impression that there was the feeling that nobody used it either..
+[21:24] <tgm4883> what actually happened was, laga was the one who wrote all the ltsp stuff for us. He left for university and nobody else picked it up.
+[21:24] <tgm4883> MCC also went though a rewrite, so the plugin no longer worked with it
+[21:25] <tgm4883> well, technically, the plugin didn't exist
+[21:28] <whyzzyrd> where did he go to uni?
+[21:29] <tgm4883> whyzzyrd, somewhere in germany
+[21:29] <whyzzyrd> cool
+[21:31] <whyzzyrd> even if one were to fix it, MCC wouldn't get updated until the next LTS release?
+[21:32] <tgm4883> MCC gets updated every release
+[21:32] <tgm4883> we don't release ISO's until the next LTS, but anyone can install MCC and configure Mythbuntu from a default install
+[21:33] <whyzzyrd> anyone any idea how much work it'd be to fix?
+[21:33] <whyzzyrd> I don't mean just fix-up the boot scripts, which appear to be foo because nbd-client's syntax has changed
+[21:36] <whyzzyrd> ok, next stupid question. was the --mythbuntu switches in the mainline ltsp package, or in a mythbuntu-specific build of the ltsp tree?
+[21:39] <sabhain> I was *never* able to use the MCC stuff.  I did my setup entirely commandline.
+[21:40] <whyzzyrd> I did mine all commandline too :)
+[21:40] <whyzzyrd> but then I'm old school
+[21:40] <sabhain> is there any other school?
+[21:40] <whyzzyrd> doubt it
+[21:43] <whyzzyrd> I have a distinct feeling though that this'll never be supported again
+[21:43] <tgm4883> whyzzyrd, IDK where it was. It would have had to be in the repos, so possibly part of mainline ltsp
+[21:43] <whyzzyrd> it was taken out of the ubuntu ltsp packages effectively 3 release ago
+[21:43] <whyzzyrd> tgm4883, it was in mainlain
+[21:43] <whyzzyrd> urk
+[21:44] <whyzzyrd> mainline
+[21:44] <tgm4883> whyzzyrd, well, the only way it's going to be supported is to get something to A) fix it up so it works on current versions, and B) support it
+[21:45] <whyzzyrd> tgm4883, the support aspect has always put me off.
+[21:45] <tgm4883> why?
+[21:46] <whyzzyrd> tgm4883, releasing anything under anything more than the buggeroff license implies having time to do something about it.
+[21:46] <whyzzyrd> I presume you're familiar with the buggeroff license?
+[21:46] <tgm4883> I can gather what it means
+[21:47] <sabhain> whyzzyrd are you someone capable of putting a dent in "A" ?
+[21:49] <whyzzyrd> depends how much coding it would take
+[21:49]  * whyzzyrd isn't the world's most fantastic coder either
+[21:50] <whyzzyrd> I'll check out a copy of the old packages, and take a look
+[21:51]  * whyzzyrd runs networks etc for a living
+[21:52] <sabhain> i'm game to learn a bit and maybe help debug and then support
+[21:52]  * sabhain runs networks for fun.  Designs orthopaedics for a living
+[21:54] <tgm4883> sabhain, mind if I quote something you said earlier
+[21:54] <sabhain> tgm4883 have at it
+[21:54] <tgm4883> sabhain, thanks
+[21:54] <whyzzyrd> tgm4883, what are you quoting ?
+[21:55] <tgm4883> whyzzyrd, it's for a blog post
+[21:55] <tgm4883> * sabhain wants to be laga in his next life and restore the diskless stuff to its awesomeness of 10.04
+[21:55] <tgm4883> <tgm4883> sabhain, then the first step, would be joining #ubuntu-mythtv-dev
+[21:55] <tgm4883> <sabhain> tgm4883, lol then step 0 would be to have time and learn programming beyond F90
+[21:55] <tgm4883> <tgm4883> sabhain, possibly. I didn't know python though before I started helping out
+[21:56] <whyzzyrd> someone facebooked a colleague the other day with some quote about deep-frying his salad..
+[21:57] <sabhain> deep fried kale could be good
+[21:57] <whyzzyrd> in a tempura batter
+=== dkeith__ is now known as dkeith
+[21:57] <whyzzyrd> but then, like the onion rings our local chip shop does, mighty tasty, but terrible for the waistline.
+[21:59] <whyzzyrd> I suspect that part of my problem came that my hobby became my degree, became my job..
+[21:59] <sabhain> cobbler's kids ...
+[22:00] <whyzzyrd> that a bit like mechanic's cars?
+[22:00] <sabhain> aye
+[22:01] <whyzzyrd> I'm off to go look at the source pacakges for ltsp from oneric
+[22:01] <sabhain> drives my wife nuts that I suck at preventative maintenance on the cars, but I'll gladly dive into the forums and sort out how to change an air suspension in my garage to save a few hundred quid
+[22:02] <whyzzyrd> ahh, but by the time you've counted your time, did it save you anything?
+[22:04] <whyzzyrd> I must admit, I tend to only do things to cars now to show the kids how
+[22:05] <tgm4883> whyzzyrd, relevant http://www.smbc-comics.com/?id=2839
+[22:06] <whyzzyrd> tgm4883, http://xkcd.com/418/
+[22:06] <tgm4883> nice
+[22:12] <whyzzyrd> well, the mythbuntu plugin for ltsp looks relatively simple (ie it's a shell script)
+[22:13] <whyzzyrd> now to fetch the rest.
+[22:17] <whyzzyrd> mythbuntu-diskless is still in raring
+[22:20] <whyzzyrd> ls
+[22:20] <sabhain> whyzzyrd usually yes.  Air springs on the back of the wife's kids mobile saved me probably $800 on a 1.5 hour job.  Took longer to jack stand the car than it did to replace them.
+[22:20] <sabhain> and unless you have a terrible time breaking a bolt free .. you should always come out way ahead on brake work.
+[22:21] <whyzzyrd> yeah, brake disks and pads are a doddle normally
+[22:22] <whyzzyrd> used to regularly change engines too :)
+[22:23] <whyzzyrd> friend had a kit car, and the radiator wasn't up to cooling the extra heat the (not recommended) turbocharger produced.
+[22:24] <whyzzyrd> hence a perpetual stream of rebuilding and skimming and swapping etc.
+=== dkeith__ is now known as dkeith
+[22:52] <whyzzyrd> heh, ltsp documentation is very opaque
+[22:53] <sabhain> check in with everyone tomorrow
+[22:57] <whyzzyrd> ltsp moved on a number of versions very quickly
+[23:17] <whyzzyrd> right, it's getting too late to do anything more, so I'll take a look tomorrow.

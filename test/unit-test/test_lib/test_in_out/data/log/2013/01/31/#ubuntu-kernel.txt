@@ -1,0 +1,159 @@
+=== yofel_ is now known as yofel
+=== smb` is now known as smb
+[07:55] <smb> morning
+[07:56] <ppisati> smb: hey
+=== henrix_` is now known as henrix
+[10:11] <ppisati> brb
+[11:30] <maswan> Hey, any reason for not building the kernels with CONFIG_NFS_V4_1? Even RHEL has it these days, and it is fairly annoying to have to maintain custom kernels just to be able to mount our storage...
+[11:42]  * ppisati -> out for lunch
+[12:10] <jpds> maswan: Someone likely just needs to add it, Debian got it recently: http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=+627655
+[12:15] <maswan> Hope someone<tm> does it soon then. :)
+[12:18] <henrix> maswan: i'm not aware of any reason not to include this option, but if you want it included, the best way is to open a bug with this request
+[12:20] <maswan> will do
+[12:22] <apw> henrix, isn't it on in raring already?
+[12:22] <maswan> would be most excellent if it could make it's way to a precise update too.
+[12:22] <maswan> or is that too invasive?
+[12:23] <apw> debian.master/config/config.common.ubuntu:CONFIG_NFS_V4_1=y
+[12:23] <apw> so definatly already in raring
+[12:23] <maswan> excellent
+[12:23] <apw> it is not on in Q so I assume not before that either.  turning it on in older releases is harder, it would definatly need a bug, and lots of testing
+[12:24] <henrix> apw: yes, its in raring
+[12:24] <henrix> i checked in P and Q, and it is not there
+[12:24] <maswan> yeah, we know it isn't in P, since we have a bunch of P servers that would like it. :)
+[12:25]  * apw concurs
+[12:26] <henrix> maswan: could you please open a bug with this and paste here the bug #? i'll follow up with this
+[12:27] <maswan> henrix: Yeah, dusting off my launchpad:ese now. :)
+[12:27] <maswan> Hm. A possible option for us would also be an r-to-p kernel backport in the wait for a new lts, I guess, assuming it works.
+[12:28] <henrix> maswan: r on p is also possible, yes
+[12:29] <maswan> But if there is a major kernel update scheduled for P anyway, this is a change that I'd very much would like to be considered for it
+[12:31] <henrix> this change would be included in the regular SRU cycles, not really in a major kernel update
+[12:32]  * maswan nods
+[12:39] <maswan> henrix: 1111416
+[12:41] <henrix> maswan: ack, thanks. i'll make sure we'll have this option enabled soon
+[12:43]  * henrix -> lunch
+[12:48] <maswan> awesome!
+=== smartboyhw_ is now known as smartboyhw
+[14:09] <apw> bug #1111416
+[14:09] <ubot2> Launchpad bug 1111416 in linux (Ubuntu Quantal) "CONFIG_NFS_V4_1=y in Precise kernel update, please" [Undecided,New] https://launchpad.net/bugs/1111416
+[14:10] <apw> maswan, when you roll custom kernels is all you are changing from the main P kernel that option?  and if so and you have tested or even production run with that it would be good infrmation to have in the bug
+[14:11] <apw> it all helps to tell us it is stable and feature complete back there
+[14:14] <maswan> apw: We haven't yet, we're just deploying the new storage now. Will prod the guys in charge of that project to do that and test it proper.
+[14:14] <apw> maswan, or get henrix to post an 'official' test kernel with the changes he intends to apply 
+[14:14] <maswan> apw: that would be even better
+[14:15] <henrix> apw: maswan: will do that. i'll post a link in the bug to Q and P test kernels before submitting the patches
+[14:15] <maswan> henrix: excellent!
+[15:41] <apw> ppisati, i have been running your -omap kernel on omap4, and i think it just wedged
+[15:41] <apw> ppisati, seen anything like that?
+[15:42] <ppisati> apw: uhm no
+[15:42] <ppisati> apw: did it print anything?
+[15:42] <apw> ppisati, also i seem to have lost my heartbeat
+[15:42] <apw> ppisati, not anywhere i could see
+[15:42] <ppisati> apw: i compiled a kernel oevr usb and it was ok
+[15:46] <apw> ppisati, http://paste.ubuntu.com/1593378/
+[15:48] <henrix> maswan: i've just updated the bug with an URL to test kernels
+[15:50] <ppisati> apw: ok, i saw it in the past
+[15:52] <apw> ppisati, so did you say there was a bug open on this one ?
+[15:52] <apw> ppisati, i am probabally pretty rare in actually having ipv6 to trigger this
+[15:53] <maswan> henrix: thank you, we'll see if we can get some testing done tomorrow, or next week.
+[15:53] <apw> ppisati, if that is the actual cause of course
+[15:53] <apw> ppisati, anyhow i have also lost my heartbeat on that box, is that gone in 3.8
+[15:53] <henrix> maswan: sure, no prob. just update the bug with any info, as i'll keep an eye on it
+[15:54] <ppisati> apw: led? probably config skew
+[15:54] <apw> ppisati, yeah the flash-flash  flash-flash  related to load thing
+[15:54] <ppisati> apw: there's a but about a slowpath being hit, and the reporter said the board was both ipv4/6 connected
+[15:54] <apw> ppisati, now i have no lights when it is idle, which is 
+[15:54] <ppisati> apw: https://bugs.launchpad.net/ubuntu/+source/linux-ti-omap4/+bug/1030397
+[15:54] <ubot2> Ubuntu bug 1030397 in linux-ti-omap4 (Ubuntu) "slowpath in tcp_recvmsg on pandaboard es" [Medium,Incomplete]
+[15:54] <apw> not what i am used to
+[15:55] <ppisati> apw: ok, i'll turn heartbeat on
+[15:55]  * ppisati has used more the imx6 lately
+[15:55] <ppisati> that's why i probably didn't notice it
+[15:56] <apw> ppisati, that bug looks different to me, here is a real BUG
+[15:56] <ppisati> apw: yes, it's different
+[15:56] <ppisati> apw: but i think i saw it
+[15:57] <ppisati> apw: apw and it didn't hangs my board
+[15:57] <apw> it is hard to know whether it was the last thing, as the log is truncated at that point
+[15:57] <ppisati> apw: ok
+[15:57] <ppisati> i'll push 2 patches for imx6, then i'll switch back to see this on omap4
+[16:03] <apw>  ppisati np thanks
+[16:03] <apw> ppisati, i'll monitor it for a bit to see if it does it again
+[16:18] <caribou_> ivoks: ping
+[16:21] <ivoks> caribou_: yes?
+[16:21] <caribou_> ivoks: any idea of what's happening with the SRU on https://bugs.launchpad.net/ubuntu/+source/lvm2/+bug/833368
+[16:21] <ubot2> Ubuntu bug 833368 in lvm2 (Ubuntu Precise) "clustered lvm commands fail with "activation/monitoring=0 is incompatible with clustered Volume Group" error" [Undecided,In progress]
+[16:22] <xnox> i am meant to upload it.
+[16:22] <xnox> but got carried away in the sprint this week.
+[16:22] <ivoks> caribou_: ^ i'm not the right person for the question :)
+[16:22] <xnox> caribou_: is it urgent?
+[16:22] <caribou_> xnox: ah, ok I just didn't see it in any of the SRU queues
+[16:51]  * ppisati goes away for 20mins
+[17:03] <apw> ppisati, elloco died again .. this time with the disk light on
+[17:18] <ppisati> apw: let me turn on my panda
+[17:20] <apw> ppisati, nothing in syslog this time, just wedged
+=== kentb is now known as kentb-lunch
+=== ogra_ is now known as ogra
+[17:35] <arges> anybody getting 'fail to flush all tx fifo queues' with 3.8.0-2 on their centrino intel w/ iwlwifi driver?
+[17:36] <henrix> arges: yeah, i've seen it as well. but it should be fixed with c3e5d7181afb66657393066bccce0956fab09ab3
+[17:37] <arges> henrix: ok so that's in the next raring kernel?
+[17:37] <henrix> (haven't tested it myself as i rarely use wifi)
+[17:37] <arges> 3.8.0-3?
+[17:38] <henrix> arges: i guess so, its mainlined
+[17:39] <henrix> arges: here's the lkml thread i recently saw: https://lkml.org/lkml/2013/1/28/603
+[17:41] <ogasawara> arges: I don't think we have it just yet in raring, but I'll cherry-pick it for now
+[17:41] <arges> ogasawara: or I can do it. either way : )
+[17:41] <ogasawara> arges: meh, easy enough for me.  I'll let you build your own kernel though.  we just missed the upload this morning.
+[17:42] <arges> ogasawara: ok
+[17:43] <henrix> arges: ogasawara: note that i haven't tested it myself -- i just saw this thread in lkml, which caught my attention because i hit the same issue during weekend
+[17:44] <henrix> (and completely forgot about it until arges remind me about it :-) )
+[17:44] <arges> well i can test 
+[17:44] <ogasawara> arges: so maybe let me know how your test goes first and then I'll cherry-pick it
+[17:44] <arges> ogasawara: ack
+[17:44] <arges> should i file a new bug to track this btw?
+[17:45] <ogasawara> arges: nah, since it's the dev release we can be a little more lenient with the process
+[17:45] <arges> ok great. baking a new kernel...
+[17:45] <ogasawara> arges: plus we'll eventually pick it up whenever -rc6 goes out and we rebase
+=== henrix is now known as henrix_
+=== henrix_ is now known as henrix
+[18:06] <ppisati> apw: http://paste.ubuntu.com/1593699/
+[18:06] <ppisati> apw: bt it's still compiling
+[18:07] <apw> yeah mine did that a lot before it stopped dead
+[18:11] <ppisati> apw: i'll let it finish a kernel compilation, then i'll ifup an ipv6 interface
+[18:28] <ppisati> http://www.theregister.co.uk/2013/01/31/ubuntu_uefi_bricking_samsung_laptops/
+=== kentb-lunch is now known as kentb
+[18:58] <apw> ppisati, yep, we've been trying to get fixes for that out for months
+[18:58] <apw> ppisati, ultimatly it is terrible firmware which loses its mind
+[19:07] <apw> ppisati, how do the dtbs get supplied to the kernel for the omap3/4 use ?
+[19:07] <ppisati> apw: we don't use them in panda&c yet
+[19:07] <ppisati> apw: if you want to use it, you need to manually copy to the fat partition
+[19:08] <apw> ppisati, so how does the kernel know it is for omap3/4 and adapt without the dtb
+[19:08] <ppisati> apw: and then modifiy uEnv.txt to load it
+[19:08] <apw> i thought the point was it used the dtb to know what it was on
+[19:09] <infinity> ppisati: What Andy's asking isn't "how do I use a dtb on Panda", but "how does the kernel know it's booting on a Panda"?
+[19:09] <ppisati> apw: arm/arch/mach-omap/boards* file are still compiled in
+[19:09] <infinity> ppisati: And if the answer is "it's build to assume it's on OMAP", that could explain why we can't make it work on vexpress.
+[19:09] <apw> ppisati, yeah i have been trying to boot the same kenrel on vexpress and its not having it for me at least, dispite appearing to be enabled
+[19:10] <apw> ppisati, even supplying a dt
+[19:10] <apw> dtb to qemu ...
+[19:10] <ppisati> apw: let me try
+[19:10] <apw> ppisati, thanks
+[19:16] <ppisati> apw: ah, maybe i know what's going on
+[19:17] <ppisati> apw: i think they are attaching the DTB at the end of the kernel
+[19:17] <ppisati> apw: so you don't see they are passing it
+[19:17] <ppisati> apw: and of course we can't do it
+[19:18] <apw> so you mean i would need to add the dtb to vmlinux for it to work
+[19:18] <apw> vmlinuz even
+[19:18] <apw> even in qemu with -dtb support
+[19:20] <apw> ppisati, can i leave you to try and figure out if it can be done manually
+[19:20] <apw> ppisati, so we can later figure out what one has to do to make it work right
+[19:25] <ppisati> apw: yep
+[19:25] <apw> thanks
+[19:32]  * ppisati goes for some dinner
+=== AlanChicken is now known as alanbell
+=== alanbell is now known as AlanBell
+[20:17]  * ogasawara lunch
+=== henrix is now known as henrix_
+[20:50] <ricotz> jsalisbury, hi :). do made some progress on https://bugs.launchpad.net/ubuntu/+source/linux/+bug/1094722 ?
+[20:50] <ubot2> Ubuntu bug 1094722 in linux (Ubuntu) "Raring: regression: fan keeps spinning at full speed after suspend" [Medium,Confirmed]
+=== emma_ is now known as emma
+[23:21]  * ppisati -> EOD
+=== emma is now known as em

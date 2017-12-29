@@ -1,0 +1,333 @@
+=== slank is now known as slank_away
+[07:49] <rogpeppe> davecheney: ping
+[07:49] <rogpeppe> mornin' all!
+[08:19] <rogpeppe> wallyworld_: you around?
+[10:18] <aram> hello.
+[10:31] <rogpeppe> aram, dimitern: hiya
+[10:32] <dimitern> rogpeppe, aram: morning :)
+[10:32] <rogpeppe> dimitern: openstack tests are broken in trunk BTW, if you don't have OS_TENANT_NAME set
+[10:32] <dimitern> rogpeppe: hmm
+[10:32] <dimitern> rogpeppe: that's now or the branch I proposed yesterday?
+[10:33] <rogpeppe> dimitern: currently
+[10:34] <rogpeppe> dimitern: it would also be nice if the goose "required environment variable" error message printed the name of the required environment variable rather than the struct field name...
+[10:34] <rogpeppe> "required environment variable not set for credentials attribute: TenantName" makes it look as if the required env var is $TenantName
+[10:35] <dimitern> rogpeppe: tell me about it :) I did it like that originally, but.. anyway I'll take a look
+[10:51] <dimitern> rogpeppe: fixed https://codereview.appspot.com/7196043 - this is trivial, if you think it's ok, I'll land it now
+[10:51] <jam> mgz: poke
+[10:52] <rogpeppe> dimitern: LGTM. agreed trivial.
+[10:52] <dimitern> rogpeppe: 10x, submitting then
+[10:55] <dimitern> rogpeppe: how about looking at my bootstrap branch - https://codereview.appspot.com/7181046/
+[10:55] <rogpeppe> dimitern: will do
+[10:56] <mgz> jam: hey
+[10:56] <jam> mgz: I had some questions about how to setup tarmac, and thought you might be good to bounce off for feedback.
+[10:56] <jam> I think I have it up and running, and a small patch to handle some stuff I didn't realize.
+[10:56] <jam> However, what branch do we want it to actually manage?
+[10:57] <jam> (do we want to add it to ~gophers, and give it write access there, do we want a different team, a branch only accessble by goose-bot, ... ?)
+[10:59] <jam> (I guess the next direct step is to add support for running juju-core tests before landing trunk code, but I'd like to answer the above first)
+[10:59] <mgz> hm, the bzr-pqm way is to have the branch owned by the bot
+[10:59] <jam> mgz: right
+[10:59] <jam> the major downside is the "manual escape hatch"
+[10:59] <mgz> but being able to get around it and commit anyway will probably be useful for now
+[10:59] <jam> especially because of wanting to be able to land goose code and juju-core code concurrently
+[11:00] <mgz> yup.
+[11:01] <mgz> so, maybe we want a new team that the bot can be a member of to own the goose code
+[11:04] <jam> I tend to be cautious, so giving it full '~gophers' access seemed a bit much, but it is also a fair amount of bookkeeping just to do goose.
+[11:04] <mgz> yeah.
+[11:05] <dimitern> jam: but isn't that like the other go projects? all owned by ~gophers?
+[11:07] <jam> dimitern: sure, and all of us have the ability to push whatever we want to them. I'm hesitant to allow a bot the same access.
+[11:08] <mgz> it's easy enough to make ~gophers a member of the group that owns goose trunk, we just don't want the bot to have too much power :)
+[11:08] <jam> dimitern: it also stems from a group that doesn't have a habit of using a bot to control their trunks, vs the launchpad group using that method for a long time.
+[11:08] <dimitern> jam: wouldn't it need to merge and push changes?
+[11:08] <jam> dimitern: goose bot needs to be able to write to goose's trunk
+[11:08] <jam> I'm not sure that it needs rights to everything else owned by ~gophers
+[11:08] <jam> (juju-core, goamz, etc, etc.)
+[11:09] <dimitern> you don't trust the bot? c'mon :D
+[11:09] <dimitern> it's a nice guy
+[11:09] <jam> dimitern: the inverse is actually just as important (to me). I would rather the equivalent of having to run 'sudo' to be able to alter trunk.
+[11:10] <jam> so that: yes anyone on our team can fix trunk if we need to, but we have to do so very explicitly instead of accidentally
+[11:10] <dimitern> jam, makes sense - preventing accidental mistakes, provided it doesn't impede normal workflow
+[11:12] <rogpeppe> dimitern: reviewed
+[11:12] <jam> so mostly I'm trying to find the tasteful point in balancing these desires, adding goose-bot to ~gophers is the most expedient solution, though not one I personally control.
+[11:12] <jam> as is having the branch owned explicitly by goose-bot
+[11:13] <jam> I suppose goose-bot the launchpad account could just have us all know the password, and all have our ssh-keys attached to the account.
+[11:13] <jam> mgz: ^^?
+[11:13] <jam> that would give us "do X to become the goose-bot superuser"
+[11:13] <dimitern> rogpeppe: tyvm
+[11:14] <jam> mgz: ah, but the problem ends up that only goose-bot can approve changes to ~goose-bot/ branches. I'll have to look into the review side of things to figure out how to fix that
+[11:14] <mgz> that would probably be okay
+[11:15] <jam> mgz: looks like you can set a "reviewers" on a branch
+[11:15] <jam> which I can just make ~gophers
+[11:15] <mgz> yeah
+[11:15] <jam> so they can approve branches even though they can't commit directly to it.
+[11:35] <mgz> jam: poke?
+[11:35] <wallyworld_> rogpeppe: i am around now, am in a stand up
+[11:35] <rogpeppe> wallyworld_: np, the issue's been fixed now.
+[11:36] <wallyworld_> ok, sorry i was at soccer training
+[11:58] <rogpeppe> wallyworld_: i only pinged you 'cos you were the only one that showed up on the IRC user list :-)
+[11:58] <wallyworld_> ah ok
+[11:58] <wallyworld_> i didn't log out at my EOD
+[11:59] <rogpeppe> a couple of CLs if anyone wants. the first one is pretty trivial, the second a bit bigger: https://codereview.appspot.com/7197043/ https://codereview.appspot.com/7133063/
+[11:59] <dimitern> rogpeppe: I'm on the first one
+[11:59] <rogpeppe> dimitern: thanks
+=== jtv1 is now known as jtv
+[12:04] <dimitern> rogpeppe: reviewed
+[12:04] <rogpeppe> dimitern: thanks
+[12:04] <rogpeppe> anyone else wanna take it to the magic two LGTMs? :-) https://codereview.appspot.com/7197043/
+[12:05] <dimitern> rogpeppe: it's weird though, unlike the usual case the first comment wasn't "Please take a look" from you
+[12:06] <rogpeppe> dimitern: ha, i'd forgotten to lbox propose it without -wip
+[12:07] <rogpeppe> dimitern: it's got that message now :-)
+[12:07] <dimitern> rogpeppe: ok :)
+[12:24] <rogpeppe> niemeyer: yo!
+[12:25] <niemeyer> rogpeppe: Heya!
+[12:28] <dimitern> niemeyer: hey!
+[12:28] <niemeyer> dimitern: Hey there
+[12:28] <dimitern> niemeyer: would you like to take a look at this - https://codereview.appspot.com/7181046/
+[12:34] <jam> mgz, wallyworld_, dimitern: I just sent you guys an email with the security keys, etc you'll need. I used your public GPG keys, but if you need help figuring out how to decode them, just ask.
+[12:34] <dimitern> jam: cheers
+[12:37] <dimitern> jam: yep, I have to replace that PGP key for which I forgot the passphrase a long time ago
+[12:38] <dimitern> jam: I'll do it today and you can resend it with my new key perhaps?
+[12:42] <rogpeppe> niemeyer: small CL to make add multiple addrs to the API: https://codereview.appspot.com/7197043/
+[12:43] <niemeyer> dimitern: CHecking
+[12:43] <dimitern> thanks
+[12:43] <niemeyer> rogpeppe: Super, thanks
+[12:45] <niemeyer> rogpeppe: Btw, have you had a chance to check that bug Dave filed?
+[12:45] <rogpeppe> niemeyer: which one?
+[12:45] <niemeyer> rogpeppe: The one saying bootstrap is broken
+[12:46] <rogpeppe> niemeyer: i couldn't reproduce it. i suspect he was running without --upload-tools.
+[12:47] <niemeyer> rogpeppe: Have you tried in the regions he suggested?
+[12:47] <niemeyer> rogpeppe: Or at least one of them?
+[12:48] <rogpeppe> niemeyer: i'll do that. the error in the bug report "error: API entity name not found in configuration" should not be possible to happen in the branch he was talking about.
+[12:48] <rogpeppe> niemeyer: but there may well be another bug
+[12:48] <niemeyer> rogpeppe: I'm poking because he asked there, so it'd be good to at least interact to clarify the bug
+[12:49] <niemeyer> Since Dave isn't on the same timezone, if we don't get back to him on async locations, we won't talk
+[12:51] <niemeyer> dimitern: Any significant change to the ec2 logic on that bootstrap function?
+[12:52] <dimitern> niemeyer: how do you mean?
+[12:52] <dimitern> niemeyer: no, it's essentially the same
+[12:52] <dimitern> niemeyer: the Bootstrap() code, that is
+[12:54] <rogpeppe> niemeyer: i'm trying it now
+[12:55] <niemeyer> rogpeppe: Thanks a lot
+[12:55] <niemeyer> dimitern: Cool, I was really just curious if there was anything that had to be done differently there
+[12:55] <niemeyer> dimitern: It's great that there isn't (except for Roger's point in the CL, which I agree with)
+[12:56] <niemeyer> dimitern: Have you seen rogpeppe's comment?
+[12:56] <niemeyer> dimitern: Are there consistency issues there too?
+[12:56] <dimitern> niemeyer: well, it's seems not - both tests (svc doubles and live) pass - although on canonistack the lack of floating IPs fails the test, but everything else works
+[12:57] <dimitern> niemeyer: about consistency - not sure how to test that, but I've run into other consistency issues with OS on some API calls
+[12:57] <niemeyer> dimitern: Oh, consistency issues and "seems" don't go well together :-)
+[12:58] <niemeyer> dimitern: The idea, in S3, is that the answer is totally arbitrary for an undefined period of time
+[12:58] <rogpeppe> dimitern: i suggest starting without any of the eventual-consistency loops, and seeing if things still work.
+[12:58] <niemeyer> dimitern: You create, and it's not there.. you delete, and it's still there
+[12:58] <niemeyer> rogpeppe: Please no
+[12:58] <dimitern> niemeyer: I've had the same issues with swift while doing live tests
+[12:58] <niemeyer> rogpeppe: We already have the logic for that.. let's not introduce the bug to see if we can hit it
+[12:59] <dimitern> niemeyer: creating/deleting/modifying containers in quick succession
+[12:59] <niemeyer> rogpeppe: I agree with you cleaner would be better, but let's ask someone that actually knows that stuff if OpenStack is consistent or not
+[12:59] <rogpeppe> niemeyer: i suppose so. but if there are no such issues in openstack, then that code is more complex for no good reason
+[12:59] <rogpeppe> niemeyer: yes, that's a good plan
+[13:00] <niemeyer> rogpeppe: Sure, that's the part I agree.. I just don't think rolling back something we know works well to wait for the bug is great
+[13:00] <niemeyer> dimitern: Oh, then it has the same issues
+[13:00] <dimitern> rogpeppe: well, we can ask yes, but how can it be consistent, when the arch is the same - distributed, multi-tier, API disconnected from the actual service, etc.
+[13:00] <niemeyer> dimitern, rogpeppe: I suggest just leaving the same logic there then
+[13:01] <dimitern> niemeyer: yeah, I agree
+[13:01] <niemeyer> dimitern, rogpeppe: If we start to have a few other backends with the exact same logic of Bootstrap, we should factor it out..
+[13:01] <rogpeppe> niemeyer: agreed
+[13:01] <niemeyer> dimitern, rogpeppe: That said, I think OpenStack is perhaps too similar to EC2.. I suggest seeing how the others look like before going over the trouble of generalizing
+[13:02] <rogpeppe> niemeyer: +1
+[13:02] <dimitern> niemeyer: +1 as well - let's not refactor/optimize prematurely :)
+[13:06] <niemeyer> dimitern: LGTM
+[13:07] <niemeyer> dimitern: Does it work for real already?
+[13:07] <dimitern> niemeyer: great, 10x
+[13:07] <dimitern> niemeyer: yes it does on canonistack, partially
+[13:08] <dimitern> niemeyer: starting the instance works, putting the tools, all ok, except for the floating iP shortage, which fails to add an address to the machine after building
+[13:14] <dimitern> rogpeppe: can I consider your review as LGTM as well, with the points mentioned addressed?
+[13:15] <rogpeppe> dimitern: i'll have a quick once-over, if that's ok
+[13:16] <rogpeppe> niemeyer: i have a suspicion that eventual-consistency issues are fouling upload-tools.
+[13:16] <dimitern> rogpeppe: you mean repropose it after changes before submitting?
+[13:16] <rogpeppe> dimitern: yeah
+[13:16] <dimitern> rogpeppe: sure
+[13:18] <rogpeppe> niemeyer: ah, no that's not it.
+[13:20] <dimitern> rogpeppe: reproposed - https://codereview.appspot.com/7181046/
+[13:21] <rogpeppe> dimitern: looking
+[13:22] <rogpeppe> dimitern: LGTM
+[13:22] <dimitern> rogpeppe: cheers
+[13:23] <rogpeppe> niemeyer: bootstrap against sa-east-1 works fine for me, although it failed for me first time because i used a different juju to the one it was uploading
+[13:24] <rogpeppe> niemeyer: i suspect that was dfc's issue too
+[13:24] <niemeyer> rogpeppe: Curious.. was the symptom the same?
+[13:24] <rogpeppe> niemeyer: similar
+[13:25] <rogpeppe> niemeyer: the problem (for me) was that it was making the cloudinit script with an old version of the agent config data structure.
+[13:27] <niemeyer> rogpeppe: How did that change again?
+[13:27] <niemeyer> rogpeppe: This kind of thing is interesting to observe and keep in mind
+[13:27] <niemeyer> rogpeppe: THis is a major breakage
+[13:27] <rogpeppe> niemeyer: in my case, i was using a version that produced JSON, not YAML
+[13:27] <niemeyer> rogpeppe: Ah, that
+[13:27] <rogpeppe> niemeyer: the problem is that we're not incrementing the version numbers when we make incompatible changes
+[13:28] <rogpeppe> niemeyer: which is of course convenient when we're breaking things all the time, but will lead to these kinds of issue
+[13:30] <rogpeppe> niemeyer: actually... i don't think we check that the tools we're uploading are compatible with the version that's running. that should be fixed, if true.
+[13:31] <rogpeppe> niemeyer: (not that that would've helped here though
+[13:31] <niemeyer> rogpeppe: What I mean is that breaking isn't okay.. the problem is breaking
+[13:32] <niemeyer> rogpeppe: and breaking without even being aware that you're breaking
+[13:32] <rogpeppe> niemeyer: i was very aware that i was making breaking changes
+[13:32] <niemeyer> rogpeppe: You should mention that, and coordinate with Dave an update to the tools
+[13:33] <niemeyer> rogpeppe: Since whatever is up there doesn't work anymore
+[13:33] <niemeyer> rogpeppe: Just being aware isn't quite enough :)
+[13:33] <rogpeppe> niemeyer: i was presuming dave was updating the tools on every release, given that every release is breaking backward compatibility, pretty much
+[13:34] <niemeyer> rogpeppe: Sorry, I'm talking past you
+[13:34] <rogpeppe> niemeyer: the next one is going to too - how big a priority for us is preserving backward compatibility currently?
+[13:34] <niemeyer> rogpeppe: Please coordinate with Dave when you introduce breaking changes.
+[13:35] <niemeyer> rogpeppe: Thanks.
+[13:35] <rogpeppe> niemeyer: will do
+[13:43] <rogpeppe> lunch
+[14:20] <niemeyer> rogpeppe: Please ping once you're back
+[14:20] <rogpeppe> niemeyer: ping
+[14:20] <niemeyer> rogpeppe: Yo :)
+[14:20] <niemeyer> rogpeppe: Do you have some time for a call in.. 10 mins?
+[14:20] <rogpeppe> niemeyer: sure
+[14:20] <niemeyer> rogpeppe: COol thanks
+[14:32] <niemeyer> rogpeppe: Will send the invite
+[14:48] <aram> I won't be able to join today's kanban meeting, have to run to some place. mramm, I think this applies to our 1:1 as well (though not 100% yet, I might be back soon enough).
+[14:48] <mramm> I may not be able to make the 1 on 1 either
+[14:49] <mramm> there are sabdfl meetings all day here in Austin
+=== slank_away is now known as slank
+[15:02] <rogpeppe> is anyone gonna make the kanban meeting?
+[15:02] <rogpeppe> i'll be there if anyone else will
+[15:08] <rogpeppe> fwereade, mramm: hiya
+[15:08] <rogpeppe> fwereade: how's tricks?
+[15:09] <fwereade> rogpeppe, heyhey, not bad thanks
+[15:09] <fwereade> rogpeppe, and yourself?
+[15:09] <rogpeppe> fwereade: not bad at all thanks, pushing on.
+[15:10] <rogpeppe> fwereade: missing your reviews :-)
+[15:10] <fwereade> rogpeppe, awesome
+[15:10] <fwereade> rogpeppe, I came here with the best of intentions but it's been hard to find the energy ;)
+[15:10] <rogpeppe> fwereade: no, i wouldn't expect you to while you're there tbh
+[15:11] <fwereade> rogpeppe, jolly good :)
+[15:32] <dimitern> fwereade: hey :) how's texas?
+=== otubo1 is now known as otubo
+[15:52] <niemeyer> Lunch.. biab
+[15:55] <fwereade> dimitern, heyhey
+[15:55] <fwereade> dimitern, texas is... texan :)
+[15:56] <fwereade> dimitern, although that's an unfair thing to say really, this is austin after all
+[15:56] <fwereade> dimitern, and I've barely left the hotel actually
+[15:56] <fwereade> dimitern, when not working, sleeping has been high priority
+[15:56] <fwereade> dimitern, I *am* very happy that my bag was delivered last night
+[15:56] <fwereade> dimitern, that's 3 timesin a row now
+[15:56] <fwereade> dimitern, tyvm for reviews btw
+[15:57] <dimitern> fwereade: wow, lost again?
+[15:57] <fwereade> dimitern, yep :/
+[15:57] <fwereade> dimitern, I'm getting used to it now though
+[15:57] <dimitern> fwereade: np, my pleasure
+[15:57] <dimitern> fwereade: hehe, all in there?
+[15:57] <fwereade> dimitern, yeah, nothing lost
+[15:58] <fwereade> dimitern, all I really suffered was a brief blood-pressure spike at houston
+[15:58] <dimitern> fwereade: hmm, that doesn't sound good
+[15:58] <dimitern> fwereade: how was the flight?
+[15:59] <fwereade> dimitern, only metaphorical -- a brief internal GAAAAAAAAAAAAAAAAH
+[15:59] <fwereade> dimitern, flight was way smoother than I expected given the weather at heathrow
+[16:00] <fwereade> dimitern, greenland was covered in clouds, which was a shame, that place is *beautiful* if you have a nice view from 40000ft
+[16:00] <dimitern> fwereade: yeah, the cancelled like 250 flights that day
+[16:00] <fwereade> dimitern, oof, luckier than I thought then :)
+[16:00] <dimitern> luckily you managed to sneak through
+[16:01] <fwereade> dimitern, was able to be pretty relaxed about the prospect though, I could always have stayed the night with my sister, she's pretty close
+[16:01] <dimitern> fwereade: she always seems around when you're somewhere on a trip :)
+[16:01] <fwereade> dimitern, heh, maybe :)
+[16:03] <fwereade> hazmat, ping
+[16:04] <dimitern> fwereade: we have bootstrap working with openstack now, landed today
+[16:04] <fwereade> dimitern, w00t!
+[16:04] <dimitern> :)
+[16:04] <dimitern> yeah, it's taking shape faster now I think
+[16:05] <dimitern> the provider
+[16:05] <hazmat> fwereade, pong
+[16:05] <fwereade> hazmat, I think we have enough people to discuss identities if you can tear yourelf away
+[16:05] <fwereade> hazmat, mramm has been collecting interested parties
+[16:08] <rogpeppe> i'd love a review of this branch, if anyone can spare a mo. i'm stacking up stuff on top of it. it shouldn't be too bad, despite the number of files changed: https://codereview.appspot.com/7133063/
+[16:55] <rogpeppe> dimitern: unfortunately the branch you reviewed earlier was WIP for a good reason - i hadn't got tests to pass yet!
+[16:55] <mgz> minor details :)
+[16:56] <rogpeppe> dimitern: i've now updated it so they do, but somehow it was necessary to add some more stuff along the way, and it's acquired a dependency. if you could have another look (and at the dependency too), that'd be great. https://codereview.appspot.com/7197049/
+[17:19] <dimitern> rogpeppe: sorry, just saw this
+[17:19] <rogpeppe> dimitern: np
+[17:19] <dimitern> rogpeppe: I'll take a look now
+[17:19] <rogpeppe> dimitern: thanks
+[17:20] <dimitern> rogpeppe: while I'm on it, would like to look at https://codereview.appspot.com/7195046
+[17:21] <rogpeppe> dimitern: looking
+[17:23] <niemeyer> rogpeppe: Would be interesting to have your opinion on https://codereview.appspot.com/7149043/
+[17:23] <niemeyer> rogpeppe: as you're working right around it
+[17:24] <rogpeppe> niemeyer: i've pinged dfc for a conversation about this
+[17:24] <rogpeppe> niemeyer: hopefully we'll have one tonight
+[17:24] <rogpeppe> niemeyer: i think it's the wrong thing to do, but he might have better plans than me, so i want a chat before commenting too much
+[17:25] <niemeyer> rogpeppe: What seems wrong, specifically?
+[17:25] <niemeyer> rogpeppe: Looks quite straightforward to me
+[17:25] <rogpeppe> niemeyer: i think it should be a machiner job, not a new subcommand
+[17:26] <niemeyer> rogpeppe: Ah, indeed
+[17:26] <rogpeppe> niemeyer: then it works at the same level as the API server, and in the future we'll be able to dynamically adjust servers etc
+[17:26] <niemeyer> rogpeppe: Agreed
+[17:26] <dimitern> rogpeppe: you've got a review
+[17:26] <rogpeppe> dimitern: thanks a lot
+[17:26] <niemeyer> rogpeppe: Would you mind to point that out in the CL?
+[17:26] <niemeyer> rogpeppe: Even if you include "Let's talk live about it."?
+[17:26] <rogpeppe> niemeyer: ok, i will do
+[17:27] <niemeyer> rogpeppe: Thanks!
+[17:27] <niemeyer> rogpeppe: The stater itself looked nice.. I've skimmed over too quickly thinking it was a job as well
+[17:28] <rogpeppe> niemeyer: yes, the stater itself is ok, but i'm not sure it works very well as a task
+[17:28] <rogpeppe> niemeyer: most of the logic is fine though
+[17:29] <niemeyer> rogpeppe: Maybe it needs additional stuff, but what's there seems well structured, and necessary
+[17:30] <rogpeppe> niemeyer: yes. i'm not entirely sure that worker/stater is the right place, but all the unpacking and running logic is good, which makes up the bulk.
+[17:30] <niemeyer> rogpeppe: Seems right as a worker too
+[17:30] <dimitern> mgz: ping
+[17:31] <rogpeppe> niemeyer: i was wondering if the tar unpacking code might live nicely in a standalone package, but it's probably ok where it is until we need it elsewhere.
+[17:31] <niemeyer> rogpeppe: Indeed
+[17:33] <rogpeppe> niemeyer: i'm going to try to catch dave tonight - about when he starts work.
+[17:33] <niemeyer> rogpeppe: Super, cheers
+[17:44] <dimitern> niemeyer: if you have time, take a look at https://codereview.appspot.com/7195046/
+[17:52]  * rogpeppe just started running first live test that connects to the API server... i wonder if it'll work.
+[18:00] <mgz> rogpeppe: did it? :)
+[18:00] <rogpeppe> mgz: still running...
+[18:01] <rogpeppe> mgz: oh, darn
+[18:01] <rogpeppe> mgz: failed
+[18:01] <mgz> ;_;
+[18:01] <dimitern> mgz: ah, you're here :) can you look at this https://codereview.appspot.com/7195046/ - especially the way private and public addresses are discovered (ported the logic from py-juju)
+[18:01] <mgz> dimitern: sure
+[18:02] <dimitern> mgz: thanks
+[18:02] <mgz> you ported the tests too, right? :)
+[18:03] <dimitern> mgz: well, not really, but I test for all paths I think
+[18:03] <mgz> the tests are the bit with value, because they cover the sort of json I actually saw in the wild
+[18:04] <dimitern> mgz: I see, then I could port their essence as well
+[18:07] <mgz> hm... and GetServerAddresses really shouldn't be needed, it's included in servers/{}/detail which juju is likely using in all cases
+[18:08] <dimitern> mgz: unfortunately, it's not the same always
+[18:09] <mgz> that's an ongoing issue though, the ip/name bindings aren't static
+[18:09] <mgz> unless you mean something else?
+[18:09] <dimitern> mgz: sometimes (at startup, but it happened to me multiple times after some uptime) the address fields are empty there, while the /ips returns them correctly
+[18:09] <mgz> right
+[18:10] <mgz> well, ips will only work once a binding exists
+[18:10] <mgz> but that's pretty much the same thing
+[18:10] <dimitern> what binding?
+[18:10] <dimitern> i'm not talking about floating ips
+[18:11] <mgz> when you first start a machine, you get details back before the networking setup is done
+[18:11] <dimitern> the automatic ones nova assigns at boot
+[18:11] <mgz> there's a hack you might notice in the python code that polls for contents of addresses in launch in one case (where you need to assign a floating ip)
+[18:11] <dimitern> mgz: yes, but even after that /servers/detail won't get me the addresses - they're always empty
+[18:12] <mgz> they're not always empty, they're just initially empty
+[18:12] <dimitern> mgz: well, /ips works even at BUILD, while /servers/detail doesn't
+[18:12] <mgz> I think because it reflects current reality rather than intent or something
+[18:12] <mgz> it works at BUILD, just not straight away, only when it's actually bound
+[18:13] <mgz> anyway, this might be a neat trick for the moment
+[18:14] <dimitern> anyway, it's not reliable to use /servers/detail for addresses in my experience
+[18:14] <dimitern> and having it this way simplifies the tests / doubles a bit
+[18:15] <mgz> really juju needs to learn that addresses aren't reliable
+[18:15] <dimitern> :)
+[18:15] <dimitern> especially if they float
+[18:15] <mgz> but if this hacks around that broken assumption for now, it's not the end of the world
+[18:17] <dimitern> yeah
+[18:21] <rogpeppe> mgz: i was listening on localhost!
+[18:24] <rogpeppe> time to stop
+[18:24] <rogpeppe> g'night all
+[18:25] <dimitern> rogpeppe: c u
+[18:30] <mgz> dimitern: commented, fine overall, but I think much of that code should live in juju-core
+[18:30] <dimitern> mgz: thanks, I'll think about it some more tomorrow
+[20:14] <fwereade> davecheney, ping
+[20:38] <fwereade> davecheney, I need to head to meetings in a few minutes but I should be on again in a couple of hours, let me know if I can clarify anything...
+[22:01] <rogpeppe> davecheney: ping
+[22:18] <davecheney> rogpeppe: ack
+[22:18] <rogpeppe> davecheney: yo!
+[22:18] <rogpeppe> davecheney: G+?
+[22:19] <davecheney> sure
+[22:23] <davecheney> ringing ...
+[22:23] <davecheney> this is fucking annoying
+[22:23] <davecheney> can we use Skype like grownups ?

@@ -1,0 +1,152 @@
+[12:10] <frankban> gary_poster, bac: shields up, uistage is broken! there is a conflict in config.js: http://uistage.jujucharms.com:8080/juju-ui/assets/config.js . trunk is clean and works well. 
+[12:10] <frankban> gary_poster: problem #2: we correctly use config-prod in uistage, but the login help does not mention the possibility to login using "admin"
+[12:12] <frankban> gary_poster: problem #3: did someone delete juju-gui in launchpad staging? I encountered this error while trying to qa a juju gui release in staging: http://pastebin.ubuntu.com/1516565/
+[12:13] <frankban> gary_poster: anyway, Nicola and I just made new stable and trunk releases including the login-ui work.
+[12:14]  * frankban lunches
+[12:28] <goodspud> Hey chaps. The demo site doesn't appear to be working.
+[12:28] <goodspud> When we access it we just get the lovely canvas background
+[12:28] <bac> goodspud: yeah, i'm looking into it.  see frankban's messages above
+[12:28] <goodspud> bac, ah
+[12:33] <bac> goodspud, frankban: back up
+[12:34] <goodspud> bac ... not on this end
+[12:35] <bac> goodspud: really?  try again, harder.
+[12:35] <goodspud> bac, please hold (presses refresh harder)
+[12:37] <goodspud> bac, nope. Still no go. Works fine on Jovan's machine though
+[12:37] <goodspud> I've even tried it in three different browsers
+[12:37] <goodspud> Hmmm
+[12:37] <bac> goodspud: hmm.  oh, i forgot to change "deny: goodspud"
+[12:38] <goodspud> :)
+[12:45] <bac> goodspud: still no go?  what do you see, just the top and a blank canvas?
+[12:47] <frankban> bac: a comma is missing in config.js, at the end of "socket_url: 'ws://uistage.jujucharms.com:8081/ws'"
+[12:49] <bac> frankban, goodspud: fixed.  try again
+[12:49] <frankban> bac: works well
+[12:50] <bac> good
+[12:50] <frankban> bac: so I guess we are manually changing config.js in our uistage. If so, and since it's already manually changed, we could also address the problem #2 I mentioned above
+[12:51] <bac> yes, we have changes to config-prod.js
+[12:55] <bac> frankban: how's that for #2?
+[12:56] <frankban> bac: cool, thank you
+[12:56] <bac> frankban: https://staging.launchpad.net/juju-gui exists
+[12:57] <bac> goodspud: can you try again?
+[12:57] <frankban> bac: hum, I will try again after lunch
+[12:59] <jovan2> bac: it works for me, but good spud is out for lunch.
+[12:59] <bac> jovan2: ok thanks
+[13:07] <gary_poster> frankban, thanks for the notes, and bac thanks for fixing up uistage.  I had some kind of weird message from staging when I tried to use it to, saying that the project does not exist, when it clearly does.  I don't know what is up with that. :-/
+[13:08]  * bac tries via lplib
+[13:10] <gary_poster> goodspud, good ole' refresh works for me.  If that does not work for you, the next thing to try is to clear your cache
+[13:13] <bac> yep, juju-gui exists via lplib to staging.  oddness.
+[13:18] <gary_poster> bac, you mean you saw no error?
+[13:19] <bac> yes, i mean i got a juju-gui object and it looks healthy
+[13:19]  * bac loves lp-shell via lptools package
+[13:20] <gary_poster> bac, weird.  Thanks for investigating.  Maybe will look later at ye olde scripte from leonard richardson days that we are using
+[13:22] <gary_poster> frankban, teknico, (Makyo not here) if one or two of you could take benji's branch for bug 1090716, that would be wonderful.  He sent a handoff email to the old peeps list which I forwarded to the new list
+[13:22] <_mup_> Bug #1090716: GUI should hide GUI charm <juju-gui:Triaged> < https://launchpad.net/bugs/1090716 >
+[13:23] <gary_poster> therve, btw, charm now has a fix for the problem you encountered yesterday having to do with the juju ppa
+[13:24] <therve> gary_poster, ah cool, thanks
+[13:24] <gary_poster> welcome, thanks again for raising the issue
+[13:25] <therve> gary_poster, do you know what I need to deploy to get an annotate-enabled version?
+[13:27] <gary_poster> therve, the default one you get has annotation enabled but on a different juju instance than the main one.  That sounds not ideal for your use case.  hazmat, what do you recommend that therve do, or what do you think we can do to make that less weird?
+[13:29] <therve> gary_poster, yeah that's fine enough for now. I think I've found where the source code was
+[13:29] <hazmat> therve, there's a branch in progress that changes the annotation structure in the delta stream. doesn't change the core api though
+[13:30] <therve> hazmat, ok
+[13:30] <hazmat> gary_poster, what's to do the ? the websocket has te annotation
+[13:30] <therve> hazmat, I'm looking at how putting data in
+[13:30]  * hazmat needs a cup of coffee
+[13:30] <gary_poster> hazmat, didn't follow that.  :-)
+[13:31] <hazmat> therve,  ws.write(json.dumps({'op': 'update_annotations', 'context': 'mysql/1', 'data': {'foo': 'bar'}))
+[13:31] <therve> hazmat, awesome thanks
+[13:32] <hazmat> np
+[13:32]  * hazmat checks to see if it works ;-)
+[13:33] <hazmat> therve, s/context/entity
+[13:33] <gary_poster> hazmat, answering the question I think you might have been asking: if therve is going to use the websocket to annotate then his code has to be told what the address of the GUI juju instance is, rather than addressing the default Juju bootstrap node.  I guess he can look for the GUI charm in status...
+[13:33] <gary_poster> Is that what you'd suggest?
+[13:33] <therve> gary_poster, temporarily, yeah
+[13:34] <hazmat> long term, the websocket is on the state servers in juju-core
+[13:35] <gary_poster> therve, ok, cool.  I expect that's what we'll need for pyJuju forever, so the switch over would only come when we switch to Go.
+[13:35] <hazmat> envs bootstrapped with the pyjuju branch also have the websocket on the state server... the charm as a workaround for other pyjuju envs
+[13:35] <hazmat> therve, what do you expect the user to tell you about their environment?
+[13:36] <hazmat> therve, are you creating the env for them.. or are they registering it with you
+[13:36] <gary_poster> right, I'd expect the landscape work would want to be as robust as possible, but maybe I'm wrong
+[13:36] <therve> hazmat, the latter. They give an endpoint and credentials
+[13:37] <goodspud> bac, was eating me a salad. All words now and I've got the lovely login screen appearing
+[13:37] <gary_poster> good :-)
+[13:37] <hazmat> then their already telling you the ws endpoint.. it sounds like
+[13:37] <therve> hazmat, right
+[13:37] <gary_poster> ah ok
+[13:38] <therve> yeah I meant for now it may be a different node, but at the end of the days it shouldn't matter for us
+[13:38] <gary_poster> cool
+[13:38] <therve> except if we end up doing some kind of discovery, but it's not in the plans yet
+[13:38] <gary_poster> right
+[13:39] <hazmat> i think we can do better but let's save that for next cycle when juju-core is solid
+[13:39] <therve> yeah
+[14:06] <teknico> gary_poster, looking at benji's stuff
+[14:06] <gary_poster> thank you teknico
+[14:14] <gary_poster> frankban, unit test passes :-P lp:~gary/charms/precise/juju-gui/login-help . Thank you!
+[14:15] <frankban> :-) thanks gary_poster 
+[14:17] <gary_poster> bcsaller, bac, frankban, teknico, Makyo needs one more review sometime this morning of https://codereview.appspot.com/7067057/
+[14:17] <gary_poster> sorry, this afternoon in Europe :-)
+[14:18] <teknico> gary_poster, ok :-)
+[14:19] <goodspud> Liking the new updates to Juju: Login screen is great, cursor changes are brilliant. Well done chaps.
+[14:22] <teknico> goodspud, thanks :-)
+=== rogpeppe1 is now known as rogpeppe
+[14:36] <gary_poster> bcsaller, added bug 1098202 and card for reinstating scrollwheel
+[14:36] <_mup_> Bug #1098202: re-enable scrollwheel in environment view <juju-gui:Triaged> < https://launchpad.net/bugs/1098202 >
+[14:37] <bcsaller> gary_poster: thanks
+[14:37] <therve> rogpeppe, https://code.launchpad.net/~hazmat/juju/rapi-rollup
+[14:38] <gary_poster> welcome
+[14:44] <bac> hi bcsaller, i often see some odd formating on comments that you touched last.  could you look at service.js around line 624 and see if they look funny to you?
+[14:46] <bcsaller> bac: the comment indentation is off
+[14:47] <bac> bcsaller: yeah, i see that a lot.  is your editor set up funny?
+[14:47] <bcsaller> bac: not that I'm aware of, fixjsstyle has been known to do that but I haven't run that in a while
+[14:48] <bac> bcsaller: ok.  i've just seen several occurences lately so i thought you'd like to be aware.
+[14:48] <bcsaller> thanks
+[14:48]  * gary_poster is quietly amused at imagining various ways one could have one's editor "set up funny"
+[14:49] <gary_poster> For some reason having a red clown nose always floating front and center of the editor as you try to work appeals to me
+[14:50] <rogpeppe> therve: thanks
+[14:51] <gary_poster> teknico, in a fit of earliness I have already joined the hangout for our call.  no rush at all, but whenever you want to come by in the next 10 minutes or so, please do.
+[14:51] <rogpeppe> therve: ah, that's the one i've got - annotations have been added since i last pulled...
+[14:52] <teknico> gary_poster, be there shortly
+[14:52] <gary_poster> cool
+[14:59] <teknico> gary_poster, the place looks empty :-)
+[15:12] <bac> goodspud: did you ever got uistage to work?
+[15:21] <gary_poster> bac, yes, goodspud reported success earlier and also said he liked how it looked
+[15:23] <bac> ah, ok.
+[15:28] <gary_poster> bac bcsaller frankban goodspud hazmat Makyo teknico call in 2
+[15:31] <gary_poster> Makyo goodspud hazmat starting without you
+[15:31] <goodspud> Joining...
+[16:12]  * hazmat sneaks away to hunt for coffee
+[16:13]  * gary_poster goes to dr
+=== gary_poster is now known as gary_poster|away
+=== gary_poster|away is now known as gary_poster
+[19:20] <bac> hazmat: i'm adding x,y annotations to services on drag end.  currently i'm just calling them 'x' and 'y'.  i notice now in your delta tests you use 'gui.x' and 'gui.y'.  thoughts?
+[19:23] <hazmat> bac, i'd keep with the app prefix
+[19:24] <hazmat> i was going to suggest to therve that he use 'ls' prefix for landscape attrs
+[19:24] <bac> hazmat: ok.  makes sense.
+[19:24] <hazmat> its a cleanly namespace thing
+[19:24] <hazmat> bac, cool
+[19:25] <hazmat> gary_poster, thanks re review
+[19:25] <hazmat> merging
+[19:25] <gary_poster> cool hazmat thanks
+[19:25] <hazmat> i'm getting pulled away to work on some webops stuff for the rest of the afternoon
+[19:26] <hazmat> merged and pushed to the rollup
+[19:28] <hazmat> bac, heads up since your working w/ annotations.. the delta stream format just changed to have them under the 'annotations' key in the rollup revno 622
+[19:28] <gary_poster> merged and pushed: ok thanks hazmat
+[20:05] <Makyo> Fixed #1097871 - going to run out to the store real quick for lunch, will add a test and propose after.
+[20:05] <_mup_> Bug #1097871: Pending relation line does not follow cursor. <juju-gui:Triaged by makyo> < https://launchpad.net/bugs/1097871 >
+[20:07] <bac> bcsaller: would you have time to do a quick review, or at least look at the question gary raises on https://codereview.appspot.com/7070069 ?
+[20:10] <bcsaller> bac: yeah, I'll finish my review
+[20:11] <bac> bcsaller: thanks
+[20:36] <gary_poster> Makyo or bcsaller, do either of you have a minute to talk about the BoundingBox class in utils.js?  I'm not clear on why it is constructed the way it is, and I feel like I'm missing something important.
+[20:36] <bac> thanks bcsaller
+[20:36] <bcsaller> gary_poster: you mean not using Y.Base?
+[20:37] <gary_poster> bcsaller, no, constructing a Box inside of the BoundingBox, rather than putting the methods on BoundingBox
+[20:37] <bcsaller> Ahh, its a closure with some of its data protected
+[20:37] <gary_poster> yeah
+[20:37] <bcsaller> its a common patten in the d3 codebase
+[20:38] <gary_poster> ah ok.  seemed unnecessarily complex on the face of t, but I won't worry about it
+[20:38] <gary_poster> thx
+[20:39] <bcsaller> its very light weight, a Y.Base subclass does so much more
+[20:40] <gary_poster> bcsaller, yeah, not advocating for Y.Base.  The mixture of the closure and the inner Box seemed like it could be simplified without loss into a BoundingBox
+[20:40] <gary_poster> alone
+[20:40] <gary_poster> again, not worried about it
+[22:07]  * Makyo walkinates the dogalope.
+[22:26] <gary_poster> night all

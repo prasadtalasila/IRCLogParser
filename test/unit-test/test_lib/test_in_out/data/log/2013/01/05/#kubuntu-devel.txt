@@ -1,0 +1,162 @@
+[03:18] <ScottK> I've been seeing occasional brightness flickering with 4.9.4.
+[03:18] <ScottK> IIRC someone else mentioned it as well.
+[03:18]  * ScottK wonders if https://projects.kde.org/projects/kde/kde-workspace/repository/revisions/285553edce61f65a88d9067136bf138e44efb149/diff might be the cause.
+[03:19] <ScottK> afiestas: ^^^ could that fix have introduced a race condition?
+[04:20] <kubotu> ::workspace-bugs:: [1072263] plasma-desktop crashes at start-up with scripted image widget @ https://bugs.launchpad.net/bugs/1072263 (by Vertago1)
+[06:07] <shadeslayer> Quantal builds seem to be done as well
+[06:07] <shadeslayer> should I just copy them over to beta backports?
+[06:10] <soee> yes!
+[06:11] <soee> :)
+[06:15] <shadeslayer> oh a tester
+[06:15] <shadeslayer> soee: I'll copy them over to staging, can you test?
+[06:15] <soee> sure
+[06:16] <shadeslayer> gimme a couple of minutes
+[06:16] <soee> ok ill be back in 5, im going to eat something
+[06:18] <shadeslayer> soee: script is running, packages should land here https://launchpad.net/~kubuntu-ppa/+archive/staging/+packages
+[06:22] <shadeslayer> all done
+[06:29] <shadeslayer> soee: once you test, just poke someone and they'll copy to the beta backports PPA
+[06:29] <shadeslayer> I've gtg 
+[06:29] <shadeslayer> cya
+[06:31] <soee> hmm
+[06:31] <soee> i have added staging ppa
+[06:31] <soee> but i see no packages to be updated 
+[06:32] <soee> only this: http://pastebin.com/73V5biUr
+[06:32] <soee> but they are not related to rc2
+[06:37] <soee> ok now it starting to see rc2 packages
+[06:38] <soee> i thnik some 'backgraound' stuff has to be done before pakckages are visible :)
+[06:51] <kubotu> ::runtime-bugs:: [1071453] Dolphin doesn't store samba share password @ https://bugs.launchpad.net/bugs/1071453 (by Pascal Korz)
+[07:15] <soee> 4.9.97 for Quantal tested and works fine, no problems during update
+[09:20] <afiestas> ScottK: yes
+[09:20] <afiestas> I have been trying to fix it
+[09:20] <afiestas> but it is hard to reproduce
+=== Quintasan_ is now known as Quintasan
+[10:52] <mikhas> Quintasan, am removing the version library suffixes from all the Maliit libraries -- quite some work!
+[10:53] <Quintasan> \o/
+[10:53] <Quintasan> Be sure to poke me when there is a release which has that
+[10:53] <mikhas> Quintasan, is it acceptable if the soname's ABI version changes with every release?
+[10:53] <mikhas> say, libmaliit.so.0.93 and then at some point libmaliit.so.0.94?
+[10:54] <Quintasan> mikhas: It should be okay as long as you don't drop any publicly exported symbols
+[10:54] <Quintasan> It is okay even if you DO drop symbols but then it will take some work
+[10:54] <mikhas> what do I have to do *if* I drop symbols?
+[10:54] <mikhas> increase the major version number and ???
+[10:55] <Quintasan> mikhas: Would be nice to tell me which symbols were dropped so I have less c++filt mangling job
+[10:55] <Quintasan> ScottK: ^ I would appreciate if you could tell me if I missed anything
+[10:56] <mikhas> cant tell tbh, we are still in unstable release cycle, so symbols come and go …
+[10:56] <mikhas> we try to be careful with what we export, however
+[10:57] <Quintasan> It's not the end of the world if you drop stuff. We will both have to do some more stuff but if we cooperate more or less it should be easily managable
+[10:59] <mikhas> Quintasan, "MIMPluginManager(std::tr1::shared_ptr<MInputContextConnection> icConnection, QSharedPointer<Maliit::Server::AbstractSurfaceGroupFactory>)" changed to "MIMPluginManager(const QSharedPointer<MInputContextConnection>& icConnection, const QSharedPointer<Maliit::Server::AbstractSurfaceGroupFactory>& factory)", but that's part of an internal library, not sure it counts as exported for your case, however.
+[10:59] <mikhas> (what a horrible long function definition)
+[10:59] <Quintasan> not public?
+[11:00] <Quintasan> we don't care :P
+[11:00] <mikhas> well, you could check whether you had this symbol in your list, then I would know that this presumed-to-be-private library needs some work, too
+[11:01] <Quintasan> mikhas: So far I have no symbols file
+[11:02] <mikhas> or let's ask the other way around: did you package libmaliit-connection?
+[11:02] <Quintasan> I would have to disable tests to get them since they currently fail
+[11:02] <mikhas> in which sense to the tests fail?!
+[11:02] <Quintasan> mikhas: Is that part of maliit-framework? if so then what directory are we talking about
+[11:02] <mikhas> can you pastebin your output of "make check"?
+[11:02] <Quintasan> mikhas: They fail because X magic I believe
+[11:03] <Quintasan> xvfb is probably not enough to execute the test in the buildd
+[11:03] <mikhas> But that should only be a couple of tests, not all.
+[11:03] <Quintasan> I'll give you the whole log in a minute
+[11:04] <mikhas> Quintasan, perhaps you could cook up a patch that properly checks for X11 in those tests (some define or so) and skips them conditionally?
+[11:04] <Quintasan> I can but I'm not sure how archive admins will like that
+[11:04] <Quintasan> ScottK: ^?
+[11:04] <Quintasan> We can leave this for later
+[11:05] <mikhas> No one likes packages without any tests. Especially if we package -dev packages.
+[11:05] <Quintasan> I don't have anything that looks like libmaliit-connection in my debian/control file
+[11:05] <mikhas> Quintasan, right. We could move tests to a separate -test package in any case, if not already done
+[11:05] <Quintasan> if this is a part of maliit-framework and it needs to be a binary package then I'll need to grep my install files
+[11:06] <Quintasan> separate binary package*
+[11:06] <mikhas> no! it's private and shall remain private :-)
+[11:06] <mikhas> but let me check where we hide it, true
+[11:07] <mikhas> but of maliit-framework package, sigh, so we do install all that crap
+[11:07] <mikhas> *part
+[11:11] <Quintasan> HURRRRRRRRRRR
+[11:11] <Quintasan> pbuilder permissions already broken
+[11:11] <Quintasan> wtf
+[11:13] <Quintasan> mikhas: http://paste.kde.org/638006
+[11:13] <Quintasan> Here is the buildlog
+[11:13] <mikhas> oki
+[11:13] <Quintasan> on the bottom you should have output of make check
+[11:14] <Riddell> is launchpad working for anyone for packages?  I just get timeouts on https://launchpad.net/ubuntu/+source/kde4libs
+[11:14] <Quintasan> Riddell: timeout
+[11:14] <Riddell> humbug
+[11:15] <Quintasan> Lunchpad - eats your time
+[11:16] <mikhas> I would laugh if it wasn't so true.
+[11:17] <mikhas> If only the Jan 2nd announcement would have been: "Guys, we drop bzr and make Launchpad use github/gitorious/… instead."
+[11:17] <Quintasan> lol nope
+[11:17] <Quintasan> not going to happen T_T
+[11:19] <Riddell> that wouldn't help it doing timeouts loading a web page
+[11:20] <mikhas> outsourcing part of your infra to more reliable services? surely would help with timeouts, too
+[11:23] <soee> Riddell, <shadeslayer> soee: once you test, just poke someone and they'll copy to the beta backports PPA
+[11:24] <Riddell> soee: you tested?
+[11:25] <soee> <soee> 4.9.97 for Quantal tested and works fine, no problems during update
+[11:25] <soee> its in staging
+[11:30] <Riddell> for asdf in `cat kdesc-packages-raring.txt`; do echo ${asdf}; ~/src/ubuntu-archive-tools/ubuntu-archive-tools/copy-package -p kubuntu-ppa --ppa-name=staging -s quantal -b --to-ppa=kubuntu-ppa --to-ppa-name=beta --to-suite=quantal ${asdf} -y; done
+[11:30] <Riddell> should keep it busy
+[11:38] <mikhas> Quintasan, not in a proper release yet, but if you dare to try maliit-framework from git master, then here's your version suffix free Maliit: https://gitorious.org/maliit/maliit-framework/commit/fe71572564612f2282cff87a296441319bab22ef
+[11:39] <Quintasan> mikhas: Mmkay, will take a look, I'd stick with tarballs unless we are short on time (which I doubt is the case)
+[11:39] <mikhas> alright
+[11:40] <mikhas> I should get to a new release by next week in any case.
+[11:40] <Quintasan> That sounds about...good.
+[11:40] <Quintasan> Can't do anything about it until next monday though
+[11:41] <Quintasan> Gotta prepare for MORE tests
+[11:41] <Quintasan> since it's the end of the semester at my uni
+[11:41] <Quintasan> I think I could go by with no preparation but better be safe than sorry.
+[11:42] <Quintasan> shadeslayer: Oh, not sure if mentioned but I failed my first test from introduction to progamming. We wrote Java code - on paper.
+[11:42] <Quintasan> But somehow I got 16-18 point out of 20 on labs
+[11:42] <Quintasan> gotta score up on the second test
+[11:43]  * Quintasan loves coding on paper
+[11:51] <kubotu> ::qt-bugs:: [1096289] Qt apps often fail to start from file manager @ https://bugs.launchpad.net/bugs/1096289 (by Alexei Kitaev)
+[12:07] <BluesKaj> Hey all
+[12:12] <soee> hi
+[12:12] <Quintasan> BluesKaj: hi
+[12:14] <BluesKaj> hi Quintasan, soee
+[12:36]  * Riddell pokes at a bunch of packages in raring to retry them
+[13:03] <Tm_T> packages on ninjas for KDE 4.8.8.97 (12.10) ready for testing?
+[13:05] <Riddell> Tm_T: 4.9.97 is now in ppa:kubuntu-ppa/beta for testing
+[13:16] <Riddell> ta da kubuntu.org/news/kde-plasma-applications-410-rc-2
+[13:17] <Riddell> better url kubuntu.org/news/kde-sc-4.9.97
+[13:20] <Riddell> now if only launchpad would let me load the package pages so I could retry bits
+[13:40] <Tm_T> hmm
+[13:41] <Tm_T> Riddell: I got packages downloaded from ninjas though
+[13:44] <Tm_T> lest's see...
+[13:45] <Tm_T> ah, didn't have beta ppa enabled
+[14:05] <Tm_T> dpkg: error processing /var/cache/apt/archives/kdewallpapers_4%3a4.9.97-0ubuntu1~ubuntu12.10~ppa1_all.deb (--unpack): trying to overwrite '/usr/share/wallpapers/Finally_Summer_in_Germany/contents/screenshot.png', which is also in package kde-wallpapers 4:4.9.95-0ubuntu2~ubuntu12.10~ppa1
+[14:06] <Tm_T> ...was sorted by upgrading kdewallpapers and kde-wallpapers (apt-get install -f)
+[14:15] <ronnoc_> Morining all. Head's up that installing Virtualbox will attempt to remove Telepathy.
+[14:23] <ronnoc_> In Raring that is.
+[14:56] <BluesKaj> ronnoc_, no loss :)
+[16:14] <ScottK> As long as SO name is bumped, dropping symbols is fine.
+[16:14] <ScottK> Quintasan: ^^^
+[16:17] <ScottK> afiestas: Thanks.  I think we'll have to revert that commit for now then.
+[16:18] <ScottK> yofel_: Can you do an update that reverts https://projects.kde.org/projects/kde/kde-workspace/repository/revisions/285553edce61f65a88d9067136bf138e44efb149/diff - it causes the brightness flickering problem we've been seeing intermittently on 4.9.4.
+[16:18] <yofel_> yes
+=== yofel_ is now known as yofel
+[16:18] <ScottK> (need 4.9.4 updated for -prposed and 4.9.5 for PPA).
+[16:18] <ScottK> yofel: Thanks.
+[16:19] <ScottK> ping me and I'll accept it.
+[16:19] <ScottK> (once it's uploaded)
+=== yofel changed the topic of #kubuntu-devel to: Kubuntu - Friendly Computing | Raring Alpha 1 Released | Packaging TODO: http://notes.kde.org/kubuntu-ninjas | oxygen-fonts in experimental PPA (from oneiric to raring)
+[16:26] <yofel> ScottK: do we want to revert that in 4.9.97 too btw? (I would vote for yes)
+[16:26] <ScottK> yofel: If people have reported the problem with 4.10, then yes.
+[16:27] <ScottK> afiestas: ^^^ - if this commit is causing problems, it probably ought to be reverted upstream before the 4.10 release.
+[16:28] <yofel> haven't heard of it yet, but the only system that I got it with once is running 4.9.5. The code is in 4.10 too so I'm simply worrying about it possibly doing the same thing
+[16:48] <yofel> afiestas: ok, I just took by eeePC and tried to change the brightness from within KDE for a change
+[16:48] <yofel> a) changing brightness with the Fn keys doesn't moved the slider in the batter applet
+[16:49] <yofel> b) moving the slider in the battery applet causes it to jump around randomly changing brightness up and down until it eventually stops after a second or 2
+[16:50] <yofel> in bug 1088150 it seems to not stop for the user
+[16:50] <ubottu> bug 1088150 in kde-workspace (Ubuntu) "KDE 4.9.4 refreshes screen brightness rapidly " [Medium,Triaged] https://launchpad.net/bugs/1088150
+[16:50] <yofel> which I can't reproduce as it does stop here - the flashing happens for both of us
+[16:52] <ScottK> For me, it happens sometime changing power state.
+[16:53] <ScottK> When it's happened, it  takes a suspend/resume to get it to stop.
+[16:54] <yofel> that's when it first happened for me to: powerdevil went into 'low battery' state -> I plugged the power cable in -> flashing starts. but it stopped after ~10s
+[16:59] <kubotu> ::workspace-bugs:: [1088150] KDE 4.9.4 refreshes screen brightness rapidly @ https://bugs.launchpad.net/bugs/1088150 (by blubman)
+[17:30] <yofel> ScottK: uploaded
+[17:31] <ScottK> yofel: Go ahead an do raring too ...
+[17:31] <ScottK> Thanks.
+[17:31] <yofel> I'm gone for now, will do it later
+[18:00] <kubotu> ::workspace-bugs:: [1088150] KDE 4.9.4 refreshes screen brightness rapidly @ https://bugs.launchpad.net/bugs/1088150 (by blubman)
+[19:06] <ScottK> yofel: Accepted.  Thanks.
+[20:07] <kubotu> ::workspace-bugs:: [1088150] KDE 4.9.4 refreshes screen brightness rapidly @ https://bugs.launchpad.net/bugs/1088150 (by blubman)

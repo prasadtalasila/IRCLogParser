@@ -1,0 +1,110 @@
+=== hggdh_ is now known as hggdh
+=== kloeri_ is now known as kloeri
+[10:21] <zequence-w> What's the easiest way to be sure one has all the dependencies needed for Ubuntu kernel maintenance/development?
+[10:52] <diwic> zequence, "apt-get build-dep linux-image-generic" probably?
+[10:52] <diwic> or lowlatency in your case 
+[10:52] <zequence-w> diwic: Thanks
+[12:49]  * rtg may have to give up on thunderbird. it is simply not capable of dealing with large mail lists such as LKML
+[12:57] <amitk> rtg: try notmuch
+[12:58] <rtg> amitk, gotta do something different. I'll have a look. Is that your main email  client ?
+=== yofel_ is now known as yofel
+[12:59] <amitk> rtg: yeah, pretty much. It is basically a mail indexer with several UI - emacs, vim, terminal-based
+[13:00] <rtg> amitk, sounds good to me. I'm kind of a vim  guy anyways.
+[14:08] <sforshee> bjf, ack
+=== chiluk_away is now known as chiluk
+[14:32] <ogasawara> bjf: I need to point someone to our list of supported kernels...do you and your stable minions prefer https://wiki.ubuntu.com/Kernel/Dev/KernelStableSupportMatrix or https://wiki.ubuntu.com/Kernel/Dev/ABIPackages
+[15:32] <bjf> ogasawara, the support matrix. it's not as out-of-date
+[15:33] <ogasawara> bjf: did you want to throw Quantal on there?  or I can
+[15:34] <bjf> ogasawara, i can soon as i wake up
+[15:34] <ogasawara> bjf: ack
+[15:35] <arges> rtg, hello
+[15:35] <rtg> arges, dude
+[15:36] <arges> rtg, dude. going to resubmit that fsnotify locking patchset. when I do the reverts, do I need to include the BugLink?
+[15:36] <rtg> arges, yep
+[15:36] <arges> cool
+[15:37] <rtg> I can add the buglinks as well. have you used ~/kteam-tools/maintscripts/maint-modify-patch ?
+[15:45] <arges> rtg, no didn't know about that one... I was looking for git templates in the debian.master directory
+[15:46] <rtg> arges, you'll have to setup an .kteam.rc, but afterwards you can add buglinks, Acked-by as well as s-o-b lines in a standardized format.
+[15:47] <arges> rtg, ok i'll do that
+[16:05] <bjf> ogasawara, the support matrix is updated
+[16:05] <ogasawara> bjf: ack, thanks
+[16:18]  * ogasawara back in 20
+[16:50] <hggdh> bjf: when trying to git pull autotest-client-tests, I get http://pastebin.ubuntu.com/1495863/
+[16:51] <hggdh> bjf: no big deal, I can simply git clone it again, but every so often I have to do it, and shouldn't
+[16:52] <rtg> hggdh, if you don't care about local changes, then try using 'git fetch origin;git reset --hard FETCH_HEAD'
+[16:52] <rtg> also do 'git checkout -f' first
+[16:56] <hggdh> rtg: thanks, will change the script accordingly
+[16:57] <rtg> hggdh, if you're getting local changes inadvertently, then you might also want to clean, e.g., 'git checkout -f
+[16:57] <rtg> git clean -f -d
+[16:57] <rtg> git ls-files --others --directory |xargs rm -rvf'
+[16:57] <rtg> that should return it to a pristine condition
+[16:58] <hggdh> rtg: it did the trick, but this is (should be) a pristine copy of the origin
+[16:58] <rtg> hggdh, not according to your pastebin. looks like yuo've had local changes.
+[16:59] <hggdh> the only thing I do there is a git pull when Brad tells me there is a new version. Ah well, just another magic, I guess
+[16:59] <bjf> hggdh, though it *should* be prestine, it's not. would be good to understand why
+[17:00] <hggdh> yeah. Will monitor. Perhaps git archive changes something there
+[17:00]  * rtg notes that 'pull' isn't really the right thing to do anyway if you want an exact copy of the origin.
+[17:00] <hggdh> rtg: checkout is better, then?
+[17:01] <rtg> hggdh, fetch and reset. pull does a merge whcih is not what you want in this case.
+[17:01] <hggdh> ack. Interesting also is that a git clone (after removing the branch) did not give me an up-to-date head
+[17:02] <rtg> hggdh, lemme have a look at the repo
+[17:07] <rtg> hggdh, hmm. it looks OK to me. In order to guarantee a pristine copy, this is what I would do :
+[17:07] <rtg> git checkout -f master
+[17:07] <rtg> git clean -f -d
+[17:07] <rtg> git ls-files --others --directory |xargs rm -rvf
+[17:07] <rtg> git fetch origin
+[17:07] <rtg> git fetch origin master
+[17:07] <rtg> git reset --hard refs/remotes/origin/master
+[17:09] <rtg> jsalisbury, need to bounce gomeisa for a kernel update
+[17:09] <jsalisbury> rtg, ack
+[17:11] <hggdh> rtg: will do it from now on, thank you
+[17:11]  * hggdh will also beef up (no, actually create) git knowledge
+[17:12] <apw> rtg, i suspect git clean -x -f -d does that clean/ls-files pair
+[17:12] <rtg> apw, actually t does leave some cruft around in some cases, especially on older cversions of git
+[17:13] <rtg> maybe the newer one works better. I'm just being pendantic
+[17:13] <rtg> or is it pedantic ?
+[17:14] <apw> heh
+[17:15] <apw> dman rtg killed my build
+[17:15] <rtg> apw, I checked on gomeisa ?
+[17:15] <apw> well it went pop in the middle :)
+[17:15] <rtg> apw, shit, sorry.
+[17:15] <apw> its only a build, it'll grow back
+[17:16] <hggdh> bjf: anyway should I grab the current head? You did not apply a tag to v0.0.5-1
+[17:16] <bjf> hggdh, ah! i'll fix that
+[17:17] <bjf> hggdh, it's tagged now
+[17:18] <rtg> arges, ikepanhc: rebooting tangerine for kernel update
+[17:18] <arges> rtg, ack
+[17:24] <hggdh> bjf: thanks, updated
+[17:39]  * apw wasnders off early to go to the theatre :)
+[18:12]  * cking wanders off to fly a model helicopter
+[18:18]  * rtg -> lunch
+[18:18]  * ogra_ knew that ckisnt a talll guy ... but *that* small ?
+[18:18] <ogra_> *cking
+[18:36] <hallyn> drat, missed my chance to bug apw
+[18:45] <bjf> sforshee, did you have raring running on this acer?
+[18:47]  * bjf will just boot it up and look
+[18:50] <sforshee> bjf, probably not but I don't recall for sure
+[18:50] <sforshee> I don't think I had used it in a while
+[18:51] <bjf> sforshee, don't know why, it's so fast :-)
+[18:51] <bjf> sforshee, nope, just quantal
+=== Edgan_ is now known as Edgan
+[19:00] <njin> hallo can be bug 1096002 a kernel bug ? thanks
+[19:00] <ubot2> Launchpad bug 1096002 in Ubuntu "Multipath does not work with EMC 5300 Storage" [Undecided,New] https://launchpad.net/bugs/1096002
+[20:08] <hggdh> bjf: perfect, Lucid is all green. Thank you.
+[20:09] <bjf> hggdh, np
+[20:09]  * ogasawara lunch
+[20:33] <jsalisbury> bjf, henrix_ If you have a chance, can you review bug 1092911 ?
+[20:33] <ubot2> Launchpad bug 1092911 in linux (Ubuntu) "linux-crashdump: missing binutils dependancy for "strings"" [Medium,Confirmed] https://launchpad.net/bugs/1092911
+[20:35] <jsalisbury> bjf, henrix_ I wasn't sure if the dependencies for linux-crashdump is something we would handle, or if I shoudl re-assign.
+[20:37]  * rtg -> EOW
+[21:28] <bjf> jsalisbury, it's not a kernel bug but, i've reassigned it to the crash project. smb did the last upload so it's something we could look at
+[21:30] <jsalisbury> bjf, Thanks!
+[22:51] <arges> bjf, hmm i thought crash was working. at least I've been using it recently ... is this after the version bump?
+[22:52] <bjf> arges, don't really know, just looked at it long enough to answer jsalisbury
+[22:52] <arges> 6.1.0-1ubuntu1
+[22:52] <arges> ok
+[22:52] <arges> bjf, also its a dup of bug 251288
+[22:52] <ubot2> Launchpad bug 251288 in crash (Ubuntu) "Crash should depend on binutils" [Medium,Confirmed] https://launchpad.net/bugs/251288
+[22:53] <bjf> ah
+[22:53] <arges> bjf, i'll take care of it
+[22:53] <bjf> thanks

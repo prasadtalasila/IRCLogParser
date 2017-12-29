@@ -1,0 +1,87 @@
+[07:20] <dhart> I'm looking for the correct place to file a bug. Subject would be "Remove confusing and inconsistent gnome- prefix from executables packaged with Ubuntu". Affects these packages: dpkg -S `locate "bin/gnome-"`
+[08:38] <snamellit`> 13:34 *** bladernr_ JOIN
+=== yofel_ is now known as yofel
+=== francisco is now known as Guest79688
+=== reels_ is now known as reels
+[15:53] <Teufelchen> i keep this bug open as per discussion from some time ago on this channel: https://bugs.launchpad.net/ubuntu/+source/mesa/+bug/1079801
+[15:53] <ubot2> Launchpad bug 1079801 in mesa (Ubuntu) "applications like Google Earth or Second Life do not work" [Undecided,New]
+[15:55] <Teufelchen> forgot to add the comment, that i was not able to test install Ubuntu 13.04
+[15:57] <Teufelchen> okay, updated
+[15:58] <Teufelchen> i hope the bug report is not annoying due to the number of comments
+=== Ursinha is now known as Ursinha-afk
+=== Ursinha-afk is now known as Ursinha
+[19:49] <TLoT> ohai!
+[19:50] <TLoT> need someone else on bugcontrol/bugsquad/MOTU to consult with on https://bugs.launchpad.net/ubuntu/lucid/+source/znc/+bug/1088390
+[19:50] <ubot2`> Launchpad bug 1088390 in znc (Ubuntu Lucid) "znc & znc-perl not to load perl module" [Undecided,New]
+[19:50] <TLoT> according to upstream, this is an issue of "Stop trying to build stuff probably written for newer ZNC on older ZNC."
+[19:50] <TLoT> which is pretty non-ubuntu of them to say, but entirely relevant here.
+[19:50] <TLoT> suggestions on hwo to proceed with the bug?
+[19:52] <micahg> TLoT: not a bug, if it was a shipped perl script that would be different
+[19:52] <micahg> maybe we can backport the newer znc to lucid?
+[19:52] <TLoT> micahg: not possible
+[19:52] <micahg> hrm?
+[19:52] <TLoT> issue is dependent on the "Backports cannot depend on backports" thing
+[19:53] <micahg> we should get that fixed
+[19:53] <TLoT> even then, i've tried backporting 0.206 to Lucid
+[19:53] <TLoT> it fails completely.
+[19:53] <TLoT> even with swig2.0 backported.
+[19:53] <TLoT> (requirements are newer versions of software than lucid has)
+[19:53] <TLoT> last time i tested, it'd require pretty much backporting most if not all build-deps from precise/oneiric -> lucid, and that... well...
+[19:53] <TLoT> can cause issues...
+[19:54] <micahg> TLoT: upstream codebase looks like it should build...
+[19:54] <TLoT> (such as interference with other packages, and libraries, and numerous other FTBFS related potential issues)
+[19:54] <TLoT> micahg: last time i tried backporting it wouldn't work
+[19:54] <TLoT> and that was...
+[19:54] <TLoT> oh...
+[19:54] <TLoT> back when Oneiric just came out.
+[19:54] <TLoT> s/oneiric/precise/
+[19:55] <TLoT> micahg: in the mean time i'm going to mark that bug as invalid (unless you wouldn't mind doing that), but stay subscribed to it.
+[19:56] <TLoT> micahg: and which upstream codebase're you looking at, 1.0 or 0.206?
+[19:56] <TLoT> 0.206 is more likely to be backported if i go hacking at the codebase a bit, but 1.0 is... actually quite dependent on newer stuff.
+[19:57] <micahg> oh, hrm, their README doesn't describe the deps well at all
+[19:57] <TLoT> micahg: pull the list of deps from a 0.206 package
+[19:57] <TLoT> i think... um...
+[19:58] <TLoT> pre-backported for precise and quantal had 0.206
+[19:58] <micahg> I was looking at the version in precise backports
+[19:59] <TLoT> micahg: i'd not EVER request 1.0 to be backported to lucid
+[19:59] <TLoT> too many... um... "issues"
+[19:59] <TLoT> since the difference in timeframe is ~3 years of codebase changes and library changes between znc in lucid and znc in precise, as well as build-dep issues
+[19:59] <TLoT> http://bazaar.launchpad.net/~ubuntu-branches/ubuntu/quantal/znc/quantal/view/head:/debian/control#L4  <--
+[20:00] <TLoT> these are the MINIMUM build deps you'd nneed.
+[20:00] <TLoT> need*
+[20:00] <TLoT> and swig2.0 FTBFS if you backport it
+[20:00] <micahg> TLoT: which isn't a problem is upstream was targeting the lowest common denominator (which they're not)
+[20:00] <TLoT> (earliest it built on was Natty, and that was a pain to do)
+[20:00] <TLoT> micahg: and now you know why i think znc on lucid is an idea riddled wtih stupidity
+[20:00] <TLoT> no offense to the rest of the world, but...
+[20:02] <TLoT> micahg: and upstream keeps syaing "Why don't they keep Ubuntu up to date with libraries and things?" to which i usually just don't respond to
+[20:03] <TLoT> since in that respect, debian stable releases and ubuntu releases are similar: they don't really version-upgrade libraries without there being a very good reason for doing so.
+[20:03] <TLoT> (security or otherwise)
+[20:05] <TLoT> micahg: and the biggest of all these issues: swig2.0 doesn't exist in Lucid
+[20:05] <TLoT> and doesn't really backport well
+[20:05] <TLoT> and has been a build-dep for 0.206 and later
+[20:07] <TLoT> so ideally two things would need to happen: (1) swig2.0 would need to be backported if possible to lucid, and (2) the bug on "Backports Can't Build-Dep on Backports" needs to be fixed, and that's i think an sbuild/archive-builders issue.,
+[20:07] <TLoT> oh, and (3) debian/control: drop build-dep on swig (to fix a conflicts issue)
+[20:08] <TLoT> micahg: mind if I quote you in the bug response when i invalid it?
+[20:10] <micahg> TLoT: sure
+[20:11] <TLoT> bleh forgot to include your statement.  but i paraphrased it and referred to the conversation here.
+[20:11] <TLoT> micahg: also for reference, this is the backports can't depend on backports bug: https://bugs.launchpad.net/launchpad/+bug/888665
+[20:11] <ubot2`> Launchpad bug 888665 in Launchpad itself "Backports can't build-depend on other backports" [High,Triaged]
+[20:12] <TLoT> its been in that state for a few years thus far
+[20:12] <TLoT> so...
+[20:12] <TLoT> (seemingly no progress?)
+[20:12] <micahg> TLoT: I should follow up with infinity on that, he was going to do it, but got blocked again, I'm not quite sure on what
+[20:16] <TLoT> micahg: i'd LOVE to know the status on that, since it would potentially break backports (not sure if it'd affect lucid, perhaps that should be checked?)
+[20:18] <TLoT> I'll check back later.
+[23:41] <TheLordOfTime> i don't even think this is valid... https://bugs.launchpad.net/ubuntu/+bug/1097969
+[23:41] <ubot2`> Launchpad bug 1097969 in Ubuntu "Remina Remote Desktop Client cannot be minimized from fullscreen" [Undecided,New]
+[23:41] <TheLordOfTime> i don't see Remina in the repos.
+[23:41]  * TheLordOfTime did an apt-cache search for 'remina' so unless he missed something...
+[23:52] <bdmurray> ith as 2 m's
+[23:52] <TheLordOfTime> bdmurray, it does?
+[23:52] <bdmurray> er, it has 2 m's
+[23:52] <bdmurray> http://packages.ubuntu.com/search?keywords=remmina
+[23:52] <TheLordOfTime> ah, so it does
+[23:52]  * TheLordOfTime takes back his initial statement and reassigns the bug to the package
+[23:55] <TheLordOfTime> would it hurt to ask them to apport-collect the bug as well?
+[23:55] <TheLordOfTime> (to gather some info about the package and the system)

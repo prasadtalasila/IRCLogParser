@@ -1,0 +1,147 @@
+[02:43] <MikeRL> If Xorg is crashing on Raring, should I gather just the logs at /var/log/syslog dmesg and /var/log/Xorg.0.log or should I also include the kernel log. Noticed the issue on Quantal too when using the mainline kernel, which also coincidently is the same major version (3.8) on Raring that I believe may have something to do with the crashes.
+[06:50] <ritz> hi, I am hitting this issue on raring - https://bugzilla.redhat.com/show_bug.cgi?id=891653
+[06:50] <ubottu> bugzilla.redhat.com bug 891653 in libvirt "Cgroups memory limit are causing the virt to be terminated unexpectedly" [Unspecified,On_qa]
+[06:50] <ritz>  Bug 891653 - Cgroups memory limit are causing the virt to be terminated unexpectedly
+[06:50] <ubottu> bug 891653 in software-center (Ubuntu) "Install/Uninstall Software center in drop-down menu not selectable for DEB packages" [Low,Confirmed] https://launchpad.net/bugs/891653
+[07:13] <alankila> ritz: hmh. Interesting. I happen to be using hugepages and I think the cgroup stuff is oblivious about memory used that way, so I guess I won't hit this problem
+[07:14] <ritz> hmm
+[07:14] <alankila> but it's pretty horrible to consider that file (or buffer) cache apparently counts to cgroup's memory usage and results in oom killer looking for a process to kill if there is no swap on the system
+[07:15] <alankila> sounds like great design! might consider just turning memory cgroups off entirely.
+[07:16] <alankila> also the equation used by libvirt is total nonsense and the proposed path obviously won't solve the problem, just makes it less likely to occur: https://www.redhat.com/archives/libvir-list/2013-January/msg00426.html
+[07:18] <ritz>  have pushed this to lp - https://bugs.launchpad.net/ubuntu/+source/libvirt/+bug/1102290
+[07:18] <ubottu> Ubuntu bug 1102290 in libvirt (Ubuntu) "Cgroups memory limit are causing the virt/qemu to be terminated unexpectedly " [Undecided,New]
+[07:20] <alankila> I think I'm losing something like 120 MB for memory cgroups right now. Peanuts, I guess, on a 16 GB system, but I'm still tempted to add cgroup_disable=memory to kernel cmdline
+[07:24] <ritz> haha
+[07:24] <ritz> useful for a server
+[07:24] <ritz> not so much for me
+[07:25] <alankila> Useful if used competently and designed sanely. Looks like neither might be the case right now.
+[07:29] <ritz> brb, rebooting
+[07:33] <ritz> cgroups--
+[07:34] <alankila> might be great idea but the design and use has to be correctly considered, not just heuristically set up to trigger a random OOM killer during disk activity.
+[07:35] <alankila> in general this OOM killing is pretty awkward. I'm still not quite sure why linux can't just fail the memory allocation and leave it at that.
+[07:39] <alankila> and I'm really not thrilled about this modern way to try to contain processes from the outside, like whitelist the system calls they might use or the files they might access, and so on. Seems like it would be better to make it possible to design the applications as secure from ground up. It sounds like work in this direction might be happening, but before it is of any use, people should agree this is the way to go
+[07:42] <ritz> more to do with rss limit enforcement
+[07:42] <ritz> which linux currently sucks at
+[07:42] <ritz> compared to solaris and bsd
+[07:42] <ritz> for the enterprise customers
+[07:42] <ritz> as they say, from where I come from
+[12:19] <BluesKaj> Hiyas all
+=== cmagina_away is now known as cmagina
+=== valdiyen is now known as cmagina
+=== plars is now known as plars-off
+[18:26] <elhoir> hi there
+[18:27] <elhoir> i have a problem about screen resolutions, my GPU is GT 220
+[18:27] <elhoir> im using driver nouveau
+[18:27] <elhoir> the problem is, if i choose 1280x1024, screen goes "off"
+[18:28] <elhoir> and i cant use PC anymore, i have to reboot it remotely, or push power button
+[18:28] <elhoir> any idea?
+[18:29] <elhoir> my system - Ubuntu 13.04, nouveau driver 1.0.6, kernel 3.8.0-1-generic
+[18:30] <elhoir> and Xorg 1.13
+[18:31] <elhoir> any idea, please?
+[18:49] <elhoir> what does this line mean in Corg.0.log ?
+[18:49] <elhoir> [ 73583.120] (EE) NOUVEAU(0): [DRI2] DRI2SwapComplete: bad drawable
+[18:49] <elhoir> Xorg.0.log
+[20:13] <Walther> Installed latest stable nvidia drivers from their website, now I can't even get to a tty
+[20:13] <Walther> help very much appreciated
+[20:15] <BluesKaj_> Walther, they aren't meant for alpha and beta release OSs
+[20:15] <Walther> even then, this is a bit too much
+[20:16] <Walther> i wonder how I can go back
+[20:16] <Walther> is reinstall really the only way
+[20:16] <Walther> failsafe x won't start
+[20:16] <BluesKaj_> you mentioned the 310.19 driver as being stable and it seems that it is , here at least
+[20:16] <Walther> this is talking about my desktop; on which I just installed latest drivers from nvidia website
+[20:17] <Walther> 310.something
+[20:17] <Walther> not 19
+[20:17] <BluesKaj_> rescue kernel
+[20:17] <BluesKaj_> I'm using 19
+[20:17] <Walther> like i mentioned, i can't get to even a tty even from a recovery/rescue kernel
+[20:17] <BluesKaj_> but I'm using kde
+[20:17] <Walther> i can see the menu about what to do, but none of the options actually works
+[20:18] <BluesKaj_> Walther, try the nomodeset setting
+[20:20] <Walther> nomodeset is specified in the recovery kernels
+[20:27] <BluesKaj_> or you can specify in the default kernel by right clicking and using "e' to edit the grub file
+[20:34] <bjsnider> Walther, you used the nvidia-installer did you?
+=== BluesKaj_ is now known as BluesKaj
+[20:35] <Walther> bjsnider: again, like i said, i ran into this issue by installing the driver from their website
+[20:36] <bjsnider> in that case, you did something that nvidia doesn't recommend. nvidia recommends using distro packages
+[20:36] <Walther>  ./NVIDIA-installer.run or something.
+[20:36] <bjsnider> if you still have the installer, you can remove its effects by adding --uninstall to the script
+[20:36] <Walther> yeah, i'm not saying this is any fault of yours or ubuntu
+[20:37] <bjsnider> run thet installer with --uninstall
+[20:37] <Walther> bjsnider: and like i mentioned above, i can't even get to a tty
+[20:37] <bjsnider> it probably destroyed mesa's libgl
+[20:37] <Walther> i'm not sure i could even boot a live usb and chroot as i have fulldisk encryption
+[20:37] <Walther> probably reinstall. luckily i at least have my laptop functioning :)
+[20:38] <Walther> (otherwise i wouldn't even try this dangerous thing :D)
+[20:38] <Walther> but even this laptop install could use some tweaking if any of you want to help
+[20:38] <Walther> somehow I can't seem to get the GPU working, optirun fails
+[20:38] <Walther> walther@affogato:~$ optirun glxgears
+[20:38] <Walther> [ 2495.188129] [ERROR]Cannot access secondary GPU - error: Could not load GPU driver
+[20:39] <Walther> even if I have bumblebee, nvidia-310 installed
+[20:39] <bjsnider> can you switch to the intel driver in the bios?
+[20:40] <Walther> on the laptop i get to the desktop fine, no problemwith X
+[20:40] <Walther> but no option in bios to disable either intel nor nvidia
+[20:41] <Walther> but optirun doesn't work, i.e. i can't run anything with the gpu
+[20:41] <Walther> everything is rendered by intel hd4000
+[20:42] <bjsnider> oh, it's that bumblebee thing
+[20:42] <bjsnider> look, i'm confused by what you're saying
+[20:42] <bjsnider> are you having a problem with the laptop?
+[20:43] <Walther> bjsnider: yeah, if you would read more carefully, you would notice that I switched topics, talking about laptop now ;)
+[20:43] <bjsnider> you're talking about bumblebee in both cases
+[20:43] <bjsnider> i think there's a channel for that
+[20:43] <bjsnider> you won't get much bumblebee talk in here
+[20:44] <Walther> no, i'm not talking about bumblebee on the desktop case
+[20:44] <Walther> desktop only has nvidia
+[20:48] <BluesKaj> Walther, so which computer is the one you need to fix ?
+[20:49] <Walther> BluesKaj: both: desktop needs a complete fix as everything broke, laptop needs to get optirun working
+[20:51] <BluesKaj> the desktop should be easier than the dual gpus on the laptop
+[20:54] <Walther> ...with help from #anotherchannel, managed to chroot in from a live usb, uninstalling nvidia driver and trying to restore previous x config
+[20:54] <BluesKaj> for me anyway , not very well versed in that optimus/bumblebee setup
+[20:54] <Walther> Also, I could definitely use some tips for the desktop - I'm getting awful performance on the nvidia-310 driver
+[20:55] <Walther> Team Fortress 2 ran only with 10-30fps whenever there was any action on screen
+[20:55] <Walther> and the gpu is a powerful GTX 570
+[20:55] <BluesKaj> the 14 or the 19?
+[20:55] <Walther> uh, whichever is provided by the repo :P
+[20:57] <BluesKaj> the 19 is available and stable , the 14 is experimental ..it's odd but it's case
+[20:57] <BluesKaj> the case
+[20:57] <Walther> which package should i install? nvidia-current, nvidia-310?
+[20:59] <Walther> hm?
+[21:00] <BluesKaj> nvidia -310
+[21:00] <BluesKaj> in the package manager it shows as nvidia-310
+[21:00] <Walther> anything else I should do to optimize things?
+[21:01] <BluesKaj> dunno , I'm on kde so gnome /unity is out of my knowledge base
+[21:02] <Walther> welp, it's not only about unity :P
+[21:02] <Walther> I mean, *really*, gtx570 should be able to push quite a bit more than 11-30fps
+[21:03] <BluesKaj> glxgears ?
+[21:03] <Walther> Hmm. "modprobe: ../tools/modprobe.c:550: print_action: Assertion `kmod_module_get_initstate(m) == KMOD_MODULE_BUILTIN' failed.
+[21:04] <Walther> Aborted (core dumped)
+[21:04] <Walther> when running apt-get install --reinstall nvidia-310
+[21:06] <Walther> and that framerate thing was about Tea Fortress 2
+[21:06] <Walther> from #anotherchannel i know a couple guys who have the same GPU and get 200-300fps
+[21:07] <Walther> and glxgears gets about 7000 fps, not tens of thousands like it should
+[21:08] <BluesKaj> my elcheapo 8400gs gets 60 , that's all
+[21:09] <BluesKaj> Full Screen
+[21:09] <Walther> BluesKaj: on team fortress2?
+[21:09] <Walther> wow.
+[21:09] <Walther> I'm not able to get that -.-'
+[21:10] <BluesKaj> nope glxgears
+[21:10] <Walther> ah, that number is probably meaningless, sounds like it's limited by vblank
+[21:10] <BluesKaj> possible
+[21:10] <Walther> 60 is your monitors freshrate
+[21:10] <BluesKaj> yup
+[21:10] <Walther> try running vblank_mode=0 glxgears
+[21:11] <BluesKaj> same
+[21:12] <Walther> hm.
+[21:13] <Walther> anyway, i'm getting a fraction of the true capabilities of my gpu, something's wrong and help would be appreciated
+[21:15] <BluesKaj> ok , disabled v-blank in the nvidia GUI , fullm screen is about 90 fps
+[21:18] <BluesKaj> Walther, perhaps your graphics is too rare for the regular 310 driver , altho you mentioned that you installed the driver recommended by the nvidia support site , correct ?
+[21:19] <Walther> BluesKaj: ...if you would stay awake in the conversation, this would be easier :) As you might remember, I just recovered via a liveusb+chroot, and asked you about which driver to install
+[21:19] <Walther> and yeah, running the nvidia-310 from repo now
+[21:20] <Walther> and gtx570 is definitely not too rare, as i said, a couple other guys are getting 200-300fps on theirs on team fortress 2
+[21:24] <BluesKaj> Walther, you posted this " Aborted (core dumped, when running apt-get install --reinstall nvidia-310" ..assumed it didn't install
+[21:25] <BluesKaj> anyway good luck with that
+[21:25] <Walther> I assume it partially installed as nvidia-settings looks to be functioning
+[23:14] <JonEdney> Is there a place where I can see what type of features is needing to be tested for 13.04?
+[23:19] <jtaylor> #ubuntu-quality might know some spots
+[23:20] <alankila> as a friendly hint, someone might test that /etc/init/qemu-kvm.conf indeed reads /etc/default/qemu-kvm for user settings. Because it totally doesn't.
+=== cmagina is now known as cmagina_away

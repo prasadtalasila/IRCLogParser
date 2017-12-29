@@ -1,0 +1,540 @@
+=== dfc is now known as Guest82651
+=== cpg|away is now known as cpg
+[02:40] <Bluefoxicy> Error! Bad return status for module build on kernel: 3.5.0-22-generic (x86_64)
+[02:40] <Bluefoxicy> Consult /var/lib/dkms/virtualbox/4.1.18/build/make.log for more information.
+[02:40] <Bluefoxicy> run-parts: executing /etc/kernel/postinst.d/initramfs-tools 3.5.0-22-generic /boot/vmlinuz-3.5.0-22-generic
+[02:40] <Bluefoxicy> include/linux/device.h:116:2: error: invalid preprocessing directive #lefine
+[02:40] <Bluefoxicy> include/linux/device.h:121:40: error: unknown type name ‘stzuct’
+[02:41] <Bluefoxicy> lol what
+[03:17] <infinity> Bluefoxicy: Looks like filesystem corruption or bad RAM.
+[03:18] <hyperair> #lefine indeed.
+[03:20] <Bluefoxicy> infinity: it just installed that
+[03:20] <Bluefoxicy> it downloaded a linux kernel image/header package I think
+[03:21] <hyperair> infinity: bad RAM sounds more likely. it's the 4th bit being flipped consistently.
+[03:21] <Bluefoxicy> weird.
+[03:21] <Bluefoxicy> wait, how would that happen
+[03:21] <Bluefoxicy> doesn't the kernel hash blocks it buffers?
+[03:23]  * hyperair shrugs
+[03:23] <hyperair> i've had memory corruption from using zcache before.
+[03:23]  * Bluefoxicy unpacks it again.
+[03:23] <Bluefoxicy> exact same result hum.
+[03:23] <hyperair> if you're using that you might like to disable it and see if it helps matters.
+[03:23] <hyperair> also try sysctl vm/drop_caches=2
+[03:23] <Bluefoxicy> KiB Mem:  15747100 total, 10308472 used,  5438628 free,   342340 buffers
+[03:23] <Bluefoxicy> KiB Swap:  7873520 total,        0 used,  7873520 free,  6556008 cached
+[03:24] <hyperair> eh well mem usage doesn't say anything.
+[03:24] <hyperair> check if dmesg complains about bad memory
+[03:24] <hyperair> sometimes the kernel notices.
+[03:24] <Bluefoxicy> odd  Segfaults a lot everywhere.
+[03:24] <hyperair> heh
+[03:24] <hyperair> have fun
+[03:24] <micahg> Bluefoxicy: go for memtest
+[03:25] <hyperair> yeah memtest
+[03:25] <hyperair> it sounds very much like bad mem now.
+[03:25] <Bluefoxicy> dropping caches seems to have fixed it.
+[03:25] <Bluefoxicy> I think I need a file system check.  :|
+[03:25] <Bluefoxicy> why oh why didn't i use lvm
+[03:26] <Bluefoxicy> i would take a snapshot and fsck it now.
+[03:27] <hyperair> nah
+[03:27] <hyperair> not fsck
+[03:27] <hyperair> if dropping caches fixes it, it's not a filesystem issue
+[03:27] <hyperair> it's a memory issue
+[03:27] <Bluefoxicy> i mean to make sure the disk doesn't have corruption from prior issues
+[03:27] <hyperair> do you have zcache enabled?
+[03:27] <hyperair> ah
+[03:27] <Bluefoxicy> no I have zswap but it's not swapping to it
+[03:27] <Bluefoxicy> zcache was terrible
+[03:28] <Bluefoxicy> it caused abberant behavior so I don't use it.
+[03:28] <Bluefoxicy> so on a completely different note
+[03:28] <Bluefoxicy> have you folks seen Pulp?
+[03:28] <hyperair> haha i had issues with zcache too.
+[03:28] <Bluefoxicy> (zcache was making Linux keep tiny, tiny file system caches so it was slow as hell)
+[03:29] <hyperair> hrmm, i didn't have that issue.
+[03:29] <hyperair> what i did get was weird intermittent short hangs
+[03:29] <Bluefoxicy> I was in the #pulp channel earlier
+[03:29] <hyperair> and dpkg corruption
+[03:29] <Bluefoxicy> they were discussing the plug-in to handle apt/deb repos
+[03:30] <Bluefoxicy> apparently that's coming soon.
+[03:30] <Bluefoxicy> so it'll be able to centralize both yum and apt repository caches and mirrors and push updates and software installation to Debian-based systems and yum/rpm systems
+[03:30] <Bluefoxicy> That should probably be a tasksel task on Ubuntu Server in the future ;|
+[03:41] <infinity> Bluefoxicy: fsck isn't going to catch the sort of corruption that bit-flipping causes.  Not in any way that won't do more damage when trying to fix it.
+[03:41] <infinity> Bluefoxicy: The best solution if you suspect this sort of pain is to back up immediately, fix the hardware problem, reinstall, and selectively restore/verify data you care about.
+=== plars-off is now known as plars
+[04:45] <Chipzz> Bluefoxicy: I doubt LVM would have helped in this case
+[06:12] <pitti> Good morning
+=== hrww is now known as hrw
+[07:49] <dholbach> good morning
+[09:07] <Laney> @pilot in
+=== udevbot changed the topic of #ubuntu-devel to: Ubuntu 12.10 released | Archive: Open | Dev' of Ubuntu (not support or app devel) | build failures -> http://qa.ubuntuwire.com/ftbfs/ | #ubuntu for support and dicussion of hardy -> quantal | #ubuntu-app-devel for app development on Ubuntu http://wiki.ubuntu.com/UbuntuDevelopment | See #ubuntu-bugs for http://bit.ly/lv8soi | Patch Pilots: Laney
+[09:08]  * dholbach hugs Laney
+[09:08] <Laney> :-)
+[09:08] <Laney> 79 items :O
+[09:11] <dholbach> I'll join you in a bit - got some other stuff to take care of first
+[09:11] <dholbach> brb
+[09:15] <Laney> xnox: what did you find out about app-install-data-partner?
+=== zequence_ is now known as zequence
+[09:29] <xnox> Laney: I found out that it is, "just do it". But the next round of SRUs affects quantal, but quantal has one app-install-data-partner in -proposed (last time I checked) it would be great to verify and publish that first.
+[09:29] <mlankhorst> heh
+[09:29] <mlankhorst> infinity: last patch before 9.0 "configure.ac: Don't link gallium drivers with libdricore"
+[09:29] <xnox> Laney: the item to be sponsored is one of them (2 bugs) but they need to be applied on all supported releases.
+[09:30] <Laney> sounds like you're on it ;-)
+[09:30] <infinity> xnox: app-install-data-partner has some curious SRU exceptions.
+[09:31] <xnox> infinity: sure. but if it's fixing a bug of something not installing correctly because of it, I'd rather see somebody actually open software centre and verify that it does the right thing now =)
+[09:32] <infinity> xnox: That someone could be you.
+[09:32] <xnox> infinity: sure =)
+[09:32]  * xnox didn't get around to it, just yet.
+[09:34] <Laney> infinity: while you're here, bug #1064475 could do with an ubuntu-sru voice
+[09:34] <ubottu> bug 1064475 in crash (Ubuntu Quantal) "crash version is outdated. Needs to import Debian version of the package" [Medium,In progress] https://launchpad.net/bugs/1064475
+[09:36] <infinity> I could have sworn I gave smb or arges or someone an opinion on that months ago.
+[09:38]  * mlankhorst tries reverting don't build gallium against libdricore patch
+[09:41] <smb> infinity, We always get lots of opinion. :-P But yes, you did. I was about to get back and ask about some more specific steps forward.
+[09:42] <infinity> smb: Kay.  Catch me in the morning (well, your evening)?
+[09:42] <smb> infinity, I thought to do it via email which is a bit more persistent and asynchronous
+[09:42] <Laney> Can someone update the bug with a quick status update? It's the top item on the queue so I imagine people keep spending precious minutes looking at it.
+[09:43] <smb> Evenings and mornings are relative... right now an hour off but back to normal soon
+[09:43] <Laney> or remove the sponsors altogether if you're sorting it out between yourselves
+[09:43] <smb> Laney, I will add a comment
+[09:44] <Laney> merci
+[09:47] <mlankhorst> infinity: adding dricore makes zero difference to size for nouveau_dri.so (I measured it, it's actually 0 difference, which is amazing :D)
+[09:49] <infinity> mlankhorst: Uhm.  Then it's being linked both statically *and* dynamically.  Or nouveau_dri.so uses no dricore symbols (which seems impossible).
+[09:50] <infinity> smb: Sure.  Mail away.
+[09:51] <mlankhorst> well afaict the original patch also created a glsl.so
+[09:56] <mlankhorst> maybe libmesagallium.a needs to be shared
+[09:57]  * mlankhorst tries evil hack
+[09:59]  * jackyalcine watches and studies mlankhorst's evil hack
+[10:00] <OdyX> tkamppeter_: can you hint me about Debian #697970 and LP #872483 Apparently the Oki fix is in cups, but some users have a problem with an Epson Stylus Color 670; what would be the correct fix ?
+[10:00] <ubottu> Debian bug 697970 in cups "cups: printing gets wrong after some pages on Epson Stylus Photo 750" [Important,Open] http://bugs.debian.org/697970
+[10:00] <ubottu> Launchpad bug 872483 in cups (Ubuntu Oneiric) "laser printer only prints first job correct" [Medium,Fix committed] https://launchpad.net/bugs/872483
+[10:06] <mlankhorst> infinity: ok an evil hack that made libmesagallium shared did the trick, back to normal sizes
+[10:06] <mlankhorst> -rwxr-xr-x 1 mlankhorst mlankhorst 1,2M jan 22 11:05 nouveau_dri.so
+[10:08] <mlankhorst> I'll try to do a proper version now
+[10:08] <infinity> mlankhorst: \o/
+[10:10] <Laney> more SRU team comments requested in bug #1014732 - proxying: can an SRU change a conffile?
+[10:10] <ubottu> bug 1014732 in mysql-5.5 (Ubuntu Precise) "log_error not set in my.cnf, errors not written anywhere" [High,Triaged] https://launchpad.net/bugs/1014732
+[10:11] <mlankhorst> hm maybe that's why the dricore patch did what it did..
+[10:35] <rbasak> Laney: I discussed it with SpamapS and I believe he wanted it. SpamapS, around?
+[10:43] <Laney> rbasak: Righto; I'm happy to sponsor when someone decides so
+[10:47]  * rbasak writes to -devel
+[10:48] <mlankhorst> Ok with some hacking I don't need to build another shared object, and I can link gallium drivers against libdricore again by just including the missing gallium parts. It should decrease size slightly more compared to just building another object.
+[10:48] <xnox> stgraber: lxc is pure awesome.
+[10:49] <mlankhorst> 12M     shared2/
+[10:49] <mlankhorst> /tmp$ du -sh static
+[10:49] <mlankhorst> 34M     static
+=== ximion is now known as ximion-afk
+[10:52] <mlankhorst> so, from 34m to 25m for shared gallium, and 25m to 12m for shared dricore re-enable :)
+[10:55] <zyga> kirkland: ping
+=== security is now known as megha
+[10:58] <xnox> mlankhorst: you rock!!!!!
+[11:05] <mpt> jelmer, bug 680833 should be reopened for bzr-git, but I don't have permission to do it myself.
+[11:05] <ubottu> bug 680833 in bzr-git (Ubuntu) ""git-apply" does not add new files" [Medium,Triaged] https://launchpad.net/bugs/680833
+=== _salem is now known as salem_
+=== Tonio_aw is now known as Tonio_
+=== ximion-afk is now known as ximion
+[12:02] <cjwatson> didrocks: would you mind sorting out bug 1102713?  I know it wasn't your upload that broke it, but barry isn't here ...
+[12:02] <ubottu> bug 1102713 in oneconf (Ubuntu) "package oneconf-common (not installed) failed to install/upgrade: trying to overwrite '/usr/share/oneconf/data/images/computer.png', which is also in package oneconf 0.2.9.1" [High,Triaged] https://launchpad.net/bugs/1102713
+[12:03] <didrocks> cjwatson: sure, doing that one now.
+[12:03] <cjwatson> ta
+[12:03] <didrocks> yw
+=== henrix_ is now known as henrix
+=== cpg is now known as cpg|away
+=== Tonio_ is now known as Tonio_aw
+=== Tonio_aw is now known as Tonio_
+[12:23] <mlankhorst> woops, broke i915 with the patch. Good thing I test :)
+=== Sweetsha1k is now known as Sweetshark
+=== Tonio_ is now known as Tonio_aw
+=== MacSlow is now known as MacSlow|lunch
+[12:57] <notgary_> Does anyone know how I can add events to the Fridge calendar http://fridge.ubuntu.com/calendars/
+[13:12] <mlankhorst> woops, the fix increases size from 11336 to 12708K, I'll see if I can get it back by building the thing shared
+[13:19] <cjwatson> ahasenack: bug 1060404 - does the instance in which you successfully tested the new grub-pc contain /boot/grub/grub.cfg?
+[13:20] <ubottu> bug 1060404 in lxc (Ubuntu Precise) "update-grub runs and fails in containers" [High,Triaged] https://launchpad.net/bugs/1060404
+[13:20] <cjwatson> (I'm trying to narrow down another report)
+=== Tonio_aw is now known as Tonio_
+[13:27] <Laney> @pilot out
+=== udevbot changed the topic of #ubuntu-devel to: Ubuntu 12.10 released | Archive: Open | Dev' of Ubuntu (not support or app devel) | build failures -> http://qa.ubuntuwire.com/ftbfs/ | #ubuntu for support and dicussion of hardy -> quantal | #ubuntu-app-devel for app development on Ubuntu http://wiki.ubuntu.com/UbuntuDevelopment | See #ubuntu-bugs for http://bit.ly/lv8soi | Patch Pilots:
+[13:27] <ahasenack> cjwatson: the lxc container you mean?
+[13:28] <ahasenack> cjwatson: the linode machine does have /boot/grub/grub.cfg (my last comment in the bug), let me check the lxc one
+[13:29] <ahasenack> cjwatson: the lxc instance does NOT have /boot/grub/grub.cfg
+[13:35] <ahasenack> cjwatson: looking at /etc/init/container-detect.conf, I wonder if we shouldn't check for lxc specifically. Would grub fail on, say, openvz too?
+[13:39] <cjwatson> It will fail in any context where it can't figure out a full path to the filesystem that will work from bare metal
+[13:39] <cjwatson> So it will probably fail in any container
+[13:39] <cjwatson> ahasenack: Does your Linode machine actually use GRUB to boot?
+[13:40] <ahasenack> cjwatson: it uses "grub-pv" iirc
+[13:40] <cjwatson> (Well, where I say "bare metal", I mean "from the context where GRUB will actually boot")
+[13:40] <cjwatson> ahasenack: Right, so that's not Sebastian's case
+[13:40] <ahasenack> cjwatson: he didn't give more info yet, did he?
+[13:40] <cjwatson> Privately
+[13:41] <cjwatson> In your Linode instance, GRUB can evidently figure out a halfway plausible route to /boot/grub and thus succeeds
+[13:41] <ahasenack> ah
+[13:41] <cjwatson> Anyway, thanks, I have enough information from you to narrow things down no
+[13:41] <cjwatson> w
+[13:41] <ahasenack> as far as I understood it, pv-grub is an external grub what will eventually call the one inside the linode, or something like that
+[13:42] <cjwatson> Kiiiiiiiiiind of
+[13:42] <cjwatson> The details are complex and not important here :)
+[13:45] <ahasenack> :)
+=== Tonio_ is now known as Tonio_aw
+=== Tonio_aw is now known as Tonio_
+[14:02] <mlankhorst> ok with shared-mesagallium back to good size
+[14:03] <mlankhorst> 11436 kb, vs broken 11336, and working 12708 kb
+[14:07] <jelmer> mpt: Fixed, thanks
+=== MacSlow|lunch is now known as MacSlow
+[14:15] <mlankhorst> cjwatson: ok it's ugly, but I think I can reduce the size of mesa again by using libdricore in the gallium drivers. saves about 5 mb on gzip
+[14:20] <cjwatson> nice
+=== scott-work is now known as Guest6298
+[14:26] <mlankhorst> took a while to come up with a cleaner approach, it's still kind of messy. mesa is a mess between its old style hand-rolled makefiles and halfway through a conversion to autotools :/
+=== ttx` is now known as ttx
+[14:36] <wjtaylor_> Sorry if this is the wrong forum. Are there any known issues with XT2 touchpads? I'm having issues in 12.04 clicking in nautilus. No one else can reproduce, so wanted to check with you all.
+[14:38] <seb128> jodh, hey, just for info https://wiki.ubuntu.com/FoundationsTeam/Specs/RaringUpstartUserSessions?action=diff&rev1=76&rev2=77 is wrong, X-GNOME-Autostart-Delay is used on login to delay start of a command, not on logout
+=== cmagina_away is now known as cmagina
+[14:40] <jodh> seb128: yeah, I did wonder about that :) Is there a way for an application to delay the logout then?
+[14:41] <seb128> jodh, no "delay" I think, there are at least 2 mechanism supported
+[14:41] <seb128> - the xorg session registration protocol
+[14:41] <seb128> but I guess that's going away when xorg is going away
+[14:42] <seb128> - http://people.gnome.org/~mccann/gnome-session/docs/gnome-session.html#org.gnome.SessionManager.Inhibit
+[14:42] <seb128> gnome-session has an inhibit api which allows to inhibit logout
+[14:42] <seb128> that's useful for things like e.g cd recording are in progress
+[14:42] <xnox> what's the best way to talk to udev from python?
+[14:43] <xnox> pitti: ^ any recommendations?!
+=== henrix_ is now known as henrix
+[14:43] <seb128> jodh, ah, found back the name of the xorg protocol, "xsmp" ... it's implemented in http://git.gnome.org/browse/gnome-session/tree/gnome-session/gsm-xsmp-client.c
+[14:44] <seb128> jodh, that's what is used by e.g gedit to display the "you have unsaved work, do you want to save it before logging out"
+[14:44] <mlankhorst> cjwatson: is it ok to break building in parallel? what I'm doing is a bit of a hack and I don't see a clean way to declare a dependency
+[14:45] <pitti> xnox: use gudev, and its gir through introspection; hang on, digging out an example
+[14:46] <pitti> xnox: hah, it's right on https://live.gnome.org/PyGObject/IntrospectionPorting
+[14:46] <pitti> xnox: http://www.michaelwood.me.uk/blag/2012/11/23/python-pygi-gudev-example/ is another one
+[14:47] <pitti> xnox: it's really the C API from http://www.freedesktop.org/software/systemd/gudev/
+[14:47] <jodh> seb128: ok, thanks. We need to find a way to tie this into the design as by default Upstart is only going to wait for up to 5 seconds for gnome-session to after the initial SIGTERM.
+[14:48] <xnox> pitti: thanks. I was about to dive into pyudev....
+[14:49] <seb128> jodh, good point, do you think there is any way to block on gnome-session to exit/send a signal?
+[14:49] <jodh> seb128: actually, it's not a problem assuming gnome-session only calls ConsoleKit to request system shutdown after its shut down its clients.
+[14:49] <pitti> xnox: <jedi wave>that's not the library you are looking for
+[14:50] <xnox> pitti: yes, master.
+[14:50] <pitti> xnox: the Source is strong in you, young Jedi!
+[14:51] <hrw> hello
+=== rickspencer3_ is now known as rickspencer3
+[14:52] <hrw> guys: in normal (X)Ubuntu installation when kernel is booted with 'quiet splash' when should splash appear?
+[14:52] <hrw> I have acer aspire one 722 here (amd c-60 with radeon integrated) and I have: black, off, black, lightdm
+[14:53] <cjwatson> mlankhorst: Yes
+[14:53] <xnox> hrw: as far as I remember the xubuntu one "splash" is missing, hence it's black (the second black I believe).
+[14:53] <hrw> on shutdown I have xubuntu splash
+[14:53] <cjwatson> mlankhorst: As long as your debian/rules doesn't honour DEB_BUILD_OPTIONS=parallel (either directly or via dh --parallel)
+[14:54] <xnox> hrw: funny.
+[14:54] <hrw> xnox: yeah. but my wife will use this machine...
+=== slank_away is now known as slank
+[14:55] <xnox> hrw: I only have limited knowledge of plymouth/boot stack & I am not interested in digging into xubuntu vs ubuntu. It works in ubuntu so check what's missing / different =/
+[14:55] <hrw> sure
+[14:56] <ogra_> hrw, what release ?
+[14:56] <hrw> ogra_: 12.10
+[14:56] <hrw> ogra_: will all recent updates
+[14:56] <xnox> hrw: as far as I remember the studio splash works correctly, and that's based on top of xubuntu........
+[14:56] <hrw> xnox: I am installing ubuntulogo theme now
+[14:56] <xnox> hrw: but studio have their own plymouth theme.
+[14:57] <ogra_> hrw, try something: add FRAMEBUFFER=Y to /etc/initramfs-tools/initramfs.conf, re-roll the initrd and see if that changes something
+[14:57] <hrw> ogra_: thanks, will check after reboot
+[14:57] <mlankhorst> cjwatson: hm I guess I'll spend some more time investigating then
+[14:57] <ogra_> i'm hunting down a race between console-setup and plymouth on arm since some time that manifests with similar issues
+[14:58] <hrw> ogra_: arm curse ;D
+[14:58] <ogra_> adding FRAMEBUFFER=Y forsec the initrd to run console-setup first and plymouth survives
+[14:58] <cjwatson> mlankhorst: Well, if you don't see parallel anywhere in debian/rules then it should be fine
+[14:58] <ogra_> at least here
+[14:58] <ogra_> *forces
+[14:59] <mlankhorst> it's been a bit of a mess though, I think I got a cleaner solution now
+[15:03] <hallyn> slangasek: do you object to bug 1103022 ?
+[15:03] <ubottu> bug 1103022 in udev (Ubuntu) "70-udev-acl.rules needs to put g+rw on /dev/kvm" [High,Confirmed] https://launchpad.net/bugs/1103022
+[15:03] <hrw> ogra_: no changes
+[15:04] <ogra_> hrw, thx, i had some hope
+[15:05]  * hallyn biab
+[15:08] <mlankhorst> yay local build finished correctly
+[15:15] <hrw> added 'break=modules', landed in busybox on framebuffer. ctrl-d then. black, splash, lightdm
+[15:16] <ogra_> hrw, weird, thats what i meant to fix with the FRAMEBUFFER option
+[15:16] <ogra_> break calls console-setup forcefully
+[15:18] <hrw> booting with plymouth:debug == splash
+[15:19] <ogra_> hrw, yeah, points to a similar race i think
+[15:19] <hrw> looks like
+[15:20] <hrw> the worst part is that after big ACER logo you have no idea is it booting or crashed. have to wait ~minute to get lightdm
+[15:20] <ogra_> ogra@nexus7:~$ cat /etc/initramfs-tools/conf.d/framebuffer
+[15:20] <ogra_> FRAMEBUFFER=y
+[15:21] <ogra_> thats how i fix it on the nexus7
+[15:21] <ogra_> FSVO "fix"
+[15:21] <ogra_> i dont get why that didnt work for you when adding it to initramfs.conf
+[15:22] <ogra_> should have the same effect as "break=" (which calls "panic()" which in turn runs console-setup)
+[15:24] <hrw> btw - how to get rid of most of kernel drivers from initramfs?
+[15:24] <mlankhorst> cjwatson: http://paste.ubuntu.com/1559853/ is the final patch I have in mind, but I want to test some more locally first in a ppa so all drivers at least load correctly :P
+[15:26] <hrw> anyway - food
+[15:27] <mlankhorst> full debdiff just enables that patch and adds back a missing rm -f libgallium.so since it wasn't meant to be linked outside of mesa
+[15:27] <mdeslaur> Is there a way for a package to state that it would prefer to keep a user modified conffile, to prevent the user from getting a conffile prompt?
+[15:29] <xnox> mdeslaur: maybe it should be a config file instead then.
+[15:29] <xnox> (aka generated with postinst script)
+[15:29] <xnox> and not touched if upgrading...
+[15:31] <mdeslaur> xnox: yeah, but then you lose the nice conffile handling if you do have an important change in a subsequent update
+[15:31] <cjwatson> conffiles don't have the sophistication you're asking for
+[15:32] <mdeslaur> cjwatson: ok, thanks...that's what I suspected
+[15:38] <xnox> pitti: it's very nice, thank you =)
+=== rickspencer3_ is now known as rickspencer3
+[15:47] <mlankhorst> ok i915 unbroken :)
+[16:16] <mlankhorst> cjwatson: uploaded mesa precise4, should hopefully fix all size issues with mesa, won't spend more time on it unless it's broken :P
+[16:16] <cjwatson> cool, thanks
+[16:28] <dobey> barry: software-center doesn't need the >= 0.3 does it? it doesn't use new API, it's just that the oneconf packaging changed, so it needs to explicitly require the python-oneconf bit, right?
+[16:29] <barry> dobey: good point, yes, that should be enough
+[16:30] <dobey> barry: great; the >= 0.3 made the daily builds not installable on older ubuntus
+[16:31] <barry> dobey: cool.  will you fix that or should i?
+[16:31] <ev> apw: https://launchpad.net/ubuntu/+bugs?field.tag=apport-kerneloops
+[16:31] <dobey> barry: i will
+[16:32] <barry> thanks
+[16:32] <dobey> i'll also probably convert it to a non-native package soon
+=== cjwatson changed the topic of #ubuntu-devel to: Ubuntu 12.10 released | Archive: Open | Dev' of Ubuntu (not support or app devel) | build failures -> http://qa.ubuntuwire.com/ftbfs/ | #ubuntu for support and discussion of hardy -> quantal | #ubuntu-app-devel for app development on Ubuntu http://wiki.ubuntu.com/UbuntuDevelopment | See #ubuntu-bugs for http://bit.ly/lv8soi | Patch Pilots:
+[16:32] <barry> dobey: nice
+[16:45] <kirkland> zyga: howdy!
+[16:45] <zyga> kirkland: hey, I have a question for you, how do you manage byobu sources to allow it to live both in git and bzr sensibly?
+[16:46] <xnox> kirkland: manpages.ubuntu.com is now deployed from lp:~ubuntu-core-dev/ubuntu-manpage-repository/ubuntu such that more people have commit rights.
+[16:46] <xnox> kirkland: and it only has distro name updates & font name change s/UbuntuBeta/Ubuntu/
+[16:46] <kirkland> xnox: that's great!
+[16:47] <kirkland> xnox: I'm very happy about that :-)
+[16:47] <kirkland> zyga: I'm using github as basically a co-lo for my launchpad projects
+[16:47] <dobey> has anything changed in pbuilder (or pbuilder-dist) in raring with regards to ~/.pbuilderrc? i've put OTHERMIRROR= in ~/.pbuilderrc, but "pbuilder-oneiric update" doesn't seem to be picking up that value
+[16:48] <zyga> kirkland: could you be more specific? can you accept merge/pull requests from both? which one is primary?
+[16:48] <xnox> kirkland: if only you can mark it "devel series" or like set a team as the project driver/maintainer. Something like core dev. But I guess there is no pressing issues with that service now..... e.g. it runs and all releases are up to date.
+[16:49] <kirkland> zyga: I have a new script in bikeshed called "dual-push";  when I push to bzr, I also push to git
+[16:49] <kirkland> zyga: bzr is primary
+[16:49] <kirkland> zyga: I haven't yet accepted a merge/pull from github, but that's the general idea -- I'd like to encourage contributions from both
+=== pgraner is now known as pgraner-afk
+=== pgraner-afk is now known as pgraner
+[16:50] <kirkland> zyga: if you have a pull request, I'm interested in testing out that workflow?
+[16:50] <kirkland> zyga: http://bazaar.launchpad.net/~bikeshed/bikeshed/trunk/view/head:/dual-push
+[16:50] <kirkland> zyga: pretty simple functionality right now
+[16:51] <zyga> thanks, I'm interested in that a lot
+[16:51] <kirkland> zyga: but my goal is to be able to accept merges/pulls from either github or lp
+[16:51] <zyga> kirkland: I use git-lp that I wrote to collaborate, so to speak
+[16:51] <Laney> xnox: auto deployed?
+[16:51] <kirkland> zyga: awesome -- I'd love to fork out dual-push to a separate project, outside of bikeshed, and use it to manage this
+[16:51] <wjtaylor_> http://paste.ubuntu.com/1560076/
+[16:51] <zyga> kirkland: there are some issues with making that possible
+[16:51] <kirkland> zyga: oh, yeah?
+[16:51] <kirkland> zyga: let me take a look at that
+[16:51] <zyga> kirkland: the bzr pieces were not finished
+[16:52] <zyga> kirkland: and with the state of bzr maintenence it's not likely they ever will
+[16:52] <xnox> Laney: well. almost =)
+[16:52] <zyga> kirkland: but if you find out about anything related to this topic I would appreciate if you could ping me about it
+[16:52] <kirkland> zyga: yeah, I've always had a ton of trouble with LP autoimporting other vcs's
+[16:52] <kirkland> zyga: the only thing that's ever worked for me
+[16:52] <xnox> Laney: in the end I just updated the configs by hand, but they have raring already.
+[16:52] <zyga> kirkland: I remember using experimental mode in bzr-git a few years ago where I could push/pull to git repos from bzr with all meta-data
+[16:52] <kirkland> zyga: is fast-export | fast-import
+[16:52] <zyga> but that code was never enabled
+[16:52] <Laney> heh
+[16:53] <zyga> kirkland: don't get me started, bzr-fastimport is so broken today
+[16:53] <zyga> kirkland: the only reason I wrote git-lp is to work around the bugs in bzr-fastimport so that I get a subset which works
+[16:54] <zyga> kirkland: I tried fixing it but I am unable to write tests that would be accepted upstream, bzr's internals are too complex for my limited time now
+[16:54] <zyga> kirkland: https://github.com/zyga/git-lp/blob/master/git-lp
+[16:55] <xnox> zyga: github has a lot of git-[bzr|lp[-ng]] wrappers and forks..... =/
+[16:56] <zyga> xnox: I looked at many of those, they all depend on fastexport
+[16:56] <zyga> xnox: so far, only bzr-git is actually genuinely different
+[16:56] <zyga> xnox: and unfinished
+[16:56] <xnox> zyga: how does your's work?
+[16:57] <xnox> zyga: or is it still fastimport but with hacks and what not
+[16:57] <zyga> xnox: it also uses fastexport but 1) only in a very limited way (with rationale) and 2) I carry a small patch for bzr (that I am unable to upstream), I don't know about anyone that uses bzr+git without a patch like that
+[16:57] <zyga> xnox: my code is really small, I encourage you to read it
+[16:57] <cjwatson> Mm, I used fastexport for several things a while back and accumulated a giant patch stack
+[16:57] <zyga> kirkland: have you ever seen bzr crashing on anything you do?
+[16:58] <cjwatson> Some of which I managed to upstream but I think not all of it, because damn it was complex
+[16:58] <xnox> zyga: cjwatson: I too have a small stack of patches.....
+[16:58] <zyga> cjwatson: which parts were complex? bzr?
+[16:58] <cjwatson> I like the idea, it's much easier to debug something like fastexport
+[16:58] <cjwatson> no, fast*port itself
+[16:58] <zyga> could you guys share patches please?
+[16:58] <zyga> I'm totally interested
+[16:58] <xnox> maybe we should push them somewhere and create a robust bzr2git.....
+[16:58] <rbasak> What's bad about fastexport? I have yet another tool (unpublished) that uses fastexport as minimally as I could and just works. But it currently works in one direction only
+[16:58] <xnox> (and reverse, if there is a desire to push things back to launchpad)
+[16:59] <cjwatson> I think mine ended up on https://code.launchpad.net/bzr-fastimport
+[16:59] <cjwatson> Hopefully
+[16:59] <zyga> the problem that I see is that some of those need to get into bzr tree and that is hard without someone that is willing to spend effort on getting to know bzr internals to write proper tests
+[16:59] <zyga> cjwatson: so have all of your patches landed upstream or are they just pushed as a branch of bzr-fastexport?
+[16:59] <cjwatson> If it's at all useful, my big-blob-of-stuff patch appears to be http://paste.ubuntu.com/1560105/
+[17:00]  * zyga looks
+[17:00] <cjwatson> I don't really remember any more how much got upstream and don't think I have the time to look right now
+[17:00] <cjwatson> But maybe you can take it from there if you care ...
+[17:00] <zyga> cjwatson: too bad it's not a bunch of commits with rationale, it's harder to track that
+[17:00] <cjwatson> Some of that's probably backporting to whatever version of bzr I was using at the time
+[17:00] <zyga> cjwatson: but still valuable, I'll read it in detail
+[17:00] <cjwatson> Yeah, the problem with this kind of thing was that I was using it one-shot
+[17:00] <zyga> cjwatson: what was your main use case?
+[17:00] <cjwatson> So didn't have a lot of motivation to tidy up later
+[17:00] <zyga> cjwatson: and is it something that you still use often?
+[17:01] <cjwatson> Generally, one-shot conversions of my various Debian package repositories from other formats (usually svn)
+[17:01] <cjwatson> Not the sort of thing you tend to use much after you're finished
+[17:01] <zyga> I see
+[17:01] <cjwatson> The existence of https://code.launchpad.net/~cjwatson/bzr-fastimport/git-directories (merged) suggests that I used it for git at least once
+[17:01] <zyga> my main use case is git-bzr co-existence (I wish lp had support for git)
+[17:02] <cjwatson> I don't use fast*port anywhere in any kind of continuous mode at the moment
+[17:02] <zyga> I see, thanks
+[17:03] <zyga> xnox: how about your patches?
+[17:03] <rbasak> zyga: I have a git native remote for bzr that seems to work perfectly in the bzr->git direction. My problem with existing tools was that they didn't integrate with git properly, and the whole point of me wanting git is for more advanced stuff that the existing tools broke for.
+[17:03] <cjwatson> +        if dirname == 'openbsd-compat/regress' and '200912' in dir_file_id:
+[17:03] <cjwatson> +            assert False
+[17:03] <cjwatson> *cough* spot the hack for openssh ...
+[17:04] <cjwatson> That must have been some kind of insane CVS weirdness, I guess
+[17:05] <zyga> rbasak: git-native remote for bzr, so you use bzr repos with git, correct?
+[17:05] <zyga> rbasak: what is the name of your remote?
+[17:05] <rbasak> zyga: I called it git-bzr-nih, but not published anything
+[17:05] <zyga> rbasak: what tech is it using?
+[17:06] <rbasak> bzr fastexport with a bit of hackery. It maintains a map of git commit hash to bzr revid, and only calls bzr fastexport for revids it doesn't already have
+[17:06] <rbasak> (it parses the map file out that bzr fastexport emits)
+[17:06] <zyga> rbasak: ah, sane, I always could not understand why bzr-fastexport used revno (which is totally useless in face of history edits)
+[17:06] <zyga> rbasak: cool, would you mind sharing that?
+[17:07] <zyga> rbasak: have you encountered anything that you had to patch in bzr/bzr-fastexport?
+[17:07] <zyga> (apart from the obvious feature you've mentioned)
+[17:07] <zyga> obviously
+[17:08] <rbasak> To go the other way I use git format-patch and a bzr-am script I wrote that does the same thing as git-am. No patching in bzr/fastexport needed
+[17:08] <rbasak> I also have a working git cache mechanism since bzr fast-export is so slow
+[17:09] <zyga> ah, cool
+[17:09] <rbasak> It's not assembled in a way that's easy for others to use since I've not spent time on it, but you can have the pieces :)
+[17:09] <zyga> does it work with stuff like merges? using raw bzr-am means that you loose parent hashes
+[17:09] <zyga> rbasak: cool, I'll take them please
+[17:10] <rbasak> Merges work in the bzr->git direction. But the git->bzr direction is completely manual - I've not done anything about it apart from the bzr-am I was using before. So in that direction only linear commits work, but that's enough for me since anything I want to submit as an MP tends to be linear anyway
+[17:11] <rbasak> I might write something to do git->bzr properly one day
+[17:19] <toabctl> Laney, I try to play mp3s with raring but I get: Error: Your GStreamer installation is missing a plug-in.
+[17:20] <Laney> play them with what?
+[17:20] <toabctl> Laney, with gst123
+[17:20] <Laney> do you have the recommends installed?
+[17:21] <toabctl> Laney, I changed nothing in /etc/apt/ so recommends should be installed
+[17:23] <toabctl> Laney, sorry. my fault. I'm in an jhbuild session. the problem has nothing to do with ubuntu.
+[17:23] <Laney> heh
+[17:35] <jdstrand> @pilot in
+=== udevbot changed the topic of #ubuntu-devel to: Ubuntu 12.10 released | Archive: Open | Dev' of Ubuntu (not support or app devel) | build failures -> http://qa.ubuntuwire.com/ftbfs/ | #ubuntu for support and discussion of hardy -> quantal | #ubuntu-app-devel for app development on Ubuntu http://wiki.ubuntu.com/UbuntuDevelopment | See #ubuntu-bugs for http://bit.ly/lv8soi | Patch Pilots: jdstrand
+=== ximion is now known as ximion-afk
+=== ximion-afk is now known as ximion
+=== freeflyi1g is now known as freeflying
+[18:13] <fm__> i would appreciate any comment on http://askubuntu.com/questions/245875/how-do-i-get-high-resolution-icons-in-unity-for-my-application-without-a-deskto
+[18:16] <sarnold> fm__: I think you ought to stick the source code of your reproducer (comment 5) into the question on askubuntu -- source code often helps lubricate discussions
+[18:17] <fm__> sarnold, source is in the upstream bugreport. see https://www.willuhn.de/bugzilla/show_bug.cgi?id=1310#c5
+[18:17] <sarnold> fm__: .. that's the source that I think should be in the askubuntu question :)
+[18:17] <fm__> sarnold, sorry now i understand ...
+[18:17] <sarnold> hehe :)
+[18:20] <fm__> sarnold, ok i added the code
+[18:20] <fm__> thanks for looking at it
+[18:21] <sarnold> fm__: woot :) good luck :)
+[18:26] <dobey> barry: hrmm, is oneconf-query in raring supposed to be using python3 now, or still python 2.7?
+[18:33] <achiang> infinity: hi, is this bug arch specific? #1081734
+=== ximion is now known as ximion-afk
+=== yofel_ is now known as yofel
+[18:42] <infinity> achiang: Shouldn't be.
+[18:43] <achiang> infinity: so we could test that package on precise/amd64 and it would be valid for SRU testing?
+[18:44] <achiang> infinity: i guess i'm asking because this was brought to my attention in the context of tegra3, and i'm seeing if i can punt the testing to our x86 team, as we have no cycles here to test.
+=== megha is now known as account
+[18:50] <infinity> achiang: I'll be SRUing for that (and other bugs) today or tomorrow, and yeah, it should be reproducible on x86, I believe.
+[18:51] <achiang> infinity: ok, do you need me to go find someone to test it or do you have it covered?
+[18:53] <infinity> achiang: Always happy to have testers.
+[18:54] <achiang> infinity: alright, let me go see what i can do
+[18:54] <dkessel> testing what? :) i am on x86...
+[18:54] <infinity> achiang: It's not actually uploaded yet, so don't get too ahead of ourselves. :)
+[18:55] <achiang> infinity: right, but i actually need to find victims^Whelpers *before* it's uploaded anyway. :)
+=== ximion-afk is now known as ximion
+=== ximion is now known as ximion-afk
+=== ximion-afk is now known as ximion
+[20:41] <achiang> infinity: one more dumb question, do you want me to find testers for before the upload or after for SRU verification?
+[20:42] <infinity> achiang: Well, I'll need to get it accepted first, so I dunno.  If that goes quickly, timing doesn't matter much.  If the review process takes a while, you could be jumping the gun.
+[20:42] <achiang> infinity: ok, thanks.
+[20:42] <achiang> infinity: i guess just poke me when you need testers
+[20:43]  * infinity nods.
+[20:52] <micahg> could someone with better knowledge of initramfs tell me if I should worry about backporting amd64-microcode to precise since it might be affected by debian 688794, here's the diff from the workaround in raring: http://launchpadlibrarian.net/129138637/amd64-microcode_1.20120910-2_1.20120910-1~ubuntu12.04.1.diff.gz
+[20:52] <ubottu> Debian bug 688794 in initramfs-tools "[initramfs] scripts/hook-functions: breaks boot if /tmp noexec" [Important,Open] http://bugs.debian.org/688794
+[20:57] <dobey> how can i tell sbuild to pull packages from a PPA, for a single build?
+[20:58] <micahg> I use --chroot-setup-commands='apt-get install -y python-software-properties' --chroot-setup-commands='add-apt-repository ppa:foo/bar' --chroot-setup-commands='apt-get purge -y python-software-properties' --chroot-setup-commands='apt-get update'
+[21:04] <micahg> dobey: ^^
+[21:05] <dobey> micahg: thanks, trying that now
+[21:14] <dobey> hrmm, sbuild --build=i386 -A seems to keep failing for me on amd64 host with i386 schroot :-/
+[21:29] <micahg> dobey: --arch i386 -A
+[21:32] <dobey> micahg: ah, looking at the man page i didn't see --arch; adding --host=i386 helped though. but now it's failing to build for other reasons… any idea what this means? http://pastebin.ubuntu.com/1560824/
+[21:35] <micahg> dobey: nope
+[21:36] <micahg> I don't have host on sbuild in precise
+[21:41] <dobey> ah i'm on raring
+[21:43] <dobey> --arch i386 seems to work as well; i think that's unrelated to the failure there though
+[21:46] <dobey> anyway, brb; gotta run for a few
+[22:13] <cjwatson> dobey: You definitely don't want --host.  That's for multiarch cross-building, not for a case where you have a full chroot for the other architecture and can execute all its binaries.
+[22:13] <cjwatson> dobey: For example, --build=amd64 --host=armhf is for cross-building to ARM.
+=== salem_ is now known as _salem
+[22:16] <zykes-> can anyone help me on the differences on a rpm repo vs a debian repo in regards to structures ?
+[22:16] <zykes-> like http://ubuntu.uib.no/archive/dists/hardy/ < is one repo I guess vs http://centos.uib.no/6/centosplus/x86_64/ in a yum format ?
+[22:22] <cjwatson> zykes-: I don't know the RPM terms.  In conventional aptish terms, http://ubuntu.uib.no/archive/ is a repository while http://ubuntu.uib.no/archive/dists/hardy/ is a suite
+[22:23] <zykes-> cjwatson: how's suite compared into a yum repo ?
+[22:23] <cjwatson> A suite being a combination of release series (hardy) and the nature of the upload stream (so hardy is the release itself, hardy-updates for recommended updates, etc.)
+[22:23] <cjwatson> I have no experience with yum repositories
+[22:25] <cjwatson> There may not be a single URL equating to the example you gave - there'll be .../main/binary-amd64/, .../restricted/binary-amd64/, etc.  main and restricted (etc.) there are called "components", and slice up the set of packages into very broad licensing/support categories
+[22:26] <cjwatson> The division into architectures goes underneath components
+[22:26] <zykes-> yeh
+[22:26] <zykes-> i'm wondering a bit because of https://github.com/ekarlso/pulp_deb
+[22:26] <zykes-> if you wondered why
+[22:27] <cjwatson> I remembered you had a project to try to present a unified view, yes
+[22:27] <zykes-> trying to hook in debian support for pulp, but pulp thinks of 1 repo as 1 thing and doesn't care for components, arches etc
+[22:27] <cjwatson> Well, what does it expect a repo to be able to do?
+[22:28] <cjwatson> (BTW I'm about to go to bed, perhaps could continue this by mail, cjwatson@u.c)
+[22:35] <bdrung> Laney: will you deal with bug #954352?
+[22:35] <ubottu> bug 954352 in gtk+3.0 (Ubuntu Raring) "Enable wayland backend" [Wishlist,Triaged] https://launchpad.net/bugs/954352
+[22:43] <dobey> cjwatson: ok. any idea about the error from dh_auto_build that i'm getting? i wonder why it's trying to create '/sbuild-nonexistent'; and why it isn't failing like that on the lp builders
+[22:43] <jdstrand> @pilot out
+=== udevbot changed the topic of #ubuntu-devel to: Ubuntu 12.10 released | Archive: Open | Dev' of Ubuntu (not support or app devel) | build failures -> http://qa.ubuntuwire.com/ftbfs/ | #ubuntu for support and discussion of hardy -> quantal | #ubuntu-app-devel for app development on Ubuntu http://wiki.ubuntu.com/UbuntuDevelopment | See #ubuntu-bugs for http://bit.ly/lv8soi | Patch Pilots:
+[22:48] <dobey> or anyone else? am a bit stumped with http://pastebin.ubuntu.com/1560824/ right now
+[22:55] <micahg> dobey: a little gooogling got me this: http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=682641#15
+[22:55] <ubottu> Debian bug 682641 in src:pycode-browser "pycode-browser: FTBFS: LyX: Creating directory /sbuild-nonexistent/.lyx/" [Serious,Fixed]
+[22:56] <RAOF> dobey: I suspect something is trying to log to $HOME, which deliberately isn't there under sbuild?
+[22:57] <dobey> hrmm
+[22:57] <dobey> but don't the launchpad buildds runn under sbuild? do they have $HOME set to a real directory?
+[22:58] <micahg> nothing should be using $HOME in a build anyways
+[22:59] <micahg> jdstrand: apparently imagemagick needs a rebuild and could use a merge from Debian, I was wondering as you TIL if you're working on that
+[23:00] <dobey> micahg: i generally agree, but i'm just taking a source package from a ppa on launchpad, which failed to build for another reason, and trying to build it locally under sbuild, since pbuilder apparently won't let me use OTHERMIRROR on oneiric
+[23:02] <micahg> dobey: try setting $HOME in the invocation line to temporarily work around it
+[23:02] <cjwatson> dobey: IME on Debian buildds HOME has been arbitrarily set or not.  You shouldn't assume anything either way
+[23:02] <slangasek> in fact, they used to be permuted across architectures to catch different classes of misuse
+[23:03] <cjwatson> dobey: The launchpad buildds use an old version of sbuild, to be found in lp:launchpad-buildd
+[23:03] <dobey> cjwatson: i'm not assuming anything either way. i just want to solve the problem i'm trying to solve, and not spend 3 days fixing other problems so i can finally get to debugging my original problem :)
+[23:03] <cjwatson> This could be a detail that differs
+[23:03] <cjwatson> There won't be many such details - honestly you might as well just fix it and get it out of the way
+[23:03] <slangasek> (HOME unset; HOME pointing to a root-only directory; HOME pointing to a non-existent directory; etc.  Moral: fix your packages to not rely on the environment's HOME)
+[23:03] <cjwatson> It'll be a lot easier than trying to get a pedantically correct lp-buildd setup locally
+[23:04] <cjwatson> Since modern sbuild is so much better in other ways
+=== cpg|away is now known as cpg
+[23:04] <cjwatson> (And maybe one of these days LP will get an upgraded sbuild ...)
+[23:09] <bdrung> cjwatson: what do you think about my patch for bug #1012439?
+[23:09] <ubottu> bug 1012439 in debootstrap (Ubuntu) "carve out distro information to distro-info package" [Undecided,Confirmed] https://launchpad.net/bugs/1012439
+[23:13] <cjwatson> bdrung: Please do not upload that to Ubuntu.  I'll have a look when I'm not going to bed, but I must warn you that I'm not keen on this.
+[23:14] <cjwatson> There's no guarantee at all that a future release won't require a change in the debootstrap scripts.  Past performance (and only since gutsy) is no guide to future performance.
+[23:14] <bdrung> cjwatson: i wasn't going to upload the change soon, but getting a review before.
+[23:15] <bdrung> cjwatson: so a warning should be printed?
+[23:15] <cjwatson> And in that case using distro-info will make it look like it will work but create possibly very subtle and hard to fix bugs.
+[23:15] <cjwatson> Or you could just leave well alone :)
+[23:15] <cjwatson> I don't really see a bug to be fixed other than "we should SRU debootstrap more vigorously".
+[23:16] <cjwatson> But bed.
+[23:24] <dobey> so this code isn't exactly using HOME at this stage. it's that python-distutils-extra's auto setup stuff imports *all* of the modules, and some of those modules do things on import
+[23:26] <infinity> micahg: That amd64-microcode backport should be fine, but we really might want to look at gettting the kernel team involved in SRUing rather than backporting microcode packages.
+[23:26] <micahg> infinity: it's not in precise
+[23:27] <infinity> micahg: Sort of falls into the same general realm as linux-firmware, which we SRU for enablement and fixes.
+[23:27] <infinity> micahg: Yeah, I know it's not.
+[23:27] <micahg> infinity: ok, should I talk to the kernel team or accept the backport
+[23:28] <infinity> Well, I guess since they're both in multiverse anyway, maybe they're not all that often used/referenced.
+[23:28]  * infinity shrugs.
+[23:28] <infinity> It still feels like something that falls under enablement SRUs rather than backports, but...
+[23:28] <micahg> infinity: it's in multiverse since it's free to distribute, but not modify AIUI
+[23:29] <micahg> well, in either case, it'll show up the same way in software center since there's no previous version
+[23:29] <infinity> Right, I was pointing out that it's in multiverse rather than restricted.  ie: we don't support or rely on it in any way.
+[23:29] <micahg> ah, ok
+[23:29] <infinity> Err, wait.
+[23:30] <infinity> Why are you backporting an older version without the workaround?
+[23:30] <micahg> infinity: the workaround would need to be SRUd to quantal or backported to quantal (would vote for SRU in this case), but if it's not an issue in Ubuntu, I wouldn't bother
+[23:31] <infinity> It should be SRUd to Q, yes.
+[23:31] <infinity> I forgot you can't backport from devel releases.
+[23:31] <infinity> s/can't/don't/
+[23:31] <micahg> it sounds like it only affects people that know how to break their systems (i.e. not default)
+[23:31] <slangasek> you don't?  I thought that was the norm
+[23:31] <infinity> The bug is quite real and just as valid on Ubuntu.  We should SRU it back.
+[23:32] <micahg> we backport through releases with an upgrade path
+[23:32] <infinity> Given the dependencies of the package, I'd almost be tempted to just copy it to quantal-proposed from raring, honestly.
+[23:33] <micahg> infinity: I don't mind preparing an SRU, I'll get it retested once that's in then, thanks
+[23:33] <infinity> The only change between Q and R is that one bugfix, and the package doesn't have any compiled code.
+[23:34] <micahg> infinity: ok, you just want the paperwork then?
+[23:35] <infinity> micahg: I'm not even convinced I want the paperwork (can't do a bug closure on a copy with nothing in the changelog anyway), if you can actually test before/after in any meaningful way.
+[23:35] <infinity> micahg: If it's going to need third-party drive-by testing then, yeah, a formal SRU will be better.
+[23:36] <micahg> infinity: well, if your SRU hat tells you the copy is fine, it sounds like it makes sense
+[23:36] <infinity> micahg: I have many hats agreeing that the copy is just fine, so long as we can get a quick test that the package DTRT.
+[23:36] <infinity> (And, honestly, if it has users at all, they'd be telling us that the raring one, with its 4 lines of bugfix, is broken)
+[23:40] <micahg> infinity: as I don't use the package, I couldn't say one way or the other
+=== vibhav is now known as Guest95839

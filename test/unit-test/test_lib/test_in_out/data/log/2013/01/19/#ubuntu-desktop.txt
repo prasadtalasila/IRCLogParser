@@ -1,0 +1,31 @@
+[00:06] <cyphermox> gah
+[00:06] <cyphermox> no
+[00:06] <cyphermox> the bug is about it being broken
+[00:06] <cyphermox> the fix for the leaks is correct and I think it was successfully validated too
+[00:07] <cyphermox> except it's still not fixing the underlying, related dbus issue
+[00:12] <cody-somerville> cyphermox: This is what I see with dbus-monitor: http://pastebin.ubuntu.com/1529451/
+[00:12] <cody-somerville> cyphermox: The errors are returned by bus_event_group or bus_about_to_show_group in libdbusmenu-glib/server.c.
+[00:12] <cyphermox> yeah
+[00:13] <cyphermox> but NM doesn't do anything magical with the dbusmenu stuff itself, everything goes through libappindicator as a batch
+[00:13] <cyphermox> it's really just calls to app_indicator_set_menu, with the full menu and the old one getting unref'djust prior
+[00:14] <cyphermox> there is no reason why the menu wouldn't be available as far as nm-applet is concerned
+[00:14] <cyphermox> I'd be interested to know if the same kind of behavior happens when nm-applet runs outside the indicator-applet
+[00:14] <cyphermox> it probably doesn't stop responding in that case
+[00:20] <cody-somerville> cyphermox: Do any other indicators that you know of update themselves as much and have event groups?
+[00:20] <cyphermox> sadly no
+[00:21] <cyphermox> no other indicators update as much
+[00:21] <cyphermox> just a second I'm tracking down one weird kernel header thing
+[00:25] <cyphermox> yay broken
+[00:26] <cyphermox> cody-somerville: so I will get back to the libdbusmenu code, I'm pretty convinced the issue is there
+[00:26] <cyphermox> but it's not obvious what goes wrong, it needs more work
+[00:27] <cody-somerville> cyphermox: Agreed.
+[00:44] <cody-somerville> cyphermox: For bus_event_group and bus_about_to_show_group, they both iterate over the events calling bus_event_core on each. If bus_event_core returns TRUE, they set 'gotone' to TRUE. bus_event_core then calls lookup_menuitem_by_id which looks in the dbusmenu server's lookup cache (a hashtable). It would appear that this lookup returns NULL which causes bus_event_core to return FALSE. Thus 'gotone' stays as FALSE and both b
+[00:44] <cody-somerville> us_event_group and bus_about_to_show_group return the error we see.
+[01:24]  * xnox ponders if the system load indicator is similar or not, as it's menu is constantly updated with values if one keeps it open.
+=== m_conley is now known as m_conley_away
+[02:07] <smspillaz> tkamppeter: *shrug* I don't develop drivers
+=== tkamppeter_ is now known as tkamppeter
+=== Ursinha_ is now known as Ursinha
+=== m_conley_away is now known as m_conley
+=== mbiebl_ is now known as mbiebl
+=== m_conley is now known as m_conley_away

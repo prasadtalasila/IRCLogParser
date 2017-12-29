@@ -1,0 +1,294 @@
+[00:07] <StevenK> wgrant: https://bugs.qastaging.launchpad.net/prop-auditorclient/+bug/939660 with a Proprietary project, and soyuz-team subscribed to the bug.
+[00:07] <_mup_> Bug #939660: globally-installed GIMP python plugins are not accessible <amd64> <apport-bug> <oneiric> <running-unity> <The Gimp:New> <gimp-plugin-registry (Ubuntu):New> < https://launchpad.net/bugs/939660 >
+[00:08] <wgrant> StevenK: It'll need to be some other team, or I'll need to steal the project from you
+[00:08] <wgrant> Since I'm a commercial admin
+[00:09] <wgrant> Actually
+[00:09] <wgrant> You can test this yourself
+[00:09] <wgrant> StevenK: https://qastaging.launchpad.net/~stevenk
+[00:10] <wgrant> Hmm
+[00:10] <wgrant> Might need to be a team, actually
+[00:11] <wgrant> StevenK: Can you see https://qastaging.launchpad.net/~soyuz-team, with the project listed?
+[00:11] <StevenK> Yes
+[00:12] <wgrant> StevenK: How about now?
+[00:13] <StevenK> wgrant: I can see the page, but the project disappeared
+[00:14] <wgrant> StevenK: And now?
+[00:14] <wgrant> (I've just added a team grant)
+[00:14] <StevenK> wgrant: The project is back
+[00:15] <wgrant> Sounds qa-ok, then
+[00:15] <wgrant> Oh
+[00:15] <wgrant> No, that was an APG, oops
+[00:15] <StevenK> Haha
+[00:16] <wgrant> And now?
+[00:16] <StevenK> wgrant: The page loads and the project is there.
+[00:18] <wgrant> Great
+[00:18] <wgrant> That's an AAG
+[00:19] <StevenK> I shall mark the bug as qa-ok, then
+[00:24] <wgrant> Sounds good
+=== slank is now known as slank_away
+[00:49] <StevenK> wgrant: We want to link the identifier in the case that there is an known email, but the identifer is not known about?
+[00:52] <wgrant> StevenK: Right. If the identifier is known then the identifier wins, otherwise we fall back to the email address and link the identifier for the future.
+[00:53] <wgrant> Currently if the identifier is known and the email is unknown, we add the email address. But we want to stop doing that.
+[01:29] <StevenK> wgrant: http://pastebin.ubuntu.com/1515303/ Am I on the right track?
+[01:31] <wgrant> StevenK: We want to at most warn if the accounts differ -- certainly not crash
+[01:31] <wgrant> And we don't even attempt to add the address if it's missing
+[01:31] <wgrant> Again, we would at most warn about it
+[01:32] <StevenK> wgrant: Right, I wasn't certain how to warn. Add an exception like TeamEmailAddressError?
+[01:33] <wgrant> That sounds like an error, not a warning.
+[01:33] <wgrant> We don't have to do a warning initially. Just ignore it for now.
+[01:34] <wgrant> It also looks like you removed the account creation bit
+[01:34] <StevenK> Yes, since that calls createPersonAndEmail
+[01:34] <StevenK> Note that paste is WIP, I've not even looked at tests.
+[01:35] <wgrant> createPersonAndEmail is one of the places that must obviously continue to create addresses
+[01:35] <wgrant> https://bugs.launchpad.net/canonical-identity-provider/+bug/556680/comments/5
+[01:36] <_mup_> Bug #556680: attempting to create a new account with an existing team email address at login.ubuntu.com oopses <isd-logging-sprint> <lp-foundations> <openid> <Canonical SSO provider:Confirmed> <Canonical ISD QA:New> <Launchpad itself:Triaged> < https://launchpad.net/bugs/556680 >
+[01:36] <wgrant> That's the sort of algorithm we want.
+[01:36] <StevenK> So I want to resurrect that code, it's sane?
+[01:36] <wgrant> But now I must go out for an hour
+[01:36] <wgrant> Yes
+[02:21] <wgrant> StevenK: How goes?
+[02:46] <StevenK> wgrant: http://pastebin.ubuntu.com/1515579/
+[02:51] <wgrant> +            create_email_token = False
+[02:51] <wgrant> why does that still exist?
+[03:17] <StevenK> wgrant: Because I don't want to assert for personless account twice
+[03:34] <wgrant> StevenK: But don't you only ever need to create an address if you end up calling createPersonAndEmail?
+[03:36] <wgrant> Remember that we no longer want to create missing addresses
+[03:36] <wgrant> That method only adds an address if the entire person is new
+[03:36] <StevenK> wgrant: create_email_token will call into getUtility(ILoginTokenSet).new(), which requires the person, and at the point I set create_email_token, I only have the account
+[03:37] <wgrant> StevenK: But why are you ever calling that method?
+[03:37] <wgrant> In what situation do you need to create an email address for an existing person?
+[03:38] <StevenK> wgrant: Where the OpenID identifier exists, but the address does not.
+[03:38] <wgrant> StevenK: We are making this change precisely so that that no longer happens
+[03:38] <wgrant> That's the entire point of this branch :)
+[03:39] <StevenK> * If the OpenID identifier has a person, and the e-mail address isn't known,
+[03:39] <StevenK> create a LoginToken, and no e-mail address, and then when the LoginToken is
+[03:39] <StevenK> consumed, we create the e-mail address as VALIDATED.
+[03:39] <StevenK> From my notes I made on the call
+[03:39] <wgrant> Ah
+[03:39] <wgrant> That bit was a misunderstanding, clearly
+[03:40] <wgrant> If the email address isn't known, we do nothing, except maybe eventually warn
+[03:40] <wgrant> That's the entire point of the change
+[03:40] <StevenK> I'm not sure how to warn :-(
+[03:40] <StevenK> We can't toss exceptions
+[03:40] <wgrant> "eventually"
+[03:40] <wgrant> So do nothing
+[03:40] <wgrant> Sure
+[03:41] <wgrant> An exception from a login method is not a warning :)
+[03:41] <wgrant> How do we normally present non-fatal warnings?
+[03:41] <StevenK> Using addNotification
+[03:41] <wgrant> Precisely.
+[03:42] <wgrant> (well, addWarningNotification)
+[03:42] <StevenK> Right, which means returning a 3-tuple and ugh
+[03:42] <wgrant> That's why I said eventually
+[03:42] <wgrant> Get it working first
+[03:42] <wgrant> Maybe even land it
+[03:42] <wgrant> Then work out how to do warnings
+[03:42] <wgrant> The key thing for now is to stop the destructive rampage
+[03:43] <StevenK> Working through test failures
+[03:43] <StevenK>   File "/home/steven/launchpad/lp-branches/openid-identifier-is-the-new-black/lib/lp/registry/tests/test_personset.py", line 818, in testNewEmailAddress
+[03:43] <StevenK>     self.assertIs(True, updated)
+[03:43] <StevenK> Well, about that ... :-)
+[03:43] <StevenK> MismatchError: True is not False
+[03:44] <StevenK> I guess that test is now bong with this change?
+[03:44] <wgrant> It certainly sounds like it's testing a piece of functionality that we're deliberately removing, so removing the test sounds sensible
+[03:46] <StevenK> And testMovedEmailAddress -- like you say, the whole point is to stop doing that
+[03:47] <wgrant> Not quite
+[03:47] <wgrant> The case it gives there is still valid
+[03:47] <wgrant> But our behaviour is different
+[03:47] <wgrant> The test name and result are no longer correct, but the scenario must continue to be tested
+[03:58] <StevenK> wgrant: This test pulls an account by using store.find(), I guess I need another DB query to find it's person?
+[04:00] <wgrant> its
+[04:00] <wgrant> You can adapt an Account to IPerson
+[04:13] <StevenK> wgrant: The only thing I'm tripping over is testNoAccount. It forces self.email.account and self.person.account to None and then calls into getOrCreateByOpenIDIdentifier()
+[04:16] <wgrant> StevenK: Is that a problem?
+[04:16] <StevenK> wgrant: Well, the test fails due to the assert in getOrCreateByOpenIDIdentifier()
+[04:17] <wgrant> Which assert?
+[04:17] <StevenK>             person = IPerson(account, None)
+[04:17] <StevenK>             assert person is not None, ('Received a personless account.')
+[04:18] <wgrant> Ah
+[04:18] <wgrant> So if you just blank out person.account without deleting the account then you'll end up with a personless account, which is illegal.
+[04:19] <wgrant> That same assertion was there before
+[04:19] <wgrant> Why did it work?
+[04:19] <StevenK> -                    # The Email Address does not exist in the database,
+[04:19] <StevenK> -                    # but the OpenId Identifier does. Create the Email
+[04:19] <StevenK> -                    # Address and link it to the person.
+[04:19] <StevenK> It was in that block
+[04:20] <wgrant> So, that test is crap
+[04:20] <wgrant> It creates an illegal state which happened to work before
+[04:20] <StevenK> Haha
+[04:20] <wgrant> Adjust it to remove the account, or at least remove its OpenID identifier
+[04:20] <StevenK> Destroy?
+[04:20] <StevenK> Aw
+[04:20] <wgrant> Oh, but it uses its own identifier?
+[04:21] <wgrant> Then how does it find the old account at all?
+[04:21] <StevenK> Now?
+[04:21] <wgrant> When it fails
+[04:22] <StevenK> Running the test under pdb so I can see what's what.
+[04:22] <wgrant> (note that self.email.account = None is effectively a no-op; the column hasn't existed for 12 months so that just creates a new unused attribute, but I clearly didn't catch all the callsites)
+[04:22] <StevenK> Hah
+[04:23] <StevenK> Right, so the case is OpenID == None, and email == <address>
+[04:23] <StevenK> And email.person.account is None
+[04:24] <wgrant> Right
+[04:24] <wgrant> So it should create an account
+[04:24] <wgrant> How does it end up with a personless one?
+[04:24] <StevenK> I think the error is misleading
+[04:24] <wgrant> Is the account itself None?
+[04:24] <StevenK> It should assert "Could not find Person from account" or something
+[04:24] <wgrant> No
+[04:24] <StevenK> (Pdb) p email.person
+[04:24] <StevenK> <Person at 0x10133110 acc2436244 (Displayname)>
+[04:24] <wgrant> If an account doesn't have a person, it's personless
+[04:24] <StevenK> (Pdb) p email.person.account
+[04:24] <StevenK> None
+[04:24] <wgrant> The error is correct
+[04:24] <wgrant> Sure
+[04:25] <wgrant> But what is "account" in "person = IPerson(account, None)"?
+[04:25] <StevenK> account will be set to email.person.account
+[04:25] <wgrant> In the latest diff I have, you've removed the account creation code
+[04:25] <StevenK> In this case
+[04:25] <wgrant> So account may be None
+[04:25] <StevenK> So None
+[04:25] <wgrant> Right
+[04:25] <wgrant> There's your problem
+[04:26] <StevenK> wgrant: http://pastebin.ubuntu.com/1515737/
+[04:26] <wgrant> Right
+[04:26] <wgrant> Note the suspiciously deleted AccountSet.new, with no replacement
+[04:28] <StevenK> Right, now resurrected
+[04:29] <wgrant> (an accountless person is probably inactive, so it's covered by the "if person is not active" block in my pseudocode)
+[04:29] <wgrant> In fact, I think an accountless person must be inactive
+[04:29]  * wgrant checks
+[04:30] <wgrant> Well
+[04:30] <wgrant> yes
+[04:30] <wgrant> They have to be
+[04:30] <wgrant> Since activeness is defined by account.status :)
+[04:30] <StevenK> Haha
+[04:31] <StevenK> Now I get IntegrityError: null value in column "account" violates not-null constraint
+[04:31] <wgrant> launchpad_dogfood=# SELECT COUNT(*) FROM person WHERE teamowner IS NULL AND account IS NULL AND EXISTS (SELECT 1 FROM emailaddress WHERE status = 4 AND person = person.id);
+[04:31] <wgrant>  count
+[04:31] <wgrant> -------
+[04:31] <wgrant>      0
+[04:31] <wgrant> (1 row)
+[04:31] <wgrant> StevenK: That sounds like it's talking about OpenIDIdentifier.account?
+[04:32] <StevenK> Ah, yeah. I can't create the account that late.
+[04:32] <wgrant> Note also that my pseudocode assumes that account has ceased to exist, so it might need some adjustment
+[04:32] <wgrant> I had planned to destroy Account by last March, but that didn't eventuate
+[04:32] <wgrant> Due to SSO
+[04:32] <StevenK> Right, and OpenIDIdentifier.account is NOT NULL, so that is fine
+[04:35] <StevenK> Bleh, stop erroring, I create a account
+[04:36] <StevenK> And it should be added to the store by IAccountSet.new, so I'm not sure why that assert trips
+[04:47] <StevenK> Bleh, the account isn't added to the store in IAccountSet.new
+[04:58] <StevenK> wgrant: Right, I have the test_personset tests passing
+[05:00] <wgrant> Great
+[05:01] <StevenK> That's ... comforting. No logintoken failures, even though I removed 70 lines of code.
+[05:02] <wgrant> Wasn't most of that from the browser code, though?
+[05:02] <wgrant> It's probably in the OpenPGP validation workflow tests
+[05:03] <StevenK> +14/-97 including browser code
+[05:04] <StevenK> Hmm, bin/test -vvt openpgp has no love
+[05:04] <wgrant> They'll be named gpg, I suspect
+[05:04] <StevenK> Yeah, -t gpg running now
+[05:05] <StevenK> lib/lp/registry/stories/gpg-coc/xx-gpg-coc.txt is the failure
+[05:20] <StevenK> wgrant: http://pastebin.ubuntu.com/1515800/
+[05:30] <wgrant> StevenK: Why don't you use AccountSet.new/
+[05:31] <wgrant> Also, now that we don't attempt to move email addresses around the team ownership check can be just before the person creation bit
+[05:31] <StevenK> wgrant: The comment before explains it:
+[05:31] <StevenK>                         # IAccountSet.new() creates an OpenIdIdentifier, which
+[05:31] <StevenK>                         # we do below.
+[05:31] <wgrant> StevenK: It's an optional argument
+[05:32] <StevenK> Oh, I misread it as 'is None'
+[05:33] <wgrant> So yeah, I'd move the team address check into the same place it is in my pseudocode
+[05:33] <wgrant> That is, the 'if email is not None' becomes 'if email is not None and not email.person.is_team'
+[05:33] <wgrant> And then a new elif after that which rejects login if the address is team-owned
+[05:34] <StevenK> Yes, just wrote that
+[05:34] <wgrant> Also, we might as well make that whole thing identifier-driven
+[05:35] <wgrant> So the 'if identifier is not None' bit goes away
+[05:36] <StevenK> Hm?
+[05:36] <StevenK> Not sure I understand what you mean
+[05:36] <wgrant> I was a little unclear
+[05:36] <wgrant> But basically I don't think the 'account' local var is valuable
+[05:36] <wgrant> person = IPerson(account, None) should be
+[05:36] <wgrant> person = IPerson(identifier.account, None)
+[05:36] <wgrant> That is, before then you just ensure that identifier is set properly
+[05:36] <wgrant> If identifier is not None then you don't have to do anything
+[05:37] <wgrant> If identifier *is* None, then you have to go through the email address check
+[05:37] <wgrant> So all the email stuff can be inside an 'if identifier is None' block
+[05:37] <wgrant> To make it clearer that the identifier completely wins if it exists.
+[05:39] <StevenK> Just running tests, and I can post a new diff
+[05:40] <StevenK> wgrant: http://pastebin.ubuntu.com/1515818/
+[05:52] <wgrant> StevenK: I reworked it to hopefully be a bit clearer. What do you think? http://pastebin.ubuntu.com/1515824/
+[05:54] <StevenK> Looks good
+[05:54] <wgrant> (this method has a hilarious history of bugs and misreadings, so I think we should make this rewrite as understandable as we can)
+[05:57] <StevenK> wgrant: So, looks good enough to propose, or we should go further?
+[05:59] <wgrant> http://pastebin.ubuntu.com/1515841/
+[05:59] <wgrant> Now it's much more understandable, I think
+[06:01] <wgrant> So propose away :)
+[06:28] <StevenK> wgrant: https://code.launchpad.net/~stevenk/launchpad/openid-identifier-is-the-new-black/+merge/142641
+[06:36] <wgrant> StevenK: In testEmailAddressAccountAndOpenIDAccountAreDifferent can you check that the email account is unchanged?
+[06:41] <StevenK> wgrant: http://pastebin.ubuntu.com/1515904/
+[06:46] <wgrant> StevenK: Sounds reasonable.
+[06:46] <StevenK> It even passes
+[06:46] <StevenK> wgrant: Any other issues?
+[06:46] <wgrant> Nope
+[06:47] <StevenK> Hmm, can we actually QA this without going insane?
+[06:47] <wgrant> To some extent
+[06:47] <wgrant> I'll do it, because I have lots of accounts that I'm not too afraid of breaking
+[06:48] <wgrant> And I know all too well how to break this :)
+[06:49] <StevenK>  16415. By Steve Kowalik 2 minutes ago
+[06:49] <StevenK>     Assert the e-mail account is unmolested in testEmailAddressAccountAndOpenIDAccountAreDifferent.
+=== almaisan-away is now known as al-maisan
+[06:50] <StevenK> Dear lp-land, why is the private bug in the commit message, but the public one isn't?
+[06:51] <wgrant> Because I unlinked the public one, because it doesn't fix it
+[06:51] <wgrant> :)
+[06:51] <StevenK> Thanks for the lack of warning :-P
+[06:52] <wgrant> I try
+[06:54] <StevenK> wgrant: Warning if the accounts are different will fix it?
+[06:55] <wgrant> StevenK: That bug sort of encompasses the weaknesses in our workflow that I identify in my rather large comment
+[06:55] <wgrant> It includes more than just email conflicts.
+[06:55] <StevenK> Right.
+[06:55] <StevenK> So this branch fixes *part* of it
+[06:56] <wgrant> Um
+[06:56] <wgrant> Sort of
+[06:56] <wgrant> Not reallty
+[07:30]  * StevenK glares at the test failure
+[07:39] <StevenK> wgrant: Hmmm
+[07:40] <StevenK> wgrant: I think the test fails because we only croak if there is no OpenID identifier
+[07:40] <StevenK> We pass one, get an account, login_called is True, test goes bang
+[07:45] <wgrant> StevenK: Right, the test probably assumes that we won't allow login with a team address at all, whereas we've now relaxed that to just failing the account creation case
+[07:45] <wgrant> Adjust the test to use a new OpenID identifier
+[07:47] <StevenK> I've been trying to work out where we even pass in the identifier
+[07:48] <wgrant> StevenK: _createViewWithResponse gets it from the provided account
+[07:49] <StevenK> Passing None as the account is probably a silly idea?
+[07:51] <wgrant> Well, it won't work
+[07:52] <StevenK> Indeed, it doesn't
+[07:52] <wgrant> You'll need to alter _createViewWithResponse to alternatively take an identifier string
+[07:52] <StevenK> And that's the first argument to FakeOpenIDResponse?
+[07:53] <wgrant>         openid_response = FakeOpenIDResponse(
+[07:53] <wgrant>             ITestOpenIDPersistentIdentity(account).openid_identity_url,
+[07:53] <wgrant>             status=response_status, message=response_msg,
+[07:53] <wgrant>             email=email, full_name='Foo User')
+[07:53] <wgrant> It would certainly seem to be
+[07:56] <StevenK> wgrant: http://pastebin.ubuntu.com/1516114/
+[07:56] <StevenK> I'll land it when I get home
+[08:01] <wgrant> StevenK: Right
+[08:50] <adeuring> good morning
+=== yofel_ is now known as yofel
+=== Ursinha is now known as Ursinha-afk
+=== al-maisan is now known as almaisan-away
+=== slank_away is now known as slank
+=== Ursinha-afk is now known as Ursinha
+=== mbarnett` is now known as mbarnett
+=== slank is now known as slank_away
+=== slank_away is now known as slank
+=== slank is now known as slank_away
+=== slank_away is now known as slank
+=== slank is now known as slank_away
+=== gary_poster is now known as gary_poster|away
+=== gary_poster|away is now known as gary_poster
+=== deryck is now known as deryck[lunch]
+=== slank_away is now known as slank
+=== deryck[lunch] is now known as deryck
+=== slank is now known as slank_away
+=== Tribaal_ is now known as Tribaal
+=== slank_away is now known as slank
+=== olli_ is now known as olli
+=== slank is now known as slank_away
+=== slank_away is now known as slank
+=== slank is now known as slank_away

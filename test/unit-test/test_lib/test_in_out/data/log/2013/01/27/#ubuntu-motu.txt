@@ -1,0 +1,177 @@
+[03:09] <micahg> hi ESphynx, I should be ready in about 30 min or so
+[03:12] <ESphynx> micahg: hey... I'm working on this stuff here but sadly not as far along as I would have hoped :|
+[03:13] <ESphynx> Planning to be working through all these issues through the night however :P
+[03:13] <ESphynx> I got pizza & coke set aside.
+[03:13] <micahg> ESphynx: heh, I should be around for the next 3-4 hours if I can be of help
+[03:15] <ESphynx> great :) thanks!
+=== dk is now known as Guest28878
+[04:50] <ESphynx> Hmm, now this is quite annoying... I had symlinks in /usr/lib/ec/ , but actual .so.0.44 were still all in /usr/lib/
+[04:50] <ESphynx> I'm assuming that libec should still be out of there not to conflict with lib elleptical curves, in case 2 versions are ever the same and to avoid overall confusion? :|
+[04:50] <micahg> ESphynx: you might need to change the install path in the Makefile or equivalent
+[04:51] <micahg> indeed
+[05:16] <ESphynx> OK I mostly took care of that :P
+[05:17] <ESphynx> How do I trick people into completing the missing translations for Ecere? :P
+[05:32] <ESphynx> xnox: going for libecc0 ...
+[05:33] <ESphynx> micahg think that should be fine?
+[05:34] <micahg> ESphynx: why not libecere0?
+[05:34] <ESphynx> micahgc: that is the runtime library package.
+[05:34] <ESphynx> micahg: This is the eC compiler library
+[05:34] <micahg> ah, libecc0 sounds good then
+[05:34] <ESphynx> (the actual compiler, not a runtime library...)
+[05:35] <ESphynx> micahg: question about this breaks/replaces stuff... I don't want to 'break' or 'replace' the elliptical curve library named libec0!
+[05:35] <micahg> ESphynx: that's why it's versioned :)
+[05:35] <ESphynx> micahg: yeah but what do the versions mean... do they refer to elliptical curve library or libec?
+[05:36] <micahg> libec
+[05:36] <ESphynx> in unstable, libec0 is the elliptical curve; in experimental, libec0 is the eC compiler
+[05:36] <ESphynx> i.e. http://packages.debian.org/experimental/libec0  vs  http://packages.debian.org/sid/libec0
+[05:37] <micahg> ESphynx: look at the versions the eC compiler version is lower, so breaks.replaces would be fine
+[05:37] <ESphynx> lower because 0.44 vs 2012?
+[05:37] <micahg> yes
+[05:39] <ESphynx> i'm very confused with the DPM's example on Replaces/Breaks  Replaces: foo (<< 1.2-3)
+[05:40] <ESphynx> The example is For example, if a package foo is split into foo and foo-data starting at version 1.2-3, foo-data would have the fields
+[05:40] <ESphynx> This is not the case here, we're talking about completely unrelated packages :|
+[05:40] <micahg> yes, so the package where the libec0 files move, breaks/replaces on the last version of libec0 that had them
+[05:40] <ESphynx> so I should not use <<
+=== dk is now known as Guest45074
+[05:40] <micahg> yeah, << is right
+[05:41] <micahg> err... <=
+[05:41] <ESphynx> Replaces: libec0 (>> 0.44.02-1)
+[05:41] <micahg> no
+[05:41] <ESphynx> is it ?
+[05:41] <micahg> Breaks: (<= 0.44.02-1)
+[05:41] <micahg> same with Replaces
+[05:41] <ESphynx> k. thaks.
+[05:42] <micahg> or << if you want to use the new version there
+[05:42] <micahg> but in this case, I think <= makes more sense
+[05:43] <ESphynx> I do'nt understand all this << ... that's a left shift operator for me :P but if you say <= works, it's good with me :)
+[05:44] <micahg> << is less than, <= is less than or equal to
+[05:47] <ESphynx> ah ok :)
+[05:50] <micahg> ESphynx: see 7.1 : http://www.debian.org/doc/debian-policy/ch-relationships.html
+[05:55] <ESphynx> I see
+[05:55] <ESphynx> a case of annoying historical baggage :P
+=== dk_ is now known as Guest34602
+[06:33] <ESphynx> What's "debarch_is_wildcard" is not exported by the Dpkg::Arch module  supposed to mean :|
+[06:33] <ESphynx> Somehow my dh-exec 0.3 on Precise got broken by some processs and I'm struggling to get it working agian :S
+[06:34] <micahg> no idea
+=== foofoofoo is now known as dk
+[06:59] <ESphynx> Well, look at that! got it working again somehow (though I seriously messed up my package DB :P)
+[07:47] <ESphynx> I wonder why i'm getting these now: W: libecc0: postinst-has-useless-call-to-ldconfig :S
+[07:52] <ESphynx> sounds like a case for an override :P
+=== zequence_ is now known as zequence
+[08:26] <ESphynx> micahg: Should update to the NEWS files be included in that SRU?
+[08:34] <ESphynx> I'm going through these 219 commits, and I'm thinking... well yes this bug should be fixed for at least 25% of them :|
+[08:52] <ESphynx> guidance? anyone? :)
+=== yofel_ is now known as yofel
+[16:45] <micahg> ESphynx: NEWS file should only be used for major changes in a package
+[18:11] <ESphynx> micahg: yeah but since this was the first versions, I was doing updates to the past history of the SDK :P
+[18:22] <ESphynx> good morning guys
+[18:24] <ESphynx> So, what can I do for these poor souls on Quantal who would like to use Ecere ?
+=== zequence_ is now known as zequence
+[21:05] <micahg> ESphynx: not sure what you mean about updates to past history, see http://www.debian.org/doc/manuals/developers-reference/best-pkging-practices.html#bpp-news-debian for what the NEWS file is for
+[21:07] <micahg> ESphynx: in the numerous uploads that I've done, I think I've only used a NEWS file entry twice
+[21:11] <ESphynx> micahg oh hi =)
+[21:11] <ESphynx> micahg: Well NEWS has its own meaning for me in the upstream package...
+[21:12] <micahg> ESphynx: that's fine, you should list changes in upstream stuff in the upstream NEWS file :)
+[21:12] <ESphynx> micahg: I made 'corrections' in the past entries of the NEWS file
+[21:12] <ESphynx> micahg: I've been talking about the upstream NEWS file the whole time.
+[21:12] <micahg> ah, heh, ok
+[21:12] <ESphynx> I don't have a separate 'NEWS' file for the package, I thought the 'changelog' handles that
+[21:12] <micahg> that's fine for new upstream versions, not for SRUs
+[21:13] <ESphynx> micahg: so this SRU... I'm at a loss, my friend
+[21:13] <micahg> ESphynx: well, if there's major breakage with a new upstream version, a package NEWS entry might make sense, but in general, no package NEWS is good NEWS :)
+[21:13] <ESphynx> I really don't care about the NEWS file
+[21:14] <ESphynx> my problem is there are ~220 commits between the current Ubuntu package (0.44.01-1) and the latest (0.44.03-1)
+[21:14] <ESphynx> most of which I consider important bug fixes
+[21:16] <micahg> ESphynx: maybe raise the bar to severe then?
+[21:17] <ESphynx> micahg: my other argument is that whichever 'patched up' 0.44.01 is going to be less tested/stable than 0.44.03  as it is
+[21:18] <ESphynx> since I essentially have to 'redo' the patch for the severe issues
+[21:19] <micahg> ESphynx: that's a classic problem with stable releases, we have backports for stuff that's not SRUable
+[21:19] <micahg> ESphynx: just pick the major stuff that's really broke that can't be worked around
+[21:19] <ESphynx> Is backport a possibility here? ah but that doesn't happen automatically, is it?
+[21:19] <micahg> ESphynx: sure, it's possible, but we should at least fix the installability issue in quantal
+[21:19] <ESphynx> Ok.
+[21:20] <micahg> backport isn't an end run around the SRU process, it's an option to get the latest upstream with all features/fixes
+[21:20] <ESphynx> So. 1. installability 2. arm/ppc issues 3.  GCC 4.7 issues
+[21:20] <micahg> sounds good to me :)
+[21:20] <ESphynx> let me give you an example
+[21:20] <ESphynx>     ecere/gfx/fonts: Fixed wrong kerning when using the same face with different sizes
+[21:20] <ESphynx> Should that make it or not?
+[21:21] <ESphynx> this can result in having the e show over the T in a 'Test' string
+[21:21] <micahg> gcc 4.7 issues shouldn't be fixed in an SRU unless they break the build
+[21:21] <ESphynx> they make loading a BMP image crash
+[21:21] <micahg> ah, sounds like a good fix then
+[21:22] <ESphynx> ide/Project: Fixed buffer overflows using DynamicString::concatf -- Should that make it?
+[21:22] <micahg> it's visually annoying, so, it's your call
+[21:22] <ESphynx> visually annoying? what do you mean?
+[21:23] <ESphynx> ah the Font one
+[21:23] <micahg> T over e
+[21:23] <micahg> yeah
+[21:23] <ESphynx> it sure is.
+[21:23] <ESphynx> but i'm just not up to document 200 bugs in Launchpad
+[21:23] <micahg> the buffer overflow might not be exploitable, if it's not, not worth fixing in an SRU
+[21:23] <ESphynx> how about buffer overflows?
+[21:24] <micahg> if it is, probably should go to -security
+[21:24] <ESphynx> hmm well I don't know if it'd be exploitable or not, I don't consider my SDK very secure in the first place.
+[21:25] <ESphynx> Ok then let me review these issues again, in light of our discussions. I'll be picking a minimal set.
+[21:25] <ESphynx> being of perfectionist nature, that's just so hard on my brain :P
+[21:26] <micahg> ESphynx: I can certainly relate
+[21:26] <micahg> ESphynx: here's the general criteria for SRU if that helps: https://wiki.ubuntu.com/StableReleaseUpdates/#When
+[21:26] <micahg> we have backports for the rest :)
+[21:27] <micahg> backports are visible by default in software center, but are opt-in
+[21:35] <ESphynx> oK i'm starting to feel this
+[21:54] <ESphynx> I've singled out 47 bugs
+[21:54] <ESphynx> or commits, rather :P
+[21:55] <ESphynx> https://gist.github.com/4650823
+[21:56] <ESphynx> I made some wine with the grapes in my backyard ;) threw in some stuff including some 100% cherry juice. i've had some comments that it tastes a bit too much of cherry / red licorice :P   This is the label  http://ecere.com/tmp/labelv8.png =)
+[21:57] <ESphynx> (Now on to cherry-picking :P)
+[22:05] <ESphynx> micahg: Any advice on how to proceed? I made a 'quantal-sru' branch and I'm going to cherry pick each of these 47 commits and verify them one-by-one and make sure the result is good.
+[22:05] <ESphynx> Should I be 'regrouping' some of these?
+[22:06] <micahg> dbaa493 eda: Put back include paths to fix Oneiric/amd64 build problems with libffi doesn't make sense
+[22:06] <micahg> db43e9b ide/Debugger: Improved support for GDB 6.3 on OS X also
+[22:07] <ESphynx> micahg: the first one is about adding -I/usr/include/i686-linux-gnu
+[22:07] <ESphynx> the latter is fixes to GDB protocol, and though I did this for OS X it would likely affect a user using GDB 6.3 on Ubuntu as well
+[22:07] <micahg> we have 7.4
+[22:08] <ESphynx> I know, but one might decide to use 6.3 :P (for reasons including the fact that GDB is completely and utterly broken these days)
+[22:08] <micahg> can you justify the reasoning and risk for all of these?
+[22:08] <ESphynx> it's also just 'improved' GDB communication
+[22:08] <micahg> ESphynx: we don't care about non-archive stuff in most cases for SRUs
+[22:09] <ESphynx> the first has no risk, it just adds an include path (reduces the risk of a build failing) ... besides I'm only going to add it if the build needs it :P
+[22:09] <ESphynx> the latter makes the integrated communication more stable
+[22:10] <micahg> I'm saying for the whole list, I don't need you to tell me the justifications, but the SRU team will want to see them as well as test cases (reproducers, not code) and regression risk
+[22:11] <ESphynx> yeah, sounds painful :P
+[22:12] <micahg> right, just focus on what you can justify :)
+[22:13] <ESphynx> a broken debugger is an annoyance
+[22:13] <ESphynx> so every bit of progress I make on integrating with GDB is golden :P
+[22:14] <micahg> sure, but it's not worth SRUing unless you can justify the regression risk
+[22:14] <micahg> and we've got backports for everything else
+[22:15] <ESphynx> I don't mean to sound like an ass, but regression risk -- seriously
+[22:16] <ESphynx> nothing and no one is using this yet :P
+[22:16] <ESphynx> I can understand regression risk to be critical for packages that used by the whole system... like X11, or the kernel, or even GTK, Qt... but for isolated packages?
+[22:17] <micahg> SRUs are meant to improve the existing versions in the archive, backports are there to bring the latest and greatest
+[22:17] <ESphynx> which is why I've singled out these 47 critical bug fixes out of the 220 commits
+[22:17] <ESphynx> but now are they going to expect me to spend 30 minutes for each of these to come up with a reproducing scenario?
+[22:18] <micahg> right, well, that's why xnox and I suggested a minimal set
+[22:19] <ESphynx> 51b6684 compiler/libec: Added missing null pointer check   -- This is a potential IDE crash (one could lose his work as a result)
+[22:19] <ESphynx> Should this make it in?
+[22:19] <micahg> if it was totally broke in quantal, you could push a new upstream, but AIUI, it's not the case on i386
+[22:19] <micahg> ESphynx: yeah, work loss is a good SRU criteria
+[22:20] <ESphynx> a lot of these are SIGSEGV fixes
+[22:20] <ESphynx> true, it's not fully broke on i386 :P
+[22:21] <micahg> ScottK: ^^ any suggestions?
+[22:21] <ESphynx> well I'll go through them again and may omit some ... that was just a first round.
+[22:22] <ESphynx> micahg: let me reiterate that I appreciate your help and especially your moral support in this difficult task :P
+[23:06] <ScottK> ESphynx: We promise no regressions post-release, so the regression concern is a potential issue for all SRUs (more some than others though).  For packages that don't have a micro-release exception approved by the tech board, it's unfortunately necessary to go through a test case for each issue.  It might be possible to have a combined test case that covers multiple bugs.  There's no need to be duplicative about it.
+[23:07] <ESphynx> ScottK: Can a test case be 'steps to reproduce' , or should it be an automated script?
+[23:19] <ScottK> ESphynx: It can be either.
+[23:23] <ESphynx> ScottK: What of a fix for something obviously wrong, but for which I never managed to reproduce the issue on Linux? I'm thinking about: 4750114 compiler/libec/lexer: Solved issue where isatty was called on an eC File object - Hopefully resolves parsing bus errors on OS X
+[23:23] <ScottK> Why would you include the fix for Linux then or are you making a bugfix release for multiple OS?
+[23:23] <ScottK> If so, there's nothing to verify since there's no issue.
+[23:24] <ESphynx> ScottK: I have newer versions which have the fix... this is still an issue on linux, isatty() expects a FILE * but I'm passing it my own struct... It never caused any problem out of sheer luck.
+[23:26] <ScottK> In that case, it's possible, if there's no other way to verify, to do it via code inspection and testing to ensure there's no regression, so mostly describe what you need to do to execute that functionality so it can be tested to still work.
+[23:28] <ESphynx> If I've fixed 5 buffer overflows in different locations, should I describe the 5 ways to reproduce each of them?
+[23:33] <ScottK> Yes.
+[23:34]  * ESphynx tremples in pain
+[23:34] <ESphynx> trembles*
+[23:41] <ESphynx> Something like e84d924 ide/CodeEditor: Fixed buffer overflow - Large strings such as the credits in the IDE's about.ec caused buffer overflows,   noticed as 'Stack smashing' on Ubuntu Quantal  -- surely deserves an SRU?
+[23:46] <ScottK> Yes and if it's noticed as stack smashing in a build log or something, the absence of the same is sufficient.
+[23:48] <ESphynx> that was noticed in the controlling when opening ide/src/about.ec in the IDE

@@ -1,0 +1,157 @@
+[15:15] <maxi_> aqui es la interpretacion en esp?
+[15:39] <chilicuil> hola, buenos dias o/, soy el interprete de las primeras 4 sesiones, lamento la demora, el lugar desde donde me conecto bloquea irc y freenode
+[15:41] <chilicuil> si tienen alguna pregunta sobre la primera sesion de dholbach y no se sienten seguros para hacerla, haganla por aqui, y hare lo mejor que pueda para traducirla, escribirla en #ubuntu-classroom-chat y devolver el resultado
+[15:42] <chilicuil> justo ahora, dholbach nos habla sobre como introducirnos al desarrollo de Ubuntu, comenzre a interpretar a partir de la segunda sesion, Getting set up for Ubuntu development
+[16:03] <nep1x> buenas chilicuil. entonces haces de traductor para nuestras preguntas entre nosotros y el conferenciante, pero no traduces la conferencia
+[16:03] <chilicuil> nep1x: hago ambas cosas, solo que no llegue a la primera sesion por problemas en mi conexion
+[16:03] <nep1x> pues me mas vale tarde que nunca :)
+[16:03] <nep1x> gracias hombre!
+[16:04] <chilicuil> gracias a ustedes por el interes
+[16:06] <chilicuil> ahora comienzo.., mientras me tomaba el e , decidi que para esta segunda sesion haremos una breve introduccion sobre como configurar un equipo para poder trabajar con el desarrollo de ubuntu y corregiremos un pequnio buug al final de la sesion
+[16:07] <chilicuil> primero que anda, necesitaremos algunos programas, esto incluye:
+[16:07] <chilicuil> - programas especificos para modificar paquetes de ubuntu
+[16:07] <chilicuil> - software de cifrado para que el trabajo que se haga pueda verificarse
+[16:08] <chilicuil> - software extra que les permitira enviar sus modificaciones de forma segura
+[16:08] <chilicuil> tambien se configuraran algunas de las herramientas que necesitara y les explicare como tener listo el resto por ustedes mismos
+[16:09] <chilicuil> bien, alguien pregunto antes si estaba bien usar una version antigua de ubuntu para ayudar con el desarrollo, y ahora respondo:
+[16:10] <chilicuil> se recomienda hacer trabajo de empaquetamiento usando la ultima version en desarrollo de ubuntu, esto es porque les permitira probar el software en el mismo entorno y verificar que sus modificaciones son correctas
+[16:10] <chilicuil> no necesitan preocuparse, existen instrucciones sobre como correr la version en desarrollo aqui: https://wiki.ubuntu.com/UsingDevelopmentReleases
+[16:11] <chilicuil> ademas existen varios programas que les facilitaran la vida como desarrolladores de ubuntu, para instalar la mayoria de estos programas pueden correr en una terminal:
+[16:12] <chilicuil>  $ sudo apt-get install packaging-dev
+[16:12] <chilicuil> (sin el $)
+[16:12] <chilicuil> si estan usando Ubuntu 11.10 o versiones anteriores, entonces deberan correr en su lugar
+[16:12] <chilicuil> $ sudo apt-get install gnupg pbuilder ubuntu-dev-tools bzr-builddeb apt-file
+[16:13] <chilicuil> si desean ayudar con el desarrollo de Ubuntu, necesitaran una forma de verificar que sus correciones funcionan bien, la forma mas segura de hacer esto es usando una maquina virtual
+[16:14] <chilicuil> instalar el software de la linea de comandos anterior, tomara un poco de tiempo, asi que continuemos mientras termina
+[16:14] <chilicuil> nuragussuryoko pregunta: la actual version en desarrollo es Ubuntu Raring == 13.04?
+[16:14] <chilicuil> dholbach responde que si
+[16:15] <chilicuil> bien, ahora hare un breve resumen de lo que se esta instalando en su equipo
+[16:16] <chilicuil> - gnu o  GNU Privacy Guard, es un paquete que contiene varias utilidades para crear llaves criptograficas, esto les permitira firmar los archivos que deseen subir a launchpad
+[16:17] <chilicuil> - pbuilder es un programa que les ayuda a construir paquetes de forma automatizada en un entorno limpo e isolado
+[16:17] <chilicuil> - ubuntu-dev-tools (y devscript que se instala como dependencia) son una coleccion de scripts que les ayudara con muchas de las tareas propias del empaquetamiento
+[16:19] <chilicuil> - bzr-builddeb (y bzr, que se instala como dependencia) es un sistema de control de version, tambien conocido como Bazaar, que les permitira trabajar en la correcion de programas de una nueva forma, especifica a Ubuntu, esta nueva forma, hace mas facil la colaboracion entre los desarrolladores
+[16:19] <chilicuil> -apt-file les ayudara a encontrar a que paquete pertenece un binario|programa
+[16:19] <chilicuil> Ahora, configuraremos pbuilder, una herramienta que muy pronto van a amar =)
+[16:20] <chilicuil> pbuilder como ya habia mencionado, permite crear paquetes desde un entorno limpio y minimalista, esto sirve para un par de propositos
+[16:21] <chilicuil> - la compilacion se hara en un entorno limpio y minimalista que ayudara a verificar que se puede crear de forma reproducible, pero sin modificaciones en el sistema base
+[16:21] <chilicuil> - evita tener que instalar todas las dependencias en su equipo
+[16:21] <chilicuil> - y una tercera, pueden crear entornos de estos para diferentes versiones ya sea de Ubuntu o de debian
+[16:22] <chilicuil> configurar pbulder es muy facil, solo necesitan correr:
+[16:22] <chilicuil>  $ pbuilder-dist <version de ubuntu> create
+[16:23] <chilicuil> donde <version de ubuntu> es  precise, quantal, raring o en el caso de Debian, sid.., una vez que lo hagan se comenzaran a descargar los archivos necesarios para tener una version minimalista de ese sistema
+[16:23] <chilicuil> por ahora, debera bastar que ejecuten:
+[16:23] <chilicuil>  $ pbuilder-dist raring create
+[16:24] <chilicuil> tuxfan pregunta: si pbuilder intenta funcionar como un sandbox (caja de pruebas)
+[16:25] <chilicuil> dholbach: responde que tecnicamente pbuilder usa un entorno desde un chroot para crear paquetes (http://en.wikipedia.org/wiki/Chroot), lo que asegura que los programas pueden ser creados una y otra vez desde un sistema minimalista
+[16:25] <chilicuil> nep1x pregunta que le parece que launchpad juega un papel muy importante en todo esto, pero que aun no lo ha entendido bien, pide que se le clarifique un poco mas
+[16:27] <chilicuil> dholbach: responde que  https://launchpad.net es la principal plataforma de desarrollo de Ubuntu, todo se hace ahi, las traducciones de los paquetes (y de otros projectis), el sistema de reporte de bugs, las ramas de desarrollo, los paquetes en si mismos, y muchas otras cosas mas
+[16:27] <chilicuil> durante esta sesion se omitira la creacion de la cuenta en lp, pero les mostrare como configurar el resto (una vez que tengan su cuenta) mas tarde, no deberia tomar mas de un par de minutos
+[16:28] <chilicuil> quequotion: pregunta sobre empaquetamiento de librerias multiples (multilib), especificamente para amd64 y i386
+[16:29] <chilicuil> dholbach responde que en realidad se refiere a multiarquitectura (multiarch), y que no esta seguro sobre que es lo que desea saber
+[16:30] <chilicuil> vale, sigamos con la sesion, espero que la instalacion de las utilidades antes mencionadas ya haya concluido
+[16:30] <chilicuil> por favor abran su archivo  ~/.bashrc  con editor de textos y agreguen algo como esto al final del mismo
+[16:30] <chilicuil>  export DEBFULLNAME="Juan Perez"
+[16:31] <chilicuil>  export DEBEMAIL="juan.perez@dominio.com"
+[16:31] <chilicuil> si no usan la shell por defecto que es bash.., entonces modifiquen el archivo de configuracion correspondiente a su shell
+[16:32] <chilicuil> ahora que lo han modificado, guardenlo, cierren la terminal y abranla nuevamente
+[16:32] <chilicuil> o pueden correr:
+[16:32] <chilicuil> $ source ~/.bashrc
+[16:32] <chilicuil> ok, espero que eso haya funcionado para todos, alguna pregunta?, a alguien le ha sucedido alguna catastrofe?
+[16:32] <chilicuil> phoenix_firebrd pregunta sobre la diferencia entre usar pbuilder-dist y pbuilder
+[16:34] <chilicuil> dholbach responde que pbuilder-dist es un wrapper (un script alrededor de pbuilder) que les hara mas facil la administracion de diferentes versiones de pbuilder en su sistema, por ejemplo, con pbuilder-dist pueden tener ubuntu precise con solo correr:
+[16:34] <chilicuil> $  pbuilder-dist precise create
+[16:34] <chilicuil> con pbuilder, tendrian que modificar archivos de configuracion, crear alias.. y otras cosas para poder hacerlo
+[16:35] <chilicuil> epikvision pregunta si solo necesita correr  pbuilder <version de ubuntu> una vez
+[16:35] <chilicuil> dholbach: responde que si, que solo 1 vez
+[16:36] <chilicuil> anish1307i pregunta si puede usasr pbuilder para crear los paquetes de prueba y luego testearlos en una maquina virtual
+[16:36] <chilicuil> dholbach responde que si, y que solo necesita copiarlos para hacerlo
+[16:37] <chilicuil> nep1x pregunta si necesitan correr  pbuilder-dist <version de ubuntu> ahora mismo, y si es asi, que version de ubuntu se debe poner
+[16:37] <chilicuil> dholbach responde que si y que la version es raring
+[16:37] <chilicuil> $ pbuilder-dist raring create
+[16:38] <chilicuil> muy bien, nos quedan aprox 20 min, hagamos un ejemplo de desarrollo de Ubuntu
+[16:38] <chilicuil> hace rato que fui a tomar mi te, introduje un error en un paquete deliberadamente :)
+[16:38] <chilicuil> ahora todos juntos vamos a arreglarlo
+[16:39] <chilicuil> hice este desorden en  lp:~dholbach/ubuntu/raring/hello/crazy-change, para obtener el codigo, por favor ejecuten:
+[16:39] <chilicuil> $ bzr branch lp:~dholbach/ubuntu/raring/hello/crazy-change
+[16:39] <chilicuil> ahora:
+[16:39] <chilicuil>  $ cd crazy-change
+[16:40] <chilicuil> si corren "ls debian" veran una lista de archivos que son relevantes para nuestro trabajo
+[16:40] <chilicuil> hace rato hice un cambio en debian/control - si ahora abren el archivo y curosean un poco veran que fui lo que modifique :-)
+[16:41] <chilicuil> hasta que alguien lo mencione en #ubuntu-classroom-chat, voy a hablar un poco sobre lo que hace el archivo debian/control
+[16:41] <chilicuil> pueden ver que esta dividido en 2 secciones, la primera es sobre el paquete fuente (hello en este caso)
+[16:42] <chilicuil> y la segunda es sobre el paquete binario, oh si!, en Debian/Ubuntu, existen 2 tipos de paquetes, paquetes fuente y paquetes binarios (.deb) y ambos se definien en debian/control
+[16:43] <chilicuil> x86_ ha encontrado el error: install-infooooooooo
+[16:43] <chilicuil> dholbach: agradece su labor y menciona que esta en lo correcto
+[16:43] <chilicuil> la linea incorrecta es esta:
+[16:43] <chilicuil> Depends: ${shlibs:Depends}, dpkg (>= 1.15.4) | install-infoooooooooooooo
+[16:44] <chilicuil> y se refiere a los programas sobre los que depende el programa "hello"
+[16:44] <chilicuil> "${shlibs:Depends}" no es el nombre de un paquete valido, es una variable que se sustituye por una lista de librerias sobre las que "hello" depende
+[16:45] <chilicuil> por favor, ahora cambien "install-infoooooooooooooo" por "install-info" :-)
+[16:45] <chilicuil> y guarden el archivo
+[16:45] <chilicuil> si lo hacen, lo siguiente que podran hacer sera:
+[16:45] <chilicuil> $ dch -i
+[16:46] <chilicuil> lo que abrira un editor con una entrada que menciona su nombre y correo que introjimos al inicio de la sesion :-)
+[16:46] <chilicuil> #nota del interprete, si les surguen dudas, por favor haganlas y agreguen mi nick para que pueda traducirlo, haganlo aqui mismo o en #ubuntu-classroom-chat
+[16:47] <chilicuil> ahora les mostrare un ejemplo de una entrada en el changelog que no deben hacer:  http://paste.ubuntu.com/1586340/
+[16:48] <chilicuil>  debian/changelog es el lugar donde todos los cambios que se le hacen a un programa son documentados, no solo hacemos esto para nosotros, sino para que otros desarrolladores de Ubuntu sepan que fui lo que hicimos
+[16:49] <chilicuil> una buena entrada en el changelog suele incluir: una referencia a lo que se cambio, las cosas que se cambiaron, la razon, y una liga a una discusion en linea si es que la hubo (puede ser una lista de correo o reporte)
+[16:49] <chilicuil> pronto notaran que esto es muy importante cuando deseen saber que fue lo que paso con ese programa que modificaron hace medio anio ;)
+[16:50] <chilicuil> para algo tan simple como la correcion de una dependencia, se puede escribir:
+[16:50] <chilicuil> * debian/control: fixed dependency: changed "install-infoooooooooooooo" to "install-info".
+[16:50] <chilicuil> #los comentarios en debian/changelog siempre se hacen en Ingles
+[16:50] <chilicuil> o algo parecido
+[16:51] <chilicuil> jincreator pregunta donde puede encontrar mas de esas variables, como  {shlibs:Depends}
+[16:52] <chilicuil> dholbach: responde que {shlibs:Depends} seguramente es la mas importante, especialmente cuando se manejan librerias compartidas y codigo enlazado, sin embargo tambien existe {misc:Depends}  y algunas otras que se usan para python y perl, tambien dice que le dara un link con mas informacion al final de la sesion
+[16:52] <chilicuil> johnhamelink pregunta como se veria debian/changelog si existiera un numero de reporte
+[16:52] <chilicuil> dholbach agradece la pregunta, y pone un ejemplo
+[16:53] <chilicuil> imaginemos que existe el reporte 12345678 en launchpad, y describe el problema que estamos arreglando
+[16:53] <chilicuil> en ese caso pueden agregar  (LP: #12345678) al final de la linea donde describen su cambio
+[16:54] <chilicuil> esto hara que el reporte se cierre automaticamente cuando su modificacion sea aceptada en Ubuntu
+[16:54] <chilicuil> bien, continuando, ahora creemos el paquete con nuestra modificacion
+[16:54] <chilicuil> $ bzr bd -- -S
+[16:55] <chilicuil> esto genera un paqeute fuente a partir de la rama sobre la que hicimos nuestros cambios (una rama es un directorio con la historia del paquete, directorio .bzr)
+[16:55] <chilicuil> este paquete fuente es el formato que se usa para subir los cambios a launchpad
+[16:55] <chilicuil> si ahora ejecutan: "ls ../hello_*", veran los siguientes archivos
+[16:55] <chilicuil> ../hello_2.8-2ubuntu2.debian.tar.gz  ../hello_2.8-2ubuntu2.dsc  ../hello_2.8-2ubuntu2_source.changes  ../hello_2.8.orig.tar.gz
+[16:56] <chilicuil> si ahora corren:
+[16:56] <chilicuil> $ pbuilder-dist raring build ../hello_2.8-2ubuntu2.dsc
+[16:56] <chilicuil> se comenzara a compilar el paquete .deb desde ese directorio
+[16:57] <alpc360> hola !
+[16:57] <chilicuil> EagleScreen pregunta si hay algo parecido para cerrar reportes de debian
+[16:57] <chilicuil> dholbach responde que si, y que es  "Closes: #123456"
+[16:57] <alpc360> hay algun hangout  ?
+[16:57] <alpc360> o solo es via chat ?
+[16:57] <chilicuil> hola alpc36!, bienvenido, por el momento solo es chat
+[16:58] <chilicuil> mas adelante habra hangout pero solo para la version inglesa
+[16:58] <chilicuil> te sugiero que tambien entres a #ubuntu-classroom-chat para que conozcas los detalles
+[16:58] <chilicuil> maxi_ dice que tuvo un error  debsign: gpg error occurred!  Aborting.... debuild: fatal error at line 1278: running debsign failed bzr: ERROR: The build failed
+[16:59] <alpc360> ya estoy
+[16:59] <alpc360> pero ahora mismo que estan haciendo
+[16:59] <chilicuil> dholbach responde que eso es probablemente por que la direccion de correo que uso en debian/changelog no corresponde con la llave GPG
+[16:59] <alpc360> es que acabo de recibir el mail de la semana esta de ubuntu OO
+[16:59] <chilicuil> alpc360: ahora mismo interpreto la sesion sobre como introducirse al desarrollo de Ubuntu =)
+[16:59] <chilicuil> la version original se transmite por #ubuntu-classroom
+[17:00] <alpc360> oks
+[17:00] <alpc360> la hora es la misma que españa o restamos 1h ?
+[17:00] <chilicuil> dholbach sugiere que se ignore el error y se corra:  bzr bd -- -S -us -uc
+[17:00] <alpc360> no estoy seguro de la UTC
+[17:00] <chilicuil> (-us -uc impide que se firme el paquete)
+[17:00] <chilicuil> n o se alpc360, estoy en Mexico y aqui es UTC-6
+[17:01] <alpc360> XD
+[17:01] <chilicuil> (la contruccion del paquete tomara un pco de tiempo, pero una vez que termine el resultado estara disponible en "ls ~/pbuilder/raring_result/"
+[17:01] <alpc360> me parece que estamos en UTC 0 sino que me corriga alguien
+[17:02] <chilicuil> cuando termine, podran ver unos pequenios y timidos paquetes .deb esperando por ustedes
+[17:02] <chilicuil> probablemente los primeros que haran =D
+[17:02] <chilicuil> con eso terminamos la sesion, sin embargo no quiero irme sin sugerirles que revisen http://developer.ubuntu.com/packaging/
+[17:03] <alpc360> chilicuil estas traduciendo de #ubuntu.classroom ?
+[17:03] <chilicuil> ahi podran ver la guia completa en Ingles y Espniol tambien!
+[17:03] <chilicuil> si desean ayudar a traducirla a otro idioma, pueden ir a  https://translations.launchpad.net/ubuntu-packaging-guide/
+[17:03] <alpc360> veo que es la traduccion ;)
+[17:04] <chilicuil> tambien, cuando tengan problemas por favor entren a  #ubuntu-motu en freenode.net, no estan solos! =)
+[17:04] <chilicuil> alpc360: asi es
+[17:04] <alpc360> ;)
+[17:05] <chilicuil> vale, ahora sigue la sesion de coolbhavi, desarrollador de Ubuntu y parte del equipo que revisa los nuevos programas que llegan a la distro y de descubrir "talentos" para otorgarles permisos de escritura en los repositorios =)
+[17:05] <chilicuil> y hablara sobre los sistemas de parches que pueden usarse en el empaquetamiento de software (que basicamente es 1, quilt)
+[17:06] <chilicuil> y por mi parte es todo, agradezco que hayan asistido a la UDW
+[17:06] <chilicuil> estare mniana otro rato interpretando a esta misma hr
+[17:06] <chilicuil> sientanse libres de interpretar sesiones si es que ese es su deseo, disfruten de la semana del desarrollador =D

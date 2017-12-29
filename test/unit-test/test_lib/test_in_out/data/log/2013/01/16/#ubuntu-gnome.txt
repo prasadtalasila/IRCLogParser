@@ -1,0 +1,113 @@
+[16:54] <jbicha> ricotz: my gjs problem was http://paste.ubuntu.com/1538095/
+[16:55] <ricotz> jbicha, ah, you didnt update gnome-shell concurrently
+[16:56] <ricotz> simply removing the "dbus import" there fixes it
+[16:56] <jbicha> well I built gnome-shell against gjs 1.35.4
+[16:57] <ricotz> no the js code of gnome-shell contains a left over
+[16:57] <ricotz> just use the newer shell version
+[16:57] <jbicha> that was 3.7.4 and there haven't been any commits like that since
+[16:57] <ricotz> the js code isnt affected by a rebuild
+[16:58] <ricotz> http://git.gnome.org/browse/gnome-shell/commit/?id=e294abc567b50ce4358dcd6be1e2f147b81ebcf8
+[16:58] <ricotz> so 3.7.4 is fine
+[16:59] <ricotz> maybe you didnt update the -common package correctly?
+[16:59] <jbicha> oh, never mind I apparently reverted back to 3.7.3.1 since I had problems
+[16:59] <jbicha> thanks
+[16:59] <ricotz> ok
+[17:05] <jbicha> ok, now my problem is that I can't figure out how to get gnome-control-center to compile: http://paste.debian.net/225388/
+[17:05] <jbicha> I am building against g-s-d 3.7.4 which was built against gnome-desktop 3.7.4
+[17:09] <ricotz> jbicha, i was planning to take a look at those two packages
+[17:11] <ricotz> look like a missing ldflag
+[17:13] <ricotz> btw nice to finally have eglibc 2.17
+[17:32] <ricotz> jbicha, as i said yesterday mutter/g-s might have problems without a newer clutter1.0 due xi2 bugs
+[17:34] <ricotz> jbicha, or maybe not, just go ahead
+[17:39] <ricotz> robert_ancell, hi
+[17:39] <robert_ancell> ricotz, hello
+[17:39] <ricotz> jbicha, robert_ancell, i have a e-d-s 3.7.4 here, any objections to push it to staging?
+[17:40] <ricotz> https://launchpad.net/~ricotz/+archive/staging/+sourcepub/2930384/+listing-archive-extra
+[17:40] <robert_ancell> ricotz, sounds good to me
+[17:41] <ricotz> i am not using evolution, but it doesnt make g-s crash or something here ;)
+[17:42] <ricotz> fabien doing evolution packages too, maybe i convince him to look at rdepends too
+[17:42] <robert_ancell> ricotz, I figure it's OK because it's a staging PPA - if it does break stuff then the new e-d-s doesn't get copied to the main PPA
+[17:42] <robert_ancell> and at least then we'll know
+[17:44] <ricotz> for non-evolution users it shouldnt do much
+[17:46] <jbicha> I don't think you should push e-d-s
+[17:47] <ricotz> jbicha, why
+[17:47] <ricotz> (already did)
+[17:47] <jbicha> I don't think we want to maintain all the rdepends that need to be rebuilt
+[17:47] <ricotz> but still stoppable
+[17:48] <ricotz> jbicha, currently it coexists fine
+[17:48] <jbicha> well maybe it's doable since we're already maintaining most of the gnome stack anyway
+[17:48] <jbicha> it was a bit different when we shipped the same gnome as ubuntu
+[17:48] <ricotz> wait with g-s upload until e-d-s is finished please
+[17:49] <jbicha> sure, I'm hoping I can figure g-c-c out first since it's kinda tied with gnome-shell
+[17:50] <ricotz> did you manager to refresh some more patches of g-s-d?
+[17:50] <ricotz> *manage
+[17:59] <ricotz> robert_ancell, are you working on any package?
+[18:00] <robert_ancell> ricotz, just updated libpeas, now working on colord
+[18:00] <robert_ancell> and baobab
+[18:00] <robert_ancell> in raring, not the PPA
+[18:00] <ricotz> ok, pushed eog
+[18:00] <ricotz> alright, i guess libpeas 1.7.0?
+[18:00] <robert_ancell> libpeas 1.6 in raring
+[18:00] <ricotz> or 1.6.2
+[18:00] <ricotz> ok
+[18:01] <ricotz> i hope you can do 1.7.0 for the ppa too
+[18:01] <robert_ancell> sure
+[18:02] <ricotz> thanks :)
+[18:24] <jbicha> ricotz: no, g-s-d isn't really any better; I went ahead and pushed what I have to https://code.launchpad.net/~gnome3-team/gnome-settings-daemon/ubuntu
+[18:24] <jbicha> https://code.launchpad.net/~gnome3-team/gnome-control-center/ubuntu
+[19:00] <ricotz> jbicha, ok
+[19:32] <jbicha> ok, it was some Ubuntu patches that were breaking the g-c-c build
+[20:55] <jbicha> ricotz: http://paste.ubuntu.com/1538880/
+[20:59] <ricotz> libedataserverui was removed upstream
+[21:00] <ricotz> just remove this dep and try again
+[21:00] <ricotz> which package is this?
+[21:02] <ricotz> i guess gnome-shell
+[21:02] <ricotz> jbicha, just drop that dep it is obsolete
+[21:04] <jbicha> yeah, it was gnome-shell, I had to replace it with libcamel1.2-dev
+[21:04] <ricotz> jbicha, camel is not a dep of g-s
+[21:05] <ricotz>  libecal-1.2 and libedataserver-1.2
+[21:05] <ricotz> if libcamel1.2-dev is needed the e-d-s package is missing an internal dev dependency
+[21:06] <jbicha> http://paste.ubuntu.com/1538931/
+[21:07] <ricotz> yeah and missing internal dep
+[21:07] <ricotz> +an
+[21:09] <jbicha> ok I'll wait for you to push a new eds then?
+[21:09] <ricotz> yeah, i am on it
+[21:14] <ricotz> jbicha, why did you push a glib2.0 package to the ppa?
+[21:15] <jbicha> ricotz: um, don't we need it?
+[21:15] <ricotz> no it is in raring as you stated
+[21:15] <ricotz> the ppa builds against the proposed pocket
+[21:15] <ricotz> otherwise you would have seen quite some failures
+[21:16] <jbicha> oh I'll delete it then
+[21:16] <ricotz> also wait a bit before you delete packages
+[21:16] <ricotz> i guess you did with the previous glib2.0 package
+[21:16] <jbicha> do you want to delete it instead then?
+[21:17] <ricotz> no delete this one
+[21:17] <ricotz> but someone deleted the older one already
+[21:17] <jbicha> on the other hand...
+[21:17] <jbicha> I don't think we should encourage users to be using -proposed
+[21:17] <ricotz> no please remove it
+[21:18] <ricotz> if someone is able to deal with gnome3-staging then -proposed shouldnt be problem
+[21:19] <ricotz> also gobject-introspection was already deleted
+[21:20] <ricotz> jbicha, i figured you did that?
+[21:20] <ricotz> (i deleted the glib package now)
+[21:21] <jbicha> yes but I wasn't thinking about glib2.0 getting held in -proposed for a while
+[21:21] <ricotz> jbicha, if you want to badly do a binary copy
+[21:21] <ricotz> the builders are busy already ;)
+[21:22] <jbicha> how do I do that?
+[21:23] <ricotz> i copied both now
+[21:25] <jbicha> ok, how did you do it?
+[21:25] <ricotz> pm
+[21:27] <ricotz> if possible do a binary copy to avoid rebuilds and different binaries
+[23:13] <darkxst> ricotz, can you file a bug with  your install headers patch upstream, and cc Jeff Walden
+[23:17] <ricotz> darkxst, i don't have a mozilla bugzilla account, feel free to do so
+[23:18] <darkxst> ricotz, ok
+[23:18] <darkxst> ricotz, also mozilla are planning on landing this before release https://bugzilla.mozilla.org/show_bug.cgi?id=812265
+[23:18] <ubot5> Mozilla bug 812265 in Build Config "js/src needs versioning added to build system to support spidermonkey releases" [Normal,New]
+[23:19] <darkxst> which changes the versioning to match firefox numbers
+[23:20] <darkxst> so presumably mozjs-17.2 or similar
+[23:21] <ricotz> darkxst, i see, looks nice
+[23:21] <ricotz> with support to co-install multiple headers
+[23:23] <darkxst> yep
+[23:24] <ricotz> hoping this release will happen soon then
+[23:37] <darkxst> hopefully
+[23:37] <darkxst> ricotz can you whip up an install-headers patch with proper headers

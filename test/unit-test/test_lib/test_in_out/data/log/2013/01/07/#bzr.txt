@@ -1,0 +1,78 @@
+=== mmrazik is now known as mmrazik|afk
+=== mmrazik|afk is now known as mmrazik
+=== slank_away is now known as slank
+[15:47] <dobey> can anyone understand why bzr builddeb would be crashing in this build log? https://launchpadlibrarian.net/127602321/buildlog.txt.gz
+[15:49] <mgz> dobey: /usr/bin/pristine-tar: Failed to reproduce original tarball. Please file a bug report.
+=== slank is now known as slank_away
+[15:49] <mgz> and lines preceeding that
+[15:52] <mgz> you can probably manually try those pristine-tar commands to see if you can get more info about why the tar it creates differs
+[15:56] <dobey> err, i guess s/builddeb/dailydeb/ sorry
+=== slank_away is now known as slank
+[16:00] <dobey> mgz: so, the recipe creates the source package just fine locally (though i had to chnage "debversion" to "debupstream" otherwise it breaks on that); this seems to only happen on the launchpad recipe build :(
+[16:02] <LeoNerd> Soo... in-place branch. Anyone have anything useful to say on the matter?
+[16:03] <LeoNerd> I.e. can I inplace 'branch' back to an earlier revision of my branch, make an edit, and then merge the previous HEAD, thus altering history?
+=== mmrazik is now known as mmrazik|otp
+[16:04] <mgz> not quite sure what you mean LeoNerd, but branching an older rev, changing something, then merging a current rev will only rearrange history, not alter it
+[16:04] <LeoNerd> Yes.. that's fine
+[16:05] <mgz> it's the same as doing the change in another branch and merging that... but you flip the left-hand and right-hand ancestry
+[16:05] <mgz> setting append_revisions_only complains at such things
+[16:05] <LeoNerd> So, suppose I have 10 revisions. I want to make a change to -r4. So I can  bzr branch -r4 , edit and commit a -new- -r5, then how do I apply the old -r5 to -r10, keeping their individual identity, thus becoming my new -r6 to -r11 ?
+[16:05] <mgz> there's a `bzr replay` in bzr-rewrite I think
+[16:06] <mgz> so, you'd do that, then replay the more recent changes
+[16:06] <LeoNerd> Yes, I know of replay
+[16:06] <LeoNerd> But what do I replay? I can't just  bzr replay -r5..10 .  can i?
+[16:06] <LeoNerd> Because it's the wrong branch
+[16:06] <dobey> need to reboot again, brb
+[16:06] <mgz> you can specify the branch, no?
+[16:06] <LeoNerd> Maybe.. but how? It's a local one, no?
+=== mmrazik|otp is now known as mmrazik
+[16:10] <mgz> well, the branch revspec would work for one end...
+[16:10] <mgz> need to look at the command help...
+[17:07] <mgz> LeoNerd: answer to your question from earlier (just got to looking at the help for replay),
+[17:07] <LeoNerd> Hrm, so apparently I totally misremembered, and it doesn't look like inplace branches are a thing
+[17:08] <mgz> `bzr replay -d target -r 5..10 old`
+[17:09] <LeoNerd> Yes, I'm aware of that. But that needs 'target' and 'old
+[17:09] <mgz> if you do `bzr branch -r4 old target` and add something first
+[17:09] <LeoNerd> Basically: I had to redo everything and have the branches actually -living- somewhere different on the filesystem
+[17:09] <LeoNerd> I couldn't do it inplace
+[17:09] <mgz> well, you can with co:
+[17:09] <mgz> but that's just the same thing with a different local arrangement
+[17:09] <LeoNerd> Yah
+[17:10] <mgz> I didn't understand what you meant by inplace to start with...
+[17:10] <LeoNerd> It's all made more tricky by the fact that I'm using bzr shadowing another VCS, so my workdir has two
+[17:10] <LeoNerd> So it's not so easy just to blow it away and get a new one
+[17:10] <mgz> well it's easy enough to do, say,
+[17:10] <mgz> `bzr branch --no-tree . /tmp/original`
+[17:11] <mgz> `bzr pull --overwrite -r4 .`
+[17:11] <LeoNerd> Wellsure.. but that needs /tmp, whereas I've actually done it with some new subdirs of the root
+[17:11] <mgz> ...edit...
+[17:11] <mgz> then replay from tmp
+[17:12] <LeoNerd> Yeah.. I'm quite familiar with that one. I just thought I recalled bzr now had some sort of inplace branches thing
+[17:12] <LeoNerd> But apparnetly not
+[17:13] <mgz> I've been using the core co: funcationality recently and it's mostly pretty good
+=== deryck is now known as deryck[lunch]
+=== iBasic is now known as BasicOSX
+=== deryck[lunch] is now known as deryck
+[19:19] <LarstiQ> LeoNerd: hmm hmm
+[19:19] <LeoNerd> Mew?
+[19:19] <LarstiQ> LeoNerd: depending on how the replay command is implemented -
+[19:20] <LeoNerd> er.. I mean.. wha?  *blink* you didn't see hat
+[19:20] <LarstiQ> LeoNerd: if you do `bzr replay -d . -r 5..0 .`, perhaps it looks up the revspec first
+[19:20] <LarstiQ> LeoNerd: and by that time just refers to the repository, and.. oh meh
+[19:21] <LeoNerd> Yes
+[19:21] <LeoNerd> That was my problem
+[19:21] <LeoNerd> In the end I just disconnected my checkout from the branch, and stored branches(plural) elsewhere
+[19:21] <LeoNerd> Which I felt a little sucky but an easy workaround
+[19:21] <LarstiQ> LeoNerd: so what about a merge directive to store the branch up to rev 10, and replay from there?
+[19:21]  * LarstiQ tests
+[19:22] <LarstiQ> which is the same as what you did, except in one fiel
+[19:22] <LarstiQ> file
+[19:22] <LeoNerd> Mmm?
+[19:31] <LarstiQ> LeoNerd: I had a slightly different idea, but that seems to blow up the replay code
+[19:31] <LeoNerd> Ah OK
+[19:31] <LeoNerd> Yeah, I don't think I can think of a better way :/
+[19:31] <LarstiQ> LeoNerd: basically, just use . for location and -r revid:..revid:
+[19:32] <LarstiQ> LeoNerd: still with the hope that it will just look at the repository
+[19:32] <LarstiQ> LeoNerd: I do think something like that makes sense, if someone was willing to work on that
+[22:05] <bsd> Is there a command-line command to see the info associated with a particular file-id?
+[22:09] <bsd> aha: 'bzr help hidden-commands' -> file-id

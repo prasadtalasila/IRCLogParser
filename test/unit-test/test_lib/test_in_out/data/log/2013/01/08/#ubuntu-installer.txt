@@ -1,0 +1,52 @@
+=== ppetraki_ is now known as ppetraki
+[15:18] <gema> xnox: we are stuck , cannot install with utah in HW because of bug 1096943
+[15:18] <ubot2> Launchpad bug 1096943 in ubiquity (Ubuntu) "Ubiquity freezes during nfs-based desktop install from recent live destkop images on physical hardware" [High,New] https://launchpad.net/bugs/1096943
+[15:18] <gema> xnox: bootspeed testing and power measurements are not able to run due to that
+[15:19] <gema> xnox: are you the right person to contact on this, or shall I be talking to someone else?
+[15:19] <gema> xnox: it started failing around 20th of December, really bad timing
+[15:19] <gema> xnox: after the holidays we've been trying to determine whether it was any of the already raised bugs
+[15:19] <ogra_> the last ubiquity upload was on dec. 5th
+[15:20] <gema> ogra_: that's interesting, then it may not be in ubiquity
+[15:20] <gema> any alternatives ideas welcome
+[15:23] <jibel> gema, did you try with rc6 disabled as I suggested this morning, I found problems with i915 on MSI boards
+[15:26] <ogra_> there was a partman-base upload on the 20th
+[15:27] <ogra_> thats the only ubiquity related bit i see
+[15:27] <gema> ogra_: that may be it, since it is failing when there is something already installed there
+[15:27] <nuclearbob> ogra_: that'a also the day I started seeing the problem
+[15:28] <ogra_> https://launchpad.net/ubuntu/raring/+source/partman-base/162ubuntu1
+[15:29] <ogra_> ... "issue a warning that partitioning may be difficult" ...
+[15:29] <ogra_> you might need to preseed that
+[15:30] <gema> nuclearbob: may that be it?
+[15:30] <ogra_> even if it isnt, it would stall your installation waiting for confirmation
+[15:31] <nuclearbob> ogra_ would a failure to preseed that cause the machine to become unresponsive during the install?
+[15:31] <ogra_> no, i wouldnt think so
+[15:31] <ogra_> for unresponsiveness i would rather take a look at the kernel or nfs support
+[15:32] <nuclearbob> ogra_ would it help to have access to the machine?
+[15:32] <ogra_> no, but do you have any more data loke a log or so you could attach tp the bug ?
+[15:32] <ogra_> *to
+[15:32] <ogra_> *like
+[15:32] <ogra_> sigh !
+[15:32]  * ogra_ needs a typing course
+[15:32] <nuclearbob> ogra_ sure, I can reach the machine over ssh, so I can grab whatever logs you think would be useful
+[15:33] <ogra_> syslog and everything in /var/log/installer and /var/log/ubiquity
+[15:36] <cjwatson> partman-base uploads only affect anything after a ubiquity upload that incorporates them
+[15:36] <cjwatson> if there wasn't a ubiquity upload, it's impossible for the partman-base upload to be responsible for this
+[15:36] <ogra_> oh, indeed
+[15:37] <ogra_> and i suspect it wont take nfs mounts into account for this function anyway
+[15:37] <xnox> and currently ubiquity is 'out-of-date', I wanted to upload ubiquity this week there are a few fixes in it already and they get rereported.
+[15:38] <ogra_> there was a kernel upload on the 15th ...
+[15:39] <ogra_> https://launchpad.net/ubuntu/raring/+source/linux/3.7.0-7.15
+[15:39] <ogra_> though if there was an issue with that it would likely have hit you on the 16th already
+[15:47] <ogra_> so the log at https://launchpadlibrarian.net/127826144/UbiquityDebug.txt seems to indicate that ubiquity got through to the point where it actually issues a reboot
+[15:47] <ogra_> and the syslog from the bug shows some hung task messages from Xorg
+[15:48] <ogra_> i strongly doubt it is installer related at all
+[15:48] <ogra_> rather kernel or network stack (rootfs messed up etc) or even Xorg itself
+[16:02] <ogra_> nuclearbob, bug 1097197 smells related
+[16:02] <ubot2> Launchpad bug 1097197 in linux (Ubuntu) "Raring daily failed to boot on MSI MS-7676/Z68MA-ED55 / Intel i915 and RC6 enabled" [High,Confirmed] https://launchpad.net/bugs/1097197
+[16:02] <ogra_> (as jibel apparently said above)
+[16:03] <nuclearbob> ogra_ I've installed in a newer images than that, buit it could still be related
+[16:03] <nuclearbob> ogra_ up to about 2012 12 20, things seem pretty okay for the main system I'm using
+[16:04] <ogra_> yeah, admittedly it is an older issue
+[16:05] <nuclearbob> ogra_ I'm going to try the boot option jibel mentioned for that
+[16:05] <ogra_> ++
+=== kentb is now known as kentb-out

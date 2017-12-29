@@ -1,0 +1,191 @@
+[00:57] <mlankhorst> anyhow uploaded fix for bug 1098215, time to bug the sru team tomorrow :)
+[00:57] <ubottu> bug 1098215 in mesa (Ubuntu Precise) "installing libqt4-opengl-dev uninstalls renamed stack" [Critical,In progress] https://launchpad.net/bugs/1098215
+[00:58] <mlankhorst> night!
+[01:08]  * bryce waves
+=== yofel_ is now known as yofel
+[09:52] <shadeslayer> aha
+[09:52] <shadeslayer> tjaalton: http://wstaw.org/m/2013/01/11/plasma-desktopa11049.png < somewhat similar bug 
+[09:54] <tjaalton> looks perfectly fine to me
+[09:54] <shadeslayer> erm
+[09:54] <shadeslayer> first suggestion, favicon 
+[09:54] <shadeslayer> rendering issue
+[09:55] <tjaalton> ah
+[09:56] <shadeslayer> should I just comment on bug 1098334 ?
+[09:56] <ubottu> bug 1098334 in xserver-xorg-video-intel (Ubuntu) "Font corruption in Chromium tab bar using Intel SNA" [Medium,Confirmed] https://launchpad.net/bugs/1098334
+[09:56] <shadeslayer> or file a new one
+[09:57] <tjaalton> you have sandybridge?
+[09:57] <tjaalton> it's not the same bug then
+[09:57] <tjaalton> best file a new one
+[09:59] <shadeslayer> yep
+[10:00] <shadeslayer> tjaalton: there's also the issue where I lock the screen with steam running and unlock it, steam does not update itself
+[10:00] <shadeslayer> so the lockscreen is visible where steam is
+[10:00] <tjaalton> steam hangs?
+[10:00] <shadeslayer> maybe
+[10:00] <shadeslayer> it was consuming 100 % of my CPU
+[10:00] <shadeslayer> had to kill it
+[10:00] <shadeslayer> but can't reproduce now
+[10:01] <tjaalton> probably not related to sna
+[10:01] <shadeslayer> okay
+[10:01] <shadeslayer> anyway, kwin seems to be working without any regressions
+[10:04] <tjaalton> what was the one you mentioned earlier?
+[10:09] <shadeslayer> huh?
+[10:09] <shadeslayer> bug 1098489 is the one I'm facing
+[10:09] <ubottu> bug 1098489 in xorg (Ubuntu) "Corruption in Chrome omni bar results using Intel SNA " [Undecided,New] https://launchpad.net/bugs/1098489
+[10:12] <tjaalton> shadeslayer: http://wstaw.org/m/2013/01/10/plasma-desktopS17003.png ?
+[10:12] <shadeslayer> ah that one
+[10:12] <shadeslayer> yeah that's still present but hard to reproduce
+[10:13] <tjaalton> ok, might be the same
+[10:13] <tjaalton> hard to tell
+[10:14] <shadeslayer> it usually happens when something new enters and exits the taskbar in quick succession
+[10:14] <shadeslayer> I'll try and find a way to do that programatically
+[11:48] <tjaalton> shadeslayer: btw, since you're using kubuntu, please install xdiagnose and run 'apport-collect 1098489' to attach debug logs there
+[11:49] <shadeslayer> sure
+[11:49] <shadeslayer> btw I switched rendering methods to Native and I couldn't reproduce it, and then I changed back to Native and then can't reproduce it 
+[11:49] <shadeslayer> erm
+[11:49] <shadeslayer> that second native should be raster
+[11:50] <shadeslayer> but I'll do it anyway
+[11:50] <tjaalton> from where?
+[11:50] <tjaalton> add that to the bug
+[11:50] <shadeslayer> there's a KWin setting for that
+[11:50] <tjaalton> upstream is looking at it
+[11:50] <shadeslayer> tjaalton: http://wstaw.org/m/2013/01/11/plasma-desktopeo2259.png
+[11:53] <tjaalton> btw, your launchpad id isn't 'shadeslayer' :)
+[11:53] <shadeslayer> heh
+[11:53] <shadeslayer> sorry about that, I'm looking at so many things
+[11:53] <shadeslayer> lost track of that field
+[11:54] <shadeslayer> fixing
+[11:54] <tjaalton> and googling around suggests it's not a driver bug then
+[11:55] <tjaalton> https://bbs.archlinux.org/viewtopic.php?id=99673
+[11:55]  * shadeslayer looks
+[11:56] <tjaalton> and old thread, but still
+[11:57] <shadeslayer> hm
+[11:57] <tjaalton> anyway, think I'll close it as invalid then, native is the default anyway
+[11:57] <shadeslayer> alright
+[11:59] <shadeslayer> It can easily be a chrome issue as well, just happened to show up when I switched methods
+[12:03] <tjaalton> actually, raster should be the default since jun '11
+[12:03] <tjaalton> or qt 4.8
+[12:06] <tjaalton> so I'll leave it open
+[12:06] <shadeslayer> hm, can't say, kwin defaults to native
+[12:07] <tjaalton> oh, has it been reverted since?
+[12:08] <shadeslayer> dunno, It's not like I actively track X :P
+[12:08] <tjaalton> it's not X
+[12:08] <shadeslayer> but it's one of the 2 settings I customize when I do a fresh install
+[12:08] <tjaalton> but kde
+[12:09] <tjaalton> and I know nothing about it
+[12:09]  * shadeslayer asks the kwin maintainer
+[12:09] <tjaalton> good
+[12:11] <shadeslayer> tjaalton: okay, I was mistaken, it does default to raster
+[12:15] <tjaalton> ok
+[12:27] <shadeslayer> tjaalton: btw I'm using some specific parameters for the intel driver, would it be possible to ask upstream if those can be automagically detected for MacbookPro's ?
+[12:28] <mlankhorst> ask in intel-gfx?
+[12:31] <shadeslayer> thanks, will do :)
+[12:32] <shadeslayer> with raring there are only some customizations I need to do to switch off the ATi card and just enable the intel card
+[12:32] <mlankhorst> more lucky than me, upstream kernel had some issues
+[12:32] <mlankhorst> :P
+[12:32] <shadeslayer> hehe
+[12:32] <mlankhorst> or maybe you had as well, but haven't noticed yet
+[12:33] <mlankhorst> when switching radeon on again through switcheroo, I lost all interrupts
+[12:33] <shadeslayer> lol
+[12:34] <shadeslayer> I've poorly documented my steps here : https://help.ubuntu.com/community/MacBookPro8-2/Raring
+[12:37] <mlankhorst> oh I pulled some random git trees, applied patch, made things work without extra things in grub
+[12:49] <shadeslayer> xD
+[14:16] <mlankhorst> shadeslayer: if you want you can try
+[14:16] <shadeslayer> try what?
+[14:17] <mlankhorst> my kernel, see if it works for you
+[14:17] <shadeslayer> will it enable graphics switching?
+[14:17] <mlankhorst> should work at least
+[14:18] <mlankhorst> not while x server is running though, I'm using it to test i915 + radeon optimus support
+[14:18] <shadeslayer> hmm
+[14:18] <shadeslayer> that's fine
+[14:18] <shadeslayer> mlankhorst: can you suspend/resume?
+[14:18] <shadeslayer> that's one of the most important things for me
+[14:18] <mlankhorst> afaict it works
+[14:18] <mlankhorst> http://cgit.freedesktop.org/~mlankhorst/linux/
+[14:18] <shadeslayer> other one being backlight control
+[14:18] <shadeslayer> I'll have a look when I have some free time :)
+[14:19]  * shadeslayer has to make a release early next week
+[14:19] <tjaalton> ricotz: bug 1093517 for you I guess
+[14:19] <ubottu> bug 1093517 in libdrm (Ubuntu) "libdrm-nouveau conflicts between versions" [Undecided,Confirmed] https://launchpad.net/bugs/1093517
+[14:20] <tjaalton> " nouveau hangs during boot of life system, prevents installation"
+[14:20] <tjaalton> someone had a heart-attack?
+[14:21] <mlankhorst> :(
+[14:21] <mlankhorst> sounds like someone had a libdrm fail..
+[14:23] <tjaalton> well I moved it to -nouveau
+[14:24] <mlankhorst> it's a failure in someone's ppa, libdrm_nouveau1a should not have libdrm_nouveau.so.2.0.0 in it
+[14:25] <ricotz> sounds like oibaf ppa
+[14:25] <mlankhorst> closed invalid
+[14:27] <tjaalton> ah
+[14:27] <tjaalton> good
+[14:27] <tjaalton> there's also many bugs of installation failures where libdrm-radeon/intel1:i386 complains about the changelog
+[14:28] <tjaalton> but that might've been a buildd bug
+[14:28] <mlankhorst> or some ppa interaction messing up
+[14:29] <mlankhorst> at one point I did mess that up in a ppa, too :P
+[14:29] <tjaalton> yeah could ber
+[14:29] <tjaalton> -r
+[14:30] <ogra_> huh ?
+[14:30] <ogra_> +e
+[14:30] <mlankhorst> aw no libdrm nouveau update yet
+[14:30] <ogra_> not -r 
+[14:30] <ogra_> :)
+[14:30]  * mlankhorst tempted to write it himself
+[14:30] <tjaalton> ogra_: oh, true :P
+[14:30] <tjaalton> getting close..
+[14:31] <mlankhorst> oh apparently I already started on it
+[14:33] <shadeslayer> oh my
+[14:33] <shadeslayer> tjaalton: I'm getting more issues in chrome now http://wstaw.org/m/2013/01/11/plasma-desktopQq2259.png
+[14:33] <tjaalton> ok
+[14:34] <tjaalton> keep the bug posted
+[14:34] <shadeslayer> and idk why but performance is now down to 35 FPS
+[14:34] <shadeslayer> window switching is fairly choppy
+[14:35] <shadeslayer> http://wstaw.org/m/2013/01/11/plasma-desktopmj2259.png
+[14:35] <tjaalton> check dmesg for drm errors
+[14:36] <shadeslayer> *blink*
+[14:36] <shadeslayer> [14469.814051] [drm:i915_hangcheck_hung] *ERROR* Hangcheck timer elapsed... GPU hung
+[14:36] <shadeslayer> [14469.814056] [drm] capturing error event; look for more information in /debug/dri/0/i915_error_state
+[14:36] <tjaalton> there you go
+[14:37] <shadeslayer> http://paste.kde.org/643790/
+[14:37] <tjaalton> attach the error_state there
+[14:37] <shadeslayer> I don't see a /debug/dri/0/i915_error_state
+[14:37] <shadeslayer> or a /debug even
+[14:37] <tjaalton> /sys/kernel/..
+[14:37] <tjaalton> as root
+[14:38] <shadeslayer> what should I say? My GPU hung up? P
+[14:38] <shadeslayer> :P
+[14:39] <tjaalton> attach the file
+[14:40] <shadeslayer> okay
+[14:40] <tjaalton> do you have 3.8 btw?
+[14:41] <tjaalton> kernel
+[14:41] <shadeslayer> nope
+[14:41] <tjaalton> upgrade
+[14:41] <shadeslayer> is 3.8 in the repos? or from the mainline PPA?
+[14:43] <tjaalton> in the repo since yesterday
+[14:43] <shadeslayer> has it migrated from -proposed? :P
+[14:44] <shadeslayer> ah it has
+[14:44] <shadeslayer> my apt cache was probably outdated
+[14:44] <tjaalton> it's a technicality, takes 30min or so
+[14:44] <tjaalton> or the mirror
+[15:11] <mlankhorst> yay vdpau merger time then
+[15:15] <tjaalton> yay beer & dinner time
+[15:32] <shadeslayer> alrighty, time to reboot to 3.8
+=== Quintasan_ is now known as Quintasan
+=== soreau_ is now known as soreau
+[19:11] <bladernr_> I'm sure I know the answer to this, but does anyone know of a way to reliably determine how much memory a video card gets from the system? (shared ram w/ integrated graphics)
+[19:11] <bladernr_> that also works more "universally" :D <-- there's the rub... 
+[19:45] <bryce> bladernr_, saw my email?
+[19:46] <bladernr_> I did, thanks.  
+[19:47] <bladernr_> In reality, it's not even an X/Graphics related issue, its that we have a script that compares the memory BIOS claims is there vs what the OS claims to have, and wanted to add code to factor in actual shared video RAM 
+[19:47] <bladernr_> that way we could account for large discrepancies...
+[19:47] <bladernr_> and I don't really want to try writing something that has a different subroutine for each and every type of card or driver out there :(
+[19:48] <bladernr_> at the basest level is it safe to assume that any memory descrepancy up to about 512MB can be attributed to video usage on a system with embedded graphics?
+[19:49] <bryce> bladernr_, proprietary drivers and foss drivers hardly ever do things the same way, so you're destined for disappointment if you want a universal tool...
+[19:49] <bladernr_> yeah, I know... that was me being hopeful
+[19:50] <bladernr_> bryce: but thanks for the information though, I do appreciate that and your expertise with this stuff
+[19:53] <bryce> bladernr_, lshw shows memory resources under the VGA controller, so there should be an interface to get that.  DMI maybe?
+[19:54] <bryce> as to memory in use, the sysfs dri debug interface is the only one I know of, and that's different on every driver
+[19:55] <bryce> mlankhorst likely knows more about this.
+[19:56] <bladernr_> Interesting, on my S10, lshw shows two display devices ... heh. 
+[19:56] <mlankhorst> really depends on card
+[20:05] <bladernr_> bryce: yeah, even lshw is not reliable :) on my S10, it shows a total of 265MB for the video card. That's reasonable, but the OS is also showing the full 1.5GB of RAM available... sigh... where on my x201, the OS shows me short by 496MB, but only 200MB for video in use, which I suspect is not correct.(but can't confirm either way(
+[20:05] <bladernr_> oh well, like I said, I was being hopeful... it's not a critical thing by any means anyway.
+[20:05] <bladernr_> more exploratory
+[20:12]  * bryce nods

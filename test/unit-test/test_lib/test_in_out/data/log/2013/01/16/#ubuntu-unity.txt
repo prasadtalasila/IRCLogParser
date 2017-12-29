@@ -1,0 +1,108 @@
+=== _salem is now known as salem_
+=== hggdh_AFK is now known as hggdh
+[01:29] <Nico__> hola
+=== salem_ is now known as _salem
+=== _salem is now known as salem_
+[12:22] <trijntje> Hi all, is https://wiki.ubuntu.com/Unity/Lenses still up to date? I noticed the code on there is C, while the wikipedia-lens tutorial uses Python
+[12:29] <sil2100> hm
+[12:30] <sil2100> larsu: indicator-appmenu is failing to build in staging for quantal it seems
+[12:32] <sil2100> Trevinho: ping
+[12:32] <Trevinho> sil2100: pong
+[12:33] <sil2100> Trevinho: it seems that (probably) after commit 227 to lp:indicator-appmenu, indicator-appmenu stopped building for staging - do you know what could be the reason?
+[12:33] <Trevinho> sil2100: looking
+[12:33] <sil2100> It can't seem to find references to g_object_unref and etc.
+[12:33] <sil2100> https://launchpadlibrarian.net/126400947/buildlog_ubuntu-quantal-amd64.indicator-appmenu_12.10.4daily12.12.14-0ubuntu1%2Bbzr226pkg0quantal2_FAILEDTOBUILD.txt.gz
+=== MacSlow is now known as MacSlow|lunch
+[12:44] <larsu> sil2100, PKG_CHECK_MODULES for HUD is missing gobject-2.0
+[12:44] <larsu> which is weird, I would have thought gio pulls that as a dependency
+[12:44] <larsu> or dbusmenu ..
+=== dandrader is now known as dandrader|afk
+[12:46] <sil2100> Didn't know you had to explicitly ask for gobject-2.0, since I saw gio-2.0 deps in the configure's
+[12:47] <larsu> yeah I don't think its necessary, let me dig deeper :)
+[12:48] <larsu> no its not necessary, `pkg-config --libs gio-2.0` gives -lgobject
+[12:48] <larsu> (among others)
+[12:50] <larsu> sil2100, is there a way to rerun this with `make V=1`? I can't reproduce it locally
+[12:50] <sil2100> larsu: I was able to reproduce it on my quantal system, when I did apt-get source from staging and tried building it with bzr bd
+[12:51] <larsu> oh, thanks
+[12:51]  * larsu only tried building upstream
+[12:56] <sil2100> Maybe it's a packaging problem, but I didn't see anything strange
+[12:57] <larsu> sil2100, I still can't reproduce it :-(
+[12:57] <sil2100> larsu: are you using quantal?
+[12:57] <larsu> no, raring
+[12:58] <larsu> which might be the issue?
+=== dandrader|afk is now known as dandrader
+[13:04] <sil2100> I think so, hm, since latest indicator-appmenu seems to build correctly on raring
+[13:04] <sil2100> `pkg-config --libs gio-2.0` on quantal gives -lgio-2.0 -lgobject-2.0 -lglib-2.0
+[13:04] <sil2100> So hm, not sure what might be wrong?
+[13:05] <larsu> sil2100, can you compile it with `make V=1` (or configure with --disable-silent-rules)
+[13:06] <larsu> so that we can see whether the right libs get passed
+[13:07] <sil2100> gcc -I/usr/include/libdbusmenu-glib-0.4 -I/usr/include/libbamf3 -I/usr/lib/x86_64-linux-gnu/libbamf3/include -I/usr/include/glib-2.0 -I/usr/lib/x86_64-linux-gnu/glib-2.0/include -Wall -Werror -g -O2 -fstack-protector --param=ssp-buffer-size=4 -Wformat -Werror=format-security -Wl,-Bsymbolic-functions -Wl,-z -Wl,relro -Wl,-z -Wl,defs -Wl,--as-needed -o hud-verify-app-info hud_verify_app_info-create-db.o hud_verify_app_info-load-app-info.o 
+[13:07] <sil2100> Ok, here it doesn't seem to add -lgobject-2.0, so maybe I'll have to add it to the dependencies indeed
+[13:08] <larsu> hm, all libraries are missing from that line
+[13:08] <larsu> except glib
+[13:08] <larsu> oh, no, that's include as well
+[13:12] <sil2100> Ah, wait, I think I see the problem
+[13:12] <larsu> sil2100, wait! this build is 12.12.14, which is *before* the 227 commit
+[13:12] <sil2100> (not sure why it works for raring)
+[13:13] <sil2100> larsu: it's hm, based on revision 226 - strange thing!
+[13:13] <sil2100> You're right
+[13:14] <sil2100> So it doesn't have Trevinho's latest commit that adds the deps
+[13:14] <larsu> yep, gio isn't in there yet
+[13:15] <larsu> dbusmenu should pull it I think, but it doesn't: `pkg-config --libs dbusmenu-glib-0.4` --> -ldbusmenu-glib
+=== MacSlow|lunch is now known as MacSlow
+=== dandrader is now known as dandrader|afk
+[15:10] <lborda> Hi Guys, does anybody have a clue about this issue on precise? This happens on precise https://bugs.launchpad.net/ubuntu-advantage/+bug/1090919
+[15:10] <ubot5> Error: launchpad bug 1090919 not found
+[15:11] <lborda> sorry that's the right one: https://bugs.launchpad.net/ubuntu/+source/unity/+bug/1096954
+[15:11] <ubot5> Launchpad bug 1096954 in unity (Ubuntu Precise) " Enabling Xinerama causes Unity Panel/Dash to become all black" [Medium,Confirmed]
+=== dandrader|afk is now known as dandrader
+[16:09] <didrocks> hey sil2100, how are you?
+[16:19] <didrocks> sil2100: didn't check the merge request, going to have a breakfast right now, but can you please refresh me by email on the flackyness of the indicator test?
+[17:00] <didrocks> sil2100: hey, I'm back :)
+=== dandrader is now known as dandrader|afk
+=== dandrader|afk is now known as dandrader
+=== salem_ is now known as _salem
+[21:59] <cwayne1> davidcalle: ping
+[22:06] <davidcalle> cwayne, pong
+[22:06] <davidcalle> cwayne1, pong
+[22:09] <cwayne1> davidcalle: hey!  just wondering if theres anything i can do to help on ubuntu-scopes
+[22:22] <fginther> mhr3, ping
+[22:22] <mterry> Two hud autopkg tests are failing
+[22:22] <mterry> https://jenkins.qa.ubuntu.com/view/PS/job/ps-indicators-autopilot-release-testing/76/
+[22:25] <sil2100> Yes, the one failed once before in the past
+[22:26] <sil2100> The first one I mean
+[22:26] <sil2100> The second, well...
+[22:26] <mhr3> fginther, pong
+[22:26] <sil2100> Trying to find what happened that suddenly those autopilot tests stopped being reliable
+[22:26] <fginther> dee-ci job is fixed
+[22:26] <fginther> mhr3, ^^
+[22:27] <thomi> sil2100: one of those tests (this one: https://jenkins.qa.ubuntu.com/view/PS/job/ps-indicators-autopilot-release-testing/76/label=autopilot-ati/testReport/junit/unity.tests.test_hud/HudBehaviorTests/test_app_activate_on_enter/) is poorly written
+[22:27] <mhr3> fginther, great, thx
+[22:27] <thomi> sil2100: it uses assertFalse, where it should use Eventually
+[22:27] <thomi> (and assertThat)
+[22:27] <thomi> (or assertProperty)
+[22:30] <sil2100> thomi: right, that's true - but test_super_h for instance looks fine, but still it seems to not change the keybinding correctly
+[22:31] <sil2100> Not much debugging for that though
+[22:31] <thomi> sil2100: yeah, I don't know why that one's not passing...
+[22:31] <sil2100> thomi: and for instance, in failure 75, test_hud_to_dash_has_key_focus fails even though the vid shows that everything is ok
+[22:31] <thomi> sil2100: possibly you can increase the verbosity of unity for that test - that way you'll get some more information
+[22:32] <didrocks> sil2100: you should go to bed :)
+[22:32] <didrocks> sil2100: did you see that this test is not the only one failing?
+[22:32] <sil2100> It fails on hiding the dash during cleanup!
+[22:32] <didrocks> sil2100: if you switch back to some runs, some other tests are failing
+[22:33] <sil2100> didrocks: yes, that's what I just told thomi - since those are really mostly different tests failing, which means that something is unreliable
+[22:33] <didrocks> you're right
+[22:56] <sil2100> thomi: maybe in the set_compiz_option the time.sleep(0.5) is not enough?
+[22:58] <sil2100> thomi: not much we can do here, we could increase the wait here, but this would impact the speed and not give any guarantee, and still we won't have 100% certainity that it would help anyway
+[22:59] <didrocks> sil2100: oh btw, if you need to launch the autopilot tests, just do it
+[22:59] <didrocks> sil2100: don't wait for me on that, the machine are yours :)
+[22:59] <sil2100> didrocks: you mean, on jenkins? ;)
+[22:59] <didrocks> yep :)
+[22:59] <didrocks> you can do it, right?
+[22:59] <sil2100> didrocks: not sure, never tried before! ;p Is it done through jenkins?
+[23:00] <didrocks> sil2100: yep, just this test
+[23:00] <didrocks> sil2100: empty the package list if you want to test with the whole ppa content
+[23:00] <didrocks> sil2100: meaning, unity
+[23:01] <sil2100> didrocks: ok, I'll be firing tests there then
+[23:01] <didrocks> sil2100: excellent!
+[23:03] <sil2100> See you tomorrow!

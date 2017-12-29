@@ -1,0 +1,381 @@
+[00:00] <sarnold> MraAlbertina: that typically means it is being overwritten by the resolvconf mechanism; see /etc/resolvconf/resolv.conf.d/* files for information..
+[00:08] <MraAlbertina> sorry, sarnold , i didn't see your msg. thanks
+=== slank is now known as slank_away
+[00:17] <MraAlbertina> sarnold: strange... /etc/resolvconf/resolv.conf.d/tail was empty. i put the values and now.. without a reboot or service networking restart i get a net ping alreadyg the net
+[00:18] <MraAlbertina> already/ cut the rest :)
+[00:18] <sarnold> MraAlbertina: woo :)
+[00:19] <sarnold> MraAlbertina: does that mean you days-long drama to get your funky machine-without-a-console installed has finally reached a point where you can treat it just like any other machine? :)
+[00:20] <MraAlbertina> lol
+[00:21] <MraAlbertina> sarnold: you don't believe how much tweaking is needed to get this working
+[00:21] <sarnold> MraAlbertina: it's sounded really annoying. :)
+[00:21] <MraAlbertina> yeah, a bit
+[00:22] <MraAlbertina> well, i'm trying to get this machine working to have a MAAS working with the others
+[00:24] <MraAlbertina> if i can get it to a point where i believe it results i might get a couple 486 machines from the garage and this would be a super/hiper/big computer system :)
+[00:25] <sarnold> here's hoping you've got some PXE-capable NICs in those 486s ;)
+[00:27] <MraAlbertina> i were kidding about the 486, but these ones yes, they could interact with pxe
+[00:27] <MraAlbertina> altough i might bet into another problem on this headless machine... i can't access bios setup
+[00:28] <MraAlbertina> bet/get
+=== jacalvo_ is now known as jacalvo
+[00:48] <MraAlbertina> bye sarnold, have a good night :)
+[01:44] <quietone> when I try mount a drive at /dev/mapper i get "NTFS signature is missing".
+[01:45] <quietone> kinda new at this, and searching hasn't helped (yet). Anything I should be reading?
+[01:49] <sarnold> quietone: how are you trying to mount the drive? what type of filesystem does it have on it?
+[01:51] <quietone> sarnold, I'm not sure. fdisk -l just shows 'Linux'.
+[01:52] <quietone> sarnold, "mount -o acl,user_xattr /dev/mapper/backup /mnt/backup"
+[01:57] <axisys> I guess raid10 does not allow grow.. oops
+[01:57] <axisys> since I have a backup, I will just rebuild raid10
+[01:58] <axisys> now is it possible to build raid10 with disks of different sizes?
+[01:58] <axisys> in my case: 2 76G and 4 300G disks
+[02:00] <sarnold> axisys: I think you'd be able to raid0 a 76 and a 300; and raid0 a 76 and 300; and then raid1 the result for 376 gigs of storage..
+[02:06] <axisys> sarnold: hehe.. i was just reading the same thing here
+[02:07] <axisys> sarnold: http://www.spinics.net/lists/raid/msg17303.html
+[02:07] <axisys> so I have 2x72G and 4x300G
+[02:07] <axisys> i guess raid0 (raid1,raid1,raid1) .. right?
+[02:09] <sarnold> axisys: oh, I _think_ Neil gave different advice than I did -- you should go with his advice, he's The Guy :)
+[02:09] <sarnold> axisys: I think you've interpreted his advice correctly
+[02:09] <axisys> sarnold: thanks
+[02:11] <axisys> sarnold: (offtopic) how do you do that underline thing? pretty cool
+[02:12] <sarnold> axisys: I just put underscores before and after the word; most clients underline that way :)
+[02:16] <axisys> _this_
+[02:16] <axisys> nice!
+[02:16] <axisys> how about bold?
+[02:16] <sarnold> *asterisks* give you bold :)
+[02:16] <axisys> *bold*
+[02:16] <axisys> lol
+[02:16] <axisys> thanks
+[02:17] <sarnold> don't tell anyone I told you this (and for $DEITY's sake, don't _use_ them), but ^B does bold too
+[02:27] <axisys> sarnold: :-)
+=== pug is now known as Guest40576
+=== Guest40576 is now known as Daver
+=== Daver is now known as DaveR
+[04:21] <Free99> hey sarnold: you know anything about drbd?
+[04:28] <jeeves_moss> how can I setup a single local dovecot server so I can use the mail dir files from a long dead server so I can get the e-mails out of them and push it into my Exchange server?
+[04:34] <patdk-lap> the same way anyone would setup any other dovecot server
+[04:34] <patdk-lap> follow the instructions 100%, there is nothing you can shortcut about it
+[04:36] <jeeves_moss> patdk-lap, even if I'm just doing it for a single user?
+[05:17] <patdk-lap> jeeves_moss, and a webserver is easier to setup for 1 client? vs 100 clients? not really
+[05:17] <patdk-lap> it makes no difference, there is just as much work
+[05:22] <jeeves_moss> patdk-lap, I'm just trying to rescue the remaining e-mail that I was able to pull
+=== vhadil is now known as naruto
+=== naruto is now known as Guest19242
+[08:16] <eagles0513875_> hey guys I have a single domain email server setup, how do I go about setting up aliases? as I am using postfix plus dovecot.
+=== smb` is now known as smb
+[08:22] <greppy> eagles0513875_: look at /etc/aliases
+[08:24] <eagles0513875_> thanks greppy will take a look
+[08:27] <eagles0513875_> greppy: quick alternate question im in the process of setting up a  new mail server, my question becomes i have another mx entry pointing at a different provider and a new mx entry pointing at another server. how will the email know which mx entry to use will it check the one with the highest priority first then if it doesnt find the account there check the other one?
+[08:30] <greppy> mail should go to the lowest numbered mx record first, not all senders honor that though.
+[08:31] <greppy> if you do a 'dig -t mx grephead.com' you will see that mail.grephead.com has a priority of 0 and backup.grephead.com has a priority of 10, backup tries to deliver to mail.grephead.com
+[08:31] <ikonia> it only uses the higher priority one if the lower prirority one doesn't respond
+[08:31] <andol> Then there are spammers who intentionally go for the highest mx number, hoping that the backup mx will have a weaker spam protection.
+[08:32] <greppy> == andol
+[08:32] <ikonia> eagles0513875_: you are running a professional Linux consultancy business, to paying clients, how are you not knowing the basics of a mail server ?
+[08:32] <ikonia> this is getting really tedious that you use this channel to basically command by command get you to set things up for your paying clients
+[08:33] <eagles0513875_> ikonia: reason im askign these questions is i dont want to disrupt their current setup in terms of emails until some other issues get resolved
+[08:34] <ikonia> eagles0513875_: yes, but you should already know this stuff
+[08:35]  * eagles0513875_ goes back to work
+=== yofel_ is now known as yofel
+=== caribou_ is now known as caribou
+[10:25] <eagles0513875_> hey guys I am looking at replacing apache prefork with either the event or worker versions what advantages does each of them have and what would one recommend?
+[10:42] <Andrei> i have no idea at the moment eagles0513875_  (i'm right after a sleepless night, not easy to think :)
+[10:42] <eagles0513875_> Andrei: understandable bro
+[10:43] <Andrei> thx. be back later
+[10:44] <pythonsnake> whats the way to reverse proxy using htaccess?
+[11:37] <ikonia> eagles0513875_: why are you looking to replace the apache process if you don't know what the alternatives do and their advantages ?
+[13:03] <koolhead17> hallyn: around
+=== cpg is now known as cpg|away
+=== Ursinha_ is now known as Ursinha
+=== slank_away is now known as slank
+=== matsubara is now known as matsubara-lunch
+[15:26] <zul> jdstrand: pinger when you are around
+[15:52] <jdstrand> zul: I'm here
+[15:53] <zul> jdstrand: when you get a sec can you review python-extras its a new dependency of quantum and will be a new dependency of python-testtools
+[15:53] <jdstrand> zul: sure
+[16:05] <zastern> If I modify /etc/security/limits.conf to allow a user more open files, e.g. www-data, can I just restart apache, for that to take effect? I'm trying to figure out a way to avoid a reboot.
+[16:06] <zastern> I know that if it were a normal user I could have them log out and back in, so for apache i suspect stopping and starting the service, which runs as www-data, might do it. Not sure how i can test that though.
+=== matsubara-lunch is now known as matsubara
+[16:51] <tedski> .+host *!*tedski@50.57.111.248
+[16:52] <tedski> derp
+[16:52] <tedski> lets try that in the right window :P
+[16:54] <toordog> is there any easy solution for central authentication with Ubuntu like the project FreeIPA for RedHat?
+[16:54] <toordog> or something like spacewalk?
+[16:56] <awaterma> Check out the CAS project. It's HTTP based.
+[16:56] <awaterma> http://www.jasig.org/cas
+[17:00] <Toordog> thanks for the link, I will investigate it.   :)
+[17:01] <awaterma> You can tie it into normal authentication on a unix box (PAM, etc.) or via JDBC, LDAP, etc. Nice solution. Developed for Universities.
+[17:01] <Toordog> the website is just unclear if it is just a SSO or it's good to centralize the authentication of my server park
+[17:01] <Toordog> cool
+[17:01] <Toordog> ok that answer my worry :)
+[17:01] <Toordog> it should work just fine then
+[17:01] <awaterma> If you're doing in Unix work, I think you'd want to do something with PAM.
+[17:02] <Toordog> yes actually i have about 400 servers with ubuntu 10.x and 12.x
+[17:02] <awaterma> Or Radius or possibly something like that. :)
+[17:02] <awaterma> Have you looked at the MAAS implementation?
+[17:02] <Toordog> I tried to build from scratch a ldap server but it was quite a headache
+[17:02] <Toordog> i'm considering to implement MAAS and JUJU for deployment infrastructure
+[17:03] <awaterma> Our server is too wimpy, so I moved to basic KVM for what I'm up to. :)
+[17:03] <Toordog> we are adding 30 servers per month in average and often it comes by batch every 2-3 month of 100-200 servers
+[17:03] <Toordog> ok
+[17:04] <awaterma> I'm just looking at single numbers of boxes down here. That's a huge amount to me. :)
+[17:04] <Toordog> well automated, it's like managing <10 servers
+[17:04] <Toordog> ;)
+[17:05] <awaterma> Hey all, it was suggested to me to look at using bonding to take advantage of my 4 nics on a box that's serving as a server for several vms, which I'd like to have running under two bridges. One bridge for static DMZ traffic, the other for internal. Is this possible?
+[17:05] <awaterma> toordog: nice!
+[17:06] <Toordog> awaterma:  yes it is possible but you need to have your switch to support the aggregation protocol you'll be using
+[17:07] <Toordog> basically you will create 2 aggregate link interface (LAG1 and LAG2)
+[17:07] <Toordog> can be separate switch or same switch, you could as well do your seggregation using VLAN and having only one LAG
+[17:07] <awaterma> Hmm. Here's my current problem, I have one nic up in "manual" mode supporting a bridge. This works nicely. When I bring up the other nic, the static connection goes down. I think this is due to using two separate gateways.
+[17:07] <awaterma> Does that sound like the right analysis?
+[17:08] <Toordog> you cannot use 2 gateway
+[17:08] <awaterma> And I have read a little that I could do this with a vlan, but it gets a bit confusing. :)
+[17:08] <Toordog> gateway = default route when there is no other route defined.
+[17:08] <awaterma> So, the analysis is right?
+[17:08] <Toordog> VLAN is just like a virtual network
+[17:09] <Toordog> on the same hardware
+[17:09] <awaterma> Am I mis-using gateway? I thought this was part of the interface configuration, e.g. computer where traffic is directed.
+[17:09] <Toordog> in a computer you have static route , you can see it via netstat -rn
+[17:09] <Toordog> your static route tell your computer where to send traffic
+[17:09] <Toordog> when it doesn't find a static route, it will send it to the gateway
+[17:10] <awaterma> Can I even do what's been requested on the same box? E.g. host virtual servers that server DMZ traffic. And host servers that server internal traffic?
+[17:10] <Toordog> you would have to explain me exactly waht is your DMZ traffic and Internal ...
+[17:10] <Toordog> do you want all VM on the internal network segment to see each other?
+[17:11] <awaterma> Not necessarily. Just be available from outside, e.g. Lamp servers for different departments.
+[17:11] <awaterma> (I'm at a University)
+[17:11] <Toordog> DMZ = Internet with public IP?
+[17:11] <awaterma> So some lamps serving external public http traffic, others serving internal traffic. that's what's desired.
+[17:12] <awaterma> I don't want to bridge the two nics.
+[17:12] <Toordog> ok
+[17:12] <Toordog> but is your DMZ with public IP?
+[17:12] <awaterma> Yeah, that's the idea.
+[17:12] <Toordog> Is your VM under your management or under the management of random people or untrusty people?
+[17:13] <awaterma> Two different routers. One router for one set of nics. Other for nics internal. I'm running the box.
+[17:14] <Toordog> ok
+[17:14] <awaterma> I think what happens now, is I bring up the other nic, and I run into this gateway issue. I don't want to bridge all the nics, as that would open the internal net to the outside. I want to use one bridge for external (public) nics and VMS, another for internal. This was why bonding was suggested to me.
+[17:15] <awaterma> Am I hoping for too much on one box?
+[17:15] <Toordog> no actually this is pretty basic
+[17:16] <Toordog> on your internal network why do you need a gateway?
+[17:17] <awaterma> I'm not sure I do. What's happening is that when I bring up the internal network (as a bridge, which is what I want, or as just a simple network connection) the external network becomes unreachable.
+[17:17] <Toordog> just make sure your gateway is on the DMZ side
+[17:17] <Toordog> route add default gw 10.x.x.x via eth0
+[17:17] <awaterma> I thought that the gateway issue was connected to the gateway that each cards is using, the static bridge is configured to pass through to one gateway, the other interface is DHCP.
+[17:18] <Toordog> DHCP can setup gateway for you and overwrite your static one
+[17:18] <Toordog> so better not use DHCP on a server
+[17:18] <awaterma> Ah, so add the route command before bringing up a the DHCP gateway?
+[17:18] <awaterma> Ah, okay, that makes sense now.
+[17:19] <Toordog> you can only have one gateway
+[17:19] <awaterma> So I could do this at the /etc/networks/interface level?
+[17:19] <awaterma> E.g. setup a static for a 10.x.x. or 192.x.x.x that uses an actual external gateway?
+[17:19] <awaterma> In the definition?
+[17:20] <Toordog> the thing about your internal network is that you might have let say : 10.1.1.0 /24 and 10.1.2.0/24 and 10.1.3.0/24 and you need to set a gateway to reach the other network
+[17:20] <Toordog> no
+[17:20] <Toordog> you would have
+[17:20] <Toordog> eth0 static IP public with gateway
+[17:20] <Toordog> eth1 static IP *NO GATEWAY*
+[17:20] <Toordog> eth2 static IP *NO GATEWAY*
+[17:20] <Toordog> ...
+[17:20] <Toordog> only one can have static IP
+[17:21] <awaterma> Ah, okay. And then when the other interfaces come up, they inherit the gateway defined in eth0?
+[17:21] <Toordog> sorry
+[17:21] <Toordog> damn
+[17:21] <Toordog> only one can have gateway
+[17:21] <Toordog> yes
+[17:21] <awaterma> (Sorry, I'm a coder, not a network guy.) :)
+[17:21] <Toordog> routing is not per interface
+[17:21] <Toordog> it is per machine wide
+[17:22] <awaterma> Ah, okay, so the DHCP server is rewriting the route table which is what knocks out my access.
+[17:22] <Toordog> the only thing that is per interface in routing is the path to reach the location.  Let say : reach 10.1.2.0 via eth1  and reach 10.1.3.0 via eth3
+[17:23] <Toordog> but it is per machine wide view since you can only reach one network node per one interface at a time *normally, there is advance option to even bypass that*
+[17:23] <Toordog> yes
+[17:23] <Toordog> DHCP is evil if it is not configured correctly
+[17:23] <Toordog> it thinks it knows better than you
+[17:23] <Toordog> :P
+[17:23] <awaterma> LOL.
+[17:24] <awaterma> So, all I have to do is update my /etc/network/interfaces file to define statics and only use the keyword "gateway" in my "eth0" definition? Or would I need to right a "ifup" script to define the route as something like "route add default gw 10.x.x.x via eth0" as well?
+[17:25] <awaterma> (Sorry for all the questions, this has been troubling me for a couple days).
+[17:28] <zastern> Do deamon starts go through pam with ubuntu/upstart?
+[17:28] <zastern> E.g. does /etc/security/limits.conf affect things, like where domain is a user like www-data
+[17:28] <Toordog> awaterma:  set your eth0 with gateway, no need of ifup script
+[17:29] <Toordog> unless your eth0 is not always up
+[17:29] <Toordog> which is unlikely
+[17:29] <awaterma> Toordog: Cool! Thanks! Off to the lab!
+[17:29] <sarnold> zastern: Idon' think so; there's no /etc/pam.d/apache or /etc/pam.d/nginx or similar..
+[17:32] <zastern> sarnold: yes, but the daemon runs as a user
+[17:32] <zastern> and im setting the domain to be that user
+[17:32] <zastern> e.g. www-data
+[17:32] <zastern> in /etc/security/limits.conf
+[17:33] <sarnold> zastern: yeah, I think the limits for most daemons have to be set via the daemon's configuration or just before the daemon is started
+[17:34] <zastern> sarnold: that seems to violate the principle of system level security though. E.g. no process or user may have more than 8000 open file handles
+[17:34] <zastern> or whatever.
+[17:35] <Toordog> CAS project doesn't have an IRC room?
+[17:35] <sarnold> zastern: it's definitely an annoyance that it can't be configured in one location..
+[17:35] <zastern> sarnold: I don't think there's a specific apache configuration item for this though, for example
+[17:35] <zastern> and apache docs mention tuning limits.conf specifically
+[17:36] <zastern> but otoh that might just be a thing on EL-based systems
+[17:37] <zastern> sarnold: hey and while you're here, what's your favorite AppArmor tutorial :D
+[17:41] <sarnold> zastern: hrm, there's no _great_ apparmor tutorial :( the wiki has two, "Creating and modifying AppArmor policy with the tools" and "Creating and modifying AppArmor policy by hand" that together should be tolerable :)
+[17:42] <zastern> cool, thanks.
+[17:42] <sarnold> zastern: .. not all the tools work with the newest features, so knowing how to do things by hand is important
+[17:42] <zastern> I need to secure my apaches.
+[17:42] <sarnold> zastern: http://wiki.apparmor.net/index.php/Documentation
+[17:42] <sarnold> zastern: but the tools, when they work, are a good time saver :)
+[17:42] <zastern> sarnold: yeah, I'm not looking for a wizard. But something more directed than just "read all the documentaiton that exists, line by line"
+[17:44] <sarnold> zastern: apache is a bit complicated because there's two ways to confine it: either as a single apparmor profile (simple) or use the libapache2-mod-apparmor package and confine different portions of your site with different permissions (hooray for keeping phpbb away from your other code..)
+[17:44] <zastern> sarnold: yeah . . . I was planning to use the latter, because I think different sites might have different requirements
+[17:46] <sarnold> zastern: you can also set the rlimits for a program in apparmor policy; it's not a perfect fit, since it is setting the usual rlimits rather than per-profile limits, but it is simple :)
+[17:46] <zastern> I don't know what that means, but I'll look it up!
+[17:47] <sarnold> :)
+[17:54] <zul> hallyn: ping
+[17:57] <Chriys> Hi everybody. i have an issue with my ubuntu server (12.04). When it's connected to router the commands apt-get install/update stuck at [Waiting for Headers] but if i connect it directly to the modem everything works fine. I have a dynamic ip and my router is TP-Link. the last i fixed it by putting into resolv.conf those lines:domain ahidjodesign.com nameserver 192.168.1.1 and 192.168.1.101
+[17:57] <Chriys> localhost. Thanks for your help.
+[18:13] <Chriys> anyone can help
+[18:14] <ketan985> http://ubuntuforums.org/showthread.php?p=12473841#post12473841
+[18:14] <ketan985> ya
+[18:14] <ketan985> Hi Chriys
+[18:15] <Chriys> hi
+[18:16] <Chriys> I got one question for you
+[18:16] <Chriys> i have an issue with my ubuntu server (12.04). When it's connected to router the commands apt-get install/update stuck at [Waiting for Headers] but if i connect it directly to the modem everything works fine. I have a dynamic ip and my router is TP-Link. the last i fixed it by putting into resolv.conf those lines:domain ahidjodesign.com nameserver 192.168.1.1 and 192.168.1.101 localhost.
+[18:16] <Chriys> Thanks for your help.
+[18:16] <ketan985> tell me...
+[18:17] <ketan985> Bro server must have configured with static ip
+[18:19] <Chriys> yeah i know but i don't have one currently so i'm using a no-ip
+[18:19] <ketan985> sometimes due to misconfiguration of nameserver we couldn't connect internet yet we connected to network
+[18:19] <sarnold> ketan985: you want to put _php_ in the path to receiving _email_?? sounds scary.
+[18:19] <ketan985> why ?
+[18:19] <ketan985> why scary man ? It 's normal
+[18:21] <sarnold> php is a fairly brittle language. I'd do my best to keep untrusted input away from it. and email is 90% untrusted and unsafe input...
+[18:21] <ketan985> Chriys,  Put nameserver 8.8.8.8 in resolve.conf
+[18:22] <ketan985> sarnold,  then what should we use
+[18:22] <sarnold> ketan985: I'd pick perl, python, or ruby...
+[18:22] <ketan985> sarnold, I need that fuctionality any language I can use
+[18:23] <sarnold> ketan985: look into the 'milter' support, it may do what you need
+[18:23] <ketan985> how I need to config that postfix server , that i need to know
+[18:24] <ketan985> sarnold, can you provide me link ???
+[18:25] <sarnold> ketan985: http://www.postfix.org/MILTER_README.html
+[18:27] <Chriys> are you serious ? :o it worked like a charm
+[18:27] <Chriys> ketan985
+[18:27] <Chriys> thanks do you know what is causing this
+[18:28] <sarnold> Chriys: did you keep the 192.168.1.1 nameservice lines when you directly plugged int othe modem?
+[18:28] <Chriys> think yes but i didn't modify the resolv.conf when i plugged to the modem
+[18:29] <sarnold> aha :)
+[18:29] <sarnold> then you wre tryin to use a nameserver that didn't exist :)
+=== zurich is now known as level15
+[18:30] <sarnold> Chriys: 192.168/16 is in the RFC1918 "non-routable" class of addresses; they won't work on the internet, only within a network designed to use them (as is the case behind most consumer routers..)
+[18:30] <Chriys> so i can do nameserver myISPDns ? right
+[18:31] <sarnold> Chriys: yes
+[18:32] <Chriys> and i have bind9 running on my server so nameserver 192.168.1.101 should be correct
+[18:33] <ketan985> ya correct Chriys
+[18:33] <sarnold> Chriys: perhaps 127.0.0.1 would be better, if it is actually on the same host..
+[18:34] <Chriys> great now i understood. ok cool got another question
+[18:34] <ketan985> ask me friend
+[18:35] <Chriys> i'm using virtual host on my ubuntu server 12.04 and i set my domain(with 1and1) to point the CNAME of the no-ip on my server. but if i try to access to mydomain.com it shows 403 forbidden can access / on this server
+[18:36] <ketan985> There is problem with permissions.
+[18:36] <ketan985> checkout it
+[18:38] <Chriys> already tried. i did chown chriys:www-data /var/www/ahidjodesign and chmod -R 777 /var/www/ahidjodesign
+[18:38] <Chriys> i did the the same with /home/chriys/www-dev/ahidjodesign
+[18:39] <Chriys> the files are located there and point to /var/www/ahidjodesign
+[18:40] <ketan985> reload server and try again Friend
+[18:41] <Chriys> in the error log of apache i got this: Symbolic link not allowed or link target not accessible: /var/www/ahidjodesign
+[18:43] <ketan985> then try to link again
+[18:43] <Chriys> ok
+[18:43] <ketan985> using ln -s
+[18:44] <sarnold> you're not allowed to exit the document root using symbolic links
+[18:45] <Chriys> don't understand
+[18:45] <ketan985> I don't think so
+[18:46] <ketan985> Bro It is given in terminal no in document file
+[18:46] <ketan985> Chriys, continue with links
+[18:46] <Chriys> ight
+[18:47] <sarnold> Chriys: you'll need this if you use symlinks: http://www.apache.com/docs/httpd-docs-2.2.13.fr/mod/core.html#options
+[18:48] <ketan985> It is very easy syntax .
+[18:49] <Chriys> it should work because i followed step from ubuntu-fr site
+[18:50] <Chriys> same issue i'm going to verify the virtual host settings
+[18:51] <Chriys> got a last question for you guys you helped me a lot.
+[18:51] <ketan985> I am always Happy to help Friend
+[18:52] <Chriys> postfix won't send email i have courier imap installed. But everything works fine if i send to myself or local
+[18:53] <Chriys> i also remember that i wasn't able to find the package postfix-tls.
+[18:53] <ketan985> Hey Chriys , I am new to postfix and having some problem like this
+[18:54] <ketan985> http://ubuntuforums.org/showthread.php?p=12473841#post12473841
+[18:55] <ketan985> pleia2,  Can you help a little in solving this issue?
+[18:55] <Chriys> thanks. Do you know how to configure a MX on my server i pointed my domain to the no-ip on my computer(which is a CNAME)
+[18:57] <Chriys> ketan985: for your question i followed some steps yesterday for creating database for postfix. But got no idea for the php script
+[18:58] <ketan985> I have a scprit friend but I don't know how to config postfix to apply it
+[19:01] <Chriys> ok i see. http://library.linode.com/email/postfix/courier-mysql-ubuntu-9.10-karmic
+[19:01] <Chriys> http://www.howtoforge.com/virtual-users-and-domains-with-postfix-courier-mysql-and-squirrelmail-ubuntu-12.04-lts
+[19:01] <ketan985> I followed this but couldnot succed , It disturbs functionality of server and I could not mail .
+[19:01] <Chriys> the first one has more detailed step
+[19:01] <ketan985> this link http://blog.thecodingmachine.com/content/triggering-php-script-when-your-postfix-server-receives-mail
+[19:02] <Chriys> it help you to configure postfix with courier and mysql
+[19:02] <ketan985> I have .py script , sendind you....
+[19:03] <Chriys> yeah i see but trying to accept it
+[19:04] <Chriys> ketan985: i could be funny but i don't code in python
+[19:05] <ketan985> Dont worry, whatever the launguage we used, I need to config postfix
+[19:06] <Chriys> haha. i don't know why but i can post on the postfix channel
+[19:09] <ketan985> http://askubuntu.com/questions/247579/fetch-data-from-incoming-mail-in-postfix-mail-server
+[19:23] <designbybeck> I connected to a Server via the COnnect to server SSH in the file browser. I have su access on that server with my username. I can see the files but I can add files to because it says access denied
+[19:23] <designbybeck> i can't paste files in there
+[19:24] <designbybeck> any ideas?
+[19:24] <sarnold> scp/sftp is not going to call 'su' to write files with a different owner for you.
+[19:24] <cloakable> indeed
+[19:25] <sarnold> I'm not sure if there is a nice way to do what you want to do.
+[19:25] <cloakable> sudo passwd root?
+[19:29] <designbybeck> :(
+[19:29] <designbybeck> i don't have the root password
+[19:30] <designbybeck> I thought I've done this before
+[19:30] <designbybeck> fused into a box and opened and edited files in a GUI and saved them back to the server
+[19:31] <sarnold> perhaps, but you might have put your ssh keys into /root/.authorized_keys or something.
+[19:31] <designbybeck> i'm a newbie
+[19:31] <designbybeck> not sure how to do that
+[19:33] <designbybeck> I'll try filezilla
+[19:37] <Chriys> i'm back ketan985 sorry i had my mother on the phone
+[19:37] <designbybeck> got denied using FIlezilla also
+[19:37] <designbybeck> my IT hates me LOL
+=== e11bits_ is now known as e11bits
+=== cyphermox_ is now known as cyphermox
+[19:45] <Chriys> designbybeck it is your server ?
+[19:45] <designbybeck> grrr... I guess you could say that Chriys... I work for a university, we asked for a R&D server I could play with, so the did a bunch of stuff to it first
+[19:46] <designbybeck> i do have su rights
+[19:46] <designbybeck> I was able to use filezilla to copy my bg.png file I'm playing with to my /home/username
+[19:46] <designbybeck> and then logged into the terminal and cp'ed it to /srv/image
+[19:46] <designbybeck> and that seemed to work
+[19:48] <Chriys> what is the directory on which you have issue
+[19:49] <designbybeck> I just setup a canvas LMS install Chriys so it is /srv/canvas/public/images
+[19:50] <Chriys> so cant do anything inside of this directory
+[19:50] <Chriys> ?
+[19:52] <Chriys> if yes do this command and paste resul:  ls -l /srv/canvas/public/images
+[19:55] <Chriys> designbybeck: result*
+[19:56] <designbybeck> on sec
+[19:58] <designbybeck> Chriys:
+[19:58] <designbybeck> http://www.pasteall.org/39140
+[19:58] <designbybeck> this was me coping the css over
+[20:01] <Chriys> sorry bro but you have no way to copy or paste something in it. You can only read what is inside. Contact the root if he can add you permission or you are the root retrieve your root password
+[20:02] <designbybeck> ok, thank you for the feedback Chriys
+[20:03] <Chriys> you are welcome
+=== frojnd_ is now known as frojnd
+[20:07] <Chriys> Guys question for you what is the difference between <Directory></Directory> and <Directory /var/www></Directory>
+[20:09] <frojnd> My quess would be <Directory></directory> automatically set directory and <Directory /var/www></directory> set directory to /var/www
+[20:10] <Chriys> ketan985 i received your file
+[20:11] <sarnold> Chriys: <directory> is a syntax error. keep this page open while you fiddle with your apache configuration :)  http://httpd.apache.org/docs/current/mod/core.html#directory
+[20:18] <Chriys> thanks sarnold you always have great links haha :p
+[20:18] <sarnold> Chriys :)
+[20:19] <Chriys> by the way do you about postfix it gives me a lot issues
+[20:21] <sarnold> I've done less with postfix; but between the manpages and website, it's reasonably over-documented :)
+[20:23] <Chriys> i tried so many steps one week but still having same issue -_-' Postfix want send email outside of the local environnement
+[20:23] <Chriys> since one week*
+[20:38] <hallyn> zul: i'm not in today.  nobody here but us chickens
+[20:38] <zul> figured
+[21:39] <Chriys> sarnold: did you find something about postfix ?¸
+=== cpg|away is now known as cpg
+=== justizin_ is now known as justizin
+=== cpg is now known as cpg|away
+=== cpg|away is now known as cpg
+[23:07] <jeeves_moss> how do I import the e-mails that I was able to save from the maildir of my dovecot server directly into Thunderbird so I can move them to my new host?
+[23:09] <sarnold> jeeves_moss: you may need to use a tool such as https://github.com/tdb/maildirarc
+[23:10] <jeeves_moss> sarnold, thanks, I'll have a quick look
+[23:11] <jeeves_moss> sarnold, basically, the folder is from a long dead server, and this is the last mailbox that I can't pull back from the dead from backups
+[23:24] <jeeves_moss> sarnold, are you still here?  I'm getting an error when I rin that program  "BEGIN failed--compilation aborted at ./maildirarc line 45."
+[23:24] <sarnold> jeeves_moss: ah, nuts :) that's the danger of recommending software one's never tried...
+[23:25] <jeeves_moss> sarnold, lol.  well, I don't know what to say.  this thing is kind of pissing me off.
+[23:25] <sarnold> jeeves_moss: try: sudo apt-get install libemail-address-perl
+[23:26] <sarnold> that should install the Email::Address module that is referenced on line 45
+[23:26] <jeeves_moss> sarnold, thanks
+[23:29] <jeeves_moss> sarnold, if I'm reading the howto correct, there is no way to batch the entire directory
+[23:32] <sarnold> jeeves_moss: it might just take some shell scripting; something like (untested :) for m in * ; do maildirarch -d0 -m /path/to/mboxes/${m} -c -F -n $m ; done    -- if that looks right, remove the -n ..
+[23:33] <jeeves_moss> sarnold, ok.  thanks again for your help.  the wife is calling so I need to leave this for now.

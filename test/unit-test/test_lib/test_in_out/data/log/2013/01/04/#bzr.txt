@@ -1,0 +1,59 @@
+=== slank is now known as slank_away
+=== verterok` is now known as verterok
+=== superfly_ is now known as superfly
+=== r0bby is now known as robbyoconnor
+[11:38] <mthaddon> LeoNerd: thx!
+[11:38] <LeoNerd> .. for?
+[11:38] <LeoNerd> Ohright.. the diff thing? That was aaages ago
+[11:38] <mthaddon> the hint about "bzr di --old=path/to/branch --new=path/to/branch"
+[11:39] <LeoNerd> Ahyes
+[11:39] <mthaddon> yeah, just saw it in backscroll
+=== yofel_ is now known as yofel
+=== slank_away is now known as slank
+[15:25] <LeoNerd> I'm going to use bzr in a directory that is dual-shared with another revision control system, purely so I can have a 'shelve' functionallity ((because the other RCS doesn't have one))
+[15:25] <LeoNerd> Any particular gotchas I should be aware of? As long as I'm careful to bzr ci after $other commit, or updates, it should be OK..? I'm only going to 'add' a fwe specific files also, so I'm planning to  bzr ignore *
+[16:11] <qengho> $ bzr log -m demo
+[16:11] <qengho> bzr: ERROR: exceptions.TypeError: expected string or buffer
+[16:11] <qengho> Weird.
+[16:14] <mgz> qengho: pastebin `bzr -Derror log -m demo`?
+[16:15] <mgz> LeoNerd: provided it's not one bzr has a plugin to recognise, you're probably fine
+[16:16] <LeoNerd> mgz: yeah; it's perforce.. should be fine :)
+[16:16] <qengho> mgz: http://pastebin.ubuntu.com/1495715/
+[16:22] <mgz> qengho: that is fun. maybe pass -Ddebug and `p strings` `p res`?
+[16:22] <mgz> looks like generator confusion rather than an error from re.search though
+[16:23] <qengho> Er, what's the env var to break into pdb?
+[16:23] <mgz> hm, I guess strings could contain None which would do it
+[16:23] <mgz> qengho: sorry, `BZR_PDB=1 bzr log -m demo`
+[16:24] <qengho> lazy_regex.LazrRegex has no useful __str__ or __repr__.
+[16:25] <mgz> I can't find a bug for this though, so would be great if you could report one, https://bugs.launchpad.net/bzr/+filebug
+[16:25] <qengho> Okay.
+[16:25] <mgz> you should be able to thunk them, but I suspect 'strings' is the cause
+[16:26] <qengho> (Pdb) map(type, strings)
+[16:26] <qengho> [<type 'unicode'>, <type 'unicode'>, <type 'tuple'>, <type 'unicode'>](Pdb) map(type, strings)
+[16:27] <mgz> `fake._real_re_compile()` will give you something inspectable
+[16:27] <mgz> heh, tuple 'd do it. guess that's from the colo changes?
+[16:28] <qengho> No idea.  It's  (u'https://launchpad.net/bugs/992352', u'fixed') .
+[16:28] <ubot5> Launchpad bug 992352 in chromium-browser (Ubuntu Natty) "Please update to 18.0.1025.168" [Medium,Fix committed]
+[16:29] <mgz> o_O
+[16:29] <mgz> what's one of the normal ones?
+[16:30] <qengho> Here's the branch, if you want to reproduce. Wife is dragging me away to lunch. ...
+[16:30] <mgz> sure :)
+[16:31] <qengho> bzr+ssh://bazaar.launchpad.net/~cmiller/chromium-browser/ppa-chromium-browser.lucid.stable
+[16:31] <qengho> lp:// should work too.
+[16:32] <mgz> ta.
+[16:35] <mgz> yeah, fails done remotely in the same way
+[16:35] <qengho> mgz: LP: #1096121
+[16:35] <ubot5> Launchpad bug 1096121 in Bazaar ""bzr log -m S" causes TypeError in filtering through regex a tuple" [Undecided,New] https://launchpad.net/bugs/1096121
+[16:36] <mgz> looks like a misparsed debian changelog...
+[16:37] <mgz> but what is it actually doing there... >_<
+[16:37] <qengho> In case it matters, the only debian-specific ext plugin I have is  builddeb 2.7.0dev
+[16:37] <qengho> Lunch.  afk.
+[16:40] <mgz> okay, just seems to be a bug in the fancy log matching not realising that rev.iter_bugs() returns a tuple
+[16:40] <mgz> should be pretty simple to test and fix
+[16:42] <mgz> workaround: using --match-message or other more specific match for now
+[16:50] <LarstiQ> LeoNerd: iirc there is a perforce plugin though ;)
+[16:51] <LeoNerd> Well.... OK. :) But I happen not to have it installed
+=== deryck is now known as deryck[lunch]
+=== deryck[lunch] is now known as deryck
+[20:24] <dobey> anyone familiar enough with bzr-builder to figure out what's wrong from a traceback?
+[20:35] <dobey> https://launchpadlibrarian.net/127602321/buildlog.txt.gz is consistently happening with this one recipe, but i have no idea what's actually going wrong here

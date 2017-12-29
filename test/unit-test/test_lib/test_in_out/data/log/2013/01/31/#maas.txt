@@ -1,0 +1,103 @@
+[00:51] <roaksoax> bigjools: the fix is in the queue (still) I nagged but it was hold due to some other non-verified bugs
+[00:51] <roaksoax> but they were verified
+[00:51] <roaksoax> so they are in the queue again ready to be released
+[00:51] <roaksoax> so just waiting on that
+[00:53] <bigjools> roaksoax: ok ta.  also yui and raphael?
+[00:53] <roaksoax> bigjools: so we will be shipping raphael+yui with MAAS it seems
+[00:54] <bigjools> eugh
+[00:54] <roaksoax> bigjools: that's what I think
+[00:54] <bigjools> I thought techboard wanted them separate?
+[00:55] <roaksoax> bigjools: https://lists.ubuntu.com/archives/technical-board/2013-January/001468.html
+[00:55] <roaksoax> bigjools: i think I agree... even though I wanted it separated at first, its really gonna cause us less headaches
+[00:58] <bigjools> ok cool
+[00:59] <roaksoax> bigjools: i'll update the mpackaging tomorrow
+[01:00] <bigjools> it'll be SO nice to see this puppy finally get SRUed
+[01:00] <bigjools> we're going to need some upgrade instructions
+[01:00] <bigjools> since it won't work out the box
+[01:01] <roaksoax> bigjools: it should work out of the box
+[01:01] <roaksoax> ubt just changing a couple of things
+[01:01] <bigjools> roaksoax: it won't
+[01:01] <bigjools> unless you don't expect your dhcp to be managed
+[01:01] <roaksoax> bigjools: iah in dns/dhcp managed dns
+[01:02] <bigjools> International Association of Hydrogeologists?
+[01:02] <roaksoax> err i mean when there's DNS/DHCP manged by maas
+[01:02] <roaksoax> but when there isn't
+[01:02] <roaksoax> then
+[01:03] <roaksoax> it should be pretty straightforward
+[01:03] <bigjools> right
+[01:03] <roaksoax> anyways i'll be playing with that puppy on monday at HP
+[01:03] <roaksoax> so i need to get that packaging updated
+[01:04] <roaksoax> err
+[02:01] <arbit30719> can some body help me solve juju and MAAS problem : I have also posted on ask ubuntu  http://askubuntu.com/questions/249350/juju-cannot-deploy-services-with-maas
+[02:02] <bigjools> sarnold: is anything usefil in the debug log?
+[02:02] <bigjools> useful*
+[02:02] <bigjools> urgh
+[02:02] <bigjools> arbit30719: ^
+[02:03] <arbit30719>  
+[02:03] <bigjools> it sounds like something went wrong with cloud init
+[02:03] <arbit30719> uh I can show you the not-started juju log
+[02:04] <bigjools> juju debug-log
+[02:04] <bigjools> iirc
+[02:05] <arbit30719> twisted@ERROR: Unhandled error in Deferred:
+[02:05] <arbit30719> in /var/log/juju/machine-agen.log
+[02:05] <bigjools> failing that, can you see anything on the console of machine 1
+[02:05] <arbit30719> Traceback (most recent call last):
+[02:05] <arbit30719>   File "/usr/lib/python2.7/dist-packages/twisted/internet/defer.py", line 1181, in unwindGenerator
+[02:05] <arbit30719>     return _inlineCallbacks(None, gen, Deferred())
+[02:05] <arbit30719>   File "/usr/lib/python2.7/dist-packages/twisted/internet/defer.py", line 1039, in _inlineCallbacks
+[02:05] <arbit30719>     result = g.send(result)
+[02:05] <arbit30719>   File "/usr/lib/python2.7/dist-packages/juju/agents/base.py", line 238, in startService
+[02:05] <arbit30719>     yield self.connect()
+[02:05] <arbit30719>   File "/usr/lib/python2.7/dist-packages/twisted/internet/defer.py", line 1181, in unwindGenerator
+[02:05] <arbit30719>     return _inlineCallbacks(None, gen, Deferred())
+[02:05] <arbit30719> --- <exception caught here> ---
+[02:05] <arbit30719>   File "/usr/lib/python2.7/dist-packages/twisted/internet/defer.py", line 1039, in _inlineCallbacks
+[02:05] <bigjools> please don't paste in here
+[02:05] <arbit30719>     result = g.send(result)
+[02:05] <arbit30719>   File "/usr/lib/python2.7/dist-packages/juju/agents/base.py", line 208, in connect
+[02:05] <arbit30719>     self.config["zookeeper_servers"])
+[02:05] <arbit30719>   File "/usr/lib/python2.7/dist-packages/txzookeeper/retry.py", line 302, in connect
+[02:05] <arbit30719>     return self.client.connect(*args, **kw)
+[02:05] <arbit30719>   File "/usr/lib/python2.7/dist-packages/txzookeeper/client.py", line 468, in connect
+[02:05] <arbit30719>     self._servers, callback, self._session_timeout)
+[02:05] <arbit30719> zookeeper.ZooKeeperException: Could not internally obtain zookeeper handle
+[02:05] <bigjools> ARGH
+[02:05] <arbit30719> ok
+[02:05] <arbit30719> sorry about tha
+[02:06] <bigjools> is its bios clock within 10 minutes of reality?
+[02:07] <arbit30719> I use command 'date'
+[02:07] <bigjools> you obviously have everything set up ok since the bootstrap node installs, so I suspect the clock on machine 1 is out of whack
+[02:07] <bigjools> (this is fixed in an upcoming SRU)
+[02:07] <arbit30719> it shows Wed Jan 30 21:06:29 EST 2013
+[02:08] <arbit30719> But the time zone i am located is +8
+[02:08] <bigjools> where are you typing "date" ?
+[02:08] <arbit30719> in machine 1
+[02:08] <bigjools> how are you logging in to it?
+[02:09] <arbit30719> I try to use ssh ubuntu@node-machine1
+[02:09] <arbit30719> But fail to use juju ssh 1
+[02:09] <bigjools> was that agent log above from machine 1?
+[02:10] <arbit30719> yep
+[02:10] <bigjools> hmmm I have seen this before, IIRC it's a juju bug.  I can't remember how to get past it....
+=== arbit30719_ is now known as arbit30719
+[02:10] <arbit30719> hmm..
+[02:11] <arbit30719> it already pending for 2 days  ha..
+[02:11] <bigjools> yeah it'll wait forever :)
+[02:11] <bigjools> jump on #juju-dev and let;s see if anyone is around to help
+[02:12] <bigjools> arbit30719: add that log to your question on askubuntu
+[02:13] <arbit30719> thanks =) if you can remember where you have found it
+[02:13] <bigjools> and point someone on the juju channel to it
+[02:13] <arbit30719> ok
+[02:14] <arbit30719> thanks for your help =)
+[02:14] <bigjools> no prob
+[02:20] <arbit30719> ha, there seems quite silence
+[11:06] <AskUbuntu> Maas problem on Workstation 9 | http://askubuntu.com/q/249758
+=== matsubara is now known as matsubara-lunch
+=== matsubara-lunch is now known as matsubara
+=== kentb is now known as kentb-lunch
+=== kentb-lunch is now known as kentb
+=== matsubara is now known as matsubara-afk
+[23:38] <mattrae> hi guys, i'm using juju + maas. one of the machines was accidently reimaged after a charm was deployed. in order to fix that node, we destroyed the service and terminated the machine. the problem is that the maas web interface still shows the machine as being allocated
+[23:38] <mattrae> so juju status no longer shows the machine, but its still allocated in maas.
+[23:38] <mattrae> how do i get that machine back to the ready state so I can redeploy the charm?
+[23:38] <mattrae> we can delete a node in maas shell to remove nodes stuck in 'commissioning' but we've never tested deleting a node with maas shell that was listed as 'allocated'
+[23:38] <mattrae> any suggestions??

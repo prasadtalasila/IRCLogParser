@@ -1,0 +1,343 @@
+[04:57] <Mirv> morning
+[09:32] <didrocks> sil2100: hey!
+[09:32] <didrocks> sil2100: there is a new failure, but just one and on the 3 architectures!
+[09:33] <didrocks> unity.tests.test_hud.HudBehaviorTests.test_alt_arrow_keys_not_eaten
+[09:33] <didrocks> jibel: FYI ^
+[09:33] <didrocks> we were almost there, snif!
+[09:34] <sil2100> \o/
+[09:34] <didrocks> sil2100: I was really believing we would release now :p
+[09:34] <sil2100> didrocks: ok, let me see that then, looks like a more random failure, but maybe we can make it better not to fail
+[09:34] <didrocks> at least the next/prev are fixed!
+[09:34] <didrocks> sil2100: the weird thing is that it's failing on the 3 config
+[09:34] <didrocks> let's hope it's reproduceable
+[09:34] <didrocks> sil2100: ps-indicators-autopilot-release-testing
+[09:34] <didrocks> rev 63
+[09:35] <sil2100> Ah, ok, sorry, I misunderstood you
+[09:35] <didrocks> seb128: popey: btw, do not hesitate to upgrade to the daily-build ppa
+[09:35] <sil2100> So it's failing on all, hm hm
+[09:35] <didrocks> sil2100: yep
+[09:35] <didrocks> seb128: popey: I did it, and it looks good, just have this indicator failure ^
+[09:36]  * sil2100 pulls latest unity
+[09:36] <seb128> didrocks, you rebuilt unity with the compiz opengl abi downgraded?
+[09:36] <didrocks> sil2100: daily-build ppa
+[09:36] <didrocks> yep
+[09:36] <popey> didrocks: i do every morning
+[09:36] <didrocks> sweet ;)
+[09:36] <seb128> didrocks, k, upgrading
+[09:39] <sil2100> Ok, so, a check for is_focused is not enough, *sighs*
+[09:40] <didrocks> sil2100: so, the test is giving a false positive?
+[09:40] <didrocks> sil2100: do you know what changed from yesterday?
+[09:41] <sil2100> didrocks: I have no idea, I mean, this failure seems to happen when the Terminal takes a bit longer to start - i.e. the shell on it
+[09:42] <sil2100> I added a wait for the Terminal window to have focus, but as I can see it doesn't help always, since the window can be focused but not yet ready to fetch input
+[09:42] <sil2100> I'll try to think of a quick clean solution
+[09:44] <seb128> mhr3, hey
+[09:45] <seb128> mhr3, with the current daily build my dash has a sort of weird blue "," between the expendable categories and their ">"
+[09:45] <seb128> e.g "installed" in the app lens
+[09:45] <didrocks> sil2100: thanks, counting on you to be able to release unity :)
+[09:45] <seb128> is that normal/wanted?
+[09:45] <didrocks> mhr3: confirmed here
+[09:45] <mhr3> seb128, yea, i saw that with trunk some time ago
+[09:45] <mhr3> not sure who did that :)
+[09:46] <didrocks> you didn't ask? :/
+[09:46] <mhr3> iirc the number of results wasn't displayed either in that case
+[09:46] <seb128> no
+[09:46] <seb128> there is only a ","
+[09:46] <seb128> or "."
+[09:46] <mhr3> thought it's an upcoming design change
+[09:47] <seb128> well, it could be to drop the label, the weird char seems wrong and misaligned though, I somewhat doubt it's a design change
+[09:47] <mhr3> andyrock, would you know something about that ^?
+[09:47] <popey> it's a ':' here seb128
+[09:48] <popey> you have good eyes! I never noticed that! ☺
+[09:48] <didrocks> I just have a . here
+[09:48] <seb128> popey, could be, I've an hard time to see exactly what char it is with my background color
+[09:48] <didrocks> popey: he's good, isn't it? :)
+[09:49] <andyrock> mhr3, no ask nick :)
+[09:51] <andyrock> mhr3, btw if Nick is not online (or busy) i can try to fix it in the afternoon
+[09:51] <didrocks> we will never be able to release unity :(
+[09:52] <sil2100> huh? Something besides the AP test is broken? :(
+[09:53] <didrocks> sil2100: yeah, but not linked
+[09:53] <didrocks> sil2100: you can continue on the test :)
+[09:53] <sil2100> Oh...
+[09:53] <sil2100> ;)
+[09:54] <didrocks> hey dednick :)
+[09:54] <dednick> howdy
+[09:54] <didrocks> seb128 | mhr3, with the current daily build my dash has a sort of weird blue "," between the expendable categories and
+[09:54] <didrocks>        | their ">"
+[09:54] <didrocks> seb128 | e.g "installed" in the app lens
+[09:54] <didrocks> dednick: good, this and one test failing that sil2100 is working on are the last step before enabling daily release of unity :-)
+[09:55] <didrocks> dednick: do you know about it? or maybe have a look at it?
+[09:55] <dednick> seb128: Do you have the "See X more results" showing next to the > ?
+[09:55] <seb128> no
+[09:55] <seb128> that replace those labels
+[09:55] <seb128> replaces
+[09:56] <seb128> I've like "Installed "," >"
+[09:56] <seb128> without the ""
+[09:56] <seb128> didrocks and mhr3 and popey confirmed
+[09:56] <dednick> ok. i think i know what this is. mandel was doing something with StaticCairoText width calculations that might have caused a regression.
+[09:56] <didrocks> dednick: I just have one one the file category working, all the others are like seb128 told
+[09:56] <dednick> i know it has caused some problems before
+[09:56] <didrocks> interesting :)
+[09:57] <dednick> didrocks: i'll check with mandel about the status of that quick.
+[09:57] <didrocks> thanks :)
+[09:58] <popey> didrocks: what do we need to do to allow users to file bugs against the compiz package in the daily ppa with "ubuntu-bug compiz"? I am getting the usual "This is not an official Ubuntu package" popup from apport
+[09:59] <didrocks> popey: let's see if we need to do that, as the daily-build is just a 4 hours step between build and distro normally
+[09:59] <didrocks> popey: if we have some stack stalled for more days, maybe it will be useful, I'm just unsure for now
+[10:01] <popey> ok
+=== mmrazik is now known as mmrazik|otp
+[10:18] <jibel> didrocks, with unity ppa, dash blinks when I type something in the search bar, I'll try to make a video
+[10:18] <didrocks> thanks jibel, duflu will maybe have some hint about it
+[10:23] <sil2100> hm, there doesn't seem any 100% safe way, so I'll do it a bit hackish
+[10:24] <didrocks> sil2100: so adding more timing?
+[10:26] <sil2100> Or maybe, let me check something on my guest session ;p
+=== mmrazik|otp is now known as mmrazik
+[10:27] <jibel> popey, hey, which tool do you use to record a video of a desktop session with the dash? I tried recordmydesktop, but it's all dark and only captures the background
+[10:29] <popey> jibel: kazam
+[10:30] <seb128> jibel, gtk-recordmydesktop works for recording the dash, etc on my raring
+[10:30] <seb128> jibel, you can always use your phone or camera or something otherwise ;-)
+[10:32] <jibel> seb128, it doesn't here with raring, all updates, etc on an intel atom IGC
+[10:32] <jibel> i'll try kazam
+[10:35] <didrocks> dednick: did you find anything relevant?
+[10:39] <jibel> seb128, finally recordmydesktop works fine, the problem comes from totem for the playback
+[10:42] <seb128> ahah
+[10:47] <jibel> bug 1098502
+[10:47] <ubot5> bug 1098502 in Unity "Dash blinks when typing text in search bar" [Undecided,New] https://launchpad.net/bugs/1098502
+[10:50] <sil2100> Ok, tested all nice solutions, none were giving me complete guarantee, so I'm using the simplest one
+[10:50] <sil2100> A sleep call, yea, we like those
+[10:52] <didrocks> sil2100: well, let's do that I guess…
+[10:52]  * sil2100 sighs
+[10:53] <sil2100> Preparing a merge
+[10:53] <sil2100> I'll have a talk with thomi next week about doing it nicer, for now let's hope this will solve the issue for releasing unity
+[10:54] <didrocks> sil2100: sounds good, yeah, let's do what we can for now :)
+[10:54] <didrocks> but I need to know where dednick is as well, not sure if we should block the release on that issue, specifically if the fix is trivial…
+[10:55] <dednick> didrocks: mandel is looking at the issue now.
+[10:56] <didrocks> dednick: ah sweet, what is his IRC nickname? can he come into that chan? :)
+[10:56] <dednick> didrocks: mandel
+[10:56] <dednick> didrocks: i've just asked him to join
+[10:57] <didrocks> thanks dednick :)
+[10:57] <mandel> dednick, hello
+[10:57] <didrocks> hey mandel ;)
+[10:57] <didrocks> mandel: so, I guess all eyes are on you to release unity now, but no pressure :-)
+[10:58] <didrocks> mandel: more seriously, do you think the fix will be trivial?
+[10:58] <mandel> didrocks, hello, so I'm looking at the StaticCairotText rendering, it seems that the PrelayoutManagement does have the correct size, witch is interesting
+[10:58] <mandel> didrocks,he, no pressure :)
+[10:59] <didrocks> mandel: oh, "funny" did you notice it's a blue dot as well?
+[10:59] <mandel> didrocks, that I did not see, let me check
+[11:00] <didrocks> mandel: it's barely noticeable, but we are more than one having <category> . >
+[11:00] <didrocks> with . being : for popey
+[11:00] <mandel> didrocks, is more like two blue dots,  but is probably it trying to render the font and doing something wrong
+[11:00] <didrocks> (and blue)
+[11:00] <didrocks> ok :)
+[11:00] <popey> yeah, could be squished text
+[11:00] <popey> and not actually a :
+[11:00] <didrocks> but why blue? :p
+[11:01] <popey> well that too
+[11:02] <mandel> didrocks, popey no to worry, I already have a fix, I need to clean the code a little and make sure it does not break in other cases
+[11:02] <mandel> give me 15/30 mins or so to make sure
+[11:02] <didrocks> mandel: you rock! :-)
+[11:02] <dednick> mandel: remember to check the tooltip as well ;)
+[11:03] <mandel> dednick, hehe, yes, I remember that ;)
+=== mmrazik is now known as mmrazik|lunch
+[11:04] <sil2100> \o/
+[11:04] <didrocks> sil2100: btw, if you need some approval on your branch
+[11:04] <sil2100> https://code.launchpad.net/~sil2100/unity/autopilot_add_ugly_sleep/+merge/142869
+[11:04] <didrocks> mandel: just to know, the fix will be in nux or unity?
+[11:04] <sil2100> Please, free karma ;)
+[11:04] <mandel> didrocks, unity
+[11:04] <didrocks> mandel: ok, great, thanks ;)
+[11:05] <didrocks> not respawing a rebuild immediately then
+[11:05]  * sil2100 always wonders why he spends so much time writing all this rationale in the merge requests
+[11:05] <didrocks> sil2100: I read them, worth it!
+[11:05] <didrocks> :)
+[11:06] <didrocks> sil2100: thanks! approved :)
+[11:06] <sil2100> Thanks :)
+[11:07] <sil2100> andyrock: soo, a Qt application for testing bug #1087422 is fine as well? ;)
+[11:07] <ubot5> bug 1087422 in unity (Ubuntu) "Windows that start minimized cannot be opened" [High,In progress] https://launchpad.net/bugs/1087422
+[11:08] <sil2100> andyrock: I'll add the feature you're requesting in a moment then!
+[11:09] <andyrock> sil2100, yeah it's fine I've already tested :)
+[11:09] <andyrock> thank you btw :)
+[11:18] <sil2100> andyrock: updated - the name is fine btw. ;p
+[11:18] <sil2100> andyrock: test it once again and if it works as it did before, approve and let's get it merged!
+[11:19] <didrocks> andyrock: sil2100: can you just wait that we do this release before getting it merged?
+[11:19] <didrocks> andyrock: sil2100: I don't want we add one another variable parameter before this release :)
+[11:19] <sil2100> andyrock: ^ ;)
+[11:20] <andyrock> didrocks, sil2100 yeah no problem :)
+[11:20] <didrocks> thanks :)
+[11:21] <sil2100> andyrock: let's get the testapp thing merged in the meantime
+[11:25] <mandel> didrocks, so nux revno 742 fixed a logical error in the layouts (no bug number, doh!) and before that was fixed I added a workaound for statica cairo text, with the new code in nux that is not longer needed and goes wrong in a diff way, I have fixed it and changed the test to ensure everything works correctly
+[11:26] <didrocks> mandel: oh interesting side effect of a workaround then :-) do you have a branch handy?
+[11:26] <mandel> didrocks, please take a look at https://code.launchpad.net/~mandel/unity/static-cairo-text/+merge/142873
+[11:26] <andyrock> sil2100, ok let me wrote the AP test for unity (without merging it for the moment)
+[11:26]  * didrocks opens and builds while reviewing
+[11:26] <sil2100> \o/
+[11:26] <mandel> didrocks, I will add no comments about nux && layouts ;-)
+[11:27] <didrocks> heh :)
+[11:27] <didrocks> mandel: well, I know what you mean, I felt the pain in the past :)
+[11:28] <mandel> didrocks, I don't know if I should feel happy because I knew where to find the problem or otherwise
+[11:29] <didrocks> mandel: ahah, well, you can call that "expertise on the subject" :)
+[11:29] <didrocks> some kind of niche knowledge ;)
+=== _salem is now known as salem_
+[11:32] <Mirv> can you reproduce that nautilus again starts behind other windows in raring+daily?
+[11:34] <didrocks> mandel: confirming the fix is working! :)
+[11:34] <didrocks> Mirv: hum, I don't see that
+[11:34] <didrocks> mandel: nice work, thanks! ;)
+[11:34] <didrocks> and still having tooltips :p
+[11:34] <mandel> didrocks, take a look at the launcher, but works too, just in case :)
+[11:34] <mandel> didrocks, you are faster than me ;)
+[11:34] <Mirv> eg. maximized firefox, super + 1, nautilus starts to the background not front
+[11:35] <Mirv> didrocks: ok, interesting, seems to me similar to what quantal had before nautilus was patched
+[11:35] <didrocks> mandel: heh :)
+[11:35] <didrocks> Mirv: ah indeed, if started with super + something
+[11:36] <didrocks> I was cliking on the launcher
+[11:36] <seb128> even clicking on the launcher it goes unfocussed for me
+[11:37] <didrocks> hum, not here, maybe something with the state
+[11:37] <seb128> we had to drop the nautilus patch, upstream fixed it in a different way for 3.6 which works for gnome-shell but not us
+[11:37] <Mirv> same as seb128, although I noticed it requires the maximized window
+[11:39] <seb128> andyrock was working on that
+[11:39] <seb128> he had a patch for gtk, not sure how that is going
+[11:40] <andyrock> seb128, what?
+[11:40] <seb128> andyrock, nautilus not getting focus in raring
+[11:40] <andyrock> again?
+[11:40] <seb128> andyrock, well, "in raring", in 3.6 since we dropped your patch, since cosimoc did a different version which works for gnome-shell but not unity
+[11:41] <seb128> andyrock, well, didn't you say it's a gtk bug in the timestamp handling?
+[11:41] <andyrock> seb128, yeah i'm sure that gtk/gdk had that bug but startup notifications maybe can workaround it :)
+[11:42] <andyrock> and unity does not support them
+[11:42] <seb128> right
+[11:42] <seb128> so it's not "again", it's "still" ;-)
+[11:42] <seb128> andyrock, did you ever get any feedback on your gtk patch?
+[11:42] <seb128> I wonder if we should just distro patch it
+[11:43] <andyrock> seb128, no Trevinho and me opened a gdk bug with a very simple test program showing the issue
+[11:43] <andyrock> btw we really need to support startup notification in unity
+[11:44] <andyrock> Trevinho wants to do it directly in bamf
+[11:44] <andyrock> but he is too busy
+[11:44] <andyrock> we need to put that bug in the "polish blueprint"
+[11:46] <seb128> right
+[11:48] <Mirv> filed bug #1098533
+[11:48] <ubot5> bug 1098533 in nautilus (Ubuntu) "New nautilus window starts behind fullscreen window" [Undecided,New] https://launchpad.net/bugs/1098533
+[11:49] <didrocks> s/fullscreen/maximized/ isn't it?
+[11:49] <Mirv> didrocks: thanks, yes, title is wrong
+[11:49] <didrocks> yw ;)
+[11:50] <Mirv> test case was correct. fixed title.
+=== mmrazik|lunch is now known as mmrazik
+=== MacSlow is now known as MacSlow|lunch
+[13:06] <Trevinho> seb128: I have a workaround that I'll try to land upstream too...
+[13:07] <Trevinho> seb128: this is the issue (and workaround) https://bugzilla.gnome.org/show_bug.cgi?id=688830
+[13:07] <ubot5> Gnome bug 688830 in gtk "gtk_window_present uses an invalid time value, and does not always work" [Major,Unconfirmed]
+=== MacSlow|lunch is now known as MacSlow
+[13:19] <seb128> Trevinho, hey, thanks, I was looking for the bug earlier but I didn't remember enough about it to find it back
+[13:19] <seb128> Trevinho, we should maybe distro patch it
+[13:20] <seb128> Trevinho, not sure upstream is going to go anywhere on that anytime soon
+[13:20] <Trevinho> seb128: I was talking of nautilus only.... Even if that change could maybe done at gdk level...
+[13:21] <seb128> oh, ok
+[13:27] <didrocks> Trevinho: another subject: on the one ws by default, do you still have something to do on the unity side?
+[13:27] <didrocks> Trevinho: on the g-c-c side, I'll just set the hsize and hsize to 1x1 or 2x2 if disabled/enabled
+[13:33] <Trevinho> didrocks: yes, I'm in the process of updating the shortcut-hints now... That's the final step..
+[13:33] <Trevinho> didrocks: ah, and probably a few lines to remove in launcher controller (to avoid removal), but on launcher side everything is done
+[13:33] <didrocks> Trevinho: ok, but agreed that on my side, I just have to do that, change hsize/vsize?
+[13:33] <Trevinho> didrocks: yes, we listen to that value
+[13:33] <didrocks> if one of them is > 1, you enable the "ws mode"
+[13:34] <didrocks> Trevinho: excellent, thanks :)
+[13:34] <didrocks> would be a nice hacking during my first flight on sunday
+[13:34] <didrocks> too early on Sunday, so need something easy :)
+=== dandrader_ is now known as dandrader|afk
+=== dandrader|afk is now known as dandrader
+[14:01] <mterry> cyphermox, more yellow paint.  While my branch built fine for i386 in a PPA, amd64 apparently died overnight
+[14:21] <Trevinho> didrocks: will you also include an option to show/hide the desktop icon?
+[14:21] <Trevinho> didrocks: it should be explained here btw https://docs.google.com/a/canonical.com/document/d/1cbPd9WSSbFHg4Z7BSOQxDKusMe2aJjj0FEF2AMxNOZM/edit
+[14:23] <didrocks> Trevinho: yep, I'll do it at the same time
+[14:23] <Trevinho> didrocks: fine, the notes at the bottom should explain everything
+[14:27] <didrocks> yep ;)
+[14:31] <mterry> didrocks, so how can we match a given daily build to a bzr commit number?
+[14:33] <didrocks> mterry: quick easily, look at debian/changelog
+[14:33] <didrocks> you have "automatic snapshot from rev <…>"
+[14:33] <mterry> didrocks, ah yes!  ok
+[14:34] <didrocks> mterry: btw, hopefully this build will be the first daily release! :)
+[14:34] <didrocks> running all the tests
+[14:34] <mterry> didrocks, yeah  :)
+[14:34] <didrocks> then, running only the indicator tests on the indicator stack + whole ppa
+[14:34] <didrocks> and if everything is fine, publishing!
+[14:34]  * mterry crosses fingers
+[14:37]  * didrocks too
+[14:37] <didrocks> I think ~ 20 minutes for all the test running
+[14:37] <didrocks> then, the indicators one will start (~55 minutes)
+[14:37] <didrocks> tests*
+[14:49] <mterry> didrocks, how can I see a list of packages uploaded for SRU but not yet accepted into -proposed?
+[14:50] <didrocks> mterry: check the unapproved queue
+[14:50] <didrocks> like for quantal:
+[14:50] <didrocks> https://launchpad.net/ubuntu/quantal/+queue?queue_state=1&queue_text=
+[14:50] <mterry> didrocks, there's a page on LP, right?
+[14:50] <didrocks> yep :)
+[14:50] <mterry> didrocks, nice, thanks
+[14:50] <didrocks> yw
+[14:50] <mterry> that's what I couldn't remember
+[15:07] <mterry> cyphermox, despite the amd64 build failing for libappindicator in my PPA, I have to work on some other stuff today.  But I do think my branch makes things better anyway (i386 worked)
+[15:34] <didrocks> mterry: cyphermox: FYI, I remove dbusmenu from the list of daily release, it's failing on every arch due (weirdly) to a missing file (see ppa failure)
+[15:34] <didrocks> mterry: sil2100: on another note, all indicator tests passed \o/
+[15:34] <didrocks> nice work sil2100 ;)
+[15:34] <mterry> yay
+[15:35] <sil2100> Yaaay! \o/
+[15:35] <didrocks> as soon as unity is published on armhf, it will be time for the first daily release :)
+[15:35] <sil2100> https://launchpadlibrarian.net/128198353/buildlog_ubuntu-raring-armhf.unity_6.12.0daily12.12.05bzr3034pkg0raring0_FAILEDTOBUILD.txt.gz <- but it looks like a random failure
+[15:36] <sil2100> didrocks: I guess in daily all is OK?
+[15:36] <didrocks> sil2100: yeah, waiting for publishing
+[15:41] <mterry> sil2100, ld crashed!?  ick
+[15:46] <didrocks> ok, done
+[15:46] <didrocks> time to force publication \o/
+[15:47] <sil2100> Excellent!
+[15:53] <didrocks> ok, readyyyyyyy
+[15:54] <didrocks> and copy request to distro done \o/
+[15:54] <didrocks> sil2100: mterry: first real daily release of unity done to the distro \o/
+[15:54] <didrocks> enabling the cronjob now!
+[15:55] <didrocks> nice work everyone :)
+[15:55] <mterry> w00t!
+[15:55]  * mterry opens champagne
+[15:55]  * sil2100 claps his hands
+[15:56]  * mterry uncomfortably watches the Jenkins bot proposing and approving its own branches
+[15:57] <didrocks> mterry: heh, you know that even that was broken?
+[15:57] <didrocks> I had to patch bzr lp-propose to have the option working
+[15:58] <mterry> :)
+=== dandrader is now known as dandrader|lunch
+[16:46] <didrocks> fginther: hey, I thought that merging for the latestsnapshot was skipping the build? https://code.launchpad.net/~ps-jenkins/bamf/latestsnapshot/+merge/142925
+[16:49] <fginther> didrocks, no sorry, there has been no progress on that
+[16:49] <didrocks> fginther: ok, you follow them and reapprove? :)
+[16:50] <cyphermox> didrocks: indicator-session buils fine now (but with start-service disabled), and I got a autopkgtest test almost working; wanna do a first review before I propose a merge to actually merge this?
+[16:50] <fginther> didrocks, I thought the approved rev_id issue was fixed. This is the first one of seen w/o an approved revid for many weeks
+[16:50] <cyphermox> https://code.launchpad.net/~mathieu-tl/indicator-session/fix-tests/+merge/142951
+[16:51] <didrocks> cyphermox: I would love to! looking :)
+[16:52] <fginther> didrocks, looking into what happened here
+[16:52] <didrocks> fginther: thanks :)
+[16:54] <didrocks> cyphermox: it sounds good to me, did you run it with some autopkg infra?
+[16:55] <cyphermox> yeah that's what I'm doing
+[16:55] <didrocks> cyphermox: maybe localcheck should be integrationcheck ?
+[16:55] <cyphermox> for now it's still failing but I was able to manually run it
+[16:55] <cyphermox> could be
+[16:55] <didrocks> ok :)
+[16:55] <didrocks> cyphermox: as you wish for the naming, but this makes more sense to me than "local"
+[16:55] <cyphermox> so it's just a matter of getting the autopkgtest script right
+[16:55] <cyphermox> yeah
+[16:55] <didrocks> sweet!
+[16:55] <didrocks> :)
+[16:55] <didrocks> nice work cyphermox, can't wait to see that one down! :)
+[16:56] <cyphermox> yeah me too
+[16:56] <cyphermox> the heavy drinking is starting to take a toll ;D
+[16:56] <didrocks> cyphermox: ahah, you needed an excuse for that! :-)
+[16:56] <cyphermox> didrocks: always do :P
+[16:56] <didrocks> heh
+=== davidcalle_ is now known as davidcalle
+=== dandrader|lunch is now known as dandrader
+[17:27] <didrocks> fginther: bamf and dee are the only 2 remaining ones not merged yet, isn't it?
+[17:30] <fginther> didrocks, compiz is still building
+[17:31] <didrocks> right :)
+[17:32] <fginther> didrocks, yes, just those 3
+[17:32] <didrocks> fginther: ok, thanks!
+[17:32] <didrocks> fginther: yeah, maybe in the future, having those bypassing the build will gain a lot of CPU cycle
+[17:32] <didrocks> fginther: especially as we are doing that everyday now (for all projects having new code)
+[17:36] <fginther> didrocks, I'll make some time to work on this today and next week, will keep you posted
+[17:36] <didrocks> fginther: excellent, thanks!
+[17:36] <didrocks> fginther: if you need some special tag to recognize those kinds of merge or have any question, do not hesitate to ask!
+[17:37] <fginther> didrocks, thanks!
+=== salem_ is now known as _salem
+=== dandrader is now known as dandrader|afk
+=== rsalveti_ is now known as rsalveti
+=== dandrader|afk is now known as dandrader
+=== _salem is now known as salem_
+=== salem_ is now known as _salem

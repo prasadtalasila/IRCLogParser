@@ -1,0 +1,323 @@
+=== slank is now known as slank_away
+[01:26] <niemeyer> Night all
+[05:20] <wallyworld> jam: hi, you around?
+[05:30] <jam> hey wallyworld
+[05:31] <wallyworld> hi, stupid question, i cannot get a go install or build etc to include any of the openstack stuff
+[05:31] <wallyworld> it seems like the openstack package is ignored for me
+[05:31] <jam> wallyworld: what command are you running, and what result are you expecting? You mean being able to run 'juju foo' with openstack as the environ?
+[05:32] <wallyworld> yes
+[05:32] <jam> or you expect something in $GOPATH/bin/...
+[05:32] <wallyworld> so i "go install launchpad.net/juu-core/..."
+[05:32] <wallyworld> and my go bin dire is updatred
+[05:32] <wallyworld> with the latest juju
+[05:32] <wallyworld> but onloy if i change somthing in ec2 package
+[05:33] <wallyworld> if i tweak something in openstack package the build/install process seems to ignore it
+[05:33] <wallyworld> so that implies the openstack stuff is not being included
+[05:33] <jam> wallyworld: right, I'm guessing we are missing the registration of the openstack provider
+[05:34] <wallyworld> and matches what i see cause the openstack init() is not being run
+[05:34] <wallyworld> the registration is done inside init()
+[05:34] <wallyworld> and init() is not being run for me since the go install seems to be ignoring my openstack package
+[05:34] <jam> wallyworld: look at launchpad.net/juju-core/cmd/main.go
+[05:35] <jam> it does "import _ "launchpadb.net/juju-core/environs/ec2"
+[05:35] <jam> we probably just need to add "openstack" there.
+[05:35] <wallyworld> ah ok, that makes sense
+[05:35] <fwereade> jam, wallyworld: that's right :)
+[05:36] <fwereade> jam, wallyworld: good mornings
+[05:36] <wallyworld> thanks, i didn't know about that - was driving me crazy
+[05:36] <jam> good early morning to you as well, fwereade
+[05:36] <wallyworld> morninh
+[05:36] <wallyworld> so till now it seems no one has tried to test go juju with openstack apart from running hte tests
+[05:37] <fwereade> wallyworld, that's weird, I could swear dimitern told me you had it bootstrapping -- maybe that's via the live tests though
+[05:37] <wallyworld> yeah, i suspect so
+[05:38] <wallyworld> and i thought i'd take a moment today to try stuff out so to speak
+[05:38] <fwereade> wallyworld, +1
+[05:38] <wallyworld> with no luck till now :-)
+[05:39] <jam> wallyworld: I thought he had, but I thought he had just done a local patch for it. It is how I would have tested it.
+[05:40] <wallyworld> jam: maybe it's time to plug it in then?
+[05:40] <fwereade> wallyworld, jam, I think so, definitely
+[05:40] <fwereade> wallyworld, jam, I would be +1 on some very basic tests that just verify that we will accept a trivial config for each of the providers that "ought" to be registered
+[05:41] <wallyworld> fwereade: so with the juju go, running "juju bootstrap" does not create a default environments.yaml like pyjuju, right?
+[05:41] <fwereade> wallyworld, that's right; I think there's a bug related t it
+[05:41] <wallyworld> ok, np.
+[05:41] <wallyworld> +1 to adding a few simple tests also
+[05:42] <fwereade> wallyworld, it's https://bugs.launchpad.net/juju-core/+bug/993616
+[05:42] <jam> wallyworld: so if we are actually at a point where 'juju bootstrap' with a openstack config doesn't barf/cause corruption, I'm happy to expose it.
+[05:42] <_mup_> Bug #993616: We should ship a boilerplate environments.yaml. <juju:Confirmed> <juju-core:Triaged> < https://launchpad.net/bugs/993616 >
+[05:42] <fwereade> wallyworld, it looks like it has some good samples in there
+[05:42] <jam> fwereade: what is the standard for testing actual binaries?
+[05:42] <jam> I don't think I've seen much testing of it in the code.
+[05:43] <fwereade> jam, we have thus far got away with testing main() in-package
+[05:44] <fwereade> jam, I would also be +1 on smart improvements to this... there's at least one test which actually builds go code
+[05:44] <fwereade> jam, I think that's the test for --upload-tools, perhaps
+[05:44] <wallyworld> jam: the main issue i see with exposing openstack by default is perhaps the lack of a suitable public bucket
+[05:45] <jam> wallyworld: we have a shared account now, I think I sent you the access keys
+[05:45] <wallyworld> but if we ship a yaml that has stuff commented out, neither openstack nor ec2 will work out of the box anyway
+[05:45] <jam> we can turn that into the public buckte for now.
+[05:45] <wallyworld> jam: right, but we wouldn't want to ship those keys
+[05:46] <jam> wallyworld: "public bucket"
+[05:46] <jam> we use the shared account to create a readable bucket
+[05:46] <jam> which other people can use
+[05:46] <wallyworld> ok, sorry, brain fade
+[05:49] <jam> wallyworld: so we should be able to do something like set up a test double, override the appropriate env variables, run 'juju bootstrap', and inspect the double afterwards
+[05:49] <jam> if you want a bit of an end-to-end (but with doubles) test.
+[05:50] <jam> that (IMO) makes a pretty decent smoke test
+[05:50] <wallyworld> yeah, agree
+[05:50] <wallyworld> i also want to try it on an openstack instance (ie mine) to see how it goes
+[05:52] <jam> wallyworld: certainly. I just wouldn't put your account details into the test suite :)
+[05:52] <wallyworld> never fear, i was just wanting to run juju locally
+[05:53] <wallyworld> not the tests, the actual tools themselves
+[05:53] <jam> certainly
+[06:00] <wallyworld> bbiab, have to take son to physio
+[06:08] <fwereade> jam, if you have a moment, would you take a look at https://codereview.appspot.com/7227045/ please? and consider in particular the rambling about InferEndpoints, which I am starting to believe is mildly crackful
+[06:39] <jam> fwereade: looking at the test, it does feel like there should be a call like AddRelation that does the infer first and then adds them. Given you are doing retries in case the service definition changes, it does seem like a combined op.
+[06:40] <fwereade> jam, cool, thanks
+[06:41] <fwereade> niemeyer, good morning
+[06:41] <fwereade> niemeyer, midnight feeding? :)
+[06:41] <jam> niemeyer: is this good morning? or good evening? :)
+[07:08] <fwereade> TheMue, morning
+[07:09] <fwereade> dimitern, morning
+[07:09] <fwereade> TheMue, free for a quick call?
+[07:10] <TheMue> fwereade: could we do it a bit later? i've to step out to the post office in a few moments, just packing a package i have to sent out today. ;)
+[07:10] <dimitern> fwereade, TheMue: morning
+[07:10] <fwereade> TheMue, I expect so -- I'll need to pop out for a bit in an hour or so myself
+[07:11] <fwereade> TheMue, when will you be back?
+[07:11] <TheMue> fwereade: i think in 30 minutes, but let's talk now
+[07:12] <fwereade> TheMue, ok, cool, should be quick
+[07:49] <rogpeppe> fwereade, TheMue, jam, dimitern, wallyworld: morning!
+[07:51] <dimitern> rogpeppe: morning!
+[08:01] <niemeyer> fwereade: Heya
+[08:01] <niemeyer> jam: Yo
+[08:01] <niemeyer> fwereade, jam: Sorry, missed the messages earlier
+[08:01] <niemeyer> fwereade: Yeah, kind of :)
+[08:02] <niemeyer> Making use of the quiet time, though
+[08:10] <fwereade> niemeyer, enjoy it while you can :)
+[08:10] <fwereade> gents, popping out for a bit
+[09:10] <fwereade> rogpeppe, are you free for a call about the API etc?
+[09:10] <rogpeppe> fwereade: definitely
+[09:10] <rogpeppe> fwereade: one mo, i'll paste you an initial CL
+[09:11] <fwereade> rogpeppe, cool
+[09:11] <rogpeppe> fwereade: https://codereview.appspot.com/6878052
+[10:12] <dimitern> jam, mgz, wallyworld: PTAL https://codereview.appspot.com/7228058/
+[10:13]  * wallyworld looks
+[10:17] <dimitern> fwereade, rogpeppe: also, this one is closely related: https://codereview.appspot.com/7241045/ to ^^
+[10:22] <wallyworld> dimitern: done
+[10:23] <dimitern> wallyworld: thanks!
+[10:23] <wallyworld> np. 'see' you at the standup
+[10:24] <fwereade> dimitern, cheers, on it shortly
+[10:44] <rogpeppe> dimitern: reviewed
+[10:45] <dimitern> rogpeppe: cheers!
+[11:02] <fwereade> dimitern, I think I'm in agreement with rogpeppe -- why is it that GetPrivateAddress needs to be exported?
+[11:02] <dimitern> fwereade: because I need to call it in the tests, which are in a separate module
+[11:03] <fwereade> dimitern, that sounds like a job for export_test.go
+[11:04] <dimitern> fwereade: yes, but would it be usable from openstack then? tests are in openstack_test and putting it in export_test will make it available for tests, but not for the openstack module I think
+[11:04] <fwereade> dimitern, but shouldn't it really be tests against the openstack Instance type anyway?
+[11:05] <dimitern> fwereade: well, initially it was a method of instance (lower case one - in provider.go), but then creating an empty instance only so I can call it on it seemed wrong
+[11:05] <fwereade> dimitern, also, shouldn't Instance.DNSName be returning the public address? I suspect I'm hopelessly confused here ;)
+[11:06] <dimitern> fwereade: no, the same logic is ported from py-juju - private address is used, the public one is not available (at least not always), until you set a floating IP to the instance
+[11:07] <fwereade> dimitern, ah, ok, sorry, you told me that the other day
+[11:07] <dimitern> fwereade: yeah, but anyway we don't need the public address there or dns name - just an address to access the instance - private will do
+[11:08] <fwereade> dimitern, so, wait, don't we need some public address so we can talk to the "bootstrap" node from outside? isn't that done via DNSName()?
+[11:09] <dimitern> fwereade: I'm not sure, but I think it's not used from outside
+[11:10] <dimitern> fwereade: maybe we should have a short call to discuss this with whoever knows best about how is this supposed to work
+[11:10] <fwereade> dimitern, ISTM that we have to talk to the bootstrap node from outside
+[11:10] <fwereade> rogpeppe, ping
+[11:10] <dimitern> fwereade: well, how did it work in py-juju then?
+[11:11] <rogpeppe> fwereade: pong
+[11:11] <fwereade> rogpeppe, what's your understanding of DNSName() re public/private address?
+[11:12] <fwereade> dimitern, I have no idea :)
+[11:12] <rogpeppe> fwereade: the only important thing AFAIR is that it should return a publicly usable address
+[11:12] <fwereade> rogpeppe, that was what I thought :)
+[11:12] <rogpeppe> fwereade: because that's what we use to connect to a unit from outside
+[11:13] <rogpeppe> fwereade: nothing in juju connects to machines, i think
+[11:13] <fwereade> rogpeppe, define "nothing in juju" please :)
+[11:14] <rogpeppe> fwereade: bah. ykwim :-)
+[11:14] <rogpeppe> dimitern: when you say "would it be usable from openstack", what openstack package are you referring to there?
+[11:14] <dimitern> rogpeppe: environs/openstack
+[11:15] <rogpeppe> dimitern: any function defined in openstack is callable from openstack
+[11:15] <dimitern> rogpeppe: the problem is the tests are in openstack_test
+[11:15] <rogpeppe> dimitern: then you can use export_test
+[11:16] <dimitern> rogpeppe: and still use it in both openstack and openstack_test ?
+[11:16] <rogpeppe> dimitern: or define some tests in openstack instead, if that's more appropriate
+[11:16] <rogpeppe> dimitern: sure
+[11:16] <fwereade> dimitern, hence export_test.go -- that will be in package openstack, but thanks to the _test.go name will only be built with the tests
+[11:16] <rogpeppe> dimitern: in export_test:
+[11:16] <fwereade> dimitern, you won't be able to use export_test.go stuff in openstack
+[11:16] <rogpeppe> func GetPrivateAddress(addresses map[string][]nova.IPAddress) (string, error) {return getPrivateAddress(addresses) }
+[11:16] <fwereade> dimitern, so you have an exported name that calls the unexported function
+[11:17] <fwereade> dimitern, what rogpeppe said :)
+[11:17] <dimitern> rogpeppe: ok, I'll that then
+[11:17] <dimitern> fwereade: still not sure about the DNSName semantics though
+[11:17] <rogpeppe> dimitern: generally we try not to put significant code in export_test - it's used to make things available for the external tests only.
+[11:18] <fwereade> dimitern, it kinda looks like you're always returning a private address there
+[11:18] <fwereade> dimitern, I think I'd be ok with a private address if and only if no public one is available
+[11:18] <rogpeppe> dimitern: private addresses are pretty much useless for the purposes juju uses DNSName for
+[11:18] <fwereade> dimitern, but DNSName() should usually return a public one
+[11:18] <dimitern> fwereade: I still think we better discuss this - with mgz as well, he has better view on the py openstack provider
+[11:19] <rogpeppe> fwereade: i tihnk i disagree - it's misleading if juju ssh tries to connect to an address that doesn't work
+[11:19] <dimitern> I need to wrap my mind around it a bit
+[11:19] <fwereade> dimitern, ISTM that the python uses a private one only if it can't get a public one
+[11:19] <fwereade> rogpeppe, ^
+[11:19] <dimitern> fwereade: where do you see this?
+[11:19] <rogpeppe> fwereade: what's the use of doing that?
+[11:20] <fwereade> rogpeppe, dimitern, mgz: my unlettered reading of this is that some openstacks have nothing public, but that the client is connecting from the same network, so it's "ok"
+[11:20] <rogpeppe> fwereade: hmm, if that's really true, then it might be ok
+[11:20] <fwereade> dimitern, providers/openstack/machine.py:62
+[11:21] <dimitern> fwereade: yeah, I see this - so it's fine to do it like this?
+[11:22] <fwereade> dimitern, I think that falling back to a private address when no public one exists is *probably* ok, assuming we get mgz to confirm we're not smoking crack
+[11:23] <dimitern> mgz: ping
+[11:23] <fwereade> dimitern, but the current approach of always returning private is not ok, I think
+[11:23] <dimitern> fwereade: well, if we need definitely a public IP always it changes things quite a bit
+[11:24] <dimitern> fwereade: we i'll then need to provision a floating IP to each machine we're starting in the environment
+[11:24] <fwereade> dimitern, I think I'm failing to communicate
+[11:24] <fwereade> dimitern, if a public address is available, we should definitely use that
+[11:24] <rogpeppe> fwereade: maybe we should have an environ parameter, say private-addresses, saying whether we want to use private or public addresses
+[11:24] <fwereade> dimitern, if not, ISTM that falling back to a private address is roughly sane
+[11:25] <dimitern> fwereade: it's never available for canonistack and I doubt it will be anything but rare in other cases
+[11:25] <rogpeppe> fwereade: when it's false, we could try to allocate floating ip addresses, or whatever's necessary to make dns names public
+[11:25] <fwereade> dimitern, assuming my reasoning holds -- I was not privy to the thinking behind this behaviour in python, and I would like some input from someone who's done this before ;)
+[11:26] <dimitern> rogpeppe: dns name allocation is also supported somewhat, but it's a different API call and likely to be similar to how floating IPs are assigned
+[11:26] <fwereade> rogpeppe, yeah, why does it have to be DNSName()? is it not SomeStringThatWillGetYouToTheInstance()?
+[11:27] <rogpeppe> fwereade: well, it's SomeStringThatWillGetYouTotheInstanceFromSomewhere() :-)
+[11:27] <fwereade> rogpeppe, ha, yeah
+[11:27] <rogpeppe> fwereade: and it's the "somewhere" that we can't easily second guess
+[11:27] <dimitern> rogpeppe: I was thinking about that :)
+[11:27] <fwereade> dimitern, what time's your standup again?
+[11:28] <dimitern> fwereade: now
+[11:29] <fwereade> dimitern, please ask mgz then, and we shall reconvene shortly?
+[11:32] <dimitern> fwereade: sure, once he comes round
+[11:32] <fwereade> dimitern, cool
+[11:33] <mgz> dimitern: hey
+[11:34]  * mgz reads discussion
+[11:34] <jam> mramm: we're mumbling if you want to unmute
+[11:35] <mramm> cool be on in 1 min
+[11:36] <jam> mramm: you were echoing
+[11:40] <mgz> so, for now returning whatever you can (by the logic from Python) for DNSName will get things working
+[11:49] <rogpeppe> fwereade: ping
+[11:49] <fwereade> rogpeppe, pong
+[11:49] <rogpeppe> fwereade: i'm looking at auth stuff
+[11:49] <rogpeppe> fwereade: and wondering about the "admin" of SetAdminPassword
+[11:49] <rogpeppe> fwereade: i'm wondering if it might be more appropriate if the "admin" was actually "client"
+[11:50] <rogpeppe> fwereade: because Admin sounds like it has superuser properties, but i don't think that's what we want to give it
+[11:50] <fwereade> rogpeppe, -1, I think we will before too long have to worry about other users with fewer privileges
+[11:51] <rogpeppe> fwereade: indeed, and i think that "client" can more easily mutate into other usernames
+[11:51] <fwereade> rogpeppe, who should have those privileges if not whoever set up the environment?
+[11:51] <rogpeppe> fwereade: i'm not sure that anyone has all the privileges
+[11:51] <fwereade> rogpeppe, this may be something we need a call to cover properly
+[11:51] <rogpeppe> fwereade: for instance, i don't think we want to enable a dodgy admin to act as a uniter
+[11:52] <fwereade> rogpeppe, ok -- but I think whoever set up the environment should have all applicable privileges on that environment -- and "admin" seems to fit that better than just "client" which is IMO way too generi
+[11:53] <fwereade> rogpeppe, at least we're not calling them "root" ;0
+[11:53] <fwereade> rogpeppe, btw, we don't have any ssh proxy support in state.Open, do we..?
+[11:53] <rogpeppe> fwereade: i'm also looking at it from the perspective of the actual mechanics of logging in. here's the code i currently have: http://paste.ubuntu.com/1585690/
+[11:54] <rogpeppe> fwereade: no. do we want it?
+[11:54] <fwereade> rogpeppe, given what mgz said above, yes, probably, if we want canonistack to work
+[11:54] <rogpeppe> fwereade: where would the proxy live?
+[11:55] <fwereade> rogpeppe, you ssh into canonistack instances via chinstrap AIUI
+[11:55] <rogpeppe> fwereade: the question wrt the above code is: what underlying type does State.Entity return when EntityName=="admin" ?
+[11:55]  * rogpeppe hasn't heard of chinstrap
+[11:56] <fwereade> rogpeppe, IMO we need a state.User
+[11:56] <rogpeppe> fwereade: i think setting passwords directly on the applicable entities is fine. but we may need state.User too
+[11:57] <fwereade> rogpeppe, I'm 90% sure we need a state.User, but I need to talk to you about it
+[11:57] <fwereade> rogpeppe, I imagine it would have worked transparently when we were using SSH directly, because everybody would have had their proxies set up
+[11:58] <rogpeppe> fwereade: what is chinstrap?
+[11:58] <rogpeppe> fwereade: ah, it's a machine!
+[11:58] <rogpeppe> fwereade: we don't need ssh proxying, just a straightforward tcp tunnel
+[11:58] <rogpeppe> s/tunnel/forwarder/
+[11:59] <rogpeppe> fwereade: but maybe sshd can provide that.
+[12:00] <fwereade> rogpeppe, just realised I need to eat before team meeting
+[12:00] <rogpeppe> fwereade: ok, enjoy
+[12:00] <fwereade> bbiab :)
+=== TheRealMue is now known as TheMue
+[12:31] <wallyworld_> jam: i'm trying to lbox submit those branches and the very first one is failing with a sad gofmt, complaining about a file which doesn't even exist. have you seen that before?
+[12:49] <rogpeppe> wallyworld_: that sounds a bit weird. if gofmt is talking about a file, i'm pretty sure it must be there.
+[12:49] <rogpeppe> wallyworld_: have you tried go fmt ./... from the project root?
+[12:49] <wallyworld_> yeah, tell me about it. but 'ls' says otherwise
+[12:49] <wallyworld_> yep, no issues
+[12:50] <rogpeppe> wallyworld_: try running the same command as lbox does: find * -name '*.go' | xargs gofmt -l
+[12:50] <rogpeppe> wallyworld_: and see if it prints anything
+[12:50] <wallyworld_> yeah, did that too
+[12:50] <wallyworld_> let me see what it said
+[12:51] <wallyworld_> no output, so happy
+[12:51] <wallyworld_> yet lbox submit complains
+[12:51] <wallyworld_> i did wipe my local go bin dir and did a go install launchpad/net/lbox earlier
+[12:52] <rogpeppe> wallyworld_: try putting a debug statement in .lbox.check to see if it's actually running; and include the value of $BADFMT too.
+[12:52] <rogpeppe> s/a debug/an echo/
+[12:53] <wallyworld_> yep, will do
+[12:54] <wallyworld_> ah, complains branch is not clean, i'll have to comment out that bit
+[12:54] <rogpeppe> wallyworld_: just commit it...
+[12:54] <rogpeppe> wallyworld_: (then revert it later)
+[12:55] <wallyworld_> ok
+[12:57] <wallyworld_> hmmm. my echo wasn't printed
+[12:57] <wallyworld_> now i'm confused
+[12:57] <rogpeppe> wallyworld_: sanity check failed :-)
+[12:58] <wallyworld_> yeah, but that's not something i expected to fail, it's just worked previously
+[12:58] <wallyworld_> and yet something is running go fmt
+[12:58] <rogpeppe> wallyworld_: that's what sanity checks are all about :-)
+[12:59] <rogpeppe> wallyworld_: more: something is saying "gofmt is sad", right?
+[12:59] <wallyworld_> yes
+[12:59] <rogpeppe> wallyworld_: which means *a* lbox.check script is running, from somewhere...
+[12:59] <wallyworld_> for a non existant file
+[12:59] <wallyworld_> yeah, i'll have to try and track it down
+[12:59] <rogpeppe> wallyworld_: how about running lbox --versose --debug ?
+[12:59] <rogpeppe> s/versose/verbose/
+[12:59] <jam> poke for our hangout?
+[13:00] <wallyworld_> good idea, didn't realise those optins were there
+[13:00] <rogpeppe> on my way
+[13:00]  * fwereade joins
+[13:01] <TheMue> hangout link?
+[13:01] <jam> mgz: poke for the hangout
+[13:02] <jam> https://plus.google.com/hangouts/_/33acfc2c8af8792568274fa110371db956f9fde7
+[13:02] <jam> w7z: https://plus.google.com/hangouts/_/33acfc2c8af8792568274fa110371db956f9fde7
+[13:05] <rogpeppe> niemeyer: meeting?
+[13:11] <niemeyer> rogpeppe: Sorry, yep
+[13:11] <wallyworld_> rogpeppe: figured it out - jam's fault :-P
+[13:12] <wallyworld_> sad go fmt file in trunk which was not there when i started my branch
+[13:16] <jam> wallyworld_: I'm willing to take the blame, I accidentally committed something directly that I was trying to submit via botd
+[13:16] <jam> sorry about that.
+[13:16] <wallyworld_> np
+[13:28] <wallyworld_> jam: i've submitted my stuff, needing to merge trunk (and hence your changes) first. there were some conflicts which i think i've done correctly. but it would be cool if you could check
+[13:56] <rogpeppe> fwereade: i'm just considering adding a user api to the state. we'd use it for admin only to start with, but potentially expandable in several directions. what do think of this? http://paste.ubuntu.com/1585936/
+[14:06] <fwereade> rogpeppe, that looks roughly sane, I'll want to have a call again in a bit but my brain is currently a touch overloaded
+[14:06] <rogpeppe> fwereade: np!
+[14:38] <dimitern> rogpeppe, wallyworld: follow-up https://codereview.appspot.com/7228058
+[14:39] <mgz> rogpeppe: what was your trick for doing an initial codereview thing? I can just propose current trunk against an empty (or r1) branch for the current state to come up in diff, for instance
+=== slank_away is now known as slank
+[15:08]  * niemeyer => lunch
+[15:10] <dimitern> rogpeppe, mgz: follow-up on https://codereview.appspot.com/7241045/
+[15:16] <mgz> dimitern: looking
+[15:41] <mgz> ...I still don't like this struct-list-test+loop thing
+[15:42] <dimitern> mgz: well, I like it more each time :) so compact and expressive
+[15:43] <mgz> it's longer than the original!
+[15:43] <dimitern> mgz: it's not yes, I changed it as we discussed - use public if available, otherwise use the private - as a compromise
+[15:44] <dimitern> mgz: aah longer
+[15:44] <mgz> each test in python is 5-7 lines, with pretty formatting
+[15:44] <mgz> and that's the *complete* test
+[15:44] <mgz> not just a test definition that then needs overly complicated testing code that lives somewhere off the page
+[15:44] <dimitern> mgz: anyway it does what's supposed and it's easy to extend, etc.
+[15:45] <mgz> each of these definitions is 8 lines, and that's without any test code, or the struct defintion
+[15:45] <mgz> it's harder to do particular customisations for special cases though
+[15:45] <mgz> you'd end up having to add a new field to your struct as a marker
+[15:46] <dimitern> mgz: it's definitely shorter than individual test case methods + comments for each
+[15:46] <mgz> add that to the each struct constructor (or used the named param idiom), and then special case that in the testing codde
+[15:46] <mgz> yeah, because there are no comments
+[15:46] <mgz> so, you've no idea what the expected result is...
+[15:47] <mgz> anyway, looks fine apart from me disliking the style (which is idiomatic here, so correct for you to do...)
+[15:48] <dimitern> mgz: ok :) is it LGTM then?
+[15:48] <mgz> sec, hitting m shortly
+[15:50] <fwereade> ok gents, I've been on since 6am and I'm a bit fried now; I'll probably swing by later, but I'm off to decompress for a bit
+[15:53] <mgz> dimitern: okay, get landing :)
+[15:53] <mgz> have a nice rest fwereade :)
+[15:53] <dimitern> mgz: cheers
+[16:17] <dimitern> rogpeppe: sorry I missed your last comments, will do a follow-up CL
+[16:17] <rogpeppe> dimitern: np
+[16:18] <rogpeppe> dimitern: just makes the docs look a bit more professional, i think
+[16:18] <dimitern> rogpeppe: yeah, I agree - wasn't sure if using func-style comments for struct fields is ok
+[16:19] <rogpeppe> dimitern: it's not always done, but i think it looks better when it is. particularly when some are longer.
+[16:20] <dimitern> rogpeppe: yes, if it's a whole line, rather than a short one at the end of the line
+[16:21] <rogpeppe> dimitern: yeah.
+[16:30] <dimitern> rogpeppe: and here it is: https://codereview.appspot.com/7235058
+[16:32] <rogpeppe> dimitern: LGTM with one typo
+[16:32] <dimitern> rogpeppe: cheers
+[17:11] <TheMue> Yeah, build of Juju on OS X works. Will test it later.
+[17:30] <rogpeppe> a CL to review, if anyone fancies, nothing too onerous: https://codereview.appspot.com/7226056/
+[18:04] <rogpeppe> that's me for the day
+[18:04] <rogpeppe> g'night all!

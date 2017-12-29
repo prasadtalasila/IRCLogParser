@@ -1,0 +1,253 @@
+=== pdxleif is now known as pdxleif_away
+=== pdxleif_away is now known as pdxleif
+[09:58] <RoyK> https://github.com/stec-inc/EnhanceIO <-- det der ser ganske interessant ut ;)
+[10:00] <RoyK> http://i.imgur.com/47D7zGq.png
+=== pdxleif is now known as pdxleif_away
+[10:34] <IvarB> haha
+[10:35] <malin> Aeyoun: wireshark-log http://paste.ubuntu.com/1555151/
+[17:20] <RoyK> malin: hva er det der?
+[17:29] <malin> wireshark-log. prøver å finne ut hvorfor Opera er så sirup om dagen
+[17:30] <RoyK> funker bedre om du laster opp ei pcap-fil
+[17:30] <RoyK> så kan wireshark lese den og gjøre analyser
+[17:31] <RoyK> dvs, mulig wireshark kan lese den loggen også, men den blir jo mye større enn ei pcap-fil
+[17:31] <malin> ok
+[17:31] <malin> jeg er noob på wireshark
+[17:31] <RoyK> tshark -Sw asdf.pcap -i eth0 port 80
+[17:32] <RoyK> f.eks.
+[17:33] <RoyK> evt wlan0 om det er på trådløst
+[17:34] <RoyK> husk bare at om du logger det på et sted uten https, så vil pcap-fila lagre brukernavn+passord i klartekst - men igjen - ikke logg deg på steder uten https :P
+[17:34] <malin> er på trådløst
+[17:34] <malin> ok
+[17:35] <malin> men så er det store spørsmålet. hvorfor skal jeg fortsette å bruke Opera når chrome og firefox ikke ser ut til å være trege, men tilogmed raskere enn Opera
+[17:36] <RoyK> det er et ganske godt spørsmål ;)
+[17:37] <malin> ja. jeg må jo være dum som tviholder på opera tenker jeg
+[17:37] <RoyK> men prøv å lage en pcap-dump, så kan du kjøre analyser av den etterpå - du lærer garantert litt om hvordan ting funker nede på de lavere lagene av nettverk
+[17:39] <malin> evt. så lærer jeg hvordan man kaster hele pc-en ut av vinduet
+[17:40] <hjd> malin: er det kun Opera eller er det også andre programmer som blir trege etter en stund?
+[17:41] <RoyK> malin: kan være litt farlig - knust glass er ubehagelig, og det er 12 kalde ute...
+[17:42] <malin> hjd: nå har jeg jo stort sett brukt Opera over tid, så jeg veit ikke om FF eller Chrome osv blir tilsvarende etter en del bruk, men nå kjørte jeg clean install av opera
+[17:42] <RoyK> malin: du kan evt prøve å slette opera-katalogen
+[17:42] <malin> og en får fortsatt problemer med at noen nettsider stopper opp slik at det står: element x/x
+[17:42] <RoyK> svjh $HOME/.opera
+[17:42] <malin> RoyK: jeg gjorde det, dvs. jeg renamet den til .opera-bak
+[17:42] <RoyK> evt mv .opera .opera.drit
+[17:42] <RoyK> ok
+[17:43] <malin> og installerte opera på nytt
+[17:43] <RoyK> du har vel greit med minne på den der også?
+[17:43] <malin> f.eks. nå når jeg går til itavisen.no
+[17:43] <malin> jeg har 4GB minne på denne
+[17:43] <RoyK> og ikke altfor fulle filsystemer?
+[17:43] <malin> så stoppet den på Element 97/98
+[17:43] <RoyK> ha du skrudd på TRIM?
+[17:43] <malin> hm, det har jeg ikke sjekket
+[17:43] <malin> hm... usikker. husker ikke
+[17:44] <RoyK> pastebin fstab
+[17:44] <malin> http://paste.ubuntu.com/1556028/
+[17:44] <malin> hm, hvordan sjekket jeg hvor fulle partisjonene var i terminal?
+[17:45] <RoyK> legg til ,discard i "options" på rota
+[17:45] <RoyK> df -h
+[17:45] <RoyK> ja, rota og home
+[17:45] <RoyK> discard == TRIM
+[17:45] <malin> ah
+[17:46] <RoyK> men igjen - hadde det vært et problem, så burde nok alt gått tregt
+[17:48] <malin> ja, det er jo rart om opera, men ikke chrome er treg om disken er full
+[17:48] <RoyK> men trim/discard funker ikke noe særlig på en disk som allerede er full. det finnes et parameter, --trim-sector-ranges, til hdparm, men manualen sier "EXCEPTIONALLY DANGEROUS. DO NOT USE THIS OPTION!!"
+[17:48] <malin> det fulleste er /home som har 93% i bruk nå
+[17:48] <RoyK> så kanskje ikke noe særlig
+[17:48] <malin> ja, da får jeg ikke bruke den :p
+[17:48] <malin> men jeg kan ikke sette på discard?
+[17:48] <malin> eller skal jeg gjøre det?
+[17:48] <RoyK> ja, skru på discard
+[17:48] <malin> liksom. du må sette på discard. også nei, det erikke så mye vits om den er litt full
+[17:48] <malin> ok
+[17:49] <RoyK> i fstab
+[17:49] <malin> ja ja
+[17:49] <RoyK> så kjører du "mount -o remount /" og for home
+[17:49] <malin> nå er det skrevet inn i fstab
+[17:49] <RoyK> så kan du sjekke med "mount" at det er skrudd på
+[17:49] <malin> og det gjør jeg hvordan?
+[17:49] <RoyK> mount
+[17:49] <hjd> malin: bare lurte. I det seneste har jeg merket maskinen min ser ut til å bli tregere hvis programmer er oppe en stund, men jeg har ikke noen god måte å si om det er Opera eller noe annet som skaper krøll. (Jeg har ikke hatt problemer tidligere dog)
+[17:50] <RoyK> hjd: enkelte programmer eter minne etter hvert som de kjører - enten dårlig ressurshåntering eller gode, gamle minnelekkasjer
+[17:51] <malin> ja, men jeg slår av pc-en hver natt
+[17:51] <RoyK> noen, som min firefox på denne mac-en, får litt panikk etter hvert og bruker 100% CPU
+[17:51] <malin> nå har vel Elements 97/98 stått sånn i tja, 10 minutter
+[17:51] <malin> og jeg ser enda ikke itavisen.no
+[17:51] <malin> ikke at det er en såå sinnsykt god nettside men
+[17:51] <RoyK> elements?
+[17:52] <hjd> RoyK: ja, jeg mistenker et eller annet lekker minne. Hvis det ikke er noe i bakgrunnen er Opera og Virtualbox mulige kandidater...
+[17:52] <RoyK> hjd: kjør top - trykk M
+[17:52] <malin> men jeg har jo nettopp gjort det da
+[17:53] <malin> oi
+[17:53] <malin> svarte jo på noe lengere oppe :p
+[17:53] <malin> virtualbox kjører ikke her
+[17:53] <malin> RoyK: opera bruker 12.9% minne
+[17:53]  * RoyK har slutta helt å bruke vbox på linux - kvm/libvirt gjør ting litt greiere...
+[17:53] <RoyK> malin: det er ganske normalt for en nettleser
+[17:53] <RoyK> å bruke litt minne
+[17:54] <RoyK> er jo greit om det brukes til noe ;)
+[17:54] <hjd> RoyK: M er hva - minnebruk? Har sjekket for kjørende programmer fra tid til annen, men har ikke sett noen unormalt store verdier.
+[17:54] <malin> RoyK: http://pastebin.com/xVHkGzir
+[17:54] <RoyK> hjd: M er "sorter på minnebruk"
+[17:54] <RoyK> hjd: tast ? for å få hjelp
+[17:55] <malin> RoyK: http://pastebin.com/1DDSX5DZ
+[17:55] <RoyK> eller h
+[17:55] <malin> RoyK: Ja, jeg klager ikke på den minnebruken der
+[17:55] <RoyK> malin: sleng på sudo foran
+[17:55] <malin> så du ikke første pastebin?
+[17:55] <malin> jeg gjorde jo det.............
+[17:56] <RoyK> malin: ah - prøv å skrive til /var/tmp eller noe
+[17:56] <hjd> malin: mener vagt å huske at det er en bugrapport om noe lignende for wireshark
+[17:56] <malin> RoyK: det virket ja
+[17:56] <malin> hjd: ok
+[17:56] <malin> er jo alltid bugs overalt :S
+[17:57] <malin> liksom. det er miner overalt
+[17:57] <RoyK> ja, litt av moroa med å jobbe med datamaskiner :P
+[17:57] <malin> tja
+[17:57]  * RoyK har fått ny, rød S3 :D
+[17:57] <malin> litt av det som gjør meg ekstra irritert for tida
+[17:57] <malin> ikke S3, men ting som ikke vil virke
+[17:58] <malin> men tja, bugs og miner er sammenlignbart. Man fikser bugs, men i neste versjon er det mange nye
+[17:58] <RoyK> malin: det er alltid bugs, uansett OS, selv om det ofte virker lettere på mac (selv om jeg kanskje banner litt i kirka her nå)
+[17:58] <malin> for hver mine som ryddes, så legges det ut ørten nye
+[17:58] <malin> skulle gjerne bytta til noe som bare virket uten bugs hele tiden
+[17:58] <malin> men joda, men det r nok mindre bugs om ting er skikkelig testet før det flagges som stabilt
+[17:59] <RoyK> ja, det skulle vi vel alle, men selv om MSDOS har ganske få bugs i dag, alt er jo retta, så vil du jo ikke kunne bruke det til stort
+[17:59] <malin> tja, jeg kan bruke msdos til ørtenvis av kule spill
+[17:59] <RoyK> winxp har også relativt få bugs, men er jo ikke så brukbart på nye ting
+[17:59] <malin> og wordperfect tror jeg, har da dosversjon.
+[17:59] <RoyK> WP5.1!
+[17:59] <malin> men kanskje jeg bare skal fikse en gammel pc med dos og windows 3.0
+[18:00] <RoyK> bruk 3.11
+[18:00] <RoyK> 3.0 suger
+[18:00] <malin> eller aknskje helst 3.1/3.11 eller noe så jeg komer på nett
+[18:00] <malin> ok
+[18:00] <malin> om jeg kan koble meg til irc via den
+[18:00] <malin> så er jeg langt
+[18:00] <RoyK> du må vel bruke en prehistorisk mirc
+[18:00] <RoyK> så kanskje ikke så gøy
+[18:01] <malin> who cares, om det funker å chatte uten noen problemer
+[18:01] <malin> kommandoene er vel de samme?
+[18:01] <RoyK> ubuntu 10.04, kanskje
+[18:01] <RoyK> burde være rimelig bugfri
+[18:01] <RoyK> menneh - programmene du kjører på den, har nok bugs
+[18:01] <RoyK> i hopetall
+[18:01] <malin> nettopp
+[18:01] <malin> :s
+[18:01] <malin> er gjerne det som er problemet.
+[18:02] <malin> at man installerer et program som virker kult i fra softwarecenter, også klarer man ikke bruke det av ymse grunner
+[18:02] <RoyK> for noen år siden, leste jeg at NASA bruker 10x tida per kodelinje enn kommersielle selskaper. forskjellen har sikkert økt siden den tid, og selv NASA har bugs i sin kode
+[18:02] <malin> 1. bugs. 2. Malin skjønner ikke noe eller 3. knotete laget
+[18:02] <malin> men de har vel færre bugs da
+[18:02] <malin> RoyK: for å avslutte den der tshar-tingen. så er det ctrl + c ?
+[18:02] <RoyK> joda, men mindre programmer skrevet for enkle maskiner
+[18:03] <RoyK> ja
+[18:03] <malin> jaaaa
+[18:03] <hjd> Jeg leste en bok for en tid tilbake om at du ikke vil se noen slippe en ny versjon av et program som kun inneholder fikser. Fordi folk tolererer det. (Den var skrevet for en del år siden så ting har forbedret seg litt, men fortsatt)
+[18:04] <malin> joda
+[18:04] <malin> før så trodde jeg desverre at et program var blitt bedre bare fordi guiet så kulere ut
+[18:04] <hjd> Et av eksemplene var skriveprogrammer som krasjet. Istedenfor å klage til produsenten el. gikk de fleste over til å lagre oftere i tilfelle noe skjedde.
+[18:04] <malin> ah
+[18:04] <RoyK> hjd: det er jo litt sånn LTS funker - litt oppdateringer de to første åra og så bare bugfixes de neste tre
+[18:05] <malin> men ja, det er vel sånn at folk tror at data = ting går alltid galt
+[18:05] <malin> på posten i sted
+[18:05] <malin> så ventet vi i 20 minutter fordi det var dataproblemer
+[18:05] <hjd> "Ah, den krasjet igjen, men det gjør den jo stadig""
+[18:05] <malin> men virket da som det som løste problemet var. turn it off and on again
+[18:05] <malin> hjd: nettopp
+[18:06] <malin> windows var, aner ikke nå, men var veldig crashete innimellom og folk har likosm tenkt at åja, deter sånn pc skal være ja....
+[18:06] <RoyK> heh - har hatt noen sånne greier på jobb også... noe går galt, ingen vet hvorfor, det var en feil i windows server vNOE som gjorde at "account policies" sletta brukerens hjemmekatalog
+[18:06] <hjd> Problemet var litt en kombinasjon av at folk fant seg i det/ikke forventet bedre kvalitet, samt at selskaper fikk mer igjen for å legge til ny funksjonalitet enn å fikse feil.
+[18:06] <malin> RoyK: nå har jeg en sånn pcap-fil. hva gjør jeg med den?
+[18:07] <RoyK> start wireshark <navn-på-pcap-fil>
+[18:07] <RoyK> du må nok chmod 644 den fila
+[18:07] <RoyK> sikker 600 på den nå
+[18:07] <malin> tja, jeg kjørte alt som sudo og den åpna seg
+[18:07] <malin> hva gjør jeg nå?
+[18:08] <malin> men står jo at det er farlig å kjøre som root
+[18:08] <malin> men er så mye som er farlig
+[18:08] <RoyK> tror ikke det er så farlig, men bedre å "sudo chown <dinbruker> <fil>"
+[18:08] <RoyK> men se litt i statistikkmenyen der
+[18:09] <RoyK> du kan finne *mye* statistikk fra ei pcap-fil
+[18:09] <malin> hva i den menyen skal jeg se på?
+[18:09] <malin> jeg er nooooooob
+[18:10] <RoyK> kan du laste opp fila? kanskje jeg kan se noe rart...
+[18:11] <malin> lastet opp til hvor?
+[18:11] <malin> kan jeg pastebinne den?
+[18:12] <RoyK> den er binær, så litt vanskelig å pastebinne - kan du ikke bare legge den på serveren din et sted?
+[18:12] <malin> ok
+[18:15] <malin> RoyK: ligger på /raid/ekstern-disk
+[18:19] <RoyK> surfa du mye mens denne gikk_
+[18:19] <RoyK> ?
+[18:24] <RoyK> ser jo ikke ut til å ha gått så mye trafikk der...
+[18:28] <RoyK> type, om du blar nedover i wireshark, så ser du x > HTTP SYN, HTTP > x, SYN, ACK, x > HTTP ACK, GET..., HTTP > x (og litt mer data)
+=== pdxleif_away is now known as pdxleif
+[18:28] <RoyK> om du ser på Time-kolonna, så ser du hvor lang tid det tok, i sekunder, fra TCP-oppkoblinga skjedde (SYN, SYN-ACK, ACK) til du sendte forespørselen (HTTP GET, typisk) og så fikk svar
+[18:32] <RoyK> noen steder finner du RST, som er en forespørsel om å avslutte (reset) tcp-oppkoblinga mot maskinen
+[18:33] <RoyK> andre steder ser du TCP Dup, noe som betyr at du har fått samme pakke to ganger, og at pakka kastes
+[18:35] <RoyK> litt merkelig at det skal gå så tregt med opera og ikke med andre nettlesere
+[18:36] <RoyK> nettet ditt virker litt tregt, men ikke mye feil
+[18:42] <malin> RoyK: nei, ikke voldsomt
+[18:42] <malin> men jeg gikk inn på itavisen da jeg kjørte den, og den stoppet jo opp
+[18:42] <malin> nettet jeg sitter på er 25/5 tror jeg
+[18:44] <RoyK> det rare er at om du ser på den der i wireshark, så spør maskina di (og opera) kort tid etter at den har fått et ACK, men det tar litt tid før den får svar, opp mot et sekund
+[18:45] <RoyK> nå kan ikke jeg nok om TCP til å se på flaggene der, men det virker som om opera gjør noe rart
+[18:47] <malin> ja, jeg skal se om jeg finner en måte å importere bookmarks over på FF og eller chrome osv
+[18:54] <RoyK> første treff http://support.mozilla.org/en-US/kb/export-bookmarks-to-opera
+[18:55] <malin> ja, FF er vel greit.
+[18:55] <malin> chrome gikk også fint
+[18:55] <malin> så var det å fikse speeddial
+[18:55] <malin> men tja, jeg bruker vel egentlig aldri disse bokmerkene
+[18:55] <RoyK> speeddial?
+[18:56] <RoyK> bare gå til bokmerker og klikk på pila nederst til venstre, velg "nøkkelord" eller noe tilsvarende om du har den på nynorsk^Wengelsk
+[19:06] <malin> speeddial er den der rutetingen når man åpner ny fane hovr man kan klikke på dit man vil
+[19:07] <malin> http://www.google.com/imgres?hl=en&safe=off&client=browser-ubuntu&hs=3O3&sa=X&tbo=d&channel=fe&biw=1366&bih=678&tbm=isch&tbnid=BWiiETLtOdCtRM:&imgrefurl=https://addons.mozilla.org/en-us/firefox/addon/speed-dial/&docid=3wz4375p_oFmOM&imgurl=https://addons.cdn.mozilla.net/img/uploads/previews/full/15/15857.png%253Fmodified%253D1331247702&w=543&h=525&ei=1JH9UMiGMZT24QTPwoGYCA&zoom=1&iact=hc&vpx=4&vpy=152&dur=
+[19:07] <malin> 3111&hovh=221&hovw=228&tx=117&ty=146&sig=110607428756082085505&page=1&tbnh=144&tbnw=149&start=0&ndsp=20&ved=1t:429,r:0,s:0,i:151
+[19:08] <RoyK> ah, den, ja
+[19:08] <RoyK> ff har en tilsvarende
+[19:08] <RoyK> men ikke så god
+[19:09] <malin> nei, syntes opera sine innebygde ting ofte er bedre enn det meste andre man får fra extensions i FF osv
+[19:10] <malin> men nå orket jeg ikke at opera var treig og man må trykke reload et par ganger før man får opp nettsider osv, så fra i dag av ble jeg FF/Chrome-bruker
+[19:13] <RoyK> heh
+[19:13] <RoyK> malin: jeg kasta ut opera for snart to år siden :P
+[19:15] <RoyK> malin: type, speeddial i ff viser bare siste oppdaterte sider, oppdaterer ikke automatisk
+[19:15] <RoyK> i hvert fall ikke som standard
+[19:18] <malin> ok
+[19:18] <malin> så får jeg lete etter mouse gestures og sånt via extensions :)
+[19:28] <malin> man må liksom velge mellom en nettleser som har lat, men er suppetreig, eller en som er rask, men som ser ut som et lappeteppe når man har fått lagt til alt det kule opera har :)
+[19:29] <malin> men nå tror jeg at jeg skal slutte å syte og klage og sånn her
+[19:31] <RoyK> :)
+[19:33] <Mathias> malin: tror det er en plugin som har opera-ish greier :p
+[19:33] <Mathias> men nå skal jeg være tech-support
+[19:33] <Mathias> onkel har en sprøstekt maskin (er det jeg tror ihvertfall)
+[19:36]  * RoyK gir Mathias en ubuntuminnepinne
+[19:36] <Mathias> RoyK: hjelper lite når skjermen og hdmi/vga ikke funker
+[19:37] <RoyK> heh
+[19:38] <Mathias> mistenker at a) maskinen har fått seg en helvettes smell b) gpu er stekt på bålet
+[19:40] <malin> Mathias: fant en sånn nå. for tja, jeg liker jo alle disse kule opera-tingene, så får prøve å gjøre FF like god med tanke på alt stæsjet
+[19:41] <malin> syntes folk kan si i fra før de skal grille pc-en sin, så kan jeg slenge på et par oste-kalkun/kyllingpølser i samme slengen :D
+[19:42] <malin> Mathias: veit du om det er en eller annen extension som gjør at man kan starte nettleseren der man slapp sist?
+[19:42] <malin> Mathias: var visst noe i preferences for å fikse det og ikke noe extension jeg trenger til det :)
+[19:42] <RoyK> malin: ff har det som standard
+[19:42] <malin> RoyK: ja, men man må velge det, altså er det ikke stilt til det som standard
+[19:43] <RoyK> malin: du finner det sikkert under about:config et sted
+[19:44] <RoyK> http://support.mozilla.org/en-US/kb/restore-previous-session
+[19:44] <RoyK> ser ut som om den skal starte som sist uansett, med mindre den krasja
+[19:47] <malin> mulig. opera starter jo med forrige tabs selv etter crash, man kan velge ved crash å restarte opera med alle tabbene
+[19:49] <RoyK> greit å måtte velge etter en krasj, det kan jo være nettstedet du besøkte sist som fikk nettleseren til å tryne
+[19:49] <Mathias> malin: ff har en "restore previos tabs"-funksjon
+[19:51] <malin> ok
+=== pdxleif is now known as pdxleif_away
+=== pdxleif_away is now known as pdxleif
+=== pdxleif is now known as pdxleif_away
+=== pdxleif_away is now known as pdxleif
+[22:12] <Mathias> skyt meg, nå
+[22:12] <winb> pang
+[22:24] <Mathias> takk
+[22:24] <Mathias> slipper jeg at onkel vurderer å konvertere hele huset til apple
+[22:25] <winb> hehe
+[22:25] <winb> Du får riste han litt
+[22:26] <Mathias> riste?
+[22:26] <Mathias> trenger en tsunami
+[22:49] <RoyK> Mathias: tja - ios suger riktignok, men os x funker fint
+=== pdxleif is now known as pdxleif_away

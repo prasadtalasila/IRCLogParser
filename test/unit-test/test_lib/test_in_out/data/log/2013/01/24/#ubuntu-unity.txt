@@ -1,0 +1,636 @@
+[01:39] <Kupiakos42> Hello. I'm having trouble getting Wine applications to show their proper icons. When I start up a Windows application (e.g. msword), it shows up in the Unity sidebar as "Wine Windows Program Loader" and has the Wine icon instead of the Microsoft Word icon and title text. This does not occur in other Desktop Environments, such as Gnome Classic. Any Ideas?
+[05:26] <duflu> Kupiakos42: I thought we had a bug resembling your Wine problem but can't find it. Please log one using "ubuntu-bug unity"
+[05:54] <Mirv> duflu: did you see bug #1103475 ?
+[05:54] <ubot5> bug 1103475 in Compiz "compiz fails to start properly after update to 1:0.9.8.6+bzr3432-0ubuntu1~test1" [Undecided,Confirmed] https://launchpad.net/bugs/1103475
+[05:55] <Mirv> although, fginther already prepared a branch that fixes the issue so we'll just get that
+[05:57] <Mirv> possibly with that commit taken out sil2100 can proceed to doing the new quantal sru
+[05:58] <duflu> Yes, I saw that bug but had no immediate "upstream" explanation. More likely something distro changed ;)
+[06:51] <popey> duflu: fginther has identified the fix for bug 1060327 as the cause of bug 1103475
+[06:51] <ubot5> bug 1060327 in Compiz 0.9.8 "compiz crashed with SIGSEGV in compiz::opengl::bindTexImageGLX() from TfpTexture::bindTexImage()" [High,Fix committed] https://launchpad.net/bugs/1060327
+[06:51] <ubot5> bug 1103475 in Compiz "compiz fails to start properly after update to 1:0.9.8.6+bzr3432-0ubuntu1~test1" [Undecided,Confirmed] https://launchpad.net/bugs/1103475
+[06:51] <popey> he's built packages which i can test here shortly
+[06:52] <duflu> popey: Yeah that's weird because it's a critical fix which we're using on raring
+[06:56] <popey> duflu: which also crashes in a vm
+[06:56] <popey> (raring that is)
+[06:56] <duflu> popey: You need updates to get the fix for raring I think... ?
+[06:57] <duflu> popey: I meant the offending fix has been verified as working and fixing crashes for lots of VM users, on raring
+[06:57] <duflu> Something must be different for 0.9.8 in quantal
+[06:58] <popey> duflu: I need to verify raring
+[06:58] <popey> need to go afk for 2 hours then will come back to it.
+[06:58] <duflu> popey: Also nvidia has a very similar crash, different bug
+=== larsu is now known as Guest85736
+[08:37] <didrocks> hey sil2100!
+[08:44] <sil2100> didrocks: hey! ;)
+[08:44] <didrocks> sil2100: how are you? did you finish the administrative stuff for your car? :)
+[08:45] <sil2100> didrocks: yes! Finally got my car back, after 2 months of pointlessness - I managed barely in time for the office to close
+[08:45] <didrocks> great ;)
+[08:46] <didrocks> sil2100: do you have time to investigate something weird? see ps-unity-autopilot-release-testing and ps-indicators-autopilot-release-testing
+[08:46] <didrocks> we have 110+ failures in one case and 22 in the othe
+[08:46] <didrocks> other*
+[08:46] <didrocks> so, apparently 25% of failures
+[08:46] <didrocks> can you check we have a valid regression from the ppa?
+[08:46] <sil2100> Oh shit
+[08:47] <didrocks> (weird, because the indicator run is just the new indicator, without any new unity)
+[08:47] <didrocks> I really wonder what happens?
+[08:47] <sil2100> Let me fire up apview
+[08:47] <didrocks> thanks
+[08:52] <popey> duflu sil2100 have tested with the package from fginther in virtualbox which has the offending code backed out, and it works
+[08:52] <sil2100> hm, I need to think what could be the reason for all those failures
+[08:52] <didrocks> sil2100: is the video showing a correct behavior?
+[08:52] <duflu> popey: Not just "works", which we know it works, but clearly and immediately resolves the bug?
+[08:53] <popey> well, doesn't crash compiz anymore
+[08:53] <duflu> Ok
+[08:53] <duflu> That's a shame for users of quantal VMs. That was the biggest issue for VM/LLVMpipe users
+[08:53] <sil2100> didrocks: hah, wait one moment - since I wanted to say 'yes', but I just noticed that one of the failures is caused by an apport crash dialog ;p
+[08:54] <sil2100> Let me check all of them
+[08:54] <didrocks> ah :)
+[08:54] <didrocks> ahah!
+[08:54] <didrocks> that can be yeah ;)
+[08:55] <sil2100> didrocks: so, the indicators tests has only the new indicator packages installed, or are there other updates?
+[08:55] <didrocks> sil2100: only the new indicator packages
+[08:56] <didrocks> sil2100: not sure of the last run as I wasn't the one running it, but the run before for sure
+[08:56] <sil2100> duflu: should we revert that fix for now then, or maybe leave it and wait for it to get properly fixed sooner or later?
+[08:59] <sil2100> didrocks: most of the failures look like genuine failures, a mystery why they're so easily reproducible by a second run - some of them are strange, like the hud geometry one, I'm looking into it now
+[08:59] <didrocks> sil2100: thanks, keep me posted! this grows anxiety in me :)
+[09:00] <didrocks> sil2100: if only the unity ones were failing, I would understand because of https://code.launchpad.net/~didrocks/compiz/default-hsize-vsize/+merge/144464
+[09:00] <didrocks> but the indicator ones don't have unity…
+[09:00] <duflu> sil2100: If it's easy to prove "is broken and now fixed" then back it out of 0.9.8, sure. But I don't think you'll find it's broken at all in trunk
+=== larsu_ is now known as larsu
+[09:02] <sil2100> didrocks: indeed, as compiz shouldn't get updated there
+[09:03] <didrocks> sil2100: yeah, compiz is 1:0.9.9~daily13.01.21-0ubuntu1
+[09:03] <didrocks> so distro, not ppa
+[09:04] <veebers> sil2100: I notice in the logs that this error (or similar) is repeated a lot: ** (autopilot:2012): WARNING **: failed to commit changes to dconf: GDBus.Error:org.gtk.GDBus.UnmappedGError.Quark._g_2dfile_2derror_2dquark.Code4: Failed to create file '/home/jenkins/.config/dconf/user.2Q7IRW': No such file or directory
+[09:04] <veebers> sil2100: (this is re: the autopilot jobs)
+[09:06] <didrocks> so would that be the cause of an apport popup making the test failing?
+[09:07] <sil2100> veebers: hi! In which test's logs?
+[09:07] <sil2100> veebers: since it would be a good explaination of why the HudAlternateKeybinding tests are failing, but I don't see that in the testlogs sadly...
+[09:08] <veebers> sil2100: hello :-) I'm looking at the file 'ap_test_debug_log.txt' which is in the jobs results/artifacts/
+[09:09] <sil2100> Ok, now I see the file
+[09:10] <sil2100> veebers: strange thing, since it's for every application - autopilot, gedit, gcalc
+[09:12] <didrocks> let's look what version of dconf we have
+[09:13] <didrocks> hum 0.15.2-0ubuntu3
+[09:13] <didrocks> it includes   * debian/patches/git_handle_empty_config.patch:
+[09:13] <didrocks>     - include fix to create the config directory when needed as well
+[09:13] <didrocks> I'm wondering if this one really fixed it
+[09:13] <didrocks> veebers: you do have access to the machines, right?
+[09:13] <sil2100> Is that a recent fix?
+[09:13] <didrocks> like being able to log in
+[09:13] <didrocks> sil2100: yeah, yesterday evening, after the new version of dconf
+[09:13] <didrocks> sil2100: but it's included
+[09:13] <didrocks> in this iso
+[09:14] <didrocks> so I wonder…
+[09:14] <sil2100> didrocks: since those messages don't appear in previous test-runs
+[09:14] <didrocks> 0.15.2-0ubuntu2 and 0.15.2-0ubuntu3
+[09:14] <didrocks> sil2100: previous being?
+[09:14] <veebers> didrocks: yes
+[09:14] <didrocks> those which run?
+[09:14] <sil2100> didrocks: for instance, in 83 build
+[09:14] <didrocks> sil2100: yeah, not sure if it's the real cause, but at least, it's an issue
+[09:15] <sil2100> didrocks: build 83 had only 2 failures
+[09:15] <sil2100> didrocks: who knows - might be related?
+[09:15] <didrocks> veebers: not sure for how long you are still around, but it would be good to check on the machine if you have this .config/dconf directory :)
+[09:15] <sil2100> veebers: good catch!
+[09:16] <veebers> I'll jump on and check it out (if it hasn't been reprovisioned yet)
+[09:16] <sil2100> Since the HUD geometries didn't change really, not sure if anything could have caused a failure there
+[09:16] <didrocks> thanks veebers :)
+[09:17] <veebers> didrocks, sil2100: ls .config/  -> no dconf directory
+[09:17] <didrocks> ahah!
+[09:17] <didrocks> so maybe seb's fix in 0.15.2-0ubuntu3 is still not enough
+[09:18] <didrocks> and then, we are getting an apport dialog which is totally messing our results?
+[09:18] <didrocks> sil2100: wdyt? ^
+[09:18] <didrocks> veebers: btw, those jobs should collect /var/crash if anything, that would be handy
+[09:18] <veebers> sil2100: thanks, I generally take a look at that log file as I find it helpful
+[09:19] <veebers> didrocks: it should use apprt-retrace to grab anything in that folder
+[09:19] <veebers> but lately apport-retrace has been excepting/trackbacking
+[09:19] <didrocks> veebers: apport-retrace is for retracing, isn't it? I meant, just archiving what we have in /var/crash :)
+[09:19] <veebers> I'm considering just grabbing the whole directory instead (like you've just suggested)
+[09:19] <didrocks> yeah
+[09:19] <didrocks> sounds good to me :)
+[09:19] <veebers> didrocks: Ah I see
+[09:20] <veebers> yeah I'll add that first thing in the morning :-)
+[09:20] <didrocks> veebers: meanwhile, what's in this dir?
+[09:20] <didrocks> so that we can maybe debug our today's while you are not around :)
+[09:20] <veebers> on the remote machine? nothing
+[09:20] <didrocks> like putting the .crash file somewhere will be handy (people.canonical.com?)
+[09:20] <didrocks> hum
+[09:20] <didrocks> that's weird
+[09:21] <didrocks> oh
+[09:21] <didrocks> veebers: I guess apport-retrace killed them
+[09:21] <didrocks> that's why we don't get anything anymore
+[09:21] <didrocks> I'll stay on the theory of dconf, and hoping I can reproduce that on a guest session
+[09:22] <veebers> oh they tend to be left there
+[09:22] <veebers> It's just looking right now there is nothing
+[09:22] <didrocks> weird, I thought this would crash
+[09:22] <didrocks> seb128: hey!
+[09:22] <seb128> lut didrocks
+[09:22] <didrocks> how are you?
+[09:22] <seb128> good, you?
+[09:23] <didrocks> well, seems everything is against daily release! :-)
+[09:23] <didrocks> YOU in that case ;)
+[09:23] <didrocks> seb128: not sure when you arrive and if you are seeing our dconf discussion?
+[09:23] <seb128> didrocks, just arrived, I forgot to start my IRC before starting on emails
+[09:23] <seb128> what's up?
+[09:23] <sil2100> veebers: good to know a log like that exists ;)
+[09:23] <didrocks> seb128: so, we have 22 failures on the indicators and 110+ on the unity ones
+[09:23] <veebers> didrocks: Right I better leave for the night. Let me know if there is anything else I can do and I'll hit it in the morning
+[09:23] <didrocks> so 25% :)
+[09:24] <didrocks> veebers: yeah, thanks for hint! let's keep in touch tomorrow :)
+[09:24] <didrocks> veebers: thanks again for looking at those :)
+[09:24] <didrocks> seb128: we have a lot of:
+[09:24] <didrocks> failed to commit changes to dconf: GDBus.Error:org.gtk.GDBus.UnmappedGError.Quark._g_2dfile_2derror_2dquark.Code4
+[09:24] <didrocks> Failed to create file '/home/jenkins/.config/dconf/user.2Q7IRW': No such file or directory
+[09:24] <didrocks> in the logs
+[09:24] <didrocks> however, we do have your latest dconf
+[09:24] <seb128> ok, talk to desrt :p
+[09:24] <didrocks> 0.15.2-0ubuntu3, including debian/patches/git_handle_empty_config.patch then
+[09:24] <seb128> I backported the fixes he told me to backport
+[09:25] <seb128> that fixes guest session/liveCD for me
+[09:25] <seb128> which were broken before
+[09:25] <seb128> I guess it's just a warning
+[09:25] <seb128> but your tests fail on any output?
+[09:25] <didrocks> seb128: well, tests seem to fail everything this is set
+[09:26] <didrocks> like if the new configuration isn't taken into account
+[09:26] <didrocks> and we don't have a ~/.config/dconf
+[09:26] <seb128> grah
+[09:26] <seb128> of course in 0ubuntu3 I forgot to add the patch to the series
+[09:26] <didrocks> seb128: "working on a guest" hum hum ;)
+[09:26] <veebers> didrocks: no worries, see you guys tomorrow
+[09:26] <didrocks> seb128: I was trusting you!!! :-)
+[09:27] <didrocks> veebers: see you tomorrow! you can go to bed with this light of hope ^
+[09:27] <seb128> didrocks, yeah, well 0ubuntu2 was fixing the issue, 0ubuntu3 is just a follow up update I did quickly at midnight when I was supposed to be off for an hour :p
+[09:27] <didrocks> seb128: revert! :-)
+[09:30] <sil2100> ;)
+[09:39] <didrocks> sil2100: oh, btw, I switched to one ws in compiz
+[09:39] <didrocks> sil2100: do you think that some tests will be impacted?
+[09:40] <sil2100> didrocks: in overall?
+[09:40] <didrocks> sil2100: yep :)
+[09:40] <sil2100> didrocks: yes, since there are many switcher tests that assume 4 workspaces and switch to them to test the switcher
+[09:41] <didrocks> sil2100: hum, so maybe I shouldn't have switch in advance
+[09:41] <didrocks> switched*
+[09:41] <sil2100> didrocks: let me check how many tests are there with that
+[09:41] <didrocks> sil2100: ok, waiting for you first then :)
+[09:41] <sil2100> didrocks: that's a good occasion to making the tests better
+[09:41] <sil2100> didrocks: since we can simply not execute those tests that assume more than one workspace ;)
+[09:41] <didrocks> yep :)
+[09:42] <didrocks> sil2100: I guess you'll have to change hsize and vsize
+[09:49] <didrocks> sil2100: any estimate? Should I just revert the change for today?
+[09:52] <sil2100> didrocks: there's a lot of tests with workspaces > 1 requirement, but I'll try fixing that - give me an hour
+[09:53] <didrocks> sil2100: oh, if you can do that in the same run so quickly, this would be awesome and I can include this additional commit :)
+[09:53] <didrocks> sil2100: you do know which keys to change, right? need any help?
+[09:57] <sil2100> Yes, no problem right now
+[10:20] <sil2100> didrocks: anyway, you want the indicator-related tests to be fixed ASAP?
+[10:20] <sil2100> Regarding one workspace?
+[10:20] <didrocks> sil2100: I relaunched the indicator already, just to ensure we have less failures
+[10:20] <didrocks> sil2100: but no, just have one MP with everything if possible
+[10:21] <luv> hi, so Im working on this patch to add list of open windows to GetMenus() ... it's basically based on a for loop for ( auto w: Windows() ) { }
+[10:22] <luv> in the for loop I would like to initialize the callbacks for when a menuitem is activated. What would you recommend? closures?
+[10:43] <rperier> sil2100: I plan to work on bug 1019457 . (The previous one about the trash is still under discussion) What do you think ? Is it easy ?
+[10:43] <ubot5> bug 1019457 in unity (Ubuntu) "The Dash closes when trying to switch to the Command lens (Alt+F2)" [Medium,Confirmed] https://launchpad.net/bugs/1019457
+[10:43] <rperier> hi btw
+[10:45] <didrocks> sil2100: if you are interested, I've done a rerun of the indicator tests
+[10:45] <didrocks> it's weird that nvidia just has one failure though, as more tests are failing
+[10:45] <didrocks> (on the others)
+[10:46] <didrocks> which seems to be multiple workspace related
+[10:46] <sil2100> huh
+[10:46] <didrocks> ah, less tests run
+[10:46] <didrocks> on nvidia
+[10:47] <seb128> didrocks, so the dconf issue is resolved?
+[10:47] <didrocks> seb128: we have less failures, so I guess so, the rest seems to be related to hsize and vsize == 1
+[10:48] <didrocks> seb128: I'll keep you posted once we can run the unity ones
+[10:48] <didrocks> (will probably be this afternoon)
+[10:49] <Trevinho> didrocks, seb128: are you referring to the impossibility to change the vsize/hsize values?ù
+[10:50] <didrocks> Trevinho: hum? no, just that the tests were written with in mind that hsize,vsize was > 1
+[10:50] <didrocks> Trevinho: dconf had another issue tonight, but it seems to be now fixed
+[10:51] <Trevinho> didrocks: mh ok... because both me and bschaefer (and others in the unity team) had that issue
+[10:51] <sil2100> didrocks: I'm almost done
+[10:51] <Trevinho> didrocks: mh, ok.. I was still upgrading last version
+[10:53] <Trevinho> didrocks: yeah, it's fixed now... :)
+[10:53] <didrocks> great :)
+[10:54] <Trevinho> :)
+[10:54] <luv> hmm
+[10:57] <luv> other approach I thought about would be to set up the menuitems with an id and store a map which would translate id->Window_number
+[10:57] <luv> though this doesnt seem so smooth
+[10:58] <luv> would be nice if I could send custom data to the menuitem-activated callback
+[11:01] <sil2100> rperier: oh! That seems like a nice bug to start out with indeed!
+[11:02] <sil2100> rperier: if you want to work on it, probably best if you 'assign' yourself to this bug - so that no duplication of work happens
+[11:02] <sil2100> luv: hard to say which one is better..
+=== _salem is now known as salem_
+=== salem_ is now known as _salem
+=== MacSlow is now known as MacSlow|lunch
+=== _salem is now known as salem_
+[12:34] <MCR1> andyrock, didrocks, Trevinho: Hi :) I noticed we have no default shortcut for Fullscreening/Un-Fullscreening windows... I would like to add Alt+Enter for that (like on win)... What is the procedure to get this approved ?
+[12:35] <didrocks> MCR1: the procedure is to ping JohnLea ^
+[12:35] <andyrock> MCR1, yeah ping John
+[12:35] <didrocks> MCR1: I'm unsure that all applications have a fullscreen feature
+[12:35] <didrocks> and that they are using the same shortcut for it
+[12:35] <MCR1> on windows not, on Linux they have
+[12:35] <andyrock> MCR1, f11
+[12:35] <didrocks> like chrome has something different from totem
+[12:36] <didrocks> and it seems to me this feature is per application
+[12:36] <MCR1> andyrock: F11 just will work 4 some applications
+[12:36] <didrocks> not sure that compiz has anything to deal with that
+[12:36] <MCR1> I want it for all of them
+[12:36] <MCR1> yes it has
+[12:36] <didrocks> MCR1: how compiz can command fullscreen on firefox/chromium?
+[12:36] <andyrock> MCR1, no it's an app shortcut but it's the de-facto standard
+[12:36] <Trevinho> didrocks: it's not command related...
+[12:37] <Trevinho> didrocks: compiz just draw that window fullscreen undecorated
+[12:37] <Trevinho> MCR1: do you meant thtat?
+[12:37] <MCR1> didrocks, andyrock: CCSM-> Extra WM Actions->Toggle Fullscreen
+[12:38] <MCR1> I got that shortcut here since ages and it works for all applications
+[12:38] <MCR1> those that already have F11 defined will also work
+[12:38] <MCR1> then the CCSM shortcut does the same
+[12:38] <MCR1> for example Chromium will enter F11 fullscreen if you hit Alt+Enter
+[12:38] <didrocks> Trevinho: yeah, that's globally what I mean
+[12:39] <didrocks> MCR1: are you sure it's doing the same? like really entering the fullscreen mode of the app?
+[12:39] <MCR1> and it acts like you would have hit F11
+[12:39] <didrocks> and not just take the window, remove decoration and put it fullscreen?
+[12:39] <didrocks> interesting
+[12:39] <MCR1> didrocks: yes
+[12:39] <Trevinho> didrocks: however trying it both firefox and chrome seem to undestand that command and they behave as you'd press f11
+[12:39] <MCR1> Trevinho: yes, exactly
+[12:40] <didrocks> will worth testing with games and other apps
+[12:40] <Trevinho> didrocks: probably they monitor their wm hints and based on them they change UI as well (nice thing)
+[12:40] <MCR1> but win users used to Alt+Enter will have that for media players for example
+[12:40] <didrocks> Trevinho: possible, yeah
+[12:40] <Trevinho> didrocks: frecell works
+[12:41] <MCR1> I also would like to change Ctrl+Alt+Del to not present the gnome standard (log-out) but the gnome-system-monitor, processes tab...
+[12:41] <MCR1> but that is another story
+[12:41] <Trevinho> didrocks: it seems gtk apps are working as well
+[12:41] <MCR1> Trevinho: As I said - I am using it since ages
+[12:42] <Trevinho> also evince...
+[12:42] <Trevinho> MCR1: yeah, I was using that too at the compiz times, then I forgot about that :)
+[12:42] <MCR1> hehe
+[12:43] <MCR1> I noticed our standard-windows shortcuts have a lot of place left (see the shortcut overlay)
+[12:43] <MCR1> JohnLea: ^^ Please comment on it...
+[12:43] <MCR1> JohnLea: Then you can get it implemented by tomorrow ;)
+[12:44] <Trevinho> MCR1: so, it's nice for me... ask more to JohnLea (or open a bug for ayatana-design);
+[12:45] <MCR1> Trevinho: TBH, I did that a long time ago, but design is not really fast to respond :(
+=== dandrader_ is now known as dandrader|afk
+[12:45] <Trevinho> MCR1: eh, you know we're all busy
+[12:45] <MCR1> sure.
+[12:46] <MCR1> bug 1069165
+[12:46] <ubot5> bug 1069165 in Unity "Unity Standard Shortcuts: Make it easier for Windows users" [Undecided,Incomplete] https://launchpad.net/bugs/1069165
+[12:50] <MCR1> Trevinho: Btw, I am not sure which commit caused it, but Icon Edge Illumination is broken...
+[12:50] <luv> well, that's double-sided
+[12:50] <Trevinho> MCR1: mh, I've noticed that...
+[12:50] <Trevinho> MCR1: would you be so kind to give it a look? :)
+[12:51] <MCR1> you mean test your fix ?
+[12:51] <luv> changing current shortcuts is not really a good idea as people are already using them - and you certainly should not annoy current users, that's more important than getting new users
+[12:51] <MCR1> luv: You are right with Ctrl+Alt+Del, but for Fullscreen/Un-Fullscreen there is nothing to change
+[12:52] <MCR1> as it is not there yet (this shortcut)
+[12:52] <luv> well, it might clash with current applications anyway!
+[12:52] <luv> terminator, vim ...
+[12:52] <mitya57> AFAIR windows now uses Ctrl+Shift+Escape for task manager, that's not bound to anything in Ubuntu
+[12:53] <MCR1> mitya57: Really ? I did not know that, hehe - sounds like a funny shortcut
+[12:53] <luv> that's why i like having all shortcuts on Super+key because i can use the rest safely
+[12:54] <luv> without nasty suprises
+[12:54] <MCR1> luv: The most important thing is to not have anything hardcoded...
+[12:54] <luv> so, it's not as simple as it seems .... as is always the case when designing and writing software
+[12:55] <MCR1> luv: I mean hardcoded shortcuts
+[12:55] <MCR1> luv: I've eliminated a few of those already
+[12:55] <MCR1> but a few are still left (TODO)
+[12:55] <luv> well that's certainly nice, but still, I use alt+enter as a terminator shortcut now, I update ubuntu, press alt+enter and it will do something totally different
+[12:55] <mitya57> MCR1: google says I'm right: http://dottech.org/26520/use-ctrl-shift-esc-to-quickly-bring-up-windows-task-manager/
+[12:55] <luv> you can imagine my reaction (-:
+[12:56] <MCR1> luv: sure...
+[12:56] <didrocks> bregma: hey, geis is daily-built, why have you done a manual upload?
+[12:56] <didrocks> cyphermox: FYI ^
+[12:57] <didrocks> and https://code.launchpad.net/~oif-team/geis/trunk doesn't reflect anymore what you uploaded
+[12:57] <MCR1> luv: But I guess it takes only a few seconds 4 you to change it in CCSM, no ?
+[12:58] <didrocks> ok my bad, need coffee
+[12:58] <didrocks> bregma: unping, got tricked by ******* thunderbird
+[12:58] <luv> MCR1: few minutes i would say
+[12:58] <MCR1> (I recommend the CCSM search function -> it is excellent ;))
+[12:59] <luv> well i won't get any results for "alt+enter" though ;)
+[12:59] <MCR1> try fullscreen
+[12:59] <MCR1> (and you can also search for shortcuts in CCSM, btw)
+[13:00] <luv> in my 12.04lts "no matches found" :-)
+[13:00] <MCR1> whoot ?
+[13:00] <luv> oh, i see, advanced search
+[13:00] <MCR1> CCSM->Advanced Search
+[13:00] <luv> that's neat
+[13:00] <MCR1> yep
+=== dandrader|afk is now known as dandrader
+[13:01] <MCR1> CCSM is excellent - I still do not understand why it is not in standard-ubuntu
+[13:01] <MCR1> I mean I understand it was unstable
+[13:01] <MCR1> but this is soon history
+[13:01] <MCR1> on raring it hardly crashes nowadays...
+[13:02] <MCR1> (but still some work to do...)
+[13:02] <MCR1> mitya57: Thx 4 the info :)
+[13:06] <rperier> sil2100: ping
+[13:29] <JohnLea> MCR1; the Ctrl Alt Del issue is a duplicate of bug #890747  , will you be able to fix this issue?
+[13:29] <ubot5> bug 890747 in gnome-settings-daemon (Ubuntu) "Keyboard shortcut - Ctrl Alt Del doesn't do what most people typing it would expect" [High,Triaged] https://launchpad.net/bugs/890747
+[13:29] <MCR1> Not 100% sure, but I guess so...
+[13:30] <MCR1> Would need to change the gnome-compatibility CCSM options I guess - pretty sure I could do it
+[13:30] <JohnLea> MCR1; btw, if there is an important bug you need me to look at, ping me in IRC,
+[13:30] <JohnLea> MCR1; cool ;-)
+[13:30] <JohnLea> MCR1: would be good to get this fixed
+[13:30] <MCR1> ok, will do - Thanks a lot. You are a bit hard to get to ;)
+[13:31] <MCR1> okay - I am on it in the next days
+[13:31] <MCR1> expect it to be fixed next week...
+[13:31] <JohnLea> MCR1; I have been out of the office for a month over christmas, but am back now
+[13:31] <MCR1> cool
+[13:31] <JohnLea> MRC1; great, thx!
+[13:31] <MCR1> good to know
+[13:31] <MCR1> yw
+[13:31] <MCR1> & thanks 4 the approval
+[13:32] <MCR1> JohnLea: If you are here - please also approve this: bug 1104029
+[13:32] <ubot5> bug 1104029 in Unity "Unity Shortcut Overlay: Minor problems remain" [Undecided,New] https://launchpad.net/bugs/1104029
+[13:33] <MCR1> JohnLea: The last text revision of the shortcut overlay was done by me (with help of bschaefer) - but I guess I missed those last time
+[13:33] <MCR1> JohnLea: I am working on fixing that right now..
+[13:34] <davidcalle> JohnLea, hi, since you are looking at Unity bugs, I would need your thoughts on this one : https://bugs.launchpad.net/unity/+bug/1098769
+[13:34] <ubot5> Launchpad bug 1098769 in unity (Ubuntu) "Previews should not enlarge small images" [Undecided,New]
+[13:48] <JohnLea> MCR1; re. the shortcut that says "Restores or minimises the window", this is the desired behaviour, we should really fix the issue with it not minimising windows rather than change the text ;-)  Re. the spelling issue, "Minimises" is the correct spelling in the UK so this is a internationalisation issue.  Re. "current window" I think this is ok for now, both "selected window" and "focused window" would also work, and "currently selec
+[13:48] <JohnLea> ted window" would be the most accurate but too verbose.  I'm not sure which is better, I'll try to make sure we look at when we do the next round of user testing to try to get some data
+[13:49] <JohnLea> MCR1; any bug that deals with user facing changes should also be maked as 'also affects project'  "ayatana-design"
+[13:49] <JohnLea> MCR1; if this isn't added to bugs we don't see them
+[13:49] <MCR1> JohnLea: ok
+[13:51] <JohnLea> MCR1; If you are interested in taking a look at fixing it, the window minimise issue is bug #966099
+[13:51] <ubot5> bug 966099 in unity (Ubuntu) "Keyboard shortcut overlay says Ctrl+Super+Down "minimises" the current window, but it doesn't" [High,Triaged] https://launchpad.net/bugs/966099
+[13:53] <JohnLea> davidcalle; yes, previews should never upscale images, they should only down scale images.  If a image is too small, it should be rendered at 100% and centred vertically and horizontally in the preview image area
+[13:53] <MCR1> JohnLea: Ok, will do that also. Probably I will find some Compiz shortcut that does minimize, but I will have to change a bit more than just a shortcut to fix this...
+[13:55] <JohnLea> MCR1; the issue with this bug is that the action of the keyboard shortcut depends on the window's state e.g. "restore the window if it is maximised" or "minimise the window if it is restored".  Compiz can't do this at the moment, but if my memory serves me correctly the last time this was discussed it was mentioned that it would not be too hard to fix (but my memory might be wrong).  I think I once discussed this with didrocks , the
+[13:55] <JohnLea> other person to ask about this is smspillaz
+[13:57] <davidcalle> JohnLea, thanks for the confirmation
+[13:58] <MCR1> JohnLea: Yes - that is exactly the problem - it would need quite some changes to work (not sure how to accomplish that best adhoc)...
+[13:58] <MCR1> Thanks - I've contact to Sam and Daniel ;)
+[13:59] <MCR1> JohnLea: Thanks 4 all your time and all the information. Highly appreciated. So thanks alot once again - I've got something to work on now ;)
+[14:00] <JohnLea> davidcalle, do you need me to ack a bug for this or contact anyone to help get this fixed?  If you haven't already, you might want to discuss this with dednick
+[14:01] <JohnLea> MCR1; no thank you ;-)  Improving quality is the most important feature we need in Ubuntu!
+[14:01] <MCR1> That is my playn ;)
+[14:01] <MCR1> *plan
+[14:02] <dednick> JohnLea, davidcalle: I thought we discussed a maximum scaling factor for the images? Was quite some time ago though...
+[14:02] <davidcalle> JohnLea, I haven't contacted anyone yet. Just wanted to make sure you knew about it first.
+=== MacSlow|lunch is now known as MacSlow
+[14:39] <mterry> So those failures this morning were just due to the workspace snafu right?
+[14:40] <mterry> (autopilot failures I mean)
+[15:00] <JohnLea> davidcalle; thanks, yes not scaling too small images sounds good to me
+=== dandrader is now known as dandrader|afk
+=== dandrader|afk is now known as dandrader
+[15:30] <rperier> sil2100: oh sorry I did not see your answer ;)
+[15:30] <rperier> (I did not receive the corresponding notification... strange...)
+[15:35] <sil2100> rperier: did it reach now ;) ?
+[15:35] <rperier> yeah :)
+[15:36] <rperier> I assigned it to me
+[15:37] <rperier> oh btw, if I start unity in this way:  "unity-env; unity --replace" the unity from trunk won't put craps into my existing settings ?
+[15:37] <rperier> (is it really separated ?)
+[15:37] <rperier> (I am talking about .config, .local and so on)
+[15:39] <sil2100> hm, I'm not entirely sure anymore ;)
+[15:40] <rperier> mhhh I should probably export XDG_CONFIG_HOME and XDG_DATA_HOME in unity-env to be sure...
+[15:40] <didrocks> sil2100: hum, it seems we still have a lot of failures…
+[15:41] <didrocks> sil2100: look at ati/nvidia…
+[15:41] <didrocks> unity job
+[15:41] <sil2100> didrocks: in indicators, or in unity autopilot?
+[15:41] <didrocks> sil2100: unity
+[15:42] <sil2100> Build 490?
+[15:43] <didrocks> sil2100: 49 you mean?
+[15:43] <didrocks> oupss
+[15:43] <didrocks> 48*
+[15:43] <didrocks> ps-unity-autopilot-release-testing
+[15:43] <didrocks> sil2100: ignore intel, it was a provisionning machine issue
+[15:44] <sil2100> Ah, ok, sorry, had the wrong job loaded ;)
+[15:44] <sil2100> Holy
+[15:44] <sil2100> hm, ok, wait, these seem to be some autopilot issues
+[15:45] <didrocks> sil2100: I hope all this mess has just ONE issue :)
+[15:46] <sil2100> didrocks: I think I saw once the "Class 'SwitcherController' has no attribute 'show_desktop_disabled'." issue before somewhere!
+[15:46] <sil2100> btw.
+[15:46] <sil2100> Ah, nevermind
+[15:47] <sil2100> Funny, build 47 has only 6 failures, while suddenly 48 - blam, 183 failures ;)
+[15:49] <didrocks> sil2100: hum, build 47 didn't start at all
+[15:49] <didrocks> see the -326 tests running
+[16:00] <didrocks> sil2100: nothing obvious?
+[16:01] <sil2100> didrocks: uno momento more ;)?
+[16:03] <didrocks> sil2100: evidenza :)
+[16:03] <didrocks> mterry: hangout? :)
+[16:03] <mterry> didrocks, sure
+[16:04] <didrocks> it's linked to the invitation
+[16:06] <mterry> oh
+[16:07] <mterry> hrm
+[16:08] <sil2100> didrocks: ok, I see one possible reason for some of the failures ;)
+[16:08] <mterry> didrocks, it stopped working, am trying to reconnect
+[16:11] <didrocks> sil2100: I'm lightning a candle
+[16:22] <sil2100> didrocks: ok, so actually, we'll have to fix unity, I'll prepare a merge request - due to some code refactoring, the properties that were normally added for introspection in the switcher's Controller now are actuallty in the pimpl, while the new Controller class doesn't export them
+[16:22] <sil2100> didrocks: so I'll re-add the necessary properties that we would need for the switcher
+[16:23] <didrocks> sil2100: ah interesting, and good catch! :)
+[16:23] <didrocks> sil2100: sure, keep me posted ;)
+[16:25] <bregma> sil2100, I refactoring the Switcher to add the properties back in already, is there a bug number for this failure?
+[16:26] <sil2100> bregma: excellent! No, no bug number yet - we just have a lot of failures due to the missing show_desktop_disabled property
+[16:27] <sil2100> The lack of the rest, like monitor, detail_mode, are possibly also problematic
+[16:27] <didrocks> sil2100: it's not the only property lacking
+[16:27] <didrocks> sil2100: I click and yeah, other properties are lacking
+[16:27] <didrocks> 2 solutions, either reverting the whole factoring (:/) or ensuring we are exposing quickly everything
+[16:27] <sil2100> bregma: is there a branch and a merge proposal already?
+[16:27] <didrocks> bregma: wdyt? ^
+[16:28] <sil2100> bregma: would be good if all properties from ShellController would be accessible through Controller
+[16:28] <sil2100> Possibly as soon as possible ;p
+[16:28] <bregma> some of the properties were in a MP that went in late yesterday, the rest will come today
+[16:28] <sil2100> bregma: excellent! \o
+[16:28] <bregma> some of those things are internal state and do not really belong as publicly introspectable
+=== dandrader is now known as dandrader|afk
+[16:29] <bregma> otherwise, we're stuck with bad code because the whitebox tests require it
+=== ricotz_ is now known as ricotz
+[16:30] <didrocks>  bregma: right, but you are stucking the releases right now :)
+[16:34] <sil2100> bregma: if needed, I could try making autopilot not use some of those properties - just tell me which of the existing ones you think shouldn't be introspected
+[16:35] <bregma> sil2100, I'm just going to make all the previously public properties public again, we can worry about the autopilot tests later when the time comes
+[16:37] <sil2100> bregma: ok, thanks
+[16:40] <sil2100> bregma: give us a sign once there's a merge request to review!
+[16:59] <bregma> sil2100, re-added the introspectable properties as a part of https://code.launchpad.net/~bregma/unity/refactor-switcher-controller-1/+merge/144743
+[16:59] <bregma> 'cos it was already proposed and is about separating the private and public parts anyway
+[17:02] <Sid_Payton> Hello, could anyone help me with a basic set of rules for creating a GUI? It was wondering what aspects a designer has to consider for whatever (desktop, phone) he is targeting. Are there some golden rules like Miller's magical seven? If this isn't the right place to ask these question please tell me where I should go to. Thanks
+[17:14] <rye> ping people, https://bugs.launchpad.net/ubuntu/+source/unity/+bug/877778 - seems that there is a regression in raring with exactly the same description
+[17:14] <ubot5> Launchpad bug 877778 in unity (Ubuntu) "Showdesktoped window contents invisible in window spread" [High,Fix released]
+[17:15] <rye> Should I re-open the bug or file another one?
+[17:18] <bschaefer> rye, I would open a new once, since that one was fixed in 5.10
+[17:18] <rye> bschaefer: ok
+[17:18] <bschaefer> rye, worst case, someone goes and marks that as a dup, and reopens the other one :)
+[17:18] <rye> :)
+[17:20] <fginther> sil2100, did you create a bug for the unity-autopilot-release failures
+[17:20] <fginther> ?
+[17:23] <rye> also, it looks like alt-tabbing to show desktop broke - now it requires two alt-tabs
+[17:24] <bschaefer> well it depends...show desktop has 2 states, the first time you use it, it hides all windows. If you don't use it again, and restore the windows manually
+[17:24] <bschaefer> then it still thinks all the windows are hidden
+[17:24] <bschaefer> so if you try again, it will attempt to un-hide all the windows, (which makes it look like it doesn't work)
+[17:26] <bregma> wow, doesn;t that sound confusing?
+[17:26] <bschaefer> yes it is...
+[17:29] <rye> bschaefer: uhm... can it...mm check that there are windows to hide?
+[17:30] <rye> and hide them if there are at least one? But then it needs to track what windows were already minimized
+[17:30] <rye> hm
+[17:31] <rye> or clicking one window should display all others too
+[17:31] <bschaefer> yeah, but someone has to do it :)
+[17:31] <rye> but the current perception is that it is broken and requires hitting 2 times to show desktop
+[17:31] <bschaefer> at best, i would think changing the icon to indicate the toggle
+[17:33] <rye> bschaefer: I don't think, that would not help much, "I want to show the desktop? Huh? SHOW ME THE DESKTOP"
+[17:33] <sil2100> fginther: one moment
+[17:33] <bschaefer> well, even if you were to check if all the windows were 'un-hidden' there is that change you have 1 or 2 windows still hidden creating the same confusion
+[17:33]  * rye was quite surprised to see that one friend of mine actually uses that functionality quite often. I "use" that only when I hit it by accident
+[17:33] <bschaefer> so really, do you want hitting show desktop to unhide all the windows?
+[17:34] <rye> bschaefer: uh-huh, tracking windows and that starts to be messy
+[17:34] <bschaefer> yeah, you can remove it from the switcher in CCSM->Unity Plugin
+[17:34]  * bschaefer removes it
+[17:34] <bregma> is there a separate bug for the two-click-to-show-desktop ?  Ayatana design should have some input on whether it's a functionality bug or not.
+[17:35] <bschaefer> yes there is..popy made it a while ago, let me go dig that up
+[17:35] <sil2100> bregma: thanks for the branch!
+[17:36] <rye> bregma: https://bugs.launchpad.net/unity/+bug/966030 ?
+[17:36] <ubot5> Launchpad bug 966030 in Unity ""Show desktop" in alt-tab doesn't always work" [Medium,Confirmed]
+[17:36] <bschaefer> yup
+[17:37]  * bschaefer assigns ayatana
+[17:37] <rye> bregma: aha, it is not seen at all when a window is fullscreen - all other windows are fading in _behind_ (well, i don't know whether they actually fade in there)
+[17:37] <rye> good to know
+[17:37]  * rye marks as affected
+[17:38] <bschaefer> rye, but if you only use it by accident in the switcher you can remove it :)
+[17:39] <rye> bschaefer: I will then never know whether it is fixed :)
+[17:39] <bschaefer> rye, you can subscribe your self to the bug report to get emails!
+[17:39] <bschaefer> lovely emails!
+[17:39] <rye> bschaefer: -ETOOMANYEMAILS
+[17:40] <bschaefer> haha, yeah, there are a lot of generated emails
+[17:40] <bregma> I currently have 1642 unread emails in my Unity Bugs folder
+[17:40] <bregma> I suspect I'm never going to get caught up
+[17:42]  * bschaefer has 4212...
+[17:42] <bschaefer> I should attempt to go through those more
+[17:42] <bschaefer> but thats compiz/unity/nux bugs
+[17:43] <rye> or just browse these on launchpad
+[17:44] <rye> Also, personal "THANK YOU!" to whoever implemented the new blur. It's just so fast I actually started browsing through  unity/nux branches to see what was that :)
+[17:45] <rye> well, to Nicolas but it does not look like he's here
+[17:50] <bregma> it's already pub time in the UK
+[17:53] <didrocks> sil2100: bregma: was on a hangout, thanks you! I think it doesn't worth running a rebuild right now as next daily release will kick in soon enough once your unity branch will get merged
+[17:57] <sil2100> \o/
+[17:58] <sil2100> didrocks: once you have more time, could you take a look and push (if ok) the quantal branches for bamf and u-l-f? Thanks in advance ;)
+[17:58] <didrocks> sil2100: will probably be tomorrow morning, but will do :)
+[17:59] <didrocks> you have a tab opened! :)
+=== dandrader|afk is now known as dandrader
+[18:15] <sil2100> didrocks: :)
+[19:19] <rperier> bug 1019457 fixed, I proposed a merge request (I can wait until tomorrow, there's no hurry)
+[19:19] <rperier> ;)
+[19:19] <ubot5> bug 1019457 in unity (Ubuntu) "The Dash closes when trying to switch to the Command lens (Alt+F2)" [Medium,Confirmed] https://launchpad.net/bugs/1019457
+[19:21] <bschaefer> rperier, make sure you link your branch to that bug
+[19:29] <rperier> bschaefer: I don't remember how to do that
+[19:29] <rperier> let me check
+[19:29] <bschaefer> rperier, go to your branch here: https://code.launchpad.net/~rperier/unity/exec-len
+[19:29] <bschaefer> and under Link Bug Report
+[19:29] <bschaefer> put the # of the bug
+[19:29] <rperier> I found !
+[19:30] <rperier> thanks
+[19:30] <bschaefer> rperier, np, and also one thing you'll need is a test with the fix :)
+[19:32] <rperier> bug linked
+[19:32] <rperier> bschaefer: a unit test or an interactive test ?
+[19:32] <bregma> all you should need to do is make sure the bug number is mentioned in the changelog or commit message (preferrably using the (lp: #NNNNN) format)
+[19:33] <bschaefer> rperier, well from that bug, an interactive test, but always  try a unit test first
+[19:33] <rperier> the bug number will be concatenated to the commit message, as I linked the bug to the branch. no ?
+[19:34] <bschaefer> rperier, so you'll have to take a loot at the autopilot stuff we have (sudo apt-get install unity-autopilot)
+[19:34] <rperier> I can write a test case into an existing unit test, sure
+[19:35] <rperier> bschaefer: looking
+[19:35] <bschaefer> rperier, well I don't think any unit tests are set up for opening exec mode, then going to the dash and asserting that the dash doesn't close
+[19:38] <bschaefer> so in autopilot you can just do "Open the Dash, Attempt to Open exec mode, Assert the dash is still open"
+[19:42] <rperier> mhhh I see
+[19:43] <bschaefer> here is what a test could look like in autopilot: http://paste.ubuntu.com/1567001/
+[19:43] <rperier> I can make better, "For all available len open the dash, attempt to open exec mode, assert the dash is still open"
+[19:43] <bschaefer> rperier, which should test what you want (I haven't ran it)
+[19:44] <bschaefer> rperier, really you just need to test that the dash it self can go from the Dash to the Command Lens with out exiting. Make sure you test that the test fails without your fix
+[19:44] <rperier> oh the test is written in python
+[19:44] <bschaefer> yup, look in unity/tests/autopilot/unity/tests/test_dash.py
+[19:45] <rperier> I will write the test tomorrow, I have to go now
+[19:45] <rperier> thanks for your help about the test
+[19:46] <bschaefer> np!
+[19:46] <rperier> ;)
+[19:46] <bschaefer> c ya, and thanks for the fix :)
+[19:46] <rperier> yw :)
+=== salem_ is now known as _salem
+[21:17] <chiluk> not sure if this is the right place, but I love the new unity dash icon in raring that was pushed in recently.  Kudos to whoever did it.
+[21:47] <qengho> Hi all.  I have a machine that unity is unusable on.  I want to help make it better.
+[21:47] <qengho> It's up to date with raring right now.
+[21:48] <popey> qengho: what spec is the machine?
+[21:48] <seb128> qengho, define "unusable"?
+[21:51] <qengho> popey: it's custom-built, somewhat beefy.  The interesting part is that the video card is Nvidia GeForce 7900 GS.  xserver-xorg-video-nouveau=1:1.0.6-0ubuntu1
+[21:51] <popey> 7900 isn't what I'd call "beefy"
+[21:52] <popey> its a 6 year old card
+[21:52] <qengho> Well, not that, but the rest of the machine.
+[21:53] <qengho> Still, six years old should be far far more than enough.
+[21:53] <popey> the card matters though  ☺
+[21:54] <bschaefer> qengho, well what happens when you attempt to start unity?
+[21:58] <qengho> Just started afresh.  First glitch is when dragging a window, I got some harsh flashes of an opaque triangle occupying the NW-SW-NE of the whole display.
+[22:00] <qengho> That's hard to reproduce again. Not sure what triggered it.
+[22:02] <qengho> Next I can reproduce easily. I can point a webcam off this computer (not the one in question) at the display so you can see for yourself.  GOOG Hangout, anyone?
+[22:03] <bschaefer> qengho, well if that is happening you should file a bug about it, along with a video or screenshot if you
+[22:03] <bschaefer> qengho, also getting specs on your machine added to the bug report would be good, using apport-bug
+[22:05] <popey> qengho: have you reproduced the bug with the nvidia binary driver instead of nouveau?
+[22:06] <qengho> popey: no, I haven't tried nvidia's driver.
+[22:06] <popey> please do. i have seen similar issues which only occur on the noueveau driver
+[22:08] <qengho> popey: Okay, I'll try. Is that what we want to tell people to do?
+[22:08] <popey> its what I'd do if I was experiencing what you are seeing
+[22:09] <qengho> I usually just keep nouveau driver and flip to gnome-shell, which doesn't trigger these problems.
+[22:10] <popey> GNOME shell probably isnt as demanding on the 3d card
+[22:10] <qengho> That is probably true.
+[22:10] <qengho> Can I make unity less demanding, then?
+[22:23] <popey> qengho: if you're a developer you could look at the unity and compiz code and see where we can improve performance, or look at existing bugs in that area..
+[22:23] <qengho> popey: right, thanks.
+[22:25] <qengho> Last time I tried to debug my window manager, I got stuck. Couldn't get another "f" in the GDB console because the window didn't have focus.  :)
+[22:26] <popey> i tend to do that remotely via ssh
+[22:26] <qengho> popey: what do you do? Start in session, and then attach from outside?
+[22:26] <popey> yes
+[22:27] <bschaefer> qengho, well there are few things you can disable...
+[22:28] <qengho> What's the equivalent of "unity --reset" now?  Move away some config directory?
+[22:28] <bschaefer> unity
+[22:28] <bschaefer> 'unity'
+[22:41] <Controlsfreek> I'm new to unity development. Is there documentation somewhere the explains how LauncherOptions and nux::Property are stored/loaded?
+[22:43] <bschaefer> Controlsfreek, nothing besides the source code :)
+[22:43] <Controlsfreek> bschaefer, ha okay.
+[22:44] <bschaefer> Controlsfreek, nux::Property stores <Type> and when it gets changes emits a signal
+[22:44] <Controlsfreek> bschaefer, yeah im with you so far. what causes it to change though? where/when does the load happen
+[22:44] <bschaefer> say you have a Property a<bool> and a is set to false.
+[22:45] <bschaefer> if you change a = true, then a signal called changed is emited
+[22:45] <bschaefer> which you can point to function to do stuff based on that variable change
+[22:46] <Controlsfreek> bschaefer, I follow you- I see how that happens with LauncherOptions. I'm going a step earlier in the process... assuming when Unity starts up, it loads configuration from disk. Cant figure out when that happens
+[22:46] <Controlsfreek> what causes that to happen
+[22:46] <bschaefer> Controlsfreek, what causes the variable to change?
+[22:47] <bschaefer> Controlsfreek, it acts like a normal variable with side effects
+[22:47] <Controlsfreek> Controlsfreek, when is the configuration loaded from disk
+[22:47] <bschaefer> hmm when Compiz loads unity as a plugin it goes through and does all of that...I would think
+[22:48] <bschaefer> though i haven't dug through that bit of code really, Trevinho could know more about those parts
+[22:48] <Controlsfreek> bschaefer, Ah yes, its that process that I'm trying to learn. I'll look at it from that angle. thanks
+[22:48] <bschaefer> Controlsfreek, np, it takes a while to get the stack understood (like months)
+[22:49] <bschaefer> so pretty much compiz loads unity as a plugin (just like any old plugin from compiz)
+[22:49] <Controlsfreek> bschaefer, Okay, so i'm not the only one who's in over their head :-)
+[22:49] <bschaefer> Controlsfreek, yeeah, the stack gets complicated :)
+[22:50] <Controlsfreek> bschaefer, no problem, i'll keep digging. Thanks for the nudge in the right direction.
+[22:51] <bschaefer> Controlsfreek, good luck, if you get stuck dont' hesitate to ping me :)
+[22:51] <Controlsfreek> bschaefer, I'm trying to load the source in an IDE to make things a little easier on myself as far as learning. Do you guys develop in eclipse or something? or are you all hardcore text editor people
+[22:51] <bschaefer> Controlsfreek, hmm I just use vim
+[22:52] <bschaefer> Controlsfreek, others use Sublime 2, which i've heard good things about
+[22:53] <Controlsfreek> bschaefer, ok. I have it compiling from the command line, so im basically just using the IDE to browse/search the code at the moment. Was hoping it would make debugging easier.
+[22:53] <bschaefer> Controlsfreek, I put this in my .bashrc which makes searching very easy
+[22:53] <bschaefer> g(){
+[22:53] <bschaefer>   grep -Hnri --color=always "$@"
+[22:53] <bschaefer> }
+[22:54] <bschaefer> which you can go to say unity/dash/ and do g ::Show *
+[22:55] <Controlsfreek> bschaefer, so basically that spits the code out with keywords highlighted and such?
+[22:55] <bschaefer> Controlsfreek, yup :)
+[22:55] <Controlsfreek> sweet. throw that one in the bag of tricks
+[22:55] <bschaefer> Controlsfreek, yeah, I use grep the most, and if you ever need to do use a debugger go to a tty and type unity --advanced-debug
+[22:56] <bschaefer> which will bring you into gdb
+[23:00] <Controlsfreek> bschaefer, excellent thanks for the tips
+[23:00] <bschaefer> Controlsfreek, np! Have fun :)
+[23:03] <Controlsfreek> bschaefer, what is the main entry point for the plugin? Is it in nux or in unity?
+[23:03] <bschaefer> Controlsfreek, unity, in unityshell.cpp
+[23:04] <Controlsfreek> bschaefer, k. thanks.
+[23:04] <bschaefer> unity/plugin/unityshell/src/unityshell.cpp is the main workhorse of unity (also a huge file that is a bit crazy....)
+[23:05] <Controlsfreek> bschaefer, okay, I'll do some homework on it. Hopefully I'll be able to squash a bug or two
+[23:06] <bschaefer> Controlsfreek, yeah, there are lots of bugs to fix :)
+[23:12] <Controlsfreek> bschaefer, was looking at this one: https://bugs.launchpad.net/unity/+bug/1099815. Seems like its just a timing issue with these options loading after the launcher is drawn
+[23:12] <ubot5> Launchpad bug 1099815 in unity (Ubuntu) "Launcher starts with default size then jumps to configured one on login" [Undecided,New]
+[23:13] <bschaefer> Controlsfreek, well if you look at the default size in Launcher.cpp, you'll see the width is set to 65
+[23:13] <bschaefer> which that 65 gets changed in unityshell.cpp when the compiz options get loaded
+[23:14] <Controlsfreek> bschaefer, yeah i saw the 65, but didnt see where the options were loading
+[23:15] <bschaefer> Controlsfreek, its in unityshell where it sets the options of each controller
+[23:16] <bschaefer> unityshell.cpp line 3150
+[23:16] <bschaefer> its in a lambda function set to trigger when size_changed emits
+[23:18] <bschaefer> Controlsfreek, what really needs to happen, is we need to set the launcher width before its created
+[23:19] <bschaefer> which it looks like size_changed is a nux signal for a nux::Area
+[23:21] <Controlsfreek> bschaefer, I was thinking it was rendering the launcher before the icon_size was loaded from the settings
+[23:22] <bschaefer> Controlsfreek, well I don't think the launcher takes that into account at start up, which is the problem :)
+[23:23] <bschaefer> but I could be mistake, I haven't dug through all of that in a bit
+[23:24] <Controlsfreek> bschaefer, It does seem to eventually catch it and then re-renders at the correct size.
+[23:24] <bschaefer> Controlsfreek, yeah, but it really seems if the width is set correctly on start up it wouldn't set it to the wrong size :)
+[23:27] <bschaefer> Controlsfreek, so in Launcher.cpp::Resize, you see a width in that function, add a print statement to see what value is there when you restart unity, I bet you'll see
+[23:27] <bschaefer> the icon_size being incorrect for 1 draw
+=== chiluk is now known as chiluk_away

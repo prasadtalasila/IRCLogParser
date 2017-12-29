@@ -1,0 +1,327 @@
+=== rickspencer3_ is now known as rickspencer3
+=== m_conley_away is now known as m_conley
+=== m_conley is now known as m_conley_away
+[06:06] <pitti> Good morning
+=== Sweetsha1k is now known as Sweetshark
+[08:04] <jibel> Good morning
+[08:41] <chrisccoulson> good morning everyone
+[08:50] <didrocks> hey chrisccoulson
+[08:55] <chrisccoulson> hi didrocks, how are you?
+[08:55] <didrocks> chrisccoulson: quite busy… still fighting with autopilot tests not running
+[08:55] <didrocks> yourself?
+[08:56] <chrisccoulson> didrocks, trying to figure out why my tests aren't working properly (https://jenkins.qa.ubuntu.com/job/raring-ppa-adt-ubuntu_mozilla_daily_ppa-firefox-trunk/) ;)
+[09:04] <Laney> ello
+[09:04] <chrisccoulson> hi Laney
+[09:04] <Laney> happy friday ;-)
+[09:10] <seb128> hey desktopers
+[09:11] <Laney> hey seb128
+=== tkamppeter_ is now known as tkamppeter
+[09:40] <lool> didrocks: Just a heads up that I've fixed the smem issue we were seeing; it wasn't amd64 specific, but related to latest 3.8 kernels
+[09:42] <didrocks> lool: interesting… good to know at least
+[09:42] <didrocks> seb128 wasn't up to date then :)
+[09:43] <seb128> didrocks, weird, I'm uptodate
+[09:43] <didrocks> seb128: come on, you are so 2012! :-)
+[09:43]  * didrocks hugs seb128
+[09:43] <seb128> well, 3.5.0-18-generic
+[09:43] <seb128> what's the current one?
+[09:43] <lool> seb128: 3.8
+[09:43] <lool> 3.8.0-1-generic
+[09:44] <didrocks> yep, 3.8 here
+[09:44] <seb128> k, I likely got the -generic binary dropped or something
+[09:44] <seb128> didrocks, lool: thanks ;-)
+[09:45]  * seb128 installs "linux"
+[09:45] <lool> it's fortunate that the nexus 7 kernel was lagging behind to
+[09:47] <BigWhale> Hmmm I think that GIR for Gstreamer is broken in 13.04 ...
+[09:48] <BigWhale> https://bugs.launchpad.net/kazam/+bug/1099942
+[09:48] <ubot2> Ubuntu bug 1099942 in Kazam Screencaster "Can't record video in any format" [Critical,Confirmed]
+[10:03] <Laney> BigWhale: interesting
+[10:03] <Laney> BigWhale: I get that when I start with a quantal chroot and then upgrade python-gi to raring's version
+[10:08] <Laney> BigWhale: http://people.canonical.com/~laney/random-scripts/gst-broken
+[10:11] <BigWhale> Laney, that's seriously broken yes ...
+[10:11] <BigWhale> :/
+[10:11] <Laney> quite
+[10:11] <BigWhale> Thanks for confirming it's not just me. :)
+[10:11] <Laney> want to file it with pygobject upstream? :-)
+[10:13] <BigWhale> I'll do that yes.
+[10:13] <Laney> excellent
+[10:14]  * Laney subscribes
+[10:23] <BigWhale> Laney, https://bugzilla.gnome.org/show_bug.cgi?id=692515
+[10:23] <ubot2> Gnome bug 692515 in introspection "Run time error trying to register a type" [Critical,Unconfirmed]
+[10:25] <Laney> merci
+[10:26] <chrisccoulson> does everyone else see black lines with this link? http://people.canonical.com/~chrisccoulson/reftests/reftest-sanity/filter-1.xhtml
+[10:26] <Laney> four boxes, alternating filled and outline
+[10:27] <chrisccoulson> hmmm :/
+[10:28] <chrisccoulson> i wonder why it appears all white when i run the actual tests?
+[10:30] <seb128> chrisccoulson, what Laney said
+[10:30] <chrisccoulson> thanks
+[10:30] <tkamppeter> larsu, seb128, I have discovered a problem: In Raring we have switched the printer setup tool from s-c-p to g-c-c. The new g-c-c does not auto-download drivers from OpenPrinting, this functionality must be introduced as completely new feature. Askink upstream for implementing it will go a long process through GNOME design and also the upstream maintainer works at Red Hat and Red Hat would not put effort into a facility for downloading
+[10:30] <tkamppeter>  proprietary drivers.
+[10:31] <seb128> tkamppeter, wasn't that a known issue before we changed?
+[10:31] <chrisccoulson> but for some reason, when i run the actual test here, the black lines are invisible
+[10:31] <chrisccoulson> and it fails in the same way here too https://jenkins.qa.ubuntu.com/job/raring-ppa-adt-ubuntu_mozilla_daily_ppa-firefox-trunk/
+[10:31] <larsu> seb128, tkamppeter, yes, this was a known issue. I thought we figured out the auto-downloading was done by the s-c-p daemon that we are still using?
+[10:32] <seb128> tkamppeter, larsu: it's listed in https://blueprints.launchpad.net/ubuntu/+spec/desktop-r-system-config-printer-vs-gnome-3-control-center
+[10:32] <seb128> "The new printer tool doesn't handle proprietary drivers (design choice), switching to the GNOME version would break downloading of those drivers
+[10:32] <seb128> -> we don't want to drop that feature in Ubuntu
+[10:32] <seb128>   -> if it doesn't get in upstream, we'll have to patch the ubuntu version"
+[10:33] <larsu> seb128, right, I think I talked to tkamppeter after that and we figured out that this is done by the daemon
+[10:34] <seb128> k
+[10:34] <seb128> tkamppeter, btw you are a workitem on that blueprint about... " Make sure driver auto-download works: TODO"
+[10:34] <larsu> seb128, I guess he's working on that right now :P
+[10:35] <seb128> ;-)
+=== sil2100_ is now known as sil2100
+[10:55] <tkamppeter> seb128, we have found a way to do it without needing to modify the GNOME tool, as the GNOME tools calls s-c-p backend libraries via D-Bus, I will put the functionality completely in the backend. S no problems with GNOME upstream.
+=== vrruiz_ is now known as rvr_
+[11:37] <chrisccoulson> ah, figured out the test failures
+[11:38] <chrisccoulson> stupid build system is mangling some svg's when packaging the testsuite
+[11:38] <chrisccoulson> grrrrr
+[11:46] <chrisccoulson> bah
+[11:46] <chrisccoulson> http://paste.ubuntu.com/1569357/
+[11:46] <chrisccoulson> that there, breaks a significant amount of tests :(
+[11:47] <chrisccoulson> pitti, how do i disable scour from running in the builds?
+[11:47] <pitti> chrisccoulson: cdbs?
+[11:48] <chrisccoulson> pitti, yeah, it's still cdbs
+[11:48] <pitti> chrisccoulson: I guess it's cdbs, as that's the only one invoking it automatically
+[11:48] <chrisccoulson> ah, i wasn't sure if this was some pkgbinarymangler thing
+[11:48] <chrisccoulson> in that case, i'll grep the cdbs files :)
+[11:49] <pitti> chrisccoulson: DEB_DH_SCOUR_ARGS = -N<pkgname>
+[11:49] <pitti> to ignore that package name; can also be specified multiple times
+[11:49] <chrisccoulson> thanks
+[11:52] <chrisccoulson> right, i'll give that a try now :)
+=== MacSlow is now known as MacSlow|lunch
+=== Ursinha_ is now known as Ursinha
+[13:51] <ogra_> cyphermox, could bug 1105068 be realted to your recent modemmanager question ?
+[13:51] <ubot2> Launchpad bug 1105068 in ubuntu-nexus7 "getty on ttyGS0 causing lots of wakeups" [Undecided,New] https://launchpad.net/bugs/1105068
+[14:04] <seb128> ogra_, the nexus meeting is at 5pm german time right?
+[14:05] <cyphermox> ogra_: no it has nothing to do with it. It could indeed be caused by MM though.. not sure
+[14:05] <ogra_> seb128, no, 5pm french time :)
+[14:05] <seb128> ogra_, thanks ;-)
+[14:08] <cyphermox> ogra_: my question was that I noticed that if I went very quickly after connecting the nexus 7 to open ttyASM3 in screen, I'd see AT commands sent by NM mess up with getty, but it settles down pretty quickly
+[14:08] <cyphermox> whereas that bug is for ttyGS0 -- inside the nexus, as opposed to outside :)
+[14:09] <ogra_> right, but it could be that getty gets confused by getting AT commands
+[14:09] <cyphermox> I think the fix will likely be the exact same thing though, and I discussed it with upstream, Dan seemed to say it shouldn't be blacklisted but I still don't understand why -- seems safe to blacklist that particular USB ID
+[14:10] <cyphermox> ogra_: in both cases it's a new "modem" (serial device), and getting probed
+[14:10] <ogra_> well, we could do it as distro patch worst case
+[14:10] <cyphermox> unless these wakeups come from something completely different
+[14:10] <cyphermox> ogra_: oh yeah
+[14:11] <cyphermox> but it still seems like a valid upstream patch -- if people are using that particular USB ID they are necessarily trying to do something special, since you can only get it if you use the kernel g_serial module, with the default settings
+[14:11] <ogra_> hmm, i think the wakeups come from chraging the device
+[14:11] <cyphermox> btw: why didn't we register a USB ID or just use a different one? ;D
+[14:11] <cyphermox> ogra_: could be too
+[14:12] <ogra_> hmm, or not
+[14:12] <cyphermox> multiple 5V on a serial line?
+[14:12] <ogra_> well, i just checked, still wakes up like crazy
+[14:12] <ogra_> even with no cable plugged in
+[14:12] <cyphermox> it could very well be confusing the kernel
+[14:12] <ogra_> so its neither
+[14:12] <cyphermox> ah
+[14:12] <cyphermox> well no
+[14:12] <cyphermox> it can still be MM
+[14:12] <ogra_> on the nexus side, yeah
+[14:13] <ogra_> shutting down MM on the nexus seems to not have any effect either
+[14:14] <cyphermox> interesting
+[14:14] <cyphermox> I'll give it a shot
+[14:14] <cyphermox> brb
+=== MacSlow|lunch is now known as MacSlow
+[14:28] <cyphermox> ogra_: what command got the traces?
+[14:28] <ogra_> traces ?
+[14:28] <cyphermox> wakeups
+[14:28] <ogra_> i'm just watching with htop
+[14:28] <cyphermox> in the bug
+[14:28] <ogra_> ask cking ... though he might be using powertop
+[14:29] <cking> i used eventstat
+[14:29] <didrocks> pitti: hey, I would appreciate if I can abuse from some of your rescoring power for https://launchpad.net/~ubuntu-unity/+archive/daily-build/+build/4246818
+[14:29] <didrocks> so that we can get a daily release soon :)
+[14:29] <ogra_> but htop shows it nicely as well, getty eats CPU all the time
+[14:29] <ogra_> usually being in the top 5 busy apps when sorting by CPU
+[14:30] <cyphermox> yeah but eventstat interests me ;)
+[14:30] <cking> I wrote it for the power saving work in 12.04
+[14:30] <pitti> didrocks: hmm; bumping to 6000 now makes it "7 hours" :(
+[14:31] <cking> cyphermox, think of it like vmstat for events ;-)
+[14:31] <cyphermox> cking cool
+[14:31] <pitti> didrocks: even 900
+[14:31] <didrocks> urgh
+[14:32] <cyphermox> of course it may be counterproductive to do that while connected to 3G over said bus...
+[14:32] <pitti> didrocks: two libo builds, and some disabled ones, sorry
+[14:32] <pitti> didrocks: but it'll be the next in line
+[14:33] <didrocks> pitti: ah, excellent! Thanks a lot :) I won't have to wake up in the middle of the night to ensure the daily is in :)
+[14:33]  * didrocks hugs pitti
+[14:34]  * pitti hugs you back
+[14:43] <cyphermox> Cking: hmm its special on the nexus with on board... It doesn't limit output to the number of lines on the terminal.
+[14:45] <cking> cyphermox, ah, so it's the  tty driver being a pain then?
+[14:48] <ogra_> cking, do you have a 3G nexus ?
+[14:48] <cking> ogra_, how do I figure that out?
+[14:48] <ogra_> i wonder if that comes into play somewhere and interferes
+[14:49] <ogra_> hmm, good question, i gues it shoudl offer you 3G networks in NM
+[14:49]  * ogra_ has never had a 3G one in his hands, in fact i only own an 8G model from the early days
+[14:49] <didrocks> seb128: did you see quite some dconf crashes since yesterday's fix?
+[14:50] <didrocks> seems there is nothing in errors on the first page
+[14:51] <cking> ogra_, I can't see any 3G networks, so can't tell really
+[14:51] <ogra_> well, was it given to you by the company ?
+[14:51] <ogra_> i know we didnt buy any 3G models
+=== m_conley_away is now known as m_conley
+[14:53] <cking> ogra_, i purchased it from google
+[14:53] <ogra_> heh, well, then you should know what you bought :P
+[15:09] <didrocks> seb128: https://bugs.launchpad.net/ubuntu/+source/d-conf/+bug/1104883
+[15:09] <ubot2> didrocks: Error: ubuntu bug 1104883 not found
+[15:17] <didrocks> hey desrt :)
+[15:17] <didrocks> desrt: want to debug a dconf crash? do you need the stacktrace this time to get it fix or will you just be awesome once more and not using it? :)
+[15:23] <cyphermox> ogra_: speaking of a 3G model, I wouldn't mind having my hands on one to make sure the modem works properly there. you know, maintaining MM and everything ;)
+[15:23] <cyphermox> cking: well, partly
+[15:23] <cyphermox> cking: the tty driver is being a pain because it's hard to easily readable data from eventstat unless you're on serial
+[15:23] <ogra_> cyphermox, probably vanhoof has one
+[15:24] <cyphermox> cking: but then that will break the data you get if what you're interested in is how often the nexus wakes up because of the tty
+[15:24] <cyphermox> cking: otherwise, we use the g_serial module with no parameters, so it load up with the default USB ID
+[15:24] <ogra_> else have your  managernapprove the expenses
+[15:24] <ogra_> ;)
+[15:25] <cyphermox> that has the chance of being used elsewhere by people trying to really hook up some fake modem to MM
+[15:25] <cyphermox> I wish we could register our own, or kind of steak the USB ID from the actual nexus
+[15:25] <cyphermox> *steal
+[15:25] <cyphermox> since you know... it's a nexus
+[15:25] <cking> yup
+[15:26] <cyphermox> though if we use that USB ID, then I definitely can't blacklist it in ModemManager, otherwise it will break tethering
+[15:26] <cyphermox> I think registering an ID with IANA or whatever costs money though
+[15:26] <cyphermox> the current state isn't too bad, just a little tricky for some things ;)
+[15:27] <cyphermox> ogra_: I've been thinking seriously about it
+[15:27] <cyphermox> but then maybe I'd just buy it outright and keep it ;)
+[15:27] <ogra_> yeah,i wasnt joking eithern:)
+[15:29] <jibel> didrocks, dconf crash has been retraced and duped to bug 1104883
+[15:29] <ubot2> Launchpad bug 1104883 in d-conf (Ubuntu) "dconf-service crashed with SIGSEGV in g_variant_is_trusted()" [Medium,Confirmed] https://launchpad.net/bugs/1104883
+[15:30] <didrocks> cyphermox: not seeing my pings? :)
+[15:30] <cyphermox> err sorry yeah I might have missed them
+[15:30] <didrocks> jibel: hem, I wrote that 20 minutes ago and even tried to teased desrt, but thanks! :)
+[15:31] <jibel> didrocks, you're faster than my email client then :)
+[15:32] <didrocks> jibel: I have an easy F5 :p
+[15:41] <sil2100> didrocks: did all tests for all machines run in 51?
+[15:42] <didrocks> sil2100: not on ATI
+[15:42] <didrocks> sil2100: but for nvidia/intel, it's reliable
+[15:42] <didrocks> sil2100: it doesn't have your latest fix, but the rest, you can base on it if you want to continue fixing some :)
+[15:42] <didrocks> sil2100: also, maybe you can investigate to put back the multi-ws ones, changing the value before the test and putting that back to 1 during the teardown?
+[15:44] <sil2100> didrocks: yea, I'll think whether to do those or just revisit them later and now look at standard failures ;)
+[15:45] <didrocks> sil2100: sounds good to me as well!
+[15:45] <didrocks> sil2100: kill them all \o/
+[15:47] <seb128> didrocks, didn't no, but seems you found it
+[15:47] <Sweetshark> bdrung: do you think I should edit/merge the ppa changelog lines from previous historical uploads too?
+[15:51] <Sweetshark> bdrung: (esp. those of upstream versions that never made it to main?)
+[15:51] <didrocks> seb128: yep, can you put that on your track list once desrt is back? we can get it reliably in the daily release
+[15:51] <seb128> didrocks, sure
+[15:51] <didrocks> thanks a lot :)
+[15:58] <bdrung> Sweetshark: if the raring version has the ppa paragraphs in it, you can keep them (to avoid additional work)
+[16:00] <bdrung> Sweetshark: alternatively, you could take the whole changelog from Debian and add only one new paragraph for raring (but then you have to state all changes to debian)
+[16:10] <Sweetshark> bdrung: k
+[16:47] <desrt> didrocks: again?
+[16:48] <didrocks> desrt: yeah, you screwed some daily release for me! (this time, it doesn't impact that much, but apport is taking the focus and so the integration tests are failing)
+[16:48] <desrt> nice.
+[16:48] <didrocks> desrt: https://bugs.launchpad.net/ubuntu/+source/d-conf/+bug/1104883
+[16:48] <ubot2> Ubuntu bug 1104883 in d-conf (Ubuntu) "dconf-service crashed with SIGSEGV in g_variant_is_trusted()" [Medium,Confirmed]
+[16:48] <desrt> that'
+[16:48] <desrt> s already fixed
+[16:49] <didrocks> seb128: backporting? :) ^
+[16:49] <seb128> desrt, not in the commits you told me to backport the other day :p
+[16:49] <seb128> desrt, do you have the commit id?
+[16:49] <desrt> yup.  just commented on the bug
+[16:49] <seb128> didrocks, do you have a testcase to confirm the fix?
+[16:49] <desrt> but here: http://git.gnome.org/browse/glib/commit/?id=998c6e65cf18aee626b9982347c29b4b09f2c097
+[16:49] <seb128> desrt, thanks
+[16:50] <desrt> very very old bug
+[16:50] <seb128> oh, come on
+[16:50] <seb128> not another glib upload :/
+[16:50] <desrt> hahah
+[16:50] <didrocks> seb128: not really, apart from not having crashes during the daily release tests
+[16:50] <desrt> https://bugzilla.redhat.com/show_bug.cgi?id=789824 may interest you
+[16:51] <ubot2> bugzilla.redhat.com bug 789824 in dconf "[abrt] dconf-0.10.0-1.fc16: gvs_tuple_is_normal: Process /usr/libexec/dconf-service was killed by signal 11 (SIGSEGV)" [Unspecified,On_qa]
+[16:51] <seb128> desrt, btw didrocks almost convinced me I was wrong to agree on taking glib unstable serie
+[16:51] <desrt> that would have been a mistake, considering this bug is some 3-4 years old :)
+[16:51] <seb128> it's turning again into playing catchup on segfault issues
+[16:51] <didrocks> seb128 loves backporting fixes :)
+[16:52] <seb128> well, we didn't have those segfaults before updating dconf
+[16:52] <desrt> plus: i warned you this would be a bumpy ride in terms of weird possibly-incompatible changes, but that i'd be around to fix crashers
+[16:52] <desrt> ya... fedora was having these issues since last year
+[16:52] <desrt> but they did get worse recently
+[17:09] <seb128> desrt, https://launchpadlibrarian.net/129480637/buildlog_ubuntu-raring-amd64.glib2.0_2.35.4-1~ppa4.2_FAILEDTOBUILD.txt.gz btw
+[17:10] <desrt> GLib:ERROR:/build/buildd/glib2.0-2.35.4/./glib/tests/gwakeuptest.c:243:test_threaded: assertion failed (g_atomic_int_get (&tokens_alive) == 0): (4 == 0)
+[17:10] <desrt> oh good.  hit my new assert.
+[17:10] <desrt> so i think it's the kernel
+[17:11] <seb128> desrt, it's racy, I had to try 3 times to hit the build issue
+[17:11] <desrt> i was concerned that i had gotten some weird thready stuff wrong in that test, but this makes it pretty clear
+[17:11] <desrt> the GWakeup does not get signalled until that variable is set to 0
+[17:12] <desrt> and meanwhile the assert sees it set to 4
+[17:12] <desrt> seb128: have you ever seen the issue on a non-builder build?
+[17:13] <seb128> desrt, no, but I tend to skip the glib testsuit when I only backport a simple commit, it takes ages to run on my laptop ;-)
+[17:13] <desrt> hrmph.
+[17:13] <Laney> it also doesn't happen on the distro builders?
+[17:14] <desrt> so we can go with my process-is-being-randomly-signalled-by-something theory
+[17:14] <seb128> Laney, hard to say, we didn't upload glib enough to say
+[17:14] <seb128> Laney, I got it twice on amd64 with 5 ppa uploads, 0 times on i386
+[17:14] <desrt> which would cause poll() to early-exit with errno=EINTR
+[17:15] <seb128> desrt, so you are saying that the test can be "bugged" by external processes?
+[17:15] <desrt> seb128: only by something causing EINTR
+[17:15] <desrt> which the kernel can throw at it for all kinds of stupid reasons
+[17:16] <desrt> this is what we were speculating about the other day
+[17:16] <seb128> right
+[17:16] <desrt> lemme throw another more-assert patch your way
+[17:16] <desrt> this bug is really interesting
+[17:16] <desrt> sorry it's so annoying for you :)
+[17:17] <seb128> no worry, it's not *that* annoying, it didn't break my upload to raring
+[17:22] <desrt> seb128: http://www.fpaste.org/yw51/
+[17:22] <seb128> desrt, thanks
+[17:23] <desrt> i honestly don't know what we will see :)
+[17:28] <Sweetshark> bdrung: http://paste.ubuntu.com/1570329/ <- fixed changelog
+[17:31] <Sweetshark> bdrung: eh, make that: http://paste.ubuntu.com/1570337/
+[17:47] <bdrung> Sweetshark: "upstream beta -- first port to raring" and "ppa prerelease bugs to packaging mailing list" could be dropped (no new information)
+[17:47] <bdrung> Sweetshark: you have "merge from Debian" twice. that could be combined to one entry
+[17:48] <bdrung> Sweetshark: besides that, it looks good
+[17:50] <bdrung> Sweetshark: i will take the source tarballs from http://people.canonical.com/~bjoern/libreoffice4/ and the debian directory from the debian git repository (so pushing your changes there is enough)
+[17:53] <Sweetshark> "ppa prerelease bugs to packaging mailing list" actually is new information, but it could be clearer -- as in:
+[17:54] <Sweetshark> make ppa prerelease bugs being reported to packaging mailing list in control-file
+[17:54] <bdrung> Sweetshark: i will leave now. i wish you enjoyable holidays. i will continue review the package later, fix severe issue (if any found), upload it, and sent you a mail with stuff that should be fixed in future uploads.
+[17:54] <bdrung> Sweetshark: = "debian/control.in: make ppa prerelease bugs being reported to packaging mailing list"?
+[17:55] <bdrung> Sweetshark: is that change only relevant for the PPA?
+[17:57] <Sweetshark> bdrung: not quite. the change is in debian/rules and it generates a "Bugs:<ppa packaging team>" in the control file, if and only if the package version has a ppa string in it.
+[17:58] <bdrung> ah, okay. the changelog entry was misleading me.
+[18:00] <bdrung> Sweetshark: BTW, PPA should be written in capital in the changelog entries
+[18:00]  * didrocks waves good evening, see you in a week guys!
+[18:00] <Laney> didrocks: have fun!
+[18:00] <didrocks> thanks, good luck for next week Laney ;)
+[18:00] <Laney> haha
+[18:01]  * Laney suddenly gets scared
+[18:01] <didrocks> ;)
+[18:12] <Sweetshark> bdrung: pushed as http://anonscm.debian.org/gitweb/?p=pkg-openoffice/libreoffice.git;a=commitdiff;h=23b97aa8cc5c80b82d10fe39be73aca1e347eefb
+[18:12] <Sweetshark> bdrung: thanks a lot.
+[18:15]  * Sweetshark begins teardown for going on vacation.
+[18:42] <doomlord> anyone know if /how its possible to add file thumbnailers to the ubuntu filebrowser
+[18:43] <doomlord> (additional thumbnailers for new types )
+[18:45] <Laney> doomlord: should be; see /usr/share/thumbnailers/
+[18:45] <Sweetshark> bdrung: oh, one note: you need to do a "./debian/rules control" to regenerate the control file when using the debian dir from the branch. Checking in a generated file didnt make sense to me (and is terribly annoying on merges)
+[18:47] <mterry> seb128, sorry I missed the nexus7 meeting this morning, but I'm reading the log
+[18:47] <seb128> mterry, no worry, thanks
+[18:48] <doomlord> i'm guessing %s = size, %u=input filename, %o = output filename for the commandline invocation
+[18:50] <robru> mterry, seb128 : there was a meeting this morning?
+[18:50] <doomlord> before i write it , does anything  in linux provide thumnailers for 3d file formats like .obj
+[18:51] <seb128> robru, not a desktop one, there is a nexus7 weekly meeting at 4pm utc on #ubuntu-meeting
+[18:51] <robru> seb128, should I be participating in that?
+[18:51] <seb128> robru, it's a good idea to join for those who are up seeing the nexus focus
+[18:51] <robru> ok
+[18:52] <robru> seb128, I'll try for the next one ;-)
+[18:52] <seb128> robru, well, it's a status update meeting more than anything else, reading the log is good enough if you don't have questions ;-)
+[18:59] <Laney> enough gstreamer/pidgin!
+[18:59] <Laney> happy weekend everyone ;-)
+[19:09] <mterry> robru, a nexus7 meeting happens at 16h UTC on Fridays
+[19:09] <mterry> robru, in #ubuntu-meeting
+[19:10] <robru> mterry, thanks
+[19:26] <desrt> seb128: looks like the amd64 build of your glib upload got past the glib/tests/ :(
+[19:26] <desrt> seb128: maybe you should modify the next upload to run the testsuite 20 times :)
+[19:36] <robru> mterry, ping
+[19:37] <robru> mterry, actually this is too hard to explain in IRC, I'm going to email you
+=== cyphermox_ is now known as cyphermox
+[19:46] <mterry> robru, yo
+[19:48] <robru> mterry, check your inbox please ;-)
+[19:51] <mterry> robru, yes Vala is magic
+[19:51] <mterry> robru, there are two separate things going on that make it seem magical
+[19:52] <mterry> robru, oh ok
+[19:52] <mterry> robru, just saw your other message.  Will reply in email
+[20:10] <mterry> robru, replied
+=== m_conley is now known as m_conley_away
+[23:46] <robru> anybody around to help me troubleshoot some networking issues on the pandaboard? cyphermox ?
+[23:59] <robru> cyphermox, I managed to boot quantal on my pandaboard, plugged in wired ethernet, and I got the notification bubble that it was connected over ethernet, but the installer gave me the warning that the installation is best done with a network connection. So I click continue anyway, and the first thing it asks me to do is connect to a wifi. So I choose my same wifi, and I get the notification bubble saying it's connected (so now it has
+[23:59] <robru> both wired and wireless connection into the same router), but the installation wizard does not continue past that point, it just hangs on the wifi selection screen (despite the fact that the wifi connected successfully).

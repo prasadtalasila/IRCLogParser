@@ -1,0 +1,231 @@
+[07:35] <mlankhorst> morning
+[07:52] <tjaalton> https://launchpadlibrarian.net/127916308/HookError_source_xorg.txt
+[07:52] <tjaalton> wth?
+[08:06] <mlankhorst> o.0
+[08:06] <tjaalton> guess we could switch to sna once 3.8 hits raring
+[08:06] <tjaalton> and I'm preparing mesa master now
+[08:06] <mlankhorst> sure, makes the intel devs happy
+[08:06] <tjaalton> you think?
+[08:07] <mlankhorst> I'm not sure it makes anyone else happy though!
+[08:07] <tjaalton> asked ickle about it a month ago or so, he thought it was maybe 80% ready back then. they've fixed some issues since then, might be 9/10 by now :)
+[08:08] <tjaalton> er, 90%
+[08:09] <mlankhorst> going to do 1 more testbuild of pixman, then push the thing
+[08:15] <tjaalton> always fun merging new mesa upstream..
+[08:20] <mlankhorst> :>
+[08:20] <mlankhorst> it's becoming more and more boring though
+[08:20] <mlankhorst> but hey tf2 fps increase, count me in
+[08:21] <mlankhorst> I'm hipster and knew about that before phoronix reported it
+[08:21] <tjaalton> a ton of conflicts that need to be manually resolved
+[08:21] <tjaalton> easy though, always take what's the new
+[08:24] <mlankhorst> when doing syncs of pre-release git, new maintainer entry should be Ubuntu Developers <ubuntu-devel-discuss@lists.ubuntu.com> right?
+[08:25] <tjaalton> i'd prefer ubuntu-x
+[08:25] <tjaalton> dpkg-source is happy as long as the address has *ubuntu.com on it
+[08:25] <mlankhorst> i thought pre-release like that was special when there were no ubuntu specific changes
+[08:28] <tjaalton> it's not a big deal
+[08:28] <mlankhorst> ok incoming pixman then
+[08:52] <tjaalton> meh, robert hasn't kept up with wayland updates..
+[08:55] <tjaalton> or my mirror.. wtf again
+[09:00] <tjaalton> right, mirror cleanup & sbuild-update fail, duh :)
+=== yofel_ is now known as yofel
+[09:34] <tjaalton> builds, with an additional uncommitted build fix..
+[09:59] <tjaalton> apw: so, were you going to upload 3.8 to raring soon?
+[10:05] <ricotz> tjaalton, hi, i there a nvidia 313.09 patch for 3.8 available? (i guess, i havent looked hard enough yet)
+[10:05] <tjaalton> ricotz: tseliot is on them
+[10:05] <ricotz> great, thanks
+[10:05] <tseliot> :)
+[10:57] <mlankhorst> can someone sponsor pixman? it doesn't appear to be part of xorg package set
+[11:46] <bdrung> hi, i like to ask about a possible MIR of libxkbcommon. we will need libxkbcommon in main if we enable the wayland backend in gtk (bug #954352)
+[11:46] <ubottu> bug 954352 in gtk+3.0 (Ubuntu Raring) "Enable wayland backend" [Wishlist,Triaged] https://launchpad.net/bugs/954352
+[11:47] <tjaalton> bdrung: go for it
+[11:47] <bdrung> tjaalton: the description says that this library is experimental
+[11:47] <tjaalton> ah
+[11:48] <bdrung> the current version of this package is a git snapshot
+[11:48] <bdrung> there is a 0.2.0 of it
+[11:48] <tjaalton> ok, I'll update it
+[11:49] <bdrung> http://cgit.freedesktop.org/xorg/lib/libxkbcommon/log/
+[11:54] <bdrung> tjaalton: the warning in the description came from bryce. bryce, did you add the warning, because the package was a git snapshot?
+[11:54] <tjaalton> it was at some point
+[11:55] <tjaalton> things have changed since
+[11:55] <tjaalton> bryce: the versions-current page doesn't seem to track libxkbcommon upstream?
+[12:14] <tjaalton> mesa snapshot builds properly now, doing libxkbcommon & weston next
+[12:33] <mlankhorst> ok first attempt at mesa done
+[12:36] <tjaalton> what's the diff like?
+[12:40] <tjaalton> bdrung: libxkbcommon 0.2.0 uploaded
+[12:41] <mlankhorst> few lines
+[12:41] <tjaalton> show it :)
+[12:41] <tjaalton> oh, it's in git already
+[12:41] <tjaalton> not quite :)
+[12:41] <tjaalton> it was the security update
+[12:42] <mlankhorst> http://paste.ubuntu.com/1512694/
+[12:42] <bdrung> tjaalton: thanks
+[12:46] <tjaalton> mlankhorst: so basically, mesa-common-dev should be backwards compatible?
+[12:46] <mlankhorst> pretty much
+[12:48] <tjaalton> unless a package depends on glu_*.h :)
+[12:48] <tjaalton> which got removed in 9.0
+[12:49] <tjaalton> but it shouldn't matter
+[12:50] <ricotz> bdrung, hi, is it possible to enable broadway too which doesnt need further depends and won't interfere either?
+[12:51] <bdrung> ricotz: what is broadway?
+[12:51] <ricotz> bdrung, the html5 backend of gtk
+[12:52] <bdrung> how much will the package size increase?
+[12:52] <ricotz> hmm, quite a question
+[12:52] <bdrung> ricotz: broadway will not need any new build dependencies?
+[12:52] <ricotz> no
+[12:52] <bdrung> ricotz: do we have an open bug report for it?
+[12:52] <ricotz> no
+[12:53] <ricotz> i was asked to do so in my ppa, and did for some time now
+[12:53] <bdrung> ricotz: and there were no regression?
+[12:53] <ricotz> it is a separate backend like wayland
+[12:53] <bdrung> ricotz: can you evaluate the size change?
+[12:54] <ricotz> i'll try
+[12:55] <mlankhorst> tjaalton: that should be pulled to libglu.*-dev then
+[12:55] <tjaalton> mlankhorst: it's not in precise
+[13:00] <bdrung> weston needs to be updated in raring - see bug #1097685
+[13:00] <ubottu> bug 1097685 in weston (Ubuntu) "libwayland and weston package versions in raring are incompatible" [Undecided,Confirmed] https://launchpad.net/bugs/1097685
+[13:00] <tjaalton> updating as we speak
+[13:03] <jcristau> bdrung: of course libxkbcommon is experimental.  so's wayland...
+[13:03] <tjaalton> just not api-wise, not anymore
+[13:05] <bdrung> jcristau: i was referring to the API (not how often the API will be extended)
+[13:07] <mlankhorst> erm afaict libglu1-mesa-dev from precise includes GL/glu.h and GL/glu_mangle.h, so installing it will work even on renamed stack
+[13:09] <tjaalton> mlankhorst: of course, dunno what I was looking at..
+[13:16] <tjaalton> sigh, why on earth doesn't the ubuntu cairo package build the egl backend?
+[13:17] <ricotz> bdrung, the stipped gdk lib would grow by ca. 90kb
+[13:17] <bdrung> ricotz: and in percentage?
+[13:18] <ricotz> 20
+[13:18] <ricotz> 550 to 640
+[13:19] <bdrung> 90 kb is not that big if there are user wanting that backend
+[13:19] <bdrung> ricotz: feel free to extend the debdiff and state the dependency/size impact of the change in the bug report
+[13:20] <ricotz> it is getting in shape in 3.7.x, while staying on 3.6 it might be not the great to use
+[13:21] <tjaalton> looks like an ancient cairo merge left the egl backend disabled, nice
+[13:22] <ricotz> tjaalton, it is intended to be disabled due nvidia blob memory problem
+[13:22] <tjaalton> ricotz: ah, meh
+[13:23] <tjaalton> ricotz: that was on oneiric?
+[13:24] <ricotz> tjaalton, still valid afaik :(
+[13:24] <tjaalton> ok tehn
+[13:24] <tjaalton> then
+[13:25] <ricotz> tjaalton, feel free to check
+[13:25] <tjaalton> nah
+[13:25] <ricotz> the nvidia kernel module will massivly increase in size
+[13:25] <tjaalton> yeah i remember now
+[13:27] <bdrung> ricotz: then a bug report with the current findings would be nice as reminder once we get >= 3.7.x into the archive
+[13:27] <ricotz> it isnt likely it will land in raring
+[13:28] <ricotz> 3.7.x i mean
+[13:28] <bdrung> therefore the bug report
+[13:28] <bdrung> tjaalton: have you seen http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=691699 ?
+[13:28] <ubottu> Debian bug 691699 in src:libxkbcommon "libxkbcommon: [PATCH] upgrade to 0.2.0" [Wishlist,Open]
+[13:29] <tjaalton> bdrung: no
+[13:29] <bdrung> tjaalton: it would be nice to review that and reduce the lintian output
+[13:29] <bdrung> http://paste.debian.net/223110/
+[13:29] <mlankhorst> ah great, pixman 1-0 and input update is enough for new xserver :)
+[13:30] <tjaalton> bdrung: huh, I only got one warning
+[13:30] <tjaalton> about out-of-date-standards-version
+[13:31] <jcristau> tjaalton: he runs lintian with the pedantic option
+[13:31] <bdrung> tjaalton: are you using lintian 2.5.11ubuntu1?
+[13:31] <jcristau> which outputs lots of irrelevant stuff
+[13:32] <tjaalton> bdrung: whatever is in raring
+[13:32] <tjaalton> jcristau: ah
+[13:33] <bdrung> tjaalton: i use --pedantic -IE
+[13:35] <tjaalton> duh, I wasn't aware it didn't use debhelper 9
+[13:36] <ricotz> bdrung, ah there is a bug https://bugs.launchpad.net/precise-backports/+bug/933641
+[13:36] <ubottu> Ubuntu bug 933641 in gtk+3.0 (Ubuntu) "Please backport/enable HTML5 (broadway) gdk backend for gtk+3.0" [Wishlist,Confirmed]
+[13:36] <tjaalton> who uses that backend anyway?
+[13:36] <tjaalton> the latest I heard was that it's still very much WIP
+[13:36] <ricotz> some kind of webapps
+[13:37] <ricotz> yeah, that is why i said 3.8 will be more appropriate to have it in a usable stat
+[13:37] <ricotz> e
+[13:37] <bdrung> ricotz: can you comment that bug report?
+[13:40] <ricotz> done
+[13:43] <ricotz> bdrung, is it possible to remove the "Precise Backports" reference completely?
+[13:44] <ricotz> from the mentioned bug
+[13:44] <bdrung> ricotz: it doesn't seem to be possible
+[13:48] <bdrung> tjaalton: will you apply the libxkbcommon patches?
+[13:48] <tjaalton> bdrung: ones that matter
+[13:49] <bdrung> tjaalton: the patches 004 - 008 makes sense to me
+[13:49] <bdrung> the patches 002 and 003 were already covered by you
+[13:49] <tjaalton> not 5 & 6
+[13:51] <ricotz> mlankhorst, hi, btw, what is holding back wine getting into raring?
+[13:53] <mlankhorst> no idea?
+[13:56] <bdrung> tjaalton: why not? what speaks against using 3.0 (quilt)? why is the tarball generation still needed?
+[13:56] <ricotz> mlankhorst, hmm, so scott is not comfortable with 1.5 yet?
+[13:56] <mlankhorst> I don't upload wine to distro, just maintaining ubuntu-wine ppa :-)
+[13:57] <ricotz> i know, i am just hoping you would know why it isnt there yet ;)
+[13:57] <mlankhorst> so you use the ubuntu-wine ppa, of course!
+[13:58] <ricotz> i do, yes
+[13:58] <mlankhorst> been maintaining audio there mostly, the ubuntu official release is probably lacking all these changes
+[14:00] <ricotz> ok, keep that up! :)
+[14:01] <mlankhorst> the bug about supporting pulseaudio is >5 years old at this point. :P
+[14:10] <mlankhorst> ok guess I'll do a 'proper' rework of all patches to xserver 1.14 now, botched up when testing airlied's stuff
+[14:11] <tjaalton> use ubuntu+1, and reset --hard it to the current branch
+[14:12] <mlankhorst> was thinking of a debian-experimental+1 first
+[14:12] <tjaalton> or just bump d-e there
+[14:12] <tjaalton> jcristau: opinions?
+[14:13] <jcristau> about?
+[14:13] <tjaalton> whether to bump xorg-server debian-experimental branch to git master
+[14:17] <jcristau> shouldn't be an issue, i don't think we need to go through 1.13
+[14:17] <tjaalton> yeah
+[14:17] <mlankhorst> ah k, x1.14 it is then
+[14:17] <jcristau> branch history will be a mess, but oh well :(
+[14:18] <tjaalton> because of xi2.3?
+[14:18] <mlankhorst> it's git, it will resolve the conflicts ;-)
+[14:19]  * ogra_ wonders why nobody had the idea to send git to syria tzhen
+[14:20] <ogra_> :P
+[14:20] <mlankhorst> they don't use version control there
+[14:20] <jcristau> mlankhorst: that's not what i'm worried about
+[14:21] <jcristau> just having lots of merges of stuff that was never used/uploaded
+[14:23] <tjaalton> on the d-e branch?
+[14:23] <mlankhorst> it was used, just not on debian :)
+[14:45] <mlankhorst> wow, that was easy, just needs inputproto / pixman version bump
+[14:45] <mlankhorst> and removal of input barrier patch
+[14:51] <mlankhorst> bit suspicious that all other patches just apply, though
+[14:53] <tjaalton> heh
+[14:53] <tjaalton> not much has changed though
+[14:53] <tjaalton> feature wise anyway
+[14:54] <mlankhorst> true
+[14:55] <mlankhorst> and I guess the 1.13 rc's grabbed most patches we cared about anyway
+[15:40] <mlankhorst> sdksyms.o:(.data.rel+0x3578): undefined reference to `PanoramiXSaveXFixesVector'
+[15:40] <mlankhorst> weee
+[15:45] <jcristau> ♥ sdksyms
+[15:49] <mlankhorst> well fine, wonder if a hack is enough, if it's a configure option not like that stuff should be exported anyway..
+[18:27] <bryce> bdrung, yeah the warning can be removed from the description.  Back when I packaged it, it was pre-release experimental, but not anymore.
+[18:27] <tjaalton> bryce: yep, done
+[18:27] <tjaalton> 0.2.0 is in raring now
+[18:27] <bdrung> bryce: thanks
+[18:28] <tjaalton> and pushed a further description update to debian-unstable branch
+[18:29] <bryce> tjaalton, yeah there's several upstreams it doesn't track.  It's on my todo list.
+[18:29] <tjaalton> cool
+[18:30] <tjaalton> weston update nearly there
+[19:08] <mlankhorst> bryce: fwiw x1.14 compiles, don't know about pointer barriers yet, seems to have been upstreamed?
+[19:24] <bryce> mlankhorst, great
+[19:25] <bryce> mlankhorst, yeah I saw peter put in some of those changes for 1.14.  Enough for us to drop our patch?
+[19:25] <mlankhorst> well it fails to apply now
+[19:27] <bryce> maybe raof can illuminate us
+[19:36]  * bryce throws in the towel on #1056039.  WFM.
+[19:44] <tjaalton> the upstreamed version of p-b is functionally equivalent to the old one, aiui
+[19:46] <bryce> tjaalton, ah good.  So perhaps just a matter of testing.
+[19:46] <tjaalton> but it was a rh/gnome guy who made it happen there
+[19:46] <tjaalton> yeah, needs testing to be sure
+[19:47] <tjaalton> maybe unity/compiz needs to adjust
+[19:47] <tjaalton> no idea
+[19:50] <bryce> sounds like a job for the TODO page
+[19:51] <tjaalton> btw, I think that for bugs just assigning them to people/the team should be sufficient :)
+[19:51] <bryce> tjaalton, how do you mean?
+[19:53] <tjaalton> bryce: meaning that maintaining a list on a wikipage takes effort :)
+[19:53] <mlankhorst> I so how would I upload xserver-xorg, without it immediately getting pushed to raring directly?
+[19:53] <tjaalton> mlankhorst: why?
+[19:54] <mlankhorst> was curious
+[19:54] <tjaalton> there is no -proposed for -proposed ;)
+[19:55] <bryce> tjaalton, certainly does, but I'm fine to do that, it's helping me keep track.  Some people have a *lot* of assigned bugs, so just looking at the raw list would have  a lot of noise.
+[19:56] <tjaalton> bryce: right, I don't mind you looking after them :)
+[19:56] <tjaalton> and it's true that trying to find a decent bug to work on from a list of 500 is "hard"
+[19:57] <tjaalton> without getting burned out
+[19:57] <jcristau> tjaalton: the wheezy rc bug list is only 300!
+[19:57]  * jcristau hides
+[19:57] <tjaalton> jcristau: hehe :)
+[20:13] <bryce> tjaalton, maybe some day I'll write a web tool that pulls assignments from launchpad.  
+[20:13] <tjaalton> bryce: yeah that might be handy
+[22:28] <RAOF> bryce, tjaalton: The upstream pointer barrier code is now sufficient, but the API's changed; unity will need to be ported.
+[22:54] <bryce> RAOF, happen to know if there is a bug # or WI for that work?
+[22:54] <RAOF> bryce: Let me check my filed bugs; if I haven't filed it, I don't think there's one.
+[22:55] <mlankhorst> I had a feeling it would be something like that
+[22:57] <RAOF> bryce: No; it looks like I haven't filed that.
+[23:00] <bryce> RAOF, ok, subscribe me to it once it's filed if you don't mind
+[23:58] <RAOF> bryce: Done.

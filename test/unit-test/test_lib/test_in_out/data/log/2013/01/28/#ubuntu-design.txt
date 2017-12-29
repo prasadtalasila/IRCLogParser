@@ -1,0 +1,48 @@
+[17:31]  * mpt wonders what the design for bug 668846 should look like
+[17:31] <ubot5> bug 668846 in software-center (Ubuntu) "No obvious error when Software Centre can't install due to Synaptic being open" [Low,Confirmed] https://launchpad.net/bugs/668846
+[17:34] <mpt> “Software Updater can’t continue until Synaptic exits.” ( Cancel ) ( Wait )
+[17:35] <mpt> ...can’t install or remove software until…
+[17:35] <mpt> “Ubuntu Software Center can’t install or remove software until apt-get exits.”
+[17:37] <mpt> that could work ... probably only after a delay, though, so it doesn't come up because of an incidental check for updates
+[17:37] <mpt> and auto-close if the problem solves itself
+[17:37]  * mpt starts sketching
+[17:45] <xnox> synaptic is crazy thought in between finishing applying changes and reloading cache it intermittedly releases lock & acquires it again. If one happens to run apt-get update at that time the two deadlock =)
+[17:45]  * xnox used to use to much CLI and GUI together.
+[17:46] <xnox> mpt: are the earlier "Web login" comments, about wifi hot-spots that ask you for email-address and such?
+[17:46]  * xnox has technical way to implement it. I was thinking to publish it as an app.
+[17:48] <mpt> xnox, yes
+[17:48] <mpt> xnox, https://wiki.ubuntu.com/Networking#captive-portal
+[17:51] <xnox> mpt: is anybody coding that?
+[17:52] <xnox> e.g. in the installer we already are doing connectivity check against a known document http://start.ubuntu.com/connectivity-check.html
+[17:52] <xnox> which should have md5sum 4589f42e1546aa47ca181e5d949d310b
+[17:52] <mpt> xnox, I did that design only yesterday, so I doubt anyone's started yet. :-) It's part of <https://blueprints.launchpad.net/ubuntu/+spec/desktop-r-connectivity-checking>, but the work items are vague about who would implement it.
+[17:53] <mpt> Ooooo.
+[17:54] <mpt> xnox, so that installer code could become part of the network-manager implementation?
+[17:54] <xnox> yeah.
+[17:54] <mpt> (Probably needs porting from Python to C or something, right?)
+[17:55] <mpt> Lorem ipsum, ha
+[17:55] <mpt> Somebody wasn't trying to save bytes there
+[17:55] <mpt> To save the world's bandwidth, we should run a collision contest to find a shorter string that has the same md5sum!
+[17:58] <xnox> =)))))))))) juju deploy md5sumcolider
+[17:58] <xnox> that's awesome idea, apart from other people might be checking other checksums, or byte by byte.
+[17:58] <xnox> [ "`wget -q http://start.ubuntu.com/connectivity-check.html -O - | md5sum`" = "4589f42e1546aa47ca181e5d949d310b  -" ] && notify-send "Full internet connection" || notify-send "Offline or captive portal"
+[17:59] <xnox> mpt: ^ that's a one liner implementation for the check. Obviously it needs to be run / triggered on becoming online.
+[18:00] <xnox> mpt: python / c / any language can grab a file of internets & check it's checksum ;-)
+[18:03] <mpt> "Get me one file of your finest internets. Neat."
+[18:03] <xnox> ... and i shall check if you gave me a rotten one ;-)
+[18:06] <xnox> mpt: the most silly thing about captive portals, is that some of them don't require one to login at all - just open it & look at advertisement. E.g. Virgin WiFi on the underground, after the first login, simply auto-redirects you to a ad.
+[18:06] <xnox> So one can try opening any page in the background to see if it's enough to establish connection ;-)
+[18:07] <mpt> xnox, yes. In that case this dialog would open and then close itself after 30 seconds ... which is probably too long
+[18:08] <xnox> mpt: it's reasonable to try this hack without pooping anything up, and if it fails then poop up the OpenZone dialog.
+[18:09] <mpt> xnox, as in make two HTTP requests and discard the first?
+[18:09] <mpt> That could work.
+[18:09] <xnox> yeah.
+[18:10] <xnox> we may need to store state (some of these dialogs show remaining paid for time) but that can be future work.
+[18:11] <mpt> Now that I think about it, there are also some portals that let you browse a few sites, but you have to log in to get the Web in general
+[18:11] <mpt> What if those few sites are actually what you want?
+[18:12] <mpt> the dialog would just stay open, unclosable
+[18:12] <mpt> Maybe we want a "Cancel" button as well as the "Disconnect" button
+[18:13] <mpt> The problem being that they'd do the same thing 99% of the time
+[18:13] <xnox> the point is that we should hide it, but keep a launcher icon in the launcher or the menu item in the network indicator to get back to the portal.
+[18:13] <xnox> (not just quit and discard)
+[18:14] <xnox> we don't know if anyone wants to go back to them or not, but if they do, they should be able to, as long as they are still connected to that network.

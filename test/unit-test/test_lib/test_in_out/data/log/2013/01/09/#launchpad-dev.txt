@@ -1,0 +1,195 @@
+=== slank is now known as slank_away
+[01:49] <StevenK> wgrant: http://pastebin.ubuntu.com/1511514/
+[01:51] <wgrant> StevenK: No
+[01:51] <wgrant> APGF.findArtifactsByGrantee is expected by other callsites to only return direct grants
+[01:52] <wgrant> You might want a checkFooAccess or similar method
+[01:52] <wgrant> eg. checkPillarAccess performs access checks on an entire pillar
+[01:52] <wgrant> You don't care about the presence or absence of grants; you care about access of some kind
+[03:21]  * StevenK continues to work out how to grant an AAG to a team on a product in a test.
+[03:24] <wgrant> StevenK: Subscribe a team to a bug on that product
+[04:17] <StevenK> Hm, it was working, but I think the query was wrong.
+[04:17] <StevenK> Now I've fixed the query and it breaks :-(
+[04:39] <StevenK> wgrant: That adds an AA for the bug, but I can't see anything related to the product.
+[04:40] <wgrant> StevenK: Confused
+[04:40] <wgrant> What are you expecting to see?
+[04:42] <StevenK> Ah, I need to match via AP for the product policy?
+[04:42] <wgrant> A bug does not have a single product, so an AA cannot link to a product
+[04:43] <wgrant> Your query probably wants to involve AAG, AA, APA, AP, TP
+[04:43] <wgrant> Note that AAG, AA, and APA are merged into APGF records with non-NULL APGF.artifact
+[04:44] <StevenK> So far I'm using APGF
+[04:44] <StevenK> And TP
+[04:44] <wgrant> How're you using them?
+[04:44] <StevenK> wgrant: http://pastebin.ubuntu.com/1511746/
+[04:45] <wgrant> +            AccessPolicyGrantFlat.abstract_artifact_id == pillar.id,
+[04:45] <wgrant> WAT
+[04:49] <StevenK> wgrant: Right, pulling out the APs using APS.findByPillar and linking that way works great.
+[04:49] <wgrant> One could alternatively do that directly in the query
+[04:50] <StevenK> Right, switched to that
+[05:22] <StevenK> wgrant: https://code.launchpad.net/~stevenk/launchpad/product-limitedview-with-team-aag/+merge/142441
+[05:24] <wgrant> StevenK: The method needs renaming, and you'll want to look for other callsites
+[05:24] <StevenK> There are none.
+[05:24] <wgrant> The convention is that "has grants" refers to a direct grant, not through TP
+[05:25] <StevenK> userIsAbleToAcknowledgeExistanceOfPillar
+[05:25]  * StevenK prepares to get murdered
+[05:26] <wgrant> That's not even the right subject/object, so yes, murder
+[05:26] <StevenK> It is only called from the LimitedView adapter. checkArtifactAccess doesn't work either
+[05:27] <wgrant> Potentially checkPillarArtifactAccess
+[05:27] <wgrant> Or PillarAnyArtifact
+[05:27] <wgrant> Or something like that
+[05:28] <StevenK> I don't mind checkPillarArtifactAccess, so let's do that
+[05:28] <wgrant> Or a new flag on checkPillarAccess
+[05:28] <wgrant> Potentially
+[05:30] <StevenK> wgrant: http://pastebin.ubuntu.com/1511809/
+[05:31] <wgrant> Sounds more reasonable
+[05:40] <StevenK> wgrant: The diff is updated.
+[05:48] <wgrant> StevenK: r=me
+[05:49] <StevenK> wgrant: So, e-mail, or did you want to discuss that on the call tomorrow?
+[05:50] <wgrant> Might as well discuss it on the call
+[05:50] <wgrant> Given it's getting toward EOD
+[05:51] <StevenK> I might bugger off to the doctors, then. I'll be back on $LATER to deal with the mailman deployment.
+[05:51] <wgrant> Thanks
+[05:53] <jtv> Got a weird problem here: somebody logs into lp, but somehow after going through the oauth dance he's always logged in under some different, newer, similarly-named account.
+[05:54] <wgrant> OAuth or OpenID?
+[05:54] <jtv> SSO confirms his correct login name and email address, but once he's redirected to launchpad, it shows him as logged into the other account.
+[05:54] <wgrant> also, details :)
+[05:54] <jtv> Oh, no idea actually which it is.
+[05:54] <jtv> Hang on, I'll fetch you some details!
+[05:54] <jtv> Username: tahoar
+[05:54] <jtv> After logging in, he suddenly found he was tahoar-z
+[05:54] <jtv> He renamed that account to tahoar2.
+[05:55] <wgrant> He has at least two SSO accounts
+[05:55] <wgrant> Has he tried logging in with the other one?
+[05:55] <jtv> Looks like — although I don't think he created that new one.
+[05:55] <wgrant> He did
+[05:55] <wgrant> Well, or someone else with his email address did
+[05:55] <wgrant> But probably him
+[05:56] <jtv> Are you looking at the original email address used for the account, or the currently configured email address?  Because he did change it  recently.
+[05:57] <wgrant> Get him to log in with the original SSO account to get into ~tahoar, then merge at https://launchpad.net/people/+requestmerge?field.dupe_person=tahoar2
+[05:57] <jtv> That's what he tried, but he can't log in as tahoar.
+[05:57] <jtv> Because when he does that, LP insists that he's tahoar2.
+[05:57] <wgrant> There are two distinct SSO accounts, because I can see that each LP account has a different OpenID identifier
+[05:57] <jtv> But somehow they get conflated.
+[05:58] <jtv> FWIW Ubuntu One does say he's logged in as tahoar.  But lp disagrees.
+[05:58] <wgrant> Ubuntu One will probably have its own concept of username
+[05:59] <wgrant> Has he tried logging into SSO with both of his email addresses?
+[05:59] <wgrant> precisiontranslationtools.com and yahoo.com
+[05:59] <jtv> He may have — but I don't think he'd know the password for tahoar2.
+[05:59] <wgrant> Also note that U1 uses login.ubuntu.com while LP uses login.launchpad.net, so he may be logged in as a different user on each
+[06:00] <wgrant> There's no "password for tahoar2" -- SSO doesn't have a concept of username
+[06:00] <jtv> Ah
+[06:00] <wgrant> It's all about email addresses
+[06:00] <wgrant> He clearly *does* know the password for the SSO account that LP knows as tahoar2, because he's logged into it
+[06:00] <jtv> No, he logs in as tahoar, not as tahoar2.
+[06:01] <wgrant> 16:54:52 < jtv> After logging in, he suddenly found he was tahoar-z
+[06:01] <wgrant> 16:54:58 < jtv> He renamed that account to tahoar2.
+[06:01] <jtv> But he used the password for his own account.
+[06:01] <wgrant> But he has two accounts :)
+[06:01] <wgrant> Each with its own email address and password
+[06:02] <jtv> Ignoring for the moment the question of how he got two accounts, how can logging into one of them get him into the other instead?
+[06:02] <wgrant> It can't
+[06:02] <wgrant> He's logging into the wrong one
+[06:03] <jtv> Yes, but why?  It's not him doing that.
+[06:03] <wgrant> He's not logging into SSO as tahoar, simply because that's a username and SSO doesn't know what a username is
+[06:03] <wgrant> He's logging into SSO as tahoar@somedomain
+[06:03] <jtv> He uses his gmail address for logging in.
+[06:03] <wgrant> Not tahoar
+[06:04] <jtv> Now, as I understand, the gmail account is _not_ associated with that weird extra account.
+[06:04] <wgrant> But it clearly is!
+[06:04] <jtv> Then it shouldn't be.
+[06:05] <jtv> It was associated with his gmail address at one point, but it isn't any longer.
+[06:06] <wgrant> Ah, I see that in the last couple of months he's changed the email address on the *LP* account ~tahoar2 from gmail.com to yahoo.com
+[06:06] <wgrant> But presumably the SSO account linked to ~tahoar2 still has gmail.com
+[06:06] <jtv> Yes, he's been trying to get back to his own account.
+[06:06] <jtv> Yes, looks like.
+[06:06] <wgrant> Then he should log in with his old account's email address
+[06:06] <wgrant> precisiontranslationtools.com
+[06:07] <jtv> Hang on, I'll call him.
+[06:07] <wgrant> SSO and LP can't magically detect that two accounts are owned by the same person; if you log in as the wrong account you'll get the wrong account, regardless of what you actually want.
+[06:09] <jtv> He's trying that now.  Looks like that precisiontranslationtools address fell by the wayside at some point.
+[06:10] <wgrant> Right
+[06:10] <wgrant> Once he's in, point him at that merge link I gave about
+[06:10] <wgrant> s/about/above/
+[06:11] <wgrant> Once the LP accounts are merged, either SSO account will work
+[06:11] <jtv> I think he has the merging link...  He just couldn't get into the right account for the merge!
+[06:12] <jtv> Apparently there are things that get deleted rather than moved over when you merge accounts.
+[06:12] <StevenK> Very few
+[06:12] <jtv> It was something specific that he didn't want to lose though.
+[06:12] <jtv> I forget what.
+[06:15] <wgrant> jtv: Nothing gets deleted from that account that will be kept
+[06:15] <wgrant> And presumably there's nothing of value on tahoar2
+[06:16] <wgrant> (it is only a few months old and has no karma entries whatsoever)
+[06:20] <jtv> He got into his original account!  But the weird thing is, he created the tahoar account and it had the gmail address as its main address.  Then the new tahoar-z (now tahoar2) account got created with that same gmail address, and the gmail address disappeared from his original account.
+[06:22] <wgrant> Are you sure?
+[06:23] <wgrant> There was no gmail address on ~tahoar last May, and in September the new account was created
+[06:23] <jtv> Well I'm getting it from him but that's the part he's sure about.
+[06:23] <wgrant> So unless it was in those four months or removed before May, it was never there
+[06:26] <jtv> He may well have moved it to his gmail account at a later stage.  Did the tahoar-z account get created automatically?
+[06:30] <wgrant> jtv: It depends what you mean by "automatically"
+[06:30] <jtv> By one of our various background jobs.
+[06:31] <wgrant> It was created automatically by LP when someone tried to log in when an SSO OpenID identifier and email address that were not linked to a Launchpad account. That's the normal way that a newly registered user logs into LP
+[06:31] <wgrant> So no, it wasn't autocreated when a background job saw the email address on an imported object
+[06:32] <wgrant> A separate SSO account was created by the user, and then that account was used to log into LP
+[06:32] <jtv> Could there have been some kind of replication-lag issue?  Changing the email address and then attempting to log in with it before things were ready?
+[06:32] <wgrant> No
+[06:32] <wgrant> There are two SSO accounts, and they must be created very explicitly
+[06:34] <wgrant> When an unknown OpenID identifier (ie. SSO account) is used to log into Launchpad, we also check to see if there's a Launchpad user with the email address in the SSO response. If there is one, we link the OpenID identifier to that existing account
+[06:34] <wgrant> Which means that at the time of first login the gmail address was not known to Launchpad
+[06:39] <jtv> Will it be safe for him to  remove the gmail address from the tahoar2 account at this stage and add it to the tahoar account?
+[06:39] <jtv> Or would it be best just to merge from there?
+[06:39] <wgrant> Merge to get rid of the excess account. It will transfer the addresses
+[06:40] <wgrant> The gmail address is presently on the gmail.com *SSO* account, which is linked to the tahoar2 aka. yahoo.com *LP* account
+[06:40] <wgrant> I don't believe the gmail.com address is on any LP account today, just SSO
+[06:42] <jtv> Massively confusing.
+[06:42] <wgrant> Certainly
+[06:42] <wgrant> Which is why that anyone with multiple accounts very probably wants to merge them as the first step
+[06:45] <jtv> Well in this case, the second account was never wanted in the first place.
+[06:46] <wgrant> Which is why we should merge it
+[06:46] <wgrant> It is the easiest and least confusing means of disposal
+[06:46] <jtv> Will it produce a situation where the 2 SSO accounts map to 1 Launchpad account?
+[06:47] <wgrant> Yes
+[06:47] <wgrant> So it may be advisable to also request that the SSO admins merge the two SSO accounts
+[06:47] <jtv> RT?
+[06:47] <wgrant> But having two SSO accounts is not problematic unless interacting with some particular external systems
+[06:47] <wgrant> https://forms.canonical.com/lp-login-support/
+[06:49] <jtv> That's taking ages to load...
+[06:49] <jtv> Ah, there it is.
+[06:50] <jtv> Thanks.
+[06:50] <wgrant> Well
+[06:50] <wgrant> It probably involves SalesForce
+[06:50] <wgrant> It would have to be slow :)
+[06:50] <jtv> Hmm... it links to a separate SSO report form.  Wouldn't he want that one?
+[06:52] <wgrant> It doesn't really matter for this issue
+[06:52] <wgrant> They are support forms for the same service, just with a different theme
+[06:52] <wgrant> They go to the same people
+[06:52] <jtv> Ah.
+=== almaisan-away is now known as al-maisan
+=== al-maisan is now known as almaisan-away
+=== almaisan-away is now known as al-maisan
+[08:51] <adeuring> good morning
+=== al-maisan is now known as almaisan-away
+=== yofel_ is now known as yofel
+=== _mup__ is now known as _mup_
+=== frankban_ changed the topic of #launchpad-dev to: http://dev.launchpad.net/ | On-call reviewer: - | Firefighting: - | Critical bugs: <150
+=== frankban_ is now known as frankban
+=== StevenK changed the topic of #launchpad-dev to: http://dev.launchpad.net/ | On-call reviewer: - | Firefighting: - | Critical bugs: <140
+=== almaisan-away is now known as al-maisan
+=== slank_away is now known as slank
+=== salgado is now known as salgado-afk
+=== al-maisan is now known as almaisan-away
+=== deryck is now known as deryck[lunch]
+=== deryck[lunch] is now known as deryck
+=== Ursinha is now known as Ursinha-afk
+=== salgado-afk is now known as salgado
+=== slank is now known as slank_away
+=== cody-somerville_ is now known as cody-somerville
+=== slank_away is now known as slank
+=== Ursinha-afk is now known as Ursinha
+[23:41] <StevenK> wgrant: Is there a private project on qas we can borrow for this QA?
+[23:45] <wgrant> StevenK: It takes like 10s to create a new one
+[23:49] <StevenK> Hmmm, isn't there supposed to be a checkbox about it?
+[23:51] <wgrant> StevenK: There's an Information Type picker on the final step
+[23:51] <StevenK> I'm on part 2, with a Complete Registration, and I can't see an information type picker
+[23:52] <wgrant> Who are you logged in as?
+[23:52] <StevenK> Oh, I see it
+[23:52] <StevenK> Between Driver and Homepage URL
+[23:58] <StevenK> Now for a team to subscribe to the bug

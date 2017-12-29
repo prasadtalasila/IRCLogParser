@@ -1,0 +1,140 @@
+[00:49] <SergioMeneses> balloons, around?
+[01:30] <cprofitt> balloons: http://ftbeowulf.wordpress.com/2013/01/09/ubuntu-that-was-friendly/
+[05:22] <pitti> Good morning
+=== tubadaz_ is now known as tubadaz
+=== yofel_ is now known as yofel
+[11:07] <psivaa> jamespage: jcollado: reported bug 1098144 for ceph i386 installations failing to reboot
+[11:07] <ubot5> bug 1098144 in Ubuntu Test Cases "i386 ceph smoke tests: the server installation fail to reboot" [Undecided,New] https://launchpad.net/bugs/1098144
+[11:08] <jamespage> psivaa, jcollado: I'm unlikely to get to that anytime soon; I would suggest we disable the ceph tests for the time being
+[11:09] <psivaa> jamespage: ack
+=== _salem is now known as salem_
+=== Ursinha is now known as Ursinha-afk
+=== ayrton is now known as ayr_ton
+=== Ursinha-afk is now known as Ursinha
+=== ayrton is now known as ayr_ton
+[17:12] <rbasak> Some autopkgtest help please. I want to write a dep8 test for an apache module, so that involves having root and trashing the machine. So to iterate on my test I want to use the testbed vm thing. If I do that, how do I get run-adt-test to use a package out of a repo, but with tests out of a local working directory?
+[17:27] <balloons> rbasak, running in the vm testbed should work fine
+[17:27] <balloons> did you try it?
+[17:28] <rbasak> balloons: I don't understand what syntax to use to try it with
+[17:33] <dkessel> good evening
+[17:33] <dkessel> balloons, bug 1097889 affects you ;)
+[17:33] <ubot5> bug 1097889 in update-manager (Ubuntu) "update-manager crashed with SIGSEGV in g_type_check_instance()" [Medium,Confirmed] https://launchpad.net/bugs/1097889
+[17:33] <balloons> rbasak, ahh, well let's step through it then
+[17:37] <balloons> rbasak, I take it you have been through the steps here: http://developer.ubuntu.com/packaging/html/auto-pkg-test.html
+[17:37] <rbasak> balloons: that's what I'm looking at
+[17:38] <rbasak> balloons: so right now I have a local unpacked debian package source tree with a debian/tests that I've just created in it, with control file, XS-Testsuite in debian/control and a test I want to run defined (I hope)
+[17:38] <rbasak> balloons: and to start with I'm happy to use the package in raring, which lacks any tests, to test with. But I want to run the test that I've defined
+[17:39] <balloons> yes of course
+[17:39] <rbasak> I've checked out auto-package-testing from bzr
+[17:39] <rbasak> So bin/run-adt-test...what? All the examples seem to expect that my test is defined in a bzr branch. But I haven't got as far as committing anything - it's juts local
+[17:39] <balloons> so, have you pushed your tests to lp?
+[17:40] <balloons> you can push it to a generic junk branch if you wish
+[17:40] <rbasak> But I have to push?
+[17:42] <balloons> rbasak, I believe I always have
+[17:42] <balloons> however, I'm trying to remember if you had to or not
+[17:42] <balloons> I feel like there was another flag you could set for local
+[17:42] <rbasak> -S looks promising
+[17:42] <balloons> Probably should add a local example to the page
+[17:43] <rbasak> But it isn't clear to me how to use it. It doesn't appear to take any parameters, but I need to specify the location of the local test somehow, surely?
+[17:43] <balloons> I don't have the flags in front of me
+[17:43] <balloons> let me go start
+[17:43] <rbasak> balloons: http://paste.ubuntu.com/1517432/
+[17:44] <balloons> rbasak, see the 'hacking inside the testbed' http://bazaar.launchpad.net/~auto-package-testing-dev/auto-package-testing/trunk/view/head:/doc/USAGE.md
+[17:46] <rbasak> balloons: but I don't want to go inside the testbed. I want the complete result of the test (preferably with logging), based on the archive package version and the a local debian/tests directory
+[17:46] <balloons> rbasak, I know, I was just pointing out the example of using -S
+[17:46] <rbasak> Oh, OK
+[17:46] <balloons> :-p
+[17:47] <balloons> is jibel still about?
+[17:47] <rbasak> It looks like -S will use apt-get source or something, rather than sourcing from my local directory
+[17:47] <balloons> yes
+[17:47] <jibel> balloons, hello
+[17:47] <balloons> jibel, hello ;-)
+[17:47] <rbasak> I'm a bit baffled. I think my mind must work differently, but this seems like the most basic use case of developing tests that I'm missing here
+[17:48] <balloons> rbasak was working with autopkgtest and wanted to run his testcase without committing it to lp first
+[17:48] <balloons> see the scrollback above.. I don't think I've ever done it that way.. and I'm not remembering if it's possible or not
+[17:48] <jibel> rbasak, ah, running tests from a local working directory is not implemented as it was originally design to be automated, this is on my todo list but no ETA though
+[17:49] <balloons> i mean, since he wants to use the testbed.. as it's invasive to run otherwise if I understand
+[17:49] <rbasak> Yeah I won't be able to run it twice if I do it locally
+[17:49] <rbasak> Or I might, but that won't test the test
+[17:49] <balloons> jibel, yes, most of the time you would simply run it locally in that case n'est pas?
+[17:50] <rbasak> I don't think this would be safe for most server packages, since they generally need root and clobber the server's configuration
+[17:50] <rbasak> (for daemons, anyway)
+[17:50] <jibel> rbasak, as solution would be to start the testbed with -kl which won't kill the testbed after the test and will log you in, then copy your package and the tests into the testbed
+[17:50] <jibel> but if your test kills the testbed, you'll have to redo it every time
+[17:50] <rbasak> And then run adt-run in there I presume
+[17:50] <jibel> rbasak, yes
+[17:51] <jibel> balloons, I never run tests locally
+[17:51] <rbasak> How would I rsync or scp stuff into the testbed? Is ssh set up in some way?
+[17:51] <jibel> as usually your local system is not clean
+[17:52] <balloons> i've always started with a bzr branch, and yea, run in the testbe
+[17:52] <balloons> but in theory, you could stay local for a bit.. meh
+[17:52] <balloons> thanks jibel
+[17:53] <jibel> ssh on the testbed is listening on port 543XX on localhost, you can either ssh to the testbed or login and copy from your host
+[17:53] <balloons> I'm going to edit that page a bit with an explanation .. is there a reason you don't want to push to bzr?
+[17:53] <jibel> balloons, it is not really practical in the first stage of test development
+[17:54] <balloons> I mean, just pushing to +junk.. you want your code vc'd
+[17:55] <rbasak> I could push every iteration out to +junk, but that's painful and slow.
+[17:55] <jibel> balloons, understood, but I also understand the rationale of not doing so when one start writing new tests
+[17:56] <balloons> ok, I just want to feel out the 'recommended' way to go out doing this, if it's not to push to lp
+[17:56] <rbasak> I'd prefer to commit logical steps, rather than every tiny typo and mistake
+[17:56] <rbasak> Of which as a newcomer I'm sure there will be many
+[17:56] <balloons> this is true
+[17:56] <rbasak> The resulting history won't be useful
+[17:57] <jibel> anyway, next hackfest is end of the month, and I find time to implement testing from a local directory before that event
+[17:57] <jibel> I'll
+[17:57] <rbasak> jibel: thank you!
+[18:01] <rbasak> EOD
+[18:07] <dkessel> jibel: +1 for running tests locally :)
+[18:48] <Noskcaj> morning everyone
+[18:48] <dkessel> good evening :)
+[18:49] <Noskcaj> can someone confirm  the new testdrive bug? unit has already mad a patch
+[18:49] <dkessel> number?
+[18:50] <dkessel> do i need real hw or a vm?
+[18:52] <dkessel> oh right.. testdrive, not checkbox :)
+[18:53] <balloons> Noskcaj, bug3?
+[18:53] <Noskcaj> bug 1098080 i think
+[18:53] <ubot5> bug 1098080 in testdrive (Ubuntu) "Testdrive gets stuck on "configuring Virtual Machine" if Virtualbox 4.2 is installed" [Undecided,New] https://launchpad.net/bugs/1098080
+[18:54] <balloons> ahh yes
+[18:54] <balloons> I manually setup vm's
+[18:55] <dkessel> Noskcaj, great - I even had that the other day...
+[18:55]  * dkessel admits he didn't file/search a bug
+[18:56] <Noskcaj> i only filed the bug because unit made a patch instantly
+[18:56] <dkessel> Noskcaj, confirmed
+[18:57] <Noskcaj> ty
+[19:02] <balloons> ahh nice
+[19:03] <Noskcaj> on a slightly related topic, can someone confirm all the "new" bugs in the iso tracker, most are from me
+[19:04] <balloons> Noskcaj, I'm still a bit confused about https://bugs.launchpad.net/ubuntu-qa-website/+bug/1096446
+[19:04] <ubot5> Launchpad bug 1096446 in Ubuntu QA Website "Iso tracker should have a timer, resetting for each testcase whenever the testcase is completed" [Undecided,New]
+[19:05] <balloons> and certainly stephane will be confused
+[19:07] <Noskcaj> ok, it was just a suggestion. but put a timer into each testcase that go's up one with every new build released and resets when the testcase is completed
+[19:07] <balloons> a timer?
+[19:07] <balloons> meaning?
+[19:08] <Noskcaj> like 1, 2, 3, 4, 5
+[19:08] <balloons> that incremented when?
+[19:08] <balloons> and what does it mean for it to go up?
+[19:08] <balloons> are you wanting some way to know if something has been tested.. like say in the past month
+[19:08] <balloons> week, days?
+[19:09] <Noskcaj> yes, i thought builds would be easier to measure it in
+[19:11] <dkessel> sounds like a sound idea. bonus points for sorting tests by last run date :)
+[19:13] <balloons> Noskcaj, dkessel well, that's the point of the dashboard
+[19:13] <balloons> reports.qa.ubuntu.com
+[19:17] <Noskcaj> i had no idea that existed
+[19:17] <Noskcaj> but it's for smoke tests
+[19:19] <balloons> yes, but I want to keep track of manual stuff there too
+[19:19] <balloons> needs to be built out
+[19:21] <dkessel> but you cannot see at a glance which which tests have not been run in the last days/weeks
+[19:21] <dkessel> i think that's was Noskcaj might have wanted?
+[19:23] <Noskcaj> dkessel, my original goal was to spread the iso testing time more evenly
+[19:25] <dkessel> ...and for that would help to easily see which tests have -not- been run in the last time, right. or am i missing the point?
+[19:32] <Noskcaj> exactly dkessel
+[19:33] <dkessel> balloons ^^
+[19:45] <balloons> dkessel, Noskcaj I agree
+[19:52] <dkessel> got to got, see you
+=== salem_ is now known as _salem
+=== tripelb is now known as macosppcgal
+=== macosppcgal is now known as tripelb
+=== tripelb is now known as macosppcgal
+=== tripelb is now known as macppcgal-b
+=== _salem is now known as salem_
+=== macppcgal-b is now known as tripelb
+=== salem_ is now known as _salem

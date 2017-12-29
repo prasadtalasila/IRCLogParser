@@ -1,0 +1,103 @@
+=== slank is now known as slank_away
+[03:30] <StevenK> wgrant: So I'm thinking of adding a accepter/rejecter exported property onto IPackageUpload that will back onto auditor, thoughts?
+[03:32] <wgrant> StevenK: Maybe
+[03:36] <StevenK> wgrant: Do you object
+[03:36] <StevenK> ?
+[03:38] <wgrant> StevenK: It will need thought
+[03:38] <wgrant> How will it perform, how will it behave if the backend service is missing, etc.
+[03:47] <StevenK> wgrant: It should perform pretty epically on staging with no data
+[03:48] <StevenK> wgrant: http://pastebin.ubuntu.com/1533266/
+[03:49] <StevenK> That change should at least be enough groundwork and allows us to properly test the auditor on staging when it's up and configured
+[03:51] <wgrant> By "epically" you mean failure?
+[03:51] <wgrant> Remember what you worked on last week? :)
+[03:52] <StevenK> Silence.
+[04:50] <StevenK> wgrant: http://pastebin.ubuntu.com/1533369/
+[04:54] <wgrant> StevenK: Did you copy the branch triggers?
+[04:54] <wgrant> They are more relevant than the bug ones
+[04:57] <StevenK> Yes
+[04:58] <StevenK> It's a copy of branch_denorm_access -- including it's comment from 16-6.
+[04:58] <StevenK> Which I've just fixed.
+[05:02] <wgrant> Right
+[05:05] <StevenK> wgrant: Only concern I have with the branch is owner.id isn't in access_grants
+[05:17] <wgrant> StevenK: Why would it be?
+[05:17] <StevenK> It was for branch
+[05:17] <wgrant> Erm
+[05:17] <wgrant> Really?
+[05:17] <wgrant> Are you sure?
+[05:18] <wgrant> Doesn't seem to be
+[05:18] <StevenK> steven@undermined:~/launchpad/lp-branches/devel% tail -n 4 lib/lp/code/tests/test_branch_access_policy_triggers.py | head -n 1
+[05:18] <StevenK>         self.assertAccess(branch, ap.id, [owner.id])
+[05:19] <wgrant> Oh
+[05:19] <wgrant> In a test :)
+[05:19] <wgrant> That's probably because the owner gets subscribed to the branch by default
+[05:19] <StevenK> RIght
+[05:21] <StevenK> wgrant: If you have no concerns, let me push this branch up
+[05:24] <wgrant> It sounds reasonable, particularly if it works
+[05:24] <StevenK> The tests I wrote pass, at least :-)
+[05:34] <StevenK> wgrant: Did the bug you filed about specification checks get closed?
+[05:36] <wgrant> Demoted
+[05:36] <wgrant> I think
+[05:37] <wgrant> Bug #1067616
+[05:37] <StevenK> I can't find it, if it's open
+[05:37] <_mup_> Bug #1067616: Blueprints could use a denormalized schema for improved performance <private-projects> <specifications> <tech-debt> <Launchpad itself:Triaged> < https://launchpad.net/bugs/1067616 >
+[05:38] <StevenK> Bah, forgot to update sampledata
+[05:39] <wgrant> StevenK: It should not be updated yet
+[05:39] <wgrant> It'll be updated by the garbo job that you'll land afterwards
+[05:39] <StevenK> I had to update sampledata for the er, branch branch
+[05:40] <wgrant> We weren't backfilling then, were we?
+[05:40] <wgrant> I thought we did the branch denorm before we started adding AAG and APAs.
+[05:40] <StevenK> Hm, possibly
+[05:41] <StevenK> I'll leave it, and if buildbot blows up, we can testfix
+[05:41] <wgrant> Anyway, the key point is that prod data is all going to be empty
+[05:41] <wgrant> So sampledata should be too
+[05:41] <StevenK> Sampledata isn't going to have the columns for existing specs
+[05:42] <wgrant> Sure, but that's no problem if the columns are nullable.
+[05:42] <StevenK> Right
+[06:04] <StevenK> stub: https://code.launchpad.net/~stevenk/launchpad/db-specification-new-access-policy/+merge/143230
+[06:05] <stub> Yeah, that's why I need the coffee.
+[06:05] <StevenK> Haha
+[06:05] <StevenK> Sorry
+=== _mup__ is now known as _mup_
+[09:08] <czajkowski> Gwaihir: thanks for the mail, jtv have you read the reply from the large POT import yesterday
+[09:14] <jtv> czajkowski: don't see it, no.  Where should I look?
+[09:16] <czajkowski> have forwarded it on
+[09:19] <jtv> Thanks, I have it now
+[09:24] <jtv> czajkowski: I absolutely don't want to get in these people's way.  They want to contribute, and our worry is not to let that go to waste.  A very simple thing we could do is set up a new, dedicated translation group for them that has only a Bosnian translation team; ask their people to join that team; and set translation permissions to Restricted.
+[09:24] <jtv> That would stop e.g. the Turkish contributions that currently seem to be going to waste.
+[09:25] <jtv> If they would be willing to take on more, it would be possible to grow the project (and translation group) into a broader Universe translation project.
+[09:26] <czajkowski> nods
+[09:31] <czajkowski> Gwaihir: ^^^
+[09:35] <Gwaihir> jtv, czajkowski, yep, agree too
+[09:37] <czajkowski> does this mean he's going to reimport those 800+ pots again ?
+[09:45] <czajkowski> jtv: which TZ are you in btw?
+[11:17] <czajkowski> Gwaihir: so the guy has reimported 445 pots today
+=== yofel_ is now known as yofel
+=== slank_away is now known as slank
+=== Ursinha_ is now known as Ursinha
+=== salgado is now known as salgado-lunch
+=== salgado-lunch is now known as salgado
+=== matsubara is now known as matsubara-lunch
+=== deryck is now known as deryck[lunch]
+=== matsubara-lunch is now known as matsubara
+[18:18] <cjwatson> wgrant: What do you think about my thoughts on LP implementation in https://wiki.ubuntu.com/PhasedUpdates?  This is the most compact way I can think of to implement the spec
+=== deryck[lunch] is now known as deryck
+=== Ursinha is now known as Ursinha-afk
+=== Ursinha-afk is now known as Ursinha
+=== salgado is now known as salgado-afk
+[21:56] <wgrant> cjwatson: That doesn't sound entirely unreasonable.
+[21:58] <czajkowski> wgrant: morning
+[21:58] <wgrant> Morning czajkowski
+[22:22] <cjwatson> wgrant: OK, good - I'll probably have a go at that soon then.  It'll probably generate a fair few publications, but there aren't so many things in -updates that it'll get prohibitive, and inventing another scheme for this seems unnecessarily complex
+[22:24] <cjwatson> And it'll reasonably automatically give us a view of what phase an update was set to in the past, which could be handy
+[22:27] <wgrant> cjwatson: Yeah, and it shouldn't be too many different levels, should it?
+[22:27] <wgrant> Plus we batch +publishinghistory now :)
+[22:27] <wgrant> And we already have a lot of publications.
+[22:27] <wgrant> So I think that should be fine.
+[22:33] <cjwatson> wgrant: Not sure how many.  I think they want the phase to be a percentage, but I assume that there's little chance of the curve being shallow enough for it to take on e.g. all integers from 0 to 100
+[22:33] <wgrant> cjwatson: Exactly, yeah
+[22:35] <cjwatson> So it more depends how frequently they want to update that, and I can probably negotiate that with the errors.u.c cabal :)
+[23:44] <StevenK> wgrant: r15461
+[23:44] <StevenK> I win
+[23:52] <wgrant> Aha
+[23:53] <StevenK> It was even rewritten for being too slow, and you don't remember that?
+[23:54] <wgrant> Oh right

@@ -1,0 +1,67 @@
+[08:52] <mpt> xnox, did you ever see this? https://lists.ubuntu.com/archives/ubuntu-installer/2012-November/001150.html
+[08:55] <infinity> mpt: A preseed of "tasksel tasksel/first multiselect" (that is, a blank selection) should probably solve his issue.
+[08:59] <infinity> mpt: Oh, except we have ubuntu-standard in standard, and I bet the installer runs "taskel -ris" or "tasksel -nris", which will pick up those priorities regardless.
+[09:00]  * mpt doesn't know what tasksel is :-)
+[09:00] <infinity> mpt: His only hope may be to skip tasksel entirely, if he's that offended by out standard set.
+[09:00] <infinity> mpt: tasksel is a curses GUI for picking tasks.  It's also the last thing you see on a d-i or server install.
+[09:01] <infinity> mpt: But when run with flags like -r -i -s, etc, it installs everything of priority required, important, standard, respectively.
+[09:01] <infinity> mpt: Which *could* be what's happening when people frustratedly try to not install the standard task and get it anyway.
+[09:01] <infinity> (Wild conjecture, it's 2am, and I can't be bothered to hunt the relevant code)
+[09:02] <infinity> That said, I'm unconvinced it's much of a problem to install standard by default.  It's trivial for people to remove it with a late_command if they're really offended by it, or to hack d-i.
+[09:11] <mpt> Ah, so that's the bit where you check a [*] checkbox for things like "Web server"
+[09:11] <infinity> Right.
+[10:15] <cjwatson> mpt: I think I already sorted him out by private mail
+[10:15] <mpt> ah, ok
+[10:16] <cjwatson> copied my answer to the list now
+[10:17] <cjwatson> (for the record, with preseeding: "tasksel tasksel/skip-tasks string standard")
+[10:29] <mpt> thanks
+[10:34] <xnox> neat preseed value.
+[16:04] <superm1> cjwatson: would you mind looking at the approach in bug 1105289? in order to make our oem image in time we're probably going to have to (at least temporarily) fork grub-installer/ubiquity w/ it, but it would be better if the same thing would eventually be landing upstream for next time we resync
+[16:04] <ubot2> Launchpad bug 1105289 in grub-installer (Ubuntu Raring) "Factory Installation w/ secure boot needs a force flag" [Undecided,New] https://launchpad.net/bugs/1105289
+[16:12] <cjwatson> actually I'd rather not introduce new interface for this in that way, because the plan is to make grub-install just install the SB image automatically on UEFI systems
+[16:15] <stgraber> superm1: can't you just preseed the additional -signed packages and a late command doing "grub-install --uefi-secure-boot"? may be easier on maintenance than forking ubiquity/grub-installer
+[16:15] <superm1> cjwatson: Ok, that sounds like a better solution indeed. any particular reason that you didn't do that initially?
+[16:16] <cjwatson> superm1: didn't think of it; when I did think of it, didn't have time
+[16:16] <superm1> ah
+[16:16] <cjwatson> Steve suggested it at UDS and I took a work item
+[16:16] <cjwatson> it's on my list for 13.04 / 12.04.3
+[16:17] <superm1> great to hear, thanks
+[16:18] <superm1> stgraber: that's a good point, i'll have to look into it to see if it's workable for us
+=== kentb is now known as kentb-lunch
+=== ogra_ is now known as ogra
+=== kentb-lunch is now known as kentb
+[19:24] <johnsterdotcom> I'm trying to use automatic-ubiquity to automate a 12.04 install. I've passed it a preseed file with ever so many 'd-i ...' commands, but I'm still not able to install/remove some packages, and my network is half-baked. Is there better (ie: more reliable) set of ubiquity-specific verbs I should be using? For instance, I've found 'ubiquity        ubiquity/keep-installed string icedtea6-plugin' ... that's what ma
+[19:25] <xnox> some are documented here: https://wiki.ubuntu.com/UbiquityAutomation
+[19:25] <xnox> note that typically tasksel is not running, so one cannot install/remove packages as easily.
+[19:26] <xnox> you can presseed ubiquity/success_command with something like 'in-target apt-get install pkgs..."
+[19:34] <johnsterdotcom> I'll look into that doc ... and the apt-get trick will be handy, absolutely
+[19:34] <johnsterdotcom> thank you
+[23:28] <johnsterdotcom> i am still having an issue where the /etc/network/interfaces file is has:
+[23:28] <johnsterdotcom> auto eth0
+[23:28] <johnsterdotcom> iface eth0 inet manual
+[23:28] <johnsterdotcom> but nothing else
+[23:29] <johnsterdotcom> is that a known issue?
+[23:42] <xnox> mine doesn't even have that. Only "auto lo"
+[23:42] <xnox> do you have network-manager installed?
+[23:42] <johnsterdotcom> yes
+[23:47] <xnox> not sure, how you got that. Unless that's how the network was configured during the install and got copied into the target?
+[23:47] <xnox> i'm not sure, how it ended up looking like that for you.
+[23:53] <johnsterdotcom> d-i netcfg/choose_interface select eth0
+[23:53] <johnsterdotcom> d-i netcfg/dhcp_timeout string 300
+[23:53] <johnsterdotcom> d-i netcfg/get_hostname string your_host_name
+[23:53] <johnsterdotcom> d-i netcfg/get_hostname seen true
+[23:53] <johnsterdotcom> d-i netcfg/get_domain string example.com
+[23:53] <johnsterdotcom> d-i netcfg/get_domain seen true
+[23:53] <johnsterdotcom> d-i netcfg/disable_dhcp boolean true
+[23:53] <johnsterdotcom> d-i netcfg/dhcp_failed note
+[23:53] <johnsterdotcom> d-i netcfg/get_nameservers string 192.168.10.12
+[23:53] <johnsterdotcom> d-i netcfg/get_ipaddress string 192.168.10.141
+[23:53] <johnsterdotcom> d-i netcfg/get_netmask string 255.255.255.0
+[23:53] <johnsterdotcom> d-i netcfg/get_gateway string 192.168.10.1
+[23:53] <johnsterdotcom> d-i netcfg/confirm_static boolean true
+[23:54] <johnsterdotcom> I assume it wants to edit /etc/network/interfaces and not the network-manager config
+[23:56] <xnox> is all of that for ubiquity preseed?
+[23:57] <johnsterdotcom> no there's quit a lot more.
+[23:57] <xnox> typically ubiquity preseed is very short. E.g http://paste.ubuntu.com/1595235/
+[23:58] <xnox> to rely on automatic networking configuration as usually that should just work with typical dhcp based networks....
+[23:58] <xnox> above preseed is used to automatically install ubiquity desktop cds in our jenkins lab.

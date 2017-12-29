@@ -1,0 +1,246 @@
+[00:16] <infinity> bdmurray: "[package/release] verification still needed" or similar.
+[00:17] <infinity> bdmurray: Since some people may judge urgency based on release, too (thinking of the pending precise point release, for instance).
+[01:51] <infinity> stgraber: Why did queubot just tell me about an upload to raring-proposed?
+[01:51] <infinity> stgraber: Oh, nevermind.  That's the EFI binary.  I'm half asleep.
+[01:52] <stgraber> right, that's the one case where we get something in unapproved even though we aren't frozen :)
+[01:52] <infinity> Yeah.  I just didn't think before I typed. :P
+[01:53] <infinity> Obviously time for a TV and food break.
+[02:16] <phillw> hi, is there an SRU person still about?
+[02:29] <xnox> phillw: infinity just went on a break =)
+[02:29] <xnox> phillw: ask what are you after, and they'll respond when they are back ;-)
+[02:31] <phillw> xnox: do the SRU team have a channel? I'm just after asking if anyone has had chance to look at https://bugs.launchpad.net/ubuntu/+source/libguestfs/+bug/1086974/comments/14 yet?
+[02:31] <ubot2> Ubuntu bug 1086974 in libguestfs (Ubuntu Quantal) "libguestfs: error: cannot find any suitable libguestfs supermin" [High,In progress]
+[02:32] <xnox> phillw: this is the channel for sru.
+[02:32] <xnox> phillw: have you seen this: http://people.canonical.com/~ubuntu-archive/pending-sru.html
+[02:33] <xnox> phillw: the quantal review queue is linked from there https://launchpad.net/ubuntu/quantal/+queue?queue_state=1
+[02:33] <phillw> looks
+[02:33] <xnox> so it's somewhere in the middle =)
+[02:34] <xnox> so i'd guestimate for it to be reviewed and accepted sometime in the next week or so.
+[02:35] <xnox> infinity: I guess we need "sru-uploaded-into-unapproved queue comment" pointing people to the queues, sru-report and describing what happens next.
+[02:36] <infinity> xnox: I dunno.  Setting bugs to "In Progress" and mentioning you've uploaded something is fine, surely? :P
+[02:37] <infinity> xnox: Pointing people at queues will inevitably lead to "how do I install this?!" questions, I guarantee it.
+[02:37] <infinity> xnox: In fact, I'd bet on it.
+[02:37] <xnox> lolz
+[02:37] <xnox> yeah, I remember somebody thought unapproved queue has already built debs
+[02:37] <phillw> I'm guessing this will not be completed in the next 7 days :)
+[02:38] <xnox> phillw: well, if infinity approves libguestfs now it might make it in 7 days.
+[02:38] <xnox> although that would clash with 12.04.2 freeze =/ which means many people will be stiff busy doing that.
+[02:39] <phillw> well, I have quantal-proposed enabled by default :)
+[02:39] <xnox> ah
+[02:39] <phillw> okies, I'll plan on using the work-around for my up coming classroom session :)
+[02:39] <infinity> xnox: Meh, the freeze shouldn't affect migrations, really.  If people verify properly, we don't have to put much work into it.
+[02:40] <xnox> ack.
+[02:41] <xnox> night
+[02:41]  * xnox Zzzzzz
+[02:41] <infinity> xnox: Switching to autoreconf for a 2-line patch to Makefile.am seems a bit heave-handed.  Why not just patch Makefile.in while you're in there?
+[02:41] <infinity> s/heave/heavy/
+[02:41] <infinity> Well, for an SRU anyway.  Unless you verified that no other patches accidentally touch auto{conf,make} stuff in ways that this could change the outcome of the build now.
+[02:41] <phillw> infinity: it it lands on proposed, a quick dig in the ribs to me will be able to verify. It's a very easy one to verify as it has a built in diagnostic which will give pass / not passed
+[02:42]  * xnox is trying to remember if automake was succeeding without full autoreconf or not.
+[02:42] <infinity> xnox: Hrm?  Just adding the same change to Makefile.in would surely make it happy.
+[02:42] <xnox> true.
+[02:43] <xnox> but I usually don't like changing generated files by hand, and prefer to use the proper generator.
+[02:43] <infinity> The reason I'm saying this is because without auditing the other patches (which I'm betting you didn't), you don't know if maybe the Debian maintainer changed something else in .in without changing .am, etc.
+[02:43] <phillw> The fix was applied to Debian quite some time ago? One Day, I'll understand how this all works.
+[02:43] <xnox> but I see your point.
+[02:43] <infinity> xnox: For an SRU, small and auditable is the key.  switching from no reconf to reconf isn't very auditable without me looking through the whole package.
+[02:44] <infinity> phillw: I assume it was applied to Debian unstable.  And that we have it in raring.
+[02:44] <slangasek> infinity: while that's true, I consider direct editing of .in files a sufficiently stab-worthy offense that I don't even bother auditing for such things in SRU reviews
+[02:44] <phillw> infinity: it does not affect raring, so it must be fixed.
+[02:45] <slangasek> if the maintainer has screwed up that badly, and the SRUer hasn't noticed, yes, it will regress; but I only have so many hours in the day to spend idiot-proofing the archive
+[02:45] <infinity> slangasek: Eh.  Even if autoreconf is love (and I agree, it is), it qualifies as "changing build systems", which is a bit of an SRU no-no to me.  Could have unintended side-effects.
+[02:46] <xnox> infinity: I've dropped autoreconf.patch, and instead run dh_autoreconf with my changes.
+[02:46] <infinity> slangasek: I mean, ADDING it qualifies as such, not using it, obviously.
+[02:46] <phillw> infinity: I know the bug looks like a complete 'dogs dinner'... but please bear with me on it. I installed the 13.04 "stuff", and recorded that the issue went away.
+[02:46] <xnox> infinity: would you want me to regenerate autoreconf.patch and then you review the diff of autoreconf.patch which are ugly as hell?
+[02:47] <infinity> xnox: Oh, indeed, the maintainer was autoreconfig himself before.  That's probably a fair indication of safety here.
+[02:47] <slangasek> infinity: while I might not add autoreconf to the build system, I also would certainly not hand-patch the .in as part of the SRU diff... so if a different point version of automake was used that generated a large delta to the .in, I wouldn't review it (or expect someone else to review it) either
+[02:47] <xnox> infinity: other patches in the stack modify configure.ac and Makefile.am
+[02:47] <infinity> xnox: Diffs to auto* aren't bad if you pick the same versions.
+[02:48] <xnox> infinity: yeah, but it's a pain for me to fetch one, cause i'll have to be matching the debian developer =/
+[02:48] <infinity> xnox: Anyhow, you looking into it is good enough for me.
+[02:48] <infinity> slangasek: I hand-patch configure and Makefile.in all the time (to match their parents, of course, not on their own).  I'm probably going to some special part of hell.
+[02:49] <xnox> it builds correctly and did fix the issue & I did test it on quantal kernel (since the package needs kernels to work correctly)
+[02:49] <infinity> slangasek: (glibc git keeps the generated files in version control, and I'll be damned if I'm going to hunt down the exact version I need to produce the small diff that I know how to produce by hand)
+[02:49] <infinity> Also, speaking fluent m4 is probably not a skill I can ever put on a resume, is it?
+[02:50] <xnox> I can speak m4 for small periods of time, otherwise migraine becomes intolerable
+[02:50] <infinity> I feel that way about German.
+[02:51] <infinity> xnox, phillw: Accepted.
+[02:52] <xnox> Nein, Ich denke das Deautsch ist fantastisch!
+[02:52] <phillw> infinity: thanks, I assume it will land in ~ 12 hours as downloadable?
+[02:52] <vanhoof> infinity: hey theres this jockey sru for precise in queue ;)
+[02:52] <xnox> phillw: hide!
+[02:52]  * xnox runs
+[02:52]  * vanhoof tries to sneak something by infinity 
+[02:52] <xnox> infinity: thanks a lot =)
+[02:52] <phillw> infinity: thanks also from me.
+[02:52] <infinity> vanhoof: I removed jockey from the archive in precise.  You didn't hear?
+[02:53] <vanhoof> infinity: you just fixed all my problems!
+[02:53] <infinity> phillw: Probably more like an hour than twelve.
+[02:53] <infinity> vanhoof: Well, all of your problems are because we still have i386 and amd64 in the archive.  I could remove those too, if you like.
+[02:53] <infinity> PPC and ARM 4 lyf, yo.
+[02:54] <infinity> *porter gang sign*
+[02:54] <phillw> infinity: it is 02:54 here, I will be heading for bed. xnox can you update the bug as 'verification needed' or what ever needs doing at this stage?
+[02:54] <infinity> phillw: That's already happened.
+[02:55] <phillw> thanks guys :)
+[02:55]  * infinity grumbles that this is the second time this week he's seen the upstart testsuite hang on PPC.
+[02:57] <vanhoof> infinity: yank em!
+[02:57] <phillw> infinity: I know PPC is low user base, but (L)Ubuntu is their last chance of a supported system. The guys really do appreciate the work you people do.
+[02:57] <infinity> phillw: There are plenty of users other than lubuntu.
+[02:58] <infinity> phillw: (In other words, please stop spreading that myth, it hurts the case, rather than helping it)
+[02:58] <phillw> good to know we're not alone :)
+[02:59] <micahg> Xubuntu would go back to producing images if there were testers
+[03:00] <infinity> micahg: Now that my PowerStation can actually boot the ISOs we produce, I may be tempted to do some install testing.
+[03:00] <infinity> I never did installer testing before, despite running a ton of PPC machines at home because our installers never actually installed to any of my hardware. :P
+[03:01] <phillw> I only know of PPC server. micahg, we've just got two new people interested in testing who have kit and are fairly okay with installing stuff. With Walter nearly back it may be possible to test xubuntu as well.
+[03:01] <micahg> infinity: heh, ok, if you're willing, I'll talk to knome
+[03:01] <infinity> micahg: I might be more willing if I swap out the Radeon card in here for some cheap of NV43 or something.
+[03:02] <infinity> Cause I have about this --><-- much interest in fixing radeon bugs just to verify pretty GUIs.
+[03:02] <infinity> (Yes, my PPC machines are all usually headless)
+[03:02] <infinity> s/cheap of/cheap old/
+[03:04] <phillw> Ahh, now I understand, I'm talking about Mac PPC machines, whereas the PPC machines are not just Mac :)
+[03:05] <micahg> well, Xubuntu obviously isn't targeting high end servers :)
+[03:05] <phillw> nor is lubuntu, but they do need 'pretty' GUI and the mac-books cannot swap out the video chip that is soldered into them :)
+[03:06] <phillw> (usually by a 12 year old )
+[03:22] <infinity> Hrm.  Does libreoffice parallelise well (or at all)?
+[03:22] <infinity> I think we're about to find out.
+[03:23] <slangasek> we are?
+[03:23] <infinity> Well, a machine with 24 SMT threads just picked it up.
+[03:23] <infinity> So yes.
+[03:23] <infinity> We'll see.
+[03:23] <slangasek> heh
+[03:24] <infinity> I'm actually getting a kick out of seeing which packages sagari builds "around the same or a bit faster than x86" and which ones it just completely leaves them in the dust on.
+[03:24] <infinity> I might need a social life or something.
+[03:35] <phillw> micahg: two testers are up for testing a Mac-PPC version of xubuntu, and that was in... 30 minutes of my asking :)
+[03:35] <micahg> cool
+[03:37] <infinity> phillw: And yeah, as for PPC != Mac, only one of my PPC machines is a Mac, and it's so old our install media doesn't have a hope of running on it.
+[03:37] <infinity> (It runs Ubuntu, though, just not from an Ubuntu installer)
+[03:46] <phillw> infinity: an IBM machine perhaps?
+[03:46] <infinity> phillw: I have some of those, yes.
+[04:52] <micahg> infinity: I've got ^^ and an evince upload coming that I'd like to get in for 12.04.2 if possible
+[04:53] <infinity> micahg: We'll see what we can do.
+[04:53] <infinity> (soonish, though, we'll have to stop accenting things that aren't installation-critical, since it really doesn't matter that much what ships on the CD if you can upgrade right after)
+[04:53] <infinity> s/accenting/accepting/
+[04:54] <micahg> true, I figured I was close enough to the cut off
+[04:54] <infinity> Yeah, you're fine.  Upload away.
+[04:54] <infinity> That was more for the general onlookers who will want to rush "one last upload". :P
+[04:55] <micahg> this way I feel kinda useful :)
+[04:56] <micahg> infinity: BTW, I know those are technically 2 different problems, but they were uploaded in devel in the same bug, figured I'd do the same for SRU
+[04:57] <micahg> but I can undupe if that's easier
+[05:06] <ScottK> micahg: The main thing is that the test case covers everything that needs testing.
+[05:14] <jackson_> https://bugs.launchpad.net/ubuntu/+source/fglrx-installer/+bug/1058040
+[05:14] <ubot2> Ubuntu bug 1058040 in fglrx-installer (Ubuntu) "fglrx-installer not working with AMD Radeon/Mobility Radeon HD 2000-4000 cards in Quantal" [Wishlist,Triaged]
+[05:39] <micahg> ScottK: yeah, wrote for both sources
+=== yofel_ is now known as yofel
+=== henrix_ is now known as henrix
+=== zequence_ is now known as zequence
+[10:48] <knome> micahg, would we? umm... :)
+[11:15] <psivaa> cjwatson: xnox: Laney: raring desktop images have not appeared yet, i saw some build breaks. are they being rebuilt?
+[11:15] <Laney> not by me at least
+[11:15] <xnox> well python-oneconf seems to be culprit, and it's back & published in main.
+[11:15] <Laney> was it the usual copying bug?
+[11:15]  * xnox has no access to push the buttons to trigger a rebuild.
+[11:16] <xnox> Laney: i think we intermittently dropped python-oneconf in favor of python3-oneconf, without noticing that software centre still uses python2.
+[11:17] <Laney> mmm
+[11:17] <psivaa> ok if you could give me a heads up if they are rebuilt so that i could monitor the smoke tests, that would help
+[11:17] <Laney> I'll give it a kick
+[11:17] <xnox> Laney: althought thinking about it, britney would not have let that happen.
+[11:19] <cjwatson> britney doesn't notice component mismatches
+[11:19] <cjwatson> Please could another ubuntu-sru member review base-files
+[11:19] <cjwatson> (it has my signoff for 12.04.2, obviously)
+[11:28]  * cjwatson sends a 12.04.2 status update
+[11:29] <infinity> cjwatson: Yeah, I was waiting for you to say you wanted it accepted. :)
+[11:30] <cjwatson> Yeah
+[11:31] <cjwatson> infinity: I delegated you as another source of 12.04.2 signoff capability in my status update - immediately, because I'm about to be offline for 2.5 days which is a bit unfortunate just after sending a freeze mail, but in general we have reasonable combined timezone coverage
+[11:31] <cjwatson> But I'd prefer that we only accept things that are installation-critical from here on
+[11:32] <infinity> cjwatson: Oh, hah, I just... Yeah. :P
+[11:32] <cjwatson> Well, so: hardish freeze from today, but I can well imagine that there's stuff in the queue that people were expecting to be accepted rather earlier
+[11:32] <infinity> cjwatson: We still have some backport stacky things to fix up (like binary drivers, jockey, etc), but I assume we'll call that installation-critical.
+[11:33] <cjwatson> So if you're planning some review this weekend, I'm happy to give that a pass.  Just remember that we're running low on time for verification.
+[11:33] <cjwatson> Enablement stack stuff counts, yeah.
+[11:33] <cjwatson> We don't have much choice there.
+[11:33] <infinity> cjwatson: Yeahp.  If we switch to building without PROPOSED soon, the "low on time for verification" thing becomes less of an issue.
+[11:33] <infinity> cjwatson: Once we're only building with updates, stuff that doesn't make it just, well, doesn't make it.
+[11:33] <cjwatson> I put that as "between 2013-02-01 and 2013-02-07, as appropriate"
+[11:34] <cjwatson> Would like to leave myself a bit of flexibility
+[11:34] <cjwatson> (2013-02-01 selected as seven days from now, so anything in -proposed now won't need a waiver)
+[11:34] <infinity> cjwatson: (As in, I'd rather not see us stop processing the queue but, instead, stop promoting precise updates)
+[11:34] <cjwatson> Sure, once we've switched to -updates
+[11:35]  * infinity nods.
+[11:35] <cjwatson> Do you think you could find a bit of time to check that the installer's up to date with all ABIs?
+[11:36] <cjwatson> And verifying bug 1040393 wouldn't hurt, into the bargain ...
+[11:36] <ubot2> Launchpad bug 1040393 in debian-installer (Ubuntu Precise) "omap netboot partition too small for flash-kernel backup procedure" [Undecided,Fix committed] https://launchpad.net/bugs/1040393
+[11:36] <infinity> cjwatson: I'll verify the OMAP thing, yeah.  The installer will need a rebuild shortly for an emergency kernel SRU.
+[11:36] <infinity> cjwatson: That is, assuming you like dnotify/inotify to function.
+[11:37] <cjwatson> I'm not totally sure d-i cares
+[11:37] <infinity> (I'd have the kernels in -proposed already by now, but, well, see above, re: Pandas)
+[11:37] <cjwatson> tail -f somewhere, maybe
+[11:37] <infinity> cjwatson: No, I meant "assuming our users care about functional systems".
+[11:37] <cjwatson> But sure, no reason not to have it completely up to date
+[11:37] <infinity> cjwatson: You're right that the installer probably doesn't care. :P
+[11:38] <infinity> cjwatson: Anyhow, that'll probably bring us a d-i rebuild next week after kernel and QA finish their dance.
+[11:38]  * cjwatson tries to clean up a little bit of obsolete awfulness on PointReleaseProcess
+[11:38] <cjwatson> I should really go and pack and stuff, though
+[11:39] <cjwatson> Probably best to SMS me if you need anything urgent
+[11:40] <infinity> cjwatson: We should survive a few days without you, I'm sure. :)
+[11:41] <infinity> cjwatson: Go forth and ignore work.
+[11:44] <tseliot> infinity: can you please reject fglrx-installer-experimental-9 from precise-proposed? (I think it's gonna FTBFS and I have a fix from raring)
+[11:45] <infinity> tseliot: Gladly.
+[11:45] <infinity> tseliot: What about fglrx-installer-updates?
+[11:45] <tseliot> infinity: that should build fine
+[11:48] <tseliot> infinity: speaking of which, I'd need the following packages to be approved for LP: #1080588: jockey, nvidia-graphics-drivers-updates, nvidia-graphics-drivers-experimental-310, fglrx-installer-updates
+[11:48] <ubot2> Launchpad bug 1080588 in jockey (Ubuntu Precise) "jockey suggests not installable packages on renamed stack" [High,In progress] https://launchpad.net/bugs/1080588
+[11:48] <tseliot> infinity: this is something we need for 12.04.2
+[11:48] <infinity> tseliot: Well aware of it, yes.
+[11:49] <tseliot> infinity: ok, thanks
+[12:36] <Laney> psivaa: images r us
+[12:36] <Laney> armhf+omap4 failed though.
+[12:38] <psivaa> Laney: thanks
+[12:38] <Laney> huh, but there's an image for it
+=== Ursinha_ is now known as Ursinha
+=== rsalveti_ is now known as rsalveti
+=== henrix is now known as henrix_
+[16:30] <smagoun> slangasek: Hi, I'm here to beg for some help on a bcmwl update that's verification-done in precise-proposed. Is there any chance that can go to precise-updates today? bug 923809
+[16:30] <ubot2> Launchpad bug 923809 in bcmwl (Ubuntu Quantal) "Upgrade bcmwl to version 6.20.55.19 (r300276) or greater" [High,Confirmed] https://launchpad.net/bugs/923809
+[16:30] <smagoun> I am willing to pay in beer at the next UDS :)
+=== henrix_ is now known as henrix
+[16:31] <xnox> smagoun: it doesn't look fully verified to me though.
+[16:31] <xnox> from http://people.canonical.com/~ubuntu-archive/pending-sru.html
+[16:32] <xnox> but 994255 (not sure if verification-done is for bcmwl or the other package)
+[16:32] <xnox> bug 994255 (not sure if verification-done is for bcmwl or the other package)
+[16:32] <ubot2> Launchpad bug 994255 in broadcom-sta (Ubuntu Precise) "bcmwl-kernel-source 5.100.82.38+bdcom-0ubuntu6.1: bcmwl kernel module failed to build [fatal error: asm/system.h: No such file or directory]" [Undecided,Confirmed] https://launchpad.net/bugs/994255
+[16:32] <xnox> and bug 1065827 is not verified yet.
+[16:32] <ubot2> Launchpad bug 1065827 in bcmwl (Ubuntu Precise) "Kubuntu 12.10 bcmwl install failure" [Undecided,Fix committed] https://launchpad.net/bugs/1065827
+[16:33] <xnox> smagoun: please check and/or verify those two bugs and then bcmwl should be good to go.
+[16:33] <smagoun> xnox: thanks for the pointer...I will see what I can do to get those verified
+[16:35] <smagoun> xnox: on 994255, comment #27 indicates that bcmwl was verified, not the other package. is that helpful?
+[16:36] <slangasek> smagoun: we have a general rule of not publishing SRUs on a Friday; if you can get the verification done this morning though, I can push it and keep an eye on it through the weekend
+[16:39] <smagoun> slangasek: ack, thank you
+[16:48] <smagoun> infinity: Hi, I'm looking at bug 1065827 in order to verify it. It's not clear from the description/comments why this bug affects precise or needs to be verified against precise. You added the precise tasks last week; can you explain why?
+[16:48] <ubot2> Launchpad bug 1065827 in bcmwl (Ubuntu Precise) "Kubuntu 12.10 bcmwl install failure" [Undecided,Fix committed] https://launchpad.net/bugs/1065827
+[16:49] <infinity> smagoun: Because the package uploaded to precise references that bug?
+[16:51] <infinity> smagoun: Verifying it would be, I suspect, having a system with b43 loaded and installing bcmwl-kernel-source, and seeing if it picks it up and DTRT immediately after install, or requires manual rmmod/modprobe (or a reboot).
+[16:54] <smagoun> infinity: ok, that makes some sense. It seems like this bug report isn't actually intended to represent an SRU for precise, which is confusing. I'll see what I can do about testing w/ b43
+[16:54] <infinity> smagoun: Yeah, I should have made your engineer fill in all the blanks.  I dropped the ball on actually checking all the bugs when I got all excited about the package actually passing review on my Nth go 'round.
+[16:54] <infinity> *cough*
+[16:56] <smagoun> heh
+[17:19] <infinity> Right, I've been up all night and need to have some sort of nap.  If anyone urgently needs me, my phone will be next to my head.  Otherwise, I'll be back this afternoon/evening.
+=== doko_ is now known as doko
+=== henrix is now known as henrix_
+[19:13] <smagoun> slangasek: Hi, per our earlier conversation we've verified the remaining bug related to bcmwl 6.20.155.1+bdcom-0ubuntu0.0.1 in precise-proposed. Specifically, we tested bug 1065827 in a manner proposed by here by infinity. If you need more data please let me know, I'll try to get it.
+[19:13] <ubot2> Launchpad bug 1065827 in bcmwl (Ubuntu Precise) "Kubuntu 12.10 bcmwl install failure" [Undecided,Fix committed] https://launchpad.net/bugs/1065827
+[19:41] <slangasek> smagoun: published
+[19:41] <smagoun> slangasek: thank you! I'll buy you a beer next time I see you
+[19:41] <slangasek> :-)
+[19:42] <slangasek> hmm, actually I'm not sure the publishing took
+=== cyphermox_ is now known as cyphermox
+[19:42] <slangasek> infinity: sru-release assures me it's copied; is that asynchronous?
+[19:43] <slangasek> cjwatson: ^^ ?
+[19:44] <slangasek> aha, really working now
+[19:45] <slangasek> the previous copy attempt apparently oopsed ;)
+[23:19] <infinity> slangasek: Yeah, sru-release just tells you that it's run a copy which is, as you've noticed, async, and there's a longstanding locking bug where bug-closures-on-copy can cause a copy to just effin' disappear.
+[23:20] <slangasek> sweet
+[23:20] <infinity> slangasek: I'm guessing you sorted out that you can divine which upload broke from the changelog librarian URL referenced in the OOPS and retry, but it's a massive pain (and entirely opaque to non-canonical consumers of the copy API, since they can't read the OOPS).
+[23:21] <slangasek> eh, I'm not sure I can read the oops
+[23:21] <infinity> Oh.  Well, I can.
+[23:21] <infinity> So, that makes it even more opaque.

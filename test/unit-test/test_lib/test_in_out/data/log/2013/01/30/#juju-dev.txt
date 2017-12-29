@@ -1,0 +1,581 @@
+=== slank is now known as slank_away
+[05:38] <jam> wallyworld: /wave
+[05:39] <wallyworld> g'day
+[05:42] <wallyworld> jam: i've put up a couple of mp's - bootstrapping a real openstack works :-)
+[05:42] <jam> wallyworld: sounds great
+[05:42] <wallyworld> but canonistack is responding now with a resource limit exceeded error, but it was working, o swear
+[05:43] <wallyworld> i ran it against my user id for everything (public bucket etc), didn't try out shared tenant
+[06:06] <jam> wallyworld: you could certainly have started to many instances, etc in a time frame.
+[06:06] <wallyworld> yes, i did a lot of debugging/testing
+[08:10] <rogpeppe> morning all!
+[08:12] <dimitern> rogpeppe: morning
+[08:12] <TheMue> rogpeppe, dimitern: morning
+[08:12] <dimitern> TheMue: hiya
+[08:14] <rogpeppe> i'd appreciate some comments on https://codereview.appspot.com/6878052 if anyone fancies having a look
+[08:15] <TheMue> Aaaargh, heavy rain showers here. OK, much warmer than a week ago, but so wet.
+[08:15] <TheMue> Thankfully no need to step out.
+[08:15] <TheMue> rogpeppe: *click* before continuing my OS X tests (build went w/o probs).
+[08:16]  * dimitern looking as well
+[08:30] <dimitern> rogpeppe: done
+[08:30] <rogpeppe> dimitern: that was quick, thanks!
+[08:30] <dimitern> rogpeppe: np
+[08:43] <dimitern> wallyworld: ping
+[08:46] <jam> rogpeppe: I'm trying to use 'lbox propose' but I'm still getting "local error: protocol version not supported".
+[08:46] <jam> Is there any way to get more context in the error messages?
+[08:46] <rogpeppe> jam: lbox --verbose ?
+[08:48] <TheMue> rogpeppe: You've got a review.
+[08:49] <rogpeppe> TheMue: tyvm
+[08:49] <jam> rogpeppe: it looks like it might be a username failure, but where are the cached auth details saved?
+[08:49] <TheMue> rogpeppe: Missed to enter the LGTM, so after your answers I'll do it. ;)
+[08:49] <rogpeppe> jam: hmm, i've never looked, sorry
+[08:50] <rogpeppe> jam: i'd appreciate your comments on this CL too, if you have some time. https://codereview.appspot.com/6878052
+[08:56] <jam> rogpeppe: ... it is telling me that it successfully read from a file that doesn't exist....
+[08:56] <rogpeppe> jam: hmm.
+[08:56] <rogpeppe> jam: lbox is?
+[08:57] <jam> rogpeppe: I hacked rietveld to tell me where it was loading the credentials, and it logs "Successfully loaded from $HOME/.goetveld_codereview.appspot.com" but there is no such file.
+[08:57] <rogpeppe> jam: weird. more printfs required, i think :-)
+[08:58] <rogpeppe> jam: i could have a look, but i'd only be duplicating your work, and i can't reproduce the problem...
+[08:59] <jam> yeah, working on it
+[08:59] <jam> lots of prints now
+[09:01] <jam> rogpeppe: step 1: failed to read file, step 2: successfully read credentials... WTF?
+[09:01] <rogpeppe> lol
+[09:04] <jam> rogpeppe: there is a func "filterNotFound()" which turns not-found errors into nil
+[09:04] <jam> so it says it loaded when the credentials aren't actually there.
+[09:05] <rogpeppe> jam: so it's deliberate. perhaps this isn't the reason after all.
+[09:05] <jam> rogpeppe: sure, but the log message saying it successfully loaded credentials is confusing
+[09:05] <jam> And it isn't asking me to log in.
+[09:05] <jam> It did the very first time I ran it with -v
+[09:05] <rogpeppe> jam: indeed. and that seems odd.
+[09:05] <jam> and now it just dies
+[09:05] <jam> It seems to get a 401
+[09:05] <jam> and then... protocol not supported tends to happen.
+[09:06] <jam> but I'm not able to get my creds into the system, because it doesn't get to the point of actually asking me to log in.
+[09:06] <rogpeppe> jam: if you run it with --debug, you'll see the traffic to and from the server too, which might help possibly
+[09:10] <jtv> Hi rogpeppe (and thanks for all your helpful comments by the  way!), hi jam.
+[09:10] <jam> h
+[09:10] <jam> hi jtv
+[09:11] <rogpeppe> jtv: hiya
+[09:11] <rogpeppe> jtv: on the go gotchas doc?
+[09:11] <jtv> The Cultural Learnings For Make Benefit.
+[09:11] <rogpeppe> jtv: a great title
+[09:11] <jtv> Julian's.  Stroke of genius.
+[09:12] <rogpeppe> jtv: i think that at least some of it might be good to publish more widely
+[09:12] <jtv> Good point.  I'll mention it in our standup call.
+[09:12] <jtv> Meanwhile, another thing you gents may be able to help with:
+[09:13] <jtv> when a juju provider needs to know things like the base URL it should talk to get its virtual machines etc., that all goes into the config and is parsed out by Provider.SetConfig(), right?
+[09:13] <rogpeppe> jtv: yup
+[09:14] <rogpeppe> jtv: or at least it should be derivable from the config
+[09:14] <jtv> Thanks.  And in general, is the config meant to be a single level deep, or nest structures, or be very very deep so the whole world can fit in if needed..?
+[09:15] <rogpeppe> jtv: generally it's a single level
+[09:15] <rogpeppe> jtv: i'm not sure if we allow deeper nesting - it might be useful at some point (i've considered a situation where we might want nested provider configs...)
+[09:16] <jtv> For gomaasapi we built a little object layer for dealing with dynamic JSON structures.  Not great, but it gets us past the static/dynamic problem.
+[09:17] <rogpeppe> jtv: have you seen juju's schema package?
+[09:17] <jam> rogpeppe: well, eventually after running the command probably 50 times now, it finally asked for my password and I could get it entered. I still don't know what was wrong with the protocol, but it apparently blocked me actually logging in.
+[09:17] <jtv> No..?
+[09:17] <jam> jtv: you can use a map[string]interface{} for dynamic structures, (I think)
+[09:18] <rogpeppe> jtv: it makes it easier to coerce dynamic JSON structures into a known form.
+[09:20] <jtv> jam: yes we do use that, but our code hides the casting etc. underneath.
+[09:20] <jtv> rogpeppe: that was part of our problem: we couldn't guarantee much about the known form.
+[09:21] <jam> jtv: how dynamic is the actual structure? We went with more of a known structs which allows the json marshall/unmarshall to handle casting to types rather than writing a lot of functions
+[09:21] <jam> (function calls)
+[09:21] <rogpeppe> jtv: that can be awkward
+[09:21] <rogpeppe> jtv: i'd be interested to see the range of forms you have to deal with.
+[09:21] <jam> (the argument is that if you don't actually know the structure, you don't really know how to use it, do you?)
+[09:22] <jtv> Well in our case we had the problem of a boundary of responsibilities between the code that uses the objects (and thus has to know /something/ about their structure) and the code that serves them up.
+[09:22] <rogpeppe> jam: yeah, but json structures can be alarmingly content-dependent sometimes
+[09:23] <jam> jtv: you can pass in the expected structure (via interface{}) and have it get populated and returned
+[09:24] <jtv> Yes.  We had a few slightly different requirements though.  The one thing we know is that "MAAS objects" are JSON objects with a resource_uri entry.
+[09:26] <jtv> (Although conversely of course, a JSON object with a resource_uri entry need not be a MAAS object)
+[09:26] <jtv> Was a bit shocked to find that numbers can parse to float64 *or* int, depending.
+[09:29] <jam> rogpeppe: should 'rpc' be in juju-core ? it feels like something that should be an external lib.
+[09:29] <jam> (with all the dep issues that entails, maybe not worth it yet, I guess)
+[09:29] <rogpeppe> jam: quite possibly. i think i'm in favour of leaving it in juju for the time being, as it may become more juju-specific.
+[09:30] <rogpeppe> jam: we can easily factor it out later (and i'm in favour of doing that when it stabilises)
+[09:31] <rogpeppe> TheMue: "
+[09:31] <rogpeppe> Just to get it right, the coverage of the API is defined by the types and their
+[09:31] <rogpeppe> methods here in the package, but those are using the generic way interact with
+[09:31] <rogpeppe> state?
+[09:31] <rogpeppe> "
+[09:31] <rogpeppe> TheMue: i'm not sure i understand your question there
+[09:33] <TheMue> rogpeppe: Just wanted to know if the type and methods the API exposed have to be defined in the API package like you've done it for Machine.InstanceId().
+[09:34] <rogpeppe> TheMue: yes. that's how all our Go-implemented clients and agents will interact with the state
+[09:34] <TheMue> rogpeppe: Fine.
+[09:35] <TheMue> rogpeppe: So more control than exposing all public state types and methods.
+[09:35] <rogpeppe> TheMue: yes
+[09:35] <TheMue> rogpeppe: +1
+[09:36] <TheMue> rogpeppe: Like it.
+[09:36] <TheMue> rogpeppe: Btw, our client runs fine on OS X. :D
+[09:36] <rogpeppe> TheMue: of course, external clients will speak JSON directly to the API server.
+[09:36] <rogpeppe> TheMue: cool.
+[09:37] <rogpeppe> TheMue: you ran the live tests?
+[09:37] <TheMue> rogpeppe: First step has been just to bootstrap. Next step are the live tests.
+[09:37] <rogpeppe> TheMue: ah, you bootstrapped ok - that's good enough for me :-)
+[09:38] <TheMue> rogpeppe: *lol*
+[09:38] <rogpeppe> TheMue: and juju status worked ok, presumably?
+[09:38] <dimitern> we may have a problem with openstack bootstrap, it seems the user_data we're passing is limited to 65K base64 encoded string
+[09:38] <TheMue> rogpeppe: Exactly
+[09:38] <dimitern> and ours is slightly over 80K
+[09:38] <rogpeppe> dimitern: compressed?
+[09:39] <dimitern> rogpeppe: no, it's just b64-ed
+[09:39] <rogpeppe> dimitern: that's huge, BTW. why is it so big?
+[09:39] <dimitern> rogpeppe: I don't know but I intend to find out shortly
+[09:39] <rogpeppe> dimitern: ec2 sends the user data compressed, BTW
+[09:39] <rogpeppe> dimitern: i mean the ec2 provider sends...
+[09:40] <dimitern> rogpeppe: nova does not support this, looking at the source
+[09:40] <rogpeppe> dimitern: the limit for ec2 user data is 16K and we fit in that alright. 80K is huge!
+[09:41] <dimitern> rogpeppe: it's either improperly encoded or it's repeated or something
+[09:42] <rogpeppe> dimitern: does nova need to know about the compression? i thought it was a cloud-init thing.
+[09:43] <dimitern> rogpeppe: not that I can see - compression is neither mentioned in the API/docs nor I can see it being handled at the nova source level
+[09:44] <rogpeppe> dimitern: https://help.ubuntu.com/community/CloudInit
+[09:44] <rogpeppe> dimitern: "content found to be gzip compressed will be uncompressed. The uncompressed data will then be used as if it were not compressed. "
+[09:45] <dimitern> rogpeppe: that's what I have http://paste.ubuntu.com/1589183/
+[09:46] <dimitern> rogpeppe: I see - so nova doesn't have to handle the decompression - cloud init will do that itself?
+[09:46] <rogpeppe> dimitern: yeah
+[09:47] <dimitern> rogpeppe: so that paste looks not right? it should be gz-ed
+[09:48] <dimitern> rogpeppe: which module should I use? compress/zlib?
+[09:48] <rogpeppe> dimitern: check out the code in the ec2 provider
+[09:48] <jam> dimitern: zlib != gz, though they are similar
+[09:48] <rogpeppe> dimitern: there's already a convenience function to do it
+[09:48] <jam> (both are DEFLATE, but gz has different headers)
+[09:48] <dimitern> rogpeppe: can you point me where?
+[09:48] <rogpeppe> dimitern: (in trivial)
+[09:49] <jam> not to be confused with mgz, who has no headers :)
+[09:49] <dimitern> :D
+[09:49] <rogpeppe> dimitern: in the userData function in ec2.go
+[09:49] <dimitern> rogpeppe: ah, ok
+[09:49] <rogpeppe> dimitern: 	cdata := trivial.Gzip(data)
+[09:50] <mgz> I have a head, though...
+[09:52] <dimitern> rogpeppe: yeah, this is removed in OS when porting the ec2 stuff .. weird
+[09:56] <jam> mgz: sometimes at least. :)
+[10:02] <dimitern> so, with the gzip part done, now it seems we need to set a public IP as well, otherwise you cannot connect to mongo, even with the sshebang VPN stuff for canonistack, and nova ssh machine-0 complains no public IPs are set
+[10:05] <dimitern> and I cannot ssh directly, because the authorized keys expect my key pair to be on chinstrap as well
+[10:20] <dimitern> and I cannot connect to the mongo on the bootstrap node at all - with either private canonistack IP or with an attached floating IP (public), even though I can see the secgroup allows port 37017
+[10:21] <dimitern> should I be able?
+[10:24] <jam> dimitern: so is it trying to ssh to the machine, or is it trying to connect directly to mongo?
+[10:24] <jam> if it is a direct connect to mongo, then you would need an ssh tunnel to it, or as you mention we need a public ip set for the machine.
+[10:25] <dimitern> jam: directly on port 37017
+[10:25] <dimitern> jam: I have a public IP set and through it it doesn't work (drops with conn refused, rather than blocking forever, when using a private IP)
+[10:27] <dimitern> jam: and I cannot seem to find a way to ssh into the machine to see what's running there (public key auth fails - used several ways to connect - with the sshebang, directly with -i ~/.ssh/mykey, etc.)
+[10:27] <mgz> you can also just ssh to chinstrap, then use a 10. address from there to test things sometimes
+[10:27] <mgz> it's likely the cloud-init was bugged though
+[10:27] <dimitern> mgz: tried that as well - still pubkey auth failed
+[10:27] <mgz> dimitern: what you need to do is look at the boottime console output
+[10:28] <dimitern> mgz: how? juju bootstrap is doing all
+[10:28] <mgz> which will tell you if injecting your public key failed somehow
+[10:28] <jam> dimitern: I'm pretty sure you can use a different ssh key to chinstrap than you use to the actual bootstrap node, but it might involve a bit of ssh config magic.
+[10:28] <dimitern> mgz: if I use lpsetup to launch a machine - it all works and at the end I'm in a ssh session
+[10:28] <mgz> dimitern: eg by `euca-describe-instances` to get the i-000000 id form
+[10:29] <mgz> then `euca-get-console-outp... something like that, don't remember the form
+[10:29] <mgz> anyway, pipe that to file and pastebin it
+[10:29] <mgz> novaclient should actually expose the console output stuff now as well
+[10:29] <dimitern> mgz: ahaa! 10x
+[10:30] <jam> mgz: nova list works for me
+[10:30] <jam> it reports the ip address of the target machine
+[10:30] <dimitern> mgz: http://paste.ubuntu.com/1589253/
+[10:31] <dimitern> nova list works for me as well, but nova ssh says "no public address set", which is wrong - there is a fip set
+[10:31] <mgz> jam: as in, what dimitern actually needs is the bootlog
+[10:31] <mgz> the eucatools list was just to get the other id form to use with the console output command
+[10:31] <jam> dimitern: well, I don't use a public IP to ssh to
+[10:32] <dimitern> mgz: that's troublesome - 2013-01-30 09:54:04,352 - __init__.py[WARNING]: Unhandled non-multipart (text/x-not-multipart) userdata: 'H4sIAAAJbogA/+y9+ZOq2rIn...'
+[10:32] <mgz> dimitern: ^right, that
+[10:33] <jam> dimitern: I use "nova list" which gives: in the last column "Networks" which has "canonistack:10.55.60.XX" and I just "ssh 10.55.60.XX"
+[10:33] <mgz> I'm *so* glad I added that log line to cloud-init :)
+[10:33] <dimitern> mgz: yay :)
+[10:33] <mgz> you appear to have done base64 then gzip?
+[10:33] <mgz> it should be gzip then base64
+[10:33] <dimitern> jam: using ssh 10.55.xx does not work either (pubkey auth error)
+[10:33] <jam> dimitern: um, I'm able to get to: 10.55.60.246
+[10:34] <dimitern> mgz: thought just that :) I'm looking
+[10:34] <jam> which is the one listed in your log
+[10:34] <mgz> once you ungzip, the first bit of literal text must be #cloud-config
+[10:34] <dimitern> jam: me too
+[10:34] <jam> sorry, bad paste
+[10:34] <jam> I get perm denied going to .246
+[10:34] <dimitern> jam: exactly
+[10:34] <mgz> jam: when cloud-init doesn't like the user data you pass (which includes the key to inject), you can't ssh to the machine in the normal way
+[10:35] <dimitern> jam: used to work before - in fact for things lpsetup created it works ok
+[10:35] <jam> mgz: sure, I imagine the key to use is in the cloud-init, and if that isn't there, bad news bears :)
+[10:36] <jam> mgz: any way to get gzip to decompress even when the data isn't complete?
+[10:36] <mgz> it's there, but can't read the user-data dimitern passed, because it comes out base64ed still
+[10:36] <mgz> jam: not really.
+[10:36] <jam> mgz: http://www.urbanophile.com/arenn/coding/gzrt/gzrt.html :)
+[10:37] <jam> but that might still be block-sized
+[10:37] <mgz> well, it can be done, but cloud-init has no facilities to do it
+[10:37] <mgz> and you can't get to the box to fiddle yourself
+[10:37] <jam> mgz: oh, I just want to see the decompression of the base64 stuff, to see if it makes any sense.
+[10:38] <jam> dimitern: btw, you might want to use pastebin.canonical.com for stuff that might contain things like private keys
+[10:38] <jam> p.u.c is fully public
+[10:39] <mgz> cloud-init dump is generally safe, but yeah
+[10:39] <dimitern> jam: ah, ok, will do
+[10:40] <dimitern> jam: luckily, because of the bug no keys were actually of importance there
+[10:40] <jam> mgz: well, the 24 base-64 bytes is not enough to get any data out of gz
+[10:42] <mgz> yeah, is a gzip stream though
+[10:42] <jam> mgz: well gzip("#cloud-config").encode('base64") => H8sIAAAA... which is the same as  the paste bin. However I imagine that is the gzip header, and not the actual compressed contenct.
+[10:43] <jam> mgz: well, you can't take out arbitrary bytes in the middle, but if you get enough of the prefix, you should be able to get something out, I imagine.
+[10:43] <jam> H4s
+[10:44] <mgz> well, we have the length
+[10:44] <jam> dimitern: one option is to dump the content (log it) in the client, to see what it thinks it is sending. And you can at least check that the prefix matches.
+[10:44] <jam> mgz: the error message sounds like it wants multipart sections
+[10:44] <mgz> ah, not we don't
+[10:45] <mgz> jam: I'm just checking with cloud-init, but I suspect over-endoing
+[10:45] <jam> mgz: but what dimitern posted before: http://paste.ubuntu.com/1589183/
+[10:45] <mgz> *encoding
+[10:45] <dimitern> jam, mgz: so I did bootstrap and logged, took the console log as well
+[10:45] <jam> mgz: I wonder if it was "base64(gzip(base64(content)))" or something like that
+[10:45] <dimitern> it seems the client is sending b64(gzip(cloud_init)) and it's exactly as it is - correctly
+[10:47] <dimitern> but yeah - I did the gzip(header) -> base64 and it's H4S.. something, so indeed another b64 is happening
+[10:47] <jam> dimitern: gzip("").encode('base64') == H4sIAAAA
+[10:47] <jam> so that is just the "I'm a gzip stream" bit
+[10:48] <jam> not the "and the content looks like #cloud-init" stuff.
+[10:50] <dimitern> it seems the data is not decoded on the other side
+[10:51] <jam> dimitern: so I'm wondering about the base64 nature
+[10:51] <jam> mgz: is there a reasonable way to get the cloud-init content out of pyjuju?
+[10:51] <jam> to compare?
+[10:52] <mgz> yeah, but it's quite different
+[10:52] <mgz> I don't think they even gzip it
+[10:52] <dimitern> where's the cloud-init decoding the stuff?
+[10:53] <dimitern> mgz: for ec2 rogpeppe said they gzip it, because the limit is 16K (in Os is 65K, ours uncompressed was 80K so bootstrap was failing with 500, and I added the gzip step as in ec2)
+[10:53] <jam> mgz: help.ubuntu.com indicates that we likely need to because of space limitations.
+[10:53] <jam> dimitern: I wonder if it could even be a "#cloud-config" with "\r\n" or some sort of line-ending/whitespace issue.
+[10:54] <mgz> yeah, it's not gziped.
+[10:54] <dimitern> jam: the code to produce it is in userData() method in environ - cloudinit.Render()
+[10:55] <dimitern> append([]byte("#cloud-config\n"), data...)
+[10:55] <dimitern> so it's \n and whatever's there
+[10:55] <mgz> so, wrapping it in mime junk would probably work, though it should function like this too, just trying to understand the handler code in cloud-init again
+[10:57] <mgz> this... must be base64 over-encoding
+[10:57] <jam> mgz: well, "Content-Type: text/cloud-config"
+[10:57] <mgz> what cloud-init is seeing is base64 encoded
+[10:57] <jam> https://help.ubuntu.com/community/CloudInit
+[10:57] <dimitern> mgz: exactly
+[10:57] <mgz> generally, what you do is base64 to pass in json over the apu
+[10:57] <jam> doesn't say anything about base64 that I've found
+[10:58] <dimitern> mgz: what's in the cloudinit is yaml
+[10:58] <mgz> then when you request the user-data from the metadata service, it's not base64 encoded
+[10:58] <mgz> so, it's that stage, rather than anything gzip or cloud-config related
+[10:58] <mgz> it never gets that far
+[10:58] <mgz> dimitern: what's the branch with this code?
+[10:58] <mgz> we're just base64ing too many times
+[10:59] <dimitern> mgz: cloud-init in juju-core - that's what I'm looking at
+[11:00] <dimitern> mgz: openstack api requires user_data to be base64 encoded
+[11:01] <mgz> dimitern: goose also base64s
+[11:02] <dimitern> mgz: only goose does, juju-core doesn't touch the gzipped yaml
+[11:02] <rogpeppe> fwereade: https://codereview.appspot.com/6878052 :-)
+[11:02] <fwereade> rogpeppe, cheers ;)
+[11:04] <mgz> wow, cloudinit.verifyConfig is the stupidest function I've seen in a while
+[11:05] <dimitern> mgz: but somehow the cloudinit doesn't expect base64-er userdata (with gzip inside)
+[11:05] <mgz> it shouldn't come off the metadata service encoded
+[11:05] <mgz> and doesn't
+[11:05] <dimitern> how is it taken from the metadata?
+[11:06] <mgz> we could reproduce more closely what juju-core is doing, and in a safe way where ssh will still work, with lpsetup
+[11:06] <jam> dimitern: according to http://docs.openstack.org/trunk/openstack-compute/admin/content/user-data.html it is a web request
+[11:06] <mgz> but I'm pretty sure it's not openstack at fault
+[11:06] <jam> mgz: is it possible to manually make a metadata request to verify what the instance got?
+[11:06] <mgz> yeah, curl the magic url
+[11:06] <mgz> but you need ssh to do that :)
+[11:06] <jam> mgz: what is the magic url?
+[11:06] <jam> openstack/date/user_data doesn't quite make sense
+[11:07] <jam> or is the 169.254 actually the magic IP?
+[11:07] <mgz> it is.
+[11:07] <rogpeppe> mgz: cloudinit.verifyConfig pretty closely from the pyjuju code.
+[11:07] <rogpeppe> s/pretty/came pretty/
+[11:08] <jam> mgz: so you have to do it from the instance? (it uses source address to determine what content to serve?)
+[11:08] <mgz> yup.
+[11:08] <jam> mgz: booo
+[11:08] <dimitern> i'm starting a node now with lpsetup to see what the metadata can be
+[11:09] <jam> dimitern: interestingly, openstack's metadata is in yaml, but ec2's is in json
+[11:10] <dimitern> jam: yeah, because juju-core uses yaml for both
+[11:10] <jam> dimitern: *might* be a problem
+[11:10] <mgz> dimitern: we can also hack around the ssh problem in juju-core
+[11:11] <mgz> if you pass key_name=dimitern and have some keys installed
+[11:11] <mgz> it won't matter if cloud-init gets borked data
+[11:11] <dimitern> mgz: keys installed where?
+[11:11] <mgz> `nova keypair-list`
+[11:12] <mgz> I'll double check the exact param as well
+[11:12] <rogpeppe> jam: i didn't think that ec2 used json at all
+[11:12] <jam> mgz: from what I can find, pyjuju does not gzip the content.
+[11:13] <mgz> jam: indeed, I said that ^up there :)
+[11:13] <jam> rogpeppe: http://docs.openstack.org/trunk/openstack-compute/admin/content/metadata-service.html seems to indicate that if you get data from the metadata api in ec2 compat mode, it comes back as json
+[11:13] <rogpeppe> jam: we only need to gzip the content now because we're passing around big certificates and keys
+[11:13] <jam> ah, there is 'metadata' and 'metadata.json' perhaps
+[11:13] <jam> rogpeppe: sure, but for sanity checking, I might recommend dimitern not gzip until we get something working in case the decode step isn't working.
+[11:14] <rogpeppe> jam: ah, i thought you were referring to goamz/ec2 or environs/ec2, neither of which use json AFAIK
+[11:14] <rogpeppe> jam: perhaps he could try a little standalone program
+[11:14] <jam> rogpeppe: it is a bit unclear what the metadata service actually does, as I haven't studied the document and it goes back and forth between JSON and yaml.
+[11:14] <jam> It might depend on what specific URL is accessed.
+[11:15] <jam> dimitern: so my immediate hack would be to take out gzip (either everywhere or just for openstack), and then take out the certs, just to see if the instance node comes up
+[11:15] <jam> also, if you push your code, we can probably try to reproduce your findings.
+[11:16] <mgz> dimitern: okay, add the following param server dict in goose: 'key_name': $OS_USERNAME
+[11:16] <mgz> then make sure you have a key under that name (you should anyway)
+[11:16] <rogpeppe> dimitern: you could try reducing KeyBits in juju-core/cert to a small number, say 128
+[11:16] <mgz> then is you bootstrap with the borked cloudinit
+[11:16] <rogpeppe> dimitern: then the cloudinit will be significantly smaller
+[11:16] <mgz> you'll be able to ssh in anyway, and then curl down the exact data the metadata service has
+[11:17] <rogpeppe> dimitern: it would be interesting to see if it still failed then
+[11:18] <dimitern> ok, one by one :)
+[11:19] <dimitern> rogpeppe: I'll try reducing the keybits first
+[11:19] <dimitern> jam: not sure how to remove the keys, otherwise removing gzip causes a failure on bootstrap every time
+[11:21] <TheMue> rogpeppe: live tests fail, looking for interesting tools: 1.9.8-unknown-amd64.
+[11:22] <rogpeppe> TheMue: ah of course
+[11:22] <TheMue> rogpeppe: not all fail, but 19
+[11:22] <rogpeppe> TheMue: no ubuntu series on macos
+[11:22] <TheMue> rogpeppe: yep, exactly
+[11:23] <rogpeppe> TheMue: perhaps we can't expect live tests to pass under macos
+[11:23] <TheMue> rogpeppe: seems so
+[11:24] <rogpeppe> TheMue: unless we have an option to disable tools upload for the live tests, which might be a reasonable way to go
+[11:25] <niemeyer> Hello!
+[11:25] <mgz> dimitern: http://paste.ubuntu.com/1589367/
+[11:25] <dimitern> mgz: I'll try that
+[11:26] <TheMue> niemeyer: Hiya
+[11:27] <dimitern> otherwise, reducing the keybits to 128 reduced the cloudinit almost in half, but still 48K uncompressed, so removing gzip doesn't help unless I somehow strip the keys
+[11:32] <dimitern> mgz: adding the key name didn't do the trick - still cannot connect with my key
+[11:33] <wallyworld> mgz: dimitern: jam: standup?
+[11:37] <mgz> mumble has decided it likes hanging...
+[11:52] <niemeyer> mgz: I'd be more surprised if Hangout decided it likes to mumble
+[11:54] <jam> niemeyer: I hear mumbling all the time on hangouts :)
+[11:55] <niemeyer> jam: :)
+[12:06] <dimitern> mgz: did it work for you with key_name?
+[12:14] <rogpeppe> dimitern: why don't you try making a little standalone program that starts an instance using nova and uses a custom-created cloudinit (you could still use juju-core/cloudinit) ?
+[12:14] <rogpeppe> dimitern: then it'll be easier to check without all the juju baggage
+[12:17] <dimitern> rogpeppe: i'm using lpsetup to start an instance with nova client and it's all ok
+[12:17] <dimitern> rogpeppe: the problem is I cannot find any way to connect to the borked cloudinit instance
+[12:17] <rogpeppe> dimitern: in that case, try it with gzipped user data
+[12:18] <dimitern> rogpeppe: without gzip bootstrap fails with 500 (too long)
+[12:18] <rogpeppe> dimitern: i mean try your standalone thingy with gzipped user data
+[12:18] <dimitern> rogpeppe: can I somehow strip the ca certs from the cloud init?
+[12:18] <rogpeppe> dimitern: sure, just hack the cloudinit package, it's trivial
+[12:18] <dimitern> rogpeppe: it's just marshaling into yaml the cfg
+[12:19] <rogpeppe> dimitern: make it so it doesn't use the same certs
+[12:20] <dimitern> rogpeppe: i'm not even sure which keys are the biggest
+[12:20] <rogpeppe> dimitern: just zero 'em all out
+[12:21] <dimitern> rogpeppe: which keys?
+[12:22] <rogpeppe> dimitern: something like this should do the job (untested): http://paste.ubuntu.com/1589462/
+[12:23] <dimitern> rogpeppe: will state work with after this?
+[12:23] <rogpeppe> dimitern: no, but the instance will be started ok
+[12:23] <rogpeppe> dimitern: so you should be able to ssh to it
+[12:23] <dimitern> rogpeppe: ok, I'll try it
+[12:25] <dimitern> mgz: http://paste.ubuntu.com/1589468/
+[12:30] <mgz> so, cuter magic on metadata service folsome(?) or later: http://169.254.169.254/openstack/2012-08-10/meta_data.json
+[12:31] <dimitern> rogpeppe: when I set these to nil it says error: cannot start bootstrap instance: cannot make user data: invalid machine configuration: missing CA certificate
+[12:32] <rogpeppe> dimitern: did you use the snippet i suggested?
+[12:34] <mgz> dimitern: so, this is double-base64 encoded
+[12:35] <rogpeppe> dimitern: are you base64 encoding inside environs/openstack ?
+[12:35] <mgz> rogpeppe: yes.
+[12:35] <mgz> well, no
+[12:35] <mgz> but... it's happening *somewhere* :)
+[12:35] <rogpeppe> ha
+[12:36] <dimitern> rogpeppe: only goose encodes to base64
+[12:39] <dimitern> wait a minute - there are 2 cloudinits - in juju-core/ and in juju-core/environs/ - the provider uses the latter
+[12:40] <dimitern> ...which uses the former actually
+[12:42] <dimitern> and there's this (line 151 in environs/cloudinit.go): 				" --env-config "+shquote(base64yaml(cfg.Config))+
+[12:42] <mgz> ...which is fine
+[12:49] <mgz> dimitern: are you using Ian's RunServer-userData-fix branch?
+[12:49] <dimitern> mgz: don't think so
+[12:50] <mgz> because this looks like something daft like the go json code being helpful by base64ing byte[] behind the scenes, after it's already been done
+[12:52] <dimitern> mgz: looks like if I remove the b64 encoding in runserver it works ok
+[12:52] <dimitern> mgz: could be! yeah - []byte to "64"
+[12:52] <mgz> right, so the right fix is... remove 4 lines...
+[12:53] <dimitern> mgz: i did, but still not sure if it's right and we should fix something else instead
+[12:55] <mgz> jam, dimitern: http://paste.ubuntu.com/1589539/
+[12:55] <dimitern> yay! ssh now works!
+[12:55] <dimitern> exactly
+[12:55] <dimitern> I'm doing that in the CL then
+[12:55] <dimitern> a separate one for goose
+[12:56] <mgz> so, Ian's mp which switches the type to string likely works as well
+[12:56] <dimitern> where's that branch?
+[12:57] <mgz> dimitern: lp:~wallyworld/goose/RunServer-userData-fix
+[12:58] <mgz> it is documented behaviour of the json go implementation though, so the use []byte and remove those lines versions is probably nicer
+[12:58] <dimitern> mgz: from go docs: Array and slice values encode as JSON arrays, except that []byte encodes as a base64-encoded string, and a nil slice encodes as the null JSON object.
+[12:58] <dimitern> :) yeah
+[12:59] <dimitern> mgz: actually, without these 4 lines ian's branch is not needed
+[13:00] <mgz> right. but Ian wasn't wrong when he said he'd got it working
+[13:00] <dimitern> yes
+[13:00] <mgz> we then just ignored him, so it broke for us :)
+[13:00] <dimitern> :) maybe I should NOT LGTM and provide that above reasons?
+[13:01] <dimitern> if in addition he did the gzip thing, his change would work
+[13:01] <mgz> well, I think I'll put up a trivial branch that actually adds a test and removes those lines
+[13:02] <dimitern> cool, if you can land it before mine it'll be perfect
+[13:02] <mgz> then we can reject the one that changes the RunServer interface, and update the enable openstack branch
+[13:03] <dimitern> yes, I also need that change
+[13:10] <dimitern> shouldn't mongo be running on the bootstrap node?
+[13:14] <dimitern> rogpeppe: ^^ ?
+[13:15] <rogpeppe> dimitern: yes, mongo should run on the bootstrap node, but it won't if you didn't have the server cert and key
+[13:16] <dimitern> I have this in /var/log/juju/machine-0.log: /bin/sh: 1: exec: /var/lib/juju/tools/machine-0/jujud: not found
+[13:16] <dimitern> (repeated muliple times)
+[13:16] <dimitern> rogpeppe: no, it's ok now - the userdata with all keys is passed ok and cloud init seems to work
+[13:16] <dimitern> rogpeppe: I'd sshed into the machine and looking - no mongo though
+[13:17] <rogpeppe> dimitern: could you paste the cloud-init-output.log file from /var/log ?
+[13:19] <dimitern> rogpeppe: https://pastebin.canonical.com/83392/
+[13:20] <rogpeppe> dimitern: the key is probably the "authorization failed" error
+[13:20] <dimitern> rogpeppe: it seems the tools tgz is somehow broken?
+[13:20] <rogpeppe> dimitern: the url tools download is failing
+[13:20] <dimitern> rogpeppe: yeah, looking at that
+[13:20] <rogpeppe> dimitern: when you're on the machine, try downloading that url in the same way
+[13:20] <dimitern> ok
+[13:21] <rogpeppe> dimitern: that is, try curl http://juju-dist.s3.amazonaws.com/tools/mongo-2.2.0-quantal-amd64.tgz or whatever
+[13:21] <dimitern> rogpeppe: it gets a bunch of binary back
+[13:22] <rogpeppe> dimitern: hmm. try putting it into /tmp and run tar tzf on it
+[13:22] <rogpeppe> dimitern: to see if it actually *does* download ok
+[13:23] <dimitern> rogpeppe: I got it with wget (41M), untarred in /tmp and it seems ok
+[13:24] <dimitern> the problem seems before that - tools is not extracted properly and jujud is missing
+[13:24] <rogpeppe> dimitern: strange. i'd add some echo statements in the cloudinit (including the args passed to wget); and maybe make it put the archive in a temp file before unarchiving it, so you can see what was fetched
+[13:25] <rogpeppe> i've got a call for lunch
+[13:25] <rogpeppe> dimitern: back shortly
+[13:41] <dimitern> rogpeppe: I got it working - the problem was ACLs on the bucket - the machine was not able to get the tools
+[13:42] <rogpeppe> dimitern: cool
+[13:42] <dimitern> rogpeppe: but mongo is still not running
+[13:42] <rogpeppe> dimitern: anything useful in the log?
+[13:43] <dimitern> /var/lib/juju/tools/1.9.8-quantal-amd64/jujud: 1: /var/lib/juju/tools/1.9.8-quantal-amd64/jujud: Syntax error: "(" unexpected
+[13:47] <dimitern> and trying to run root@machine-0:/var/lib/juju/tools/machine-0# ./jujud gives "-su: ./jujud: cannot execute binary file"
+[13:48] <dimitern> rogpeppe: ^^
+[13:49] <rogpeppe> dimitern: what does "file /var/lib/juju/tools/machine-0/*" say?
+[13:50] <dimitern> rogpeppe: the same line (first one) - multiple times
+[13:51] <rogpeppe> dimitern: which line?
+[13:51] <dimitern> /var/lib/juju/tools/1.9.8-quantal-amd64/jujud: 1: /var/lib/juju/tools/1.9.8-quantal-amd64/jujud: Syntax error: "(" unexpected
+[13:54] <dimitern> rogpeppe: and I still get "-su: /var/lib/juju/tools/machine-0/jujud: cannot execute binary file" when I try to run jujud in the tools dir
+[13:54] <rogpeppe> dimitern: surely you didn't get the above line when running the file command?
+[13:55] <dimitern> rogpeppe: what file command? I did sudo su - before to get root
+[13:55] <rogpeppe> dimitern: the command i suggested you run: "file /var/lib/juju/tools/machine-0/*"
+[13:56] <dimitern> rogpeppe: with sudo bash the error on ./jujud is a bit different: bash: ./jujud: cannot execute binary file
+[13:56] <dimitern> rogpeppe: aah file
+[13:56] <dimitern> jujud:              ELF 64-bit LSB executable, x86-64, version 1 (SYSV), dynamically linked (uses shared libs), stripped
+[13:57] <dimitern> rogpeppe: how can I check what arch is running? 32/64?
+[13:58] <dimitern> rogpeppe: ah, I did ldd `which bash` and it seems this is a 32bit machine, not 64 bit
+[13:58] <rogpeppe>  dimitern: uname -a
+[13:58] <rogpeppe> dimitern: that could possibly have something to do with it :-)
+[13:59] <rogpeppe> dimitern: i'm surprised you don't get a better error message though
+[13:59] <dimitern> rogpeppe: uname -a does not mention 64 bit
+[13:59] <rogpeppe> dimitern: althugh i suppose it's the usual unix errno limitations
+[13:59] <dimitern> rogpeppe: could be - so the tools are wrong.. or the image possibly
+[13:59] <rogpeppe> dimitern: the image is wrong
+[13:59] <rogpeppe> dimitern: we don't currently push 32 bit tools
+[14:00] <rogpeppe> dimitern: although... have you tried bootstrap --upload-tools ?
+[14:00] <dimitern> rogpeppe: yes, nailed it then - I'll set the correct default image id
+[14:00] <dimitern> dimitern: yes, that's how I do it - my machine is also 64bit
+[14:03] <dimitern> so I should use "smoser-cloud-images/ubuntu-quantal-12.10-amd64-server-20121218" instead of "smoser-cloud-images/ubuntu-quantal-12.10-i386-server-20121017"
+[14:08] <mgz> haiup.
+[14:09] <dimitern> now with the correct image - eeeeverything works :) bootstrap, status, mongo, ssh - it's a charm
+[14:10] <dimitern> still cannot connect to the state from the private ip though
+[14:11] <mgz> you got a charm working too? :)
+[14:11] <mgz> charming!
+[14:12] <dimitern> mgz: not yet :)
+[14:12] <mgz> charmation...
+[14:12] <dimitern> actually, it doesn't work after connecting to state - it seems it's using AMI-like instance ids, rather than openstack ones
+[14:13] <mgz> right, that's the bug I mentioned earlier
+[14:13] <mgz> in the provider:
+[14:13] <mgz> InstanceIdAccessor: "$(curl http://169.254.169.254/1.0/meta-data/instance-id)",
+[14:14] <mgz> wrong.
+[14:14] <mgz> compare with the pyjuju code.
+[14:14] <mgz> for folsom, you have a shortcut (sort of, still have icky shell goop to deal with)
+[14:14] <mgz> using the other metadata service url I pasted ^up there
+[14:15] <mgz> shell isn't great for parsing json :)
+[14:15] <mgz> though I'm sure smoser would manage it somehow
+[14:15] <dimitern> mgz: so?
+[14:15] <mgz> the id is wrong
+[14:15] <dimitern> yes I see that :)
+[14:15] <mgz> we're doing openstack things, we need the UUID, not the ec2-style
+[14:15] <dimitern> but is there a workaround to get the instance right
+[14:16] <mgz> if you use the url^^ up there and parse the json, yes
+[14:17] <mgz> or the old hack (which we should put off worrying about till later, now canonistack has been upgraded)
+[14:17] <mgz> http://169.254.169.254/openstack/2012-08-10/meta_data.json
+[14:18] <dimitern> I'm still confused - how does it get to use that ami-comp. id?
+[14:18] <dimitern> it's not in the provider
+[14:19] <mgz> ...you want the long explaination?
+[14:19] <mgz> so, the bootstrap node (or whatever we should be calling it these days) wants to know it's own id
+[14:20] <dimitern> ok..
+[14:20] <mgz> when we create the user-data, which is the main way of doing customisation on a new instance
+[14:20] <mgz> we don't know the id yet, because we've not created the instance
+[14:20] <dimitern> yes
+[14:21] <mgz> so, instead what gets passed in is a snippet of shell, that when run during machine setup, resolves to the id
+[14:21] <mgz> this is icky
+[14:21] <dimitern> yes, but it seems the only way to go
+[14:21] <mgz> but basically works, because you can get the info from the metadata service
+[14:21] <dimitern> unless we change the metadata right after we have the id again
+[14:21] <mgz> you can't
+[14:21] <fwereade> mgz, dimitern: so long as the metadata service is working at that moment, anyway
+[14:22] <mgz> you could do something else, not involving the metadata service though
+[14:22] <dimitern> fwereade: isn't the metadata svc external to the machine?
+[14:22] <fwereade> dimitern: I have seen it fail
+[14:22] <mgz> because it needed to work on essex, what pyjuju does for openstack
+[14:22] <mgz> is stick the id of the bootstrap node in a well-known location on swift
+[14:22] <mgz> (or nova-storage, for openstack_s3)
+=== slank_away is now known as slank
+[14:23] <mgz> the machine could also, really, ask the api for the id itself
+[14:23] <fwereade> dimitern: very rarely, and it may be rare enough that we don't care, but it would be nice to be more robust if there's an opportunityt
+[14:23] <mgz> but the way this stuff is layed out currently, that's not in the right order
+[14:24] <dimitern> fwereade: no, the svc is working now
+[14:24] <mgz> anyway, for folsom or later, you can get the openstack-style server uuid from the metadata service, from a different url that returns json with useful stuff
+[14:24] <dimitern> mgz: so we should use some other metadata key to get the OS inst Id
+[14:24] <mgz> right, which is the link I pasted
+[14:24] <dimitern> mgz: but it'll not work for essex
+[14:25] <mgz> indeed, but we don't care about that for now.
+[14:25] <dimitern> mgz: ok then, I'll look into it
+[14:25] <mgz> and it would be nicer to fix the mess of shell at the same time, later
+[14:26] <dimitern> mgz: and that should happen in userData() ?
+[14:28] <mgz> dimitern: this is violently horrible, but bascially all you need:
+[14:28] <mgz> -               InstanceIdAccessor: "$(curl http://169.254.169.254/1.0/meta-data/instance-id)",
+[14:28] <mgz> +               InstanceIdAccessor: "$(curl http://169.254.169.254/openstack/2012-08-10/meta_data.json|python -c \"import json,sys;print json.loads(sys.stdin.read())['uuid'])\"",
+=== slank is now known as slank_away
+[14:29] <mgz> fixing the model would be nice, but as a just-get-things-working step...
+[14:33]  * niemeyer => lunch
+[14:39] <dimitern> mgz: it works with the fix!
+[14:41] <dimitern> mgz, rogpeppe, jam: it's ready https://codereview.appspot.com/7223059
+[14:48] <TheRealMue> dimitern: You've got a review.
+[14:48] <dimitern> TheRealMue: thanks
+[14:48] <mgz> douple
+[14:48] <dimitern> also this https://codereview.appspot.com/7229060
+[14:49] <dimitern> mgz: cheers
+=== TheRealMue is now known as TheMue
+[15:02] <dimitern> mgz: care to take a look again at the comments? https://codereview.appspot.com/7223059/
+[15:05] <dimitern> TheMue: 10x
+[15:07] <mgz> dimitern: what does %q do when you give it a bunch of binary junk?
+[15:07] <dimitern> mgz: what %s does, quoted
+[15:07] <mgz> print the whole []byte contents in some form?
+[15:07] <mgz> I'd lose that much at least, even if you keep the log statement for the length
+[15:08] <dimitern> mgz: in string form, just like %s -> string([]byte) does
+[15:08] <mgz> we don't want the cloud-init stuff appearing in the logs in any form, as it contains certs and such like
+[15:08] <dimitern> mgz: ok, I'll remove the %q there (it's printed with --debug anyway)
+[15:09] <dimitern> mgz: it won't appear in any logs, just on the console, and anyway - the certs are encoded
+[15:10] <mgz> my first step when people have juju issues is ask them to run with as much logging as possible then pastebinit :)
+[15:11] <dimitern> also, we seem to need floating ip attached to be able to connect to the state/0 node, even with the sshebang stuff for canonistack, simple connections won't work unless tunneled
+[15:11] <mgz> right, that's from rog's changes to how shizzle works, which I didn't really follow
+[15:12] <dimitern> mgz: done that
+[15:12] <dimitern> mgz: and how about the goose CL ? is it LGTM?
+[15:12] <mgz> ...I said land, but does need to go with the goose change...
+[15:13] <mgz> and really that does need a test
+[15:13] <dimitern> mgz: ok :)
+[15:13] <mgz> which I did say I would write, but then got distracted with other things
+[15:14] <dimitern> mgz: even without the goose change, juju won't break - at least until you try to bootstrap an OS env
+[15:14] <mgz> and the tests pass?
+[15:15] <mgz> or there aren't enabled bootstrap tests that care yet?
+[15:15] <dimitern> mgz: the tests pass
+[15:15] <mgz> in which case, go ahead and land
+[15:15] <dimitern> mgz: he problem come after launching the machine
+[15:15] <mgz> ...and then work on a test that would actually have failed :D
+[15:15] <dimitern> which the doubles do not do
+[15:15] <dimitern> ..really
+[15:16] <dimitern> what should that test be? check the output of RunServerOpts serialization?
+[15:16] <mgz> I mean on the juju-core side
+[15:17] <mgz> there are some more live ones we have skipped, that actually depend on a running bootstrap node, right?
+[15:17] <dimitern> yes, some of them - these which require provisioner and state connection
+[15:17] <mgz> and yeah, we don't have any testing a the right level for this in goose, which is painful, because pyjuju has a ton
+[15:18] <dimitern> mgz: so should I land the goose CL then?
+[15:18] <mgz> I'd suggest working on whatever remaining things are borked with them then, if nessersary put up a mp that auto-assigns a floating ip for the bootstrap node if that's a dependency
+[15:19] <dimitern> mgz: that will be needed yes - the floating ip for node -
+[15:19] <mgz> dimitern: I guess, and reject Ian's one that does the same thing
+[15:19] <dimitern> s/node/machine-0/
+[15:19] <mgz> I hate the fact our testing has worse coverage and isn't as robust as the (notably flakey) python juju testing, but we'll get there... I hope...
+[15:19] <dimitern> I think he should reject it - I'm not sure I can
+[15:20] <dimitern> :) yeah, we'll get there.. in 2 months at most :)
+[15:20] <mgz> you can antilgtm and note we've landed an alternative in the comment at least
+[15:21] <dimitern> mgz: I did that
+[15:23] <dimitern> rogpeppe: can you reject and delete this branch pls - I remember it was just a test.. lp:~rogpeppe/goose/client-using-identity
+[16:38] <TheMue> so, have to step out for dinner. will be back later.
+[18:29] <rogpeppe> fwereade: i've updated the rpc CL taking account of your comments about Machine: https://codereview.appspot.com/6878052
+[18:30] <rogpeppe> time to stop for the day
+[18:30] <fwereade> rogpeppe, sweet, tyvm, I will try to look at those when laura is settled... this is not imminent I'm afraid
+[18:30] <rogpeppe> fwereade: :-)
+[18:30] <fwereade> rogpeppe, enjoy your evening :)
+[18:30] <rogpeppe> fwereade: and you.
+[18:31] <rogpeppe> g'night all
+[18:35] <niemeyer> rogpeppe: Night!
+[18:35] <niemeyer> and I think I'm done with multipart uploads

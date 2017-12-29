@@ -1,0 +1,442 @@
+[00:19] <vsingh165> anyone here know why I can't branch or checkout the lp:df-libreoffice branch?  it always seems to get stuck at 10639 kB
+=== slank is now known as slank_away
+[00:24] <vsingh165> when I bzr branch lp:df-libreoffice in terminal, I get "Write failed: broken pipe" errors
+=== chiluk_away is now known as chiluk
+=== salem_ is now known as _salem
+[01:12] <sladen> vsingh165: report a bug
+=== sraue_ is now known as sraue
+[06:56] <infinity> doko_: Why do crossbuild-essential-* depend on pkgbinarymangler?  That's pretty buildd-specific, and regular build-essential doesn't depend on it.
+[06:58] <infinity> doko_: (And, sure, you need pkgbinarymangler if your non-cross arches also use it, but conversely, if not, you need to not have it, so it should be something installed/enabled in the chroots by end users, not forced by dependencies, no?)
+=== tkamppeter_ is now known as tkamppeter
+[07:29] <tkamppeter> infinity, did you see my answer about CUPS?
+[07:30] <infinity> tkamppeter: Yeahp, thanks.  Noticed the upgrade removed the obsolete file here, and cron should shut up now, thanks.
+[07:33] <pitti> Good morning
+=== doko_ is now known as doko
+[08:05] <doko> infinity, just did take that from wookey. didn't know if cjwatson's test build adds it explicitly
+[08:05] <doko> xnox:
+[08:05] <doko> checking for pkg-config... /usr/bin/pkg-config
+[08:05] <doko> checking pkg-config is at least version 0.22... yes
+[08:05] <doko> checking for DBUS... no
+[08:05] <doko> configure: error: Package requirements (dbus-1 >= 1.2.16) were not met:
+[08:05] <doko> No package 'dbus-1' found
+[08:05] <doko> looks like libnih still uses the wrong pkg-config binary
+[08:06] <infinity> $crossbuild_core_depends = { armhf => ['build-essential', 'gcc-arm-linux-gnueabihf', 'g++-arm-linux-gnueabihf', 'pkg-config-arm-linux-gnueabihf', 'dpkg-cross']
+[08:07] <infinity> doko: ^-- What Colin and I use (and, I assume, his testbuilds)
+[08:08] <StevenK> 'gnueabihf' sounds like the noise you can make while sneezing.
+[08:09] <infinity> doko: The extra interesting thing there is that your crossbuild-essential has a cross-arch libc6-dev:crossarch dep, while we're just relying on gcc-arm-linux-gnueabihf to get it right, I guess?
+[08:12] <doko> infinity, yes, you have to install the runtime target libs "twice", or else the shlibs files won't be found
+[08:13] <infinity> doko: That's... Special.
+[08:14] <infinity> doko: Anyhow, I have no opinion on the libc6-dev:armhf thing (and just caught up on the discussion in the Debian bug), but we should drop the pkgbinarymangler bit and leave that to the discretion of people building/managing their chroots.
+[08:15] <infinity> (As in, mk-sbuild will do it for you by default with --distro=ubuntu, but it shouldn't be a hard dep, for people who prefer not to mangle)
+=== MrWGW- is now known as DrStrangelove
+=== smb` is now known as smb
+=== DrStrangelove is now known as MrWGW-
+[08:54] <cody-somerville> seb128: Hey. I run into LP #930563 in case you need help debugging the issue.
+[08:54] <ubottu> Launchpad bug 930563 in libdbusmenu (Ubuntu) "NM Applet menu entries not responding" [Low,Confirmed] https://launchpad.net/bugs/930563
+=== Tonio_ is now known as Tonio_aw
+[08:55] <seb128> cody-somerville, hey, it would rather be something for larsu/charles/cyphermox
+[08:55] <cody-somerville> kk.
+[08:57] <cody-somerville> cyphermox: I'm quite certain that LP #985028, LP #933300, and LP #930563 are the same.
+[08:57] <ubottu> Launchpad bug 985028 in network-manager-applet (Ubuntu) "nm-applet stops displaying VPN connections" [Medium,Confirmed] https://launchpad.net/bugs/985028
+[08:57] <ubottu> Launchpad bug 933300 in network-manager-applet (Ubuntu) "nm-applet needs restart after resume" [Medium,Confirmed] https://launchpad.net/bugs/933300
+[08:57] <ubottu> Launchpad bug 930563 in libdbusmenu (Ubuntu) "NM Applet menu entries not responding" [Low,Confirmed] https://launchpad.net/bugs/930563
+[08:59] <cody-somerville> cyphermox: https://bugs.launchpad.net/ubuntu/+source/libdbusmenu/+bug/930563/comments/8 is the key I think.
+[08:59] <ubottu> Ubuntu bug 930563 in libdbusmenu (Ubuntu) "NM Applet menu entries not responding" [Low,Confirmed]
+=== Rushin_ is now known as zsoftich
+[09:28] <didrocks> @pilot in
+=== udevbot changed the topic of #ubuntu-devel to: Ubuntu 12.10 released | Archive: Open | Dev' of Ubuntu (not support or app devel) | build failures -> http://qa.ubuntuwire.com/ftbfs/ | #ubuntu for support and dicussion of hardy -> quantal | #ubuntu-app-devel for app development on Ubuntu http://wiki.ubuntu.com/UbuntuDevelopment | See #ubuntu-bugs for http://bit.ly/lv8soi | Patch Pilots: didrocks
+=== yofel_ is now known as yofel
+=== henrix_ is now known as henrix
+=== smb` is now known as smb
+[09:51] <cjwatson> doko: My chroots are made with mk-sbuild, which adds pkgbinarymangler by default, so I don't need crossbuild-essential-* to add it as well
+[09:52] <doko> ok, will remove it with the next upload
+[10:07] <xnox> doko: well when doing cross it does two builds: native and then cross. Do you have full log? (my cross-chroot is not very minimal, maybe I should reset it up)
+[10:09] <xnox> doko: and did that build install both native&cross build-deps? (I didn't add :native build-deps since that is not supported just yet by sbuild)
+[10:09] <cjwatson> I'm surprised that it works to do one build in a subdirectory and another in the source tree itself
+[10:09] <cjwatson> I thought automake complained about that
+[10:09] <cjwatson> usually when I need to do one build in a subdirectory I convert all the builds to do that
+[10:10] <doko> xnox, http://people.canonical.com/~cjwatson/cross/armhf/raring/
+[10:11] <cjwatson> doko: that's the native build pass
+[10:11] <cjwatson> doko: so it's correct for it to use /usr/bin/pkg-config
+[10:12] <xnox> cjwatson: hm. I was dubious about how the configure cache is handled. I think native build cache leaks into cross =/ but didn't look deeper into it.
+[10:12] <cjwatson> doko: the problem is the known one that we don't yet have a way to declare the native build-dependency
+[10:12] <doko> ahh, ok
+[10:12] <xnox> (unless it's not leaking but using the preload)
+[10:12] <cjwatson> xnox: config.cache is in the build directory, so shouldn't leak; but the one preset by dpkg-cross might
+[10:13] <cjwatson> xnox: you could unset CONFIG_SITE for the native build pass, perhaps, although that seems like quite a big hammer
+[10:22] <doko> well, isn't CONFIG_SITE plain wrong for the native build?
+[10:23] <cjwatson> when it's been set by dpkg-cross, yes
+[10:23] <cjwatson> or rather to the dpkg-cross config
+[10:23] <cjwatson> I can imagine somebody using it for other purposes, although we don't
+[10:23] <cjwatson> but that's probably not worth worrying about - sounds best to unset it
+[10:25]  * cjwatson applies http://paste.ubuntu.com/1512288/ to groff, for comparison
+[10:31] <doko> https://wiki.ubuntu.com/CrossBuilding/BuilddChroot looks pretty complete now, besides perl and linux
+[10:32] <xnox> doko: I just uploaded DEB_STAGE=stage1 build variant for libsemanage. So we should be mostly done now =)))))
+[10:33] <didrocks> pitti: mind rejecting https://code.launchpad.net/~jelmer/ubuntu/raring/etckeeper/merge-debian/+merge/141431?
+[10:33] <pitti> didrocks: done
+[10:34]  * cjwatson looks at kmod
+[10:34] <didrocks> thanks pitti :)
+[10:35] <cjwatson> oh, sorry jelmer, I didn't notice that MP
+[10:35] <cjwatson> I kept the change of default to bzr in my merge
+[10:35] <cjwatson> so if you still want to revert that, then propose another MP with just that, I think
+=== Tonio_aw is now known as Tonio_
+=== cking_ is now known as cking
+[11:14] <doko> barry`, maybe ask the debian maintainer before starting packaging the pil fork. I already have it packaged
+[11:17] <bdrung> Laney: re bug #954352, do you have the prepared package at hand? i haven't prepared anything yet. so it could take more time for me than for you.
+[11:17] <ubottu> bug 954352 in gtk+3.0 (Ubuntu Raring) "Enable wayland backend" [Wishlist,Triaged] https://launchpad.net/bugs/954352
+=== _salem is now known as salem_
+[11:27] <Laney> bdrung: yeah, let me get the debdiff
+[11:29] <Laney> bdrung: http://paste.debian.net/223087
+[11:31] <didrocks> doko: hey, I'm wondering why https://launchpadlibrarian.net/127995793/buildlog_ubuntu-raring-i386.efilinux_1.0-3ubuntu1_FAILEDTOBUILD.txt.gz is only failing on i386 and amd64. I'm not really motivated to add -fno-stack-protector. Any help?
+[11:31] <didrocks> and *not* on amd64
+[11:31] <bdrung> Laney: shouldn't have the symbols version a trailing ~ (for backport reasons)?
+[11:32] <Laney> yep
+[11:32] <Laney> i didn't upload it yet :-)
+[11:34] <bdrung> Laney: as you wrote, we need to get a MIR for libxkbcommon first
+[11:34] <cjwatson> didrocks: the other question is why you uploaded a merge from somebody who didn't touch it last and hadn't talked to the previous uploader, who might have had a merge in progress ...
+[11:35] <doko> didrocks, well, should be clear if build with -nostdlib
+[11:35] <Laney> bdrung: I'm not massively interested in working on it, so feel free to check with #ubuntu-x
+[11:35] <Laney> I get the feeling that it's experimental so won't be allowed in
+[11:35] <didrocks> cjwatson: I was just doing my patch pilot sponsoring and waiting to help clean the queue. The merger from debian seemed straightforward enough to be handle and builds fine on my amd64
+[11:36] <cjwatson> didrocks: that doesn't answer my complaint, at all
+[11:36] <cjwatson> sponsoring is not an excuse for doing it wrong
+[11:36] <bdrung> Laney: it's relatively new. there were no release, when the ubuntu package was created, but now there is a 0.2.0 tarball:  http://cgit.freedesktop.org/xorg/lib/libxkbcommon/log/
+[11:36] <didrocks> ok, I'll keep that in mind for the next sponsoring shift and only touch my area
+[11:36] <cjwatson> no, that isn't what I said
+[11:36] <didrocks> doko: let me have a look
+[11:37] <cjwatson> People being sponsored need to be educated how not to step on people's toes
+[11:37] <cjwatson> That doesn't mean exaggerating to "only touch my area"
+[11:37] <didrocks> cjwatson: well, in that case, it's easier to wait that the other people is doing his shift (if they do it…)
+[11:37] <bdrung> Laney: i will ask in #ubuntu-x . can you attach your debdiff to the bug report?
+[11:38] <cjwatson> didrocks: sure, because those other people are off relaxing on the beach rather than doing other useful work, I'm sure
+[11:38] <cjwatson> (I'm quite tired of the insinuations about sponsoring)
+[11:38] <didrocks> for things that seems easy people directly uploads them, like when people multiarched the unity stack, and didn't use the right branches, I didn't scream at "you are stepping on my toes"
+[11:39] <cjwatson> didrocks: We've had a notice on merges.ubuntu.com for eight years that people should check with the previous uploader before merging
+[11:39] <cjwatson> It's not like it's news
+[11:39] <didrocks> cjwatson: oh, it's not about you, TBH, I even don't know who is doing their shift and who doesn't, I just see a lot of complain from dholbach that a lot are not doing
+[11:39] <cjwatson> Yes, dholbach isn't fixing cross-builds either
+[11:39] <cjwatson> We all do things
+[11:39] <didrocks> I agree, that's why I didn't complain and try to help getting things clean
+[11:40] <didrocks> for things that seemed straightforward and builds fine, I didn't think about that would bother others, sorry for that
+[11:40] <cjwatson> (Actually, Logan did say to me in private mail that he was going to do better about contacting the previous uploader in future - so that's OK until the next person :-) )
+[11:40] <cjwatson> What I want is for this to be a check in the sponsorship process; I agree that in this case it was fairly untroublesome, but in other cases it has caused me problems
+[11:40] <cjwatson> I don't know how to achieve this efficiently
+[11:41] <didrocks> the issue is that we have too many ways to get things in, but that's just IMHO
+[11:41] <cjwatson> (For instance something that's deliberately not being merged for one reason or another)
+[11:41] <didrocks> but I agree with your remark
+[11:41] <cjwatson> didrocks: And very few efficient ways to say "no" in a way that sticks :-/
+[11:41] <didrocks> right
+[11:42] <cjwatson> didrocks: So sorry, I was too harsh on you, I need coffee :-)
+[11:42] <didrocks> cjwatson: no worry, I can understand the feeling, I hope I didn't sponsor anything you didn't want in :)
+[11:42] <Laney> bdrung: done
+[11:42] <bdrung> thanks
+[11:43] <cjwatson> I guess what I'd really like is a more reliable way to notify interested people about things pending sponsorship
+[11:43] <cjwatson> Right now, if somebody proposes a merge to a package I touched recently, I only find out if they explicitly ask for my review, or if I watch the whole sponsorship queue
+[11:43] <bdrung> cjwatson: good ideas are welcome. maybe we could add some information the the sponsoring queue?
+[11:43] <infinity> cjwatson: Yeah, if I could more easily subscribe to these things, I wouldn't care about losing TIL on all my merges (which happens all the time)
+[11:44] <cjwatson> bdrung: The problem with approaches that involve more information on the sponsoring queue is that you still have to watch the queue to see them
+[11:44] <cjwatson> bdrung: I think I want LP's default who-gets-asked-for-review to be smarter
+[11:44] <infinity> It really irks me to lose TIL on merges (which reminds me, I need to steal dpkg back from you), cause then they go off my radar.
+[11:45] <cjwatson> infinity: And for some reason we advertise merges as a good thing for people to do when they're learning
+[11:45] <cjwatson> I've *never* understood that
+[11:46] <infinity> Probably because many of them (like the eflinux one above) are really trivial.  But the knock-on effects of "stealing" trivial merges from other people are pretty irritating.
+[11:46] <cjwatson> Merges tend to be either trivial or REALLY REALLY HARD
+[11:46] <infinity> Yup.
+[11:46] <cjwatson> And if you aren't experienced you can't tell which in advance
+[11:47] <cjwatson> didrocks: So, I can solve the losing-TIL problem for efilinux by fixing up that build failure for you, if you like ;-)
+[11:48] <didrocks> cjwatson: indeed, that's a way to do it. I don't like cleaning what broke under me, but if there is a benefit for you, sure, please do :)
+[11:48] <didrocks> grrr
+[11:48] <didrocks> I don't like *not* cleaning
+[11:49] <didrocks> 2 *not* missing in less than 30 minutes, need coffee as well :)
+[11:50] <cjwatson> doko: Shouldn't -ffreestanding inhibit use of the stack-protector?  I'm sure it used to
+[11:50] <cjwatson> Oh, wait, the problem might be in gnu-efi
+[11:51] <cjwatson> Hah, and slangasek dropped the -fno-stack-protector bit there saying that it was no longer needed
+[11:52] <cjwatson> LIES
+[11:54] <didrocks> :)
+[11:55] <didrocks> @pilot out
+=== udevbot changed the topic of #ubuntu-devel to: Ubuntu 12.10 released | Archive: Open | Dev' of Ubuntu (not support or app devel) | build failures -> http://qa.ubuntuwire.com/ftbfs/ | #ubuntu for support and dicussion of hardy -> quantal | #ubuntu-app-devel for app development on Ubuntu http://wiki.ubuntu.com/UbuntuDevelopment | See #ubuntu-bugs for http://bit.ly/lv8soi | Patch Pilots:
+=== MacSlow is now known as MacSlow|lunch
+[12:00] <cjwatson> didrocks: OK, fix on its way now, although it won't involve reuploading efilinux
+[12:00] <cjwatson> Them's the breaks
+[12:01] <didrocks> cjwatson: just a rebuild once gnu-efi rebuilt from what I saw. Well, if someone contacts me for this package, I'll redirect it to you
+[12:02] <cjwatson> Yeah, no worries
+[12:02] <cjwatson> xnox: I've sorted out the gluegen2/armhf horribleness, I think
+=== francisco is now known as Guest79688
+[12:03] <cjwatson> So we should be able to crawl up that stack shortly and get opencv promoted
+[12:05] <xnox> \o/
+=== cpg is now known as cpg|away
+[13:00] <pitti> didrocks: nice progress on the sponsoring queue!
+[13:01] <didrocks> pitti: thanks :)
+[13:02] <pitti> hm, ubuntu-drivers-common just started failing, bcmwl doesn't compile any more
+[13:02] <pitti> and testing locally confirms it
+[13:03] <pitti> tseliot: ^ seems the "support 3.8" broke 3.7?
+[13:03] <pitti> Fehler: »struct cfg80211_ibss_params« hat kein Element namens »chandef«
+[13:07] <pitti> tseliot: filed as bug 1097729; should we revert the change for now, or do you think it could be made to work with both kernels/
+[13:07] <ubottu> bug 1097729 in bcmwl (Ubuntu Raring) "6.20.155.1+bdcom-0ubuntu3 stops building on current raring" [High,Triaged] https://launchpad.net/bugs/1097729
+[13:07] <pitti> ?
+[13:11] <wookey> where do I go to ask questions when apt is apparently doing daft things?
+[13:12] <wookey> Currently in a raring chroot if I try to install libgcc1:arm64 apt wants to remove all of essential. I don;t understand why...
+[13:13] <wookey> is there an apt irc channel or debugging info somewhere?
+[13:16] <cjwatson> wookey: #debian-apt on OFTC
+[13:16] <cjwatson> wookey: Also -oDebug::pkgProblemResolver=true
+=== mterry_ is now known as mterry
+[13:28] <infinity> wookey: Is that the same version of libgcc1 that you have on your other arch (or is it otherwise causing a version skew that would break the world)?
+[13:28] <infinity> wookey: That's the only obvious thing I can think of.
+=== MacSlow|lunch is now known as MacSlow
+[13:37] <wookey> aha. 4.7.2-17ubuntu2 vs 1:4.7.2-17ubuntu2. I bet that's bloody it!
+[13:37] <wookey> mutter
+=== barry` is now known as barry
+[13:39] <wookey> the annoying hting is that the error message you get from apt about this is 'libc6:arm64 depends on debconf:arm64' which is just wrong, and thoroughly misdirectful
+[13:39] <wookey> I guess multiarch is going to produce more of this sort of mysteriousness
+[13:40] <cjwatson> that's particularly curious since debconf is M-A: foreign
+[13:40] <wookey> exactly
+[13:40] <wookey> I was thoroughly nonplussed
+[13:41] <barry> doko: where is it?  i looked didn't find it.  it's a different source package
+[13:42] <wookey> I'm not sure what to do with this sort of problem. take it to the deity list?
+[13:42] <cjwatson> perhaps, yeah
+[13:42] <infinity> wookey: Which problem?  The unhelpful error message, or you asking apt to do something you shouldn't?
+[13:42] <wookey> analysis with libdose can be helpful but that said everything was OK.
+[13:42] <wookey> apt giving unhelpful meessages when I ask it to do womthing it shouldn't :-)
+[13:42] <infinity> Heh.
+[13:43] <cjwatson> the problem with analysing with some other tool is that half the time you find yourself analysing why they differ
+[13:43] <cjwatson> hello, yak-shaving
+[13:43] <tseliot> pitti: let me check. I'm pretty sure there's a check which applies only to 3.8
+[13:43] <wookey> cjwatson: indeed. but I don't know how to get more detailed info out of apt about why it thinks what it things. I recall there is some, but I failed to find info on it yesterday
+[13:44] <cjwatson> generally you get more detailed info by adding more of the packages it complains about to your apt-get install line until it gives you a real error
+[13:44] <cjwatson> and as I say -oDebug::pkgProblemResolver=true can be helpful although it takes practice to read
+[13:44] <wookey> searching for apt debug on google gets you some astronomical windows tool apt.exe
+[13:44] <cjwatson> between them those two strategies are usually enough
+[13:45] <pitti> tseliot: a mere "sudo apt-get install bcmwl-kernel-source" on current raring reproduces it
+[13:45] <wookey> right. I knew the 1st but not the second.
+[13:47] <tseliot> pitti: true, I can reproduce it here. I'll fix it
+[13:48] <pitti> tseliot: thank you!
+[13:48] <Chipzz> wookey: while U agree that apt's error messages could sometimes be improved upon, I'm not sure how simple that would be
+[13:49] <Chipzz> *I
+[13:49] <wookey> Chipzz: Yes. That may well be the b3est that it can do, but I'd like to be assured of that by someone :-)
+[13:49] <Chipzz> the solver probably is quite complex
+[13:49] <cjwatson> wookey: BTW have you seen https://wiki.ubuntu.com/CrossBuilding/BuildChroot?
+[13:49] <wookey> Really I thinbk we just need some easy-to-find docs on how to debug
+[13:50] <wookey> no such page?
+[13:50] <cjwatson> wookey: Sorry, https://wiki.ubuntu.com/CrossBuilding/BuilddChroot
+[13:51] <bdrung> mdeslaur: see bug #1084054
+[13:51] <ubottu> bug 1084054 in vlc (Ubuntu Precise) "Denial of service via crafted PNG file" [Undecided,Confirmed] https://launchpad.net/bugs/1084054
+[13:51] <wookey> nice
+[13:51] <barry> didrocks: any chance you could take a look at https://code.launchpad.net/~barry/oneconf/py2py3/+merge/141001 ?
+[13:52] <didrocks> barry: not today, but it's on my list :)
+[13:52] <wookey> we need to agree on our DEB_STAGE/BUILD_PROFILE bootstrap/stage1 terminology before we do too much more of this...
+[13:52] <mdeslaur> bdrung: sarnold is on community this week, he should be picking it up. thanks!
+[13:52] <barry> didrocks: okay, thanks!
+[13:54] <bdrung> mdeslaur: i saw your comments on bug #1095434 and bug #1096193
+[13:54] <ubottu> bug 1084054 in vlc (Ubuntu Precise) "duplicate for #1095434 Denial of service via crafted PNG file" [Undecided,Confirmed] https://launchpad.net/bugs/1084054
+[13:54] <ubottu> bug 1084054 in vlc (Ubuntu Precise) "duplicate for #1096193 Denial of service via crafted PNG file" [Undecided,Confirmed] https://launchpad.net/bugs/1084054
+[13:54] <bdrung> sarnold: time to sponsor vlc?
+[14:08] <micahg> didrocks: thanks for working on the sponsorship queue, could you please try to remember to check the .changes file for the appropriate changelog entries when sponsoring merges (I know UDD makes this more difficult than grab-merge)
+[14:11] <wookey> OK. fixing the epoch on libgcc1 means it gives a much more sensible message:  libgcc1:arm64 : Conflicts: libgcc1 but 1:4.7.2-17ubuntu2 is to be installed
+[14:13] <wookey> aha. yes. I've failed to push my equivs patch to enable Multi-Arch: foo upstream
+[14:17] <wookey> yee-ha. only taken 3 days to get that package installed :-) Now I should be able to do sbuild raring arm64 cross-builds
+[14:21] <tumbleweed> didrocks: looks like you forget to use -v a few times when sponsoring merges today. And I'm noticing too late to make any difference...
+[14:25] <micahg> tumbleweed: and I mentioned it 13 minutes ago :)
+[14:25] <micahg> err...13 minutes previous to you
+[14:25] <tumbleweed> ah, I lastlogged for -v, you didn't match :)
+[14:26] <micahg> yeah, I figured people keep asking what it is (which I guess is a problem in and of itself, but, meh)
+[14:26] <micahg> and syncpackage seems to not be doing it properly either ATM...
+[14:27] <micahg> ah, maybe that's for the first sync into the series
+[14:27] <tumbleweed> syncpackage is only responsible for the changes it shows you and closes bugs with
+[14:27] <micahg> it does that part properly ;)
+[14:28] <micahg> it's the LP side that seems broke
+[14:28] <micahg> I"ll have to make sure a bug is logged later
+[14:39] <zul> mterry:  ping
+[14:41] <mterry> zul, heyo
+[14:42] <mterry> zul, I'm mostly back up and running, I can take a look at the mirs again
+[14:42] <zul> mterry: cool they should be ok now
+[14:45] <stokachu> chrisccoulson: Was there a email or any documentation relating to acroread not being built after Precise?
+[14:46] <cjwatson> The partner maintainers asked for packages in partner not to be automatically carried over to the next release
+[14:46] <cjwatson> So if it hasn't been published in later series then that's because none of the partner maintainers saw fit / remembered to reupload it
+[14:46] <stokachu> should i ping one of them about it?
+[14:46] <cjwatson> I gather this was something to do with contracts not necessarily covering all series
+[14:46] <cjwatson> Yes
+[14:46] <stokachu> ok
+[14:46] <stokachu> thanks :)
+=== kentb-out is now known as kentb
+[15:06] <mterry> zul, your testrepository upload ftbfs
+[15:07] <zul> mterry:  ubuntu3?
+[15:07] <mterry> zul, yeah
+[15:07] <zul> mterry: i just uploaded ubuntu4
+[15:10] <didrocks> tumbleweed: micahg: sorry not enough sleep and yeah, I noticed it once I sent my report :/
+[15:11] <mterry> zul, ah cool
+=== slank_away is now known as slank
+[15:37] <zul> mterry:  when i run it locally it runs fine
+[15:38] <mterry> zul, this was in a pbuilder
+[15:38] <mterry> zul, maybe a missing depend?
+[15:38] <zul> mterry: ubuntu4?
+[15:38] <mterry> zul, yeah
+[15:38] <zul> dont think so
+[15:39] <mterry> zul, it finishes the build.  And I didn't test it actually running
+[15:39] <mterry> zul, this is just output from the build
+[15:39] <mterry> zul, looks like it tried to run some tests, failed, but didn't fail the build
+[15:39] <zul> mterry: it runs just fine when its used in the nova build
+[15:39] <doko> cjwatson, infinity, pitti: udev b-d's on usbutils. should this be m-a foreign?
+[15:40] <pitti> doko: usbutils M-A: foreign sounds right to me
+[15:41] <cjwatson> Yeah, agreed
+[15:41] <doko> ok
+[15:43] <psusi> cjwatson: I'm going to apply to become a debian maintainer and was wondering if you would mind signing my gpg key? A70FB705
+[15:44] <cjwatson> psusi: We'd need to exchange key material in person
+[15:44] <cjwatson> I would hope that nobody here would sign a key on the strength of an IRC conversation :-)
+[15:45] <psusi> really?  years of irc conversations, being registered with lp, used to sign many emails, my ppa, all not enough? ;)
+[15:46] <cjwatson> Sorry, pretty standard practice
+[15:46] <psusi> wish I had remembered that last time uds was here
+[15:46] <cjwatson> I'm happy to sign a key at the next conference when we meet
+[15:47] <psusi> heh, when will UDS be back in Orlando? ;)
+[15:48] <cjwatson> Well, it's been twice now so presumably the odds aren't awful
+[15:48] <xnox> look up on db.debian.org for DDs near you & meet in person.
+[15:48] <psusi> hrm...
+[15:49] <Laney> argh
+[15:49] <Laney> I got a keysigning request ages ago and forgot to set up a meeting
+[15:51] <psusi> xnox: doesn't seem to show where they live...
+[15:52] <xnox> there is also a keysigning page on debian wiki
+[15:52] <xnox> that has locations.
+[15:52] <Laney> http://wiki.debian.org/Keysigning/Offers
+[15:56] <hrw> psusi: conferences are one of best ways to get key signed.
+[15:57] <hrw> at last Linaro Connect I hunted down Linaro kernel hackers for example
+[15:59] <psusi> yea.. damnit, I should have done that.. seems signatures just aren't needed in the Ubuntu community though so I guess I was a bit lazy
+[15:59] <hrw> psusi: fosdem in 3 weeks?
+[15:59] <hrw> probably too soon
+[16:05] <psusi> yea, I can't fly half way around the world ;)
+[16:06] <psusi> ahh, damn.. next uds is in copenhagen
+[16:06] <Laney> what makes you think that?
+[16:06] <cjwatson> uh, wasn't that the last one?
+[16:06] <Laney> the /previous/ one was
+[16:06] <roadmr> psusi: hmm I don't think so, that was in November and I doubt it would repeat
+[16:07] <roadmr> psusi: probably an outdated page
+[16:07] <pitti> psusi: I heard rumours about Oakland
+[16:07] <psusi> ohh, you're right.. guess the page hasn't been update
+[16:09] <pitti> psusi: FWIW, you could have spent five years as "psusi" and your name could still be Eduard Frankenstein -- IRC personality vs. official authority document :)
+[16:09] <psusi> when you sign the key in person do you authenticate my birth certificate? ;)
+[16:10] <pitti> (and it is totally okay to call yourself anything you like in the interwebs, that's not uncommon)
+[16:10] <pitti> psusi: well, passport, ID card, something like that
+[16:10] <pitti> at least you need to meet someone in person, preferrably more than once
+[16:11] <psusi> ohh... so this is... what's it now... that high level of trust type signature they talk about in the manual, not just normal?
+[16:12] <pitti> it is certainly conceivable to generate a GPG key with an identification of "https://launchpad.net/~psusi"
+[16:12] <pitti> but ordinarily you create GPG keys with your real name/email
+[16:12] <pitti> I don't need to sign your key to trust that lp.net/~psusi can control /~psusi/+gpgkeys
+[16:13] <pitti> but if I want to ensure that those key bits are controlled by a person called "Phillip Susi", I need to see an official ID with your photo and your name
+[16:14] <cjwatson> I *have* signed the odd person's key in the past based on an IRC conversation, but only people I know very well so that I can e.g. have some way to satisfy myself that they're the same person that I know offline
+[16:15] <cjwatson> And sometimes I do say that if somebody is impersonating so-and-so then they've been doing a good enough job of it for long enough that they deserve to win
+[16:15] <pitti> if I have met someone personally once, I would be comfortable having her/him read out the fingerprint over the phone, and tell me how/when we met if I can't recognize the voice reliably
+[16:15] <psusi> sure.. but sending an encrypted email and verifying I can read it verifies the pairing of email address and key... and the fact that I've been signing email with that key for years is pretty good indication that someone didn't just make it up and hack my email.. about the only possibility is that I've been lieing about my real name all these years, and well... that just seems a little paranoid
+[16:15] <cjwatson> But I have to know them personally for that; I don't have a good enough social brain to convince myself that a person I'm talking to on IRC now is the same person I've been talking to before
+[16:16] <cjwatson> Basically, diverging from the standard safe procedure means that I have to think really hard about whether this might be a social-engineering attack
+[16:16] <pitti> psusi: there are quite a number of community members who prefer working under a pseudonym
+[16:16] <cjwatson> And that's difficut
+[16:16] <cjwatson> +l
+[16:16] <pitti> psusi: i. e. you can trust the work of someone with a pseudonym without having to trust his real name
+[16:16] <cjwatson> Ubuntu is quite plausibly a high-value target of attack; I don't think it's paranoid to be careful
+[16:16] <psusi> right, so would it even matter if I had been using a false name this whole time?
+[16:17] <cjwatson> as is Debian
+[16:17] <pitti> tseliot: thanks!
+[16:17] <cjwatson> I don't think it would matter if you'd been using a false name, but I'm not willing to give up the "exchange key material in person" step
+[16:17] <pitti> psusi: not in terms of how other people regard your work
+[16:17] <cjwatson> Other people might feel it matters
+[16:18] <pitti> psusi: I would sign a key ID saying "https://launchpad.net/~psusi is an Ubuntu community member", if that would make any sense; but I couldn't sign an ID saying "Philip Susi", as I cannot verify that
+[16:19] <tseliot> pitti: thanks for reporting
+[16:19] <Daviey> pitti: So, you have seen my online identify of Dave Walker (Daviey) for a number of years now.. Would you consider that enough to sign my key, remotely.. without seeing supporting ID?
+[16:20] <Daviey> identity*
+[16:20] <pitti> Daviey: I know you in person and would trust myself to recognize your voice; so if I were to sign a key for you, I'd be content with calling your phone number and you reading me your fingerprint
+=== pitti is now known as sabdfl
+[16:20] <cjwatson> Likewise.  But if I *only* knew you online then I wouldn't sign a key base on that
+[16:21] <cjwatson> *based
+[16:21] <sabdfl> cjwatson, Daviey: I'm doubling your salary
+[16:21] <sabdfl> that's the problem with IRC identities :)
+[16:21] <cjwatson> rawk
+=== sabdfl is now known as pitti
+[16:21] <ogra_> LOL
+[16:21] <chrisccoulson> hah
+[16:21]  * xnox doesn't sign people's keys with documents I don't recognise. e.g. us driving license is meaningless to me. I've signed on us driving license only once, but that person was already in my web of trust.
+[16:21] <Daviey> hah.  Works for me.
+[16:21] <psusi> Daviey: depends on the type of signature... gpg defines different levels and one of them is to signify that yes, you are attesting that the persons' name is correct... but there are others that just mean you are sure that someone else is not impersonating the person you know
+[16:22] <maxb> Unfortunately those levels of signature aren't nearly well defined or publicised enough
+[16:22] <Daviey> Well, people use them very differently
+[16:22] <cjwatson> psusi: the uses of the web of trust in Debian generally consider any signature to be sufficient, 
+[16:23] <cjwatson> in any case, this is all very long-established stuff; you're swimming upstream by trying to persuade people to make exceptions for you, and it might well be easier to just arrange a meeting in person
+[16:24] <psusi> I guess what I'm saying is that the bar of "verified identity with gov't documents" is the highest level of trust, and seems a tad much for getting recognized as a dm
+[16:24] <psusi> I fired off an email to the one dd listed as living in FL, see what happens
+[16:24] <xnox> psusi: levels of trust != attestation. You attest for everyone, levels of trust are set locally. E.g. i might attest somebody, but mark in my keyring to not trust that persons attestations cause said person publically tried to get a key signed without checking ID.
+[16:24] <maco> i dont think i'd need my mom's drivers license to believe she's my mom
+[16:24] <cjwatson> a DM very likely has root on lots of people's machines
+[16:25] <cjwatson> it's worth fairly carefully establishing that they are who you think they are
+[16:25] <maco> well any more than i already have trouble believing we're related ;)
+[16:25] <cjwatson> if nothing else so that you have some chance of having some recoure
+[16:25] <cjwatson> *recourse
+[16:26] <Daviey> well, a key parties you tend to look and validate a whole chunk of people.  If i validate someone called "John Smith", i'm not going to remember the contact details to support recourse.  I just know that it is *A* John Smith.
+[16:27] <psusi> that's the thing... trusting someone, and verifying their identity are different things entirely... how does verifying my legal name help with the trust part?  it doesn't seem to...
+[16:27] <pitti> psusi: that's right, these are totally different concepts
+[16:27] <maxb> It does seem a bit incongruous that a decision on whether to give uploader privileges is pretty much wholly based on behaviour of an online persona, yet there's no agreed on way to set up cryptographic trust based on that. But that's the situation that seems to have evolved.
+[16:28] <cjwatson> if you thought you trusted somebody and then they screwed you over (actionably), then if you can't verify they were who they said they were you have absolutely no recourse
+[16:28] <pitti> maxb: actually, that's pretty much how LP's upload privileges work
+[16:28] <psusi> if you trust the guy who has been going by the name Phillip Susi and using the email address psusi@ubuntu.com and submitting patches for a while enough to give him a ppu status, what difference does it make whether that's the name that's on his birth certificate?
+[16:28] <cjwatson> if you've verified a binding with real-world identity then you at least have *some* chance
+[16:28] <Daviey> 2 people on my team go by different names to what their legal name was.  When i turned up to a hotel and asked if they had checked in, i was told nobody with those names were staying at the hotel.  I then got worried i was at the wrong hotel :)
+[16:29] <cjwatson> it's not likely to be sufficient, but it seems necessary
+[16:29] <pitti> psusi: we hand out developer/upload privileges based on that "online identity" indeed
+[16:29] <pitti> I'm not actually sure whether we require someone's GPG key to be in the WoT still; we did in the past
+[16:30] <pitti> does anybody know?
+[16:30] <maco> we do have one developer who went by an alias because he was under 18 and his parents wouldn't let his birth-certificate-name be used online. the key he has under the alias was signed by several ubuntu an debian folks
+[16:30] <maco> pitti: debian does, dont think ubuntu does
+[16:30] <pitti> maco: that's what I thought, too
+[16:33] <stgraber> pitti: I can't remember the DMB ever checking that before granting upload rights to Ubuntu, but maybe it's some part of the procedure that got forgotten over time
+[16:33] <pitti> stgraber: I think it makes sense that way
+[16:33] <ogra_> we used to have an awful process that involved an attoney and a fax machine in the beginning
+[16:34] <pitti> stgraber: we started with WoT before Launchpad
+[16:34] <psusi> that reminds me, there was someone working for canonical that lived around here and wanted to meet, and darnit I forgot who
+[16:35] <cjwatson> gah, fantasy on the brain, I keep reading that as "Wheel of Time"
+[16:35] <psusi> lol, me too ;)
+[16:35] <ogra_> better than Wheel of Fortune at least ...
+[16:35] <ogra_> (in the light of granting upload rights)
+[16:40]  * Laney glares
+[16:43] <psusi> is there a list of canonical employees with where they live?
+[16:43] <xnox> ogra_: ppu/motu/core-dev should be in the web of trust (the set of debian & ubuntu devs)
+[16:44] <xnox> psusi: you want a Debian Developer if you want to become a Debian Maintainer.
+[16:44] <xnox> and employment information is private & sensitive information pretty much everywhere in the world.
+[16:44] <psusi> yea, I know... I'm just bothered now because I had a convo with a canonical developer a while back and he lived nearby and wanted to meet for a beer some time, and I can't recall who it was now and we never did
+[16:57] <arges> tseliot: hi i noticed an ftbfs for nvidia-graphics-drivers. looks like a missing common in the control file. should I create a patch or is somebody else looking at this already?
+[17:00] <tseliot> arges: which revision?
+[17:00] <arges> tseliot: looks like nvidia-graphics-drivers-310
+[17:00] <tseliot> arges: I can see the log now. Weird, let me check
+=== deryck is now known as deryck[lunch]
+[17:22] <rbasak> Is there an example of dep3 as applied to dpatch somewhere?
+[17:26] <xnox> rbasak: dpatch uses it's op DP: description fields and predates dep3 by a long time.
+[17:27] <cjwatson> Yeah, I usually just stick them in DP: and don't worry too much about it
+[17:27] <xnox> convert to quilt & use dep3, or stay with dpatch + write a bit of text in the description.
+[17:27] <xnox> s/op/own/
+[17:27] <cjwatson> dpatch is deprecated anyway so the problem should go away over time
+[17:28] <rbasak> OK so it's vague and if I just make it human readable it'll be sufficient?
+[17:28] <rbasak> I guess I'll just prepend dep3 stuff with ## DP: then
+=== a3Dman_ is now known as a3Dman
+[17:28] <rbasak> Thanks!
+[17:31] <cjwatson> rbasak: I normally find prepending DEP-3 headers with DP: is too awkward - I just do free-form text
+[17:31] <cjwatson> But whatever
+=== Tonio_ is now known as Tonio_aw
+=== deryck[lunch] is now known as deryck
+=== Ursinha is now known as Ursinha-afk
+=== slank is now known as slank_away
+=== cody-somerville_ is now known as cody-somerville
+=== parasight_ is now known as parasight
+[18:54] <kenvandine> @pilot in
+=== udevbot changed the topic of #ubuntu-devel to: Ubuntu 12.10 released | Archive: Open | Dev' of Ubuntu (not support or app devel) | build failures -> http://qa.ubuntuwire.com/ftbfs/ | #ubuntu for support and dicussion of hardy -> quantal | #ubuntu-app-devel for app development on Ubuntu http://wiki.ubuntu.com/UbuntuDevelopment | See #ubuntu-bugs for http://bit.ly/lv8soi | Patch Pilots: kenvandine
+=== henrix is now known as henrix_
+=== slank_away is now known as slank
+=== burlak- is now known as burlak
+=== salem_ is now known as _salem
+[22:29] <kenvandine> @pilot out
+=== udevbot changed the topic of #ubuntu-devel to: Ubuntu 12.10 released | Archive: Open | Dev' of Ubuntu (not support or app devel) | build failures -> http://qa.ubuntuwire.com/ftbfs/ | #ubuntu for support and dicussion of hardy -> quantal | #ubuntu-app-devel for app development on Ubuntu http://wiki.ubuntu.com/UbuntuDevelopment | See #ubuntu-bugs for http://bit.ly/lv8soi | Patch Pilots:
+=== cpg|away is now known as cpg
+[23:16] <bdrung> sarnold: re bug #1084054 - vlc has a preliminary MRE. the SRU still needs to get build through -security
+[23:16] <ubottu> bug 1084054 in vlc (Ubuntu Precise) "Denial of service via crafted PNG file" [Undecided,Confirmed] https://launchpad.net/bugs/1084054
+[23:21] <sarnold> bdrung: hrm, that does sound familiar but now I can't find the documentation that would explain it further
+[23:23] <bdrung> sarnold: -proposed will build with -updates, which is not allowed for packages going to -security
+[23:29] <sarnold> bdrung: oh, I overlooked the "preliminary MRE" the first read-through, do you have a link handy?
+[23:29] <sarnold> (I didn't see it on https://wiki.ubuntu.com/StableReleaseUpdates/MicroReleaseExceptions )
+[23:29] <bdrung> that's how i got 2.0.3 in. let me digt out the TB meeting
+[23:32] <bdrung> sarnold: http://ubottu.com/meetingology/logs/ubuntu-meeting/2012/ubuntu-meeting.2012-07-23-21.14.html
+[23:33] <sarnold> bdrung: thanks
+[23:54] <xnox> pitti: your @debian.org email doesn't work =(

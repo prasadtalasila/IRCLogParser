@@ -1,0 +1,74 @@
+[00:28] <ricotz> darkxst, http://paste.debian.net/plain/225500
+[10:07] <darkxst> ricotz, so I tried to install 3.7 from testing on my Q laptop and hit the same 'focus issue' have been having with jhbuild on R :(
+[10:54] <ricotz> darkxst, vanilla quantal with ricotz/testing ppa?
+[10:59] <darkxst> ricotz, it was a vanilla quantal install, but has ubuntu-gnome-desktop installed
+[11:00] <ricotz> with "focus issue" you mean the exclusive problem in g-s overview?
+[11:01] <darkxst> yeh
+[11:01] <darkxst> well not just overvew, happens with any pop-up or dialog
+[11:01] <darkxst> i.e alt-tab
+[11:04] <ricotz> so switching to a window with alt-tab shows it but doesn't focus it?
+[11:05] <darkxst> mabye focus is really the wrong word, but basically  launching a dialog (say alt-tab) all input gets stuck keyboard/mouse, that times out after about 10-30sec
+[11:05] <darkxst> then you get one more input event from key/mouse and it gets stuck indefinately
+[11:06] <ricotz> ok, focus-issue is the wrong word for it then
+[11:07] <ricotz> i might have seen this with the volume control with raring
+[11:07] <darkxst> also its not your typical push/pop modal issue
+[11:07] <ricotz> the alt-tab window stays there for ever?
+[11:07] <darkxst> that tends to cause wierd things with events going to the wrong windows
+[11:08] <darkxst> ricotz, yeh
+[11:08] <ricotz> could you use your volume conrol keys in a "faster way"
+[11:08] <ricotz> so tune it up and down a bit
+[11:09] <darkxst> I did not try volume keys
+[11:09] <ricotz> this is how i am seeing it occasionally and the volume-control-window of g-s gets stuck
+[11:09] <ricotz> of course this window doesnt use modal so it doesnt grab all keys afterwards
+[11:10] <ricotz> but it sounds like the same issue
+[11:10] <darkxst> similar, except this is affecting basically everything
+[11:10] <ricotz> i guess you told me already, which x-driver do you use?
+[11:11] <darkxst> intel on Q, nvidia blob on R
+[11:11] <ricotz> ok
+[11:12] <ricotz> blob and intel on R here
+[11:12] <ricotz> only seen my issue on with blob
+[11:13] <ricotz> will try to reproduce it (i updated today to 313.18)
+[11:13] <ricotz> also i am using a pre-release of eglibc 2.17
+[11:13] <ricotz> on raring
+[11:14] <ricotz> which solves some deadlocks of 2.16
+[11:18] <darkxst> of course the strange thing is the 3.7 g-s packages from testing work perfectly on my R machine with broken jhbuild
+[11:21] <darkxst> and when I attached to g-s with gdb, it just had g-s sitting in a normal idle state
+[11:24] <darkxst> anyway I am stuck on my laptop this week, so can't really go and break it again, to try debug more
+[11:46] <ricotz> darkxst, alright, this seems to be caused by some dependency or the X stack
+[11:59] <darkxst> hm right
+[12:14] <darkxst> btw, I think I probably have xorg-edgers installed on my R/jhbuild machine
+[12:40] <ricotz> me too ;)
+[17:12] <jbicha_> gdm unlock seems broken http://paste.ubuntu.com/1542043/
+[20:39] <darkxst> jbicha_, I think that is this bug https://bugzilla.gnome.org/show_bug.cgi?id=689106
+[20:39] <ubot5> Gnome bug 689106 in lock-screen "ScreenShield: try harder to become modal, and catch failures" [Critical,New]
+[20:40] <jbicha_> darkxst: thanks, I guess I should file a bug report then
+[20:41] <jbicha_> I'm getting the gnome-screensaver unlock and the gnome-shell unlock but then it gets stuck with just the gray gnome-shell unlock screen (I'm using 3.7.4)
+[20:48] <darkxst> jbicha_, how come you are getting the gnome-screensaver unlock?
+[20:53] <darkxst> the 'incorrect pop' results in basically a stuck grab?
+[20:53] <jbicha_> uh I think so
+[20:54] <jbicha_> let me reboot just to clear some things
+[20:59] <jbicha> darkxst: ok, never mind it seems to be working fine now
+[21:01] <jbicha> it could just have been me restarting gnome-shell manually which confuses the too fragile gdm/gnome-shell combination
+[21:05] <darkxst> oh, its possible that is gnome-screensaver is running when you run 'gnome-shell --replace', then you end up with both
+[21:06] <darkxst> I have also occasionally seen g-s fail to get the auth channel to gdm, but pretty sure that results in g-s lock being disabled
+[21:13] <darkxst> speaking of stuck grubs I just got hit by one, but different
+[21:15] <darkxst> possibly caused by a notification, while in (or maybe exiting) overview
+[21:35] <ricotz> jbicha, hi
+[21:35] <ricotz> darkxst, hi, was the hg patch usable?
+[21:36] <darkxst> yeh
+[21:37] <ricotz> jbicha, i have taken a look at g-c-c and it would be quite some work to get a external library again and make g-c-c aware of the ubuntu plugins
+[21:37] <ricotz> jbicha, the easiest would be to consume the real plugins as a patch and integrate them like the upstream ones
+[21:47] <jbicha> ok I got the login screen problem again, I just had to wait for the screen to automatically lock
+[21:48] <jbicha> ricotz: yes, g-c-c is quite a bit more difficult to get the external library working again
+[21:52] <jbicha> I'll let Canonical fix that if it's a priority to them
+[21:52] <ricotz> btw, i pushed empathy, but i guess i will split account-plugin-* again with the next release
+[21:53] <ricotz> jbicha, currently the online-accounts are not usable which is a big deal :\
+[21:55] <ricotz> jbicha, or got they integrated in g-c-c?
+[21:55] <darkxst> jbicha, yeh the failed push happens when the idle timer kicks in
+[21:55] <jbicha> ricotz: ah, well for the staging PPA we may want to disable uoa then since I doubt g-c-c will get fixed until Canonical cares, which probably won't be for a few more months
+[21:55] <jbicha> darkxst: should I open a gnome bug for that?
+[21:55] <darkxst> jbicha, it is the same bug I linked you before
+[21:56] <ricotz> jbicha, uoa is upstreamed
+[21:56] <ricotz> meaning in empathy
+[21:56] <darkxst> although those patches really just workaround the issue and don't fix whatever is causing the grab to fail
+[21:57] <jbicha> ricotz: right but it's still a configure flag

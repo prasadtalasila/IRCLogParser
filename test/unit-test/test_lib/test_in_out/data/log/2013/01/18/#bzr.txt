@@ -1,0 +1,98 @@
+=== slank is now known as slank_away
+[03:56] <jaimef> how can you restore a checked out repo to prestine state?
+[04:15] <bob2> revert
+=== superfly is now known as MrTwinkle
+=== MrTwinkle is now known as superfly
+=== yofel_ is now known as yofel
+=== r0bby_ is now known as robbyoconnor
+=== slank_away is now known as slank
+[16:23] <vila> jelmer: bug #1101206 seems to be for you ;)
+[16:23] <ubot5> bug 1101206 in bzr (Ubuntu) "autopkgtest failed with "No module named subunit" - missing test dependency on python-subunit" [Undecided,Triaged] https://launchpad.net/bugs/1101206
+[16:48] <jelmer> Vila: I'm no longer involved in the packaging of bazaar, that's all Andrew S-B these days
+[17:43] <atc3030> anyone able to help me with this?
+[17:43] <atc3030> i run
+[17:43] <atc3030> bar branch lp:gcc-linaro
+[17:43] <atc3030> and it results in  a dir named gcc-linaro but only contains a .bzr dir. nothingelse
+[17:44] <xnox> atc3030: well $ bzr branch lp:gcc-linaro
+[17:44] <xnox> atc3030: try $ bzr info
+[17:45] <xnox> or you can try afresh: $ bzr branch -r1 lp:gcc-linaro
+[17:45] <xnox> and then do incremental pulls, e.g. $ bzr pull -r 25000
+[17:45] <atc3030> atc3030@atc3030-buildserver:~/android/prestigix/linaro_src/gcc-linaro$ bzr info
+[17:45] <atc3030> Standalone tree (format: 2a)
+[17:45] <atc3030> Location:
+[17:45] <atc3030>   branch root: .
+[17:45] <atc3030> Related branches:
+[17:45] <atc3030>   parent branch: http://bazaar.launchpad.net/~linaro-toolchain-dev/gcc-linaro/4.7/
+[17:46] <xnox> $ bzr status?
+[17:46] <xnox> $ bzr status
+[17:46] <xnox> ?
+[17:46] <atc3030> that just spits out about 10000000 lines of files. lol
+[17:46] <atc3030> nothing else
+[17:46] <atc3030> i can pastebin if you like
+[17:46] <xnox> $ bzr revert
+[17:46] <xnox> ?
+[17:46] <xnox> and then $ ls ?
+[17:47] <atc3030> bar revert is thinking lol
+[17:47] <atc3030> bzr*
+[17:47] <xnox> it may take a while.
+[17:47] <atc3030> bzr: ERROR: Corruption while decompressing repository file, zlib: Error -3 while decompressing data: incorrect data check
+[17:48] <mgz> atc3030: look at your ~/.bzr.log, find the initial branch operation you did, and see if it also resulted in an error
+[17:49] <xnox> i'd recommend to remove .bzr; remove the dir; bzr branch the first revision only (-r 1) and then do incremental pulls (-r 20000, -r 40000, etc). The repository you are trying to clone is massive.
+[17:50] <xnox> if you are going to have many branches, then please do create a shared repository $ bzr init-repo linaro-gcc-trees; cd linaro-gcc-trees and then branch in there.
+[17:50] <mgz> wouldn't be surpised if you ran out of disk or something...
+[17:50] <xnox> that way all branches will share the massive history and your checkout will succeed and subsequent onces will be fast.
+[17:52] <atc3030> grrr. why must this be so hard to understand. lol
+[17:53] <atc3030> I do not know what to specifically look for but the other branches i have been able to successfully sync have not had this, but the ones I'm having problems with say "24 bytes left on http socket"
+[17:53] <xnox> well, I used to hack on gcc bzr trees and gcc's history is huge. hence the need to use advance tricks to speed it up or make it at least work.
+[17:55] <atc3030> what if i don't want the entire history? i could care less about where it all came from, i just need a snapshot of it now to use it in another project.
+[17:56] <mgz> download the tarball.
+[17:57] <atc3030> that will work i guess. i was hoping to be able to automatically pull don the new changes without chasing down a new url but that will work
+[17:57] <mgz> a lightweight checkout might perform okay these days too.
+[17:59] <mgz> not over http though, you'll want a launchpad login and to give launchpad your ssh key for that.
+[17:59] <vila> jelmer: Oh, I didn't know (or haven't realized maybe). Thanks, I'll try to get in touch with him ;)
+[17:59] <mgz> vila: while you're here and I'm thinking about it, is there a bug filed for `bzr config` not liking lp: urls?
+[18:00] <atc3030> THank you guys. I am just gonna download the tarball
+[18:00] <atc3030> thank you
+[18:00] <mgz> atc3030: actually, that worked really well
+[18:00] <xnox> no problem =)
+[18:01] <mgz> Fri 2013-01-18 17:58:33 +0000
+[18:01] <mgz> 0.045  bazaar version: 2.6b2
+[18:01] <mgz> 0.046  bzr arguments: [u'checkout', u'--lightweight', u'lp:~linaro-toolchain-dev/gcc-linaro/4.7/']
+[18:01] <vila> mgz: not that I know of, but it's more a bug in the commands that interpret the urls before saving them in the config I'd say
+[18:01] <mgz> ...
+[18:01] <mgz> 92.921  Transferred: 170293kB (1839.6kB/s r:157531kB w:12761kB)
+[18:02] <mgz> you'll get a slower transfer, but 150MB isn't bad
+[18:02] <mgz> atc3030: if you're not sure how to do the launchpad-login stuff, see the help page
+[18:02] <vila> mgz: at least, I've known the limitation when I started using bzr and never tried to fix it ;)
+[18:03] <mgz> vila: as in,
+[18:04] <mgz> $ bzr config -d lp:bzr --scope=branch
+[18:04] <mgz> bzr: ERROR: Not a branch: "bzr+ssh://bazaar.launchpad.net/+branch/bzrlp:bzr/".
+[18:05] <vila> mgz: oh ! You mean *that* command doesn't resolve the url ;-D Well '-d' handling is a far simpler thing to fix ;)
+[18:06] <mgz> right, it looks trivial
+[18:06] <mgz> just wanted to know if there's a bug for it already you know about
+[18:06] <vila> nope
+[18:06] <mgz> okay, I'll file one
+[18:07] <atc3030> thank you mgz
+[18:07] <vila> mgz: thanks, I may give it a shot
+[18:13] <vila> jelmer: wow, pitti already fixed it ;)
+[18:15] <mgz> file bug 1101320
+[18:15] <ubot5> bug 1101320 in Bazaar "Using bzr config with --directory and --scope fails with lp: url " [Medium,Confirmed] https://launchpad.net/bugs/1101320
+[18:15] <mgz> pitti is a super-monster :)
+[18:19] <mgz> fault:
+[18:19] <mgz> (Pdb) urlutils.normalize_url("lp:bzr")
+[18:19] <mgz> 'lp:bzrlp:bzr'
+[18:20] <mgz> so, doing that is not the right thing
+[18:21] <mgz> just killing that line might be enough, but I'm not clear why it exists
+=== james_w` is now known as james_w
+=== jordan_ is now known as jordan
+[21:32] <Guest5262> Hi folks - I want to get a list of all changes to a particular file over time - how do I do that?
+[21:38] <mnn> just a quick question: when I've uncommited some revisions, while working. How to purge these dead revisions, so they won't clutter repository?
+[21:54] <Guest5262> is there anyone here who actually responds to questions? is there anyone here who can respond to questions?
+[21:57] <Guest5262> is there a developer online now?
+[21:59] <Guest5262> is there any reason why #bzr should not be shut down permanently?
+[22:19] <xnox> mnn: $ bzr pack; $ bzr pack --clean-obsolete-packs
+[22:20] <xnox> Guest5262: maybe because it's friday evening and people are away from computers?!
+[22:20] <xnox> anyways $ bzr log -p path/to/file
+[22:20] <lifeless> xnox: Guest s long gone :)
+[22:21]  * xnox has little hope that Guest will read http://irclogs.ubuntu.com
+[23:01] <mnn> xnox: thanks!

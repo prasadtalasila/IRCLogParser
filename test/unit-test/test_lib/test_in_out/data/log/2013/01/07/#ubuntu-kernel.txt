@@ -1,0 +1,195 @@
+[08:06] <ppisati> moin
+[08:16]  * smb yawns and starts actively ignoring lots of email
+=== henrix_ is now known as henrix
+[09:22] <cking> smb 47a133339c332f9f8e155c70f5da401aded69948
+[09:24] <cking> and also I need to try out c8b74c2f6604923de91f8aa6539f8bb934736754
+[09:26] <infinity> henrix: FYI, #1040557 could be hard to verify in anything other than quantal, given that it relies on booting in EFI mode, which we didn't support until Q...
+[09:26] <infinity> henrix: (Just noticed your comment on the bug asking to test it on oneiric)
+[09:27] <henrix> infinity: right, i took a look at the patch and didn't realised the 
+[09:27] <henrix> infinity: 'oneiric' part...
+[09:28] <henrix> infinity: thanks for the heads up
+[09:28] <infinity> (I'm not actually sure why we backported this back to 3.2 and 3.0, though it doesn't hurt to have it there either)
+[09:28] <infinity> cking: ?
+[09:28] <infinity> Oh, wait.  No.
+[09:29] <infinity> We support booting EFI mode on precise (and maybe oneiric).  I'm half asleep.
+[09:29] <infinity> But this bricking issue was only happening on Q kernels, wasn't it?
+[09:29]  * infinity shrugs.
+[09:29] <infinity> No harm either way, the patch is simple enough.
+[09:31]  * cking thought that prevention at all levels is better than bricking
+[09:31] <infinity> cking: Yeah, I'm not inclined to disagree.
+[09:32] <infinity> Just could be harder to validate this one than most.
+[09:32] <infinity> The weird catch-22 of "if it previously bricked machines, no one wants to test" (though, Samsung should be testing quantal for us there) and "if it didn't brick before, all we can verify is that your disabling bit worked" (oneiric and precise, I think).
+[09:33] <cking> infinity, indeed
+[09:33] <cking> who wants to test something that may brick one's machine?
+[09:33] <infinity> Pick me, pick me!
+[09:33] <smb`> donkey
+=== smb` is now known as smb
+[09:34] <cking> as it was, we had jsalisbury did test this patch for me on a later kernel in the non-UEFI mode. the regression risk is really minimal
+[09:34] <smb> Obviously Samsung should test on their machines... they may even have some unbrick option... :-P
+[09:35] <cking> unbrick uption is "get a new motherboard"
+[09:35] <infinity> Well, "replcace the firmware" but, yeah, without bootstrap pre-firmware flashy bits (which either they lack, or their service centres don't know how to use?), it's a new motherboard for end users.
+[09:36] <smb> But the worst case we can get would be users whining about lost functionality on older releases. IF it ever did work without bricking
+[09:36] <infinity> I assume Samsung themselves fix it with a slightly less large hammer.
+[09:38]  * cking not sure how we proceed on this - my preference is to say it should go through w/o verification 
+[09:39] <infinity> cking: I want verification to the nth degree from Samsung on the Quantal kernel, but for P and O, I'm happy with someone just booting them and saying "yep, the module's disabled now".
+[09:39] <infinity> cking: Cause I'm pretty sure P and O weren't bricking things (though we've never had a straight answer there, the bug reports all seem to be Qish)
+[09:40] <cking> infinity, I will prod joseph later today to see if I can get him to re-test with Q
+[09:40]  * apw yawns
+[09:40] <infinity> Cause once I can get Samsung to say "yes, this fixes the world, yay", I intend to respin the quantal/amd64 images with the kernel update and stop the madness.
+[09:40] <smb> Maybe nobody really ran those releases in UEFI mode back then. Which is now more often caused be the other OS requirement
+[09:40] <cking> have we direct access to Samsung to get this tested ASAP then?
+[09:41] <infinity> smb: Tis possible that the laptops recently switched to being EFI by default instead of legacy but, even then, you'd expect a fair number of LTS installs.
+[09:41] <infinity> cking: AFAIK, we have some Samsung people standing by to test, but they're not "Linux people", so we'll need to produce an image and hand-hold them through it.
+[09:41] <infinity> cking: I'll be trying to make sure that happens this week.
+[09:42] <apw> that does match my information
+[09:42] <cking> infinity, thanks for the handling that :-)
+[09:42] <smb> infinity, True. At least nowish. Ok, people would need a second computer to open the bug report to shout at us. And blame it on the install rather on crappy hw
+[10:04]  * ppisati goes out (early) to hunt for food
+=== amitk is now known as amitk-afk
+=== amitk-afk is now known as aitk
+=== aitk is now known as amitk
+[13:04]  * henrix -> lunch
+=== chiluk_away is now known as chiluk
+[15:27] <ogra_> rtg, apw ... could one of you take care for bug 1096919 ?
+[15:27] <ubot2> Launchpad bug 1096919 in linux-nexus7 (Ubuntu) "please enable CONFIG_BLK_DEV_IO_TRACE in the nexus7 kernel" [Medium,New] https://launchpad.net/bugs/1096919
+[15:27] <rtg> ogra_, working on it...
+[15:27] <ogra_> gracias :)
+[15:40] <jsalisbury> rtg, it looks like bug 1064924 needs to be reverted per upstream.  Should I create a new bug and submit the revert request, or can I used the existing bug?
+[15:40] <ubot2> Launchpad bug 1064924 in linux (Ubuntu Quantal) "Please add LVDS quirk for the zotac zbox" [Medium,Fix released] https://launchpad.net/bugs/1064924
+[15:40] <rtg> jsalisbury, prolly stick to the original bug and note why we're reverting
+[15:40] <jsalisbury> rtg, got it, thanks
+[15:41]  * ogasawara back in 20
+[15:46] <dobey> what file should i edit to change the boot command line, if the grub menu won't let me edit the command line (pressing e or c at grub do nothing for me)?
+=== amitk is now known as amitk-afk
+[15:52] <smb> apw, Are you aware of packaging changes regarding libcrypto in raring. Something that definitely did compile before the holidays now fails in the configure stage. *grr*
+[15:53] <apw> smb, i am not indeed, might be worth asking on #ubuntu+1-maint though
+[15:53] <smb> apw, will do...
+[15:54] <arges> smb: which package
+[15:54] <smb> arges, xen :-P
+[15:54] <arges> smb: i see xen-api/xen-api-libs on ftbfs only for armhf/powerpc
+[15:56] <smb> arges, Its the main xen package and even the version currently in the archive now fails in my sbuild environment...
+[15:57] <arges> smb: do you have a link to the failing .dsc?
+[15:58] <apw> dobey, most of the things you can change are changable from /etc/default/grub2
+[15:58] <arges> smb: oh nevermind you mean 4.2.0-1ubuntu5
+[15:58] <arges> err
+[15:58] <arges> 4
+[15:58] <smb> arges, If it is not only me and the first day it would be the pull-lp-source xen raring
+[16:01] <arges> smb: trying it now
+[16:02] <sforshee> hrm, I just experienced a thermal shutdown on my thinkpad :-/
+[16:02] <sforshee> I wasn't even abusing it that badly
+[16:04] <apw> sforshee, intel ?
+[16:04] <sforshee> apw, yep
+[16:04] <apw> raring 
+[16:04] <apw> have you s/r since boot ?
+[16:04] <sforshee> no, precise with the quantal hwe kernel
+[16:04] <apw> oh dear
+[16:05] <sforshee> I haven't installed a new kernel since mid last week though
+[16:05] <bjf> sforshee makes me sad
+[16:05] <sforshee> but I've had a thermal shutdown on this machine
+[16:05] <arges> sforshee: which kind of thinkpad? and which kernel version
+[16:06] <dobey> apw: thanks, i'll try that
+[16:06] <sforshee> arges, t410, 3.5.0-19.30
+=== bjf is now known as bjf[afk]
+[16:07] <sforshee> I meant to say I've never had a thermal shutdown on this machine previously
+[16:08] <arges> smb: ok i get the same error. I can work on a patch if you'd like
+[16:09] <smb> arges, No worries. I am on it anyway. Just wanted to find out whether this is sort of known
+[16:09] <xnox> Hello, kernels hackers =) does anyone has any hardware that can build ndiswrapper dkms module and load any driver to see if ndiswrapper works?
+[16:09] <arges> smb: cool. also did you see the crash patch I attached? added 'binutils' as a Depends. I think you are maintainer right?
+[16:10]  * xnox fixed it in raring and now I want to SRU it back to quantal & precise, as it is broken in quantal & precise is getting quantal kernel.
+[16:10] <apw> xnox, not me, i wonder if tseliot might
+[16:11] <smb> arges, I saw it. And yep, suppose I am sort of.
+[16:11]  * smb looks at his dirty fingers
+[16:11] <apw> smb is tarnished with it is probabally a better description
+[16:11] <tseliot> xnox: no, sorry, I'm not familiar with ndiswrapper
+[16:12] <rtg> ogra_, uploaded linux-nexus7_3.1.10-8.20 for bug  #1096919
+[16:12] <ubot2> Launchpad bug 1096919 in linux-nexus7 (Ubuntu Raring) "please enable CONFIG_BLK_DEV_IO_TRACE in the nexus7 kernel" [Medium,Fix committed] https://launchpad.net/bugs/1096919
+[16:13] <ogra_> rtg, thanks a lot ... lets see if that boots faster :)
+[16:13] <smb> apw, blursed...
+[16:13] <rtg> ogra_, yeah, might help ureadahead
+=== amitk-afk is now known as amitk
+[16:28] <sforshee> no luck inducing a thermal event by loading cpus/io and trying to induce gpu activity
+[16:28] <sforshee> I wonder what happened to generate all that heat
+[16:29] <rtg> sforshee, thunderbird
+[16:29] <sforshee> I use mutt/offlineimap
+[16:29] <apw> sforshee, have you s/r since you rebooted ?
+[16:30] <sforshee> apw, no I haven't
+[16:30] <apw> cking is tracking a bug with i915 and s/r making it consume 3x the power
+[16:30] <apw> you might try it 
+[16:30] <sforshee> ack, I'll give that a try
+[16:30]  * sforshee disappears for a minute
+[16:30] <awe_> cking, ping
+[16:30] <cking> well, it's on my TODO list, not quite onto it yet
+[16:30] <cking> awe_, pong
+[16:31] <awe_> long time...
+[16:31] <apw> cking, thats why i say "tracking" and not "fixing" :)
+[16:31] <awe_> need some debug help with my thinkpad
+[16:31] <jsalisbury> sforshee, its bug 1086123
+[16:31] <ubot2> Launchpad bug 1086123 in linux (Ubuntu) "3x power consumption compared to quantal" [High,Triaged] https://launchpad.net/bugs/1086123
+[16:32] <jsalisbury> sforshee, v3.8-rc2 seems to resolve it, but the bug is against raring and not quantal
+[16:34] <sforshee> jsalisbury, apw: if it's a regression in raring then I shouldn't be affected since I'm using precise + quantal hwe
+[16:34] <sforshee> in practice s/r didn't seem to change anything
+[16:35] <sforshee> once my machine hits 95C the temperature starts backing off
+[16:35] <apw> man that seems hot to me
+[16:35] <sforshee> that's not the normal temp, that's with everything loaded
+[16:36] <sforshee> right now it's at 60C
+[16:38] <apw> i guess my old clunker just doesn't get so hot
+[16:39] <jsalisbury> sforshee, I can get my x201 to hit 100C by loading it up.  I've been able to do it from 2.6 all the way up to 3.8-rc2.  It's interesting it's just started happening to you though.
+[16:40] <sforshee> jsalisbury, well it's only happened this one time, and so far I can't reproduce it
+[16:40] <jsalisbury> sforshee, I usually control the fan manually if I'm going to do something that loads it.
+[16:40]  * apw whines about lenovos
+[16:40] <sforshee> jsalisbury, what's odd is that I've done highly parallel kernel builds on this machine before without problem. I wasn't being anywhere near as abusive when it shut down.
+[16:40] <cking> i3, and i5 seem OK, i7 based Lenovos seem to get quite toasty
+[16:41] <sforshee> this is i7
+[16:41] <sforshee> Intel(R) Core(TM) i7 CPU       M 620  @ 2.67GHz
+[16:41] <sforshee> westmere I believe
+[16:41] <jsalisbury> sforshee, thats what I got too: model name	: Intel(R) Core(TM) i7 CPU       M 620  @ 2.67GHz
+[16:42] <cking> I've seen that with a fully loaded CPUs and minimal GPU usage these i7 based lenovos get really hot.
+[16:43] <cking> and even Windows 7 users gripe about it being toasty hot
+[16:43] <sforshee> cking, mine gets hot, but when it hits 95C something is kicking in to mitigate it. The temp immediately drops down to about 89 then starts ramping back up.
+[16:43] <jsalisbury> sforshee, I can get my system to overheat by running a bunch of these silly little things in parallel:
+[16:43] <jsalisbury> http://paste.ubuntu.com/1507070/
+[16:44] <cking> sforshee, at 95 degrees C the CPU is scaled back I suspect
+[16:44] <sforshee> i was using stress
+[16:44] <sforshee> cking, likely
+[16:45] <jsalisbury> sforshee, have you ever updated the bios?
+[16:45] <cking> sforshee, the fan takes ~7 seconds to ramp upto full speed, so this means we have a window where the machine can't dump the excessive heat quick enough
+[16:45] <sforshee> jsalisbury, I can't recall for sure, but not anytime recently
+[16:46] <cking> passive cooling via CPU freq scaling is fairly fast, but even with the CPU scaled back it takes some time for the fan to dump the heat out of the laptop
+[16:47] <jsalisbury> cking, and if the fan is partially blocked by dust, or by sitting on a soft surface, it takes even longer :-)
+[16:48] <cking> jsalisbury, indeed. but the real kicker is that it seems that quite a few  i7 based Lenovos to get to the TjMax point really easily.
+[16:50] <sforshee> this machine is sitting in a docking station on my desk just like usual. Actually there was nothing unusual at all.
+[16:51] <sforshee> may have been some difficult-to-hit firmware or kernel bug
+[16:52] <sforshee> anyway, I think I'll just keep an eye on my temperature for now and go back to my normal work
+=== root_ is now known as lynus
+[17:12] <lynus> new 12.04 install on my acer S3-391 laptop,randomly freez ,no response to sysrq.Is there any way to get a kernel dump?
+[17:13] <cking> bah, one one the many machines in my office is beeping periodically and I can't find which one it is.
+[17:14] <apw> cking, check the smoke alarm too
+[17:15] <cking> apw, I can't mistake the smoke alarm - it screems at ~100+ dB
+[17:15] <apw> cking, mine goes "bip" once like eveyr 5m when its battery is going flat
+[17:15] <apw> drives one mental, cause its not long enough to find direction
+[17:15] <cking> apw, good point, mine are mains and battery powered
+[17:16]  * cking notes that a pure tone beep is directionally hard to detect
+[17:19] <cking> bah, this is driving me potty
+[17:19] <cking> maybe it's all in my mind
+[17:19] <apw> cking, time to start turning everything off one by one
+[17:19]  * cking starts with his brain
+[17:21]  * ppisati -> gym
+[18:19]  * rtg -> lunch
+=== bjf[afk] is now known as bjf
+=== henrix is now known as henrix_
+=== henrix_ is now known as henrix
+=== henrix is now known as henrix_
+=== henrix_ is now known as henrix
+[18:58]  * smb calls it an EOD
+=== henrix is now known as henrix_
+=== rsalveti_ is now known as rsalveti
+[19:56] <apw> ogasawara, ok i've pushed a bunch of config stuff to the tree, it seems to build on everything we still have flavours for
+[19:56] <ogasawara> apw: ack
+[19:56] <apw> ogasawara, that represents the config review for 3.8 as much as i can stomach
+[19:59] <apw> http://kernel.ubuntu.com/~kernel-ppa/configs/raring/reviews/38early.html
+[19:59] <apw> ogasawara, ^^ (linked into the spec)
+[20:07]  * apw gives it up
+[20:11] <bjf> beeg.com
+[20:38] <bjf> lol
+[20:46]  * rtg -> EOD
+=== chrisccoulson_ is now known as chrisccoulson
