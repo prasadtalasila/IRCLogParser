@@ -2,6 +2,7 @@ import unittest
 from lib.analysis import network
 import networkx as nx
 import lib.util as util
+import lib.config as config
 import os
 
 current_directory = os.path.dirname(os.path.realpath(__file__))
@@ -29,6 +30,14 @@ class NetworkTest(unittest.TestCase):
         assert top_keyword_overlap == expected_top_keyword_overlap
         assert top_auth == expected_top_auth
         assert nx.is_isomorphic(message_graph, expected_message_graph)
+        
+    def test_nick_receiver_from_conn_comp(self):
+        conn_comp_list = [["Rohit", "rohit", "kaushik"], ["krishna", "krish", "acharya"], ["Rohan", "rohan", "ron"]]
+        conn_comp_list.extend([[]]*config.MAX_EXPECTED_DIFF_NICKS)
+        
+        assert network.nick_receiver_from_conn_comp("kaushik", conn_comp_list) == "Rohit"
+        assert network.nick_receiver_from_conn_comp("krishna", conn_comp_list) == "krishna"
+        assert network.nick_receiver_from_conn_comp("Rohan_goel", conn_comp_list) == ""
 
 if __name__ == '__main__':
     unittest.main()

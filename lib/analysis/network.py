@@ -720,7 +720,10 @@ def nick_receiver_from_conn_comp(nick, conn_comp_list):
     """
         creates nick_receiver from conn_comp_list,
         it is a helper function used in create_message_time_graph and message_number_graph
-    """    
+    """
+    
+    nick_receiver = ""
+        
     for i in range(config.MAX_EXPECTED_DIFF_NICKS):
         if nick in conn_comp_list[i]:
             nick_receiver = conn_comp_list[i][0]
