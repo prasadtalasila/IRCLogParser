@@ -51,6 +51,7 @@ setup(
         'plotly',
         'ddt',
         'mock'
+        
     ],
     extra_requires={
     	'dev': [
