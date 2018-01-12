@@ -1,0 +1,69 @@
+=== dniMretsaM is now known as dniMretsaM_away
+=== glebihan_ is now known as glebihan
+=== yofel_ is now known as yofel
+=== dniMretsaM_away is now known as dniMretsaM
+[12:34] <rigo> hi
+[12:34] <rigo> im trying to install raring and get em:
+[12:35] <rigo> dpkg: dependency problems prevent configuration of linux-headers-3.7.2-030702-generic:  linux-headers-3.7.2-030702-generic depends on linux-headers-3.7.2-030702; however:   Package linux-headers-3.7.2-030702 is not installed.
+[12:35] <rigo> i download the 3 .deb files from here http://kernel.ubuntu.com/~kernel-ppa/mainline/v3.7.2-raring/ and type dpkg -i *.deb
+[12:36] <rigo> 12.10 x64
+[12:49] <yofel_> rigo: sounds like you're missing the "all" file
+[12:52] <rigo> so i need one more file? u mean this? linux-headers-3.7.2-030702_3.7.2-030702.201301111424_all.deb
+[12:53] <yofel_> right
+[12:53] <rigo> gr8 thanks. than i need 4 files to install. i give a try.
+[12:57] <rigo> works like charm. thanks.
+[12:57] <rigo> what do u suggest? should i remove all of the old kernels?
+[12:58] <yofel_> feel free to do that *after* making sure the new one works fine
+[12:59] <rigo> what is the easyest way to do that?
+[13:06] <BluesKaj> howdy all
+[14:15] <penguin42> Hey BK
+[14:28] <BluesKaj> I think something in my hardware has been written out of the 3.7 and 3.8rc kernels . Neither work on my pc , not even on 12.10
+[14:28] <penguin42> BluesKaj: They haven't been written out; you're just hitting a bug
+[14:28] <penguin42> BluesKaj: The only stuff removed recently was old i386
+[14:29] <BluesKaj> others with similar if not the same HW don't have a problem it seems
+[14:30] <penguin42> as I say a bug
+[14:30] <BluesKaj> could be my graphics card , but I need it for this monitor ...no VGA inputs
+[14:32] <penguin42> it fails really early for you doesn't it, even with the recovery options?
+[14:32] <BluesKaj> yup
+[14:33] <penguin42> have you altered grub not to use graphics stuff?
+[14:33] <penguin42> that's a disaster for graphics card compatibility
+[14:33] <BluesKaj> ubiquity fails , even if I can get a desktop with the live dvd
+[14:34] <penguin42> what kernel is on the live dvd?
+[14:34] <penguin42> (ubiquity failing isn't too unusual)
+[14:34] <BluesKaj> well, I'm using the daily build and the default is 3.7 I believe
+[14:35] <penguin42> well if the live dvd is starting up with a 3.7 but you can't boot an installed 3.7 then that adds more to the idea it's grub/kernel hand off, and if you suspect the graphics card then it makes sense to put that back to basics
+[14:36] <BluesKaj> which is ?
+[14:37] <penguin42> BluesKaj: If you install an old version that works, then uncomment the GRUB_TERMINAL=console line in /etc/default/grub and do an update-grub   it'll stop it using the graphics stuff
+[14:39]  * penguin42 notices there is now a /boot/grub/gfxblacklist.txt  I wonder when that landed
+[14:42] <BluesKaj> penguin42, how would I install an older kernel like the 3.5 to run 13.04 if the dvd won't install the OS ,,,I'm not going to upgrade this 12.10 to 13.04 via an internet upgrade ..I need one stable OS
+[14:43] <penguin42> so what do you currently have installed and working solidly?
+[14:45] <penguin42> you can put the grub in 12.10 in text mode and then try installing a 3.7 kernel, you can always just try it
+=== yofel_ is now known as yofel
+[15:01] <BluesKaj> penguin42, what do you mean put grub in text mode , not sure what that is?
+[15:04] <penguin42> BluesKaj: When Grub starts it either uses oldschool VGA text mode where each byte in video memory is one character or it uses graphics mode where it draws the characters, the later is more complex
+[15:04] <penguin42> BluesKaj: Good old VGA text mode works with pretty much any graphics card
+[15:05] <penguin42> BluesKaj: In graphics mode the 'hand off' to the kernel seems a bit hairier as well
+[15:06] <BluesKaj> penguin42, well the dvd seems to be using text mode when I try to install 13.04 from the install menu page , because there's no graphic just text
+[15:07] <penguin42> BluesKaj: Right, but once you've installed it'll install grub and then try and probably boot in graphics mode
+[15:08] <BluesKaj> if do the noapci and nomodeset to the desktop, then ubuquity tries the graphics mode and jusrt sits there with spinning cursor
+[15:09] <penguin42> BluesKaj: as I say, I'd try seeing if you can get a 3.7/3.8 to boot on an existing install and try and avoid ubiquity for the moment
+[15:10] <BluesKaj> penguin42, think I'll wai til I see some fixes to amd and nvidia on the kernel in launchpad since it's still pretty early days
+[15:19] <penguin42> fair enough, worth looking at /etc/default/grub so you can see what's there
+[15:26] <BluesKaj> looks pretty standard
+[15:28] <penguin42> BluesKaj: Yep, see the GRUB_TERMINAL, that's the one I normally turn on if there are any boot time graphics probs
+[15:29] <penguin42> the other thing if you have one installed that won't boot is if you can get grub up then before booting the kernel edit the option and remove all vthandoff lines and all quiet and splash stuff and see if it gets there
+[15:33] <BluesKaj> I have no  GRUB_TERMINAL , line in /etc/default/grub, penguin42
+[15:36] <penguin42> not one starting with #  preceeded by the comment 'Uncomment to disable graphical terminal (grub-pc only)    ?
+[15:39] <BluesKaj> penguin42, this is the first line GRUB_GFXPAYLOAD_LINUX=keep , then further down , GRUB_GFXMODE=640x480  ..should these be commented?
+[15:42] <penguin42> sounds very different from mine
+[15:42] <penguin42> http://paste.ubuntu.com/1527760/  is mine
+[16:22] <BluesKaj> penguin42, here's my default grub http://paste.kde.org/645956/
+[16:23] <penguin42> hmm that's boringly uncommented
+[16:25] <BluesKaj> well i didn't write it , except for the terminal line :)
+[16:27] <penguin42> hmm wonder why, mine is an upgrade, but would someone change it to remove the comments?
+[16:28] <BluesKaj> BBL
+=== sdx32 is now known as sdx23
+=== chris|| is now known as chris|
+=== yofel_ is now known as yofel
+=== dniMretsaM is now known as dniMretsaM_away
+=== dniMretsaM_away is now known as dniMretsaM

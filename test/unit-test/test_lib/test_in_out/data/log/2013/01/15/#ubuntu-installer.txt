@@ -1,0 +1,42 @@
+[06:40] <mfilipe> I'm going to install Ubuntu on my new laptop. So, I wanna now if the Ubuntu Installer automagically aligns the ssd partitions.
+[09:31] <wenchien> hi~
+[09:31] <wenchien> proposed merges for lp:944614
+[09:31] <wenchien> https://code.launchpad.net/~wenchien/ubiquity/ubiquity.lp944614/+merge/143250
+[09:31] <wenchien> https://code.launchpad.net/~wenchien/ubiquity/precise-proposed.lp944614/+merge/143251
+[09:32] <infinity> wenchien: We get mailed notifications for those.
+[09:32] <wenchien> infinity: ok, thanks!
+[09:40] <xnox> wenchien: i looked at it, it's ok. But I am worried how/why are we loosing dbfilter when switching between steps & i'd like stgraber to review those as he did the first fix attempt to fix the experienced problem.
+[09:46] <wenchien> xnox: thanks, i'll wait for stgraber's comment :)
+[09:49] <cjwatson> infinity: build all the udebs and shove them in build/localudebs/
+[09:49] <infinity> cjwatson: Yeah, I remembered that shortly after I asked.
+[09:50] <infinity> cjwatson: Of course, what I neglected to do was include my scsi.udeb in the mini.iso. :P
+[09:50] <infinity> cjwatson: So I now have a machine that booted (progress!), but I miiiight not have any disks until I can either get remote hands for a new CD, or get IS to fix my networking.
+[09:50] <infinity> cjwatson: But, whatever.  It's mostly there.  I'm happy.
+[09:53] <cjwatson> wenchien: I don't think this fix is correct, for much the same reason xnox outlined.  It needs more analysis of *why* that's None.
+[09:53] <cjwatson> infinity: is this for the new powerpc box?
+[09:54] <infinity> cjwatson: *nod*
+[09:56] <infinity> Sweet mother of... I didn't look at cpuinfo until now.
+[09:56] <infinity> Did IBM do something hyperthreading-like on POWER when I wasn't paying attention?
+[09:56] <infinity> My 6 cores report as 24 CPUs.
+[09:57] <StevenK> "PowerPC Server processors have supported Simultaneous Multi-Threading (SMT) ... update; POWER7 processor cores support SMT4"
+[09:57] <StevenK> So, yes. I guess.
+[09:58] <infinity> StevenK: SMT4 seems to have the right integer to back this up. :P
+[09:58] <StevenK> infinity: Right, that I was my thought as well.
+[09:58] <StevenK> s/I //
+[09:58] <infinity> Not gonna complain, if it performs.  As soon as this is up, I'm throwing linux-ppc at it to see how it does.
+[09:58] <StevenK> We have a DAS for it?
+[09:59] <infinity> Hrm?
+[09:59] <StevenK> Or is this by hand?
+[09:59] <infinity> It's powerpc...
+[09:59] <wenchien> cjwatson: humm, ok, i'll do that
+[09:59] <infinity> I'll just copy linux-ppc from raring to my PPA and force it on this machine.  Anything's better than the 13.5h the last build took on adare, but I want to see how MUCH better.
+[14:26] <stgraber> cjwatson, xnox: ok, so the real fix we need here is a check for whether the page is currently active. The proposed fix does that but I'm sure we can check on somehting a bit better than dbfilter.
+[14:27] <stgraber> basically the problem here is that you can trigger on_keyboard_variant_selected and then skip the page before the 600ms timeout hits
+[14:27] <stgraber> and when the timeout hits, it'll try poking at things that no longer exist and will cause ubiqutiy to fail quite badly
+[15:24] <cjwatson> stgraber: got it
+[19:58] <Jasper> ev, how do you feel about putting libtimezonemap on GNOME git?
+[23:48] <xnox> Jasper: I need to make one commit to add original svg sources for the map. I am ok with gnome git. If GNOME will use it than it will be great.
+[23:50] <Jasper> xnox, that's fine. Our current design: https://raw.github.com/gnome-design-team/gnome-mockups/master/system-settings/date-and-time/date-and-time-hi-res.png
+[23:52] <xnox> Jasper: looks nice =) mpt had some proposed design tweaks to date-and-time as well, last time were brainstorming on the installer.
+[23:52] <xnox> Jasper: do wait for ev's reply. I'm just a minion here =)
+[23:53] <Jasper> OK.

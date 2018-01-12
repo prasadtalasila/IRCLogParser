@@ -1,0 +1,862 @@
+[00:01] <elkingrey> sw: Well, I just want to know whether or not it was originally enabled before I started tinkering with it 20 minutes ago,
+[00:02] <sw> elkingrey: by default it'll be installed but won't have rules added
+[00:04] <elkingrey> sw: yeah, just curious if it was enabled or not.
+=== cpg|away is now known as cpg
+[00:08] <lvmer> I've got a crashed ubuntu server because of some file permissions. Is there a good way to boot to the live cd and get a $ dpkg -l    & somehow compile that list so I can install the same programs on the re-install?
+[00:11] <lvmer> pretend it is a healthy computer - how do I compile a dpkg -list   and install it on a fresh install?
+[00:15] <sw> lvmer: $ dpkg --get-selections > packages.txt and then $ dpkg --set-selections < packages.txt and $ apt-get dselect-upgrade
+[00:15] <sw> or something like that, I'm tired
+[00:16] <sw> $ man dpkg and look at --get-selections and --set-selections to be sure
+=== cpg is now known as cpg|away
+=== bigjools_ is now known as bigjools
+[00:58] <blair_> where do i report a bug in https://help.ubuntu.com/12.04/serverguide/ubuntucloud.html and https://help.ubuntu.com/12.10/serverguide/ubuntucloud.html?  these pages seem to document the Essex release and not the Folsom release, specially the format of /etc/nova/nova.conf has changed
+[01:04] <TradeFortress> I believe my server has being compromised. Apache access.log and error.log is missing Jan 12th
+=== Malediction_ is now known as Malediction
+[01:07] <TradeFortress> How do I see if someone actually logged onto my server? access.log has a lot of disconnects from an IP in china
+=== ejnahc_ is now known as ejnahc
+[01:12] <ikonia> TradeFortress: then they have not logged in
+[01:13] <TradeFortress> ok, thanks. is there any reason for missing Jan 12th in Apache logs? other than an attacker removed them?
+[01:13] <patdk-lap> isn't the default only weekly rotates?
+[01:14] <PryMar56> TradeFortress, see if they are parsing for php* (blogs,wordpress,sql) setup config files... they will try to get credentials
+[01:15] <TradeFortress> ahh, I'm not running a custom script, I'm running a self developed one (which was hacked)
+[01:15] <ikonia> TradeFortress: if you have any reason to suspect comrpomise, re-install your whole OS resetting all passwords
+[01:16] <TradeFortress> ikonia: I'll do that, but then I'll get attacked again.. can't see how they did it with the logs.
+[01:16] <ikonia> TradeFortress: no,
+[01:16] <patdk-lap> the longs won't show much
+[01:16] <ikonia> TradeFortress: you seem to know what it was already, your script
+[01:16] <patdk-lap> and it might show 1 issue, but not all issues you have
+[01:17] <patdk-lap> expecially if they used POST requests
+[01:17] <TradeFortress> okay, but the attacker somehow got root access..
+[01:18] <ikonia> TradeFortress: delete your OS - re-install
+[01:18] <ikonia> TradeFortress: that is the answer
+[01:18] <patdk-lap> if they got root access you have many levels of issues to correct
+[01:18] <patdk-lap> and the logs won't show that
+[01:20] <TradeFortress> thanks everyone, I'm going to reinstall & look for a pentester
+[01:25] <lvmer> I just had to reinstall ubuntu-server on the main OS disk. I had 8 other disks in software raid 10 before the re-install. Typing $ mdadm --detail /dev/md0   looks to be perfect.  How do I make sure I remount or re-declare this array the right way?
+[01:26] <patdk-lap> heh?
+[01:26] <lvmer> o?
+[01:27] <patdk-lap> if you didn't copy over mdadm.conf, then the best shot is mdadm --examine --scan
+[01:27] <ikonia> lvmer: if the array is started....it's there
+[01:27] <ikonia> lvmer: you can also put the sattings back in /etc/mdadm/mdadm.conf
+[01:27] <lvmer> idk if it is started or not
+[01:27] <ikonia> check
+[01:27] <lvmer> or /etc/fstab ?
+[01:27] <ikonia> err no
+[01:27] <ikonia> that's a list of mounts
+[01:27] <lvmer> I don't remember playing with mdadm.conf
+[01:27] <ikonia> mdadm to query it
+[01:28] <ikonia> or use /prod/mdstat
+[01:28] <ikonia> proc
+[01:29] <lvmer> you lost me
+[01:29] <lvmer> it's a fresh install, would it be there normally? ps shows mdadm --monitor
+[01:29] <ikonia> no
+[01:30] <ikonia> that's just mdadm monitoring the arrays status
+[01:30] <lvmer> yah
+[01:30] <lvmer> as I'd expect
+[01:30] <ikonia> so why are you referencing it ?
+[01:31] <lvmer> ?
+[01:31] <lvmer> I want to know if I have to rebuild something or just remount it
+[01:31] <ikonia> I've just told you to check the arrays status
+[01:31] <lvmer> proc says it's active
+[01:31] <ikonia> you said "mdadm --monitoring" is running,
+[01:31] <ikonia> I told you that's a monitor program
+[01:31] <lvmer> it is in ps
+[01:31] <ikonia> you said "I know"
+[01:31] <ikonia> so I'm waiting to understand why you've just told me that information as it has nothing to do with the conversation
+[01:31] <lvmer> I'm confused
+[01:32] <ikonia> what is confusing
+[01:32] <ikonia> if it's running - you can use it
+[01:32] <ikonia> check the array status
+[01:32] <ikonia> if it's not you need to start it
+[01:32] <lvmer> it is active
+[01:32] <ikonia> it's useful to create an /etc/mdadm/mdadm.conf file also
+[01:32] <lvmer> what is it used for?
+[01:33] <ikonia> a config file for mdadm's array info
+[01:33] <lvmer> never used it before
+[01:33] <lvmer> isn't that auto created?
+[01:34] <ikonia> not always, but it should be
+[01:34] <ikonia> hence why it's worth checking it / creating it
+[01:35] <lvmer> it is already created
+[01:35] <lvmer> I think the must be an auto install thing
+[01:35] <ikonia> ok....so checking it is worth while
+[01:35] <lvmer> all the volume groups and logical volumes and pv's look identical
+[01:35] <ikonia> why are you referencing LVM ?
+[01:35] <ikonia> you where talking about a raid array a moment ago
+[01:35] <lvmer> crazy how everythign is the same... I thought id have to redo stuff
+[01:36] <ikonia> did you format the raid array ?
+[01:36] <lvmer> no that could erase info
+[01:36] <lvmer> I'm recovering a raid10
+[01:36] <ikonia> then why are you shocked that the data is there ?
+[01:36] <lvmer> I'm shocked the vg's are still there
+[01:36] <lvmer> not the data
+[01:37] <lvmer> thought that was an OS config
+[01:37] <ikonia> ok the array data
+[01:37] <lvmer> have you ever recovered an array before?
+[01:37]  * patdk-lap would hardly call that recovering a raid10
+[01:37] <ikonia> yes
+[01:37] <lvmer> what do you usually do
+[01:37] <ikonia> "usually"
+[01:37] <ikonia> what are you talking about
+[01:37] <ikonia> what has happened to the array ?
+[01:37] <lvmer> recovering an undamaged array... but thanks for your criticism.
+[01:38] <ikonia> no-one it criticising you
+[01:38] <lvmer> I told you already
+[01:38] <ikonia> lvmer: what has happened to the array ?
+[01:38] <lvmer> reinstall
+[01:38] <ikonia> no, you've not
+[01:38] <ikonia> ok - so nothing has happened to the array
+[01:38] <patdk-lap> he reinstalls the os drive, and is remounting the raid
+[01:38] <ikonia> you are not recovering it
+[01:38] <lvmer> (1/13/2013 8:29:49 PM) lvmer: it's a fresh install,
+[01:38] <ikonia> yes, but you also said you are recovering a raid array - you are not
+[01:38] <ikonia> that is adding confusion
+[01:38] <lvmer> ok
+[01:39] <lvmer> what now
+[01:39] <patdk-lap> activate the lvm
+[01:39] <ikonia> I don't understand what you are asking
+[01:39] <patdk-lap> add your filesystems to fstab
+[01:39] <patdk-lap> done
+[01:39] <ikonia> there array has no problems
+[01:39] <lvmer> ah thank you pat
+[01:39] <ikonia> so what is the problem ?
+[01:40] <patdk-lap> sounds like, access to his data, but had no idea how mdadm/lvm/... works
+[01:40] <ikonia> if it's a clean install though, you do nothing
+[01:41] <ikonia> the installer will create fstab/start the volume groups etc
+[01:41] <ikonia> I don't see a problem
+[01:41] <patdk-lap> ikonia, existing install of the mdadm raid
+[01:41] <ikonia> patdk-lap: yeah, the installer will just see an array
+[01:41] <ikonia> he's done an install ontop of that array.....no problem
+[01:48] <lvmer> I'm still a noob here. I have 3.5.0-17 headers, is it ok to install 3.5.0-21 headers in addition? I had both before. It seems strange to me though. Idk what headers even are.
+[01:49] <lvmer> I was going to run a dpkg -l   selection file  to get all the old programs/libraries
+=== cpg|away is now known as cpg
+[02:58] <lvmer> is there any way to $ cp -r /etc/*  to a smb share folder that I can copy to another computer while keeping all the file permissions the same?   Like what if I send /etc/* to a .zip files & change the .zip file permissions, will the inside file permissions still be intact? like 0750 ? etc.
+[03:42] <zul> lifeless:  the testrepository package was missing python-tz so everything is kosher now
+[03:42] <lifeless> zul:  cool
+[03:44] <qman__> lvmer, a tar archive will store the unix permissions
+=== popey_ is now known as popey
+=== Onii-san|DoYouEv is now known as Onii-san
+[07:26] <samba35> ubuntu server 12.04.2 will be based on which kernel version ?
+=== smb` is now known as smb
+[08:19] <smb> samba35, If you install from the 12.04.2 media, you will get a 3.5 kernel. Installing with the release or 12.04.1 image and dist-upgrading keeps you on the 3.2 kernel.
+[08:27] <samba35> smb, thanks
+[09:45] <jamespage> zul, Daviey, adam_g_: I just reviewed all of the cloud-archive bugs FYI
+[09:46] <Daviey> jamespage: woot!
+[09:46] <Daviey> thanks
+[09:46] <jamespage> jodh, thanks for picking up on 'Framebuffers, plymouth, upstart and server installs.'
+[09:47] <jamespage> Daviey, are we confirmed on the 3.5 kernel for 12.04.2 yet?
+[09:47] <jamespage> Daviey, just spotted smb's comment above
+[09:47] <Daviey> jamespage: pretty much looks like it, against my hope.
+[09:48] <jamespage> Daviey, OK - I need to spend time with openvswitch then
+[09:48] <jamespage> it won't work with 3.5 kernel at-all with the version we have in 12.04 ATM
+[09:48] <jamespage> which will break quantum badly
+[09:48] <Daviey> jamespage: Apparently the kernel team are checking it..
+[09:49] <jamespage> Daviey, I would recommend they backport the version we have in quantal
+[09:49] <Daviey> jamespage: 12.04.2 has been delayed btw.
+[09:49] <jamespage> its only minor point release
+[09:49] <jamespage> Daviey, yeah - I saw
+[09:49] <Daviey> jamespage: does that work with 3.2 ok?
+[09:49] <jamespage> Daviey, probably
+[09:49] <jamespage> I've not tested it - but we can do
+[09:49]  * smb had a commend?
+[09:49] <jamespage> smb "<smb> samba35, If you install from the 12.04.2 media, you will get a 3.5 kernel. Installing with the release or 12.04.1 image and dist-upgrading keeps you on the 3.2 kernel."
+[09:49] <smb> Oh that one...
+[09:50]  * Daviey commends smb for resolving the openvswitch issue
+[09:50] <jamespage> smb, yeah - that one :-)
+[09:50] <smb> Daviey, Not my issue
+[09:50] <jamespage> smb, actually I could do with a bit of help with openvswitch in raring as well
+[09:50] <Daviey> smb: I thought Leanne said that your team was working through the dkms issues?
+[09:50] <jamespage> smb, dkms module is broken again - looks like headers in the linux kernel source have jigged around for 3.8?
+[09:51] <jamespage> smb, bug 1098650
+[09:51] <smb> jamespage, If it is not about the in-kernel stuff being not fully enabled functionwise, I have no clue about what problems you may have
+[09:51] <uvirtbot> Launchpad bug 1098650 in openvswitch "dkms module fails to build with 3.7/3.8 kernel" [High,Confirmed] https://launchpad.net/bugs/1098650
+[09:51] <smb> Daviey, Likely those they _know_ about.
+[09:51] <smb> There were some wl issues afaik
+[09:52] <Daviey> smb: Wait, QA or Kernel team hasn't tried installing all dkms modules in th archive and seeing if they go bang?
+[09:53] <smb> Daviey, Cannot speak for QA but, no
+[09:54] <jamespage> jibel, who's focussed on 12.04.2 from the QA team?
+[09:54] <smb> Daviey, We expect at least that people providing the dkms modules to test and come back to us as part of the process.
+[09:55] <Daviey> smb: OK, I think i need to send a mail.
+[09:57] <smb> Daviey, Yes, it would at least make things clear. (hoipfully) I mean there is probably a misunderstanding at least what *all* means.
+[09:59] <smb> And there are probably more dkms modules than we realize
+[09:59] <Daviey> Yeah, i am realy quite shocked that either kernel or QA team didn't test this.
+[09:59] <jibel> jamespage, plars is the QA contact for 12.04.2. For kernel specific issues it is hggdh
+[09:59] <smb> jamespage, I can have a look at the bug you mentioned in a bit
+[10:02] <jamespage> smb, yes please
+[10:03] <jamespage> smb, I think the configure check just needs updating but I've not had time to look in full yet
+[10:04] <smb> jamespage, Yeah, either things like that or adding further ifdefs for a more or less slightly changed api in the kernel...
+[10:17] <jamespage> smb, actually looks like this commit will do the trick: http://openvswitch.org/cgi-bin/gitweb.cgi?p=openvswitch;a=commit;h=2520f4528742decf78a8b375f5389b50977f5e4b
+[10:18] <smb> jamespage, Looks like something I would expect in that kind of situation
+[11:24] <Diegosnat> hi guys
+[11:25] <Diegosnat>  I was wondering if you could tell me a solution to monitor the internet usage of my network?? I want to see what people surf
+[11:25] <f2> hey folks, new to ubuntu server, On a windows domain, got a dhcp address, but im not getting out on the internet. can anybody help me with that?
+[11:26] <f2> when running "sudo apt=get install mysql-server-core-5.5
+[11:26] <f2> i get unable to locate package
+[11:28] <f2> when running "sudo apt=get install mysql-server-core-5.5, i get unable to locate package
+[11:30] <Diegosnat> f2, ifconfig
+=== cpg is now known as cpg|away
+[11:38] <Diegosnat> authenticator ntlm_sasl_server: cannot find authenticator driver "cyrus_sasl"
+[11:38] <Diegosnat> how can i solve it??
+=== diego_ is now known as Diegthito
+[12:08] <Diegthito> guys!! help me!! :'''(
+[12:18] <jamespage> smb, well that fixes the check; compatibility across the dkms module itself is problematic
+[12:18] <jamespage> smb, trunk works OK -  1.4.3 -> 1.9.0~gitXXX it might be
+[12:21] <Jeeves_> Is there some boot-switch to make sure a box boots, even if some mount cannot be mounted?
+[12:21] <Diegthito> authenticator ntlm_sasl_server: cannot find authenticator driver "cyrus_sasl"  <---------- how can i solve it??? It's when I restart exim4
+[12:21] <Jeeves_> I saw a 'Press S to skip this mount'-warning last week
+[12:21] <Jeeves_> I pressed S, but this time I was next to to box
+[12:30] <Zapp83> Diegthito: http://nixforums.org/viewtopic.php?p=440661 may help!
+[12:31] <Diegthito> Zapp83, already seen unfortunately
+[12:50] <Zapp83> Diegosnat: ok, Have you looked at  https://github.com/Exim/exim/wiki/AuthenticatedSmtpUsingSaslauthd  ?
+=== soren_ is now known as soren
+[12:58] <smb> jamespage, I can imagine that the network stack is less than ideal for having to cope with in an external module. Also it sounds like you are already on top of it. Not really anything I could or would do differently here than to sync with a recent version. And it pretty much sounds like you are done with it.
+[12:59] <jamespage> smb, it looks pretty horrid TBH
+[12:59] <jamespage> the 1.4.x branch we currently baseline on only supports to kernel 3.3 I think
+[12:59] <jamespage> so we already carry patches for 3.5;
+[13:00] <jamespage> I've emailed upstream to ask for some guidance - we might have to take a preview snapshot of 1.9.x
+[13:02] <smb> jamespage, Yeah I can imagine. Everytime I look into network it has again changed a lot. :/ So my feeling would be as well to see whether dropping 3.5 patches and just rebase against their tip for raring is way to go. And maybe hope there is a final 1.9.x before entering freeze on our side
+[13:02] <jamespage> smb, that will be the trick :-)
+[13:04] <smb> jamespage, At least we promise not to change our kernel version again before release... ;)
+[13:04] <jamespage> good
+[13:05] <dassouki> what are some of the application that can allow me to accessm my email account from terminal if let's say i'm emailing myself a fiel or something (gmail)
+=== gary_poster|away is now known as gary_poster
+=== gary_poster is now known as gary_poster|away
+=== gary_poster|away is now known as gary_poster
+=== schmidtm_ is now known as schmidtm
+=== dnat__ is now known as Diegosnat
+[13:41] <Diegosnat> hi guys, quick question can I use samba, kerberos and cyrus all together??
+=== Ursinha is now known as Ursinha-afk
+[13:56] <RoyK> Diegosnat: don't see why not
+[13:56] <Diegosnat> RoyK, cool
+[13:57] <_ruben> glueing 'em all together might be tricky, but might be doable .. if you want that is unclear tho
+=== Ursinha-afk is now known as Ursinha
+[14:02] <andygraybeal> was the java vulnerability that is popular right now .. with the exploit for oracle's java, was that vulnerability fixed with openjdk?
+[14:03] <jamespage> andygraybeal, I believe its in the Oracle Java Web Plugin which is not opensource so is not distributed with openjdk.
+[14:04] <andygraybeal> jamespage, okay, i thought the vulnerability was in both, but only the exploit was for oracle's java.  and thanks for saying it was the 'web plugin' in particular.
+[14:05] <jamespage> andygraybeal, I'm not 100% sure - but it won't effect server side stuff anyway
+[14:05] <jamespage> as the exploit is through java in the browser...
+[14:06] <andygraybeal> okay thank you.
+[14:06] <jamespage> np
+[14:06] <andygraybeal> i use ltsp :)  so i have the client stuff installed on the server
+[14:06] <andygraybeal> but i understand :)
+=== gary_poster is now known as gary_poster|away
+=== gary_poster|away is now known as gary_poster
+=== gary_poster is now known as gary_poster|away
+[14:12] <Diegosnat> hi guys, I have got this problem... any idea?? do_auth         : auth failure: [user=] [service=imap] [realm=] [mech=kerberos5] [reason=saslauthd internal error]
+=== gary_poster|away is now known as gary_poster
+=== gary_poster is now known as gary_poster|away
+=== Ursinha is now known as Ursinha-afk
+=== gary_poster|away is now known as gary_poster
+[14:19] <zul> Daviey: can you do me a favor and promote testrepository (1096914), python-stevedore (1086958) and alembic (1097706), nova, cinder, and quntum is in dep-wait because they havent been promoted yet
+[14:20] <Diegosnat> hi guys, I have got this problem... any idea?? do_auth         : auth failure: [user=] [service=imap] [realm=] [mech=kerberos5] [reason=saslauthd internal error]
+=== Ursinha-afk is now known as Ursinha
+[14:24] <patdk-wk> Diegosnat, fix your sasl
+[14:30] <dnat__> hi guys, I have got this problem... any idea?? do_auth         : auth failure: [user=] [service=imap] [realm=] [mech=kerberos5] [reason=saslauthd internal error]
+[14:31] <Daviey> zul: done, will be active on next publisher run
+[14:31] <zul> thanks
+=== yofel_ is now known as yofel
+=== slank_away is now known as slank
+[14:58] <frojnd> Hi there :)
+[14:59] <frojnd> I have following task to complete; I have to install web server (I'll do lightppd since it's light and easy) and I have 2 external IP adresses. Now my first external IP address is already assigned to eth0 network card. But I have another gigabit network card and unasigned second IP address. I'll use my first IP address for git commits and second IP address for web server. What would be the safest way
+[14:59] <frojnd> to achieve that?
+[15:00] <frojnd> Oh, I have ubuntu server 12.4
+[15:10] <toabctl> hi
+[15:10] <RoyK> ho
+[15:10] <toabctl> is dbconfig-common still the right way to support DB credentials in a package?
+[15:11] <toabctl> see http://people.debian.org/~seanius/policy/dbconfig-common.html/
+[15:17] <roaksoax> Daviey: ping
+[15:18] <roaksoax> Daviey: are you SRU member already?
+[15:26] <Daviey> roaksoax: no
+[15:26] <roaksoax> Daviey: ok :)
+[15:27] <frojnd> Help please? :)
+[15:33] <diego_> guys I really need help with Ubuntu, Samba and Kerberos
+[15:34] <diego_> somebody??
+[15:36] <frojnd> Is here any bot that helps find documentation? I really need some documentation on how to configure multiple public IP addresses
+[15:38] <kodapa> frojnd: google ;)
+[15:38] <frojnd> kodapa: hi :)
+[15:39] <frojnd> In my case what would be better? To configure separately public IP addresses for each NIC or both public IP addresses for one NIC?
+[15:39] <frojnd> and by better I mean more simple
+=== zapp88 is now known as Zapp
+=== a|way is now known as alein
+[16:24] <ckramer> anyone know why the Precise virtual kernel doesn't include 9p filesystem support?
+=== mike_ is now known as mike_87
+[16:32] <newlinux> Hi all
+[16:32] <newlinux> I need urgent help
+[16:32] <newlinux> can someone help me out
+[16:32] <NaGeL>  hello. I havea problem with my ubuntu. i installed it on an old computer. andi use ethernet to cnnect it to my router. now my router gives it az IP throught DHCP. a reserved one. this is fine, but wheni start up the PC ubuntu getsa total random IP that doesnt work at all. Butwhen i click on disconect wired network and reconnect it it magically works
+[16:34] <zul> Daviey: python-flask as well? (1086955)
+[16:36] <ckramer> newlinux: what is the nature of your issue?
+[16:37] <newlinux> I have installed ubuntu 12.10 server with the mail sever
+[16:37] <newlinux> can i know how to create new email accounts and use it as email server
+[16:38] <frojnd> I've set up another external IP addrses for second NIC. I wa s able to ssh from new IP address but ifconfig -a didn't show any TX or RX bytes for this NIC that has this new IP address. Odd isn't it?
+[16:38] <ckramer> newlinux: here a good link from Ubuntu answers which covers that topic. http://askubuntu.com/questions/54960/how-do-i-set-up-an-email-server
+[16:38] <jamespage> bug 1086955
+[16:39] <uvirtbot> Launchpad bug 1086955 in flask "[MIR] flask" [High,Fix released] https://launchpad.net/bugs/1086955
+[16:40] <Daviey> zul: done
+[16:45] <newlinux> thanks <ckramer>  I will check it out
+[16:53] <RoyK> hi all. any idea if hardware raid controllers out there support TRIM these days? I'm planning a Bacula install with PostgreSQL on SSDs, so TRIM would be nice
+=== motmot is now known as liva
+=== jacalvo_ is now known as jacalvo
+[17:04] <frojnd> I need help with configuring multiple network card with multiple external IPs. I've set up second nic with second external IP address. I can ping second IP address but when I ping from second NIC destinations are unreachable (external)
+[17:05] <RoyK> pastebin /etc/network/interfaces, please
+[17:08] <newlinux> hi all\
+[17:10] <RoyK> hi/
+[17:10] <frojnd> RoyK: http://sprunge.us/daeL
+[17:11] <frojnd> RoyK: note I had to mask some ips...
+[17:11] <Diegosnat> HELP MEE!!! :'''((    Ubuntu + Samba + Kerberos + Cyrus!!
+[17:11] <RoyK> !ask
+[17:11] <ubottu> Please don't ask to ask a question, simply ask the question (all on ONE line and in the channel, so that others can read and follow it easily). If anyone knows the answer they will most likely reply. :-) See also !patience
+[17:12] <RoyK> frojnd: first of all, just add dns to one interface
+[17:12] <Diegosnat> guys I cannot use kerberos with cyrus
+[17:12] <RoyK> otherwise it looks ok
+[17:12] <frojnd> RoyK: ok will try that now
+[17:12] <Diegosnat> actually my kerberos
+[17:12] <Diegosnat> seems not to work
+[17:13] <newlinux> how can i create new mailbox's in ubuntu 12.10 server with pi
+[17:13] <ikonia> what a great description of the problem and troubleshooting process you have tried to now
+[17:13] <ikonia> "it won't work"
+[17:13] <ikonia> newlinux: with "pi" ?
+[17:13] <newlinux> sorry
+[17:13] <newlinux> i want to create five email accounts
+[17:14] <RoyK> what mailserver?
+[17:14] <newlinux> i have installed ubuntu 12.10 with email
+[17:14] <ikonia> what mail server are you running ?
+[17:14] <ikonia> "with email".......
+[17:14] <newlinux> postfix
+[17:14] <frojnd> Running /etc/init.d/networking restart is deprecated because it may not enable again some interfaces (this also happened the first time I added eth1)
+[17:14] <ikonia> ok, so each system user by default will also have a mail account associated with it
+[17:14] <ikonia> user@server.fqnd
+[17:14] <newlinux> yes
+[17:14] <newlinux> yes
+[17:14] <ikonia> so create a new user
+[17:14] <RoyK> newlinux: you probably want a good poa too, like cyrus or dovecot or something
+=== tyhicks` is now known as tyhicks
+[17:15] <newlinux> im new to linux
+[17:15] <newlinux> shall i create a normal user accounts?
+[17:15] <RoyK> newlinux: postfix is an mtu, it talks smtp, not much else
+[17:15] <newlinux> how to give the email
+[17:15] <RoyK> !mailserver
+[17:15] <ubottu> Ubuntu supports the Simple Mail Transfer Protocol (SMTP) and provides mail server software of many kinds. You can install a basic email handling configuration with the "Mail server" task during installation, or with the "tasksel" command. See also https://help.ubuntu.com/community/MailServer and https://help.ubuntu.com/12.04/serverguide/C/email-services.html
+[17:15] <ikonia> newlinux: each "normal" user account will also be associated with a mail account
+[17:15] <ikonia> newlinux: eg: user@hostname.fqdn
+[17:16] <RoyK> newlinux: read that
+[17:16] <frojnd> RoyK: I still get: From 95.x.y.46 icmp_seq=3 Destination Host Unreachable when trying to ping 8.8.8.8 like this: ping -I eth1 8.8.8.8 any other ideas?
+[17:16] <newlinux> ok, during the installation of ubuntu i selected to install mail server is that enough?
+[17:17] <ikonia> not really
+[17:17] <RoyK> frojnd: not really, but is the address available from the internet? if you post the address (or pm me) we/I can try
+[17:17] <ikonia> newlinux: have you any understanding of how to run a mail server ?
+[17:17] <frojnd> RoyK: yes incoming connections are allowed, I can ssh and ping from my home IP address to this newly created IP on eth1
+[17:18] <RoyK> frojnd: then what's the problem?
+[17:18] <newlinux> yes still im confused
+[17:18] <RoyK> newlinux: did you read that article from the guide?
+[17:19] <frojnd> when pinging from this newly created IP address (external ofcourse)on eth1 host is unreachable
+[17:19] <frojnd> RoyK: I must setup lighttpd for this newly created IP addrss :)
+[17:19] <RoyK> I guess just tell lighty to listen to that address
+[17:19] <newlinux> you mean this one https://help.ubuntu.com/12.04/serverguide/postfix.html?
+[17:20] <RoyK> !mailserver | newlinux
+[17:20] <ubottu> newlinux: Ubuntu supports the Simple Mail Transfer Protocol (SMTP) and provides mail server software of many kinds. You can install a basic email handling configuration with the "Mail server" task during installation, or with the "tasksel" command. See also https://help.ubuntu.com/community/MailServer and https://help.ubuntu.com/12.04/serverguide/C/email-services.html
+[17:22] <newlinux> i have done that
+[17:22] <newlinux> but how to create new accounts?
+[17:23] <frojnd> RoyK: when I do ifconfig under eth1 I see: RX bytes:0 (0.0 B)  TX bytes:0 (0.0 B)
+[17:24] <frojnd> I'll first try to set up lighttpd
+[17:24] <RoyK> strict firewall somewhere?
+[17:25] <frojnd> no pysical firewall anywhere
+[17:25] <frojnd> only apparmomr
+[17:25] <RoyK> i'd recommend using ufw to limit access to those services you want to expose
+[17:26] <RoyK> but never mind that now
+[17:26] <RoyK> I guess these are two physical NICs?
+[17:27] <frojnd> yes
+[17:27] <frojnd> well at least lspci | grep ethrnet says :p
+[17:28] <frojnd> Ethernet*
+[17:28] <frojnd> let me setup lighttpd first
+[17:32] <newlinux> RoyK> can you advise how to create a new email user from web
+[17:34] <RoyK> newlinux: you need an email server that has a web ui. only thing I know that is very userfriendly in that, is zimbra, but it'll require a dedicated setup, usually a VM
+[17:35] <newlinux> I have ubuntu 12.10
+[17:35] <newlinux> I just want to create two users, user1@domain.com, user2@domain.com
+[17:36] <RoyK> well, either you read the ubuntu docs on setting up a mailserver, or you setup a dedicated VM on ubuntu 12.04 and download zimbra - it's easy to manage, good for newbies, but rather heavy cpu and memory wise
+[17:36] <ikonia> newlinux: this is a waste of time
+[17:36] <RoyK> newlinux: just read the docs on cyrus imap or dovecot - it's not hard, but you have to study a bit
+[17:36] <ikonia> newlinux: you appear to have no basic understanding of how a mail instance works and you don't seem to be reading any of the documentation provided
+[17:36] <ikonia> just repeating the same question over and over is not acceptable
+[17:37] <RoyK> ikonia++
+[17:40] <newlinux> ok I will try again, im new to linux thats why :)
+[17:41] <LuizAngioletti> Hello there! I want to adjust the terminal resolution... where should I poke?
+[17:41] <ikonia> newlinux: if you are new to linux, setting up a mail server is not a good introduction
+[17:41] <RoyK> newlinux: learning linux or other unices takes time - just sit back and read for a while...
+[17:41] <RoyK> ikonia: it can be a good start - don't scare people ;)
+[17:41] <ikonia> newlinux: plus being new to linux does not mean you should bypass having an understanding of how a mail serverup works
+[17:41] <RoyK> it just require patience
+[17:42] <RoyK> it's too cold in this country!
+[17:43] <ogra_> move then :)
+[17:43] <RoyK> nah
+[17:44]  * patdk-wk moves the sun, to make royk happy
+[17:44]  * RoyK sends patdk-wk some akvavit in return
+[17:48] <patdk-wk> that reminds me, but alittle depressing
+[17:49] <patdk-wk> http://www.nuts.com/chocolatessweets/licorice/finnish/red.html
+[17:49] <patdk-wk> damn, it's 1pm all ready, thought it might be 11am
+[17:52] <LuizAngioletti> Does anyone knows how to adjust the terminal resolution? I've tried a code in kernel boot-up: vga=xxxb, but it didn't work.
+[17:52] <patdk-wk> hmm, pure sugar, no wonder I love them
+[17:52] <patdk-wk> LuizAngioletti, what version?
+[17:53] <LuizAngioletti> I followed some instructions in a link I lost... so.. =) Came to you guys.
+[17:53] <LuizAngioletti> patdk-wk: Ubuntu 12.04
+[17:53] <patdk-wk> most likely you have to adjust it in grub
+[17:54] <RoyK> doesn't 12.04 use pretty high resolution already, if the GPU is supported?
+[17:54] <RoyK> it does for me
+[17:55] <LuizAngioletti> RoyK: It does for my netbook, but not for my desktop (with a GeForce GT440)
+[17:56] <Zapp> LuizAngioletti, Check out   http://www.linuxquestions.org/questions/linux-desktop-74/ubuntu-console-resolution-947005/
+[17:56] <LuizAngioletti> patdk-wk: I tried that.. do you know how to find the supported resolutions?
+[17:57] <LuizAngioletti> Zapp: cheking it.
+[17:58] <patdk-wk> that is very old intel specific zapp
+[18:01] <LuizAngioletti> not cheking it then. =P
+[18:02] <patdk-wk> it might be relevent, but no idea what video chipset you have
+[18:03] <Zapp> patdk-lap, i'm assuming you know better!  But i can not find anyware where it says that its only for intel.
+[18:06] <patdk-wk> well, the 915 is a older intel video chipset
+[18:07] <patdk-wk> the nomodeset is normally only required when grub has an issue iwth a video card, for me, older intel chipsets
+[18:08] <LuizAngioletti> I checked it and would really ask about what is between the quotes. But patdk-wk has already explained it.
+[18:09] <LuizAngioletti> I run a system with a GeForce video card, I don't think the intel thingy is suitable.
+[18:09] <patdk-wk> using the offical nvidia drivers?
+[18:10] <patdk-wk> using the opensource driver, it should just work
+[18:10] <patdk-wk> using nvidia, I have done it before, but can't remember how
+[18:10] <LuizAngioletti> Ok.
+[18:10] <LuizAngioletti> I'll look a bit harder.
+[18:10] <LuizAngioletti> =)
+[18:10] <LuizAngioletti> thx
+[18:11] <RoyK> I somewhat think that using non-gpl graphics drivers on a server is a bit dodgy
+[18:11]  * patdk-wk things having a graphics card at all, is kind of silly :)
+[18:20] <Zapp> LuizAngioletti, This might be relevant? http://wiki.debian.org/GrubTransition#Grub2andtheVGAparameter Or what do you think patdk-lap ? Am i way off again? :)
+[18:25] <LuizAngioletti> Zapp: Thank you. I'll try that and report back
+[18:25] <LuizAngioletti> =)
+[18:26] <patdk-wk> zapp, that is the normal way yes
+[18:26] <patdk-wk> but I don't believe it worked for the official nvidia drivers
+[18:28] <frojnd> Is this old? https://help.ubuntu.com/community/lighttpd
+[18:29] <patdk-wk> define, old
+[18:29] <frojnd> up to date for corresponding packages (up to date)
+[18:29] <patdk-wk> yes, it's current infomation
+[18:29] <frojnd> thank you
+[18:30] <RoyK> frojnd: why lighty?
+[18:30] <frojnd> RoyK: no need for apache2
+[18:30] <patdk-wk> why not?
+[18:30] <frojnd> it ueses much less resources than apache2
+[18:30] <frojnd> and above all php is fast on it
+[18:30] <RoyK> why not nginx?
+[18:31] <patdk-wk> all that could be done with apache too, just annoying to configure
+[18:31]  * patdk-wk supports lighttpd :)
+[18:31] <frojnd> RoyK: I recently installed lighttpd on raspberrypi and I liked it so far
+[18:31] <patdk-wk> why not thttp?
+[18:31] <frojnd> I'm more familiar with it then with nginx
+[18:32] <frojnd> RoyK: btw, now I can't even ssh or ping on that second address
+[18:32]  * RoyK sticks to apache on larger things like servers
+[18:32] <RoyK> frojnd: same switch?
+[18:32] <frojnd> yes
+[18:32] <LuizAngioletti> By the way... I'm not a native Engish speaker (in case you didn't notice =P) and I get confused with the names people give to the terminal console...
+[18:32] <frojnd> I have this server at leaseweb btw..
+[18:32] <RoyK> frojnd: does arp -an show any entries on eth1?
+[18:33] <LuizAngioletti> What is what? Console, terminal, Virtual Terminal (VT)...
+[18:33] <LuizAngioletti> =/
+[18:33] <frojnd> RoyK: no nothing
+[18:33] <frojnd> RoyK: only for eth0
+[18:33] <RoyK> wierd - this is hosted?
+[18:33] <frojnd> yes
+[18:33] <frojnd> dedicated server
+[18:34] <frojnd> RoyK: can I pm you with more details? :)
+[18:34] <patdk-wk> likely they disabled it all
+[18:34] <RoyK> frojnd: then ask the isp
+[18:34] <RoyK> frojnd: you may want to go through dmesg to check if eth1 shows any "up"
+[18:34] <RoyK> eth0 should
+[18:34] <RoyK> depending on hardware/driver
+[18:35] <frojnd> yeah it shows like this: link is not ready
+[18:35] <RoyK> frojnd: dmesg | grep eth[0-9]
+[18:35] <RoyK> heh
+[18:35] <RoyK> meaning it's probably unplugged
+[18:35] <frojnd> RoyK: can't be
+[18:36] <frojnd> I was able to ssh just a few minutes ago
+[18:36] <RoyK> or the switchport is disabled
+[18:36] <RoyK> or something fishy is going on
+[18:37] <frojnd> I'll restart networking and see what dmesg has to say
+[18:37] <RoyK> frojnd: was that 'link is not ready' message old?
+[18:37] <RoyK> ok
+[18:37] <frojnd> RoyK: [Fri Oct  5 19:01:25 2012] ADDRCONF(NETDEV_UP): eth1: link is not ready AND [Mon Jan 14 17:30:16 2013] ADDRCONF(NETDEV_UP): eth1: link is not ready (which is today) when I started to assign publi IP addresses
+[18:39] <frojnd>  * Running /etc/init.d/networking restart is deprecated because it may not enable again some interfaces
+[18:39] <frojnd>  * Reconfiguring network interfaces...
+[18:39] <frojnd> ANd dmesg says only about eth0 [Mon Jan 14 19:38:27 2013] ADDRCONF(NETDEV_CHANGE): eth0: link becomes ready
+[18:39] <frojnd> just like eth1 would be ignored
+[18:40] <RoyK> it isn't ignored, dmesg only reports if interfaces change state to 'up'
+[18:40] <RoyK> pastebin interfaces again
+[18:40] <frojnd> # ifdown eth1 && ifup eth1
+[18:40] <frojnd> ifdown: interface eth1 not configured RTNETLINK answers: File exists Failed to bring up eth1.
+[18:40] <frojnd> http://sprunge.us/DChR
+[18:41] <RoyK> frojnd: ifconfig eth1 down # and then up
+[18:41] <RoyK> no 'auto' set for eth1
+[18:41] <frojnd> aha so I should set it to auto I guees?
+[18:41] <RoyK> and remove dns settings on one of them
+[18:41] <patdk-wk> no
+[18:41] <RoyK> yes
+[18:41] <patdk-wk> auto is only need to do an ifup on boot
+[18:42] <RoyK> that's what he's trying to do
+[18:42] <patdk-wk> thought he just typed ifup, and it failed
+[18:42] <RoyK> still
+[18:42] <patdk-wk> ya, dns/gateway should only be set on one
+[18:42] <frojnd> [Mon Jan 14 19:42:16 2013] ADDRCONF(NETDEV_UP): eth1: link is not ready after ifconfig eth1 down && ifconfig eth1 up
+[18:42] <patdk-wk> no idea what happens if it is on both
+[18:43] <patdk-wk> are you sure both of those are suppost to be on different nic's?
+[18:43] <RoyK> patdk-wk: usually you get an EEXISTS
+[18:43] <RoyK> for the gateway
+[18:43] <patdk-wk> normally linux really hates it, if multible nics are on the same subnet
+[18:43] <RoyK> not really
+[18:43] <sarnold> patdk-wk: it does?
+[18:44] <frojnd> eth0 was already configured... I just used that pattern to configure eth1
+[18:44] <patdk-wk> well, it will fill dmesg/logs, with, duplicate packet already received on x
+[18:44] <patdk-wk> frojnd, maybe you whree suppost to configure it as an alias?
+[18:44] <frojnd> alias?
+[18:45] <RoyK> frojnd: ip addr add x.y.z.123/24 dev eth0
+[18:45] <frojnd> I only know that I have to configure second public IP addresss for web server and First public addrss for git commits (and since I have two NICS) I tried to configure it with both nics
+[18:45] <RoyK> frojnd: but it seems eth1 isn't connected
+[18:46] <frojnd> RoyK: eth0 is fine, eth1 is not
+[18:46] <patdk-wk> unless they TOLD you to use the second nic, I would assume they set it up on nic1, and not nic2
+[18:46] <RoyK> frojnd: that's what I'm saying - you can add a secondary ip address to eth0
+[18:46] <frojnd> RoyK: after bringing it down and up I'm again able to ping second IP addrss
+[18:46] <RoyK> ok, add 'auto eth1' and try to reboot
+[18:46] <frojnd> ok..
+[18:47] <RoyK> and remove the dns/gateway things from eth1
+[18:47] <frojnd> done
+[18:48] <frojnd> rebooting
+[18:48] <frojnd> anyway is this practical?
+[18:48] <frojnd> To use second NIC just for one public IP address?
+[18:48] <RoyK> well, why wouldn't it be?
+[18:48] <RoyK> not reall
+[18:48] <RoyK> not really
+[18:48] <RoyK> that is, if you want multipath, it is
+[18:49] <RoyK> if you need the extra bandwidth, it is
+[18:49] <patdk-wk> if you can max out the nic with that one ip, sure
+[18:49] <RoyK> if you just want a secondary ip address, it's not
+[18:49] <frojnd> RoyK: I want secondary ip addrss to be for web server and primary only for git commits, for sshfs and stuff
+[18:50] <RoyK> frojnd: if it's not a bandwith or multipath issue, better stick to a single nic
+[18:50] <frojnd> RoyK: aha ok
+[18:53] <frojnd> :\ balls won't boot up
+[18:53] <RoyK> don't you have console access?
+[18:54] <frojnd> I have a rescue mode
+[18:55] <RoyK> you sure that's not a VM?
+[18:55] <frojnd> It says it's dedicated :D
+[18:56] <RoyK> well, if you get in contact with it, pastebin lshw
+[18:58] <adam_g_> zul: http://people.canonical.com/~agandelman/folsom/python-eventlet/ needed for UCA precise-folsom. ready to upload with a +1
+[18:58] <adam_g_> jamespage: ^
+[18:59] <zul> looks good to me
+[19:23] <jamespage> adam_g_, +!
+[19:23] <jamespage> +1 even
+=== Ursinha is now known as Ursinha-afk
+[19:32] <frojnd> omg this rescue mode is so sloooooooooooooow
+[19:32] <frojnd> it needs like 10minutes to initialize
+=== mike_ is now known as Guest75142
+[19:33] <adam_g_> jamespage: http://paste.ubuntu.com/1531781/ is this something you've seen before? from glance-api.log (raring/grizzly + RBD)
+=== Ursinha-afk is now known as Ursinha
+[19:39] <nxvl> Daviey: ping
+[19:40] <Daviey> nxvl: yo'll
+[19:40] <nxvl> Daviey: i'm bored, where do you need some hands on the server land?
+[19:41] <nxvl> i feel cloudy today :D
+[19:42] <adam_g_> jamespage: actually i lied, precise/grizzly + RBD
+[19:43] <Daviey> nxvl: current vital things are: http://reqorts.qa.ubuntu.com/reports/rls-mgr/rls-r-tracking-bug-tasks.html
+[19:43] <Daviey> see the 'server' section
+[19:47] <frojnd> RoyK: still here?
+[19:47] <RoyK> mhm
+[19:48] <frojnd> should I entirely remove eth1 section from interfaces?
+[19:48] <frojnd> RoyK: I made a mistake somehwere because I wasn't able to boot again
+[19:48] <frojnd> maybe it's better I only configure one NIC with 2 public ip addresses
+[19:48] <RoyK> frojnd: well, if you add "up ip addr add x.x.x.x/x dev eth0" to the eth0 section, it'll probably work well
+[19:49] <frojnd> RoyK: that's the only thing?
+[19:49] <frojnd> beside auto eth1?
+[19:49] <RoyK> yes, it'll add a secondary ip address to eth0
+[19:49] <RoyK> just comment out eth1
+[19:49] <RoyK> all of it
+[19:49] <frojnd> ah nope
+[19:50] <RoyK> nope?
+[19:50] <frojnd> no, ignore :)
+[19:50] <frojnd> where do I put this?
+[19:50] <RoyK> just after the dns things
+[19:50] <RoyK> what was your netmask again? 255.255.255.192?
+[19:51] <frojnd> yes
+[19:51] <RoyK> if so, up ip addr add x.x.x.x/26 dev eth0
+[19:51] <RoyK> iirc
+[19:52] <frojnd> RoyK: I should put this in a line with auto eth0 or just after dns-search in the same tab?
+[19:53] <RoyK> after iface ...
+[19:53] <RoyK> after dns-search will do
+[19:54] <frojnd> I mean like this: http://sprunge.us/cUMC
+[19:54] <frojnd> or like this: http://sprunge.us/fVaA
+[19:55] <RoyK> I'd write it like http://paste.ubuntu.com/1531927/
+[19:55] <RoyK> since it belongs to eth0
+[19:55] <frojnd> thank you
+[19:57] <frojnd> Now I have to wait another 10minutes for server to boot up from rescue mode to normal mode
+[19:57] <frojnd> well at least I have a rescue mode :P
+[20:03] <Jaden_Korr> Good evening, i am trying to setup IPv6 connectivity on my server. Its all working except resolvconf does not seem to pickup the secondary DNS server from the dns-nameservers line
+[20:07] <frojnd> RoyK: ifconfig is strange now
+[20:08] <RoyK> frojnd: try ip addr list
+[20:08] <frojnd> second IP is at brd
+[20:08] <RoyK> pastebin?
+[20:09] <frojnd> RoyK: yes just a second I'll paste both ifconfig and ipa addr list
+[20:09] <RoyK> frojnd: btw, it's not very dangerous to post your official ip on irc - it'll be exposed once you setup a webserver :P
+[20:10] <RoyK> and unless you've done something sincerily stupid, your server should be safe anyway
+[20:11] <frojnd> no.. broadcast is ok
+[20:11] <frojnd> I just can't see second IP address
+[20:11] <frojnd> :o
+[20:11] <RoyK> frojnd: ifconfig won't show it
+[20:11] <frojnd> http://sprunge.us/BTdG
+[20:12] <RoyK> eh
+[20:12] <RoyK> can you pastebin the interfaces file?
+[20:12] <RoyK> btw, if on ipv6, like you look to be, better ask for a static ip
+[20:13] <frojnd> RoyK: it's a static ip
+[20:13] <LuizAngioletti> Have you played with tcpserver?
+[20:13] <frojnd> RoyK: http://sprunge.us/JOLC
+[20:13] <RoyK> no, two dynamic ipv6 ips
+[20:13] <RoyK> "dev eth0"
+[20:14] <RoyK> not just eth0
+[20:14] <frojnd> ah :)
+[20:14] <RoyK> and ask for a static ip
+[20:14] <RoyK> works better in the long term
+[20:14] <RoyK> ipv6
+[20:14] <frojnd> RoyK: but those two ips are always the same
+[20:14] <RoyK> just ask for a static
+[20:15] <LuizAngioletti> I have an Ubuntu 12.04 with Qmail as MTA, and I'm getting an error message that I can't figure out what it means.
+[20:15] <RoyK> LuizAngioletti: erm, why qmail?
+[20:15] <LuizAngioletti> RoyK: I really can't say... It isn't mine. =)
+[20:16] <RoyK> afaik qmail isn't very well supported
+[20:16] <sarnold> hehe
+[20:16] <RoyK> postfix being the preferred mta
+[20:16] <LuizAngioletti> I'm suppose to fix it, but I can't figure out what a specific error code from tcpserver means...
+[20:16] <sarnold> on the one hand, the author hasn't touched it in nearly a decade. on the other hand, I don't think it's gotten many bug reports in that time. :) hehe.
+[20:16] <frojnd> RoyK: RTNETLINK answers: File exists Failed to bring up eth0 ...done.
+[20:17] <frojnd> what is a proper way to restart networking on ubuntu 12.4 server anyway?
+[20:17] <frojnd> so I don't lock myself out
+[20:17] <RoyK> restart networking
+[20:17] <RoyK> or just reboot the box
+[20:18] <frojnd> I did: # /etc/init.d/networking restart
+[20:18] <frojnd> and that's what I got
+[20:18] <frojnd> * Running /etc/init.d/networking restart is deprecated because it may not enable again some interfaces
+[20:18] <frojnd> * Reconfiguring network interfaces...
+[20:18] <RoyK> # restart networking
+[20:18] <frojnd> and those lines above I already pasted
+[20:19] <frojnd> restart: Unknown instance:
+[20:19] <RoyK> hm...
+[20:19] <RoyK> sorry
+[20:19] <nxvl> Daviey: thanks
+[20:19] <RoyK> frojnd: try rebooting
+[20:20] <frojnd> ok
+[20:25] <frojnd> ok booted on
+[20:25] <frojnd> in*
+[20:26] <frojnd> I can ping it :)
+[20:26] <frojnd> from outside
+[20:26] <frojnd> second IP addr
+[20:26] <RoyK> :)
+[20:26] <frojnd> how do I test it from inside?
+[20:26] <RoyK> well, you can't
+[20:26] <frojnd> :>
+[20:26] <RoyK> or just ping that ip
+[20:27] <RoyK> best thing is to test from the outside
+[20:27] <RoyK> doesn't matter if it works from the inside, really
+[20:27] <frojnd> aha
+[20:28] <RoyK> why do you need a separate ip for the webserver, btw?
+[20:30] <frojnd> well.. because I don't want people who commit to a first IP know about what other stuff I have on the sever
+[20:30] <frojnd> in this case web server
+[20:31] <RoyK> frojnd: just secure your server, and you can use a single IP for all of ut
+[20:31] <RoyK> all of it
+[20:31] <RoyK> even
+[20:32] <frojnd> can you suggest me any newbie firewall? The thruth is I never usesd a fw on a computers, I allways had router but since now this is my first remote server I need to learn about firewalling in linux
+[20:32] <RoyK> !ufw
+[20:32] <ubottu> Ubuntu, like any other Linux distribution, has firewall capabilities built-in. The firewall is managed using the 'ufw' command - see https://help.ubuntu.com/community/UFW | An alternative to ufw is the 'iptables' command - See https://help.ubuntu.com/community/IptablesHowTo | GUI frontends such as Gufw (GNOME) and Guarddog (KDE from Lucid onwards) also exist.
+[20:33] <RoyK> start out with "ufw allow ssh" and "ufw enable"
+[20:33] <RoyK> and take it from there
+[20:33] <frojnd> RoyK: I don't have standard port for ssh
+[20:33] <frojnd> can I still start witz ufw allow ssh?
+[20:33] <RoyK> then ufw allow 1234/tcp
+[20:33] <RoyK> replace 1234 with your ssh port
+[20:34] <frojnd> RoyK: when I instal ufw by default everything is blocked?
+[20:34] <RoyK> if you *enable* it, it blocks everything by default, yes
+[20:34] <RoyK> therefore, allow ssh first
+[20:34] <frojnd> yeah while I'm still logged in :)
+[20:35] <RoyK> so ufw allow yoursshport/tcp
+[20:35] <RoyK> then enable it
+[20:35] <frojnd> mmm *app armor* was installed by default on the sever I got hands on, so first I have to uninstall that
+[20:35] <RoyK> apparmor is ok
+[20:35] <escott> frojnd, apparmor shouldn't be preventing you from doing anything
+[20:35] <RoyK> not the nazi stuff like with selinux
+[20:35] <frojnd> apparmor in compare to ufw?
+[20:36] <RoyK> no, it's local
+[20:36] <RoyK> ufw/iptables is for remote access
+[20:36] <frojnd> so I don't need actually ro remove apparmor
+[20:36] <RoyK> so is selinux, btw, but a bit harder to learn
+[20:36] <RoyK> frojnd: just don't remove it
+[20:36] <frojnd> ok ufw then
+[20:37] <frojnd> ufw is installed I guess :D
+[20:37] <RoyK> frojnd: btw, can you pastebin lshw?
+[20:37] <frojnd> RoyK: yeah
+[20:37] <RoyK> lshw | pastebinit
+[20:38] <frojnd> http://paste.ubuntu.com/1532207/
+[20:40] <RoyK> not strange eth1 didn't work - it shows up as disabled
+[20:40] <frojnd> what does that mean?
+[20:40] <frojnd> that cable is unplugged?
+[20:40] <RoyK> no, seems disabled in bios
+[20:40] <RoyK> somehow
+[20:40] <frojnd> heh
+[20:40] <frojnd> a call to leaseweb then
+[20:41] <RoyK> but never mind that if eth0 works well with two ip addresses
+[20:41] <RoyK> less hassle
+[20:41] <RoyK> linux can be a bit tricky with two nics on the same subnet
+[20:42] <frojnd> better use different subnets and bridge them?
+[20:42] <RoyK> or just use two ips on the same nic
+[20:42] <RoyK> if bandwidth isn't a problem
+[20:42] <frojnd> it really isn't
+[20:42] <frojnd> for now I hope
+[20:42] <RoyK> then don't bother
+[20:43] <RoyK> seems eth0 is at 100Mbps
+[20:43] <frojnd> I've added 10010/tcp in ufw but what I miss is to add somekind of comment beside it
+[20:43] <RoyK> if that suffices for your work, well, ok
+[20:43] <RoyK> frojnd: dunno if ufw allows for comments - don't think so
+[20:43] <jdstrand> (it doesn't)
+[20:43] <frojnd> RoyK: it should be 1000Mbps
+[20:44] <RoyK>                 size: 100Mbit/s
+[20:44] <frojnd> Ethernet controller: Intel Corporation 82572EI Gigabit Ethernet Controller (Copper) (rev 06)
+[20:44] <RoyK>                 capacity: 1Gbit/s
+[20:44] <RoyK> meaning it's a gigabit adapter, but the switch it's connected to, only serves 100Mbps
+[20:44] <frojnd> aha that makes sense
+[20:45] <qhartman> You could also bond the interfaces together and use just the virtual interface that provides. That way if one gets unplugged you won't lose connectivity. But generally, having two NICs on the same network that aren't bonded somehow isn't worth the possible hassle.
+[20:45] <frojnd> RoyK: I've enabled that ssh port but where do I see the rules?
+[20:45] <frojnd> qhartman: thanx
+[20:45] <RoyK> ufw status - but that only works once it's enabled :P
+[20:45] <frojnd> yeah :)
+[20:45] <frojnd> that's the problem :D
+[20:46] <frojnd> well better I didn't make a typo then :P
+[20:46] <RoyK> hehe
+[20:46] <qhartman> If you define an application for the ports you want to use in UFW. Then you have comments and whatnot in that app definition
+[20:46] <frojnd> qhartman: that's handy
+[20:46] <RoyK> qhartman: where can you define that?
+[20:46] <qhartman> heh, Google came up with the Arch docs first, but they look right: https://wiki.archlinux.org/index.php/Uncomplicated_Firewall
+[20:47] <frojnd> haha
+[20:48] <RoyK> didn't know arch used ufw
+[20:48] <RoyK> :)
+[20:48] <qhartman> Me neither
+[20:48] <frojnd> it doesn't anything  by default :)
+[20:48] <frojnd> it's a matter of choice, I don't prefer arch for server
+[20:48] <RoyK> I've only tested it on ARM
+[20:49] <frojnd> I use it on main computer station, laptop, and arm - raspberrypi but for servers (I prefer anything debian/debian - based)
+[20:52] <frojnd> Ok neat, now only ssh non standard port is supported
+[20:53] <frojnd> what if I fuck it up, how do I disable ufw in rescue mode?
+[20:53] <RoyK> frojnd: try to ssh into that port
+[20:53] <IdleOne> No swearing in here please
+[20:54] <frojnd> Sorry, I'm used to swear  from other chans, won't happen again.
+[20:54] <escott> frojnd, iptables shouldn't be loaded in rescue mode
+[20:54] <frojnd> escott: no, but since I've enabled ufw
+[20:55] <escott> frojnd, again, i dont think iptables will be loaded in rescue, if they were you would have to login at the console and drop the rules
+[20:55] <RoyK> frojnd: ufw is an iptables wrapper
+[20:55] <jamespage> adam_g_, I think that happens when  glance is using python-ceph < 0.48
+[20:55] <frojnd> escott: yeah that's true, I mean when I'm not in rescue mode and I have to disable or modfy ufw rules for normal boot
+[21:02] <RoyK> frojnd: any luck?
+[21:03] <frojnd> RoyK: yes :)
+[21:03] <frojnd> RoyK: I was able to allow 80/tcp to test php
+[21:03] <frojnd> for web service
+[21:07] <frojnd> Ok, so I've configured lightppd and php, any tips how can I configure further server so user who is responsible for web development will without root password be able to write and update and maintain code for web server?
+[21:09] <RoyK> frojnd: it's all in the guide
+[21:09] <RoyK> !guide | frojnd
+[21:09] <ubottu> frojnd: The Ubuntu server guide may be found at http://help.ubuntu.com/12.04/serverguide/C/
+[21:15] <frojnd> RoyK: thank you
+[21:20] <Jaden_Korr> Does resolvconf not parse a secondary IPv6 DNS if you put two on the dns-nameservers line in /etc/network/interfaces?
+=== cpg|away is now known as cpg
+[22:52] <lvmer> Is anyone here a pro at bonding network interfaces? I'm having trouble getting all 3 to act as 1 connection, but they work fine separate with different ips. :/
+[22:52] <StevenR> lvmer: can you be more specific? Can you pastebin the configuration you're using?
+[22:53] <lvmer> stevenr: yes I can, I apologize for that.
+[22:53] <StevenR> lvmer: no need to apologise :)
+[22:54] <lvmer> http://paste.kde.org/647030/
+[22:54] <lvmer> that's actually interfaces.bak2   I'm using a different one atm.
+[22:55] <lvmer> that has all auto/dhcp settings
+[22:58] <StevenR> lvmer: I think you might be missing some steps. Have you looked at https://help.ubuntu.com/community/UbuntuBonding ?
+[22:58] <StevenR> lvmer: also, what, if any, bonding have you configured on the switch?
+[23:01] <lvmer> none on the switch
+[23:01] <lvmer> I didn't need it for windows
+[23:01] <lvmer> do I need to do switch side for ubuntu?
+[23:02] <lvmer> I have the same intel nic bonded in win7 with no switch problems
+[23:02] <StevenR> no, you don't need to
+[23:02] <StevenR> you just need to specify an appropriate bonding mode
+[23:02] <lvmer> yup I did ifenslave-2.6
+[23:02] <lvmer> did the modules
+[23:03] <lvmer> um 1 sec I'll get the errors and paste them
+[23:03] <lvmer> rr
+[23:03] <lvmer> balance-rr ?
+[23:03] <lvmer> in windows I use some weird dynamic mode
+[23:04] <lvmer> it's like link dynamic something
+[23:04] <StevenR> your switch might not like rr. Try balance-xor
+[23:04] <lvmer> ubuntu said I should try 802.3ad I think in an error msg
+[23:04] <StevenR> lvmer: Link Aggregation Control Protocol?
+[23:04] <StevenR> is that what windows is using?
+[23:05] <lvmer> no I don't think so I remember dynamic in the name I'll check
+[23:07] <frojnd> I have a general question about packages. My philosophy is that programs installed by official packages is safer. Now I have 12.4 LTS and I need lighttpd 1.4 the problem is that with 12.4 LTS only comes lighttpd 1.3 https://help.ubuntu.com/community/lighttpd says I can use ppa. Is this safe practice? Afaik ppa isn't checked by community?
+[23:10] <lvmer> Adaptive Load Balancing (ALB)
+[23:11] <StevenR> lvmer: that's what windows uses?
+[23:12] <sarnold> frojnd: a ppa is only as good as the person who owns it; that might be very good or very bad, or anywhere in between
+[23:12] <frojnd> sarnold: so It's not to be blindly trusted help.ubuntu?
+[23:12] <lvmer> yah
+[23:12] <frojnd> ok
+[23:13] <sarnold> frojnd: since lighttpd is in universe, updates would be handled by "the community" -- that might be the same person who runs the ppa, or might be someone else, or a bunch of people at random (or you..) -- in which case, either the ppa or the repository might be more appropriate. no easy way to tell.
+[23:13] <StevenR> lvmer: what sort of switch are you using?
+[23:14] <frojnd> Ok. sarnold since I have 12.4 LTS can I excpect for apps to be updated just like if I had 12.10?
+[23:14] <lvmer> some kind of dlink no way I know off the top of my head
+[23:14] <StevenR> lvmer: and is it configured as a trunk/bond/aggregated link?
+[23:14] <lvmer> teamed
+[23:14] <frojnd> StevenR: or this rule goes only for security updates?
+[23:14] <lvmer> yah I think that means the same thing
+[23:14] <StevenR> lvmer: the switch is teamed?
+[23:14] <lvmer> the nic is
+[23:14] <frojnd> sarnold: or this rule goes only for security updates?
+[23:15] <frojnd> StevenR: sorry..
+[23:15] <lvmer> I don't think the switch is managed at all
+[23:15] <StevenR> ok... then try the xor one then
+[23:15] <lvmer> I've never seen it's bios or anything, only the firewall
+[23:16] <sarnold> frojnd: security updates can happen in LTS or non-LTS releases, as the community works on them
+=== cpg is now known as cpg|away
+[23:17] <sarnold> frojnd: the PPA may or may not be updated in the same fashion -- it might be intended only for use on 12.10, it might be intended for 12.04 LTS. It's up to the PPA author to declare intentions..
+[23:17] <frojnd> sarnold: thanx for clearing this up for me
+[23:19] <sarnold> frojnd: general updates (not security) can also happen for both 12.10 and 12.04 LTS -- the package would have to go through the "SRU" process.. I don't yet know which is more common
+[23:19] <frojnd> sarnold: that's nice to hear
+[23:24] <StevenR> lvmer: make sure you go through the whole document I posted the link to :)
+[23:25] <lvmer> stevenr: $ ifup bond0      error: rtnetlink: file exists, failed to bring up bond0
+[23:26] <StevenR> lvmer: isthe bond already up?
+[23:26] <lvmer> nope
+[23:26] <lvmer> cat /proc/net/bonding/bond0  = down
+[23:26] <StevenR> lvmer: can you bring just the two intel interfaces into the bond?
+[23:27] <lvmer> I'll try it. in windows all 3 work :(
+[23:27] <lvmer> but I don't have windows on the motherboard anymore
+[23:27] <StevenR> lvmer: well, lets start with working out if it's just a problem with the "odd" card
+[23:34] <lvmer> stevenr: how can I comment out a ton of lines in /etc/network/interfaces   so I can get a connection to pastebinit
+[23:39] <StevenR> lvmer: um have you tried just not including the "odd" interface in the bond config, and configuring the bond as per the instructions... to get logs and configs off.. you could use a usb stick?
+[23:40] <lvmer> yah I could usb stick it
+[23:41] <lvmer> http://paste.kde.org/647066/
+[23:42] <lvmer> stevenr: yes I did get the odd interface out. I couldn't restart the networking service for some reason though. so I just rebooted. lol
+[23:43] <StevenR> lvmer: um....
+[23:43] <StevenR> lvmer: do you understand that the # at the start of a line means that the line will be ignored when the server reads the config file?
+[23:44] <StevenR> (it's just that you seem to have commented out most of the config file
+[23:44] <lvmer> stevenr: yah I said I had to comment it all out to get a link to pastebinit
+[23:44] <StevenR> lvmer: so where's the *actual* config file you're trying?
+[23:45] <StevenR> lvmer: I've no idea what you're working with, you're basically asking me to troubleshoot with false data
+[23:47] <lvmer> http://paste.kde.org/647078/
+[23:49] <StevenR> lvmer: coment out bond-lacp-rate 1
+[23:52] <lvmer> server seems to hang when restarting network $ sudo service networking restart
+[23:55] <StevenR> lvmer: how long for?
+[23:56] <lvmer> indefinitely? no idea, I canceled after 30 seconds and rebooted
+[23:56] <lvmer> cat /proc/net/bonding/bond0  reports up
+[23:56] <StevenR> lvmer: does ps paux | grep -i network    show NetworkManager?
+[23:56] <lvmer> but I can't ping anything
+[23:57] <lvmer> no
+[23:57] <lvmer> only 1  'network'
+[23:57] <lvmer> idk what the columns are
+[23:57] <StevenR> ok
+[23:58] <lvmer> but it says: john 2510 0.0 0.0 9388 904 tty1 R+ 18:57
+[23:58] <lvmer> for 'network'
+[23:58] <StevenR> ok
+[23:58] <lvmer> not networkmanager
+[23:58] <lvmer> no*
+[23:58] <StevenR> that's fine
+[23:58] <lvmer> k
+[23:58] <StevenR> NetworkManager must not be running
+[23:58] <StevenR> :)
+[23:58] <StevenR> and it isn't, which is good
+[23:59] <lvmer> I'll take your word for it
+[23:59] <StevenR> lvmer: does ifconfig -a show the correct IP addressing on the bond0 interface?
+[23:59] <lvmer> yes
+[23:59] <lvmer> 192.168.0.40
+[23:59] <NomadJim> anyone use debconf to silently install stuff? I'm trying to get it to work with mysql
+[23:59] <NomadJim> mysql-server

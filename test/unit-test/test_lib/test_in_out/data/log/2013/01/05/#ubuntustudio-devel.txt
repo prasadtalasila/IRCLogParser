@@ -1,0 +1,172 @@
+=== Lump|AFK is now known as Lumpy
+=== Lumpy is now known as Lump|AFK
+[09:47] <zequence> http://www.davidrevoy.com/article154/mypaint-1-1-a-guide-through-the-new-features#.UOdo1GF7gT0.google_plusone_share
+[16:54] <len-1304> zequence, can you see a good reason for having more than one rtirq setup to run?
+[16:54] <len-1304> I'm thinking for more than one sound card.
+[16:55] <len-1304> In the case where sometimes an internal card is used, but sometimes a USB card is used.
+[16:56] <zequence> len-1304: I've done very little testing with rtirq. The times I've looked at the result from the default config, it has looked fine. And then, I've had no effect from using it. But then I haven't used anything else than pci and firewire, where I've been lucky enough to never have a problem with firewire
+[16:57] <zequence> len-1304: One thing I was thinking about for -controls was a way to adjust prio for devices
+[16:57] <len-1304> With FW, if it is not plugged in then PCI or internal comes out top anyway.
+[16:57] <zequence> So, someone not wanting to spend time with config files could do it from the gui
+[16:58] <len-1304> With USB, I do not want a BUS stick to have priority over an internal sound card
+[16:58] <zequence> len-1304: Does it make a difference for you in performance?
+[16:58] <len-1304> Yes.
+[16:58] <len-1304> with USB it does
+[16:59] <len-1304> there is a more than this of course but it does help
+[16:59] <zequence> having a usb stick get high prio from the default config sounds like a bug, but how to determine if the usb port is connected to an audio device?
+[16:59] <len-1304> I am thinking there could be three stock rtirq files.
+[17:00] <len-1304> It takes some user know how. 
+[17:00] <len-1304> I had to find out wich USB port has it's own irq and then set that one higher than the others
+[17:01] <len-1304> The thing is, in some ways rtirq should be run after the USB sound IF is plugged in
+[17:01] <zequence> It would be best if the prios were set in a plug and play fashion too
+[17:01] <len-1304> Ya
+[17:02] <len-1304> That is kind of what I was saying
+[17:02] <zequence> len-1304: Any chance you could work out some method for doing this? btw, are you still planning on working on the menu?
+[17:02] <len-1304> How working on the menu?
+[17:03] <len-1304> I have done the icons... just waiy=ting for the upload.
+[17:03] <zequence> len-1304: The stuff we talked about a couple of months ago. making it freedesktop based as much as possible, etc
+[17:03] <len-1304> The icons are there, but -settings has not yet been released to make use of them.
+[17:04] <len-1304> I have sort of done that, all our new menus are based on standard icon file names now.
+[17:04] <len-1304> I have not gone through the categories though.
+[17:05] <zequence> Well, there's no particular hurry. It's a long term work in progress thing
+[17:05] <zequence> I'm getting closer to taking over kernel maintenance
+[17:05] <len-1304> I am thinking of updating my mode switch glue.
+[17:06] <zequence> Should do some testing with some configs. Probably dropping debug stuff should improve things somewhat
+[17:06] <len-1304> That would mean redoing packages
+[17:06] <zequence> redoing what packages
+[17:07] <len-1304> Almost all the a/v packages have some debug stuff in them, I think.
+[17:07] <zequence> I'm talking about the build config for linux-lowlatency. So, just one file in the source.
+[17:07] <len-1304> Ah, good
+[17:07] <zequence> But, that thing is also todo, yues
+[17:08] <zequence> len-1304: I had a talk with David H about jackd and PA integration
+[17:08] <len-1304> OK and
+[17:09] <zequence> So, the code that makes jack2 able to grab the audio device from pulseaudio is something that only exists in PA and jackd
+[17:09] <zequence> It's a Poettering solution
+[17:09] <zequence> It happens through dbus
+[17:09] <zequence> Now, it doesn't seem to be working as intended though
+[17:09] <len-1304> Thats what I hear... that would be why it is a "package problem"
+[17:09] <zequence> Cause, at least for me, jackd can only grab the card, if PA is not playing something
+[17:10] <len-1304> I think there just needs to be some small delay added to the jackd end of things.
+[17:10] <zequence> Well, I wouldn't call it a packaging problem, as it's a problem with the source
+[17:10] <len-1304> I was talking about from the jack people's POV
+[17:10] <zequence> Either the code in jackd, or PA, or both needs to be improved
+[17:11] <len-1304> There is a "if we didn't put it there it's a packaging problem"
+[17:11] <zequence> I don't know which. I only know it's dbus stuff that Poettering wrote, and I have no idea how it's used in the whole scheme of things
+[17:11] <len-1304> PA releases the port.
+[17:12] <len-1304> PA tells jack it is released? or jack just assumes it asked and tries to grab it.
+[17:12] <zequence> It's a mechanism existing in PA, which jackd can interface with through dbus
+[17:12] <zequence> jackd asks PA to release the card through dbusd
+[17:12] <len-1304> anyway jack seems to try to take it before PA has released.
+[17:12] <len-1304> Sometimes it just works. (1 in 20)
+[17:12] <zequence> It works fine, as long as PA is not playing something. Which is not how it's supposed to be
+[17:13] <zequence> At least for me
+[17:13] <zequence> So, anyway, it's a code problem
+[17:13] <len-1304> I mean even when PA is streaming
+[17:13] <zequence> Yeah, ok.
+[17:14] <zequence> qjackctl has a wrapper script that is broken. It's supposed to start with the pasuspender tool, if present. The wrapper script has an error which does not start it. So, I'm going to fix that
+[17:14] <len-1304> I have had one or two time audacious streaming and started jack and the stream just switches from going to the port to going through jack.... very nice.
+[17:14] <zequence> I'm going to rewrite it, make it only do pasuspender if jackd1 is installed, as jackd2 doesn't need it.
+[17:14] <len-1304> We don't want pasuspender. It breacks PA-jack bridging.
+[17:15] <zequence> len-1304: We don't want it for jackd2, but we do want it for jackd1
+[17:15] <len-1304> OK, we don't ship jack1 though.
+[17:15] <zequence> Doesn't matter. Some people need it
+[17:15] <len-1304> My thought is fix what we ship first
+[17:15] <zequence> And it should work on any Debian derived distro
+[17:16] <zequence> I'm doing it in Debian
+[17:16] <len-1304> sure makes sense.
+[17:18] <len-1304> I'm going to add zita-ajbridge to the seeds. It is only 96k installed (19k DL)
+[17:18] <zequence> len-1304: Right. Haven't yet checked what that was
+[17:19] <len-1304> It is a high quality, less cpu version of alsa-in
+[17:20] <len-1304> It allows adding two cards to jack. No xruns. Even if they are synced it seems to work better than making a muti card in alsa
+[17:21] <len-1304> It is possible that the author will make an even lower cpu one for synced cards
+[17:21] <zequence> len-1304: I should try that. That's another thing that would be nice to have in -controls. Ability to do multi card setting up
+[17:22] <len-1304> using xita-ajbridge it is possible to get lower latencies than with the alsa multi setup.
+[17:23] <zequence> For recording studios, that kind of things is gold
+[17:23] <len-1304> His standalone reverb is really nice too
+[17:24] <len-1304> Anyway, I am going to add zita-ajbridge.
+[17:25] <zequence> someone give me a million dollars and a team of developers, please
+[17:25] <len-1304> It would be nice to have a tool like qjackctl that deals with a2j and zita-ajbridge as well as jack because these are things that would all be started at the same time.
+[17:26] <astraljava> zequence: I'll be happy to be one of that team, please. :)
+[17:26] <len-1304> Using a script started by qjackctl is less than optimal.
+[17:26] <zequence> astraljava: Let me just buy a lotto ticket first
+[17:26] <astraljava> B(u)y all means.
+[17:31] <len-1304> zequence, It appears we should set the sound cards to default to 48K
+[17:33] <len-1304> There was a really good discussion as to why in LAU. And there seems to be more than one reason for us to do so
+[17:34] <zequence> len-1304: You're talking about ~/.jackrc, right?
+[17:34] <zequence> or .jackdrc
+[17:34] <zequence> ..I mean
+[17:37] <zequence> hmm, nope. qjackctl doesn't edit that file
+[17:38] <zequence> ah, yes it does
+[17:39] <zequence> The file is changed only after starting jack after changing settings in qjackctl
+[17:39] <zequence> I'd assume jackdbus uses those settings, no matter from where you start it?
+[17:39] <zequence> jackd, started from the command line, needs arguments
+[17:40] <zequence> But not jackdbus, when using jack_control
+[17:42] <zequence> len-1304: So, change the default settings in qjackctl?
+[17:43] <zequence> no, jack_control starts jack without that file present
+[17:44] <zequence> And qjackctl I think has it's own savefile for settings, but edits the jackdrc when starting jackd
+[17:47] <zequence> So, where does qjackctl get the default config?
+[17:53] <zequence> len-1304: From what it seems, the default config is in the source for qjackctl. There's no file that can be altered in the package. The change needs to be done upstream
+[17:55] <zequence> In src/qjackctlSetup.cpp
+[17:55] <zequence> The line: preset.iSampleRate  = m_settings.value("/SampleRate", 44100).toInt();
+[17:56] <zequence> line 360
+[17:57] <zequence> len-1304: You could take it up with the author
+[18:32] <zequence> Either done upstream, or add a patch in the Debian or Ubuntu package
+[18:45] <len-1304> zequence, sorry went for breakfast :)
+[18:45] <len-1304> looking through the man page for jack_control explains a bit how qjackctl must work too.
+[18:46] <zequence> len-1304: man page?
+[18:46] <len-1304> when settings are set with qjackctl (one at a time over dbus) it appears jackdbus saves the config.
+[18:46] <zequence> I haven't found any docs on it. Assumed there was no manpage
+[18:47] <len-1304> Oops you are right... jack_control --help?
+[18:47] <zequence> len-1304: Nope
+[18:47] <len-1304> nope
+[18:47] <len-1304> jack_control with no 
+[18:48] <len-1304> on it's own
+[18:48] <zequence> Ah
+[18:48] <len-1304> I knew I had seen it somewhere
+[18:48] <len-1304> Everything qjackctl does can be done from jack)control for server start
+[18:49] <len-1304> But it takes another command to do connections
+[18:49] <zequence> Another jack tool, yes
+[18:51] <len-1304> qjackctl config is stored in ~/.config/rncbc.org
+[18:52] <len-1304> in QjackCtl.conf
+[18:52] <len-1304> including sample rate
+[18:52] <zequence> Yes, but there's no default config file though
+[18:52] <zequence> So, there's no way to replace it
+[18:52] <len-1304> /etc/skel
+[18:52] <zequence> Ah, ok
+[18:53] <len-1304> (not there now, but could be)
+[18:53] <len-1304> micahg, wouldn't like it :)
+[18:53] <zequence> len-1304: But, considering there was a good reason to change to 48kHz, why not do it upstream so everyone gets the benefit of the change
+[18:54] <len-1304> Yup. Is it something the author chose? debian? or ubuntu?
+[18:54] <zequence> It's in the code, so it's the author
+[18:54] <zequence> If the author doesn't want to change it, we can add a debian patch in the package
+[18:55] <zequence> But, if it in deed is the best choice, than I guess the author wouldn't mind changing it
+[18:56] <len-1304> He was probably thinking the way I was (before some better minds explained) that if it is made for CD why not start in the finish format.
+[18:57] <len-1304> However, 48k means a less sharp roll off at the top end about 1/4 less processing.
+[18:57] <len-1304> and less in band effects.
+[18:58] <len-1304>  The sample rate change at export for cd is the same (same code in fact) as a low pass filter.
+[18:59] <len-1304> We support video as well. Video audio is standard at 48k
+[19:00] <len-1304> Many cards are designed around 48k with 44.1k added as an after thought sometime with less care/poorer quality components/design as well.
+[19:02] <len-1304> ... thats the quick recap.
+[19:04] <zequence> len-1304: I'm sure Rui reads the list. I missed the posts about this myself, and don't have a good idea of the problem. You could take it up here https://lists.sourceforge.net/lists/listinfo/qjackctl-devel
+[19:04] <len-1304> zequence, we should Talk to David H as well about setting PA to default to 48K as well. Ask if it would hurt any of the desktop operation. (It doesn't seem to have on my netbook)
+[19:05] <zequence> I don't think you can set PA rate. It's application based, isn't it?
+[19:06] <len-1304> Rui only seems to post announcements on there, so I don't know that he reads through.
+[19:06] <zequence> It plays any samplerates
+[19:06] <len-1304> PA has a default rate setting in its config.
+[19:06] <zequence> Some on the fly conversion probably
+[19:06] <zequence> Oh?
+[19:06] <len-1304> I had to change it on my netbook for a built in mic problem
+[19:06] <len-1304> The built in mic is a 48k device only.
+[19:06] <zequence> You could ask for a merge to the source too
+[19:06] <zequence> http://sourceforge.net/p/qjackctl/code/743/tree/
+[19:07] <zequence> With an explanation of the problem
+[19:07] <len-1304> It has extra nioce when run at 44.2
+[19:07] <zequence> I could prepare the patch for you, if you want. I just don't know what to tell him about this
+[19:07] <len-1304> *noise
+[19:07] <len-1304> I should talk to him first.
+[19:08] <len-1304> If he has a reason for 44.1 that is fine by me.
+[19:09] <zequence> I'm sure he reads the mail list. There are other ways to contact him too. His personal forum http://www.rncbc.org/drupal/
+[19:09] <zequence> Or just email him
+[19:10] <len-1304> I have emailed him before so I have it here.
+[19:17] <len-1304> I will ask if qjackctl looks at any environment variables. It may be we can set default rate as well as default device... it would be nice to do it once for both PA and jackd
+[19:38] <len-1304> Ubuntu doesn't set anything

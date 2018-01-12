@@ -1,0 +1,521 @@
+=== slank is now known as slank_away
+=== _mup__ is now known as _mup_
+[07:40] <TheMue> davecheney, fwereade_, rogpeppe: Morning
+[07:40] <fwereade_> TheMue, everybody, heyhey
+[08:14] <rogpeppe> morning all!
+[08:22] <TheMue> rogpeppe: hiya
+[08:42]  * TheMue enjoys installing a fresh environment to run MAAS in KVM
+[08:57] <aram> moin.
+[09:10] <dimitern> morning!
+[09:30] <TheMue> aram, dimitern: hiya
+[09:30] <dimitern> TheMue: yo :)
+[10:25] <rogpeppe> fwereade_: you have reviews
+[10:25] <rogpeppe> fwereade_: i'd appreciate a look at https://codereview.appspot.com/7105054/
+[10:27] <fwereade_> rogpeppe, cool, thanks; I'll take a peek
+[10:45] <fwereade_> rogpeppe, LGTM
+[10:45] <rogpeppe> fwereade_: thanks!
+[10:46] <fwereade_> rogpeppe, I need to take a break for a bit... would you let http://paste.ubuntu.com/1533914/ roll around your mind for sanity for a bit?
+[10:46] <rogpeppe> fwereade_: looking
+[10:57]  * jam goes to grab a coffee, will be back for standup in 2 min
+[11:01] <jam> mgz: poke
+[11:01] <mgz> hey
+[11:01] <jam> for great mumbling!
+[11:05] <mgz> I'm on.
+[11:14] <fwereade_> niemeyer, heyhey
+[11:28] <niemeyer> fwereade_: How's tricks? :)
+[11:28] <fwereade_> niemeyer, good thanks; but a massive storm has just blown up here, somewhat to my surprise
+[11:29] <niemeyer> fwereade_: Ugh
+[11:29] <niemeyer> fwereade_: I guess you have good power rails there :)
+[11:30] <rogpeppe> niemeyer: hiya!
+[11:30] <fwereade_> niemeyer, it usually messes with the wifi more than the power but power cuts are not unheard of here
+[11:30] <fwereade_> holy crap, hail
+[11:38] <TheMue> lunchtime
+[11:40] <niemeyer> fwereade_: Wow
+[11:40] <fwereade_> niemeyer, and now it's just eerie silence
+[11:46] <dimitern> fwereade_: I'm always hoping for a good, massive hailstorm, just to see how bad it gets here, but alas - nothing worthy so far :D
+[11:48] <fwereade_> dimitern, yeah, that wasn't all that much to write home about on reflection
+[11:48] <fwereade_> dimitern, but still pretty unexpected, given the beautiful sunshine not half an hour before
+[11:48] <fwereade_> dimitern, I think I just heard thunder though
+[11:50] <dimitern> fwereade_: yeah, this here is like mountain weather - 5m and it's completely different
+[11:50] <fwereade_> rogpeppe, any thoughts re sanity of that paste?
+[11:51] <rogpeppe> fwereade_: what's the difference between Destroy and Remove?
+[11:51] <fwereade_> rogpeppe, Destroy is the method everything has; it might set Dying or it might remove
+[11:52] <fwereade_> rogpeppe, Remove only applies to units/machines because they're the only ones that follow the path we originally understood
+[11:52] <fwereade_> rogpeppe, Dying services and relations are removed as side-effects of either Unit.Remove or RelationUnit.LeaveScope
+[11:53] <fwereade_> rogpeppe, did you get a chance to take a look at death-and-destruction.txt?
+[11:54] <rogpeppe> fwereade_: yes, i did, although i wasn't sure how much is what we've got now, and how much is plans for the future.
+[11:54] <fwereade_> rogpeppe, everything except how services are done, which was agreed before xmas and which I'm working on now
+[11:56] <rogpeppe> fwereade_: BTW why might Remove of a unit also remove its service? don't we allow services with no units?
+[11:56] <fwereade_> rogpeppe, if the service is Dying, then the disappearing unit might be the last reference to the service
+[11:56] <rogpeppe> fwereade_: ah, of course
+[11:57] <rogpeppe> fwereade_: the paste looks reasonable to me
+[11:57] <rogpeppe> fwereade_: it'll be worth discussing this with niemeyer, since he's around
+[11:58] <fwereade_> rogpeppe, quite so; niemeyer, I'd like to have an API discussion with you when you have some free time
+[11:59] <niemeyer> fwereade_: Sure, any time
+[11:59] <niemeyer> fwereade_: Next meeting is in an hour
+[11:59] <fwereade_> niemeyer, I'd quite like a bite to eat before then -- could we do it right afterwards please?
+[12:00] <fwereade_> niemeyer, (or, hmm, will that hit your lunchtime?)
+[12:00] <niemeyer> fwereade_: Sounds good
+[12:00] <fwereade_> niemeyer, ok, cool, thanks :)
+[12:00] <niemeyer> fwereade_: It might, but it's okay either way.. worst case we do when I'm back
+[12:06] <rogpeppe> fairly simple CL if anyone cares to have a look:  https://codereview.appspot.com/7085062
+[12:17] <niemeyer> rogpeppe: Looking
+[12:22] <rogpeppe> niemeyer: thanks
+[12:51] <dimitern> i keep getting error: environment "canonistack" has an unknown provider type "openstack" - what should I do to fix this? I tried go installing cmd/juju to make sure it was compiled with the latest source, still no luck
+[12:55] <dimitern> rogpeppe, fwereade_- any hints? ^^
+[12:56] <rogpeppe> dimitern: juju needs to import the openstack provider
+[12:56] <rogpeppe> dimitern: import _ "launchpad.net/juju-core/environs/openstack"
+[12:56] <dimitern> rogpeppe: so we need that for all providers? even though they are registered?
+[12:57] <rogpeppe> dimitern: they can only register if they're imported
+[12:57] <rogpeppe> dimitern: (by at least one thing)
+[12:57] <dimitern> rogpeppe: I see, 10x
+[13:17] <jam> TheMue: https://wiki.canonical.com/Launchpad/MAASTesting I'm not sure if you knew of that one, but it should have some stuff about the Lenovo QA Lab for MaaS
+[13:17] <TheMue> thx
+[13:18] <jam> TheMue: I think rvba in #maas would probably be able to help out on questions/access information to the lab.
+[13:19] <jam> aram: ^^ probably you're interested in that one as well (if you haven't seen it already)
+=== niemeyer_ is now known as niemeyer
+[13:43] <niemeyer> fwereade_: Sorry, net hiccup
+[13:43] <fwereade_> niemeyer, np, hangout is still open
+[13:43] <niemeyer> fwereade_: Are you still in the same hangout?
+[13:43] <niemeyer> fwereade_: Joining
+[13:50] <rogpeppe> wallyworld__: shall we try to sort out the public storage thing?
+[13:51] <wallyworld__> rogpeppe: would love to but it's almost midnight here and i'm tired, i'll have another look tomorrow to try and see how what i've done may be different to how ec2 does it and will ask you if i need to
+[13:51] <rogpeppe> wallyworld__: ok, np
+[13:51] <wallyworld__> thanks for asking
+[13:52] <rogpeppe> wallyworld__: FWIW in the ec2 provider, the public storage is implemented with exactly the same type as the private storage
+[13:52] <wallyworld__> i do that too
+[13:52] <wallyworld__> the public openstack storage uses a client connection that doesn't fo any authentication
+[13:52] <rogpeppe> wallyworld__: it's probably down to the way the container object is initialised
+[13:53] <wallyworld__> the public storage requires that the container be created with the correct acl to allow world readable without auth being required
+[13:53] <wallyworld__> and so the reading bit works fine
+[13:54] <wallyworld__> ie someone who is authenticated can upload stuff to the container and then anyone can read it, autjenticated or not
+[13:55] <wallyworld__>  however, using the public container to try and write something eg fake tools in the tests, fails because no auth is used since the public container uses a non authenticating client
+[13:55] <wallyworld__> s/public container/public storage
+[13:56] <rogpeppe> wallyworld__: is the issue that you *can't* use authentication when connecting to a container that doesn't require it?
+[13:56] <wallyworld__> i could, but the public storage is initialised with a non authenticating client
+[13:56] <wallyworld__> openstack clients store the auth token when authentication occurs
+[13:56] <rogpeppe> wallyworld__: could you initialise it with an authenticating client?
+[13:56] <wallyworld__> and then put that token in each request
+[13:57] <wallyworld__> yes, but that would require authentication which the public containers must not require?
+[13:57] <rogpeppe> wallyworld__: i'm presuming the crux is in this code: http://paste.ubuntu.com/1534329/
+[13:57] <wallyworld__> the non public storage in the openstack provider does indeed use an authenticating client
+[13:58] <wallyworld__> yes
+[13:58] <wallyworld__> the public storage is initialised with a client which does not authenticate, so no credentials are used
+[13:59] <wallyworld__> used or required
+[13:59] <rogpeppe> wallyworld__: what is it about the publicStorageUnlocked initialisation that isn't authenticating?
+[13:59] <wallyworld__> publicBucketClient
+[13:59] <rogpeppe> wallyworld__: i see two occurrences of e.client(ecfg, authMethodCfg)
+[13:59] <rogpeppe> wallyworld__: ah, i may be looking at an old branch though
+[13:59] <wallyworld__> let me check the code
+[14:00] <wallyworld__> func (e *environ) publicClient(ecfg *environConfig) client.Client {
+[14:00] <wallyworld__> 	return client.NewPublicClient(ecfg.publicBucketURL(), nil)
+[14:00] <wallyworld__> }
+[14:00] <wallyworld__> around line 196
+[14:01] <wallyworld__> the public storage instance uses a goose client that is non authenticating as constructed above
+[14:01] <rogpeppe> wallyworld__: ah, i wasn't in sync
+[14:01] <wallyworld__> public bucker url above is like the public region for ec2
+[14:02] <wallyworld__> so a goose client can be created with credentials, or not
+[14:02] <wallyworld__> if credentials are provided, it authenticates
+[14:03] <rogpeppe> wallyworld__: so if you provide credentials for a container that doesn't require them, it fails?
+[14:03] <wallyworld__> there are separate constructors for each type - you cannot supply credentials for a public client
+[14:04] <wallyworld__> if use curl to poke a container which is publicly readable but use credentials, i'm not sure what will happwn
+[14:04] <wallyworld__> i think i read that there is a but in that area and it will not work
+[14:05] <wallyworld__> bug not but
+[14:05] <rogpeppe> wallyworld__: that's what i was wondering
+[14:05] <wallyworld__> i definitely read that there is a bug in that area, but am uncertain if it is fixed. i will need to test
+[14:06] <rogpeppe> wallyworld__: it seems a bit wrong that it can't ignore credentials when they're not required
+[14:06] <wallyworld__> indeed
+[14:07] <rogpeppe> wallyworld__: i wonder if it would be possible to work around that bug
+[14:07] <rogpeppe> wallyworld__: for instance, by detecting an error code that signifies the bug
+[14:07] <wallyworld__> not sure, but it does seem the idea of a non authenticating client needs to be rethought
+[14:08] <rogpeppe> wallyworld__: goose/client could certainly do with some API docs - i can't see how it's meant to work...
+[14:08] <fwereade_> rogpeppe, https://codereview.appspot.com/7058073 has changed a bit since I merged trunk in and might benefit from a second glance; TheMue, you've also started to review that one
+[14:08] <TheMue> fwereade_: Will take a look.
+[14:09] <fwereade_> TheMue, tyvm
+[14:09] <wallyworld__> rogpeppe: yes, it probably does need more doc
+[14:09] <wallyworld__> it's very openstack specific
+[14:10] <wallyworld__> to understand it you need you to know about how openstack works
+[14:10] <rogpeppe> wallyworld__: if it's openstack specific, perhaps it should be hidden behind the swift, etc APIs
+[14:10] <rogpeppe> wallyworld__: rather than requiring clients to interact with it
+[14:11] <wallyworld__> the goose client is used by the goose swift code to provide the underlying transport/connectivity
+[14:11] <wallyworld__> a client needs to be created with credentials, but after that, it's opaque
+[14:12] <wallyworld__> it just needs to be passed to a swift instance so that it can be used
+[14:12] <rogpeppe> wallyworld__: perhaps the goose swift code should provide a function that encapsulates that, so the type isn't externally visible.
+[14:12] <dimitern> is there a command to show the complete effective environ config as seen by juju?
+[14:12] <wallyworld__> the same client is used by the nova and glance stuff too
+[14:12] <dimitern> after defaults, etc. are applied?
+[14:13] <rogpeppe> dimitern: you can call AllAttrs
+[14:14] <rogpeppe> wallyworld__: hmm, yes, i see the issue
+[14:14] <dimitern> rogpeppe: on what?
+[14:14] <rogpeppe> dimitern: config.Config
+[14:14] <rogpeppe> dimitern: what's your context?
+[14:15] <dimitern> rogpeppe: I want to dump the config after validation, before any cmd like bootstrap is executed
+[14:15] <rogpeppe> wallyworld__: if NewPublicClient and NewClient were merged, i'm not sure there would be a good reason for exposing Client.
+[14:16] <dimitern> rogpeppe: isn't there something like juju get --all ?
+[14:16] <wallyworld__> rogpeppe: the same client instance is shared by nova and swift instances
+[14:16] <rogpeppe> dimitern: ah, from the command line
+[14:16] <dimitern> rogpeppe: yeah, that seems easiest
+[14:16] <wallyworld__> ah, no it's not
+[14:17] <wallyworld__> a new client instance is created for each nova, swift instance
+[14:18] <wallyworld__> rogpeppe: i sort of think of a goose client as like a tcp socket - you may need to create one and then give it to things to use on your behalf but you don't need to know how a socket works
+[14:18] <wallyworld__> but i guess you are saying each thing should create it's own socket
+[14:19] <rogpeppe> wallyworld__: well, i think that might possibly make for a more straightforward API, but i'd need to think about it
+[14:20] <rogpeppe> wallyworld__: in general though, whether openstack-specific or not, any exported API should be fully documented
+[14:20] <wallyworld__> the thing with merging NewClient and NewPublicClient is that go lacks default method  params etc, so it gets messy
+[14:20] <wallyworld__> yeah, agree with doco - we've just run way short on time
+[14:21] <rogpeppe> wallyworld__: i don't think that's necessarily a problem. NewClient has quite a few args anyway; it could easily be a struct.
+[14:21] <wallyworld__> yes. i used that approach in some of the client internals
+[14:21] <rogpeppe> wallyworld__: type ClientParams struct {Creds ...; AuthMethod ...; Logger; etc}
+=== TheMue_ is now known as TheMue
+[14:22] <rogpeppe> wallyworld__: that's the go way to do default method params. works pretty well usually.
+[14:22] <wallyworld__> yeah, i gotta get used to that. hard to forget all that python
+[14:22] <wallyworld__> it does seem to add overhead though
+[14:23] <wallyworld__> compared with just using default method or kw args
+[14:23] <wallyworld__> and that overhead is incurred for each and every call
+[14:23] <rogpeppe> wallyworld__: runtime overhead?
+[14:23] <wallyworld__> since the struct needs to be created each time
+[14:23] <wallyworld__> typing/verbosity overhead
+[14:24] <wallyworld__> code bloat
+[14:24] <rogpeppe> wallyworld__: there are advantages too though - you can create an object encapsulating the params and pass it around and manipulate it easily
+[14:24] <fwereade_> rogpeppe, TheMue, niemeyer: can anyone remember why we prevent SetExposed and ClearExposed when a service is Dying?
+[14:25] <wallyworld__> rogpeppe: swings and roundabouts as with anything :-)
+[14:25] <rogpeppe> fwereade_: it was a fairly arbitrary decision AFAIR
+[14:25] <dimitern> rogpeppe: so I guess there isn't a way to dump the config from the command line?
+[14:25] <rogpeppe> dimitern: you could write a program to do it in 3 minutes
+[14:26] <wallyworld__> rogpeppe: thanks for discussion, way past my bedtime, i'll look again tomorrow
+[14:26] <rogpeppe> wallyworld__: cheers!
+[14:26] <dimitern> rogpeppe: ok, so I need to dump AllAttrs from environ?
+[14:27] <rogpeppe> dimitern: i think you'd print the result of environs.NewFromName("").Config().AllAttrs()
+[14:27] <dimitern> rogpeppe: I'll try that, 10x
+[14:27] <fwereade_> rogpeppe, I don't think I can justify disallowing ClearExposed; SetExposed is more interesting, but I'm inclined to say it should be allowed for symetry's sake
+[14:27] <rogpeppe> dimitern: assuming you're using the standard environments.yaml
+[14:28] <rogpeppe> fwereade_: i'm not sure the operations need to be symmetrical
+[14:28] <rogpeppe> fwereade_: we often allow closing-down operations when dying, but not adding operations
+[14:28] <fwereade_> rogpeppe, yeah, true
+[14:29] <rogpeppe> fwereade_: mind you, i always thought there should only be one call: SetExposed(bool)...
+[14:30] <fwereade_> rogpeppe, yeah, I can sympathize there
+[14:30] <niemeyer> fwereade_: I think either way is fine
+[14:31] <niemeyer> rogpeppe: Yeah, I recall that :)
+[14:31] <niemeyer> The reasoning, ironically, is precisely for symmetry..
+[14:31] <niemeyer> Other flags require more than a bool
+[14:31] <niemeyer> But I digress
+[14:31] <niemeyer> and will have lunch, in fact.. biab
+[14:32] <rogpeppe> fwereade_: just looking at https://codereview.appspot.com/7058073 - quite a bit has changed, but i don't see my comments addressed
+[14:33] <fwereade_> rogpeppe, oh, hell, I got completely distracted by the manual merge
+[14:33] <rogpeppe> fwereade_: np
+[14:33] <fwereade_> rogpeppe, I don't have any objections to any of them though
+[14:33] <rogpeppe> fwereade_: cool
+[14:40] <TheMue> fwereade_: you've got a review
+[14:40] <fwereade_> TheMue, ty
+[14:45] <rogpeppe> fwereade_: ping
+[14:45] <fwereade_> rogpeppe, pong
+[14:46] <rogpeppe> fwereade_: i'm starting to think that all public Dying methods are crackful (other than Tomb's, of course). thoughts?
+[14:47] <rogpeppe> fwereade_: the fact that something is dying is really an internal detail - what an external thing should care about is dead or not dead IMO
+[14:47] <fwereade_> rogpeppe, hmm -- I can't think of many places they're used but I'm not yet ready to commit to such a statement myself
+[14:47] <fwereade_> rogpeppe, wait, you mean on state entities? or on watchery things?
+[14:47] <rogpeppe> fwereade_: so for instance, the only place you use Uniter.Dying, you could (should, i think) use u.tomb.Dying instead
+[14:47] <rogpeppe> fwereade_: both
+[14:48] <fwereade_> rogpeppe, when is there a Dying method that isn't `return x.tomb.Dying()`?
+[14:48] <rogpeppe> fwereade_: here: http://paste.ubuntu.com/1534428/
+[14:49] <rogpeppe> fwereade_: oops, those are calls
+[14:49] <rogpeppe> fwereade_: i don't think anything should expose its internal tomb's dying state
+[14:49] <rogpeppe> fwereade_: what's it useful for?
+[14:50] <rogpeppe> fwereade_: it says "this object is starting to shut down", but that's not useful info when interacting with the object.
+[14:50] <rogpeppe> fwereade_: i think all those Dying methods should be Dead methods that return x.tomb.Dead()
+=== slank_away is now known as slank
+[14:53] <rogpeppe> fwereade_: for example, the comment here is just wrong:
+[14:53] <rogpeppe> // Dying returns a channel that signals a Firewaller exit.
+[14:53] <rogpeppe> func (fw *Firewaller) Dying() <-chan struct{} {
+[14:54] <rogpeppe> fwereade_: it doesn't signal a firewaller exit, but just that at some time in the future the firewaller hopefully will exit.
+[15:32] <rogpeppe> lunch
+[16:19] <rogpeppe> fwereade_: what was the last thing you saw me say before i said "lunch" ?
+[16:19] <fwereade_> rogpeppe, fwereade_: it says "this object is starting to shut down", but that's not useful info when interacting with the object.
+[16:20] <rogpeppe> ah
+[16:20] <rogpeppe> [14:50:46] <rogpeppe> fwereade_: i think all those Dying methods should be Dead methods that return x.tomb.Dead()
+[16:20] <rogpeppe> [14:53:40] <rogpeppe> fwereade_: for example, the comment here is just wrong:
+[16:20] <rogpeppe> [14:53:40] <rogpeppe> // Dying returns a channel that signals a Firewaller exit.
+[16:20] <rogpeppe> [14:53:40] <rogpeppe> func (fw *Firewaller) Dying() <-chan struct{} {
+[16:20] <rogpeppe> [14:54:06] <rogpeppe> fwereade_: it doesn't signal a firewaller exit, but just that at some time in the future the firewaller hopefully will exit.
+[16:21] <fwereade_> rogpeppe, that also sounds sane, probably, where there are places it's actually used
+[16:21] <fwereade_> rogpeppe, how common is that?
+[16:21] <rogpeppe> fwereade_: there's one use, in a test.
+[16:22] <fwereade_> rogpeppe, heh, for something that doesn't just have a .Wait()?
+[16:22] <rogpeppe> fwereade_: no, so that we can time out a wait
+[16:22] <rogpeppe> fwereade_: all the other uses of Dying other than on a tomb are in uniter, and those could all be u.tomb.Dying
+[16:23] <fwereade_> rogpeppe, consider me +1 then
+[16:23] <fwereade_> rogpeppe, not sure why I ever had u.Dying()
+[16:23] <rogpeppe> fwereade_:  i tell a lie, it's never used
+[16:24] <fwereade_> rogpeppe, cool
+[16:24] <rogpeppe> fwereade_: i thought f.Dying was on a firewaller (not looking at the file) but it was on a uniter.filter.
+[16:24] <fwereade_> rogpeppe, ah, yeah
+[16:25] <rogpeppe> niemeyer: does this sound reasonable to you: change all public Dying methods in juju-core into Dead methods?
+[16:26] <niemeyer> rogpeppe: Huh!?
+[16:26] <rogpeppe> niemeyer: there's no use for Dying, but there is a use for Dead
+[16:26] <rogpeppe> niemeyer: dying in an internal state
+[16:26] <rogpeppe> s/in an/is an/
+[16:26] <niemeyer> rogpeppe: Sorry.. quite out of context here
+[16:27] <niemeyer> rogpeppe: The quick answer is no, it doesn't sound reasonable without further detail
+[16:27] <rogpeppe> niemeyer: that's fine. let me try to explain.
+[16:27] <rogpeppe> niemeyer: 1) nothing ever uses a Dying method currently (other than Tomb.Dying)
+[16:28] <rogpeppe> niemeyer: 2) ... except for one case in a test where it should be using Dead.
+[16:28] <rogpeppe> niemeyer: 3) i'd like to use a Dead method (on api.Server)
+[16:29] <rogpeppe> niemeyer: 4) i believe that "dying" cannot signify anything useful to a user of an object
+[16:29] <rogpeppe> niemeyer: because it's really a transitional state
+[16:29] <niemeyer> rogpeppe: What's the test that is broken? That may be an interesting case to look at
+[16:30] <niemeyer> rogpeppe: Not really.. Dying isn't transitional
+[16:30] <rogpeppe> niemeyer: here's the code: http://paste.ubuntu.com/1534705/
+[16:30] <rogpeppe> niemeyer: the bug is that it can wait 50ms for dying to happen, but then the transition to dead might take a lot longer
+[16:30] <niemeyer> rogpeppe: tomb.Dying and other similar channels fire once the thing is dying, and always from then on
+[16:31] <rogpeppe> niemeyer: i mean that dying is part of the transition to dead
+[16:31] <rogpeppe> niemeyer: i realise that the channel state is persistent
+[16:31] <niemeyer> rogpeppe: The point is that Dying, the method you're suggesting we remove, is not transitional.. it has well defined  behavior that is fire-once
+[16:31] <rogpeppe> niemeyer: can you think of a good use case for Dying?
+[16:31] <rogpeppe> niemeyer: as a publicly visible method
+[16:31] <niemeyer> rogpeppe: Given the dozens of cases we have with tomb.Dying, of course..
+[16:32] <rogpeppe> niemeyer: i'm not including tomb.Dying.
+[16:32] <rogpeppe> niemeyer: that's fine as is
+[16:32] <rogpeppe> niemeyer: it's the tomb's raison d'etre
+[16:32] <niemeyer> rogpeppe: Not really.. Tomb is only useful with the full behavioral pack it has
+[16:32] <niemeyer> rogpeppe: Including Dead, Kill, etc
+[16:33] <rogpeppe> niemeyer: but a tomb is an implementation detail of an object, which is why we have it as a non-exported field, rather than embedding it.
+[16:33] <niemeyer> rogpeppe: Wait
+[16:33] <rogpeppe> niemeyer: ok, true
+[16:33] <niemeyer> rogpeppe: So I'm looking at the paste
+[16:33] <niemeyer> rogpeppe: It's not clear how that proves Dying is bad
+[16:33] <rogpeppe> niemeyer: "dead not detected"
+[16:34] <rogpeppe> niemeyer: it's waiting for the object to die. but Dying does not signify that. it signifies that it will die (hopefully soon)
+[16:34] <niemeyer> rogpeppe: Sure.. it's a bit like saying Sleep is back because it blocks
+[16:34] <niemeyer> s/back/bad
+[16:35] <rogpeppe> niemeyer: why would we ever want to wait until an object *starts* to clean itself up?
+[16:35] <rogpeppe> niemeyer: i think that we always want to wait until it *has* cleaned itself up
+[16:35] <niemeyer> rogpeppe: Always when?
+[16:35] <rogpeppe> niemeyer: (unless we're part of the object itself, and need to participate in the cleaning-up process)
+[16:35] <niemeyer> rogpeppe: It feels like we're trying to guess stuff up unnecessarily
+[16:36] <niemeyer> rogpeppe: All I see is one test poorly written
+[16:36] <niemeyer> rogpeppe: That doesn't say much about Dying
+[16:36] <rogpeppe> niemeyer: that's the *only* place that Dying is used (other than some places in uniter that could use the tomb Dying method)
+[16:36] <rogpeppe> niemeyer: i mean Dying-other-than-tomb.Dying there
+[16:37] <niemeyer> rogpeppe: Erm
+[16:37] <rogpeppe> niemeyer: the only place that one of the Dying methods defined in juju-core is used
+[16:37] <rogpeppe> niemeyer: to be more accurate
+[16:38] <niemeyer> rogpeppe: UnitDying?
+[16:39] <fwereade_> niemeyer, UnitDying is justa broadcast channel that's closed when the unit's Life is Dying -- has nothing to do with tombs
+[16:39] <rogpeppe> niemeyer: that's different. it's not about the object itself
+[16:40] <niemeyer> <rogpeppe> niemeyer: why would we ever want to wait until an object *starts* to clean itself up?
+[16:40] <rogpeppe> [16:35:40] <rogpeppe> niemeyer: (unless we're part of the object itself, and need to participate in the cleaning-up process)
+[16:40] <niemeyer> rogpeppe: UnitDying is not part of the object itself
+[16:40] <niemeyer> rogpeppe: Someone else watches it
+[16:40] <rogpeppe> in this case, the uniter could arguably be considered part of the unit "objecT"
+[16:41] <rogpeppe> niemeyer: i would not suggest changing UnitDying to UnitDead
+[16:41] <niemeyer> rogpeppe: Me neither.. Dying means what it means, and seems to be fine everywhere we've used it
+[16:41] <niemeyer> rogpeppe: If you use Dying when you mean Dead, it won't fly so well, though
+[16:41] <niemeyer> rogpeppe: Same thing if you use Dead when you mean Dying
+[16:41] <rogpeppe> niemeyer: which is... in one place, wrongly.
+[16:42] <niemeyer> rogpeppe: In one place if you special case-out every other place
+[16:42] <rogpeppe> niemeyer: i don't see why we expose Dying on Firewaller, for example
+[16:42] <rogpeppe> niemeyer: or Provisioner or Uniter
+[16:43] <rogpeppe> niemeyer: or uniter.filter
+[16:43] <rogpeppe> niemeyer: all those places would be much better served with a Dead method AFAICS
+[16:44] <niemeyer> rogpeppe: That's an easier to verify assertion
+[16:44] <niemeyer> rogpeppe: rather than a witch-hunting against Dying methods
+[16:44]  * niemeyer looks
+[16:44] <rogpeppe> niemeyer: those are the only Dying methods we define
+[16:44] <fwereade_> rogpeppe, don't all tasks have Wait() though anyway?
+[16:44] <niemeyer> rogpeppe: Heh
+[16:44] <rogpeppe> fwereade_: yes. but Dying is nicer than starting a new goroutine just to call wait and send on a channel
+[16:45] <rogpeppe> fwereade_: when we've got that channel available anyway
+[16:45] <rogpeppe> oops!
+[16:45] <rogpeppe> fwereade_: Dead!
+[16:45] <fwereade_> rogpeppe, haha :)
+[16:45] <fwereade_> rogpeppe, I'll be guided by you in that, you're deeply involved with the client ATM
+[16:46] <fwereade_> rogpeppe, AIUI that's what the client does at the moment, right?
+[16:46] <rogpeppe> fwereade_: which client?
+[16:46] <fwereade_> rogpeppe, jujud
+[16:47] <niemeyer> rogpeppe: So firewaller.Dying is never used?
+[16:47] <rogpeppe> niemeyer: indeed
+[16:47] <niemeyer> rogpeppe: Easy one.. just kill it
+[16:47] <rogpeppe> niemeyer: +1
+[16:47] <niemeyer> Huh
+[16:47] <rogpeppe> niemeyer: and the other never-used Dying methods too?
+[16:47] <niemeyer> Why are we even discussing this?
+[16:47] <rogpeppe> niemeyer: because i'm just about to create a Dead method
+[16:48] <rogpeppe> niemeyer: and was wondering about the precedent.
+[16:48] <niemeyer> rogpeppe: Why do we need one?
+[16:48] <niemeyer> rogpeppe: That's different
+[16:48] <niemeyer> rogpeppe: Removing an unused method is a pretty easy choice
+[16:48] <niemeyer> rogpeppe: No matter its name :)
+[16:48] <rogpeppe> niemeyer: we don't *need* one - we can always do go func() {c <- obj.Wait()}; but a Dead method seems nicer, since the channel is available anyway
+[16:49] <niemeyer> rogpeppe: Sure, if you need Dead just add it
+[16:49] <rogpeppe> niemeyer: ok, cool
+[16:50] <niemeyer> rogpeppe: That's a different conversation than "let's kill all Dying methods and replace them by Dead because that's always what we need", if you see what I mean
+[16:50] <rogpeppe> niemeyer: i guess so. i had hypothetical use cases in mind, not real ones :-)
+[16:50] <niemeyer> rogpeppe: There's no long term decision, or convention being established.. just add that one-liner you need and let's be happy :)
+[16:51] <rogpeppe> niemeyer: and i still think that an externally visible Dying method that just returns obj.tomb.Dying() is almost certainly going to be a mistake
+[17:05] <rogpeppe> hmm, weird codereview behaviour i haven't seen before: https://codereview.appspot.com/7101059/
+[17:06] <rogpeppe> fwereade_: do you see no diffs at all?
+[17:06] <rogpeppe> the diffs in launchpad look fine
+[17:13] <niemeyer> rogpeppe: No issue exists with that id (7101059)
+[17:13] <niemeyer> rogpeppe: That's the message I get
+[17:13] <rogpeppe> niemeyer: i've just deleted it, trying again.
+[17:13] <rogpeppe> niemeyer: but the next one has the same problem too
+[17:13] <rogpeppe> niemeyer: one mo
+[17:13] <niemeyer> rogpeppe: FWIW, I just got a weird behavior while using it too.. had to reload the CL *several* times to see comments I had just entered
+[17:13] <rogpeppe> niemeyer: https://codereview.appspot.com/7106052
+[17:14] <niemeyer> rogpeppe: And my comments disappeared again!
+[17:14] <niemeyer> rogpeppe: There's something funky going on in their side
+[17:14] <rogpeppe> niemeyer: i guess you could review it by looking at the launchpad page
+[17:15] <rogpeppe> niemeyer: there's nothing complicated going on
+[17:20] <niemeyer> rogpeppe: It's not okay for lbox/codereview to be broken like that
+[17:21] <rogpeppe> niemeyer: i've never seen this particular failure-mode before
+[17:21] <rogpeppe> niemeyer: i imagine there's a data warehouse gone down somewhere :-)
+[17:25] <niemeyer> rogpeppe: The changes to u.Dying => u.tomb.Dying seem undue
+[17:26] <niemeyer> rogpeppe: u.Dying seems perfectly okay there
+[17:26] <rogpeppe> niemeyer: why would something external to uniter find any use from using the Dying method?
+[17:26] <rogpeppe> niemeyer: the dying state is surely something internal to the implementation of Uniter?
+[17:27] <rogpeppe> niemeyer: as it is in all our other objects
+[17:27] <rogpeppe> fwereade_: what do you think?
+[17:28] <niemeyer> rogpeppe: Maybe
+[17:28] <niemeyer> rogpeppe: none of our other objects tend to touch their tombs from external functions, though
+[17:28] <rogpeppe> niemeyer: neither does uniter
+[17:29] <niemeyer> rogpeppe: See modes.go
+[17:29] <niemeyer> rogpeppe: I don't care enough, though
+[17:30] <rogpeppe> niemeyer: modes.go is still internal to the package, although it's true it defines functions not methods
+[17:30] <rogpeppe> niemeyer: but that's not unprecedented. in jujud, i pass tombs around to other functions.
+[17:30] <niemeyer> Whatever William says is fine by me
+[17:30] <niemeyer> rogpeppe: Yes, you do..
+[17:30] <niemeyer> rogpeppe: Other functions don't grab private tombs, though
+[17:31] <rogpeppe> niemeyer: the modes.go functions use other private Uniter fields too
+[17:31] <niemeyer> rogpeppe: I don't care, though.. it feels a bit of a red-herring change, and a bike-sheddy discussion
+[17:31] <rogpeppe> niemeyer: i don't think the tomb is much different
+[17:32] <niemeyer> rogpeppe: LGTM and let's focus on something more valuable
+[17:32] <rogpeppe> niemeyer: i didn't plan on spending more than 5 minutes on this change!
+[17:32] <niemeyer> rogpeppe: Zero would be a better number
+[17:33] <mramm> looks like I'm going to be without power for about 2 hours here this afternoon
+[17:34] <mramm> I'll be around though, so if you you need to contact me I will be checking e-mail periodically
+[17:34] <mramm> and will be available by phone
+[17:34] <niemeyer> rogpeppe: Regarding the yaml vs. json change, we can use yaml, and fix goyaml later to use !binary, that encodes as base64 by itself
+[17:35] <rogpeppe> niemeyer: i think if we use yaml we'll exceed the 16K cloudinit limit
+[17:35] <niemeyer> rogpeppe: "The server encountered an error and could not complete your request."
+[17:35] <niemeyer> rogpeppe: codereview is busted
+[17:35] <rogpeppe> niemeyer: seems like it
+[17:35] <niemeyer> rogpeppe: I don't understand
+[17:35] <niemeyer> rogpeppe: How does the agent configuration file written to disk relate to cloudinit?
+[17:36] <rogpeppe> niemeyer: see WriteCommands
+[17:36] <rogpeppe> niemeyer: it's also used to generate the cloudinit file
+[17:36] <rogpeppe> niemeyer: which is kinda the point of the package - it's a common place that knows how to write an agent configuration file
+[17:36] <rogpeppe> niemeyer: whether that's into a cloudinit file or an upstart script, or directly.
+[17:37] <rogpeppe> niemeyer: actually we don't use it in an upstart script
+[17:38] <niemeyer> rogpeppe: echo | gunzip?
+[17:38] <niemeyer> rogpeppe: I mean, the two things seem somewhat unrelated.. you can do whatever you want in these commands
+[17:38] <rogpeppe> niemeyer: that's a thought
+[17:39] <rogpeppe> niemeyer: except it would have to be echo | b64decode | gunzip
+[17:39] <rogpeppe> niemeyer: is there a base 64 decoder provided as standard in ubuntu?
+[17:40] <niemeyer> rogpeppe: Yeah:
+[17:40] <niemeyer> % dpkg -S /usr/bin/base64
+[17:40] <niemeyer> coreutils: /usr/bin/base64
+[17:41] <rogpeppe> niemeyer: cool, i'll do that then.
+[17:41] <rogpeppe> niemeyer: if that seems like a reasonable approach to you
+[17:47] <niemeyer> rogpeppe: Sounds okay.. even if we convert it to base64 inside goyaml itself (which sounds sane), we'll still be getting more compression that way
+[17:48] <niemeyer> rogpeppe: It would actually be nice to pass the whole cloudinit compressed instead
+[17:48] <niemeyer> But I don't recall if that's possible out of the box
+[17:48] <rogpeppe> niemeyer: yeah, and it will deal nicely with the two-identical certificates issue
+[17:48] <rogpeppe> niemeyer: yes, that would be good
+[17:49] <rogpeppe> niemeyer: maybe it does - i haven't actually experimented with the limits, just googled for them
+[17:49] <niemeyer> rogpeppe: I know it has a fancier mime multipart scheme
+[17:49] <niemeyer> Hah
+[17:50] <niemeyer> rogpeppe: https://help.ubuntu.com/community/CloudInit
+[17:50] <niemeyer> rogpeppe: "content found to be gzip compressed will be uncompressed"
+[17:50] <rogpeppe> niemeyer: cool!
+[17:50] <niemeyer> rogpeppe: We can actually just bundle the whole thing with gzip and send down the wire
+[17:50] <rogpeppe> niemeyer: that's just brilliant
+[17:50] <niemeyer> +1
+[17:50] <rogpeppe> niemeyer: i can relax a bit
+[18:02] <niemeyer> Lots of good stuff in the history of the past month so far
+[18:03] <niemeyer> It's great to have the CL links in the log, btw
+[18:03] <niemeyer> I hadn't realized how useful that'd be until now
+[18:03] <rogpeppe> niemeyer: isn't it, just
+[18:04] <rogpeppe> niemeyer: i'm glad you haven't found too many WTFs!
+[18:04] <rogpeppe> niemeyer: (or maybe you have, but are dwelling on the good things...)
+[18:04] <rogpeppe> niemeyer: i've gotta go
+[18:05] <rogpeppe> g'night all, see ya tomorrow
+[18:05] <niemeyer> rogpeppe: Nah, looks good so far :)
+[18:05] <niemeyer> rogpeppe: Have a goo dnight man
+[18:05] <rogpeppe> niemeyer: my dnights will indeed be all gooey
+[18:05] <rogpeppe> :-)
+[18:16] <niemeyer> rogpeppe1: Are you back from the goo dnight? :)
+[18:16] <hazmat> anyone else having issues with reitveld?
+[18:16] <niemeyer> hazmat: Yeah
+[18:16] <niemeyer> hazmat: Server seems busted ATM
+[18:16] <hazmat> rogpeppe1, gooey is sweet and crunchy ;-)
+[18:18] <niemeyer>   testing: print mongod log messages
+[18:18] <niemeyer> rogpeppe1: ^ nice
+[18:18] <niemeyer> I had seen that before too
+[18:18] <niemeyer> Or rather, s/seen/suffered from/
+[18:22] <hazmat> app engine, the most helpless way to fail at scale
+[18:25] <TheMue> niemeyer: Google has GAE troubles and rietveld runs on it.
+[18:25] <niemeyer> TheMue: Really?
+[18:25] <niemeyer> TheMue: Where's the news?
+[18:25] <TheMue> niemeyer: Yep, just read it.
+[18:26] <TheMue> niemeyer: One moment.
+[18:26] <TheMue> niemeyer: Hehe, even http://code.google.com/status/appengine failt.
+[18:26] <TheMue> fails.
+[18:27] <niemeyer> TheMue: Works here, but it does say the service is facing difficulties
+[18:28] <TheMue> niemeyer: See also https://twitter.com/app_engine/status/291243267239059456
+[18:28] <niemeyer> TheMue: Cheers
+=== fss is now known as flaviacarlette
+=== flaviacarlette is now known as fss
+[20:03] <hazmat> niemeyer, if you've got a moment.. there was an lbox question from orange squad .. an error their getting on submit .. http://pastebin.ubuntu.com/1535263/
+[20:03] <hazmat> bzr info output http://pastebin.ubuntu.com/1535286/
+[20:04] <niemeyer> hazmat: "*** Bazaar has encountered an internal error."
+[20:04] <niemeyer> hazmat: Doesn't look like an lbox issue
+[20:05] <niemeyer> hazmat: The command line is pretty boring: arguments: ['/usr/bin/bzr', 'commit', '-F', '/tmp/commit-803116972', '--
+[20:05] <niemeyer>     author', 'Curtis Hovey <curtis.hovey@canonical.com>',
+[20:05] <niemeyer>     '/home/curtis/Work/charmworld/lbox-245970753/lbox']
+[20:05] <hazmat> niemeyer, noted thanks
+[20:06] <niemeyer> hazmat: I note it's a beta bzr version.. might be related
+[20:07] <niemeyer> (2.6b2)
+[20:10] <hazmat> niemeyer, it might also be related to plugins, several members of this team have various assorted plugins.. i'm wondering if lbox should do bzr --no-plugins when executing
+[20:10] <hazmat> several don't use it as a result due primarily to errors on submit
+[20:11] <niemeyer> hazmat: lbox doesn't use anything special about bzr
+[20:11] <niemeyer> hazmat: It's just running it via its command line
+[20:12] <niemeyer> hazmat: If plugins are broken with lbox, I'm curious about why is that a problem related to lbox
+[20:12] <hazmat> niemeyer, understood. but in this case the user can commit to trunk fine using bzr byitself..
+[20:12] <niemeyer> hazmat: Exactly, lbox *is* using bzr itself
+[20:13] <hazmat> niemeyer, just that lbox could potentially be more robust by disabling user plugins
+[20:14] <niemeyer> hazmat: indeed, but it would also prevent people from using plugins with lbox.. I don't yet understand why that's a good thing
+[20:14] <hazmat> hmm...
+[20:14] <niemeyer> hazmat: The one thing lbox uses that some people are not used to is lightweight checkouts
+[20:15] <niemeyer> hazmat: But that's a stock feature, which hopefully should work fine
+[20:15] <hazmat> at the moment i'm just trying to discover what's the issue, it was pointed out that the plugin disable can be done via env var. we're trying that now
+[20:15] <niemeyer> hazmat: Thanks, I'm also curious to know what's the actual issue
+[20:18] <hazmat> niemeyer, no change.. http://pastebin.ubuntu.com/1535318/  is there an option to have lbox keep the temp directory around?
+[20:18] <hazmat> hmm.. no such revision.. is that a common ancestor check.
+[20:21] <niemeyer> hazmat: Not yet, but it should be relatively simple to break at the right point by replacing the bzr executable and catching commit
+[20:21] <niemeyer> Hmm.. the branch checked message has a bug..
+[20:21]  * niemeyer fixes
+[21:17] <hazmat> niemeyer, fwiw 2.6b2 is the quantal bzr and the further analysis (no real answer) http://pastebin.ubuntu.com/1535610/
+=== davechen1y is now known as davecheney
+=== davechen1y is now known as davecheney
+[23:33] <fwereade_> davecheney, morning
+[23:33] <davecheney> fwereade_: hello
+[23:34] <fwereade_> davecheney, I'm about to sleep, but I have a vague feeling that you are *probably* least tainted by groupthink-related issues re state and lifecycle
+[23:34] <davecheney> fwereade_: that is a sounds assumption
+[23:34] <fwereade_> davecheney, and therefore I would particularly appreciate your thoughts on https://codereview.appspot.com/7095059
+[23:34] <davecheney> fwereade_: will do
+[23:35] <fwereade_> davecheney, as a diff, it's a monster; but if you read doc/draft/death-and-destruction.txt first, I *hope* it will appear roughly sane to you
+[23:35] <davecheney> fwereade_: ok
+[23:35] <fwereade_> davecheney, ie I think/hope the operations are clear and adequately explained; but the near-equivalence between behaviours before and after is harder to discern
+[23:36] <davecheney> removing things is always the hardest
+[23:36] <davecheney> and tends to mess up pretty mental models
+[23:36] <fwereade_> davecheney, I *thiiiink* I'm converging one something that works ok for now
+[23:36] <davecheney> fwereade_: i can assure you that you are the one that knows the most about this problem
+[23:37] <fwereade_> davecheney, which is why it's so important I get sanity-checks from everyone else ;p
+[23:37] <fwereade_> davecheney, anyway, sleepytime :)
+[23:38] <doc_> is this strictly for juju developer questions?
+[23:52] <davecheney> doc_: if it's a general juju question you're probably likely to find better help in #Juju
+[23:53] <doc_> davecheney: Thanks. Tried there, nobody answering :-(
+[23:54] <davecheney> doc_: bad time of day
+[23:54] <davecheney> most juju's are in the EU/US timezone
+[23:54] <doc_> tx. Will try again tomorrow then
+[23:55] <doc_> EST myself … which reminds me maybe I should go get some food :-)
+[23:55] <davecheney> doc_: consider also https://lists.ubuntu.com/mailman/listinfo/juju

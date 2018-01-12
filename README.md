@@ -13,37 +13,48 @@ The objective of this project is to utilize social network analysis techniques t
 <img src="https://raw.githubusercontent.com/wiki/prasadtalasila/IRCLogParser/sample_images/infomap_CU.png" width="400px"></img>
 
 
+## Documentation
+
+IRCLogParser uses [Sphinx Python Documentation Generator](http://www.sphinx-doc.org/en/stable/) for generating documentation of the library.
+The documentation is auto-generated from the commits made on the [dev](https://github.com/prasadtalasila/IRCLogParser/tree/dev) branch. Please see the [online documentation](http://prasad.talasila.in/IRCLogParser/).
+
+
+## Installation
+
+IRCLogParser depends on various third-party libraries which are handled by [setup.py](./setup.py). 
+Run the "install.sh" script present in [script](./script] directory to install these dependencies and other OS level
+dependencies for the third-party libraries.
+
+Follow the steps to install dependencies and IRCLogParser library:-
+`git clone https://github.com/prasadtalasila/IRCLogParser.git`
+`cd IRCLogParser`
+`bash script/install`
+ 
+Ideally the installation takes not more than 10 minutes.
+
+
+## Testing
+
+Presently, IRCLogParser has various end-to-end implemented which reside in the [test directory](./test/).
+
+To run the all the tests locally on your machine, execute :
+`python -m unittest -v discover -s test/` in the root directory.
+
+To run a particular test, execute :
+`python -m unittest -v location_to_test` in the root directory.
+
+Running all the unit & integration tests require 3-5 minutes.
+
 ## Usage
 
 The library's working has been modularised into many modules namely input, analysis, output, visualisation and validation. The [sample.py file](./sample.py) very comprehensively presents how one can use IRCLogParser for parsing and analysis.
 
 A page on typical workflow for using IRCLogParser also exists on the documentation [here](http://prasadtalasila.github.io/IRCLogParser/TypicalUsage.html).
 
-Some of the visualisable sample outputs can be on the wiki, giving an idea about IRCLogParser's capabilites.
-
-
-## Documentation
-
-IRCLogParser uses [Sphinx Python Documentation Genertor](http://www.sphinx-doc.org/en/stable/) for generating documentation of the library. The documentation is setup to work with [Google Style Docstrings](http://www.sphinx-doc.org/en/stable/ext/example_google.html) which eases the documentation writing process.
-
-The documentation is deployed on the branch `gh-pages` who's updation has been made automatic by the a [bash script](./ext/docs_auto_deploy.sh) which otherwise requires to run `make html` in docs directory after every commit.
-
-You can view the documentation hosted on `gh-pages` [here](http://prasadtalasila.github.io/IRCLogParser/).
-
-
-## Testing
-
-Presently, IRCLogParser has various end-to-end implemented which reside in the [test directory](./test/).
-To run the tests locally on your machine, run `python -m unittest -v tests` in the test directory.
-
-
-## Installation
-
-IRCLogParser depends on various third-party libraries which are handled by [setup.py](./setup.py). 
-Run the "install.sh" script in the root directory to install these dependencies and other OS level
-dependencies for the third-party libraries.
+To run and test the sample program, execute in root directory :
+`python sample.py`
 
 ## License
 
-IRCLogParser is available under the [MIT License](./LISENCE.md)
+IRCLogParser is available under the [GPL v3.0](./LISENCE.md)
 

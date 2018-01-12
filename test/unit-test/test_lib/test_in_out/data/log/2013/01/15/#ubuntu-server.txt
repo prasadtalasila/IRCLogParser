@@ -1,0 +1,613 @@
+[00:00] <NomadJim> But the password I supplied in the debconf isn't working when I try to login to the mysql server
+[00:00] <NomadJim> http://paste.ubuntu.com/1532899/ - debconf file
+[00:01] <lvmer> stevenr: ops forgot to disable firewall..... fml
+[00:01] <lvmer> stevenr: I can ping local address will test other asap
+[00:02] <lvmer> stevenr: I can ping local, but no net
+[00:02] <lvmer> no google.com :/
+[00:02] <StevenR> lvmer: can you ping your router?
+[00:02] <lvmer> yes
+[00:02] <lvmer> 0.3 ms
+[00:02] <StevenR> can you ping 8.8.8.8 ?
+[00:02] <lvmer> what is that?
+[00:02] <StevenR> one of google's DNS servers
+[00:02] <sarnold> that's nice of them :)
+[00:02] <lvmer> yes I can
+[00:03] <lvmer> 14 ms
+[00:03] <StevenR> ok, so you just need to configure some DNS servers
+[00:03] <lvmer> hum
+[00:03] <StevenR> lvmer: edit /etc/resolv.conf
+[00:03] <lvmer> idk what to do, domain name service servers? where is that
+[00:03] <lvmer> ok
+[00:04] <lvmer> says do not edit by hand
+[00:04] <lvmer> changes will be overwritten
+[00:04] <StevenR> nameserver 8.8.8.8   is an example to use one of google's
+[00:04] <StevenR> meh
+[00:04] <StevenR> don't worry about that
+[00:05] <lvmer> k
+[00:06] <lvmer> so what do I do? add a column that says:    google.com   8.8.8.8  ?
+[00:06] <StevenR> no
+[00:06] <StevenR> add a line that says:
+[00:06] <StevenR> nameserver 8.8.8.8
+[00:07] <StevenR> or use whatever you'd normally put (your router? your ISP's DNS server?)
+[00:07] <lvmer> not sure, the file was blank
+[00:07] <StevenR> ideally put two
+[00:07] <lvmer> but adding that line
+[00:07] <lvmer> helped
+[00:07] <StevenR> ok
+[00:07] <lvmer> I can ping google.com
+[00:07] <StevenR> also add:
+[00:07] <StevenR> nameserver 8.8.4.4 (google's other public DNS server)
+[00:08] <StevenR> (don't add the bit in brackets!)
+[00:08] <lvmer> ok
+[00:08] <lvmer> where should I put this? so it doesn't get over written?
+[00:09] <StevenR> lvmer: it probably won't. Reboot and see
+[00:10] <lvmer> stevenr: so what was the problem? why did I get errors with the bond, but not without?
+=== slank is now known as slank_away
+[00:11] <StevenR> lvmer: I don't understand?
+[00:11] <StevenR> lvmer: what do you mean?
+[00:11] <lvmer> I assume my router is the problem, it freaks out and stops doing dns when it gets 2 ports from the same ip?
+[00:11] <lvmer> like why could I always ping google.com
+[00:11] <lvmer> but now that I bond and restart
+[00:11] <lvmer> I can't until I add that file
+[00:12] <StevenR> lvmer: no, you had no DNS servers configured. When you used DHCP, the nameservers where put in your resolv.conf automatically.
+[00:12] <lvmer> oooooooooo
+[00:12] <StevenR> (that's one of the things that DHCP does)
+[00:12] <lvmer> stevenr: it got erased
+[00:12] <lvmer> resolv.conf
+[00:12] <lvmer> I make a .bak
+[00:12] <lvmer> but how do I stop this?
+[00:12] <StevenR> ok. you'll need to configure resolvconf
+[00:12] <lvmer> I assume I can add nameservers to the interfaces? or something
+[00:12] <lvmer> o
+[00:13] <StevenR> but I'm not sure how you do that
+[00:13] <StevenR> you might be able to do that
+[00:13] <StevenR> doesn't look like it
+[00:14] <StevenR> have a look at configuring resolvconf
+[00:15] <lvmer> dns-nameservers 12.34.56.78 12.34.56.79
+[00:15] <lvmer> you can add it in interfaces
+[00:15] <StevenR> cool
+[00:16] <StevenR> do that then :)
+[00:16] <lvmer> yup
+[00:16] <lvmer> thanks a lot for the help :)
+[00:16] <StevenR> no problem :)
+[00:16] <StevenR> now you can look at adding in the odd interface
+[00:16] <lvmer> yah
+[00:16] <lvmer> xD
+[00:19] <lvmer> the default nameserver file is:  nameserver 192.168.0.1    [new line]   search hsd1.pa.comcast.net
+[00:19] <StevenR> ?
+[00:19] <lvmer> how do I add the search one? lol
+[00:19] <lvmer> resolv.conf
+[00:20] <lvmer> that's the resolv.conf if I start up with dhcp
+[00:23] <StevenR> dns-search-domains ?
+[00:23] <StevenR> not sure (Guessing)
+[00:23] <StevenR> anyway, I need to sleep now :)
+[00:24]  * StevenR &
+[00:24] <lvmer> stevenr: bye :)
+[00:26] <sarnold> lvmer: in my experience, 'search' is often not helpful (why do you care if you don't have to type "hsd1.pa.comcast.net" on host names?)
+[00:26] <lvmer> curiocity
+[00:26] <lvmer> lol
+[00:26] <lvmer> that is it
+[00:26] <lvmer> I've moved on, I'm editing other stuff now xD
+=== cpg|away is now known as cpg
+[00:45] <lvmer> mii-tool reports no mii interfaces found
+=== WaVeR` is now known as WaVeR
+[01:12]  * lvmer sighs in shame after realizing his strict firewall settings start automatically on reboot & were preventing him from properly troubleshooting the network adapters
+=== cpg is now known as cpg|away
+=== ahs3` is now known as ahs3
+[04:57] <Brombomb> I'm running server at home as a media server (DLNA, UPnP).  Is there a way to play audio out to a connected speaker system?
+[05:06] <PryMar56> Brombomb, use a 1/8 to RCA conversion cable
+[05:07] <Brombomb> sorry not hardware wise but software wise... controlling the server remotely
+[05:07] <PryMar56> ssh in, and launch abrac (x-forward)
+[05:07] <PryMar56> abraca
+[05:07] <PryMar56> it needs xmms2 server
+[05:08] <PryMar56> apt-get install abraca xmms2
+[05:08] <Brombomb> cool I'll check it out
+[05:08] <Brombomb> thanks for the suggestion
+[05:08] <PryMar56> it works smooth here
+=== pug is now known as Guest41110
+=== cpg|away is now known as cpg
+=== voxadam_ is now known as voxasdam
+=== voxasdam is now known as voxadam
+[07:58] <Fleck> hey, how can I keep current kernel?
+[08:01] <sarnold> Fleck: investigate 'pinning' in dpkg, apt, apt.conf manpages
+[08:01] <Fleck> ty
+=== Malediction_ is now known as Malediction
+=== smb` is now known as smb
+=== tspxx is now known as tspx
+[09:09] <Daviey> jamespage: bug 1087091 seems a bit certain 'it should be removed'.. can they not just be fixed? :)
+[09:09] <uvirtbot> Launchpad bug 1087091 in nova "get-orig-source-git should be removed" [High,Confirmed] https://launchpad.net/bugs/1087091
+[09:09] <Daviey> morning all, btw :)
+[09:10] <jamespage> Daviey, I'm leaving that up to zul; whatever we have should be consistent across all packages
+[09:11] <Daviey> yeah
+[09:12] <RoyK> morning
+[10:57] <maruq> hi guys
+[10:58] <maruq> having some fun trying to get raid 0 array to persist on a hi1.4xlarge (AWS)
+[10:58] <maruq> I boot the node (canonical's ubuntu 12.04) with ephemeral at /dev/sdf & /dev/sdg
+[10:58] <maruq> I then assemble a raid0 array using mdadm
+[10:58] <maruq> I format the device (/dev/md0) as xfs
+[10:59] <maruq> write things to /etc/fstab & /etc/mdadm/mdadm.conf
+[10:59] <maruq> check it's all good using df -h (I see a 2TB volume that I've mounted at /mnt/data)
+[10:59] <maruq> I then reboot, and check the df -h to see the volume is not there
+[10:59] <maruq> if I do an mdadm --detail --scan, it seems my device has moved from /dev/md0 to /dev/md/0_0
+[10:59] <jodh> anyone know why nova-network is using start-stop-daemon in its Upstart job? Is it purely to change the user?
+[10:59] <maruq> I seem to have missed something… any ideas?
+[11:00] <xnox> maruq: update-initramfs -u ?
+[11:01] <maruq> xnox: we tried that before & it still seemed to happen, will give it another try though
+[11:16] <AtuM> hello.. I'm trying to setup a two-node drbd/ocfs2 cluster using pacemaker,corosync and cman... I'm going through cluster-from-scratch manual, but that's ment for rhel based distros.. is there a known how-to to this setup
+[11:18] <AtuM> this wiki is no good: https://wiki.ubuntu.com/ClusterStack/Precise
+[11:18] <StevenR> lvmer1: most modern ethernet interfaces don't have a mii-tool compatible interface :)
+=== yofel_ is now known as yofel
+[11:28] <maruq> xnox: thanks, that seems to be working now ;)
+[11:28] <maruq> giving it another reboot to confirm, but it seems good
+[11:37] <maruq> xnox: do you know of a safe way to call the "update-initramfs -u" ? I'd like to call via chef when I mount the volume… best to avoid calling it over & over
+[11:39] <xnox> maruq: it is safe enough. either it will regenerate the same initramfs, or fail to regenerate one (without overwriting the old one) that was my experience with it so far, but check the update-initramfs code to be sure.
+[11:39] <xnox> maruq: you need to regenerate initramfs after adding new raid volumes, not after each mount.
+[11:41] <maruq> xnox: yeah, that was my thought. it just seemed pointless to call every chef run
+[12:33] <ttx> jamespage: I see you're coming to FOSDEM, anyone else from server team ?
+[12:34] <jamespage> ttx, sure am - Daviey and rbasak are as well
+[12:34] <ttx> ok, cool
+[12:36] <jamespage> ttx, see you there!
+[12:36] <jamespage> ttx, when do you arrive in brussels? friday?
+[12:36] <ttx> jamespage: thursday evening.
+[12:36] <jamespage> ttx, right - I arrive friday afternoon
+[12:54] <maruq> xnox: just trying to get my positioning right in my chef recipe. should I be calling update-initramfs after creating the raid, or after formatting the device & writing the fstab?
+=== cpg is now known as cpg|away
+[13:07] <samba35> RoyK, ping
+[13:18] <RoyK> samba35: pang!
+=== zeppo_ is now known as zeppo
+[13:20] <samba35> i am trying to setup a lvm ,with existing harddisk can we build a lvm with lossing data (want to create partion )
+[13:22] <RoyK> -win 28
+[13:22] <samba35> ?
+[13:22] <RoyK> samba35: just ask on the channel, please don't pm me for support, please
+[13:22] <samba35> ok
+[13:23] <RoyK> but no, you can't convert an existing filesystem to lvm
+[13:23] <samba35> i have lvm formated disk (guess)
+[13:24] <samba35> how do i check ? if i hit enter i am getting lvm prompt is that mean i am already on lvm
+[13:27] <samba35> lvm> pvscan
+[13:27] <samba35>   PV /dev/sda5   VG ubserver   lvm2 [148.81 GiB / 0    free]
+[13:27] <samba35>   Total: 1 [148.81 GiB] / in use: 1 [148.81 GiB] / in no VG: 0 [0   ]
+[13:27] <samba35> so i am on lvm ?
+[13:29] <AtuM> samba35, you're in lvm prompt. what you see is that /dev/sda5 has been declared as a pv and its in use by volume group named ubserver
+[13:31] <samba35> so i am using lvm ,now if i want to create another small partion can i create it with esixting free space
+[13:31] <AtuM> samba35, you should check free lvm space with vgdisplay
+[13:32] <samba35> ok
+[13:32] <AtuM> then use lvcreate --help
+[13:32] <samba35> Free  PE / Size       0 / 0
+[13:33] <AtuM> well then no, you cannot create any extra partitions (lvm volumes in your case)
+[13:33] <samba35> ic
+[13:35] <samba35> df -h show 101 gb free
+[13:35] <AtuM> samba35, you should really read something like http://www.redhat.com/magazine/009jul05/features/lvm2/ to get familliar with lvm concept first
+[13:35] <samba35> ok
+[13:36] <AtuM> df always shows space on filesystems.. thats above the partition layer
+[13:37] <AtuM> if you have free space on your FS, you can just use it.. if it's not the propper "path", then just use symlinks ;-)
+[13:37] <samba35> ok
+[13:39] <AtuM> if you can't live with what you have set-up, then reinstall - downsizing partitions on lvm2 is no easy task. you must first understand lvm2
+[13:42] <samba35> ok
+[13:42] <samba35> can  i create lvm on pen drive and use it as a lvm volume ?
+=== niemeyer_ is now known as niemeyer
+[13:48] <zul> lifeless: ping
+[13:50] <ztane> why would upstart fail to reap its children?
+[13:51] <ztane> I have firefox zombies clinging to pid 1 but not reaped... also any ideas how to debug?
+[13:57] <xnox> ztane: so firefox was started by e.g. gnome-session. But it's lost it's track of firefox and hence it got reparented to upstart pid1. Upstart will not reap those. In raring we are working on adding support to run upstart on per-usersession basis (with subreaper call) such that firefox would have been reparented to user-upstart and correctly reaped when user logs out.
+[13:58] <xnox> ztane: also such questions are best suited for #upstart =)
+[13:58] <ztane> ok :P
+[14:00]  * ogra_ wonders what you do with an upstart started firefox on a server
+[14:03] <ztane> ogra_: it does nothing, however when I went to ask the same question on #ubuntu I got a lecture what zombie processes are and how I can ignore the problem altogether.
+[14:03] <ztane> and here I got an answer :D
+[14:03] <ogra_> well
+[14:05] <AtuM> what I'd like to know is why would anyone want upstart on server machines? what's the upside of starting processes in paralel on a server?
+[14:05] <ztane> AtuM: faster startup on for example elastic computing
+[14:06] <ztane> servers used to be "that big iron on racks", not that much anymore
+[14:06] <AtuM> ztane, and that's what... 2min max... if server is stabile i'd expect it would not need any reboots for years to come.. so what's the point
+[14:07] <ztane> AtuM: you do not get it obviously
+[14:07] <ogra_> you wouldnt do any security upgrades on your server ?
+[14:07] <ztane> cloud computing, if you need 5000 machine hours of computing
+[14:07] <ztane> you boot 50000 computers and do it in 6 minutes
+[14:07] <ztane> and then halt
+[14:08] <AtuM> ogra_, linux is not windows..
+[14:08] <ogra_> AtuM, ??
+[14:08] <ztane> also, computers *will* crash
+[14:08] <ztane> because of parity errors at least
+[14:08] <ztane> on cheaper hardware
+[14:08] <AtuM> ogra_, if I protect linux from the outside world and it works fine.. do I really "need" security updates?
+[14:09] <ogra_> yes
+[14:09] <ztane> your desktop computer *will* crash because of parity errors.
+[14:09] <AtuM> ztane, yes.. but not that often.. and if I use ECC memory it should't crash.. forget desktop... we're in "server" section
+[14:09] <ztane> maybe not so for expensive server hw
+[14:09] <ogra_> AtuM, as long as your server is in any way connected to the internet you should always make sure to have all security fixes
+[14:10] <ogra_> and that has nothing to do with linux or windows
+[14:10] <ztane> another case is
+[14:11] <ztane> that in a sequential sequence, there might be a case that something "not so necessary" would be blocking ssh in boot...
+[14:11] <ztane> how would you go fix that problem, ssh cannot start because it would launch at 50 instead of 30 :D
+[14:11] <AtuM> ogra_, let's say I have a database server that never connects to internet.. it's client is in dmz and the security is taken care of.. the likleyhood of breaching the server is low.. and the critical part is the db software, not linux kernel
+[14:12] <ogra_> you dont have any users in your network ?
+[14:12] <ogra_> usually a server serves something to more than one person
+[14:12] <ztane> anyway, there are bugs in kernel, patching a running kernel is a bit difficut
+[14:12] <ztane> *difficult
+[14:13] <ogra_> and indeed the DB software might be more important here but what tells you that there isnt a kernel vulnerabolity that can be used through sql commands ? :)
+[14:14] <AtuM> ogra_, security is a far fetched idea... it's an illusion.. there are always vulnerabilities we don't know of.
+[14:14] <ogra_> an admin who doesnt regulary security updates has to be fired imho
+[14:14] <ogra_> immediately without discussion ...
+[14:14] <AtuM> ogra_, you don't work with HA systems do you?
+[14:15] <ogra_> i did in my life
+[14:15] <ogra_> and also saw people being fired because of missing security updates
+[14:17] <AtuM> ogra_, so you're basically saying that upstart saves time with doing security updates
+[14:17] <ogra_> as long as there are users you can not trust you are vulnerable, very simple ...
+[14:17] <ogra_> no
+[14:17] <ogra_> i'm just reacting to "servers dont need to be rebooted for years"
+[14:17] <AtuM> ogra_, that's a fact that no patch can solve
+[14:17] <ogra_> no, patches cant, but being up to date minimizes the risk
+=== zurich is now known as level15
+[14:19] <jdstrand> fyi, ksplice can patches many kernel vulns without a reboot. you are going to need to patch your servers. consider a flaw in the database being used with a kernel local priv escalation. sure you have to weigh the risks vs regressions vs downtime, but flat out saying security is an illusion is not correct
+[14:20] <AtuM> ogra_, that "no reboot for years" remark is just for discussion. I think it all depends on SLA and the risk management policy.. if there's no big risk to a periferal server I see no reason for regular updates.. but that's just me
+[14:20] <jdstrand> there is a big difference between a vuln waiting to be discovered and one that is known and can be actively exploited
+[14:21] <AtuM> jdstrand, ksplice is owned by Oracle now.. it's off topic for ubuntu-server
+[14:21] <jdstrand> and part of the beauty of HA is you can take down some servers for a reboot and leave others running
+[14:22] <ogra_> right
+[14:22] <jdstrand> AtuM: I don't think the mere mentioning of ksplice is off-topic
+[14:22] <ogra_> which makes security maintenance so much easier
+[14:22] <jdstrand> it is something that they offer for Ubuntu for people who don't want to reboot cause of kernel vulns. I am not advocating its use, I am saying it is possible
+[14:23] <jdstrand> but in the HA case, it isn't needed. you use phased updates
+[14:36] <jacobw> hi, what's the easiest way to install 12.04 on non pae?
+[14:37] <ztane> jacobw: hmm?
+[14:38] <newlinux> Hi all
+[14:38] <newlinux> can I have zimbra mail with apache web server in the same ubuntu server?
+[14:39] <ztane> jacobw: shouldnt that just work right out of the box
+[14:39] <roaksoax> zul: quick question... is there an effective way to determine whether package A is to be installed (or has been installed) in package B postinst ?
+[14:39] <jacobw> ztane: >12.04 kernel requires pae extension
+[14:39] <zul> roaksoax: not that i know of
+[14:40] <roaksoax> zul: k thanks
+[14:40] <ztane> jacobw: really? or that it has support enabled
+[14:41] <ztane> hmm
+[14:42] <ztane> seems that it is indeed dropping non-pae support
+[14:44] <ztane> ah i thought it was a runtime switch but ofc it is not as it changes page directory layout
+[14:45] <zul> jamespage: extras packaged and uploaded
+[14:47] <jacobw> ztane: using the mini iso is the answer
+[14:48] <diego_> where can i find the most updated repository for samba4 for 12.04 ?
+=== slank_away is now known as slank
+=== zeppo_ is now known as zeppo
+=== Ursinha_ is now known as Ursinha
+=== motmot is now known as liva
+[15:06] <jamespage> zul, ta
+[15:06] <jamespage> yolanda, ^^ see zulls comment re extras
+[15:06] <yolanda> let me check
+[15:07] <yolanda> ok, i'll try to rebuild the package
+[15:19] <iclebyte_work> how can i downgrade one specific package to that of a previous release without having apt remove all the dependent applications. the package in question is libgnutls26 - i'm running 12.04lts and have added oneric's security repo and masked the libgnutls26 pkg in /etc/apt/preferences and 'apt-get install libgnutls26' wants to downgrade to 2.10.5-1ubuntu3.1 but it also wants to remove all the other apps which rely on it
+[15:24] <diego_> http://paste.org/60172 guys any help??? Samba4 + Kerberos
+=== alaing_ is now known as alaing
+[15:33] <newlinux> Hi All
+[15:33] <newlinux> I need small help
+[15:33] <newlinux> im new to linux
+[15:34] <newlinux> I have download xeams mail server
+[15:34] <newlinux> its .tar
+[15:37] <iclebyte_work> newlinux, yes? what is your question?
+[15:40] <newlinux> Ok
+[15:41] <newlinux> I have download a free linux mail server, its 50MB file .Tar
+[15:41] <newlinux> I have done the these steps
+[15:41] <newlinux> tar -xf XeamsLinux.tar
+[15:42] <newlinux> when i run Install.sh , I get that the file is not there
+[15:42] <newlinux> but when I ls I can see the file
+[15:42] <iclebyte_work> how are you running Install.sh?
+[15:43] <iclebyte_work> you should use a dot slash to signaify execute from the current directory. i.e. './Install.sh'
+[15:43] <iclebyte_work> remember also Linux is case sensitive so Install.sh and install.sh are not the same.
+[15:44] <newlinux> Yes I have done that
+[15:44] <iclebyte_work> did it work?
+[15:44] <newlinux> it shows command not found
+[15:44] <iclebyte_work> try this
+[15:44] <iclebyte_work> chmod +x Install.sh
+[15:44] <iclebyte_work> then ./Install.sh
+[15:44] <newlinux> Ok Thanks <iclebyte_work>
+[15:45] <newlinux> but it says I must login name root
+[15:45] <newlinux> I just installed ubuntu 12.4, didnt ask for the root password?
+[15:45] <newlinux> can you please advise?
+[15:45] <iclebyte_work> no it wont, it assumes you are root
+[15:45] <iclebyte_work> type this: sudo ./Install.sh
+[15:45] <iclebyte_work> then put in YOUR password when it asks for one
+[15:46] <iclebyte_work> the sudo command can be remembered as 'super user do'
+[15:46] <newlinux> it says you must login as root?
+[15:46] <iclebyte_work> just put in your password
+[15:46] <iclebyte_work> newlinux, if you are new, i would recommend you install software from the offical ubuntu packages rather than from a tar.gz or something
+[15:46] <iclebyte_work> postfix is a good email server
+[15:46] <iclebyte_work> apt-get install postfix
+[15:47] <newlinux> yes but its complex
+[15:47] <newlinux> xeams its easier it seems
+[15:47] <newlinux> whats the root defaulr password?
+[15:48] <iclebyte_work> there isnt a root account
+[15:48] <iclebyte_work> you have the ability to run commands as the root user
+[15:48] <iclebyte_work> using sudo
+[15:48] <iclebyte_work> there is no 'root password'
+[15:48] <newlinux> you mean sudo then inter
+[15:48] <newlinux> enter
+[15:48] <newlinux> I tried
+[15:48] <iclebyte_work> 'sudo ./Install.sh'
+[15:49] <iclebyte_work> Also, the default postfix should just work straight away
+[15:49] <iclebyte_work> just choose 'Internet Site' when you install it
+[15:51] <newlinux> but if does postfix has web based?
+[15:52] <iclebyte_work> no postfix is not web based. if you want web based administration of postfix try 'postfixadmin' available from http://postfixadmin.sourceforge.net
+[15:53] <iclebyte_work> but you will also need to configure a web server and mysql database
+[15:53] <freesbie_> maybe this should help you in the right direction with the mail server: https://help.ubuntu.com/community/PostfixCompleteVirtualMailSystemHowto
+[15:55] <Daviey> m_3: Are you chairing this next meeting?
+[15:56] <newlinux> i have istalled it
+[15:56] <iclebyte_work> can anyone assist me with this downgrading issue?
+[15:56] <Daviey> jimbaker: If m_3 doesn't respond, you are next in the list?
+[15:59] <jimbaker> Daviey, i'm teaching a course in a few minutes
+[15:59] <newlinux> Thanks all
+[16:00] <Daviey> jimbaker: wow, you can multi-task?
+[16:00] <jimbaker> Daviey, not particularly well ;)
+[16:01] <Daviey> Ursinha: According to the rota, that puts you next in place.. Are you able to take it?
+[16:02] <Ursinha> Daviey, I think so
+[16:02] <Daviey> \o/
+[16:02] <newlinux> dear all
+[16:02] <newlinux> my ubuntu is 64 bits
+[16:03] <SuperMatt> well put it back together
+[16:03] <newlinux> and i want to install a 32 bits package, is that fine?
+[16:03] <SuperMatt> yup
+[16:03] <SuperMatt> might be a good idea to install ia32-libs
+[16:03] <newlinux> ?
+[16:04] <SuperMatt> they're 32bit libraries
+[16:04] <SuperMatt> so if the app doesn't work initially, it *should* do with ia32-libs
+[16:05] <newlinux> coz i got some file not found message
+[16:05] <newlinux> i think better to install ubunti 32 bits?
+[16:05] <SuperMatt> well try ia32-libs :)
+[16:05] <SuperMatt> no no
+[16:05] <SuperMatt> what is the application?
+[16:08] <SuperMatt> newlinux: ?
+[16:09] <m_3> Daviey: I did last week
+[16:11] <Daviey> m_3: not according to the schedule
+[16:11] <Daviey> m_3: did you do minutes?
+[16:12] <newlinux> sorry
+[16:12] <SuperMatt> np
+[16:12] <newlinux> iys xeams mail server
+[16:12] <newlinux> what do you think, shall i install ubuntu 12.4 32 bits
+[16:13] <SuperMatt> you shouldn't need to
+[16:13] <newlinux> im still at office its 7:10 pm :(
+[16:13] <SuperMatt> try installing ia32-libs from the package manager
+[16:13] <SuperMatt> so apt-get install ia32-libs
+[16:13] <newlinux> this is the site http://www.xeams.com/XeamsDownload.htm
+[16:14] <newlinux> the package is 32 bits
+[16:14] <newlinux> its mentioned it works with all lexus
+[16:14] <newlinux> Linux
+[16:14] <SuperMatt> yup
+[16:14] <SuperMatt> I've just checked their site, and it suggests ia32-libs
+[16:14] <SuperMatt> http://www.xeams.com/ubuntu.htm
+[16:14] <newlinux> so I will try the 32 bits?
+[16:15] <shauno> it also appears to be java, which is worth not overlooking
+[16:15] <newlinux> ?
+[16:15] <SuperMatt> well, it's not downgrading to ubuntu 32 bit, it just installs some stuff to make 32 bit stuff work
+[16:15] <newlinux> what do u mean?
+[16:16] <newlinux> what can i do
+[16:16] <SuperMatt> newlinux: at your command line, do this: sudo apt-get install ia32-libs
+[16:17] <newlinux> ok I did
+[16:17] <SuperMatt> what happened?
+[16:18] <newlinux> its installing
+[16:18] <SuperMatt> excellent
+[16:18] <SuperMatt> once that is done installing, try xeams again
+[16:19] <newlinux> do I need to restart?
+[16:20] <SuperMatt> shouldn't need to
+[16:21] <newlinux> ok, incase it didnt work, any other easy web based linux email package i can use?
+[16:21] <SuperMatt> roundcube
+[16:22] <SuperMatt> which you install with: sudo apt-get install roundcube
+[16:22] <newlinux> is it easy
+[16:22] <newlinux> ?
+[16:22] <SuperMatt> well that depends on your definition of easy
+[16:22] <SuperMatt> I could probably get a round cube server running in about 10 minutes
+[16:23] <SuperMatt> can I ask: how long have you been using Ubuntu/Linux?
+[16:23] <newlinux> ohh please
+[16:23] <newlinux> im stock since 3 days
+[16:23] <newlinux> i belive this is the best option
+[16:23] <newlinux> It can be configured in Iphone and other mobiles?
+[16:23] <SuperMatt> yup
+[16:24] <newlinux> I used backtrack in my security course last year
+[16:24] <SuperMatt> well roundcube is just a front end to other technologies, such as postfix and dovecot
+[16:24] <SuperMatt> did you read this at all? https://help.ubuntu.com/community/MailServer
+[16:25] <newlinux> I will go through it
+[16:25] <MACscr> Hmm, I am having issues with postfix after an apt-get upgrade. Postfix appears to be running, but i dont think its to functional right now. The upgrade did not complete as well. here is what it shows if i try to do apt-get upgrade again: http://pastie.org/pastes/5688996/text?key=rurb5ciidsbsulx6byneww
+[16:25] <newlinux> so in this case i still need postfix?
+[16:25] <MACscr> any suggestions based on my errors above?
+[16:26] <SuperMatt> newlinux: do you have postfix install already?
+=== matsubara is now known as matsubara-lunch
+[16:28] <newlinux> no
+[16:28] <newlinux> I can install it as you mentioned apt ??
+[16:28] <SuperMatt> yup
+[16:28] <SuperMatt> postfix is only for sending email
+[16:28] <SuperMatt> you will also need something like dovecot to store email
+[16:29] <SuperMatt> there's a lot of configuring you'll have to do
+[16:29] <newlinux> so I need to install both posfix and dovecot?\
+[16:29] <SuperMatt> yup
+[16:30] <SuperMatt> newlinux: I really recommend you don't do this on a live server. You should get your hands on a virtual machine with ubuntu on it and test everything in that
+[16:30] <SuperMatt> you're looking for a whole world of hurt if you don't do this in testing first
+[16:31] <newlinux> im doing in the new server, its a test
+[16:31] <SuperMatt> ok, good
+[16:32] <newlinux> Supermatt, can you be with me I will do it rights now
+[16:33] <SuperMatt> uhm, I can't guarantee anything
+[16:34] <SuperMatt> newlinux: I'm not trying to put you down or anything here, but it sounds to me like you have quite limited ubuntu experience. For what it's worth, I think it would be a good idea to leave the server alone for the evening, and just concentrate on ubuntu server basics
+[16:34] <SuperMatt> http://ubuntu-manual.org/
+[16:34] <newlinux> Yes, I respect you and your rights
+[16:35] <newlinux> actually im trying to install it for my manager house
+[16:36]  * ogra_ would also suggest a few weeks or months for learning linux basics first
+[16:37] <ogra_> at least if you really plan to use that server in production ...
+[16:38] <SuperMatt> agreed
+[16:38] <SuperMatt> otherwise the server might be insecure
+[16:39] <newlinux> ok i understand
+[16:40] <m_3> Daviey: nope (/me guilty look)... just kinda thought it was done at the end of the meeting... doh
+[16:41] <newlinux> Supermatt, any good article i can use to follow and install any basic mail server
+[16:44] <ikonia> newlinux: do you understand how a mail setup works yet ?
+[16:44] <SuperMatt> newlinux: https://help.ubuntu.com/community/MailServer I would start here and I would read it all. You need to work out what you need and why you need it. Reading these will help, though they won't tell you everything
+[16:44] <ikonia> newlinux: we went over this yesterday and you had no idea how any of it worked, so a guide at this time will be useless
+[16:46] <newlinux> <ikonia>, I understand how it works but not in linux
+[16:47] <SuperMatt> newlinux: I think you should start by readying through the ubuntu manual project and learn about how the ubuntu command line works, then work your way up
+[16:48] <newlinux> sure
+[16:48] <newlinux> thanks all
+[16:48] <SuperMatt> you have a long road ahead of you
+[16:49] <SuperMatt> installing a secure, stable mail server is something I haven't managed yet, and I've been in the linux game for 5 years now
+[16:49] <ogra_> definitely ...good luck though
+[16:49] <newlinux> thanks all
+[16:51] <shauno> particularly mailservers.  making them work is the easy bit.  not turning them into a spammer's best friend calls for a little less guesswork
+[16:55] <patdk-wk> making a mailserver spammerproof is easy
+[16:55] <patdk-wk> making it not receive spam, is hard
+[16:56] <patdk-wk> making your website cgi's protected against hacking to send spam, is normally not hard, but seems to fail in the real world
+[17:19] <frojnd> Is it neccessery for lighttpd properly run that apache2 is installed?
+[17:20] <frojnd> The files in the document root have to be
+[17:20] <frojnd> readable by the user starting the web server
+[17:20] <frojnd> In my case I started lighttpd as root so if root has access that's ok right?
+[17:24] <SuperMatt> uhm, just because you started as root, doesn't mean it's running as root
+[17:24] <frojnd> how can I check?
+[17:24] <SuperMatt> it's possible that lighttpd has an options to run as a different user
+[17:24] <SuperMatt> ps auxww | grep lighttpd
+[17:24] <SuperMatt> the first column should be the user it's running as
+[17:24] <frojnd> ok it's root
+[17:25] <SuperMatt> cool
+[17:26] <SuperMatt> so yeah, if it's running as root, it should be able to read anything
+[17:27] <sarnold> frojnd: you don't want your webserver to run as root. that's a quick way to sharing your machine with the albanian mob.
+[17:27] <SuperMatt> well yes, there is that
+[17:27] <frojnd> yeah, I'm gonna chage it to www-data ?
+[17:27] <Darkstar1__> anyway I can profile my system memory to see what's consuming what?
+[17:27] <SuperMatt> good idea
+[17:27] <frojnd> I belive that's the correct name for it?
+[17:29] <sarnold> frojnd: yes, though I have a personal grudge about that :) the on-disk data should be owned by a different user than the webserver runs as -- you wouldn't want a compromised webserver to have write access to more than the database sockets it needs and its logsfiles.
+[17:30] <Darkstar1__> I'm having segmentation fault issues in apache
+[17:30] <SuperMatt> sarnold: agreed, we only ever give www-data access to specific folders
+[17:31] <frojnd> sarnold: so if I have /var/www/htdocs my documentRoot for www data,.. how do I make I don't know one user safely write code?
+[17:31] <sarnold> frojnd: you could chown the directory to a new user, "web" or something, and have your user copy data into it (perhaps via sudo) when necessary
+[17:32] <sarnold> frojnd: you could also just chown it for that user account, but that really only makes sense on a server that the user doesn't do anything else, except publish web..
+[17:33] <RoyK> or even, just create a group for web and chgrp the dir and chmod g+w the dir and let the user copy entirely without sudo
+[17:33] <sarnold> better :)
+[17:34] <Guest63082> I'm having trouble using postfix with SSL enabled LDAP, can someone give me some pointers how to do it, or is it not possible?
+[17:39] <frojnd> sarnold: ok so here it is now: /var/www/ and all subdirs are owned by root:root
+[17:39] <frojnd> sarnold: and lighttpd is run as www-data:www-data
+[17:39] <RoyK> frojnd: really, you don't want www-data to be able to write to those files
+[17:40] <frojnd> RoyK: I just said that they are root:root
+[17:40] <RoyK> that's ok
+[17:40] <sarnold> frojnd: better :) owned by root is a bit overkill, but having the daemon have very little write access is the most important thing. woot.
+[17:40] <RoyK> frojnd: just do as I said above
+[17:40] <frojnd> drwxr-xr-x  2 root root 4096 Jan 15 18:15 htdocs drwxr-xr-x  3 root root 4096 Jan 15 17:42 servers
+[17:41] <frojnd> Now I have to create a chrooted user
+[17:41] <frojnd> meh, jailed user :)
+=== matsubara-lunch is now known as matsubara
+[17:43] <frojnd> This is /etc/init.d/lighttpd http://paste.ubuntu.com/1534874
+[17:44] <frojnd> The server has to be started as root to take control of port 80, but it's not necessary or a good idea to continue running as root after port acquisition.
+[17:45] <frojnd> can someone check that bash script?
+[17:45] <Darkstar1__> guys any gui tool I can use to get a profile of what's eating system memory?
+[17:45] <Darkstar1__> it's a desktop 12.04 that I'm using as a server right now
+[17:47] <sarnold> Darkstar1__: memory consumption is difficult to measure, since shared libraries are shared amongst all processes that have loaded them..
+[17:48] <sarnold> Darkstar1__: 'top', 'htop', or 'ps aux' are pretty good tools though; the VSZ is the virtual address space allocated, the RSS is the "resident set size", the actual physical memory the process is using, the SHR is the amount that _can be_ shared with other processes -- though it isn't necessarily shared
+[17:49] <Darkstar1__> sarnold: reason I ask is because I have a php issue that only turns up in apache error logs as just plain ol' segmentation fault. The system monitor reports 2/7.9Gb memory in use but the cli tool called free reports that I have 7 .something in use and only 528Mb free
+[17:50] <sarnold> Darkstar1__: now I know I've seen a tool that actually looks into /proc/*/maps and figures out which processes are using which libraries and accounts each process "their share" of that address space, but I've never been able to find it again. heh.
+[17:50] <Darkstar1__> sarnold: I hate when that happens :D
+[17:51] <Darkstar1__> ok running htop
+[17:51] <sarnold> Darkstar1__: well, segfaults are something else. php is a pretty shitty interpreter, and poorly written (or intentionally written) php code can segfault it all day long...
+[17:51] <sarnold> Darkstar1__: .. and if the code is poorly-written just right, it'll let external people play with its address space. :/
+[17:52] <sarnold> Darkstar1__: that really doesn't have much to do with actual memory _consumption_. Your linux system will generally have only a few hundred megabytes free -- free memory is wasted memory -- the value that makes more sense to look at is the +/- buffers line in the free output
+[17:53] <sarnold> Darkstar1__: check the kernel logs for more details on those segfaults; dmesg output may have it, or it may be in /var/log/kern* something -- maybe you'll be able to pinpoint whatever stupid program is crashing and either fix it or remove it.
+=== hggdh is now known as hggdh_AFK
+[18:15] <frojnd> Heh this is funny
+[18:15] <frojnd> When I start lighttpd like this: /etc/init.d/lighttpd start
+[18:15] <lifeless> zul: pong
+[18:15] <frojnd> and then stop it like this: /etc/init.d/lighttpd stop and after it I try to run it: I get: 2013-01-15 19:14:52: (network.c.358) can't bind to port:  80 Address already in use
+[18:16] <frojnd> And ps aux | grep lighttpd says: www-data 18251  0.0  0.0  36028   708 ?        S    19:13   0:00 /usr/sbin/lighttpd -f /etc/lighttpd/lighttpd.conf
+[18:16] <frojnd> and /etc/init.d/lighttpd status says:  * lighttpd is not running
+[18:17] <frojnd> Is there something wrong with lighttpd file? http://paste.ubuntu.com/1534874
+[18:19] <sarnold> frojnd: does lighttpd start child processes? you may need to remove the pidfile from start-stop-daemon if it has child processes that also listen on port 80
+[18:19] <frojnd> sarnold: fuser -v 80/tcp says: 80/tcp:              www-data  18251 F.... lighttpd
+[18:20] <frojnd> sarnold: how do I check if it starts a child processes? ps?
+[18:20] <sarnold> frojnd: yeah, or pstree
+[18:21] <sarnold> frojnd: did you write that init script yourself? or was it provided?
+[18:21] <sarnold> you may wish to just file bugs if 'stop' doesn't kill all the processes
+[18:21] <frojnd> sarnold: provided
+[18:22] <sarnold> it seemed a bit much to just write for yourself ;) hehe
+[18:22] <frojnd> my knowladge at bash is really limited haha :>
+[18:23] <frojnd> sarnold:      |-lighttpd <-pstree
+[18:23] <frojnd> Just that.
+=== The_Pugilist is now known as DaveR
+[18:24] <sarnold> frojnd: well, killall lighttpd first, start it with the initscript, and see what's started..
+[18:25] <frojnd> sarnold: ps aux | grep lighttpd www-data 18706  0.0  0.0  36028   712 ?        S    19:24   0:00 /usr/sbin/lighttpd -f /etc/lighttpd/lighttpd.conf
+[18:26] <frojnd> sarnold: pstree:   |-lighttpd and that's it
+[18:26] <frojnd> oh and fuser -v 80/tcp 80/tcp:              www-data  18706 F.... lighttpd
+[18:26] <sarnold> frojnd: just the one process? okay. now kill it with its initscript again, and see what's left over
+[18:27] <frojnd>  * Stopping web server lighttpd    ...done.
+[18:27] <frojnd> ps aux | grep lighttpd www-data 18706  0.0  0.0  36028   712 ?        S    19:24   0:00 /usr/sbin/lighttpd -f /etc/lighttpd/lighttpd.conf pstree:  |-lighttpd and fuser: 80/tcp:              www-data  18706 F.... lighttpd
+[18:27] <frojnd> it does not kill it :)
+[18:29] <sarnold> frojnd: is the pidfile still there?
+[18:30] <frojnd> yes
+[18:30] <sarnold> are there anything odd about its permissions or the permissions of its containing directory?
+[18:32] <frojnd> sarnold: -rwxr-xr-x 1 root root 2545 Aug 19  2010 /etc/init.d/lighttpd
+[18:32] <frojnd> sarnold: and /etc/init.d looks like this: drwxr-xr-x  2 root root  4096 Jan 15 18:44 .
+[18:33] <sarnold> frojnd: sorry, the pidfile will be in /var/run
+[18:34] <frojnd> sarnold: in /var/run drwxr-x---  2 www-data   www-data     40 Jan 15 17:08 lighttpd
+[18:35] <RoyK> the whole of var run owned by www-data?
+[18:35] <RoyK> oh, ic
+[18:35] <frojnd> sarnold: ls -la /var/run/ NO: drwxr-xr-x 16 root       root        520 Jan 15 18:15 .
+[18:35] <frojnd> RoyK: no..
+[18:36] <frojnd> ah, you typed i cee..
+[18:37] <sarnold> frojnd: how about /var/run/lighttpd.pid ?
+[18:37] <frojnd> sarnold: does not exist
+[18:37] <frojnd> sarnold: even though ps aux | grep lighttpd says otherwise: www-data 18706  0.0  0.0  36028   712 ?        S    19:24   0:00 /usr/sbin/lighttpd -f /etc/lighttpd/lighttpd.conf
+[18:38] <sarnold> frojnd: how odd. killall lighttpd again, restart it, and check the pidfile while it is running
+[18:40] <frojnd> sarnold: there is no /var/run/lighttpd.pid
+[18:40] <sarnold> frojnd: how odd. :)
+[18:40] <frojnd> indeed :)
+[18:40] <frojnd> let me try and start it with service lighttpd start
+[18:41] <frojnd> no, the same
+[18:42] <frojnd> should I reinstall lighttpd?
+[18:43] <sarnold> frojnd: might not hurt, though I hate that as an answer.
+[18:43] <frojnd> sarnold: what's the proper way for uninstalling? apt-get --purge remove?
+[18:44] <sarnold> frojnd: I think apt-get purge
+[18:46] <frojnd> yeah now it works ps aux | grep does not show anything
+[18:47] <frojnd> where in /var/run/ should that file be exactly?
+[18:47] <sarnold> frojnd: /var/run/lighttpd.pid
+[18:47] <frojnd> it's just not there
+[18:48] <frojnd> http://paste.ubuntu.com/1535068/
+[18:48] <frojnd> Only those 6 pids are there
+[18:49] <frojnd> what in the *blub* is goning on :D
+[18:49] <frojnd> goin'
+=== Ursinha is now known as Ursinha-afk
+=== Ursinha-afk is now known as Ursinha
+[20:32] <michele> hi there
+[20:32] <michele> i already have ubuntu-server installed. how do I launch the tasksel for "ubuntu software selection" (like http://askubuntu.com/questions/153265/what-does-the-basic-ubuntu-server-package-contain-in-software-selection-during ) ?
+[22:10] <RamosDevil> Quick question - I just set up Ubuntu 12.04 Server on my Mac Mini (late 2011).  Everything was running smoothly until I stopped getting a response from the box... I checked the computer and it was still on, but I couldn't get anything to happened, so I restarted.  I'm assuming the server itself crashed, and there's no sleep or standby mode since this is a server, correct?
+[22:11] <sarnold> RamosDevil: when I stopped getting responses from a machine, it had gotten a new dhcp but not entered into dns yet. (perhaps your setup is a little less clumsy than mine :)
+[22:11] <sarnold> RamosDevil: iirc, it's the same kernel all the way through, so suspend and hibernate are available, "pm-suspend" and "pm-hibernate" ought to do the job, iirc.
+=== smw_ is now known as smw
+[22:12] <sarnold> RamosDevil: in my case, I wrote a quick bit of bash scripting to scan ssh banners and look for the host that felt 'right'. for i in `seq 2 254` ; do echo "" | nc 192.168.1.${i} 22 ; done
+[22:12] <sarnold> RamosDevil: .. of course, if yours is _offline_, that's something else entirely
+[22:13] <Daviey> adam_g_: hey, https://review.openstack.org/#/c/19495/ .. has an update for lvm as SRU been considered, do you know?
+[22:14] <RamosDevil> Thanks, guys. Even though the kernels are merged now (server/desktop), I would assume that suspend and hibernate are disabled by default in server installations... How would I check to see if a timeout time has been set?
+[22:16] <sarnold> RamosDevil: if you're running unity, the system settings -> power will show it.. if you're not running a desktop environment, though, I'd expect it to work as any other server ought to.
+[22:17] <RamosDevil> Yeah, no GUI for me... Dang.  Looks like I've got a hardware issue.  Thanks for the assist.
+[22:17] <sarnold> RamosDevil: was there anything suspicious looking in the logs?
+[22:20] <RamosDevil> Nothing that points me in the direction of what may have happened... No KP or anything, just abruptly ends.
+[22:21] <sarnold> damn, I hate those :(
+[22:28] <RamosDevil> Not the way I wanted to end my work day, but it gives me something to focus on tomorrow.  Thanks again, have a good night!
+=== Malediction_ is now known as Malediction
+=== Malediction_ is now known as Malediction
+[22:55] <adam_g_> Daviey: re: LVM. seems like new features that wouldn't fit into an SRU, but a potential backport for future CA releases?
+[23:10] <Daviey> adam_g_: we should explore if it CAN be SRU'd first.  It does sound like it could be unsuitable, but we should check first.
+[23:10] <Daviey> -> afk
+=== Malediction_ is now known as Malediction
+[23:23] <m_tadeu> hi everyone...I just upgraded to 12.04 and I'm experiencing a problem in smtp...the client says "This server does not support authentication". And it was working before the upgrade
+[23:24] <patdk-lap> m_tadeu, likely you accidentally told it to overwrite your config when you upgraded it
+[23:26] <m_tadeu> patdk-lap: I'm quite sure I didn't...I was very careful with that. but where should I check?
+[23:26] <patdk-lap> what smtp server are you using?
+[23:26] <m_tadeu> postfix with dovecot
+[23:27] <patdk-lap> then you need to check in /etc/postfix/main.cf and /etc/postfix/master.cf
+[23:29] <m_tadeu> patdk-lap: can it be the milter?
+[23:29] <m_tadeu> my config is there
+[23:29] <patdk-lap> no
+[23:31] <xnox> Daviey: adam_g_: what in particular do you want in lvm? =)
+[23:31] <xnox> Ah... thin provisioning. I am working on landing it in Debian experimental and ubuntu.
+[23:32] <xnox> First I need to get it into raring, then we can think about SRU. It will need a new thin-provisioning package for related tools. Not sure how sru friendly new packages are.
+[23:36] <m_tadeu> I'm getting this message in the log
+[23:36] <m_tadeu> postfix/smtpd[10912]: warning: connect to Milter service inet:localhost:8891: Connection refused
+[23:37] <sarnold> hrm :)
+[23:37] <m_tadeu> googling is not helping much :(
+[23:37] <patdk-lap> google won't be ANY HELP
+[23:37] <sarnold> m_tadeu: what milter did you run there?
+[23:37] <patdk-lap> only you know what milter you had running on that port
+[23:40] <m_tadeu> patdk-lap: where can I check it? sorry to ask basic questions, but it was a while ago since I did this
+[23:42] <patdk-lap> no way to know
+[23:42] <patdk-lap> you have to find the program on your server configured to use port 8891
+[23:42] <patdk-lap> or disable the milter in postfix and figure it out later
+[23:51] <m_tadeu> probably it should be dkim...I restarted the service, but it wont show up in netstat
+[23:52] <orudie> Greetings. I just installed squid proxy server for the first time. Looking for some assistance on configuration. Thanks in advance
+[23:53] <m_tadeu> so, I'm using dkim in 8891 and domainkeys in 8892
+[23:53] <m_tadeu> netstat only shows dk-filter in 8892....so no dkim. the process is running...damn

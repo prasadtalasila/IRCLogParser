@@ -1,0 +1,196 @@
+[10:55] <rvba> jam: mgz Hey guys, would you mind having a look at bug #1100091 ?
+[10:55] <ubot5> bug 1100091 in MAAS 1.2 "Kernel opts tagging feature missing completely" [Undecided,New] https://launchpad.net/bugs/1100091
+[11:19] <mgz> rvba: indeed, we were putting it on 1.2 but you guys were trying to do a release from that so we took it off
+[11:20] <mgz> if it's now wanted in a 1.2 release, it will need backporting
+[11:22] <rvba> mgz: Thanks for having a look.  What's weird is that the support is partially implemented (the db migration to add the new field is there for instance).
+[11:23] <rvba> mgz: I guess we need to clarify if it's a 1.2 or not.
+[11:24] <mgz> the db migration stuff is there because migrations only work in a linear fashion
+[11:24] <mgz> so, you can't backport one db change, but not the parts previous to it, without messing stuff up
+[11:24] <rvba> Right
+[11:39] <jam> mgz, rvba: last word I heard was that bigjools didn't want it to land in 1.2 at all.
+[11:41] <rvba> jam: well, Julian is the one who asked me to have a look at that bug.  I added a comment on it; I guess we will see what he has to say about it.
+[11:41] <rvba> mgz, jam thanks for your input guys.
+[15:05] <rvba> roaksoax: Hi Andres, do you manage to get nodes enlisted in your environment?  Because we're having trouble doing this in the lab and we're wondering if there isn't a problem with the ephemeral images…
+[15:07] <roaksoax> rvba: howdy!! yeah im enlisting just fine. is this precise you are using?
+[15:08] <rvba> roaksoax: yes
+[15:08] <rvba> roaksoax: the nodes end up with an empty /etc/resolve.conf and the cannot do much.
+[15:09] <roaksoax> rvba: is there a screenshot of the failure?
+[15:10] <rvba> roaksoax: not really, but I can send you a log file if you want.
+[15:10] <roaksoax> rvba: adam_g reported yesterday a failure after a cloud-init update
+[15:10] <roaksoax> so might be related
+[15:10] <roaksoax> smoser: ^^
+[15:12] <smoser> ephemeral images have not changed.
+[15:12] <smoser> and should not be affected  by cloud-init in -updates
+[15:14] <roaksoax> smoser: whats the bug thst adam_g reported yesterday?
+[15:14] <roaksoax> rvba: logs would be helpful
+[15:18] <rvba> roaksoax: the failure itself is simple: in the logs, I see lots of "unable to resolve archive.ubuntu.com" and then the node gets enlisted with a stupid name because of bug #1081660.
+[15:18] <ubot5> bug 1081660 in maas-enlist (Ubuntu) "If maas-enlist fails to reach a DNS server, the node will be named ";; connection timed out; no servers could be reached"" [Critical,Triaged] https://launchpad.net/bugs/1081660
+[15:21] <roaksoax> rvba: check squid-deb-proxy maybe?
+[15:21] <rvba> Logs looks fine…
+[15:21] <rvba> We're trying with an old ephemeral image…
+[15:21] <rvba> Just to be sure smoser ;)
+[15:21] <roaksoax> ack
+[15:22] <smoser> rvba, ephemeral images have not been updated to my konwledge
+[15:22] <smoser> shoot.
+[15:23] <smoser> if you're using dailies, something could be wrong
+[15:24] <rvba> Damnit, it worked
+[15:27] <smoser> rvba, were you using dailies ?
+[15:27] <rvba> We're using the daily images in the lab indeed.
+[15:28] <smoser> yeah. ok. so there is work to fix there then. i'm not sure what :-(
+[15:29] <rvba> The symptom was: the image was dhcp booting ok but ended up with an empty /etc/resolve.conf
+[15:32] <smoser> rvba, are you easily able to test quantal daily ?
+[15:32] <smoser> wait. not woth it.
+[15:33] <rvba> all right
+[15:34] <rvba> (but the answer would have been 'yes')
+[16:46] <roaksoax> rvba: the kernel opts stuff was removed from 1.2?
+[16:46] <roaksoax> rvba: as in the stuff that allows us to specify extra kernel opts?
+[16:46] <roaksoax> with tags
+[16:46] <roaksoax> jam: ^^
+[16:47] <rvba> roaksoax: it was removed from 1.2 because Julian told jam the 1.2 was supposed to contain only bugfixes and no new features. Apparently…
+[16:48] <roaksoax> -_-
+[16:48] <roaksoax> -_-'
+[16:48] <rvba> roaksoax: maybe we will revise that but we're waiting for Julian to decide :)
+[16:48] <roaksoax> ack!
+[16:49] <roaksoax> thanks for the info
+[16:49] <rvba> (ツ)
+[16:52] <bitwiz> does this error have anything to do with the error WARNING **: mirror does not support the specified release (precise)? I am also getting that error when a node pxe boots the inital install
+[16:55] <bitwiz> the console log also show INFO: mirror does not have any suite symlinks. When i run the wget command on a virtual console one the node, i get a line for both Suite and Codename
+[17:04] <roaksoax> smoser: so simply said, the fastpath installer is different kernel opts with different user-data right?
+[17:04] <smoser> are there different kernel opts ?
+[17:05] <smoser> wait.
+[17:05] <smoser> ok. so what it is ...
+[17:05] <roaksoax> http://bazaar.launchpad.net/~smoser/+junk/xinstall.maas/view/head:/maas.changes.diff
+[17:07] <smoser> roaksoax, it is possible that i could have changed that else on line 51 btter
+[17:09] <smoser> roaksoax, yea... so really the only additional prameter to the ephemeral environment is 'ds=nocloud-net
+[17:09] <smoser> '
+[17:09] <roaksoax> smoser: ack
+[17:09] <smoser> which convinces cloud-init it should just use the stuff from cloud-config-url= and not expect a datasource.
+[17:10] <roaksoax> smoser: so in this case cloud-config-url is the contents of the /etc/maas/FAST-PATH-INSTALLER file
+[17:10] <smoser> no.
+[17:10] <smoser> that is an empty file. that just indicates if it should be taken or not
+[17:11] <smoser> the payload is in 'preseed_fastpath' (see first hunk)
+[17:11] <smoser> htat file is wrtten by the command listed in http://bazaar.launchpad.net/~smoser/+junk/xinstall.maas/view/head:/README.maas
+[17:12] <smoser> we might be able to get rid of the different kernel param
+[17:13] <smoser> and that is probably the correct fix.
+[17:13] <smoser> as it maas's life much simpler.
+[17:14] <roaksoax> yeah i'm just trying to visualize how to do this
+[17:15] <roaksoax> rvba: so we have an issue, maas doesn't support raring
+[17:17] <roaksoax> rvba: and it doesn't really makes sense to hardcode stuff
+[17:24] <smoser> "maas doesn't support raring"
+[17:24] <smoser> a.) that needs to be fixed
+[17:24] <smoser> b.) why does that matter here
+[17:24] <smoser> c.) what does that mean (doesnt support installing?)
+[17:24] <roaksoax> smoser: yeah
+[17:24] <roaksoax> smoser: raring is not a 'supported' release within MAAS
+[17:25] <roaksoax> smoser: since it is being hardcoded
+[17:25] <roaksoax> it was automatically detected before but was decided to not use that and hardcode it for the time being
+[17:39] <roaksoax> smoser: we will not be using this right? # this line just says to use a different url (with -root.tar.gz)
+[17:43] <smoser> roaksoax, well, the end goal is that we'll be using a -root.tar.gz to install from.
+[17:43] <smoser> but we only have available on maas.ubuntu.com/images partition images.
+[17:44] <smoser> elsehwere in that doc README.maas it explains it (see line 55)
+[17:47] <roaksoax> smoser: ok, so we need 1. create the -root images (i'm guessing with maas-import-pxe-files)
+[17:47] <roaksoax> 2. create /usr/share/maas/preseeds/preseed_fastpath on the fly
+[17:47] <roaksoax> 3. have a tag that tells a system to fastpath
+[17:48] <roaksoax> 4. have a tag that tells a system extra user-data
+[17:48] <roaksoax> to be integrated with 2
+[17:50] <smoser> 1 should happen on the server side. tthe client should not need to create those. although it is sufficiently easy, so maybe that makes sense. it does require root though :-(, so maybe not.
+[17:50] <smoser> anyway. .. .one way or another we need to have -root.tar.gz files availble for the installer to get at.
+[17:51] <smoser> i might generalize 3 and 4 into one thing from maas perspective.
+[17:51] <smoser> basically:
+[17:52] <roaksoax> smoser: yeah i already have the tags stuff
+[17:52] <roaksoax> (r partially)
+[17:52] <smoser>  if a node has a tag (through inheritance or directly) named 'install_preseed', then use that preseed.
+[17:52] <roaksoax> smoser: the -root needs to be created on server side once maas-import-pxe-files is invoked though
+[17:52] <smoser> this can probably be done in the existing preseed manner.
+[17:53] <smoser> ideally, maas's knowledge of "fast path" should come down to
+[17:53] <roaksoax> smoser: i'f the tag is fastpath=True, then I tell that the purpose is fastpath (which could be 'commissioning', or 'install')
+[17:53] <smoser> a.) allow tag data to affect preseed data
+[17:53] <smoser> b.) boot ephemeral image as the installer
+[17:54] <smoser> c.) (if we have to) allow tag data "fastpath_install_kernel_opts='ds=nocloud'" to affect kernel options to 'b'
+[17:54] <smoser> that make sense ?
+[17:54] <smoser> then maas really is completely unaware of "fastpath"
+[17:55] <roaksoax> smoser: yeah
+[18:04] <roaksoax> smoser: this is what I was thinking: http://paste.ubuntu.com/1542176/
+[18:06] <smoser> done use the string fast path
+[18:07] <smoser> and decouple "preseed_input" from "should_install_use_ephemeral_environment"
+[18:08] <roaksoax> smoser: so tag would be ephemeral_install
+[18:08] <roaksoax> or similar
+[18:08] <smoser> right.
+[18:09] <smoser> and then... the preseed templates
+[18:09] <smoser> when theyu're rendered, do they have access to the node ? and its tags ?
+[18:10] <smoser> carp. i thought tags had values. that sucks.
+[18:10] <smoser> a tag as "kernel_opts"
+[18:10] <smoser> :-(
+[18:10] <roaksoax> smoser: they should yes
+[18:11] <smoser> no. i'm saying tags do not have values. its not key-value.
+[18:11] <smoser> its just key.
+[18:11] <smoser> which sucks.
+[18:11] <smoser> and its limited to 256 chars
+[18:11] <smoser> which also sucks
+[18:12] <smoser> you'll have to ask the maas devs about this. i dont udnerstand it really.
+[18:12] <roaksoax> yeah
+[18:13] <smoser> oh.. ok. re-using the kenelopts stuff. we can just override that. here..
+[18:13] <smoser> we add maas awareness of one tag:
+[18:13] <smoser>  installer_ephemeral_kernel_opts
+[18:14] <smoser> if that is set, then it uses the 'kernel_opts' for that and uses the ephemeral environment for install
+[18:14] <smoser> err... i guess you can cut the 'kernel_opts' part off the name
+[18:14] <smoser> hten, to allow the user to atually put useful *DATA* into the preseed path, we will need to put another field in.
+[18:14] <smoser> into the tags, but lets just call it "value" or something.
+[18:15] <smoser> that make sense?
+[18:15] <smoser> why oh why does a tag not have a value *and* be limited to 256 chars
+[18:16] <roaksoax> smoser: right, that's similar to what I;m doing
+[18:16] <smoser> heh. i guess we could just use tag names like:
+[18:16] <smoser>  installer_opts=http://place.where.my.opts.are
+[18:16] <smoser> i dont know.
+[18:17] <roaksoax> uhmm
+[18:18] <smoser> ha. funny.
+[18:18] <smoser> we just overload 'comment' with data
+[18:18] <smoser> base64 encoded data.
+[18:19] <smoser> then, if the preseed templates have access the currently executing node's tags, we can base64 decode there.
+[18:19] <roaksoax> yeah
+[18:19] <roaksoax> that too
+[18:20] <smoser> jtv, anyone here able to explain to me why a tag would be so limited value ?
+[18:20] <smoser> roaksoax, the more long term fi for this would be to have maas know about some "installer_input" and actually handle that specifically
+[18:21] <roaksoax> yeah
+[18:21] <roaksoax> i guess i'll have to discuss this with the MAAS team
+[18:21] <smoser> do you know if we can get at node's tags in the preseed?
+[18:21] <roaksoax> smoser: if we add them to the context we can
+[18:22] <smoser> they shoudl definitely be part of the context
+[18:23] <roaksoax> yeah
+[18:23] <roaksoax> so I'll first work on getting the boot stuff, kernel params, image, etc, working as expected
+[18:23] <roaksoax> then will deal with the preseed that
+[18:23] <roaksoax> preseed data
+[18:33] <roaksoax> smoser: Hold on
+[18:34] <roaksoax> smoser: so we can do this: maas-cli tag create --name=00-default-console --definition=true \ --kernel_opts=console=ttyS0
+[18:34] <roaksoax> err
+[18:34] <roaksoax> maas-cli tag create --name=ephemeral_install --definition=true  --ephemeral_install_data=XYZXYZXYZXYZ
+[18:37] <roaksoax> mgz: ping
+[18:43] <smoser> roaksoax, ephemeral_install_data ?
+[18:44] <smoser> you're saying we'd have to add that.
+[18:47] <roaksoax> smoser: so if I do this: http://paste.ubuntu.com/1542262/, that means that we can define a tag with *any* name
+[18:47] <smoser> definition is not that though. defnition describes the nodes that it applies to
+[18:47] <roaksoax> smoser: right, forget about definition :)
+[18:48] <roaksoax> so we owuld be adding another attribubte to the tag
+[18:48] <smoser> overload comment
+[18:48] <smoser> :)
+[18:48] <roaksoax> so the tag would have a name, definition, and ephemeral_install_data attribute
+[18:48] <roaksoax> and comment
+[18:48] <smoser> oh wait. that might not work because tag is probably unique
+[18:48] <smoser> maybe it is id ont now.
+[18:49] <roaksoax> right so we can create a tag  name=ephemeral, comment='ephemeral install', definition='whatever', ephemeral_install_data='data to use at install time'
+[18:49] <smoser> right. i get what you're saing. we could do that. but i'd say that it shouldn t be "ephemeral_install_data"
+[18:49] <smoser> it should just be "value"
+[18:51] <roaksoax> smoser: you mean this?: http://paste.ubuntu.com/1542272/
+[18:51] <roaksoax> smoser: so the 'name' would *always* have to be say 'ephemeral_install' and we would have to check for that
+[18:52] <smoser> tags dont work here i dont think.
+[18:52] <smoser> 'name' is unique
+[18:52] <roaksoax> smoser: so if someone defines: name='ephemeral_installer' value='blob' it wouldn't work
+[18:52] <smoser> not unique per-node, but unique.
+[18:52] <smoser> right.
+[18:52] <roaksoax> so we would have to check for the name of the tag
+[18:56] <roaksoax> smoser: now the problem is how to pass the user data
+[18:56] <roaksoax> say we create a tag with --value=/path/to/filename we would need to modify the cli
+[18:56] <roaksoax> to open the file, convert it in a base64 blob
+[18:56] <roaksoax> etc etc
+[19:00] <smoser> --value wont work
+=== matsubara is now known as matsubara-afk

@@ -1,0 +1,125 @@
+=== Makyo is now known as Makyo|out
+[13:31] <bcsaller> frankban: can you test that phantomjs branch again after install phantomjs? :) npm install -g phantomjs Want to get another verification that it works
+[13:33] <frankban> bcsaller: sure
+[13:34] <frankban> bcsaller: i wonder why phantomjs is not a dependency of mocha-phantomjs
+[13:34] <bcsaller> frankban: I would think so as well, but their might be an issue with phantom also wanting a global install 
+[13:34] <frankban> bcsaller: 326 tests complete (6 seconds) 1 test pending, very cool!
+[13:35] <bcsaller> sweet :)
+[13:35] <bcsaller> hey wait! your computer is faster than mine!
+[13:35] <bcsaller> no fair
+[13:35] <frankban> :-)
+[14:32] <gary_poster> hey bcsaller looks like you merged the phantomjs without the review changes
+[14:33] <bcsaller> gary_poster: they should be in there
+[14:33] <bcsaller> docs, removed console comments, what did I miss? (and sorry)
+[14:37] <gary_poster> bcsaller, ah weird.  No, it's cool.  Your branch (https://code.launchpad.net/~bcsaller/juju-gui/phantom-testing) does not have your changes (verified locally and in LP) but trunk does.  I guess that is some lbox magic or something. <shrug> But yes it's in trunk, thanks and sorry for false alarm
+[14:37] <bcsaller> gary_poster: yeah, I didn't repropose/push, just did the submit after the changes
+[14:37] <gary_poster> interesting that lbox works that way.  Thanks for the branch bcsaller, really awesome to have that.
+[14:38] <bcsaller> gary_poster: really happy to have this branch in :)
+[14:38] <gary_poster> definitely :-)
+=== Makyo|out is now known as Makyo
+[15:28] <teknico> bac, bcsaller, benji, frankban, Makyo, daily call in 2 minutes
+[16:21] <Makyo> Downside to the phantomjs thing: leaving make test-server running while you try to submit causes everything to blow up.
+[16:25] <bcsaller> we could change the port?
+[16:25] <Makyo> Not a big deal, just forgot I had the server running :)
+[16:56] <benji> Makyo: no, over here!  what are you doing over there?
+[16:57] <Makyo> Bouncing between windows, apparently :)  I'll review after a restart, because apparently a package update requires that.
+[16:58] <benji> actually, a restart sounds good; maybe it will make my camera work again; back in a minute
+[17:02] <benji___> Why does Ubuntu hate me?  Almost every time I reboot I have to rebind my workspace navigation keys.
+[17:04] <bcsaller> benji___: I get that too with things like toggle max state on windows, drives me crazy
+[17:07] <teknico> bcsaller, it happened to me too, so I stopped redbinding them and learnt to love the default bindings :-)
+[17:07] <bcsaller> teknico: I never saw you as a conformist
+[17:08] <teknico> bcsaller, it came as a total shock to me too, it must be the age :-)
+[17:08] <bcsaller> ha
+=== benji___ is now known as benji
+[17:15] <benji> bcsaller: yep, I use a custom maximize toggle too, wierd thing is that one will get reset and not the other
+[17:17] <frankban> charm accepted! \o/
+[17:25] <teknico> frankban, yes, it was announced on #juju about half an hour ago :-)
+[17:26] <frankban> :-) cool
+[17:52] <benji> <sigh> Attempting to install phantomjs generates an error, therefore I can't land my branch.
+[17:56] <benji> does this make sense to anyone?
+[17:56] <benji> http://paste.ubuntu.com/1566725/
+[17:56] <benji> guihelp: ^^
+[18:03] <hazmat> benji, looks like a download error, for the binary from google code, i'd retry
+[18:03] <benji> hazmat: I figured the same thing.  I retried, no luck.
+[18:04] <hazmat> benji, your on 32 bit?
+[18:04] <benji> yep
+[18:09] <benji> hmm, it looks like the file it is trying to download 404s (http://phantomjs.googlecode.com/files/phantomjs-1.8.0-linux-i686.tar.bz2)
+[18:09] <hazmat> that might be the delta, its possible the link is bad
+[18:09] <benji> 1.7.0 exists; I will try requesting that version
+[18:10] <hazmat> benji, 1.8.1 is also present http://code.google.com/p/phantomjs/downloads/list
+[18:10] <benji> mm
+[18:10] <Makyo> Is https://bugs.launchpad.net/juju-gui/+bug/1087110 no longer a thing?
+[18:10] <_mup_> Bug #1087110: makefile and tests are not run automatically before landing <juju-gui:Triaged> < https://launchpad.net/bugs/1087110 >
+[18:10] <benji> hmm, I wonder why it is trying 1.8.0
+[18:11] <Makyo> benji, there was an update to npm today, for me.  Maybe try that?
+[18:11] <Makyo> s/try/check
+[18:14] <benji> Makyo: nope (I have updated recently)
+[18:16] <benji> hmm, different error from "sudo npm install -g phantomjs@1.8.1"
+[18:36] <benji> guihelp: I haven't been able to get npm to install phantomjs; I have two cards gumming up the lane, therefore I am going to subvert lbox and just land the branches in question.  You have five (5) minutes to object.
+[18:42] <benji> Time's Up!
+[18:42] <bcsaller> benji: can you manually install http://phantomjs.googlecode.com/files/phantomjs-1.8.1-linux-i686.tar.bz2
+[18:42] <bcsaller> opps
+[18:42] <bcsaller> too slow 
+[18:42] <benji> bcsaller: :)
+[18:43] <benji> bcsaller: I tried (in that I tried pointing npm at that URL as well as wget-ting the file and pointing npm at the file on disk; all failed)
+[18:43] <bcsaller> you're sure it was 1.8.1?
+[18:43] <benji> I also tried "npm install -i phantomjs@1.81"
+[18:43] <bcsaller> and not 1.8.0? that was the link I saw before
+[18:44] <benji> yep, I tried several versions
+[18:44] <bcsaller> but have you tried it w/o npm?
+[18:44] <benji> what does "w/o npm" mean?
+[18:46] <bcsaller> you can download the package directly and see about putting it in the right place
+[18:46] <bcsaller> or at least check if the binary will run from the archive for you
+[18:47] <benji> that's worth trying, I'll see about that
+[18:49] <bcsaller> for me it looks like a stand alone binary, you might have to check its library deps with `ldd` and make sure you're not missing anything as you're skipping normal packaging 
+[18:50] <benji> bcsaller: how about just using apt to install it?
+[18:51] <bcsaller> haven't tried, my guess is its too old but you can try that as well 
+[18:51] <benji> untarring it into a temp directory gives me a working (apparently) phantomjs; now, I wonder where I would put it 
+[18:51] <bcsaller> somewhere in your pat
+[18:52] <bcsaller> path
+[18:52] <bcsaller> it just spawns that with some args
+[18:53] <benji> that confuses me, isn't there some sort of npm packagy, javascripty thing supposed to be going on...
+[18:53] <benji> bcsaller: I was supposed to run this command, right? "sudo npm install -g phantomjs"
+[18:53] <bcsaller> npm is being subverted to serve a binary in this case (and not well)
+[18:54] <benji> hmm
+[18:54] <bcsaller> phantom is basically headless webkit
+[18:54] <bcsaller> or I thought it was, might be something else under the hood
+[18:56] <benji> it is (basically headless webkit)
+[18:56] <benji> ok, I have phantomjs installed; "sudo npm install -g mocha-phantomjs" appeared to work
+[18:56] <benji> running lbox now
+[18:57] <benji> eating avocado... mmm
+[18:58] <benji> yay! the tests failed!
+[19:03] <benji> bcsaller: yay, it lives!  Double yay: it cought a test failure that I would have introduced to trunk!
+[19:03] <bcsaller> benji: excellent, sorry about the install trouble
+[19:04] <benji> bcsaller: I will add a note to HACKING that if you have trouble installing phantomjs you can do it manually and outline that; many thanks for the help!
+[19:12] <benji> oh man, I love running the tests in a terminal so much
+[19:12] <bcsaller> yeah, me too
+[20:24] <gary_poster> bcsaller Makyo benji bac, hi.  Neither the menu's "view" choice work nor the double-click work to go from the environment to a service.  I'll file a bug in 30 minutes or so if no-one else has, but if someone is available to file that would be great.  If someone is available to fix, that would be great.
+[20:24] <Makyo> gary_poster, on it, will start with the bug.
+[20:24] <benji> gary_poster: I can file it
+[20:24] <benji> or Makyo can
+[20:24] <gary_poster> Thank you Makyo.  Thanks benji :-)
+[20:25] <gary_poster> Makyo, looks like click on a unit no longer works on http://uistage.jujucharms.com:8080/service/wordpress/ either
+[20:26] <bcsaller> gary_poster: a fix for that was applied a day or so ago, maybe someone merged it out
+[20:26] <gary_poster> ok thanks bcsaller, maybe check with Makyo if there is a quick fix
+[20:37] <bcsaller> gary_poster: it was a trivial, found it, I'll just merge the fix, its putting old code back :-/
+[20:38] <Makyo> bcsaller, where was it?
+[20:38] <bcsaller> Makyo: app.js/handler for *:navigateTo 
+[20:39] <Makyo> bcsaller, ah, alright
+[20:40] <bcsaller> I think all I saw was the console.log and removed the handler, read the second line as arguments 
+[20:40] <bcsaller> *shameface*
+[20:40] <Makyo> On looking at https://launchpad.net/juju-gui should we update the charm store url?
+[20:41] <Makyo> It's still pointing to the ~juju-gui charm.
+[20:41] <gary_poster> bcsaller, ok thank you.  Makyo yes please I think you can
+[20:42] <Makyo> gary_poster, Done and done.
+[20:43] <gary_poster> thank you Makyo!
+[21:32] <benji> protip: if you want to run a subset of the tests in a terminal you can just start the test server (and close the annoying test window it opens) and then run a command like this: mocha-phantomjs "http://localhost:8084/test/index.html?grep=viewport module"
+[21:33] <benji> Since mocha-phantomjs supports reading the test file from the filesystem it would be a nice enhancement to get "mocha-phantomjs test/test_index.html" (or similar) to work
+[21:33] <benji> ...then we wouldn't need a test server to run the tests in a terminal
+[21:37] <bcsaller> benji: or just add .only to the describe or it for the test
+[21:38] <bcsaller> we can change the test-server script to pass through options, grep is a cli option as well, you don't need to modify the url directly
+[21:42] <benji> bcsaller: I didn't see grep in the help for mocha-phantomjs and --grep didn't work (although it didn't complain about it either, which is odd)
+[21:43] <benji> the .only trick is a good one; everyone should know that one, maybe you should mention it in the weekly meeting
+[21:44] <bcsaller> benji: hmm, only mocha takes --grep directly, sorry about that 
+[21:56]  * Makyo dogwalks.
+[22:23]  * Makyo dedogwalks.

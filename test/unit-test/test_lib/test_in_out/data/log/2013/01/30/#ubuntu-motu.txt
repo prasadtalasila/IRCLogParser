@@ -1,0 +1,215 @@
+=== almaisan-away is now known as al-maisan
+=== al-maisan is now known as almaisan-away
+[00:53] <TheLordOfTime> hmm...........
+[00:53] <TheLordOfTime> anyone know which package provides python dev headers?
+[01:01] <aboudreault> python2.7-dev ??
+[01:02] <aboudreault> apt-cache search python | grep dev
+[01:02] <TheLordOfTime> hmm
+[01:02] <TheLordOfTime> that's weird because when i use that on this package, it errors out..
+[01:03] <TheLordOfTime> unless debhelper's broken... https://launchpadlibrarian.net/129898603/buildlog_ubuntu-raring-amd64.mysql-workbench_5.2.45%2Bdfsg-1~raring~ppa0.1_FAILEDTOBUILD.txt.gz
+[01:03] <TheLordOfTime> python-all-dev caused an FTBFS because it couldn't find the dev headers... switching it out with python2.7-dev caused FTBFS too...
+[01:07] <TheLordOfTime> strangely, though...
+[01:07] <TheLordOfTime> using the upstream mysql-workbench package that you download from Oracle works OOTB
+[01:07] <TheLordOfTime> except that you have to manually install it
+=== Amaranthus is now known as Amaranth
+=== jackyalcine_ is now known as jalcine
+[03:08] <micahg> TheLordOfTime: hrm, python-all-dev should do it
+[03:08] <TheLordOfTime> micahg, and it wasn't - case in point the earlier build log
+[03:08] <TheLordOfTime> (and strangely enough: i just asked about this in -packaging xD
+[03:08] <TheLordOfTime> )
+[03:09] <TheLordOfTime> https://launchpad.net/~teward/+archive/buildtests/+build/4257686 i386; https://launchpad.net/~teward/+archive/buildtests/+build/4257685 amd64
+[03:09] <TheLordOfTime> and those two build logs were using *only* the debian version with nothing changed but a changelog repointing to raring for the PPA
+[03:09] <TheLordOfTime> i *tested* whether python2.7-dev was sufficient, and that FTBFS'd as well
+[03:09] <micahg> TheLordOfTime: backportpackage is your friend :)
+[03:10] <TheLordOfTime> which was that ~ppa0.1 one i linked after asking what the dev headers package is
+[03:10] <TheLordOfTime> micahg, from Experimental?
+[03:10] <TheLordOfTime> backportpackage can work from Experimental?
+[03:10] <TheLordOfTime> o.O
+[03:10] <TheLordOfTime> micahg, 5.2.45 is in experimental only...
+[03:10] <TheLordOfTime> ... or oracle's binary-only .deb ...
+[03:10] <micahg> it's in the python package, why does python-dev not depend on python :(
+[03:10] <TheLordOfTime> (and oracle's 5.2.45 deb works fine)
+[03:11] <TheLordOfTime> (at least in 12.04 it does)
+[03:11] <TheLordOfTime> so i'm curious what the delta is between oracle's .debs and what's in Experimental
+[03:11] <micahg> python-all-dev depends on python :(
+[03:11] <TheLordOfTime> micahg, and now you know why i'm confuzled with this package
+[03:12] <TheLordOfTime> in theory, it should build.
+[03:12] <TheLordOfTime> in actuality it does not
+[03:12] <micahg> http://wiki.debian.org/Python/TransitionToDHPython2?action=show&redirect=Python%2FPythonSupportToDHPython2
+[03:12] <TheLordOfTime> ... well, it depwait'd initially, because of mysql-connector-c++ not being new enough in raring... that was an easy fix...
+[03:13] <micahg> ah, hrm, let me update
+[03:13] <TheLordOfTime> but i'm hesitant to ask that to be sync'd because its rdeps shows a libreoffice sql connection plugin as depending on it (which could break thingsa!)
+[03:16] <TheLordOfTime> micahg, if i do ask for a sync of mysql-workbench from experimental: (1) the FTBFS issue needs fixing, and (2) https://launchpad.net/ubuntu/+source/mysql-connector-c++ needs to be updated (the package in it that holds the library shows an rdep of something in libreoffice)
+[03:16] <TheLordOfTime> unless i'm mistaken, if it FTBFS in a PPA, it FTBFS in the archives.
+[03:16] <micahg> TheLordOfTime: yeah, you'll need to talk to sweetshark to see if libreoffice works with the newer version
+[03:17] <TheLordOfTime> so, email then.
+[03:17]  * TheLordOfTime goes and locates their LP page
+[03:17] <TheLordOfTime> micahg, regardless, i want to nail down the FTBFS issue.
+[03:17] <TheLordOfTime> whether i end up requesting the sync or not
+[03:18] <micahg> TheLordOfTime: yeah, that seems fine
+[03:18] <TheLordOfTime> and since i'm sufficiently confuzled about why it initially FTBFS, well...
+[03:18] <TheLordOfTime> no clue how to resolve that since python-all-dev should pull in dev headers
+[03:18] <TheLordOfTime> but the configure script won't detect them in ~ppa0
+[03:19] <TheLordOfTime> so... unless python-all-dev in Ubuntu puts it in a different location than the configure script seeks...
+[03:20] <TheLordOfTime> ... which afaict it shouldn't...
+[03:21] <micahg> oh, that's probably a multiarch problem which I thought they were all fixed
+[03:21] <micahg> err.mostly fixed
+[03:23] <TheLordOfTime> so...
+[03:23] <TheLordOfTime> blame launchpad and go complain to them?
+[03:25] <micahg> no
+[03:25] <ajmitch> what has launchpad got to do with a build failure like that?
+[03:25]  * TheLordOfTime misread
+[03:25]  * TheLordOfTime yawns
+[03:25] <TheLordOfTime> micahg, is there a solution to this?
+[03:25] <micahg> you probably need to make the configure check use python-config
+[03:28] <micahg> TheLordOfTime: I'll have a debdiff for you in a minute
+[03:28] <TheLordOfTime> micahg, thanks.
+[03:29] <micahg> TheLordOfTime: try this: http://paste.ubuntu.com/1587747/
+[03:29] <TheLordOfTime> also, afaict, somewhere between what's in quantal and latest upstream (which is in experimental, albeit possibly tweaked), this bug might've been fixed: https://bugs.launchpad.net/ubuntu/+source/mysql-workbench/+bug/1108630
+[03:29] <ubottu> Ubuntu bug 1108630 in mysql-workbench (Ubuntu) "mysql-workbench SQL Editor does not show any schemas" [Undecided,New]
+[03:29] <TheLordOfTime> so if i can at least get this to build and see if the version from Debian Exp fixes this, that would be added to the sync reason
+[03:33] <micahg> TheLordOfTime: actually, that's not the right fix..
+[03:34] <micahg> that's the one that was fixed :)
+[03:35] <TheLordOfTime> urgh, lag.
+[03:37] <TheLordOfTime> micahg, confirmed: 5.2.45 has some codefix that resolves the issue, using the packages produced by Oracle
+[03:38] <TheLordOfTime> (which fixes Bug #1108630 that is)
+[03:38] <ubottu> bug 1108630 in mysql-workbench (Ubuntu) "mysql-workbench SQL Editor does not show any schemas" [Undecided,New] https://launchpad.net/bugs/1108630
+[03:39] <micahg> TheLordOfTime: try this: http://paste.ubuntu.com/1587765/ , the patch will need a little explanation since what upstream was trying to do was broke to begin with
+[03:39] <TheLordOfTime> of course, i'm waiting to hear back from sweetshark via email on whether libreoffice can build with the dependency on the mysql-connector-c++ 1.1.1
+[03:39] <TheLordOfTime> before i file *any* sync requests.
+[03:40] <micahg> TheLordOfTime: if libreoffice 4.0 builds with it, I'll take it for backports regardless
+[03:41] <TheLordOfTime> micahg, this isn't backportable in its current form, not without... ah... "tweaking" to make it work
+[03:41] <TheLordOfTime> for pre-raring
+[03:41] <micahg> well, builds + works
+[03:41] <TheLordOfTime> afaict at least
+[03:41] <TheLordOfTime> (for raring, if the FTBFS is fixed, this can be synced :P)
+[03:41] <TheLordOfTime> again, depending on the response from sweetshark
+[03:43] <micahg> yeah, best to try to get it in the release itself first :)
+[03:43] <TheLordOfTime> yep
+[03:43] <TheLordOfTime> and of course i don't do that until i build-test :P
+[03:46] <TheLordOfTime> micahg, suggested explanation?  since you wrote the patch :P
+[03:46]  * TheLordOfTime put that in the AUthor: field in the DEP3
+[03:47] <micahg> TheLordOfTime: Since the upstream configure file uses -L in the LIBS test, python-config --ldflags is the easiest way to get that
+[03:47] <micahg> TheLordOfTime: and it goes in the description
+[03:48] <TheLordOfTime> right
+[03:48] <TheLordOfTime> micahg, your contact info's in Author: though if i remember dep3 right
+[03:48] <micahg> well, that + the libs
+[03:48] <micahg> yeah, should already be there
+[03:48] <TheLordOfTime> yeah, it wouldnt quilt import right, so i am (sort of) rebuilding the dep3
+[03:48] <TheLordOfTime> (apparently this line broke it: ---)
+[03:49] <TheLordOfTime> i meant that i put that you were the author in Author:
+[03:49] <TheLordOfTime> :p
+[04:03] <TheLordOfTime> ... wow gmail detected the LP PPA notifications as spam o.O
+[04:11] <TheLordOfTime> micahg, so far so good: https://launchpad.net/~teward/+archive/buildtests/+build/4258335
+[04:12] <TheLordOfTime> no FTBFS... yet...
+[04:14] <TheLordOfTime> (i386 is lagging behind the amd64 build though... by about two minutes)
+[05:40] <TheLordOfTime> micahg, successfully built from source - your patch fixed the FTBFS.
+[05:41] <TheLordOfTime> once i hear back from sweetshark, and assuming LibreOffice builds with the updated mysql-connector-c++ source, then you'll see at least one sync request (probably going to have to work with devel to get the cpp connector synced though, since its in main)
+[05:42] <micahg> TheLordOfTime: I can take care of it, I'll keep an eye on the queu
+[05:42] <TheLordOfTime> awesome, in the mean time i'll wait to hear back on the email i sent.  at least it doesn't fail to build now :P
+[05:42]  * TheLordOfTime heads off to get some sleep
+[07:42] <dholbach> good morning
+[07:47] <geser> good morning
+[07:49] <ESphynx> 'morning guys
+=== almaisan-away is now known as al-maisan
+[09:32] <jackyalcine> Can someone take a glance at https://code.launchpad.net/~jackyalcine/ubuntu/raring/telepathy-logger-qt/raring/+merge/145560 ?
+[09:34] <jackyalcine> ah, I have to make a few changes.
+[09:34] <jackyalcine> vis a vis http://developer.ubuntu.com/packaging/html/fixing-a-bug-example.html
+=== zequence_ is now known as zequence
+=== yofel_ is now known as yofel
+[10:24] <spacecowboy29>  A question, I have an error in bazaar, http://pastebin.com/4Fn63Xad,  Corkscrew is referred as Corksrew, so I'm guessing a typo, but not sure where to modify it...
+[10:24] <xkernel> "pbuilder-dist raring create" is getting many many packages and taking too long time and sometimes if fails and when I run again it start from the beginning
+[10:44] <jackyalcine> okay now my merge would LOVE a review :(
+[10:44] <jackyalcine> *:)
+[10:45] <jackyalcine> https://code.launchpad.net/~jackyalcine/ubuntu/raring/telepathy-logger-qt/raring/+merge/145560
+[10:47]  * ESphynx is almost done with this SRU preparation =(
+=== ziviani is now known as Guest5930
+=== Guest5930 is now known as ziviani
+[11:32] <ESphynx> xnox: i'm going to update that package again if you haven't uploaded it yet :P
+[11:33] <ESphynx> All this reviewing process had me fix more stuff :|
+[12:06] <xkernel> when building a package with "bzr bd -- -S"  where to predefine the secret key to be used for signing?
+[12:12] <Zhenech> -kkey-id
+[12:37] <jackyalcine> xkernel: you could also set DEBSIGN_KEY in your ~/.devscripts file
+[12:37]  * jackyalcine took me a while to notice that little kicker
+[12:39] <Laney> DEBSIGN_KEYID, that is
+[12:39] <xkernel> jackyalcine, DEBSIGN_KEY <email> ?
+[12:40] <jackyalcine> well, you'd set the keyid you're signing with.
+[12:40] <jackyalcine> ie: DEBSIGN_KEYID=728BA2C4
+[12:41] <xkernel> thanks
+[12:41] <tumbleweed> or you could just sign your changelogs with an e-mail address that gpg can find a key for
+=== al-maisan is now known as almaisan-away
+=== almaisan-away is now known as al-maisan
+=== dpm is now known as dpm-laptop
+=== smartboyhw_ is now known as smartboyhw
+[14:38] <dholbach> Day 2 of https://wiki.ubuntu.com/UbuntuDeveloperWeek starts in 22 minutes in #ubuntu-classroom
+[14:40] <smartboyhw> dholbach, thx
+[15:30] <ESphynx> Could someone pelase target https://bugs.launchpad.net/ubuntu/+source/ecere-sdk/+bug/1110284 to Quantal ?
+[15:30] <ubottu> Ubuntu bug 1110284 in ecere-sdk (Ubuntu) "[SRU (Quantal)] Makefiles generated by the Ecere IDE do not work by themselves" [Undecided,Confirmed]
+[15:31] <TheLordOfTime> ESphynx, nominated for quantal.
+[15:31] <TheLordOfTime> someone'll be along to either approve/reject that nomination :p
+[15:31] <TheLordOfTime> (although i don't think there'll be issues there ;P)
+[15:32] <ESphynx> TheLordOfTime : thanks, I meant just marking it as 'affects quantal' as micahg did for the other bugs
+[15:32]  * TheLordOfTime goes back to stabbing a half-dead drive
+[15:32] <TheLordOfTime> ESphynx, same difference, except i think MOTU has approve-nomination or equivalent rights - bugcontrol can nominate for a specific release (such as affects: quantal, lucid, etc.), but only a specific group can approve such things.
+[15:32] <ESphynx> Ok thanks. I'll finally be assigning to ubuntu-sru
+[15:33] <ESphynx> been working on this non-stop since Saturday :S
+[15:33] <Laney> assigning to ubuntu-sru doesn't sond right
+[15:33] <TheLordOfTime> ESphynx, you mean subscribe?
+[15:33] <ESphynx> Laney: it doesn't?
+[15:33] <ESphynx> subscribing, yes, sorry.
+[15:33] <TheLordOfTime> ESphynx, subscribe them - don't assign.
+[15:33] <ESphynx> yes subscribe is what I meant :P
+[15:33] <Laney> subscribe *ubuntu-sponsors* to the bug which contains the patch/branch
+[15:34] <ESphynx> Procedure #4 says  Ask a bug supervisor to target the bug to the appropriate Ubuntu releases (e. g. the current LTS and latest stable release), then subscribe the team ubuntu-sru to your bug report.
+[15:34] <TheLordOfTime> ESphynx, you missed the part where you have to subscribe ubuntu-sponsors if you have no upload rights
+[15:34] <Laney> Oh, it does say that but I believe that's obsolete
+[15:35] <Laney> anyway, you can do it if you like but the important part that will get it uploaded is ubuntu-sponsros
+[15:35] <Laney> with correct spelling
+[15:35] <TheLordOfTime> Laney, if its obsolete, why's it still there?
+[15:35]  * TheLordOfTime raises an eyebrow
+[15:35] <Laney> because nobody deleted it yet?
+[15:35] <Laney> it's not harmful but I do not think it is necessary any more
+[15:35] <ESphynx> well I'm hoping my friends micahg and xnox are going to take it from here :P
+[15:35] <TheLordOfTime> :P
+[15:36] <TheLordOfTime> ... oh that reminds me, i have to go prod bugcontrol's mailing list about something...
+[15:36] <TheLordOfTime> Laney, this whole talk of "obsolete things on the wiki" reminded me of things :P
+[15:37] <Laney> at least with a wiki such things are easily fixable
+[15:37] <TheLordOfTime> well...
+[15:37] <TheLordOfTime> sorta...
+[15:37] <TheLordOfTime> depending on who has "operational control" over the specific wiki areas
+[15:37] <TheLordOfTime> like... bugcontrol has somewhat control over the Bugs/* stuff
+[15:37] <TheLordOfTime> ... which reminds me yet AGAIN to send an email to bugcontrol list regarding something
+[15:38] <TheLordOfTime> *sigh*
+[15:38] <TheLordOfTime> meh, cba to open up google while i'm on a liveusb *shrugs*
+=== al-maisan is now known as almaisan-away
+=== almaisan-away is now known as al-maisan
+=== al-maisan is now known as almaisan-away
+=== dpm-laptop is now known as dpm
+[19:12] <xkernel> where to find applications that needs packing?
+=== Quintasan_ is now known as Quintasan
+[19:36] <PaoloRotolo> xkernel, here: http://tinyurl.com/byoff9w
+[19:46] <Fudgie> I've dropped here from https://wiki.ubuntu.com/UbuntuDevelopment/NewPackages
+[19:46] <Fudgie> Anyone about?
+=== Amoz_ is now known as Amoz
+[20:19] <Unit193> From what I can see, Bug #991750 is in universe.
+[20:19] <ubottu> bug 991750 in Ubuntu "[needs-packaging] owncloud-client" [Wishlist,Confirmed] https://launchpad.net/bugs/991750
+[20:32] <Rhonda> Unit193: client, not server?
+[20:33] <Unit193> owncloud-client: Candidate: 1.0.5+repack1-0ubuntu1   500 http://archive.ubuntu.com/ubuntu/ quantal/universe i386 Packages
+[20:33] <Unit193> !info owncloud-client quantal
+[20:33] <ubottu> owncloud-client (source: owncloud-client): GUI app to sync a folder to ownCloud. In component universe, is optional. Version 1.0.5+repack1-0ubuntu1 (quantal), package size 739 kB, installed size 1996 kB
+[20:33] <Rhonda> Oh, right, since quantal
+[20:33] <Rhonda> Mark it as fix released, then? :)
+[20:34] <Unit193> Yep, quantal and up, precise doesn't have it.
+=== almaisan-away is now known as al-maisan
+[22:23] <bobweaver> hello there all. I just was installing one of my packages when I realized that it is installing all the Recomended things. Was wondering what is causing this. you can see d/control here http://bazaar.launchpad.net/~josephjamesmills/u2t/dailybuilds/view/head:/debian/control   thanks for your time
+[22:27] <Unit193> bobweaver: So you tried to install a package, and it was installing the recommends?  This is normal unless you have it set not to, could also try --no-install-recommends if you're pulling from a ppa/using apt-get.
+[22:28] <bobweaver> Oh I thought that Recomends:  is for when user types in apt-get install <package> it says this is recomended
+[22:28] <bobweaver> lol see how much I know
+[22:28] <bobweaver> do you know where I put that ?
+[22:29] <bobweaver> Line 169 is the package that I want to Recommend to the user,
+[22:29] <bobweaver> qtcreatro
+[22:32] <Unit193> What about suggests?
+[22:36]  * bobweaver goes to re-read debian new maintainers guide 
+[22:37] <Unit193> Please note, I am not a Debian maintainer. :)
+[22:39] <bobweaver> I understand Unit193  thanks though for you help and input.
+=== al-maisan is now known as almaisan-away

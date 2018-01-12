@@ -1,0 +1,104 @@
+[02:19] <berto-> following the instructions on the following page i was able to build my own kernel.  after rebooting i'm able to SSH into the box, but there is no console (TTY1).  any ideas? https://help.ubuntu.com/12.04/installation-guide/i386/kernel-baking.html
+[09:18]  * apw whines about the early hour
+[09:19] <stgraber> have to get used to it again :)
+[09:26]  * apw reboots into a 2013 kernel ...
+=== yofel_ is now known as yofel
+=== amitk is now known as amitk-afk
+=== chiluk_away is now known as chiluk
+=== amitk-afk is now known as amitk
+[13:38]  * ogasawara stretches and waves
+[13:55] <apw> hny ogasawara :)
+[13:56]  * rtg has accumulated a simply staggering amount of email in 2 weeks
+[13:57] <ogasawara> my inbox was actually manageable, although I was staying on top of it over the break
+[15:02] <rtg> sforshee, do I want BRCM_TRACING=y for 3.8 ?
+[15:05] <sforshee> rtg, yes, let's have BRCM_TRACING=y and BRCMDBG=n
+[15:05] <rtg> sforshee, ack
+[15:05] <sforshee> rtg, I think there were some mac80211 trace options I wanted to enable too but I can send a patch
+[15:06] <rtg> sforshee, wait until I've got the rebase complete. I'll send out a note
+[15:07] <sforshee> rtg, ack. I doubt I'll get to it before then end of the day anyway, most of today will be playing catch-up.
+[15:35] <rtg> bjf, 3 of us responded....
+[15:35] <bjf> rtg, i heard a "yup"
+[15:35] <rtg> bjf, ok, its hard to tell when _you_ don't respond
+[15:53]  * ogasawara back in 20
+=== JanC_ is now known as JanC
+[16:40] <slangasek> cking: ping - did you see my request in bug #1040557 to push your samsung-laptop changes to precise-proposed so that we can build live images from there and test the fix?
+[16:40] <ubot2> Launchpad bug 1040557 in Ubuntu CD Images "UEFI boot live-usb bricks SAMSUNG 530U3C,np700z5c laptop" [Critical,Confirmed] https://launchpad.net/bugs/1040557
+[16:48] <bjf> slangasek, i'm working on the next round of kernels as we "speak"
+[16:49] <slangasek> bjf: is there a commit from cking somewhere that you can perhaps pull in for this?
+[16:49] <bjf> slangasek, it's already in the tree and will be part of this update
+[16:49] <slangasek> oh, awesome - thanks!
+[16:51] <cking> ..the crank is turning so to speak
+[16:51] <bjf> indeed
+[16:52] <rtg> ogasawara, pushed raring master-next. build tested on amd64/i386. still working on armhf. updated dropped.txt with the usual suspects.
+[16:52] <ogasawara> rtg: ack, thanks.  I'll give it a spin on my kit.
+[18:32]  * rtg -> lunch
+[19:06] <rtg> ogasawara, repushed raring with some version fixes. its now 3.8.0-0.1
+[19:06] <ogasawara> rtg: ack
+[19:14] <infinity> Ooo, 3.8?
+[19:14] <infinity> That fixes my tmpfs leak.  Want.
+[19:14] <rtg> it even seems to work so far
+=== chiluk is now known as chiluk_away
+=== chiluk_away is now known as chiluk
+=== chiluk is now known as chiluk_away
+=== chiluk_away is now known as chiluk
+[20:16] <dobey> if i clone the git repo for the kernel, and do debuild -S, where does it get the orig source from?
+[20:21]  * ogasawara lunch
+[20:25]  * rtg finally catches up on LKML
+[20:31]  * rtg -> EOD
+[21:02] <kamal> dobey: it doesn't get the orig source from anywhere ... you need to manually download it and place it in "../"  (right above the git repo) before you do your debuild -S
+[21:02] <dobey> it appears a bit more complex than that
+[21:02] <kamal> dobey: if you don't do that, then it will build a *full* source package
+[21:02] <dobey> debuild -S just errors
+[21:02] <dobey> because there's no debian/changelog (it's under debian.master/)
+[21:03] <kamal> dobey: you must do "fakeroot debian/rules clean" first ... that'll setup debian/
+[21:03] <dobey> ah
+[21:03] <kamal> (i.e. it'll copy bits from debian.master)
+[21:03] <kamal> dobey: fakeroot debain/rules clean is poorly named ...  it would be better called "clean_and_prepare"
+[21:04] <kamal> dobey: another tip:   for the kernel tree in particular, you'll want to use:    debuild -S -I -i   (to make it not try to package up the .git/ dir and other junk bits)
+[21:07] <dobey> kamal: and what would the orig source be, given there's no debian/patches directory, and the kernel has patches which aren't in the upstream orig source?
+[21:08] <dobey> i'm trying to understand how i can add some patches to it, and build a package, so i can test them
+[21:11] <kamal> dobey: the orig source is in fact, the upstream kernel release tarball, e.g. linux_3.5.0.tar.gz but renamed to linux_3.5.0.orig.tar.gz as is normal for debian packages
+[21:12] <kamal> dobey: you can download that .orig.tar.gz file from Launchpad ...
+[21:13] <kamal> https://launchpad.net/ubuntu/+archive/primary/+files/linux_3.5.0.orig.tar.gz
+[21:13] <kamal> (modify as needed for your version)
+[21:14] <kamal> dobey: there's no debian/patches directory because this particular debian package just doesn't use debian/patches -- instead, all the changes (the delta from that .orig) are just glommed into another big tarball at the time you run debuild -S
+[21:16] <kamal> dobey: for your case, you should just *apply* the patches directly to your git repo, then add a new "customdobeyversion" entry to debian.master/changelog, then fakeroot debian/rules clean (to copy that into debian/), then debuild -S . . .
+[21:16] <kamal> you'll end up with a new customdobeyversion source package in ../
+=== chrisccoulson_ is now known as chrisccoulson
+=== henrix_ is now known as henrix
+=== henrix is now known as henrix_
+[21:54] <dobey> well i managed to get a source package with at least one of the patches i want to test. i hope it doesn't blow up
+[21:58] <kamal> dobey: excellent.  good luck!
+[22:16] <dobey> well, this is unfortunate, and not particularly helpful either: http://pastebin.ubuntu.com/1490051/
+[22:18] <kamal> dobey: the paste doesn't show the "real" error, which surely happened many many lines above that ... the kernel's parallel make gets run in "-k" (try to keep going after an error) mode, so the trick there is to capture the whole build output log, then search backwards from the bottom for "Error"
+[22:28] <dobey> make[3]: openssl: Command not found
+[22:28] <dobey> make[3]: *** [signing_key.x509] Error 127
+[22:28] <dobey> that i guess?
+[22:29] <kamal> dobey: that sure looks like a problem to me!  but I don't know how to fix it
+[22:31] <dobey> but why would the kernel package not have a build-depends on openssl if it requires it? this is git://kernel.ubuntu.com/ubuntu/ubuntu-raring.git save for the i915 drm patch i pulled in from dan's intel-fixes branch, and my changelog entry to tweak the version
+[22:32] <kamal> dobey: I think the openssl "signed kernel" stuff is new for raring, for whatever that's worth
+[22:32]  * kamal tries a test raring build
+[22:34] <dobey> but the latest changelog entry is for the same version i'm currently running, so it's surely been built by the builders, which is weird
+[22:34] <dobey> i'm happy to build without that for now if i can. i just want to see if this patch fixes my video issue
+[22:36] <kamal> dobey: yes, the buildlog here does refer to openssl: https://launchpad.net/ubuntu/+source/linux/3.7.0-7.15/+build/4065696
+[22:36] <dobey> indeed. and pbuilder very helpfully just deletes the tree when it's done, regardless of failure
+[22:42] <dobey> interestingly though, "openssl" is not installed via build-depends according to that build log
+[22:42] <kamal> dobey: I was just going to point that out!
+=== chiluk is now known as chiluk_away
+[22:44] <dobey> ok, found where i need to add it to build-depends, i think
+[22:45] <kamal> dobey: but that won't explain why it builds okay on launchpad ;-)
+[22:45] <kamal> dobey: is your pbuilder up to date?
+[22:46] <dobey> yes, i did update right before the build
+[22:46] <dobey> and i'm running on a raring host as well
+[22:59] <kamal> dobey: my raring kernel test build (using the schroot builder on tangerine) did run openssl, just like the launchpad build.  I still don't know what's pulling it in though.
+[23:00] <dobey> kamal: maybe sbuild has it installed in the chroot by default, while pbuilder doesn't?
+[23:00] <kamal> seems unlikely to me
+[23:10] <kamal> dobey: I take that back ...  openssl does indeed appear to be installed in the schroot on my build machine -- I don't know if that's the standard default or not.
+[23:10] <kamal> .... and it's not installed in my raring pbuilder.
+[23:12] <kamal> so, yes, I'm inclined to think that this is a bug in raring's Build-depends... it should list openssl explicitly.
+[23:14] <dobey> now i'm getting this: http://pastebin.ubuntu.com/1490157/
+[23:14] <kamal> dobey:  progress!
+[23:15] <dobey> i think i'll have to deal with it later though. 
+[23:15] <kamal> dobey: the easiest solution to that is to just disable the ABI check ...   I can help you with that when you're ready to proceed.  holler for me.
+[23:15] <dobey> thanks!
+[23:16] <dobey> later

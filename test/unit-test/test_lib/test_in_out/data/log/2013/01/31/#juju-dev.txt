@@ -1,0 +1,477 @@
+[02:17] <arbit30719> can some body help me solve juju and MAAS problem : I have also posted on ask ubuntu  http://askubuntu.com/questions/249350/juju-cannot-deploy-services-with-maas
+[02:24] <arbit30719> hello ?
+[02:30] <arbit30719> can some body help me solve juju and MAAS problem : I have also posted on ask ubuntu  http://askubuntu.com/questions/249350/juju-cannot-deploy-services-with-maas
+[02:31] <bigjools> arbit30719: most of the devs are in Europe and USA
+[02:41] <arbit30719> I see  :P
+[04:59] <arbit30719> hi all
+[06:04] <jtv> jam: Why do we create one global instance of each provider, but *register* a different instance?
+[06:05] <jam> jtv: well for ec2 'environProvider' has no state (struct{}) so the concept of an instance of it is a bit weak.
+[06:06] <jam> I think the important part is to register that the instance exists.
+[06:06] <jam> I see your point, though.
+[06:06] <jam> It does look like
+[06:06] <jam> environs.RegisterProvider("ec2", providerInstance)
+[06:06] <jam> would make more sense.
+[06:06] <jam> It works because there is no state, and all the functions just exist to create the actual environ where work is done.
+[06:07] <jtv> Thanks!  I was wondering if there might be externalized data associated with pointers-to-providers too.
+[06:07] <jam> jtv: I imagine the openstack code just copied the ec2 code.
+[06:07] <jtv> Yeah...  I'm not reading too much into the "everyone does it" for that reason.  :)
+[06:08] <jam> jtv: yep. We inherited a fair amount of stuff I suspect from copying it from ec2
+[06:08] <jam> It would make sense to me to have a patch that registered the global variable
+[06:08] <jam> otherwise, why have that var?
+[06:08] <jtv> Maybe as a prototype..?
+[06:08] <jam> well it is used in functions
+[06:08] <jam> SetConfig() calls providerInstance.newConfig() etc.
+[06:09] <jtv> Yeah.  It looks a lot as if the thing has neither state nor identity...
+[06:09] <jam> so *if we get state* I think we have to use the global variable in the registration.
+[06:09] <jtv> That does sound sane, yes.
+[06:09] <jam> jtv: I imagine there is a discrete instance, (you can probably take the address of it)
+[06:09] <jam> &providerInstance
+[06:09] <jam> but it is not actually used
+[06:09] <jam> I think the type is there to collect methods
+[06:09] <jam> and you can't just call Type.method()
+[06:09] <jam> so you have to somewhere generate an instance of it
+[06:10]  * jam always doubts if global state is correct, though.
+[06:10] <jtv> Well if there's no state...  :)
+[06:10] <jtv> It looks as if a singleton was intended.
+[06:10] <jam> jtv: then you should be using a local var
+[06:11] <jam> ?
+[06:11] <jam> to make it clear
+[06:11] <jam> jtv: yeah, it does look like someone was trying for a singleton pattern.
+[06:11] <arbit30719> hi all
+[06:11] <jtv> A local var would be nice, but puts it out of reach of the code that needs the singleton.
+[06:11] <jtv> Hello arbit30719
+[06:11] <arbit30719> can some body help me solve juju and MAAS problem : I have also posted on ask ubuntu  http://askubuntu.com/questions/249350/juju-cannot-deploy-services-with-maas
+[06:11] <arbit30719> =)
+[06:13] <jam> arbit30719: from everything I can see "agent-state: not started" means that the juju control isn't established on your machine 1, and from the traceback, it appears it will never start.
+[06:13] <jam> I would say kill it (juju destroy-service mysql, juju delete 1)
+[06:13] <jam> and maybe try again.
+[06:14] <jam> I'm not sure why it is having trouble getting a zookeeper connection, though.
+[06:14] <arbit30719> I tried several times and failed
+[06:14] <jam> give "juju status" indicating the root machine is working.
+[06:15] <arbit30719> I am pretty sure root machine works fine between machine 0 and maas server
+[06:15] <jam> jtv: where is the state stored in maas? Is it reasonable to try and query that for what the saved 'zookeeper' information is, to try a manual connection
+[06:15] <jam> ?
+[06:16] <jtv> bigjools worked on that code — he may know
+[06:17] <arbit30719> ?
+[06:19] <bigjools> this is a juju bug as I recall
+[06:20] <bigjools> something to do with ZK
+[06:20] <bigjools> but I can't remember what causes it or what the resolution is
+[06:20] <bigjools> perhaps update to the latest version from the PPA
+[06:21] <jam> bigjools: does maas do firewalling? Is it possible juju is trying to connect to ZK on a port that isn't open?
+[06:21] <bigjools> it doesn't
+[06:22] <arbit30719> I also tried disable firewall and failed...
+[06:22] <bigjools> I remember this bug pretty well, just not well enough to know what the problem was :)
+[06:22] <bigjools> I encountered it on my own systems
+[06:22] <bigjools> arbit30719: what version of juju are you using?
+[06:22] <arbit30719> 0.6
+[06:23] <bigjools> is that from precise/quantal?
+[06:23] <arbit30719> quantal
+[06:23] <bigjools> can you try the official PPA
+[06:24] <arbit30719> you mean ?
+[06:25] <bigjools> also put juju-origin: ppa in the config
+[06:25] <arbit30719> I think MAAS in quantal is much easier to setup
+[06:25] <bigjools> it will get even better with the SRU that's coming
+[06:25] <arbit30719> yes I do put pap in environment.yaml
+[06:25] <arbit30719> SRU ?
+[06:26] <arbit30719> typo   pap  -> ppa
+[06:26] <bigjools> ok
+[06:26] <bigjools> not sure where else to go
+[06:27] <bigjools> I expect one of the core devs will remember when they start (in ~2.5 hours)
+[06:27] <arbit30719> um...
+[06:27] <arbit30719> ok
+[06:32] <bigjools> arbit30719: ah I have an idea
+[06:33] <bigjools> can machine 1 resolve the machine 0's DNS address?
+[06:33] <bigjools> the name of the machine that you use in MAAS needs to be resolvable
+[06:34] <arbit30719> ha I also checked the name server (MAAS-dns)
+[06:34] <arbit30719> They  can resolve both 0's and controller's name
+[06:34] <bigjools> so ssh to machine 1
+[06:34] <bigjools> and do:
+[06:34] <bigjools> host node-4487fc70b037
+[06:35] <arbit30719> 192.168.1.5
+[06:36] <bigjools> can you do:
+[06:36] <bigjools> telnet node-4487fc70b037 2181
+[06:36] <bigjools> and see if it connects to ZK
+[06:43] <jam> jtv: one small thing about your patch, I'm pretty sure you want to just use "providerInstance" not "&providerInstance"
+[06:44] <jtv> Where exactly?
+[06:44] <jam> +func init() { +	environs.RegisterProvider("maas", &providerInstance) +}
+[06:44] <jam> I would be wrong, since that actually creates a copy of the instance
+[06:44] <jam> (but again, no actual state :)
+[06:44] <jam> but the code you are replacing was:
+[06:44] <jam> +func init() { +	environs.RegisterProvider("maas", environProvider{}) +}
+[06:44] <jam> which isn't an address.
+[06:45] <jtv> Yeah.  Don't we have a type system for this?
+[06:45] <jam> jtv: it is an interface
+[06:45] <jam> I imagine that both providerInstance and &providerInstance support the methods you need to be part of the interface.
+[06:45] <jam> EnvironProvider
+[06:45] <jtv> No...  only providerInstance does.
+[06:45] <jam> (interfaces are based on what methods are available)
+[06:46] <jam> jtv: if you define a method func (e environProvider) Foo()
+[06:46] <jam> is that also exposed on *environProvider ?
+[06:46] <jam> If it is, then both provide the interface
+[06:47] <jam> if the funcs themselves are func (e environProvider) than using the address has no effect
+[06:47] <jam> because a new copy will be created for each function call.
+[06:47] <jtv> AFAIK it is only exposed on the object itself, not the pointer.
+[06:47] <jtv> I think I just took the address to satisfy the type system.  Let me try.
+[06:47] <jam> jtv: I'm actually pretty sure it is both
+[06:48] <jam> there is a cast earlier that hints at it
+[06:48] <jtv> That would explain.  And also freak me out.
+[06:48] <jtv> Grr.  It works either way.
+[06:49] <jam> jtv: http://bazaar.launchpad.net/~gophers/juju-core/trunk/view/head:/environs/openstack/provider.go#L38
+[06:50] <jam> so we know that a pointer to a provider provides the interface
+[06:50] <jam> because we have an explicit cast
+[06:50] <jtv> That sort of destroys the last vestige of sense in the ec2 code, doesn't it?  Why create an instance and register its address, when registering an instance will do the same thing?
+[06:50] <jam> however: http://bazaar.launchpad.net/~gophers/juju-core/trunk/view/head:/environs/openstack/provider.go#L61
+[06:50] <jam> all of the actual methods are done based on the object itself
+[06:50] <jam> not its pointre
+[06:50] <jam> so if you define funcs on the pointer, then you must have a pointer to call the object
+[06:50] <jam> but if you define funcs on an object, you can have the object or a pointer to it.
+[06:50] <jtv> But not the other way around.  Shudder.
+[06:51] <jam> jtv: and when calling a func-on-object, a new actual object is created during the function call
+[06:51] <jam> so you cannot mutate state in one of those calls
+[06:51] <jam> so you must either have 0 state, or at least 0 mutable state
+[06:51] <jtv> Yes.
+[06:52] <jam> jtv: so IMO, funcs on objects don't make a lot of sense
+[06:52] <jam> which would then put you in a case where you have to pass the address.
+[06:52] <jtv> They sort of do...  but only for small, immutable objects.
+[06:52] <jam> but, that is the way the code exists.
+[06:52] <jam> jtv: without state changes, which means why is it on an object rather than a plain func.
+[06:52] <jam> I guess interfaces mean you have a way to group funcs.
+[06:53] <jtv> That's exactly what it is.
+[06:53] <jam> I want *this* set of vpointers
+[06:53] <jtv> They call them "method sets," I think.
+[06:53] <jtv> AFAICS the only form of dynamic dispatch in the language is that an interface is basically a tuple (vtable, object)
+[06:53] <jtv> An interface *value*, that is.
+[06:53] <jam> jtv: right
+[06:54] <jtv> Not an interface *definition*, obviously.
+[06:54] <jtv> Anyway, I wrote all that up in our Cultural Learnings document last week:
+[06:54] <jtv> https://docs.google.com/a/canonical.com/document/d/1GQ3u7keE3hJH2oaweAm28K78hQZAbqeQqR9xwD9OR4I/edit#
+[06:56] <jtv> I'll update it with the new knowledge that a pointer to an implementing object is also a valid interface value.
+[06:58] <jam> jtv: I'm using my canonical creds with lbox (though I do have some difficulties) it does seem to work.
+[06:58] <jam> (reading through your docs)
+[06:58] <jtv> Yeah, Gavin had the same experience.  Don't know what I did wrong.
+[06:58] <jam> I got a bunch of "protocol not supported" failures until it happened to work
+[06:59] <jam> and then it seems to generally work afterwards, though I just had propose fail again
+[07:00] <jtv> Weird
+[07:00] <jtv> Thanks for going through the document BTW.
+[07:00] <jam> I'm pretty sure I read it the first time you mentioned it as well.
+[07:01] <jam> but it is good to be reminded from time to time.
+[07:07] <jtv> jam: I updated my branch to register (a copy of) the provider instance, rather than its address.  For what it's worth!
+[07:08] <jam> jtv: I see the point either way. Having thought about it, I probably prefer the address method, but that is probably just my 'why isn't it actually an instance'
+[07:08] <jam> It is a method set, and instance doesn't really mean anything, but we have no way to talk about it without an instance.
+[07:09] <jtv> Okay, I'll undo the change you asked for.  :)
+[07:09] <jtv> Or do you mean you would like the *methods* implemented on the pointer?
+[07:20]  * jtv relocates
+[08:15] <rogpeppe> mornin' all
+[08:15] <jtv> Hi rogpeppe
+[08:16] <rogpeppe> jtv: hiysa
+[08:16] <jtv> jam: did you mean earlier that you would prefer the provider to implement its interface on the pointer only?
+[08:18] <fwereade> rogpeppe, heyhey
+[08:18] <fwereade> everyone, heyhey
+[08:19] <rogpeppe> jtv, jam: that looks like a bug in Register method
+[08:19] <rogpeppe> although it won't make any difference.
+[08:19] <jtv> rogpeppe: I wasn't aware, but if class T implements interface N, then *T also implements N.
+[08:20] <rogpeppe> jtv: yeah
+[08:20] <rogpeppe> jtv, jam: Environ.Provider was a latecomer to the party
+[08:21] <rogpeppe> jtv, jam: and if you don't have that, there's you don't need providerInstance.
+[08:21] <rogpeppe> in fact, you don't need providerInstance at all anyway
+[08:21] <rogpeppe> environs.Provider could just return environProvider{}
+[08:22] <jam> jtv: I would say it is "method set" vs "singleton". If you are going to have a singleton factory, then you should have the methods implemented of "*Foo" so that they all use the same instance.
+[08:22] <jam> If you just have a method set, then there isn't an instance to really think about
+[08:22] <jam> as it just gets created all the tiem.
+[08:23] <jam> time
+[08:23] <jtv> And now we're discussing how to implement a singleton.  I miss python.  :)
+[08:24] <jtv> If it really doesn't matter at all, I'll just go with Environ.Provider() and forget about the singleton.
+[08:25] <jtv> Thanks for pointing that out, rogpeppe  — it makes a few missing pieces fall into place for me.
+[08:25] <jam> jtv: I would probably push towards one or the other for consistency.
+[08:25] <jam> At this point, I don't really care which.
+[08:25] <jam> But we shouldn't have both.
+[08:25] <jtv> Makes sense.
+[08:25] <jam> Because it makes you say: oh we have a singleton, but wait, these are all pass by value, but wait, all the methods are also pass by value so it doesn't matter.
+[08:26] <jam> The last one especially requires you to actually inspect all the methods.
+[08:26] <jam> Rather than just being obvious from the pattern.
+[08:27] <rogpeppe> jtv: the reason only reason that the global var is useful is to make it more convenient to do environProvider.newConfig(environProvider{})...
+[08:27] <jtv> Oh
+[08:28] <jam> rogpeppe: doesn't that hint that 'newConfig' should just be a local func?
+[08:31] <rogpeppe> jam: yeah, it probably should be
+[08:32] <rogpeppe> jam: if it was calling one of the environProvider's exported functions, it would be right
+[08:33] <jam> but you can poke at private methods as long as you are in the same package, right?
+[08:48] <TheMue> Morning
+[09:00] <mgz> mornin'
+[09:40] <jam> morning mgz
+[09:43] <mgz> hey!
+[09:46] <rogpeppe> jam: sure, but there's no real reason for newConfig to be defined on environProvider
+[09:55] <dimitern> jam: hey, I didn't add a test for checking userdata encoding/etc. because I don't yet see how I can test it
+[09:56] <jam> dimitern: have a test that creates an object, serializes it to json, and asserts the content is base64 encoded? (and decodes to the right content?)
+[09:56] <jam> that would at least be something.
+[09:56] <jam> the bug was that we were encoding to base64, and then it was getting encoded *again* by JSON
+[09:56] <dimitern> jam: you think that's enough? done on RunServerOpts only?
+[09:56] <jam> so a test that it is encoded just 1 time would fit the bill
+[09:57] <jam> possibly we mighht want to refactor the code so that the part that fills out the object can be tested separately from actually making an RPC
+[09:57] <dimitern> yeah, but we were wrong because didn't bother to read carefully what the json module does to []byte fields..
+[09:57] <jam> dimitern: so I realize what the bug was, and the fix is correct. But lets add a test so that in 6 months we don't forget and wonder "why aren't we encoding this field"
+[09:58] <dimitern> is it useful to test that go does something it says it does?
+[09:58] <jam> dimitern: clearly it was non-obvious
+[09:58] <jam> or we wouldn't have made the mistake in the first place.
+[09:58] <dimitern> jam: I added a comment there in RunServer
+[09:58] <jam> dimitern: the fact that it confused us for roughly 2 days
+[09:58] <jam> means that we could have some help
+[09:58] <jam> I still think it is clearly untested code
+[09:58] <jam> or it wouldn't have broken
+[09:59] <dimitern> jam: ok, so should it in juju or in goose?
+[09:59] <jam> dimitern: seems like a goose level test to me
+[09:59] <dimitern> jam: ok and now with the bot - we follow the steps you outlined from now on?
+[09:59] <jam> dimitern: yeah, if it doesn't work, just poke me
+[10:00] <jam> but things should land in ~2min from when you mark it approved.
+[10:00] <jam> depending on how slow the juju-core test suite is.
+[10:00] <dimitern> jam, ok then, I'll think of a test then
+[10:01] <dimitern> and in juju I still have to set a FIP to the state machine when bootstrapping
+[10:01] <jam> dimitern: FIP ?
+[10:01] <jam> floating ip
+[10:01] <dimitern> floating ip
+[10:02] <fwereade> blast: I have a doctor's appointment, it might take a little while: I'll be back when I can be :/
+[10:05] <jam> rogpeppe: arbit30719 was asking about http://askubuntu.com/questions/249350/juju-cannot-deploy-services-with-maas earlier
+[10:06] <jam> any ideas about problems connecting to ZK when using juju w/ maas?
+[10:06] <jam> or other people to point him to?
+[10:07] <rogpeppe> jam: hmm
+[10:09] <rogpeppe> jam: it seems as if machine 1 can't connect to zk, even though the juju client can.
+[10:10] <jam> rogpeppe: right, I think bigjools said he had seen something similar in the past, but we didn't have much  more state than that.
+[10:10] <rogpeppe> jam: it would be nice if that exception provided more info - perhaps it got a connection refused or something
+[10:11] <rogpeppe> jam: and it's weird that he can't use juju ssh to connect to machine 1
+[10:11] <rogpeppe> jam: any of the original juju team would be better at answering this question than me :-)
+[10:12] <rogpeppe> jam: i think bigjools' answer is a good one
+[10:12] <mgz> ...who are the original juju team?
+[10:13] <rogpeppe> mgz: kapil, jim baker, ben howard, william, gustavo
+[10:13] <mgz> ah, jim was too? I don't know ben.
+[10:14] <rogpeppe> mgz: oops not ben howard. ben... surname escapes me
+[10:15] <rogpeppe> mgz: ben saller
+[10:15] <rogpeppe> doh
+[10:17] <arbit> hello i am the previos arbit30719
+[10:23] <jam> mgz: btw, I think your public containers stuff has landed, we should update the kanban board
+[10:23] <mgz> jam: good point
+[10:26] <mgz> I'll put up some tasks in 'coding' that aren't coding as such but could do with tracking there
+[10:32] <jtv> Hi there mgz — did you have any notes about the gomaasapi code?
+[10:33] <mgz> jtv: not yet, was hoping to look at it with Gavin today
+[10:33] <jtv> Ah OK.  Thanks again!
+[10:34] <mgz> mentioned it in the standup the other day, and rogpeppe noted it would be nice to have the whole thing up on codereview for those (gojuju people) who like to use that when reviewing things
+[10:34] <jtv> And jam, are you comfortable enough with my "provider singleton" branch that I can land it on our feature branch?  This one: https://code.launchpad.net/~jtv/juju-core/mpv-singleton/+merge/145777
+[10:34] <mgz> so, will probably put up a r1..-1 dummy merge for that
+[10:34] <jtv> On Rietveld?
+[10:34] <mgz> yup
+[10:34] <rogpeppe> jtv: yeah. it's really nice to be able to spray comments around in context :-)
+[10:34] <jtv> Looking forward to learning more.
+[10:35] <jtv> I imagine it is, yes.
+[10:35] <jtv> Twitter Review API!
+[10:35] <jtv> Sorry, just a weird thought.
+[10:37] <mgz> rogpeppe: how did we do that last time? would probably make sense for jtv to put it up rather than me
+[10:37] <rogpeppe> mgz: you didn't do that last time :-)
+[10:38] <rogpeppe> mgz: perhaps a change that changes each source file in a trivial way (e.g. adding a "// to review" comment at the start)
+[10:38] <rogpeppe> mgz: then propose that
+[10:38] <mgz> I'd do something like `bzr push -r1 lp:~/gomaasapi/base` then `~/go/bin/lbox propose -cr -v -for=lp:~/gomaasapi/base`
+[10:39] <mgz> which would give a diff of all the bits that matter
+[10:39] <rogpeppe> mgz: that's a good plan
+[10:39] <rogpeppe> mgz: sounds good
+[10:39] <rogpeppe> mgz: except that the target isn't right, but i guess that doesn't matter.
+[10:40] <mgz> well, the target is backwards, but it gives the right diff
+[10:40] <arbit> hi all, does anybody have some suggestions about the issue I pasted on ask ubuntu http://askubuntu.com/questions/249350/juju-cannot-deploy-services-with-maas
+[10:41] <arbit> It seems that I cannot connect to zk server of machine 1
+[10:41] <mgz> arbit: #juju is the channel for general juju questions, but you might need to wait for US timezone peeps to awaken
+[10:41] <mgz> or #maas in this case
+[10:41] <rogpeppe> arbit: have you tried bigjools' suggestion?
+[10:41] <arbit> yes I tried and failed to connect
+[10:42] <arbit> igjools told me to paste here
+[10:42] <rogpeppe> arbit: what did the connection failure say?
+[10:43] <arbit> uh I might need to reply this to you later.
+[10:44] <arbit> I have difficulty connect to the server right now
+[10:50] <mgz> jtv, rogpeppe: https://codereview.appspot.com/7228069
+[10:50] <jtv> Thanks
+[10:50] <rogpeppe> mgz: cool, thanks
+[10:51] <rvba> Thanks for doing this mgz.
+[10:59] <TheMue> lunchtime, biab
+[11:20] <dimitern> rogpeppe, mgz: here is another bootstrap-related fix https://codereview.appspot.com/7226068
+[11:24] <rogpeppe> dimitern: will have a look in a bit, thanks.
+[11:32] <jam> dimitern: wallyworld_: poke for the mumbling
+[11:32] <dimitern> jam: right there
+[11:33] <dimitern> jam: my mumble decided to start crashing :(
+[11:34] <mgz> it's like my yesterday
+[11:34] <dimitern> dimitern@kubrik:~$ mumble
+[11:34] <dimitern> Segmentation fault (core dumped)
+[11:44] <niemeyer> Hey all
+[11:45] <dimitern> niemeyer: hiya
+[11:45] <rogpeppe> niemeyer: yo!
+=== amithkk_ is now known as amithkk
+=== amithkk is now known as Guest8601
+[12:32] <dimitern> rogpeppe: did you have time to look at the CL?
+[12:33] <rogpeppe> dimitern: sorry, been involved elsewhere. will look now.
+[12:33] <rogpeppe> dimitern: mgoPortSuffix = ":" + string(mgoPort)
+[12:33] <rogpeppe> lol
+[12:34] <rogpeppe> entirely understandable!
+[12:35] <dimitern> rogpeppe: :) yeah, learning everyday
+[12:35] <rogpeppe> dimitern: i should've caught it!
+[12:36] <dimitern> har har :)
+[12:36] <rogpeppe> dimitern: when would FloatingIP.InstanceId not be a string?
+[12:37] <rogpeppe> dimitern: oh, i see
+[12:37] <rogpeppe> dimitern: i think it should be defined as *string, not interface{}
+[12:37] <dimitern> rogpeppe: it's defined as interface{} and it might be either string or null
+[12:37] <rogpeppe> dimitern: in nova, that is
+[12:37] <dimitern> rogpeppe: well, there was something about it, which prevented *string somehow, can't remember now
+[12:38] <rogpeppe> dimitern: what's the difference between null and the empty string?
+[12:38] <dimitern> rogpeppe: we don't care for anything but non-empty string
+[12:40] <dimitern> rogpeppe: that's just how OS returns it - null, "" or "someip"
+[12:40] <rogpeppe> dimitern: BTW i'd be interested to know what prevented using *string
+[12:40] <rogpeppe> dimitern: 'cos AFAIK that's the canonical way to do null-or-string
+[12:40] <dimitern> rogpeppe: well, if it's missing from the response?
+[12:41] <rogpeppe> dimitern: it turns into nil
+[12:41] <dimitern> yeah
+[12:41] <rogpeppe> dimitern: (assuming the field value was nil originally)
+[12:41] <rogpeppe> dimitern: missing fields are unchanged.
+[12:41] <dimitern> rogpeppe: I suppose  I should change that then in goose as a follow-up
+[12:42] <rogpeppe> dimitern: i think it's worth using static types where possible, yeah
+[12:42] <dimitern> rogpeppe: that was the very beginning - still leaning go and how stuff works
+[12:42] <rogpeppe> dimitern: :-) i know the feeling.
+[12:42] <dimitern> not that I know it all now, but slightly better than ten :)
+[12:43] <dimitern> then*
+[12:43] <dimitern> rogpeppe: what worries me a bit is there is no obvious way to test this locally..
+[12:44] <dimitern> rogpeppe: otherwise from cmd line it works - tried multiple times
+[12:44] <rogpeppe> dimitern: why not?
+[12:44] <rogpeppe> dimitern: can't you implement similar functionality in the double?
+[12:44] <dimitern> rogpeppe: yeah, it starts to shape up a bit in my head how I could actually
+[12:45] <dimitern> rogpeppe: have 2 cases (or more probably) - with free ip and without (to alloc new), then some errors, etc.
+[12:46] <dimitern> rogpeppe: and in juju i can then call bootstrap on the double and ensure it passes
+[12:46] <rogpeppe> dimitern: sounds plausible
+[12:46] <dimitern> rogpeppe: cannot see how to live test it (on canonistack)
+[12:47] <rogpeppe> dimitern: ah, because canonistack always allocates an IP?
+[12:47] <dimitern> rogpeppe: it's very flaky and unreliable with floating ips
+[12:47] <rogpeppe> dimitern: ha
+[12:47] <dimitern> rogpeppe: because there are rarely any free to alloc
+[12:47] <rogpeppe> dimitern: in which case, you're stuffed :-)
+[12:50] <dimitern> rogpeppe: and the live test will fail randomly (but very often)
+[12:50] <rogpeppe> dimitern: yeah. maybe you should add a live test, make sure it passes at least once, and then disable it until we've got a decent live testbed.
+[12:51] <dimitern> rogpeppe: or even check if FIPs are available first, otherwise skip it in the suite
+[12:51] <rogpeppe> dimitern: that sounds like a good plan
+[12:52] <dimitern> rogpeppe: yeah, I'll try it out next
+[12:53] <rogpeppe> dimitern: you've got a review
+[12:53] <dimitern> rogpeppe: tyvm
+[12:53] <fwereade> rogpeppe, btw, I was wondering about having PasswordHash directly in the document and the PasswordValid method pn AuthEntity
+[12:53] <fwereade> s/pn/on/
+[12:54] <rogpeppe> fwereade: yes? (that's what i'm proposing, right?)
+[12:55] <fwereade> rogpeppe, I'm wondering what will use PasswordValid
+[12:55] <rogpeppe> fwereade: the api server
+[12:56] <fwereade> rogpeppe, ok, and it's never actually going to be sent out to anything else?
+[12:56] <rogpeppe> fwereade: indeed
+[12:56] <rogpeppe> fwereade: it's specifically so that the api server can authenticate users
+[12:57] <dimitern> mgz: ping
+[12:57] <rogpeppe> fwereade: (and agents, of course)
+[12:59] <fwereade> rogpeppe, ok, I guess that's reasonable... I have something knocking around in my mind that a private key is maybe a good approach here as well -- we're not restricted to mongo's name/password scheme any more
+[13:00] <fwereade> rogpeppe, this is mainly because the authorized-keys in an environment should probably be thought of as belonging to the admin user now
+[13:00] <fwereade> rogpeppe, and I was wondering if it might be profitable to think around that idea a little
+[13:00] <rogpeppe> fwereade: passwords over https are a fairly conventional way of doing authentication over the web. i like the idea of private keys too, but passwords are more straightforward and not too bad.
+[13:01] <fwereade> rogpeppe, and, yeah, I'm not sure we can expect such a thing from the gui
+[13:01] <rogpeppe> fwereade: yup
+[13:02] <rogpeppe> fwereade: well... a private key is just a very large password from the client's point of view
+[13:02] <fwereade> rogpeppe, well, it never gets sent
+[13:02] <rogpeppe> fwereade: but it's quite useful to have a password you can type
+[13:03] <fwereade> rogpeppe, yeah, indeed
+[13:03] <rogpeppe> fwereade: true. it would be nice if the client used their private key to establish the tls connection
+[13:03] <fwereade> rogpeppe, not quite sure the tradeoff is the same from the agent POV
+[13:04] <fwereade> rogpeppe, but yeah, I'm not blocking anything, just raising it as something to keep in the back of your mind
+[13:04] <rogpeppe> fwereade: yeah. i'm just going with the architecture previously agreed with niemeyer
+[13:05] <fwereade> rogpeppe, the one case to keep in mind even if you don't address it right away is the one in which we use ubuntu SSO
+[13:05] <rogpeppe> fwereade: i'm not sure how the SSO protocol works
+[13:06] <rogpeppe> fwereade: but presumably the SSO key goes straight to the web server, so we can treat it as a password with an additional level of indirection to validate the user.
+[13:06] <rogpeppe> fwereade: s/SSO key/generated SSO token/
+[13:07] <fwereade> rogpeppe, nor am I, I'm afraid -- but please would you look into it briefly, enough that you're reasonably sure that it'll integrate cleanly with your auth plans?
+[13:09] <rogpeppe> fwereade: i saw it did kerberos, and thought "hmm, that might be a lot of work" but .... http://godoc.org/github.com/jmckaskill/gokerb
+[13:10] <rogpeppe> s/did/used/
+[13:10] <fwereade> rogpeppe, cool
+[13:15] <rogpeppe> fwereade: although maybe we just need to speak openid
+[14:02] <dimitern> fwereade: can you take a look at this pls: https://codereview.appspot.com/7226068/
+[14:02] <fwereade> dimitern, sure
+[14:02] <fwereade> dimitern, I have a couple up on https://code.launchpad.net/juju-core/+activereviews as well :)
+[14:03] <dimitern> fwereade: cheers, I'll take a look
+[14:09] <fwereade> dimitern, what's the situation in which a freshly-started instance has a fip allocated?
+[14:09] <dimitern> fwereade: there is no way this can happen
+[14:10] <dimitern> fwereade: started instances do not have fips attached by default
+[14:10] <dimitern> fwereade: but even if it does, I have the check fip.instanceid == serverid and exit
+[14:11] <fwereade> dimitern, ok -- I was wondering then whetherit makes sense to try to get the floating ip before we start the instance, then -- ie separate allocate and assign
+[14:11] <fwereade> dimitern, at bootstrap, if that fails, we can know not to even launch the instance
+[14:12] <dimitern> fwereade: launching the instance and having fips available are not related - startup can fail, but then it may succeed and fip allocation can fail
+[14:13] <dimitern> fwereade: and even checking before startup, nothing guarantees a positive check will not fail after startup (fips may be exhausted in the mean time)
+[14:14] <dimitern> fwereade: at least most cases of errors are handled sanely and a shutdown is performed
+[14:14] <mgz> dimitern: hey, still need me for owt? shall I just check for things in need of review? :)
+[14:15] <fwereade> dimitern, so you can allocate the IP and have someone else take it away before you assign it to the instance? that seems surprising
+[14:16] <dimitern> mgz: yeah, if you want - take a look pls https://codereview.appspot.com/7226068
+[14:17] <mgz> if by someone else you mean "another process using your tenant and credentials", yes
+[14:17] <dimitern> fwereade: no, if you allocate it (or already have at least 1 avail) then assignment will always succeed (unless nova itself does not respond sanely)
+[14:19] <fwereade> dimitern, in that case, if the environment requires a floating IP, it seems best to start by allocating that and then, if you get one, provisioning a machine to put behind it
+[14:19] <fwereade> dimitern, (and finally assigning the ip to the machine)
+[14:19] <dimitern> fwereade: yes, you're right
+[14:19] <dimitern> haven't thought of that
+[14:20] <dimitern> it makes sense, better logic, and possible earlier failure
+[14:20] <fwereade> dimitern, TLDR; I think we want `allocatePublicIP()` and `assignPublicIP(serverName string)`
+[14:20] <fwereade> dimitern, cool, I'll note it
+[14:20] <dimitern> fwereade: great, 10x
+[14:21] <dimitern> mgz: of course, you're right as well
+[14:21] <dimitern> mgz: if you mess up your own account from another location, then it'll break
+[14:21] <mgz> well, it's more of an issue with shared accounts like the one we have for goosebot
+[14:22] <mgz> then you might have multiple copies of juju, even, trying to do things at the same time :)
+[14:22] <dimitern> yes
+[14:24] <dimitern> and why did we need a shared account in the first place? because of the tools?
+[14:26] <mgz> well, we wanted shared resources regardless, the reason we have a shared account rather than a shared tenant is just IS hysterical raisins it seemed
+[14:27] <dimitern> I see :)
+[14:27] <mgz> but the point is we want to manage a shared resource (a juju deployment of tarmac) between multiple people. there's no particular reason we'd be doing conflicting things at the same time, but it's possible
+[14:46] <rogpeppe> "
+[14:46] <rogpeppe> mt.Sprintf(":%d", apiPort)
+[14:46] <rogpeppe> Why did these change?
+[14:46] <rogpeppe> "
+[14:46] <rogpeppe> fwereade: because the previous version was just wrong :-)
+[14:46] <rogpeppe> fwereade: string(1234) != "1234"
+[14:46] <fwereade> rogpeppe, glaargh
+[14:47] <fwereade> rogpeppe, good point indeed, I was focusing on var/const :/
+[14:47] <mgz> and there's no concept of pure functions in go...
+[14:47] <mgz> so, Sprintf can't promise that, given const input, output is const-suitable
+[14:47] <rogpeppe> mgz: indeed. no function is really pure though, even in haskell :-)
+[14:48] <fwereade> mgz, rogpeppe: thanks :)
+=== slank_away is now known as slank
+[14:50] <rogpeppe> in limbo, a close ancestor of Go, string(1234) did give "1234" (so it was const-able) but the only way of generating a string containing a single constant rune was sprintf("%c", x). i think i prefer Go's decision, but they're both useful
+[14:52] <rogpeppe> jam, fwereade: i'm interested in your reactions to my comments on the boilerplate environments branch: https://codereview.appspot.com/7223063/
+[15:00] <rogpeppe> mramm, fwereade, TheMue: meeting?
+[15:01] <TheMue> rogpeppe: I'm prepared, just waiting for the invitation.
+[15:01] <mramm> ahh
+[15:01] <mramm> joining
+[15:01] <mramm> hangout is in the meeting invite
+[15:01] <rogpeppe> TheMue: https://plus.google.com/hangouts/_/539f4239bf2fd8f454b789d64cd7307166bc9083
+[15:07]  * niemeyer => lunch
+[15:46] <rogpeppe> fwereade: here's the api model code i was playing with, in case you missed the link i pasted in the hangout: http://paste.ubuntu.com/1593298/
+[15:47] <fwereade> rogpeppe, sorry, I did; thanks
+[15:47] <rogpeppe> fwereade: it just models a single client reading a single changing value
+[15:48] <rogpeppe> fwereade: (in the naive way i'd originally envisaged
+[15:48] <fwereade> rogpeppe, I hope I will get to playing with it tonight - I'll be looking after laura as well but will probably be back later on :)
+[15:48] <fwereade> rogpeppe, (I'm still around until just after 6)
+[15:49] <rogpeppe> fwereade: i'm just heading out for some lunch and a stomp outside - will be back before then but not much before.
+[15:49] <fwereade> rogpeppe, then enjoy your stomp, and also your evening
+[15:50] <fwereade> rogpeppe, I will see you if I see you :)
+[16:40] <rogpeppe> fwereade_: stomp enjoyed
+[16:41] <rogpeppe> fwereade_: found about a dozen broken plastic sledges at the bottom of the village "run"
+[16:41] <fwereade_> rogpeppe, haha
+[16:41] <rogpeppe> fwereade_: all the snow's gone now though
+[16:43] <fwereade_> rogpeppe, I realised I was old when my instinctive "yay, it's snowing" was almost instantly overwritten by "grrmbl I have to walk to work through that"
+[16:43] <fwereade_> rogpeppe, and then I ran away to the med to try to forget it ;p
+[16:43] <rogpeppe> fwereade_: i'm still in the yay! phase
+[17:16] <TheMue> fwereade_: both branches are in, will also add a bug for the sudo-test-change
+[17:16] <fwereade_> TheMue, awesome, tyvm
+[17:17] <TheMue> fwereade_: are your review cards still active? if so, could you copy the link to the reviews into the cards? makes it simpler.
+[17:18] <fwereade_> TheMue, ah, sorry, sure -- I use +activereviews to keep up with them... er, when I do keep up with them :/
+[17:18] <TheMue> fwereade_: hehe
+[17:19] <TheMue> fwereade_: it's nice to see the cards in review state and directly follow the links
+[17:19] <fwereade_> TheMue, agreed
+[17:19] <fwereade_> TheMue, added
+[17:20] <fwereade_> TheMue, remind me when I forget
+[17:20] <TheMue> fwereade_: cheers
+[17:25] <TheMue> fwereade_: So, bug is entered at https://bugs.launchpad.net/golxc/+bug/1111640 and assigned to me.
+[17:25] <_mup_> Bug #1111640: Extend tests to run without sudo <golxc:New for themue> < https://launchpad.net/bugs/1111640 >
+[17:25] <fwereade_> TheMue, lovely, thanks
+[17:25] <TheMue> fwereade_: yw
+[17:59] <TheMue> fwereade_: You've got two reviews.
+[18:19]  * rogpeppe is done for the day
+[18:19] <rogpeppe> g'night all
+[18:31] <TheMue> rogpeppe: good night, I'm leaving too.

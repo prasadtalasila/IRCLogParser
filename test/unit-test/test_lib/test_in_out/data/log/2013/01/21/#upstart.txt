@@ -1,0 +1,35 @@
+[10:06] <sveinse> Are there any activity here? Anyways. telinit can be used asynchronously to change runlevel. How can I use initctl to do it synchronously? With that I mean that it does not return until all events regarding the runlevel change has been started
+[10:19] <sveinse> Well I found it: initctl emit runlevel RUNLEVEL=... 
+[10:24] <xnox> =)
+[11:05] <jodh> xnox: have you spoken to the desktop folk about a fallback for XDG_RUNTIME_DIR?
+[11:05] <xnox> no.
+[11:06] <xnox> jodh: who was our desktop team contact / driver behind the spec?
+[11:06]  * xnox adds a note to my backlog.
+[11:07] <jodh> xnox: nobody nominated - I'd try pitti/seb128 for starters.
+[11:07] <jodh> xnox: we really need to try to get all outstanding branches merged this week. Added to which, I'm starting on list-sessions which will need the same code to find the session files.
+[11:08] <jodh> xnox: we'll go over all this in the meeting later.
+[11:13] <xnox> ack.
+[11:33] <jodh> xnox: you haven't started on the ':sys:' / ':user:' code yet have you? If not, I'm about to look at it.
+[11:36] <xnox> jodh: nope. Go ahead =)
+[11:50] <sveinse> Are there any ways to set a environment from a file in upstart. I have a service which needs the LANG environment var set. The value of this var can be read from /etc/locale. I'd like to avoid wrapping the exec with sh if possible
+[11:51] <sveinse> *reading 8.2 in cookbook....*
+[11:56] <xnox> sveinse: here is verbose example of sourcing settings: http://upstart.ubuntu.com/cookbook/#pre-start-example-ubuntu-specific
+[11:58] <sveinse> xnox: Yes, that is one half of it. What I'm wondering when reading the env var example in 8.2 is that does export var in pre-script make the var visible for the binary run by exec?
+[12:02] <xnox> sveinse: no.
+[12:03] <xnox> (as far as I currently tested locally)
+[12:18] <sveinse> hmm,ok . So I probably need to wrap the executable in a script section...
+[12:32] <xnox> sveinse: exec LANG=C.UTF-8 mydaemon
+[12:32] <xnox> should work as well, but that will also be executed via shell.
+[12:33] <sveinse> xnox: If it was so simple... exec LANG=$(cat /etc/locale) mydaemon  would be more correct
+[12:34] <xnox> $ cat /etc/locale
+[12:34] <xnox> cat: /etc/locale: No such file or directory
+[12:34] <sveinse> But it seems wrapping through sh seems inevitable 
+[12:34] <xnox> the correct way is to call $ locale and use that output (for me that defines en_GB.UTF-8 correctly)
+[12:36] <sveinse> on this system /etc/locale will always exist, but anyways, since I can't pass pre-script variables into the main exec, it seems I have to use the shell to start the daemon
+[12:39] <sveinse> baah. Of course. I can use script and call the daemon with exec. This way I can load the environment I need.
+[12:44] <xnox> yes. =)
+[12:45] <xnox> pre-start script - is only usually used for sanity checking if daemon can / cannot start & e.g. abort if not properly configured.
+[15:04] <jodh> xnox: you about for the meeting?
+[15:05] <xnox> yeap
+[20:17] <jY> i'm using ubuntu 10.04 and an upstart job is hanging for start/stop.. no expects in there
+[20:17] <jY> what can i do to debug it?

@@ -1,0 +1,219 @@
+[00:04] <StevenK> wgrant: Ha. Hahaha
+=== yofel_ is now known as yofel
+=== slank is now known as slank_away
+[00:37] <wgrant> StevenK: Going well?
+[00:40] <StevenK> Still making a list of pages to hit up
+[00:46] <wgrant> Ah
+[00:48] <StevenK> Trying to find a projectgroup on qas that uses blueprints
+[00:49] <wgrant> https://qastaging.launchpad.net/heehee
+[00:50] <lifeless> !
+[00:53] <StevenK> wgrant: So that's Person, Product, ProductSeries, Milestone, Distribution, DistroSeries, and Sprint checked.
+[00:53] <StevenK> heehee has no blueprints, and something with private blueprints would be nice.
+[00:53] <wgrant> StevenK: It does, you might just not be able to see them
+[00:54] <wgrant> prop-auditorclient is in it
+[00:54] <wgrant> And I added a private blueprint to it last week to check this exact thing
+[00:54] <StevenK> Yeah, I can't view prop-auditorclient
+[00:54] <wgrant> I've made it public
+[00:55] <wgrant> The project group now correctly shows an empty blueprint list for an anonymous user
+[00:55] <wgrant> So it looks fixed
+[00:55] <StevenK> I still get the message for me
+[00:55] <wgrant> Which message?
+[00:55] <StevenK> "... Register the first blueprint in this project! If you have a proposal for a feature ..."
+[00:56] <wgrant> That's the empty blueprint list :)
+[00:56] <StevenK> Not so much a list as a wall of text
+[00:56] <wgrant> I believe it is the largest wall of text in the entire application, indeed
+[00:56] <wgrant> (ignoring help popups)
+[00:57] <StevenK> I still can't see the blueprint for prop-auditorclient, but eh
+[00:58] <StevenK> Oh, projectgroup didn't check for privacy. Right.
+[00:58] <StevenK> Now it does, since I made it do so.
+[00:59] <wgrant> Exactlyu
+[00:59] <wgrant> i've just shared the project with you
+[00:59] <wgrant> So you should be able to see the spec
+[00:59] <StevenK> And I can
+[00:59] <StevenK> Fantastic
+[00:59]  * StevenK goes to mark bugs as qa-ok
+[00:59] <StevenK> Did you want a deployment?
+[00:59] <wgrant> Indeed
+[00:59] <wgrant> I'm about to disappear out to lunch, so if you could arrange that...
+[01:00] <wgrant> Also, if it happens while I'm gone, do keep an eye on buildd-manager
+[01:00] <StevenK> I'll sort it out
+[02:58] <StevenK> wgrant: http://pastebin.ubuntu.com/1561501/
+[03:00] <wgrant> StevenK: Does it work?
+[03:01] <StevenK> The tests pass
+[03:01] <StevenK> I fear it doesn't close danilos bug
+[03:03] <wgrant> StevenK: H, though the privacy filter should be in the recursive query, not the outer one
+[03:03] <wgrant> eg. if we have A->B->C and I can't see B, I think this will do strange things
+[03:03] <wgrant> whereas if the filter's in the recursive bit, then I will just see A, not A and C
+[03:04] <StevenK> wgrant: Right
+[03:06] <StevenK> And both recursive_dependent_query and recursive_blocked_query are just a string
+[03:06] <wgrant> Maybe not for long :)
+[03:06] <StevenK> Yeah
+[03:06] <wgrant> Otherwise you can use that compilation thingy
+[03:06] <wgrant> convert_storm_clause_to_string
+[03:07] <StevenK> wgrant: The inner SELECT from the UNION requires the privacy check?
+[03:07] <wgrant> I haven't actually looked at the recursive query
+[03:07]  * wgrant looks
+[03:07] <StevenK> Which is on specificationdependency :-/
+[03:08] <wgrant> Yeah, so you'll probably want to adjust the second half of each union to do the filtering.
+[03:08] <wgrant> I didn't realise it was only over specificationdependency, which makes it a bit awkward
+[03:08] <wgrant> But it shouldn't be too bad.
+[03:10] <StevenK> So I have to join back to spec and then feed in get_specification_privacy_clause?
+[03:18] <wgrant> StevenK: Right.
+[03:19] <StevenK> Hmmm, on specification on dependency, though
+[03:19] <wgrant> Hm?
+[03:19] <StevenK> specificationdependency has specification and dependency, both of which are specification
+[03:20] <wgrant> Whichever one it returns
+[03:20] <wgrant> Which will be one for blocked, and the other for deps
+[03:39] <StevenK> Hm, my query is broken
+[04:07] <StevenK> wgrant: http://pastebin.ubuntu.com/1561618/
+[04:10]  * wgrant cries
+[04:10] <StevenK> wgrant: Hm?
+[04:11] <wgrant> StevenK: a) It's illegal to construct SQL with %. Legacy code is permitted as long as it's of the form "% sqlvalues(...)", but nothing else. Try using SQL() instead.
+[04:11] <wgrant> b) Have you verified the constructed SQL?
+[04:11] <wgrant> What does convert_storm_clause_to_string do when given multiple args?
+[04:12] <StevenK> It isn't, it's either an [Or()] or a [In()]
+[04:12] <wgrant> Ah
+[04:12] <wgrant> Still, examine the constructed SQL
+[04:14] <StevenK> wgrant: http://pastebin.ubuntu.com/1561630/
+[04:15] <wgrant> StevenK: lolwut
+[04:15] <wgrant> Oh, misread
+[04:16] <wgrant> StevenK: What doesn't it do?
+[04:16] <StevenK> Oh?
+[04:16] <wgrant> There's no actual SELECT there
+[04:16] <wgrant> Just a WITH RECURSIVE
+[04:16] <wgrant> Which is not completely helpful
+[04:18] <StevenK> wgrant: http://pastebin.ubuntu.com/1561633/
+[04:19] <wgrant> StevenK: and what's broken about it?
+[04:19] <wgrant> Other than some possibly missing parens
+[04:20] <StevenK> It was broken, I fixed it by reordering the FROM
+[04:20] <wgrant> Oh
+[04:20] <wgrant> I thought it was still broken :)
+[04:20] <StevenK> But I can't use %s
+[04:21] <StevenK> Is this a subtle hint that I should Storm-ify it?
+[04:21] <wgrant> You should be able to use SQL()
+[04:22] <wgrant> I don't think our current Storm With expression supports RECURSIVE
+[04:24] <StevenK> wgrant: The callsites do SQL(), the functions are expected to just return a string
+[04:24] <wgrant> You might want to rearrange that
+[04:25] <wgrant> Given the paucity of callsites that should be quite trivial
+[04:28] <StevenK> wgrant: http://pastebin.ubuntu.com/1561643/
+[04:29] <wgrant> StevenK: https://code.launchpad.net/~wgrant/launchpad/bug-1100977/+merge/144432
+[04:30] <StevenK> 22if content.find(no_key_message) >= 0:
+[04:30] <StevenK> Sadface
+[04:30] <wgrant> StevenK: I think your linewrapping violates the UDHR.
+[04:31] <StevenK> Which linewrapping?
+[04:31] <wgrant> +        )""", params=(spec.id, convert_storm_clause_to_string(
+[04:31] <wgrant> +            *get_specification_privacy_filter(user))))
+[04:33] <StevenK> wgrant: And you didn't complain that I only fixed one of the methods? Disgraceful.
+[04:33] <StevenK> wgrant: http://pastebin.ubuntu.com/1561650/
+[04:33] <wgrant> I give up reading un-highlighted diffs easily :)
+[04:33] <wgrant> (--syntax=diff is your friend)
+[04:34] <wgrant> That's still a criminal offence in most jurisdictions, but less so
+[04:35] <StevenK> wgrant: params=(\nspec.id, ... )?
+[04:36] <wgrant> StevenK: Right :)
+[04:37] <StevenK> wgrant: http://pastebin.ubuntu.com/1561657/
+[04:40] <wgrant> StevenK: Actually, I'm surprised that works. 
+[04:40] <wgrant> Given you're passing a plain string into params
+[04:40] <wgrant> But trying to use it as SQL
+[04:40] <wgrant> It may work if you wrap it in SQL(), not sure
+[04:41] <StevenK> I've not actually tried it ...
+[04:41] <wgrant> Heh
+[04:42] <wgrant> You might actually be able to properly Stormify it with a bit of a hack
+[04:42] <wgrant> With('RECURSIVE dependencies(id)', Union(...))
+[04:43] <StevenK> DataError: invalid input syntax for type boolean: "Specification.information_type IN (1, 2)"
+[04:43] <StevenK> LINE 8:             WHERE sd.specification = d.id AND (E'Specificati...
+[04:43] <StevenK> Hahaha
+[04:46] <StevenK> Hmmm
+[04:46] <StevenK> ProgrammingError: can't adapt type 'In'
+[05:20] <StevenK> wgrant: I'm not sure about the Storm-ified version ...
+[05:20] <StevenK> Or indeed if I've done it correctly
+[05:25] <StevenK> wgrant: http://pastebin.ubuntu.com/1561722/
+[05:26] <wgrant> StevenK: The easiest way to be sure about it and that you've done it correctly is to see if the tests work
+[05:28] <wgrant> Bah
+[05:28] <wgrant> zeca was tested directly
+[05:28] <StevenK> Haha
+[05:28] <StevenK> I was about to point that out
+[05:29] <StevenK> CompileError: Don't know how to compile type Reference of <storm.references.Reference object at 0x795c850>
+[05:29] <StevenK> Thanks for being helpful, Storm.
+[05:29] <wgrant> StevenK: Did you do reference == reference?
+[05:29] <wgrant> That doesn't work
+[05:29] <wgrant> id == id
+[05:30] <wgrant> Or reference == id
+[05:30] <wgrant> works
+[05:32] <StevenK> Specification.id == SpecificationDependency.specificationID
+[05:32] <StevenK> That's the only ==, so I'm not sure which reference it's barfing on
+[05:33] <wgrant> Is it roughly simialr to the code that you pased?
+[05:33] <wgrant> +        'RECURSIVE blocked(id)', Union(Select(
+[05:33] <wgrant> +            (SpecificationDependency.specification,),
+[05:33] <wgrant> That might not work
+[05:33] <wgrant> You probably have to select the ID
+[05:34] <StevenK> wgrant: The only change is calling the new function further down
+[05:35] <StevenK> wgrant: 'RECURSIVE blocked', Select((id,), Union(... ?
+[05:37] <wgrant> StevenK: That'll try to select the builtin function 'id'
+[05:37] <wgrant> SpecificationDependency.specificationID
+[05:38] <StevenK> Which is already in the inner select?
+[05:39] <wgrant> StevenK: Is that a problem?
+[05:40] <StevenK> Just ... odd
+[05:41] <wgrant> Not sure how
+[05:45] <StevenK> Right, RECURSIVE blocked(id) is working because specificationID rather specification
+[05:45] <StevenK> Except it doesn't love blocked
+[05:45] <StevenK> So I get an actual statement that compiles but postgres doesn't love.
+[05:46] <wgrant> What does postgres complain about?
+[05:48] <StevenK> wgrant: http://pastebin.ubuntu.com/1561762/
+[05:49] <wgrant> StevenK: Ah, you should be able to see the problem there
+[05:50] <StevenK> Select((spec.id,), Union(... ?
+[05:50] <wgrant> No
+[05:50] <wgrant> Look at the first line
+[05:50] <StevenK> Oh, quoting RECURSIVE is a bad thing
+[05:50] <wgrant> Yes
+[05:50] <wgrant> With(SQL("RECURSIVE blocked(id)"), ...) might work
+[05:50] <wgrant> Not sure
+[05:52] <StevenK> ProgrammingError: syntax error at or near "("
+[05:52] <StevenK> LINE 1: WITH (RECURSIVE blocked(id)) AS (SELECT 13 WHERE (SELECT Spe...
+[05:52] <StevenK> Let's go with no
+[05:55] <wgrant> StevenK: Bah, it's too smart.
+[05:55] <StevenK> Heh
+[05:55] <wgrant> StevenK: Define your own With expression, I guess.
+[05:55] <StevenK> I don't think the Storm-ifying is buying us anything. If anything, it's far uglier
+[05:55] <wgrant> (or extend the one in our Storm branch, I guess, would be better0
+[05:56] <wgrant> Certainly
+[05:56] <wgrant> But it would have been a trivial way to integrate the privacy filter apart from the RECURSIVE issue
+[05:56] <StevenK> Toss it as a param is giving me a wierd error too
+[05:56] <wgrant> Well, params is for params
+[05:57] <StevenK> Oh
+[05:57] <StevenK> I feel %s calling, but I'll get stabbed
+[05:58] <wgrant> It seems that avoiding it here is somewhat non-trivial
+[05:58] <wgrant> So it may be permissible
+[05:58] <wgrant> But inserting the id like that as the original code did is strictly forbidden
+[05:58] <wgrant> Even in legacy code
+[08:52] <adeuring> good morning
+=== almaisan-away is now known as al-maisan
+[09:00] <jtv> Good morning adeuring!
+[09:00] <adeuring> hi jtv!
+=== yofel_ is now known as yofel
+[10:49] <plomme> hi guys
+=== jtv1 is now known as jtv
+=== Ursinha_ is now known as Ursinha
+[14:12] <cjwatson> wgrant: I'd like to have a pre-imp chat about bug 1102870
+[14:12] <_mup_> Bug #1102870: Copies use naïve ancestry check to calculate previous version for notifications and bug closures <package-copies> <Launchpad itself:Triaged> < https://launchpad.net/bugs/1102870 >
+[14:13] <cjwatson> I *think* a sensible way to approach this is by moving NascentUpload.getSourceAncestry (and probably getBinaryAncestry too, for symmetry) somewhere more sensible
+[14:13] <cjwatson> However, it uses the deprecated DS.getPublishedSources method
+[14:14] <cjwatson> Rephrasing it in terms of Archive.getPublishedSources isn't too hard, but it means more potato programming since there's then no way to query multiple archives at once
+[14:15] <cjwatson> I kind of feel that the method belongs on DS anyway, since it's "give me the current published version of $package in this distroseries, for some set of pockets"
+[14:16] <cjwatson> But I'm not sure that there isn't a better place - do you have any strong feelings?
+[14:17] <cjwatson> (If I put it on Archive, then I have to do explicit version comparison between the results for each pocket, I think, and the method that does that will still have to live somewhere common - so I don't think putting it on Archive would help)
+[14:19] <cjwatson> It might be worth getting rid of one more use of DS.getPublishedSources in any case; something like http://paste.ubuntu.com/1563165/
+=== al-maisan is now known as almaisan-away
+=== slank_away is now known as slank
+=== matsubara is now known as matsubara-lunch
+[15:56] <gmb> benji, bac, if either of you have time today, could you take a look at https://code.launchpad.net/~gmb/lp2kanban/encode-annotations-with-json/+merge/144372? It takes the description annotations work and uses JSON for encoding rather than hand-rolled key=value pairs.
+[15:56] <gmb> (per benji's suggestion)
+[15:56] <benji> gmb: sure (bac is a bit sickly at the moment)
+[15:57] <gmb> benji, Thanks.
+=== matsubara-lunch is now known as matsubara
+=== matsubara is now known as matsubara-afk
+[19:54] <joey> dzin: hmm sinzui isn't here
+[19:54] <joey> dzin: maybe we need to go to #launchpad! :-)
+[19:54] <dzin> ok :)
+[19:55] <czajkowski> joey: he doesnt do LP stuff any more
+[19:55] <joey> czajkowski: ah ha
+[23:59] <cjwatson> wgrant,StevenK: I'd like to get https://code.launchpad.net/~cjwatson/launchpad/avoid-copy-archive-spam/+merge/144611 reviewed reasonably quickly, to ensure we stop spamming its victim

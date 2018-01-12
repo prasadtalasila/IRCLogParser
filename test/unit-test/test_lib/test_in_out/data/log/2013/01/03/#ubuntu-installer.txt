@@ -1,0 +1,62 @@
+[12:45] <psivaa> cjwatson: xnox: i come across an ubiquity crash during raring installations, but apport does not lead me to report a bug from the it. should i enable/do anything for that
+[12:48] <xnox> psivaa: did you get a crash dialog at all?
+[12:48] <xnox> (ubiquity one)
+[12:48] <xnox> you can switch to tty1 and do ubuntu-bug ubiquity
+[12:53] <psivaa> xnox: yes i did, will ubuntu-bug ubiquity include the specific crash file as well?
+[12:55] <psivaa> i could attach the crash file but not sure if it will contain all the information as reporting the bug from the crash itself
+[12:56] <cjwatson> You can run ubuntu-bug on a crash file
+[12:56] <xnox> psivaa: it might not, check /var/crash and upload those as well with apport-bug *.crash
+[12:56] <xnox> snap.
+[12:56] <cjwatson> And if you do so there is no reason to run ubuntu-bug ubiquity separately
+[12:58] <psivaa> cjwatson: xnox i tried ubuntu-bug -c *.crash from /var/crash. it just creates a .upload file. it does not open the lauchpad to report it as a bug
+[13:04] <psivaa> this simply brings up the 'Sorry. Ubuntu 13.04 has experienced an internal error' dialog and clicking continue does not open the web browser with lp
+[13:09] <cjwatson> Why -c?
+[13:09] <cjwatson> That's neither in --help nor in the man page.
+[13:35] <gema> xnox: how are you doing with bug 1080701?
+[13:36] <ubot2> Launchpad bug 1080701 in ubiquity (Ubuntu Raring) "After 'Preparing to install Ubuntu' screen, raring installation hangs" [High,Confirmed] https://launchpad.net/bugs/1080701
+[13:36] <gema> did you guys manage to reproduce it yesterday?
+[13:42] <psivaa> cjwatson: i use -c for crash files (probably started using from hearsay) but even without -c the behaviour is the same, the 'internal error' dialog opens but clicking continue does not open a browser
+[15:52] <psivaa> cjwatson: xnox: reported bug 1095684 for the installer crash during manual partitioning
+[15:52] <ubot2> Launchpad bug 1095684 in ubiquity (Ubuntu) "Ubiquity crashes upon clicking 'New partition table' twice in the manual partitioning step during raring installation" [Undecided,New] https://launchpad.net/bugs/1095684
+[16:11] <Peanut> http://loopy.jive.nl/~boven/syslog and http://loopy.jive.nl/~boven/preseed.cfg
+[16:19] <Peanut> Jan  3 15:55:55 localechooser: info: Preseeded language ignored: unknown language code
+[16:19] <Peanut> Maybe that's my problem?
+[16:21] <cjwatson> Yeah, en_NL doesn't exist
+[16:22] <Peanut> But I'm preseeding that I want en_US.UTF-8 for locale
+[16:22] <cjwatson> You need to set /country to one that's valid for en, but then later on say that you want Dutch timezone configuration / mirrors / etc.
+[16:23] <cjwatson> also, minor issue but you have a bunch of owners (the first field) that are clock-setup, pkgsel, or *-udeb - those should all be just d-i
+[16:23] <cjwatson> the only ones that shouldn't be d-i are ones that relate to packages installed in the target system, such as postfix
+[16:23] <Peanut> I'll try that. But it does contradict the documentation somewhat, that is giving these combinations. (language en, country NL, locale )
+[16:24] <cjwatson> I suggest 'd-i debian-installer/country string US' (or actually you can just leave that out and only preseed the locale)
+[16:24] <cjwatson> dropping debian-installer/language and debian-installer/country altogether is probably simplest
+[16:24] <cjwatson> sorry about the doc bug, feel free to file that on installation-guide
+[16:24] <Peanut> I'll do that once I get this working
+[16:25] <Peanut> Doc page also say that preseeding localization only works with initrd preseeding, which seems to be incorrect?
+[16:26] <cjwatson> "... or with auto-install"
+[16:26] <cjwatson> (don't know if it actually says that outright, it may be in a different section)
+[16:26] <Peanut> Nope, doesn't say it
+[16:26] <cjwatson> it wouldn't work without auto=true, which quite possibly postdates that bit of the docs
+[16:27] <Peanut> Is the confusion between country, language and locale also the reason that it would ask for the mirror, despite that being preseeded?
+[16:27] <Peanut> Hmz.. now it skipped the language questions, but still wants me to confirm the mirror.
+[16:28] <cjwatson> I would actually be inclined to use "manual" rather than "NL" for mirror/country
+[16:28] <cjwatson> you already force nl.archive.ubuntu.com just below in a line that's only honoured for mirror/country=manual
+[16:28] <cjwatson> so change that and it should stop asking
+[16:29] <Peanut> Ah
+[16:30] <Peanut> "enter information manually" ?
+[16:30] <cjwatson> manual
+[16:30] <cjwatson> like I said
+[16:30] <cjwatson> that actually *is* in the installation guide :)
+[16:31] <cjwatson> "enter information manually" is the human-readable form - docs prefer to recommend the underlying identifier for preseeding as it's more resilient against running in different locales
+[16:31] <Peanut> Oh, ok - was just comparing it to a preseed that I had for Lucid on the same machines, that has that text in place.
+[16:32] <cjwatson> "enter information manually" is the old form; "manual" has been supported as a (preferred for preseeding) alias since hardy
+[16:32] <Peanut> I've got 40 machines to re-install, so I'm kind of keen on making it really automated. I love d-i, preseeding and IPMI + SOL.
+[16:33] <Peanut> Ok, it gets a whole lot further now - let me try and figure out the remaining issues withoug bugging you, thanks a lot.
+[16:34] <cjwatson> great
+[16:40] <Peanut> "Installation Complete" :-)
+[16:41] <cjwatson> yay
+=== ppetraki is now known as ppetraki-busy
+=== ppetraki-busy is now known as ppetraki
+[22:21] <mattrae> hi guys, i have had reports of this same bug when installing using kickseed: https://bugs.launchpad.net/ubuntu/+source/debian-installer/+bug/1023069
+[22:21] <ubot2> Launchpad bug 1023069 in debian-installer (Ubuntu) "Packages was corrupt" [Undecided,Expired]
+[22:22] <mattrae> the workaround was to create an empty Packages file although Packages.gz wasn't corrupt
+[22:23] <mattrae> any insights on this bug?

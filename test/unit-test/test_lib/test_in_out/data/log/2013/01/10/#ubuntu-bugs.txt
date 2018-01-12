@@ -1,0 +1,137 @@
+[00:00] <bdmurray> no it wouldn't hurt
+[00:01] <bdmurray> and /var/log/apt/term.log might help in figuring out which update it may have been
+[00:02] <TheLordOfTime> oops too late already hit submit on the part where i request that they apport-collect the bug.
+[00:03] <TheLordOfTime> aaand, timeouts to LP
+[00:03] <TheLordOfTime> figures.
+[00:03]  * TheLordOfTime goes to kick his router again
+=== Teufelchen_ is now known as Teufelchen
+=== yofel_ is now known as yofel
+=== reels_ is now known as reels
+[12:41] <DavidInPerth> Hi all
+[13:22] <DavidInPerth> I have a problem
+[13:23] <DavidInPerth> I've been looking into an Ubuntu bug for a while
+[13:25] <DavidInPerth> https://bugs.launchpad.net/ubuntu/+source/casper/+bug/932663
+[13:25] <ubot2`> Launchpad bug 932663 in casper (Ubuntu) "kernel upgrade failed on a USB live system created by usb-creator" [High,Fix released]
+[13:27] <DavidInPerth> The bug was marked "fix released" because it wasn't reproduced in 12.10, but it's still present in 12.04 (as in, i've installed all updates and it hasn't fixed the problem)
+[13:32] <DavidInPerth> I talked to stgraber on Tuesday, and ey gave me some info & suggestions
+[13:36] <DavidInPerth> (My ideal outcome here is that the bug is fixed for 12.04.2, and/or can be fixed by a usual security update)
+=== Ursinha is now known as Ursinha-afk
+[13:43] <DavidInPerth> The current situation is:
+[13:43] <DavidInPerth> - I don't know if the bug is present in the current snapshot of 13.04.
+[13:43] <DavidInPerth> - stgraber marked it as "fix released" because ey could not reproduce it in 12.10.
+[13:43] <DavidInPerth> - There is only one kernel version available for 13.04, so I can't upgrade/downgrade to test for the bug.
+[13:44] <DavidInPerth> - If the bug is fixed in 13.04, I don't know how to go about finding the code change that fixed it.
+[13:45] <DavidInPerth> - ...and without that, the fix can't be applied to 12.04
+[13:53] <DavidInPerth> I'm new to launchpad & ubuntu bugs, so if anyone can help me out that would be greatly appreciated
+[13:56] <hggdh> DavidInPerth: yeah...
+[13:56] <hggdh> DavidInPerth: there is one workaround described there, have you tried it?
+[13:57] <DavidInPerth> No. To be honest I'm more interested in getting it fixed properly for everyone
+[13:59] <DavidInPerth> I think it's a pretty big thing that LiveUSBs of the LTS release cannot get kernel updates
+[14:00] <DavidInPerth> (I didn't try the workaround, because then I would've had to do another liveusb to do more testing)
+[14:00] <hggdh> DavidInPerth: I am not being fresh, but can you give me a reason why updating the kernel is easier than regenning the media with the new ISO?
+[14:01] <hggdh> I just want to be sure I can sanely state it *is* important
+[14:01] <DavidInPerth> I didn't think the ISO was updated with new kernel releases
+[14:02] <hggdh> no, not with a kernel update. But with the point releases
+[14:02] <hggdh> hah
+[14:02] <hggdh> OK, I can see it now
+[14:02] <DavidInPerth> yeah, I'm talking about in between point releases
+[14:03] <hggdh> DavidInPerth: I just nominated it for Precise
+[14:04] <DavidInPerth> hggdh: Although for the record, I think that using Update Manager to update the kernel is a lot easier than re-generating the liveUSB
+[14:04] <DavidInPerth> cool, I was going to ask if/how that is possible
+[14:05] <hggdh> DavidInPerth: I usually just dd in the new image
+[14:05] <hggdh> (no usb-creator)
+[14:05] <DavidInPerth> you mean the kernel, or the ISO?
+[14:05] <DavidInPerth> oh, okay...
+[14:05] <hggdh> the ISO
+[14:05] <DavidInPerth> do you have to rename the isolinux files or something...?
+[14:06] <hggdh> You can also update the kernel in an ISO (mount the ISO in a tmpfs, chroot to it, update), but it is more convoluted
+[14:07] <DavidInPerth> that sounds like the kind of thing I'd love to be able to do one day, but not sure if I ever will
+[14:07] <hggdh> no, for dd you just 'sudo dd if=<iso> of=/dev/<whatever> bs=8M' (after umounting the media)
+[14:07] <hggdh> and you are done
+[14:09] <DavidInPerth> yeah, I recently learned how to use dd to back up an entire hard drive (8GB eeePC SSD - managable size)
+[14:09] <DavidInPerth> oops, not hard drive
+[14:09] <DavidInPerth> #technicalities
+[14:11] <hggdh> heh
+[14:12] <DavidInPerth> I was reading something online - i think it was on stack exchange - that said that before unetbootin and the like, liveusbs required dd-ing the ISO onto the USB stick, and then re-naming isolinux files/folders to something else...
+[14:12] <hggdh> DavidInPerth: nomination for series and targetting milestones are restricted options
+[14:12] <DavidInPerth> I forget some of the details
+[14:13] <DavidInPerth> ah, okay, cool
+[14:13] <DavidInPerth> I was planning to look up what "nominate for series" meant
+[14:13] <hggdh> maybe. Never needed it, but perhaps my use case is more limited
+[14:14] <DavidInPerth> Oh... but if you dd the image that means that it's an ISO filesystem, right?
+[14:14] <DavidInPerth> so isolinux would work
+[14:14] <hggdh> nominate for series allows you to state this bug should be resolved for a specific Ubuntu version. Target to milestone allows you to state the bug should be fixed by a set milestone
+[14:14] <hggdh> yes
+[14:15] <DavidInPerth> but you don't have persistence with the ISO on USB?
+[14:18] <DavidInPerth> hggdh: I just had a look at your update to the bug page
+[14:20] <hggdh> DavidInPerth: usually I am not worried with persistence, I just want to check the machine to be kosher
+[14:21] <DavidInPerth> hggdh: You mean disaster recovery? Compatibility testing?
+[14:21] <hggdh> compatibility and sanity of the image
+[14:22] <hggdh> (sometimes I still do disaster recovery, but the process is the same)
+[14:30] <DavidInPerth> I see. Yeah, if you're doing it for the sake of testing of the distribution, it's a very different goal...
+[14:31] <DavidInPerth> ...vs. wanting to use a LiveUSB for other tasks, and possibly for extended periods
+[14:32] <DavidInPerth> Which makes both persistence, and kernel updates, quite important
+[14:32] <DavidInPerth> for security, if nothing else.
+[14:33] <hggdh> indeed
+[14:34] <DavidInPerth> if I'm loading up a live USB in March / September, 5 months after a release, I don't want to have to download all security updates *every time* I boot onto it, in order to safely use the internet.
+[14:35] <DavidInPerth> (not that the danger is all that great, but still)
+[14:35] <DavidInPerth> you can probably tell I'm not a security expert ;-)
+[14:39] <hggdh> heh. Not really, this is a valid use case
+[14:40] <DavidInPerth> I meant that I don't have a very strong conception of what a typical kernel vulnerability will make me vulnerable to
+[14:41] <DavidInPerth> I've got a feeling that it's mostly in terms of people remotely trying to break / control the computer
+[14:42] <hggdh> most of the times, it is, given that if you have local access to the machine, the game is already over. You *own* it
+[14:42] <DavidInPerth> yeah
+[14:43] <DavidInPerth> what about browsing, though. Could a kernel bug be exploited through a web browser? or is that only an issue for browser bugs?
+[14:43] <DavidInPerth> (I imagine the answer is no, but I'm not sure)
+[14:47] <hggdh> anything could happen..., it will always depend on what the kernel bug is, and what has been affected by it. It is not the browser (for remote attacks) that gets really hit, but the server
+[14:48] <hggdh> a browser may trigger a server error; of course, if it is a browser flaw, the attack is incoming to the machine running the browser
+[14:51] <DavidInPerth> hggdh: uhuh. But it's possible (if perhaps unlikely) to have a kernel bug that can be exploited by a website, through a user's browsing, even when there is no bug in the broser itself (only in the kernel)?
+[14:53] <hggdh> DavidInPerth: it *is* possible. The web server may trigger a kernel failure. Exploitation of such a failure will depend on what is exposed, how it is exposed, and -- most probably -- a malicious string of data from the browser
+[14:54] <DavidInPerth> uhuh
+[14:57] <DavidInPerth> upshot: It's not safe to browse the internet from a liveUSB without the most recent kernel update (even if all other updates are working)
+[14:58] <DavidInPerth> Okay, I have one more question regarding that bug
+[15:02] <hggdh> well, it is not safe to browse the internet, period. One has to always be careful
+[15:02] <DavidInPerth> Roger Hunwicks says
+[15:02] <DavidInPerth> "In fact, I got it trying to apt-get install mdadm - so it seems possible it occurs any time update-initramfs runs rather than just on a kernel update."
+[15:02] <DavidInPerth> https://bugs.launchpad.net/ubuntu/+source/casper/+bug/932663/comments/10
+[15:02] <ubot2`> Launchpad bug 932663 in casper (Ubuntu Precise) "kernel upgrade failed on a USB live system created by usb-creator" [Undecided,New]
+[15:03] <DavidInPerth> @hggdh: True, very true
+[15:03] <meetingology> DavidInPerth: Error: "hggdh:" is not a valid command.
+[15:03] <DavidInPerth> hggdh: True, very true
+[15:07] <DavidInPerth> I want to know if there's a way to test the above theory with my 13.04 snapshot, given that it doesn't have an alternative kernel version to upgrade/downgrade to
+[15:07] <DavidInPerth> would running update-initramfs help at all?
+[15:17] <jibel> DavidInPerth, you can always downgrade to a previous version a package by selecting the version on https://launchpad.net/ubuntu/+source/linux/+publishinghistory (for the kernel in this case) then in 'builds' select you architecture
+[15:18] <jibel> then download the debs and install them with dpkg
+[15:18] <DavidInPerth> ah, I see
+[15:18] <DavidInPerth> yeah, that makes sense
+[15:20] <DavidInPerth> Hmm... I'm trying to run Quantal in a VM with 256M of RAM, and 1 core, on a system that's already getting low on memory...
+[15:20] <DavidInPerth> oh well, I only really need to get to apt to test for this anyway
+[15:21] <DavidInPerth> :-D
+[15:30] <hggdh> I think 256M is a bit on the low side...
+[15:37] <micahg> I increase my VMs for Unity to 1GB for testing, you could probably muddle through with 768MB
+=== Ursinha-afk is now known as Ursinha
+=== mspencer is now known as iBelieve
+=== pedro_ is now known as Guest20557
+[20:38] <alo21> hi everybody...
+[20:39] <alo21> I am fixing bug LP: #1095521
+[20:39] <ubot2`> Launchpad bug 1095521 in util-linux (Ubuntu) "Manpage for mount list different options in same paragraph (keybits, nofail, iversion)" [Medium,In progress] https://launchpad.net/bugs/1095521
+[20:40] <alo21> this bug affects Debian too, and I am wondering if I have to report the bug, and attach the debdiff in DBTS.
+[20:47] <hggdh> alo21: yes, you should
+[20:52] <alo21> hggdh, OK. Thanks
+[20:52] <hggdh> alo21: actually, thank YOU for helping :-)
+[20:53] <alo21> hggdh, It's my pleasure... and I really would like to do more for this amazing community/OS
+[20:56] <bdmurray> The fix for bug 821233 could use SRU'ing to Precise if someone is interested.
+[20:56] <ubot2`> Launchpad bug 821233 in indicator-weather (Baltix) "indicator-weather crashed with AttributeError in export_location_details(): Location instance has no attribute 'location_code'" [Medium,In progress] https://launchpad.net/bugs/821233
+=== pedro_ is now known as Guest35034
+[22:59] <alo21> can someone set the bug LP: #1095521 as Triaged and assignee it to nobody for me please?
+[22:59] <ubot2`> Launchpad bug 1095521 in util-linux (Ubuntu) "Manpage for mount list different options in same paragraph (keybits, nofail, iversion)" [Medium,In progress] https://launchpad.net/bugs/1095521
+[23:00] <alo21> Because the bug has been reported in debian, and may be the patch will be upload
+[23:02] <alo21> leave the bug, please. I changed my mind
+[23:07] <hggdh> ack
+[23:09] <bdmurray> gah
+[23:09] <TheLordOfTime> ehehehe, i was looking at that bug earlier, don't remember why though...
+[23:09]  * TheLordOfTime returns to poking php5's source
+[23:12] <bdmurray> I hate it when you are trying to work one bug and run into more trying to fix the first one
+[23:13] <TheLordOfTime> bdmurray, happened with a php5  SRU, a dupe of one bug slipped past when i was SRUing it
+[23:13] <TheLordOfTime> fortunately i caught it in -server, and saw it was a dupe.
+[23:13] <TheLordOfTime> (whenever they have to relate to php5-fpm, i usually hear about it)

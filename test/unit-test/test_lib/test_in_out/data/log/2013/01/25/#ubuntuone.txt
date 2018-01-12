@@ -1,0 +1,69 @@
+=== slank is now known as slank_away
+[09:22] <mandel> morning!
+[11:16] <gatox> good morning!
+[13:24] <freannrak> Hello, I'm having trouble with ubuntu one's sync. The problem is that it doesn't respect my upload limit. I've set it to 10 kilobits per second, but under system monitor I can clearly see that it's uploading at full speed.
+[13:26] <rye> freannrak: hi
+[13:26] <freannrak> rye: hey
+[13:27] <rye> freannrak: this is bug https://bugs.launchpad.net/ubuntuone-storage-protocol/+bug/720707 and we have recently had some progress on that, let me dig it up
+[13:27] <ubot5> Launchpad bug 720707 in Ubuntu One storage protocol "Bandwidth limit is not correctly enforced: Transmission delays are inserted between data chunk writes (of arbitrary sizes)" [High,Confirmed]
+[13:28] <rye> dobey: has Stuart provided enough information re: https://code.launchpad.net/~stub/ubuntuone-storage-protocol/devel/+merge/143261 ?
+[13:28]  * rye stares at the workarounds in the bug report
+[13:31] <rye> freannrak: do you feel adventurous enough to test the fix?
+[13:31] <freannrak> rye, thanks. I'm going to try wondershaper as a workaround.
+[13:32] <freannrak> or do you have something better in mind?
+[13:32] <freannrak> I have about 30-40 minutes to spare.
+[13:33] <rye> freannrak: http://paste.ubuntu.com/1569778/
+[13:34] <rye> freannrak: after this restart ubuntuone (in case patch applies cleanly) and test the upload limits
+[13:37] <freannrak> patch applied, how do I fully restart ubuntu one?
+[13:38] <freannrak> just kill it from htop?
+[13:44] <freannrak> brb
+[13:47] <freannrak> hmm, still uploading at full speed.
+[13:54]  * rye reboots to test
+[14:06] <rye> freannrak: what speed have you set in upload settings and what's your ubuntu version?
+[14:06]  * rye sees max 30KiB/s when set 20 Kilobits per second
+[14:06] <rye> i guess we have a bug report for that
+[14:07] <freannrak> rye, 10 kilobits per second, I also tried with 1 afterwards, but no dice. 12.04 LTS
+[14:08] <rye> freannrak: hm, i am now in 12.04 LTS too... Silly question - have you clicked "Apply these settings"?
+[14:08] <freannrak> rye, I'm pretty sure I did. Will try again just to make sure.
+[14:09] <freannrak> rye, yep. still going at full speed ~120KiB/s.
+[14:10] <rye> freannrak: could you please try shutting it down with u1sdtool --quit and starting again?
+[14:10] <freannrak> rye, I did that after changing the settings in the GUI and clicking apply.
+[14:11] <rye> freannrak: ok, it may mean that the patch has not applied or the compiled version for some reason is used instead of .py
+[14:11] <rye> freannrak: may I ask you to remove /usr/lib/python2.7/dist-packages/ubuntuone-storage-protocol/ubuntuone/storageprotocol/client.pyc ?
+[14:11] <freannrak> done
+[14:12] <rye> freannrak: now please try restarting with upload limit already set
+[14:13] <rye> freannrak: hm, now I can't make it work too
+[14:14] <freannrak> restarting as in full system reboot?
+[14:14] <rye> freannrak: no, u1sdtool --quit; (check that no ubuntuone-syncdaemon processes are running then), u1sdtool --connect
+[14:15] <rye> freannrak: what's the size of the file that is being uploaded (or there are multiple of these)?
+[14:15] <freannrak> bunch of mp3 albums
+[14:16] <freannrak> still going at full speed
+[14:17] <rye> freannrak: could you please pastebin ~/.config/ubuntuone/syncdaemon.conf ?
+[14:19] <freannrak> rye, http://pastebin.com/KD4D7dU6
+[14:19] <rye> freannrak: may I ask you to set it to 10 "Kilobits" in the config?
+[14:20] <freannrak> sec
+[14:20] <freannrak> rye, stop being so polite :P
+[14:21] <rye> freannrak: built-in string messages, cannot override
+[14:22] <freannrak> rye, http://pastebin.com/9n8H7wq1
+[14:22] <rye> freannrak: and still uploads at full speed?
+[14:22] <rye> ok, need to test with multiple files
+[14:22] <freannrak> rye, will test again, sec.
+[14:22] <rye> oh
+[14:23] <rye> interesting
+[14:23] <rye> freannrak: it starts uploading at full link speed, then gradually decreases.
+[14:26] <rye> ok, definitely does not work properly
+[14:26] <freannrak> hmm, it's hovering around 70-95 for 2 minutes now.
+[14:26] <rye> dobey: re: throttling patch - does not appear to work reliably (at least of 12.04 LTS, my raring is broken(
+[14:26] <rye> )
+[14:33] <freannrak> rye, oh well. I'm out of time atm, need to get some actual work done. I subscribed to the bug and am hoping for a fix. In the meantime I'll just have to manually sync at night when everyone is sleeping.
+[14:33] <freannrak> rye, thanks for trying to help.
+[14:33] <rye> freannrak: i had some success with "trickle" - it shaped writes pretty reliably
+[14:34] <freannrak> rye, thanks. I'll check it out.
+=== slank_away is now known as slank
+[15:10] <dobey> rye: what isn't working reliably?
+[15:12] <rye> dobey: well, i tried adjusting speed in sd with stuart's patch and it does not work quite well when one is changing parameters in runtime. At some point it just forgets about the limits and runs with full uplink speed, setting up sd to test this
+[15:13] <dobey> hrmm, that sounds odd
+=== salgado is now known as salgado-lunch
+=== salgado-lunch is now known as salgado
+=== gatox is now known as gatox_lunch
+=== gatox_lunch is now known as gatox

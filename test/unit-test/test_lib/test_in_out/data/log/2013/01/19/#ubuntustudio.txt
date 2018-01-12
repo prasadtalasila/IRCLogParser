@@ -1,0 +1,77 @@
+[03:57] <WatsonIT> Hello all. I am running Ubuntu Studio 12.10 alongside a standard Ubuntu 12.10 installation. Until I a comfortable that all is working as needed in Studio. The first thing I notice is that the Bluetooth is no longer recognized. Any advice?
+[07:46] <tete_> hi, i cant get ubuntustudio runningon my workstation. in live mode with usb stick its working as expected, but after installing it to a custom partition layout, it boots fine but i can not get move the mouse nor execute alt+f2 to execute any command. but the screen does not look frozen, as its popping up saying that there are few updates - so i chrooted with the usb stick and did the updates, still no luck
+[07:47] <tete_> also the resolution is pretty bad, i guess vesa is chosen, thats not a problem as i can install the drivers later but i could imagine that this is somehow connected with my usb driver problem (microsoft keyboard, logitech mouse)
+[08:16] <tete_> so even the rescue mode is not working because - i guess - of missing modules in initrd or such stuff...
+[08:45] <tetractys> Hi there! proud to be here. I just bought my Akai EWI 4000s (a sort of electronic sax). Anyone has some initial info on how to see a fresh MIDI USB device on ubuntustudio? thanks in advance!
+[09:41] <zequence> tete_: Check the downloaded image for corruption. Something's gone really bad
+[09:41] <zequence> tetractys: Do you have more than one audio device?
+[09:44] <zequence> tetractys: If not, just stick your usb device into the computer. Make sure no audio applications are running, including any browser. Open Qjackctl. Click "Start" (will start the jack audio server). If all went ok, open Hexter (synth). Use "Connect" in Qjackctl, and find the "Alsa" tab. Connect your midi device to Hexter.
+[09:45] <zequence> If it works, you can then close Hexter. Stop jack from qjackctl, by pressing "Stop". In "Setup" set frames/period to something like 64 or 128. Save. Start jack, open Hexter, do the connection. Play
+[09:46] <zequence> .. This will reduce latency
+[09:46] <zequence> tetractys: If jack was unable to shut down properly, use this in a terminal: killall -9 jackdbus
+[09:46] <tete_> zequence, got it working, was some problem because of - i guess - i checked the update option in the installer... did a chroot, mounted everything (proc, dev, ..) and reinstalled the kernel
+[09:46] <zequence> Then retry
+[09:47] <zequence> tete_: Weird
+[09:58] <tetractys> @zequence: thank you very much. i'll try as soon as possible. :)
+[10:08] <zequence> tetractys: I'm assuming you have installed Ubuntu Studio. If not, then there will be more steps
+[10:26] <tetractys> zequence: ubuntustudio 12.10 64bit. only one device anyway.  i'm reinstalling a fresh one on an i7 notebook right now. (this notebook will be used *only* for audio affairs) ;-)
+[10:38] <zequence> tetractys: All right. Just remember, there's a couple of bugs, so starting jack when you have desktop audio running will most likely not work. And, jack often crashes on shutdown, so use the command: killall -9 jackdbus, when that happens
+[11:16] <jbermudes> What does "Parameter value mismatch: was expecting 'i', got 'u'." mean when trying to start Jack?
+[11:30] <tete_> how can i see whats blocking my audio device?
+[11:36] <tete_> when i try: alsa_in hw:Adapter, jackd gets started, and then alsa_in is complaining about: Capture open error: Device or resource busy - when i use fuser to find the process which is blocking the card, its jack itself
+[11:44] <tete_> ... qjackctl did not save the configuration
+[12:11] <zequence> tete_: qjackctl starts jackdbus by default as well. If you want to start jackdbus from the commandline, you can use the jack_control tool
+[12:12] <zequence> jbermudes: post the entire message at http://paste.ubuntu.com
+[12:15] <zequence> tete_: Oh, and make sure that one of them is not already running
+[12:15] <zequence> jackdbus || jackd
+[12:17] <jbermudes> zequence: http://paste.ubuntu.com/1548843/
+[12:17] <jbermudes> Some folks over at #jack mentioned that the error is related to a wontfix bug: http://sourceforge.net/p/qjackctl/tickets/2/
+[12:22] <zequence> jbermudes: So, jack did start anyway, right?
+[12:23] <jbermudes> zequence: It appears so, but I can't seem to figure out what settings to use in Audacity to test it out
+[12:23] <zequence> jbermudes: Just use jack in audacity.
+[12:24] <zequence> audacity won't show ports in jack connections until you start it
+[12:24] <zequence> I mean, play something
+[12:24] <zequence> jbermudes: You don't need jack with audacity though. What are you planning to use it for?
+[12:25] <zequence> audacity is an audio wave editor, and is best used for that. I know many people use it as a recording tool as well, which is usually fine for stereo recordings. If you want to do multitrack recordings, I recommend Ardour or qtractor
+[12:25] <jbermudes> I'm trying to record 4 microphones into a 4 track audio file by hooking them up to the PC via an Alesis iO4 audio interface device
+[12:26] <jbermudes> Well, actually in the end I guess they'd be 4 separate audio files
+[12:26] <zequence> jbermudes: I really recommend ardour or qtractor for that. They are also much nicer when mixing, especially Ardour
+[12:27] <zequence> Ardour is a pro multitrack DAW, specifically designed for studio recording
+[12:27] <zequence> audacity on the other hand is really nice when you want to edit audio files
+[12:27] <cfhowlett> jbermudes, ardour all the way for that set up.
+[12:31] <jbermudes> Does ardour have commandline options that would allow me to do things headless like starting and stopping a recording session, exporting, etc.?
+[12:33] <zequence> jbermudes: Are you about to record a live session, or convert audio files? It's the best Linux audio tool you can find for studio recordings.
+[12:33] <zequence> As for starting and stopping, there are a bunch of ways you can control ardour
+[12:34] <zequence> I think the simplest one is just keyboard short cuts
+[12:34] <zequence> ..while ardour is running, of course :)
+[12:35] <jbermudes> Right, but then you can't really do it remotely.
+[12:35] <zequence> jbermudes: You can use midi, or OSC
+[12:35] <zequence> But, I haven't done either myself
+[12:35] <zequence> I think you can even use the network
+[12:36] <jbermudes> Yeah, control via network is what I'm aiming for. So I can make a script to ping a server and it starts recording, then after I ping it to stop it exports it, etc.
+[12:36] <zequence> jbermudes: Why are you doing it remotely? Is the recording happening in a remote location?
+[12:36] <jbermudes> Not a remote location per se, I just want to automate it so I can tie it into another system that's running on a different machine
+[12:37] <zequence> jbermudes: Maybe you're looking for a command line tool all together then
+[12:37] <jbermudes> That'd be fine. I don't need to do any post-processing other than just exporting it
+[12:38] <zequence> jbermudes: Don't know if the tool jack_rec handles multi channel
+[12:38] <zequence> Then there's jack_net* as well
+[12:39] <zequence> On ardour, I'd ask about it on #ardour. And there you might also get help on jack, though there's also #jack where you can ask about the jack net stuff
+[12:40] <zequence> Audacity might work as well, of course, but the already mentioned might prove simpler
+[12:40] <zequence> Audacity doesn't connect with jack very nicely
+[12:51] <jbermudes> I couldn't seem to get Audacity to record stuff but in the 5 minutes I've spent with Ardour I've already gotten something recorded, yay
+[13:03] <zequence> jbermudes: I think OSC, if you can get it to work with ardour is probably the best choice. I know there are tools for using it over the network, but can't advice on which they are
+[13:04] <jbermudes> Sweet. I love Open Source!
+[13:07] <tetractys> jbermudes: you love open source and overall Ubuntu in his artistic expression: Ubuntu Studio! spread the world with this!
+[13:08] <tetractys> :)
+[13:08] <jbermudes> I'm a member of the Ubuntu California LoCo =)
+[13:08] <tetractys> good!
+=== Scott_ is now known as Guest59093
+[17:22] <Guest59093> What command could I assign to the superkey to get it to open the menu in the top left?
+=== Submarine__ is now known as Submarine
+[19:06] <FloatingGoat> what's better?
+[19:06] <FloatingGoat> realtime or low latency?
+[19:13] <zequence> FloatingGoat: realtime involves a patch, which you can only get for every other linux version. It gives you deterministic realtime. It's better.
+[19:13] <zequence> lowlatency is better in another way. It only involves a couple of config options, and you get it with every linux version
+[19:13] <zequence> lowlatency is safer also
+[19:13] <zequence> And almost as good
+[19:19] <FloatingGoat> thanks man

@@ -1,0 +1,166 @@
+=== almaisan-away is now known as al-maisan
+[00:04] <wallyworld> StevenK: any luck?
+=== al-maisan is now known as almaisan-away
+[00:05] <StevenK> Fighting with Chromium
+[00:06] <StevenK> Because Firebug hates our test pages
+[00:06] <wallyworld> :-(
+[00:10] <StevenK> wallyworld: form_node.one('#tag-input:focus');
+[00:11] <StevenK> Sigh
+[00:11] <StevenK> wallyworld: form_node.one('#tag-input:focus'); == null
+[00:11] <wallyworld> StevenK: so perhaps something else is being assigned focus
+[00:11] <StevenK> Or the test is braindead
+[00:11] <wallyworld> StevenK: you could attach an onblur event handler to the tag-input node and log something so that you can see if focus is being lost
+[00:12] <wallyworld> or the test ia dead, yes
+[00:12] <wallyworld> at least activeElement and :focus are behaving consistently
+[00:13] <wallyworld> StevenK: i haven't the code handy, but perhaps autocomplete render is messing with the focus
+[00:13] <StevenK> It could have focus rather than the text box
+[00:13] <StevenK> I guess
+[00:14] <StevenK> If :focus works, I just have to Y.Assert.isNotNull();  -- I hope that, or something like it exists
+[00:15] <wallyworld> yes, it exists, can't recall the exact syntax
+[00:15] <wallyworld> my brain is rotten
+[00:21] <StevenK> Y.one('.bug-tag-complete:focus') is also null
+[00:22] <StevenK> Y.one(':focus'); is also null
+=== slank is now known as slank_away
+[00:29] <StevenK> wallyworld: So I'm not sure if :focus works either
+[00:30] <wallyworld> hmmm
+[00:31] <wallyworld> can you fire up an instance, and click on an input field and then in firebug type a css expression to see if it selects the field you just clicked?
+[00:32] <wallyworld> ah won't work
+[00:32] <wallyworld> since clicking out of the input takes away focus
+[00:43] <StevenK> Hmmm, I think the <form> is activeElement now
+[00:43] <StevenK> With a id of 'tag-input'
+[00:43] <StevenK> That might even be success
+[00:44] <StevenK> Expected: [object HTMLInputElement] (object)
+[00:44] <StevenK> Actual: INPUT#tag-input yui_3_5_1_1_1359506644965_424 (object)
+[00:45] <StevenK> But from my reading in the debugger, the _yuid's are the same
+[00:45] <wallyworld> Actual aboce is correct
+[00:46] <StevenK> wallyworld: Expected is document.activeElement, tag_input is the actual
+[00:46] <wallyworld> i think the assert is comparing the DOM node wityh a YUI node perhaps
+[00:46] <StevenK> Right
+[00:46] <wallyworld> so you need to "convert" the document,activeElement to the YUI node
+[00:46] <wallyworld> there's a YUI.DOM method for that
+[00:47] <wallyworld> from memory
+[00:48] <StevenK> % bzr grep YUI.DOM | wc -l
+[00:48] <StevenK> 0
+[00:49] <StevenK> -i helps not
+[00:49] <wallyworld> let me check
+[00:49] <wgrant> Don't you just give it to the YUI.Node constructor?
+[00:49] <wgrant> IIRC
+[00:50] <wallyworld> StevenK: Y.one() accepts a DOM element from memory
+[00:50] <wallyworld> and returns the YUI node
+[00:50] <StevenK> Let's see
+[00:51] <StevenK> No failures!
+[00:52] <wallyworld> \o/
+[00:52] <StevenK> NoCanonicalUrl: No url for u'http://blueprints.launchpad.dev/product-name-100004' because u'http://blueprints.launchpad.dev/product-name-100004' broke the chain.
+[00:53] <StevenK> canonical_url, I hate you
+[00:53] <wgrant> That's a string
+[00:53] <wgrant> You can't take the URL of a string
+[00:53] <StevenK> url = canonical_url(product, rootsite='blueprints')
+[00:53] <wgrant> product is the URL
+[00:53] <wgrant> Not a product
+[00:53] <StevenK> product = self.factory.makeProduct()
+[00:53] <wgrant> I suspect
+[00:53] <wgrant> You sure it's failing on that line?
+[00:54] <StevenK> Oh, god damn it, getViewBrowser
+[00:54] <StevenK> I hate you, please die in a fire
+[01:19] <wgrant> StevenK: Looking
+[01:20] <wgrant> StevenK: Why'd you remove the first assert?
+[01:20] <wgrant> And why do you get form_node, rather than going straight to #tag-input?
+[01:21] <StevenK> wgrant: Compare line 19 and 22
+[01:21] <wgrant> Ah, true
+[01:21] <StevenK> I can go straight to #tag-input, but I wanted to be sure it was the unhidden form's node
+[01:22] <wgrant> If there's a duplicate ID that has focus then there are probably bigger problems
+[01:22] <wgrant> 'cause both of those requirements are problems
+[01:23] <StevenK> wgrant: http://pastebin.ubuntu.com/1587567/
+[01:23] <wgrant> StevenK: You can probably inline that now
+[01:25] <StevenK> wgrant: http://pastebin.ubuntu.com/1587573/
+[01:25] <wgrant> Much better.
+[01:25] <StevenK> The line is too long with Y.one(document.activeElement), so that can stay outside as the var
+[01:29] <StevenK> wgrant: The MP has updated
+[01:30] <wgrant> StevenK: r=me, thanks
+[01:35]  * StevenK stabs himsefl
+[01:36] <StevenK> *himself
+[01:36] <wgrant> What did you do?
+[01:36] <StevenK> No wonder my query count is tiny, I'm not invalidating the cache
+[01:39] <StevenK> Hmmm, that doesn't help
+[03:14] <StevenK> And I switch to c_i_v() and the query count drops to 17. WTF.
+[03:15] <wgrant> StevenK: Did you actually render the view?
+[03:25] <StevenK> view() should do that, no?
+[03:25] <wgrant> Yes
+[03:31] <StevenK> Oh, HAH
+[03:31] <StevenK> official_blueprints
+[03:31] <StevenK> STAB
+[03:31] <wgrant> Heh
+[03:34] <StevenK> sudo dpkg -P hayfever
+[03:37] <StevenK> Hm, blueprints.l.d/product is only showing 5
+[03:37] <wgrant> Right, batch size on launchpad.dev is 5 by default
+[03:41] <StevenK> I think my test is slighly broken
+[03:42] <StevenK> The query list shows an INSERT INTO specification
+[03:43]  * StevenK peers at the oops attached to 1108261
+[03:44] <StevenK> The sreg_info we got back was None?
+[03:44] <wgrant> Or not present at all, more likely
+[03:44] <wgrant> Which possibly means that the user tried to authenticate with an SSO account that had no LP account, or somehow convince SSO not to send the info
+[03:46] <StevenK> wgrant: http://pastebin.ubuntu.com/1587769/ the rest of the changes (ISpecification.linked_branches cachedproperty and preloading are shelved)
+[06:26] <wgrant> StevenK: You need to check that the query count is constant, because a query count of 35 for 5 specs could easily include 3 queries for each spec.
+[06:27] <wgrant> so eg. create one, check query count, create another 4, check query count is still the same
+[06:29]  * StevenK peers at this test
+[06:29] <StevenK> I think getViewBrowser screws with the interaction
+[06:34] <StevenK> wgrant: http://pastebin.ubuntu.com/1588354/
+[06:37] <wgrant> StevenK: That looks more test-like, though I'm not sure about having that query count hardcoded in a generically-named method :)
+[07:13] <StevenK> wgrant: http://pastebin.ubuntu.com/1588558/
+[07:19] <wgrant> StevenK: Have you considered BrowsesWithQueryLimit?
+[07:19] <wgrant> That might even handle invalidation for you
+[07:23] <StevenK> Doesn't look like it handles invalidation
+=== almaisan-away is now known as al-maisan
+[08:55] <adeuring> good morning
+=== yofel_ is now known as yofel
+=== matsubara-afk is now known as matsubara
+=== al-maisan is now known as almaisan-away
+=== almaisan-away is now known as al-maisan
+=== dpm is now known as dpm-laptop
+=== slank_away is now known as slank
+=== slank is now known as slank_away
+[15:35] <czajkowski> mgz: may want to add your details to https://wiki.ubuntu.com/Fosdem/2013  and poke Jelmer :)
+[15:36] <mgz> ah, hadn't realised there was a wiki.ubuntu.com page, I put 'em on the canonical one
+[15:36] <czajkowski> nods
+[15:36] <czajkowski> community one is public :)
+[15:36] <czajkowski> now to poke the canonical folks to add their details there
+[15:38] <mgz> global poke'd
+[15:39] <czajkowski> cheers
+[15:39] <czajkowski> mgz: http://www.drugopera.be/
+[15:39] <czajkowski> very close to delierium  then for friday night beers
+[15:41] <mgz> that is the stupidest name...
+[15:41] <czajkowski> indeed
+[15:41] <czajkowski> but is within the perdiem also
+[15:41] <czajkowski> easily
+[15:45] <czajkowski> mgz: oh this also means I finally get to meet jelmer
+[15:45] <mgz> wait, you've never met 'im?
+[15:45] <czajkowski> NO!
+[15:45] <czajkowski> I joined the month  after the sprint
+[15:45] <czajkowski> :(
+[15:48] <mgz> he's coming to london immediately after and settling in :)
+[15:49] <czajkowski> aye
+[15:49] <czajkowski> has he found a place to live?
+[15:49] <mgz> has a place arranged for the first month or so and will start looking for something longer term
+[15:50] <czajkowski> cool
+[15:50] <czajkowski> a weekend of beer waffles chocolate and geeks :D
+[15:50] <czajkowski> cannot wait
+[15:55] <mgz> don't eat the geeks!
+[16:05] <cjwatson> wgrant,StevenK: any chance of a review of https://code.launchpad.net/~cjwatson/launchpad/bpph-phase/+merge/144154 ?
+=== matsubara is now known as matsubara-lunch
+=== dpm-laptop is now known as dpm
+=== matsubara is now known as matsubara-afk
+[23:37] <StevenK> wgrant: https://code.launchpad.net/~stevenk/launchpad/precache-specification-linked-branches/+merge/145544 has updated
+[23:39] <wgrant> StevenK: You still need the explicit invalidate?
+[23:39] <wgrant> Also, the "specs" list is not useful at all
+[23:39] <wgrant> You only read from it to get the store to invalidate, and you can get that from product just as easily
+[23:42] <StevenK> wgrant: The test passes without the invalidate
+[23:42] <StevenK> But I'm still not convinced it invalidates the store
+[23:43] <wgrant> Looks like you're right
+[23:44] <StevenK> I could make it do so, but that may have far reaching implications
+[23:46] <wgrant> Anyway, I guess that means you should eliminate the specs var and I will be happy :)
+[23:47] <StevenK> I've already done so: http://pastebin.ubuntu.com/1591256/
+[23:47] <wgrant> Much better :)
+[23:49] <StevenK> wgrant: I'm happy to make BrowsesWithQueryLimit invalidate the store in a seperate branch and toss it at ec2
+[23:52] <wgrant> StevenK: That might be worth a try
+[23:54] <StevenK> wgrant: The MP is updated
+[23:58] <wgrant> StevenK: r=me

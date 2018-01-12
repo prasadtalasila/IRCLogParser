@@ -1,0 +1,515 @@
+[06:32] <didrocks> good morning
+=== amithkk is now known as Guest39143
+=== tkamppeter_ is now known as tkamppeter
+[07:34] <pitti> Good morning
+[07:35] <pitti> Bonjour
+[07:37] <didrocks> bonjour pitti! c'est à ton tour de te lever tard ;)
+[07:38] <pitti> didrocks: oui, je ne suis pas très bien
+[07:38] <pitti> seems my cold came back, after I was already over it
+[07:40] <larsu> good morning!
+[07:40] <didrocks> argh, take care pitti :/
+[07:40] <didrocks> hey larsu! how are you?
+[07:40] <larsu> didrocks, good thanks, and you?
+[07:40] <pitti> hey larsu!
+[07:40] <larsu> pitti, hi, gute Besserung!
+[07:41] <didrocks> larsu: I'm fine, thanks!
+[07:41] <larsu> is there a reason that `update-manager -d` doesn't work?
+[07:41]  * larsu wants to finally update to R
+[07:43] <mvo> larsu: do you have pending updates?
+[07:43] <larsu> mvo, no
+[07:43] <mvo> larsu: hm, does do-release-upgrade -d work?
+[07:43] <pitti> oh, hey mvo, happy new year!
+[07:44] <mvo> hey pitti, happy new year!
+[07:44] <larsu> mvo, seems to work, thanks!
+[07:45] <larsu> and happy new year ;)
+[07:45] <mvo> cool
+[07:45] <mvo> and happy new year larsu
+[07:45] <larsu> thanks :)
+[07:52] <didrocks> hey mvo! happy new year :-)
+[08:15] <pitti> RAOF: hey Chris, how are you?
+[08:15] <RAOF> pitti: Yo!
+[08:16] <RAOF> pitti: I'm within one standard deviation of my long-term average :)
+[08:16] <pitti> haha
+[08:16] <pitti> RAOF: happy new year then!
+[08:17] <RAOF> pitti: And to you, likewise!
+[08:17] <pitti> RAOF: and may your health not deviate more than 1.5σ from the expected value :)
+[08:18] <pitti> RAOF: so I wanted to ask you, do you know how and where X.org detects monitors?
+[08:18] <pitti> RAOF: I already checked the X.org server itself and its xrandr extension; that doesn't just seem to read sysfs or so; it seems that's the responsibility of the individual device drivers?
+[08:19] <pitti> RAOF: background is, I want to see whether and to which degree we can simulate monitors in a mock environment, for writing tsts
+[08:19] <pitti> and tests, too
+[08:19] <RAOF> The drivers we care about query the kernel.
+[08:19] <pitti> so I was hoping it would just read syfs, but it doesn't
+[08:19] <RAOF> Mocking that out is going to require mocking libdrm
+[08:20] <RAOF> Specifically the handful of ioctls dealing with modesetting.
+[08:20] <pitti> ah, so they are directly poking the hardware, not reading /sys/class/drm ?
+[08:20] <RAOF> Correct.
+[08:21] <pitti> RAOF: intercepting ioctls is already on my table
+[08:21] <RAOF> You can quirk an edid by writing to the firmware-ish file, but that's not going to help if the output is not detected as connected, or if you want to fake, say, an HDMI output.
+[08:21] <pitti> xvfb doesn't seem to have xrandr capability, so I guess we need to start the real X.org under some kind of dummy driver
+[08:22] <pitti> RAOF: so I guess as we have to use a dummy driver anyway, that one coudl just report a set of fake monitors?
+[08:22] <RAOF> Absolutely.
+[08:23] <RAOF> That'd be a simple extension to xf86-video-dummy
+[08:23] <pitti> right, that woudl have been my next question; is xserver-xorg-video-dummy the right driver for this kind of thing?
+[08:23] <RAOF> ¹: For sufficiently boring boilerplaity values of “simple”
+[08:24] <RAOF> I would think so, yes; it's pretty much what you're after - a no-hardware fake graphics driver.
+[08:25] <pitti> do you know if that's sufficiently capable to run unity on?
+[08:27] <pitti> RAOF: ok, thanks so far; I'll play around with this, see how to start X.org with the dummy driver, and where to plug in RR bits
+[08:27] <soren> pitti: Funny, I looked into this just last night. What specifically are you wanting to test?
+[08:27] <RAOF> If unity can run with software rendering it can run on dummy.
+[08:28] <pitti> RAOF: oh, another question -- how does X.org detect the driver to use?
+[08:28] <RAOF> Magic!
+[08:29] <pitti> soren: I have no specific test right now; I want to evaluate how we can set up various "multiple monitor" scenarios and then test xrandr and unity within that
+[08:29] <RAOF> pitti: It's got a pciid→driver switch statement buried in the bowels of it.
+[08:29] <pitti> RAOF: right, I meant, does it again do its own hardware poking, or just iterate through /sys or /proc?
+[08:30] <RAOF> It uses libpcithingamabob; I think that does /sys probing, from memory.
+[08:30] <pitti> ah, libpciaccess0
+[08:30] <RAOF> pitti: This *might* be superceded by the udev code, new in 1.13 (or 1.12); I've not looked at the driver matching code since that landed.
+[08:30] <RAOF> pitti: Yeah, that one.
+[08:30] <pitti> splendid, thanks
+[08:31] <pitti> we can easily mock bits in /sys
+[08:31] <pitti> soren: so what did you look at? starting X.org with the dummy driver?
+[08:31] <pitti> RAOF: thanks for your help!
+[08:31] <soren> pitti: Ok, I can't help much then. I was looking at slightly higher layers, but if you wat to be able to test xrandr itself, that's a different story.
+[08:32] <seb128> hey desktopers
+[08:32] <pitti> it's a seb!
+[08:32] <pitti> bonjour mon ami
+[08:32] <didrocks> salut seb128
+[08:33] <soren> pitti: I was looking into adding some automatic monitor switching magic to XFCE and wondered how I could test it.
+[08:33] <pitti> soren: doesn't that also require faking monitors?
+[08:33] <soren> pitti: Gnome has its own abstraction for it, which should be easily mockable if you just want to test the unity bits.
+[08:33] <pitti> in libgnome-desktop, yes
+[08:34] <soren> Right.
+[08:34] <seb128> pitti, hey, how are you?
+[08:34] <seb128> didrocks, lut ;-)
+[08:34] <pitti> seb128: my cold bounced back, so could be better, but ok for now
+[08:35] <pitti> how are you?
+[08:35] <seb128> I'm good thanks
+[08:35] <pitti> soren: I thought that would just be a rather straight interface to xrandr
+[08:35] <soren> pitti: I didn't actually write any code. I just looked at what it would take. I think I'd just have faked the "something changed" event and checked that it used the correct, new config. In unit tests, that is. I suspect you're doing something more integration test-ish?
+[08:35] <pitti> soren: i. e. no file interface in between which you could intercept?
+[08:35] <pitti> soren: ah, ok
+[08:36] <soren> pitti: Both Gnome and XFCE uses the xrandr library. I suppose xrandr must as well. Perhaps that's easier to deal with?
+[08:36] <pitti> soren: yeah, ideally we could start an X server (with -dummy or even xvfb, but that doesn't seem to work), run unity or gnome-shell or whatever in it, then change the mocked monitors, and verify that it adjusts accordingly
+[08:37] <pitti> soren: that's the bit I'm currently investigating :)
+[08:37] <pitti> soren: everything that uses /sys properly to detect hardware is easy to mock
+[08:37] <pitti> everything that does its own probing with poking ports and ioctls is much harder, of course
+[08:38] <pitti> but I guess X.org needs to work on more systems than just linux
+[08:38] <soren> pitti: Oh, what I meant was a mock implementation of libxrandr itself, not the primitives that xrandr uses/manipulates.
+[08:38] <pitti> ah
+[08:38] <soren> pitti: I don't know if that'll be more or less work, really. I'm just throwing the idea out there.
+[08:39] <pitti> soren: well, xrandr itself is pretty shallow
+[08:39] <pitti> soren: it's little more than poking commands into the X socket
+[08:39] <pitti> the actual detection and implementation of the commands happens on the driver side
+[08:39] <pitti> (shallow from the mocking perspective, not from the logic, of cours)
+[08:40] <soren> Do you mean libxrandr? Or /usr/bin/xrandr ?
+[08:40] <pitti> both really
+[08:40] <pitti> on the client side, xrandr has no hardware specific bits
+[08:40] <soren> Right.
+[08:41] <pitti> it just talks to the X socket, no to sysfs, ioctls, etc.
+[08:41] <soren> Right.
+[08:42] <soren> This seems like a good place to hook in to me.
+[08:42] <soren> ..but you naturally understand much better what it is that you want to test. :)
+[08:43] <soren> That saves you completely from having to think about hardware. I like to not think about hardware :)
+[08:43] <pitti> indeed intercepting it at the X protocol level would be a lot simpler
+[08:44] <pitti> I'm not actually interested in the sever-side layers; mostly in that applications and the desktop DTRT in various multiple-monitor scenarios
+[09:01] <chrisccoulson> good morning everyone
+[09:02] <Laney> hey
+[09:04] <mvo> hey didrocks, happy new year to you as well!
+[09:04] <didrocks> thanks ;)
+[09:05] <didrocks> hey chrisccoulson, Laney
+[09:05] <chrisccoulson> hey didrocks, Laney, how are you?
+[09:05] <chrisccoulson> hi mvo, happy new year :)
+[09:05] <Laney> striving away
+[09:05] <didrocks> chrisccoulson: good good! yourself? :-)
+[09:05] <didrocks> chrisccoulson: regular ping about my thunderbird stalling issue btw :p
+[09:06] <mvo> hey chrisccoulson! happy new year to you as well :)
+[09:06] <chrisccoulson> didrocks, tired. both daughters decided that they were far too cool to sleep last night
+[09:07] <seb128> hey chrisccoulson, Laney
+[09:07] <seb128> mvo, oh, a mvo! happy new year!
+[09:07]  * seb128 hugs mvo
+[09:07] <seb128> mvo, how are you?
+[09:07] <didrocks> chrisccoulson: argh ;)
+[09:07] <mvo> seb128: !!! happy new year
+[09:07]  * mvo hugs seb128
+[09:08] <mvo> seb128: I'm good, thanks, all very new, like I get up at 6 in the morning and commute to a office, a really strange experience. but I can hack on the train, so thats great
+[09:08] <didrocks> mvo: how far are you from the university?
+[09:09] <seb128> mvo, 6, man ... I decided to try to start working at reasonable time and be at the computer at 9am so I wake up between 8 and 9 and I already find that difficult :p
+[09:09] <mvo> didrocks: its about ~35min by train plus a short bus trip
+[09:09] <didrocks> seems reasonable :)
+[09:09] <mvo> seb128: haha
+[09:09] <mvo> didrocks: yeah, its not too bad
+[09:09] <mvo> didrocks: but quite a change
+[09:09] <didrocks> yeah, I can imagine :)
+[09:10] <Laney> seeing /real people/!
+[09:10] <didrocks> Laney: do they exist? I keep hearing from that, but never conducted that to facts
+[09:10] <mvo> Laney: yes! out of my cave. I wasn't aware of how many people there are actually in the real -world ;)
+[09:11] <mvo> didrocks: I have empiric evidence of that now! at least here in my part of the world they do exist :)
+[09:11] <didrocks> 10:05:56      didrocks | chrisccoulson: regular ping about my thunderbird stalling issue btw :p
+[09:11] <didrocks> chrisccoulson: I think you missed it ^
+[09:11] <seb128> mvo, see, they were right when they put you in the "dog" category back then (was it in plymouth?) ... you like people after all ;-)
+[09:11] <didrocks> mvo: waow! amazing :-)
+[09:11] <didrocks> should be a German-only thing. I refuse to believe it! :-)
+[09:12] <chrisccoulson> didrocks, yeah, i've not looked at any thunderbird stuff since i got back ;)
+[09:12] <chrisccoulson> (thanks to firefox bugs)
+[09:12] <mvo> seb128: lol
+[09:12] <mvo> seb128: indeed, I think that was around the plymouth time - the funny thing is that my first thought about plymouth was the bootscreen, not the conference we had there :P
+[09:13] <chrisccoulson> mvo, i don't believe real people exist. you must provide evidence :)
+[09:13] <Laney> they're the people that bring my internet shopping deliveries, right?
+[09:13] <chrisccoulson> actually, i think i saw a person walk past my window one day
+[09:14] <mvo> chrisccoulson: haha, I can take pictures from the cafeteria - there are two kinds, man *and* woman
+[09:14] <mvo> Laney: lol
+[09:16] <seb128> mvo, lol, same here, I had to check on google if that spelling for the city was the same :p
+[09:21] <mvo> unity is crashing btw on my dual monitor fglrx setup :P but I will look into that later, gtg
+[10:07] <pitti> RAOF: hm, is there a replacement for -nohwaccess ? (https://wiki.ubuntu.com/X/Rootless)
+[10:10] <pitti> RAOF: nevermind, apparently not needed with using the dummy driver
+[10:26] <pitti> didrocks: do you happen to know whether it's possible to run two unitys at the same time as an user/
+[10:26] <pitti> didrocks: I tried "DISPLAY=:1 dbus-launch unity", and while that works, that still kills/restarts my "main" unity
+[10:26] <didrocks> pitti: hum, I doubt it, first compiz is checking there is no other window compositor running
+[10:26] <pitti> DISPLAY=:1 compiz seems to work fine
+[10:26] <pitti> didrocks: well, my real session is on display :0
+[10:26] <didrocks> ah, another DISPLAY
+[10:26] <pitti> I tried the dbus-launch, but that doesn't seem to help either
+[10:27] <didrocks> you have some services that you will need to dbus-launch as well
+[10:27] <didrocks> but that shouldn't kill as it happens for you here
+[10:28] <didrocks>     Window currentWmSnOwner = XGetSelectionOwner (dpy, wmSnAtom);
+[10:28] <didrocks> this is the detection of the other compiz running
+[10:29] <didrocks> it seems to be per dpy
+[10:29] <didrocks> pitti: do you know if at least, compiz is trying to load its plugin?
+[10:29] <pitti> didrocks: they actually do run in parallel, just that the original compiz restarts
+[10:29] <pitti> didrocks: yes, that all seems to work fine
+[10:29] <didrocks> pitti: well, unity is running --replace by default
+[10:29] <pitti> DISPLAY=:1 compiz
+[10:29] <pitti> flawless even with the same dbus
+[10:30] <didrocks> even ok, so it's really unity, I don't see any reason off hand
+[10:30] <pitti> didrocks: ok, nevermind; not a biggie for now
+[10:30] <didrocks> but as you are stealing the unity-panel-service dbus connection, maybe that impact
+[10:30] <didrocks> (it's dbus activated, so you need 2 of them)
+[10:30] <pitti> that was my first guess, but with dbus-launch it has its own private bus
+[10:31] <didrocks> oh right, so you have a second one running spawn by the second bus
+[10:31] <didrocks> hum
+[10:31] <pitti> anyway, my main exercise was to run unity under an user X.org with the dummy driver, which seems to work
+[10:31] <didrocks> sweet :)
+[10:32] <pitti> I'll try to do a screenshot
+[10:32] <didrocks> that would be interesting :)
+[10:38] <pitti> awesome, that works nicely
+=== vrruiz_ is now known as rvr_
+=== cking_ is now known as cking
+[10:56] <didrocks> Laney: do you want to have a look at https://code.launchpad.net/~logan/ubuntu/raring/gst-plugins-good1.0/debian-merge/+merge/141136?
+[10:57] <didrocks> as you won the privilege to be the gst maintainer :)
+[10:57]  * Laney screams
+[10:57] <Laney> yeah, sure :P
+[10:57] <didrocks> Laney: webkit, gst, what would be next? :p
+[10:57] <didrocks> will*
+[10:57] <didrocks> thanks Laney ;)
+[10:58] <smspillaz> desrt: hey you about ?
+[10:59] <smspillaz> desrt: I'm generating an introspection binary and it hangs on my_thing_get_type () inside of g_once_init_enter, was wondering if there's an obvious solution that I missed
+[11:01] <xclaesse> seb128, is it possible to upload devhelp 3.6.1 in quantal?
+[11:01] <xclaesse> seb128, it fix an annoying bug that I cannot do ctr-c to copy text
+[11:02] <xclaesse> IIRC that's the only fix in .1 release
+[11:02] <seb128> xclaesse, you pinged me about that in december
+[11:02] <seb128> xclaesse, I got it uploaded: https://launchpad.net/ubuntu/+source/devhelp/3.6.1-0ubuntu0.1
+[11:02] <seb128> xclaesse, it didn't go from proposed to updates because nobody confirmed that the bug is fixed, if you want to do it please comment on https://bugs.launchpad.net/ubuntu/+source/devhelp/+bug/1079694
+[11:02] <ubot2> Launchpad bug 1079694 in devhelp (Ubuntu Quantal) "3.6.1 stable update, fix ctrl-C copy" [Low,Fix committed]
+[11:03] <xclaesse> seb128, ahhh, ok. I though you forgot about it :)
+[11:03] <seb128> xclaesse, ;-)
+[11:03] <xclaesse> seb128, ok I'll test that right now
+[11:03] <seb128> xclaesse, just enable quantal-proposed and get it from there
+[11:04] <seb128> xclaesse, thanks
+[11:14] <xclaesse> seb128, cannot get to software source settings
+[11:14] <xclaesse> it does nothing when I click on it
+[11:15] <xclaesse> seb128, I tried to just dpkg -i the deb from https://launchpad.net/ubuntu/+source/devhelp/3.6.1-0ubuntu0.1/+build/4024122 but it's missing -common package
+[11:21] <xclaesse> seb128, http://pastebin.com/qbD1ALKD
+[11:21] <xclaesse> python3....
+=== vrruiz_ is now known as rvr_
+=== vrruiz_ is now known as rvr_
+=== MacSlow is now known as MacSlow|lunch
+=== francisco is now known as Guest79688
+[12:20]  * Laney requests the Archive Gods consider promotion of farstream-0.2
+[12:20] <Laney> requires gstreamer1.0-nice too
+[12:59] <Mirv> I wonder if anyone has tested grilo yet? related to bug #1035701
+[12:59] <ubot2> Launchpad bug 1035701 in totem (Ubuntu) "grilo plugins should be enabled in Totem" [Undecided,Triaged] https://launchpad.net/bugs/1035701
+[12:59] <Mirv> I've found myself missing UPnP/DLNA support
+[13:00] <Mirv> just a mental note partly to myself...
+=== Guest39143 is now known as amithkk
+[13:21] <tjaalton> requesting a new merge of cairo, with the egl backend enabled
+[13:22] <tjaalton> it's been enabled on debian all the time, no mention on the changelog why it's disabled on ubuntu
+[13:22] <tjaalton> weston would like to have it
+[13:23] <tjaalton> ok, ricotz explained why :)
+[13:25]  * Sweetshark is churning away on precise patches ...
+[13:26] <ricotz> Laney, hi
+[13:27] <ricotz> Laney, while you were looking into enabling wayland-backend, would it be much trouble if you add --enable-broadway-backend too (gdk lib size will increase by like 90kb)
+=== mterry_ is now known as mterry
+[13:28] <ricotz> Laney, be aware of the backend default choice which might need to be patch in 3.6.x
+[13:35] <larsu> attente, good morning
+[13:35] <attente> larsu, hi
+[13:35] <larsu> attente, I can't reproduce your crash :)
+[13:35] <larsu> but I do get the same warning about the handler id
+[13:36] <larsu> anything specific I need to do to trigger it?
+[13:36] <attente> the warning itself is the crash
+[13:36] <attente> totally kills it for me
+[13:36] <larsu> interesting. Are you running with G_DEBUG=fatal-warnings or something?
+[13:36] <larsu> it just continues running for me
+[13:37] <attente> do the menus work for you?
+[13:37] <larsu> yes, except for the emoticon menu
+[13:37] <larsu> I guess because they are custom widgets?
+=== MacSlow|lunch is now known as MacSlow
+[13:37] <attente> probably
+[13:39] <larsu> actually the menu works, but the images aren't displayed
+[13:40] <attente> is there a G_MENU_ATTRIBUTE for menu item images?
+[13:40] <larsu> not upstream, no. We've been using x-canonical-icon for the indicators, but that probably doesn't work yet for the appmenu
+[13:41] <larsu> by the way: what are you patching in indicator-appmenu?
+[13:41] <attente> it's just an extra action group with the "unity." namespace
+[13:41] <larsu> ah, good idea
+[13:41] <attente> so that we don't have to go through the trouble of grabbing the old action group and merging it into ours
+[13:42] <larsu> makes sense. And the action names are simply the labels of the menu items?
+[13:42] <attente> all desrt's idea
+[13:42] <attente> in general, yes
+[13:42] <attente> but if a GtkAction is available, we use that instead
+[13:43] <larsu> wow, this thing is much cleverer than I thought :)
+[13:43] <larsu> hm, that warning appears (twice) when I receive a message. But not every time...
+[13:44] <attente> haha, it's been in the works for a long time now, so i would hope so...
+[13:45] <attente> anyways, i'm still trying to fix the package again...
+[14:09]  * Sweetshark is down to 5 patches for precise backports.
+[14:19] <ritz> seb128 heya, sorry for the delay. done - https://bugs.launchpad.net/ubuntu/+source/pidgin/+bug/1026442
+[14:19] <ubot2> Launchpad bug 1026442 in pidgin (Ubuntu) "Buddy pounce - send message window too short" [Low,Confirmed]
+=== huats_ is now known as huats
+=== m_conley_away is now known as m_conley
+[14:37] <smspillaz> y
+[14:37] <smspillaz> whoops :)
+[14:41] <seb128> ritz, hey, ok, thanks
+[14:41] <seb128> attente, hey, need packaging help there?
+[14:42] <attente> seb128, things seem to be working fine here, but thanks :)
+[14:43] <seb128> great, well done!
+[14:43] <larsu> attente, this bug is super tricky :-/
+[14:43] <ritz> seb128 is it fine if I post the SRU notes to priv lp
+[14:43] <ritz> or this has to be to pub lp
+[14:44] <larsu> empathy does some crazy stuff with that menu (it's the Contact menu), but it appears like it's nothing illegal :)
+[14:44] <attente> larsu yeah... don't worry about it too much...
+[14:44] <attente> larsu: what is it doing exactly?
+[14:44] <seb128> ritz, better public, otherwise the SRU team and the verification team will not be able to read those
+[14:45] <ritz> okay, cool
+[14:46] <larsu> attente, it sets the submenu for the contact, a qdata (that it doesn't seem to use) and connects to notify::visible for no apparent reason
+[14:46] <larsu> attente, http://git.gnome.org/browse/empathy/tree/src/empathy-chat-window.c#n603
+[14:47] <larsu> attente, I tried creating the same circumstances from a test script, but didn't manage to get the same warning
+[14:50] <attente> larsu, your test script also switches the submenu?
+[14:50] <larsu> attente, yes
+[14:50] <attente> huh.
+[14:51] <gQuigs> hello there
+[14:51] <gQuigs> anyone know what the status of the LibreOffice ppa is?
+[14:52] <gQuigs> it looks like 3.6.1-rc2 never got built, and hasn't been updated since
+[14:52] <gQuigs> https://launchpad.net/~libreoffice/+archive/ppa?field.series_filter=precise
+[14:54] <seb128> gQuigs, hey, check with Sweetshark, he's maintaining libreoffice for Ubuntu
+[14:54] <gQuigs> thanks seb128, ping Sweetshark
+[14:55] <Sweetshark> pong
+[14:55] <Sweetshark> gQuigs: you have 5 minutes, then Ill be in a TDF board of directors call
+[14:55] <Sweetshark> ;)
+[14:56] <Sweetshark> eh, tricky. first writing the content, then the ping.
+[14:56] <gQuigs> thanks Sweetshark, I was just wondering what the status of the PPA is?.. it looks like 3.6.1-rc2 failed in someway
+[14:58] <Sweetshark> yes, it seems ricotz did that. I asked him to always build in a separate ppa, but IIRC he ignored that here because it was the first 3.6 upload.
+[14:58] <Sweetshark> still would have been better
+[14:59]  * Sweetshark checks the buildlog
+[15:00] <Sweetshark> seems like there are deps missing on precise. for the specific one a first workaround would be to disable the mediawiki extenion to be build.
+[15:01] <Sweetshark> gQuigs: https://launchpad.net/~bdcomp <- he is currently working on backporting LO to precise, but he still has a lot to learn, so it still might take a while.
+[15:01] <Sweetshark> anyway: gone for now, call ;)
+[15:02] <gQuigs> Sweetshark: thanks!
+[15:04] <Sweetshark> fscking timezone, was off the mark by one hour. anyway, I think you got what you needed for a start ;)
+[15:06] <Sweetshark> gQuigs: https://launchpad.net/~bdcomp/+archive/backports/+packages <- there is a package building in there. note the big, fat "DO NOT USE IT" on the ppa though ;)
+[15:07] <gQuigs> I did notice that... :)
+[15:09] <larsu> attente, something tries to disconnect the handler twice. This might mean we have a circular menu structure somewhere...
+[15:09] <attente> ok
+[15:10] <attente> but the handler is on the UnityGtkMenuShell, right?
+[15:10] <attente> not the GtkMenuShell, i believe
+[15:11] <attente> er... sorry
+[15:11] <larsu> yes, UnityGtkMenuShell is the GMenuModel, right?
+[15:11] <attente> right, but actually the exported version of that
+[15:11] <larsu> yes
+[15:13] <attente> i'm just fixing that non-portable linking warning right now
+[15:13] <larsu> attente, actually, the handler is on a UnityGtkMenuSection
+[15:14] <larsu> oh, wait, I think I'm mistaken: the handler isn't disconnected twice
+[15:14] <larsu> I got confused by dual debug printfs :)
+[15:14] <attente> hehe
+[15:22] <larsu> attente, so its much easier than this... just a object_unref too many. The question is: where? :P
+[15:23] <attente> larsu, could it just be that the section is disappearing without the disconnect code knowing about it?
+[15:24] <larsu> attente, well, the disconnect code has a reference on it, so it shouldn't disappear
+[15:24] <larsu> but it definitely does, I put a weak ref on it
+[15:24] <attente> :S
+[15:24] <larsu> ya
+[15:24] <larsu> :)
+[15:24] <attente> ok, haha, thanks :)
+[15:39] <larsu> attente, got it.
+[15:39] <larsu> phew
+[15:39] <Laney> seb128 / didrocks: Direct ping regarding the ^^^ promotion request ;-) farstream-0.2 (source) and gstreamer1.0-nice (binary from source already in main)
+[15:39] <Laney> if you have time
+[15:39] <attente> larsu: what was it?
+[15:39] <seb128> Laney, didrocks: can do
+[15:39] <seb128> looking
+[15:39] <Laney> merci
+[15:39] <seb128> de rien, sorry for missing it earlier
+[15:39] <didrocks> thanks seb128 :)
+[15:39] <seb128> yw ;-)
+[15:40] <larsu> attente, http://paste.ubuntu.com/1513350/
+[15:40] <larsu> ah wait, that's your own function
+[15:41] <larsu> Your log says "Run dispose to break cycles."
+[15:41] <seb128> Laney, done
+[15:41] <Laney> great
+[15:42] <Laney> will upload empathy when that publishes then
+[15:42] <larsu> attente, I'm pretty sure you shouldn't call g_object_run_dispose in this case
+[15:42] <larsu> but it's a question for desrt, really
+[15:42] <larsu> do you remember which problem this solved?
+[15:43] <attente> larsu, i added that to break the ref cycle between shell and section when the section disappears
+[15:43] <attente> or is supposed to disappear
+[15:44] <larsu> hm, I'm not sure I know enough about your code to give good advice here :)
+[15:44] <attente> but i thought the problem was that g_object_unref was getting called too many times
+[15:45] <attente> but if the fix works, you're probably right
+[15:50] <larsu> attente, hm. I'm not sure I fully understand it yet
+[15:50] <larsu> (after what you just said)
+[15:50] <attente> actually, i'm having a hard time understanding why it would fix the problem too...
+[15:55] <desrt> smspillaz: using only DEFINE_TYPE macros?
+[15:55] <desrt> smspillaz: doing anything odd from class_init() functions?
+[15:55] <desrt> if you're using the stock get_type() from G_DEFINE_TYPE then the usual cause of this is that you're doing something bad in some sort of class_init
+[15:56] <larsu> desrt, are weak refs notified on dispose?
+[15:56] <desrt> otherwise, it could be an obscure race that I know we have in multi-threaded situations... would be strange to see that in the go-i scanner, though
+[15:56] <desrt> unless, as above, you're calling weird stuff from class_init() :)
+[15:56] <larsu> desrt, as in, if attente calls g_object_dispose manually, will weak refs be notified?
+[15:56] <desrt> larsu: yes and no
+[15:56] <desrt> larsu: no.
+[15:56] <desrt> but they are notified before dispose() is called automatically after the last ref drops
+[15:56] <larsu> I have a stack trace that looks like it
+[15:56] <larsu> hm, weird
+[15:56] <desrt> well
+[15:57] <desrt> dispose() often results in the handler calling unref() on a lot of stuff
+[15:57] <desrt> which in turn could obviously cause a weak notify
+[15:57] <larsu> yeah but it's on the same object
+[15:57] <desrt> hmm
+[15:57] <desrt> odd
+[15:57] <larsu> cycles?
+[15:58] <desrt> i doubt it
+[15:58] <desrt> read the trace...
+[15:58] <desrt> then read the source :)
+[15:58] <larsu> ya
+[15:59] <larsu> desrt, in any case, running dispose manually is probably not a good idea, is it?
+[15:59] <larsu> I mean, what if other objects still have references...
+[15:59] <desrt> in my opinion dispose is completely stupid
+[15:59] <larsu> I know
+[15:59] <larsu> but that doesn't answer my question :)
+[16:03] <attente> running dispose is supposed to be an idempotent operation, right?
+[16:03] <larsu> yes
+[16:11] <attente> desrt, want to meet an old friend for lunch today?
+[16:12] <desrt> is he swiss?
+[16:12] <attente> no, that's on the 19th, btw
+[16:12] <desrt> cool :)
+[16:13] <desrt> i'm probably up for it as long as the location is reasonable
+[16:13] <desrt> although it would probably be nice to know who it is first
+[16:13] <attente> mehdi
+[16:13] <attente> king and bay
+[16:13] <desrt> for sure
+[16:13] <attente> 12:30
+[16:13] <attente> sorry about the short notice
+[16:13] <desrt> i still have a sworn pact to murder the two of you for what you did to the se3f03 course webpage
+[16:14] <attente> hahah
+[16:14] <desrt> it will be very convenient to see both of you in one spot
+=== pitti is now known as sabdfl
+[16:21] <desrt> well... this is an interesting development
+=== sabdfl is now known as pitti
+[16:33] <dobey> seb128, didrocks: hey, just replied on bug #1047606 ; do i need to fix and attach new files to the bug, or wait until it's accepted and just upload a new revision?
+[16:33] <ubot2> Launchpad bug 1047606 in Ubuntu Raring "[needs-packaging] ubuntuone-client-data" [Wishlist,New] https://launchpad.net/bugs/1047606
+=== amithkk is now known as mechanobot
+[16:38] <seb128> dobey, new revision will do
+[16:49] <larsu> attente, sorry, I was distracted for a bit, but I have the real solution
+[16:49] <larsu> for which I had to go into gobject.c
+[16:49] <larsu> not nice
+[16:50] <attente> what is it?
+[16:50] <larsu> so g_object_dispose calls g_signal_handlers_destroy
+[16:50] <larsu> pretty simple :)
+[16:51] <larsu> I think the real fix here is to not call dispose. If you're worried about cyclic references, use a weak ref on one side
+[16:52] <attente> huh, ok, i'll give it a shot :)
+[16:52] <larsu> or no reference, if you can be sure that the section's shell pointer is only valid as long as the shell also has a ref on the section
+[16:52] <larsu> the latter is probably the easier solution in your case
+[16:52] <larsu> the same goes for "items" btw, dispose is called on them too
+[16:54] <attente> larsu, i think you're right, there's no reason for these to have a strong reference to their parents, no reason i can remember right now at least
+[16:55] <attente> larsu, thanks for your help once again :)
+[16:55] <larsu> attente, no problem :)
+[17:05] <desrt> attente: good general rule: don't call dispose
+[17:05] <desrt> if you're trying to do that you're probably trying to do something wrong
+[17:07] <attente> desrt: is there a proper way to break a ref cycle without using dispose?
+[17:07] <desrt> don't create the cycle
+[17:08] <attente> lesson learned
+[17:08] <attente> :)
+[17:28] <desrt> attente: seriously, though
+[17:29] <desrt> reference cycles are an annoying hazard of refcounted OO (which you're surely aware of from your obj-C upbringing)
+[17:29] <desrt> techniques used to break them are workarounds and it's usually possible to just avoid the cycle in the first place
+[17:29] <desrt> through more careful design of your object relationships
+[17:31] <desrt> i often find when i'm in a situation where A depends on B and B depends on A then at least one of them could be split into two separate classes (let's split B into B and B2) such that B depends on A and B2 and A depends only on B2 (ie: B is the public-facing part and B2 is some internal utility)
+[17:31] <desrt> that way B2 stays for as long as either A or B are around but safely goes away when both are gone, and there are no cycles
+=== Ursinha is now known as Ursinha-afk
+[18:24] <cyphermox> is it supposed to be best to put .vapi files under the versioned /usr/share/vala-0.XX/vapi/  or the unversioned directory /usr/share/vala/vapi/ ?
+[18:34] <ricotz> cyphermox, unversioned
+[18:35] <ricotz> cyphermox, the versioned directory is exclusive for the vapis shipped with vala itself
+[18:35] <cyphermox> ack
+[18:36] <cyphermox> is that described anywhere in policy or something? because it's not really obvious
+[18:37] <ricotz> not sure if it is written somewhere, but it is common sense for upstream shipped bindings
+[19:12] <bcurtiswx> AlanBell, who am i supposed to talk with about getting meetingology in loco channels ? you're the person who set the topic as nobody else seems to ever exist in the scribes channel
+[19:14] <AlanBell> bcurtiswx: what channel?
+[19:15] <bcurtiswx> AlanBell, #ubuntu-us-dc
+[19:15] <AlanBell> done
+[19:15] <bcurtiswx> AlanBell, thanks :)
+[19:15] <AlanBell> np
+[19:22]  * didrocks finished to debug something, time for evening!
+[19:22] <bcurtiswx> nite didrocks
+[19:22] <didrocks> bye bcurtiswx ;)
+[19:39] <ricotz> jbicha, hi :)
+[19:39] <ricotz> syncing harfbuzz leads to some problems while graphite2 isnt multiarched :\
+[19:43] <ricotz> i guess graphite2 should be synced from exp too (isnt multiarched yet though)
+[20:27] <jbicha> ricotz: ok, the exp. graphite2 has a soname bump so maybe we should just wait for multiarch?
+[20:29] <jbicha> are you actually using harfbuzz for anything yet?
+[20:35] <ricotz> jbicha, syncing and transitioning it doesnt interfere with a later multiarch enablement
+[20:35] <ricotz> jbicha, yes, the new pango uses it
+[20:36] <ricotz> so does the whole gnome stack therefore
+[20:37] <micahg> ricotz: well, it's potentially rebuilding the reverse dependencies twice
+[20:37] <ricotz> micahg, hmm, i dont think so
+[20:38] <ricotz> but multiarch first is fine too
+[20:38] <micahg> oh, is graphite2 already multiarched?
+[20:38] <ricotz> no
+[20:38] <micahg> right, so, the SONAME bump is one rebuild, and multiarching is potentially another depending on what paths are used where
+[20:40] <ricotz> micahg, the library look up shouldn't break when it is moved from "lib" to "lib/.../"
+[20:40] <ricotz> or does it
+[20:40] <ricotz> ?
+[20:41] <micahg> ricotz: that depends on what the package is doing during build (binaries might continue to work, but the package might FTBFS)
+[20:42] <ricotz> i see
+[20:42] <micahg> binaries could break as well if it's doing something silly like manually checking paths
+[20:42] <ricotz> alright
+[20:45] <jbicha> ricotz: harfbuzz is still optional for latest pango, right?
+[20:47] <ricotz> jbicha, no, hard dep
+[20:48] <ricotz> https://launchpad.net/~ricotz/+archive/testing/+sourcepub/2919028/+listing-archive-extra
+[20:48] <ricotz> jbicha, ^
+[20:49] <jbicha> are we going to try for pango 1.32 in raring?
+[20:49] <ricotz> in gnome3-staging at least since it is a hard-dep of gtk+
+[21:09] <bcurtiswx> interesting, todays removal of libat4 wants to remove skype
+[21:09] <bcurtiswx> libqt4*
+[21:10] <bcurtiswx> well, nix that all the i386 parts of qt4
+[21:13] <chrisccoulson_> lol @ bug 1097940
+[21:13] <ubot2`> Launchpad bug 1097940 in glib2.0 (Ubuntu) "gsettings" [Undecided,Incomplete] https://launchpad.net/bugs/1097940
+[21:14] <jbicha> ricotz: actually that package built fine if I removed libharfbuz-dev from the build-depends
+[21:25] <ricotz> jbicha, hmm, i doubt that
+[21:26] <ricotz> the ppa package adds back the x backend to preserve backwards compat
+[21:26] <ricotz> try to disable the "readd_pangox.patch"
+[21:28] <ricotz> the build should fail badly anyway
+[21:31] <jbicha> ricotz: some day you might do changelogs ;)
+[21:32] <ricotz> i know :\
+[21:33] <ricotz> jbicha, btw, the chances are good gjs will need mozjs 1.8.8 if we see a release
+[21:33] <ricotz> chrisccoulson_, hi ^
+[21:34] <jbicha> ricotz: ok, for raring we'll be stuck with gnome-shell 3.6 since gnome-control-center/settings-daemon 3.8 won't be ready for the gnome3 ppa
+[21:35] <ricotz> chrisccoulson_, not sure if you are following the js-standalone hassle, but i was looking into snapshots from the ESR17 branch https://launchpad.net/~ricotz/+archive/staging/+sourcepub/2909894/+listing-archive-extra
+[21:35] <ricotz> jbicha, yeah, that was foreseeable, that is what gnome3-ppa is for ;)
+=== m_conley is now known as m_conley_away
+[22:31] <desrt>  blehhhh
+[22:31] <desrt> yay for dentists
+[22:31] <attente> cavities?
+[22:31] <desrt> ya
+[22:31] <desrt> well, only one
+[22:32] <attente> pretty good
+[22:32] <desrt> first one in as long as i can remember -- more or less since my early teens, i think
+[22:32] <desrt> maybe even longer
+[22:32] <attente> haven't been to one in a year and a half
+[22:32] <desrt> i hadn't gone in a very very long time
+[22:33] <desrt> but apparently my obsessive brushing/flossing paid off in that time

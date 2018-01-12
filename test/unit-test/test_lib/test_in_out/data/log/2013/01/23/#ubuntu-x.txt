@@ -1,0 +1,85 @@
+=== yofel_ is now known as yofel
+[01:37] <agrestringere> exit
+[08:54] <tjaalton> hmm, wonder if the new -modesetting release would fix bug 1098639
+[08:54] <ubottu> bug 1098639 in xorg-server (Ubuntu) "Xorg crashed with SIGABRT" [Medium,New] https://launchpad.net/bugs/1098639
+[09:02] <mlankhorst> to the buildmobile!
+[09:04] <tjaalton> mlankhorst: just checking; you noticed that I reset the xorg-server branches?-)
+[09:04] <mlankhorst> yes
+[09:04] <tjaalton> good
+[09:08] <mlankhorst> I'm waiting for rc2 release before I start on it again
+[09:08] <tjaalton> and then to the staging ppa?
+[09:09] <mlankhorst> yes
+[09:12] <tjaalton> great
+[09:34] <tjaalton> erm, the bug -modesetting might fix is actually bug 1065288
+[09:34] <ubottu> bug 1065288 in xorg-server (Ubuntu) "Xorg crashed with SIGABRT in OsAbort()" [Medium,Confirmed] https://launchpad.net/bugs/1065288
+[09:39] <Chipaca> hi guys. Today my intel-ironlake-driven 1920x1200 displayport monitor doesn't get any signal nine times out of ten i change something with xrandr. Is that a known issue, or should I file a new bug?
+[09:41] <tjaalton> Chipaca: and worked perfectly yesterday?
+[09:41] <Chipaca> tjaalton: well. it failed less often; i've had to drop to console and frob xrandr before now
+[09:42] <Chipaca> but it would just take the once, or very rarely the second time
+[09:42] <Chipaca> and i'd be able to come back into x, turn off eDP1 and carry on using DP2 happily
+[09:42] <tjaalton> so what changed?
+[09:42] <Chipaca> today the only time (out of ~10) i got it working on the console, came back to X, turned off eDP1, and lost DP2 again
+[09:43] <Chipaca> to be clear, X thinks it's working, the monitor drops into "no signal so power save" mode
+[09:43] <Chipaca> tjaalton: you tell me; it's raring :)
+[09:43] <tjaalton> bad cable?
+[09:43] <tjaalton> well it's hard to guess what you've done to your system..
+[09:44] <Chipaca> tjaalton: what do you mean?
+[09:45] <Chipaca> I haven't done anything to it other than update it
+[09:45] <tjaalton> exaclty
+[09:45] <tjaalton> so what changed?
+[09:46] <Chipaca> tjaalton: x, the kernel, libc, python, compiz, dbus? maybe
+[09:46] <Chipaca> not sure about x either, but i think so
+[09:46] <Chipaca> tjaalton: you seriously expect me to keep track?
+[09:46] <mlankhorst> you expect us to keep track what changes on your system? :p
+[09:46] <tjaalton> Chipaca: check dpkg.log..
+[09:47] <tjaalton> the xserver hasn't changed, -intel driver has seen minor updates, kernel otoh..
+[09:47] <Chipaca> mlankhorst: if you change something in the distribution that breaks my system, hell yes i do :)
+[09:47] <mlankhorst> unfortunately the software we work on can change one very hardware combination
+[09:47] <mlankhorst> so quite impossible :P
+[09:48] <tjaalton> you can be running an obsolete raring, and then get a months worth of updates one day
+[09:48] <mlankhorst> could you try an older kernel perhaps?
+[09:49] <Chipaca> http://paste.ubuntu.com/1562150/
+[09:49] <Chipaca> that's dpkg.log
+[09:49] <Chipaca> last known working with this monitor was the 21st
+[09:50] <mlankhorst> i it was a software thing, it was probably either xserver-xorg-video-intel, or linux-image, so check those ;P
+[09:50] <mlankhorst> that site seems to cause my poor firefox to hang
+[09:51] <tjaalton> downgrade -intel
+[09:53] <bryce> Chipaca, see /topic
+=== yofel_ is now known as yofel
+[12:11] <mlankhorst> so many libdrm dupes about 2.4.39-0ubuntu1 :/
+[12:23]  * mlankhorst eyes Sarvatt suspiciously
+[12:31] <tjaalton> what dupes?
+[12:32] <mlankhorst> about failing to upgrade because xorg-edgers had a libdrm with the same version as quantal
+[12:32] <mlankhorst>  * [new tag]         mesa-9.0.2 -> mesa-9.0.2
+[12:32] <mlankhorst> \o/
+[12:36] <tjaalton> oh that
+[12:36] <tjaalton> whee
+[12:36] <mlankhorst> tjaalton: are you still working on mesa-master for raring, or should we upload that version to raring first with the size reduction patches I did for the lts-stack enabled?
+[12:36] <tjaalton> mlankhorst: I'm ok with uploading 9.0.2 first
+[12:36] <tjaalton> no immediate rush to get master there
+[12:36] <mlankhorst> ok
+[12:43] <mlankhorst> tjaalton: btw you can just override LLVM_CONFIG with ./configure ac_cv_path_LLVM_CONFIG=llvm-config-3.2
+[12:44] <tjaalton> so no need to patch it?
+[12:44] <tjaalton> sounds good
+[12:49] <mlankhorst> it grabs whatever you put after ./configure and puts it in environment, so you end up with this (I force ignored build-deps because I'm on precise backport stack)
+[12:49] <mlankhorst> checking for llvm-config... (cached) llvm-config-3.2
+[12:49] <mlankhorst> ./configure: line 22091: llvm-config-3.2: command not found
+[12:50] <tjaalton> ok
+[12:52] <mlankhorst> it's almost the same as doing ac_cv_path_LLVM_CONFIG=llvm-config-3.2 ./configure, but when you reconfigure it will remember to pass it again :)
+[13:53] <mlankhorst> configure: error: LLVM 3.1 is required to build the radeonsi driver.
+[13:59] <tjaalton> right
+[13:59] <tjaalton> you need to force it for now
+[13:59] <tjaalton> with master it doesn't matter
+[14:00] <tjaalton> since the backend got removed
+[14:00] <mlankhorst> yeah sadly
+[14:00] <mlankhorst> is there no way to convince the llvm maintainer to take on the radeonsi patches?
+[14:01] <tjaalton> tstellar is on it
+[14:01] <tjaalton> don't think it's ready for llvm yet
+[14:01] <tjaalton> and we won't get a snapshot anyway
+[14:01] <tjaalton> unless it's a separate one-off package for raring
+[14:02] <mlankhorst> we should
+[14:03] <mlankhorst> I would rather not remove support for recent cards that worked before
+[14:04] <tjaalton> fsvo worked
+[14:07] <mlankhorst> indeed but still better than llvmpipe :P
+[16:05] <mlankhorst> weird
+[16:05] <mlankhorst> I have a diff to src/gallium/auxiliary/Makefile that according to git doesn't exist..

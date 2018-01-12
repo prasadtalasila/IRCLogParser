@@ -1,0 +1,681 @@
+[00:03] <BarkingFish> hi guys - just a word to the wise, something in the latest set of updates for raring is busted.  Apper won't download python-pycurl, claims packages are left unconfigured. if you deselct it, something else breaks, etc, ad infinitum, until you're left only upgrading firefox.
+[00:06] <Riddell> we've never used apper
+[00:06] <Riddell> try muon
+[00:08] <BarkingFish> i've never used muon. i don't even have it installed.  i used kpackage until it vanished and apper took over, then carried on with apper :)
+[00:09] <BarkingFish> i'll try doing it in a tty - that's solved most things before :)
+[00:11] <BarkingFish> and as predicted, that fixed it.
+[00:11] <BarkingFish> :P
+[00:26] <BarkingFish> ok, that's got most of it fixed.  still a little strange though - there's a new kernel in the update, 3.8.0-2, which has been kept back, and I can't figure out why.  
+[00:27] <yofel> how did you upgrade when it was kept back?
+[00:27] <BarkingFish> tty, yofel - apper was being a pain in the privates
+[00:27] <yofel> if you ran apt-get upgrade that won't install new kernels, dist-upgrade will
+[00:28] <BarkingFish> that'll be why then.
+[00:28] <BarkingFish> thanks
+[00:28] <yofel> reason: the kernel image is a new package, only the meta package is really *upgraded*
+[00:28] <yofel> and "upgrade" won't install anything new
+[00:30] <BarkingFish> I hope ndiswrapper will build against 3.8.0-2 :)  I never figured out why it wouldn't build against 3.8.0-1 last night
+[00:32] <yofel> there a buildlog for the dkms module somewhere which should tell why
+[00:32] <BarkingFish> the answer to that is... no. It hasn't.  "Bad return status for module build on kernel 3.8.0-2-generic (i686)"
+[00:32] <BarkingFish> yeah, just about to take a peek
+[00:34] <BarkingFish> http://paste.ubuntu.com/1574501/
+[00:37] <BarkingFish> looks like a problem with the code.  I might drop away from 1.58rc1 and go back to 1.58
+[00:43] <BarkingFish> oh this is getting silly.   this is trying to build 1.58
+[00:43] <BarkingFish> http://paste.ubuntu.com/1574515/
+[00:43] <BarkingFish> .
+[00:44]  * BarkingFish bangs his head repeatedly against his desk
+[00:44] <yofel> possibly something it looks for got removed in 3.8
+[00:44] <BarkingFish> i hope not, or I am permanently screwed
+[00:45] <BarkingFish> there is no driver for the ar5523 - without ndiswrapper, i am shot.
+[00:45] <yofel> well, someone already filed bug 1106051
+[00:45] <ubottu> bug 1106051 in ndiswrapper (Ubuntu) "ndiswrapper-dkms 1.58~rc1-0ubuntu1: ndiswrapper kernel module failed to build" [Undecided,New] https://launchpad.net/bugs/1106051
+[00:47] <BarkingFish> ok, well i'm subscribing to that now - i'll keep watch there
+[01:16]  * BarkingFish happy happy happy happy happy happy happy :D
+[01:16] <BarkingFish> I don't need ndiswrapper anymore.  
+[01:17] <BarkingFish> As of kernel 3.8.0-2-generic, there is now an ar5523 module
+[01:18]  * BarkingFish bounces up and down like a roo on a pogo stick
+[01:31] <apachelogger> hooray for free drivers
+[01:35] <BarkingFish> apachelogger, you bet.  I've been using ndiswrapper for almost 8 years, and finally a working ar552 driver pops up.  I can't deny i'll miss ndiswrapper's little foibles and general pain in the arse-ness, but this is about the best day since I dropped windows 11 years ago.
+[01:35] <BarkingFish> *ar5523
+[01:36] <BarkingFish> especially since ndiswrapper's dkms module wouldn't build on 3.8.0-2 - this sorta turned up at the right time
+[01:49] <BarkingFish> night guys, i'm out to get some sleep :) 2.50am here :P
+[03:31] <shadeslayer> Riddell: it seems that rbelem didn't add the description and I didn't double check
+[09:21] <phoenix_firebrd> Riddell: need to use ec2
+=== yofel_ is now known as yofel
+[11:41] <phoenix_firebrd> yofel: are you there?
+[11:42] <yofel> more or less yes
+[11:43] <phoenix_firebrd> yofel: do you have access to the ec2?
+[11:43] <yofel> no
+[11:43] <phoenix_firebrd> yofel: ok
+[11:44] <yofel> if anything I can get you an account on my server, has reasonable amount of bandwidth, but your sudo permissions would be limited to pbuilder
+[11:45] <phoenix_firebrd> yofel: i think Riddell has added a wrong key of mine and i am denied access
+[11:45] <yofel> is it even running?
+[11:45] <phoenix_firebrd> yofel: not sure
+[11:45] <yofel> probably not then
+[11:45] <yofel> pm
+[11:45] <shadeslayer> phoenix_firebrd: when did you request the instance?
+[11:46] <phoenix_firebrd> yofel: if it is not running then how come it can give a key fingerprint
+[11:46] <phoenix_firebrd> shadeslayer: hi
+[11:46] <shadeslayer> hey :)
+[11:46] <shadeslayer> yofel: huzzah, PA3 is up
+[11:46] <shadeslayer> almost all of it
+[11:46] <phoenix_firebrd> shadeslayer: Riddell gave me naturally as you mentioned
+[11:46] <yofel> hm, dunno, I don't know much about ec2
+[11:46] <shadeslayer> phoenix_firebrd: no, I mean *when*
+[11:46] <shadeslayer> not to mention
+[11:46] <yofel> shadeslayer: \o/
+[11:46] <shadeslayer> since the IP addresses are shared
+[11:46] <phoenix_firebrd> shadeslayer: 2 days back
+[11:47] <shadeslayer> phoenix_firebrd: probably shut down then
+[11:47] <shadeslayer> phoenix_firebrd: it's basically use and throw instances
+[11:47] <shadeslayer> once you're done, you shut them down and someone can spin a new instance and it might get the same address
+[11:47] <phoenix_firebrd> shadeslayer: I have asked Riddell to add my key and i have 2 keys in launchpad, i think he might have added the wrong one
+[11:48] <phoenix_firebrd> shadeslayer: ok
+[11:48] <shadeslayer> which is why you get a fingerprint on your konsole, but the fingerprint is different since it's a new instance
+[11:48] <phoenix_firebrd> shadeslayer: ok
+[11:48] <shadeslayer> with a different ssh instance
+[11:48] <phoenix_firebrd> shadeslayer: ok now understand
+[11:48] <shadeslayer> :)
+[11:48] <phoenix_firebrd> shadeslayer: So we should request Riddell everytime need one
+[11:49] <shadeslayer> more or less
+[11:49] <shadeslayer> and shut it down once you're done
+[11:49] <phoenix_firebrd> shadeslayer: it was a blizz working with a 40 mbps connection
+[11:49] <shadeslayer> :D
+[11:49] <shadeslayer> one other way to speed up builds is by doing in memory builds
+[11:50] <shadeslayer> but then you need alot of RAM for that
+[11:50] <yofel> talking abou thtat
+[11:50] <phoenix_firebrd> shadeslayer: only thing that is bad for me is i have a 400ms delay in char echo
+[11:50] <shadeslayer> heh
+[11:50] <shadeslayer> phoenix_firebrd: mosh ftw
+[11:50] <yofel> shadeslayer: any idea why eatmydata wouldn't work?
+[11:51] <phoenix_firebrd> ya
+[11:51] <phoenix_firebrd> i am getting my log filled by it
+[11:51] <shadeslayer> yofel: no idea
+[11:51] <yofel> I tried to make phoenix_firebrd enable it, but it only kept throwing errors that the so isn't there, even though it seemed installed (from what he said)
+[11:51] <phoenix_firebrd> yofel: need the log?
+[11:52] <phoenix_firebrd> yofel: its just this "ERROR: ld.so: object '/usr/lib/libeatmydata/libeatmydata.so' from LD_PRELOAD cannot be preloaded: ignored."
+[11:52] <shadeslayer> yofel: did you try making sure LD_PRELOAD had the lib in it's path
+[11:52] <yofel> not really
+[11:52] <shadeslayer> hm
+[11:52] <phoenix_firebrd> shadeslayer: i checked it and it was in the patch
+[11:52] <yofel> shadeslayer: if works fine for me, that's why I'm confused
+[11:52] <phoenix_firebrd> shadeslayer: and ldd loads it without a problem
+[11:52] <yofel> phoenix_firebrd: in the path *inside* pbuilder, right?
+[11:53] <phoenix_firebrd> yofel: ya, we checked together, you forgot
+[11:53] <yofel> no, just wanted to double check
+[11:53] <yofel> as this doesn't make sense
+[11:53] <phoenix_firebrd> yofel: let me check it one more time
+[11:55] <phoenix_firebrd>  the lib is in its path and it ldd shows no problem
+[11:57] <phoenix_firebrd> yofel: how do i replace the default editor used by quilt, i put "EDITOR=kate" in quilltrc. thats not working
+[11:57] <yofel> what would quilt need an editor for?
+[11:57] <shadeslayer> quilt edit ?
+[11:57] <yofel> never used that
+[11:58] <shadeslayer> heh okay
+[11:58] <shadeslayer> phoenix_firebrd: try putting : export EDITOR=kate : in bashrc
+[11:58] <yofel> ^
+[11:58] <phoenix_firebrd> shadeslayer: ok
+[11:58] <phoenix_firebrd> i will try
+[12:01] <phoenix_firebrd> shadeslayer: works
+[12:01] <shadeslayer> awesome
+[12:03] <phoenix_firebrd> i can see probably in some debian/patches files the original file is in source.orig dir and the new file is in the source dir why is this?
+[12:03] <shadeslayer> I usually setup quilt by following : http://www.debian.org/doc/manuals/maint-guide/modify.en.html
+[12:04] <shadeslayer> phoenix_firebrd: patch strips out the first part of the path when used with -p1
+[12:04] <yofel> same here, except a few things removed that pinotree said were nonsense
+[12:04] <shadeslayer> yofel: oh? like?
+[12:05] <yofel> --no-index
+[12:05] <shadeslayer> phoenix_firebrd: have a read through the -pnum option in the patch man page
+[12:05] <yofel> that was like ages ago though so don't ask me for the reasoning
+[12:05] <shadeslayer> heh
+[12:07] <phoenix_firebrd> I am not able to understand what you said, i will post the original patch and the new patch created by me take a look at it
+[12:08] <phoenix_firebrd> this is the old one -->http://paste.kde.org/657410/
+[12:08] <phoenix_firebrd> this is the new one created my me -> http://paste.kde.org/657422/
+[12:09] <shadeslayer> looks the same
+[12:09] <shadeslayer> except it adds an index
+[12:09] <yofel> because he has my quiltrc
+[12:09] <shadeslayer> heh
+[12:09] <phoenix_firebrd> shadeslayer: look at the new and original file locations
+[12:10] <phoenix_firebrd> shadeslayer: in the original patch
+[12:10] <yofel> same?
+[12:10] <shadeslayer> ^
+[12:11] <phoenix_firebrd> shadeslayer: sorry
+[12:11] <phoenix_firebrd> i added the wtrong one as original file
+[12:11] <yofel> phoenix_firebrd: or did you mean something like this: http://paste.kde.org/657428 ?
+[12:12] <phoenix_firebrd> yofel: exactly
+[12:12] <yofel> what's what you get if you don't use "-p ab" in quilt diff
+[12:12] <yofel> and your quiltrc sets that
+[12:12] <yofel> *that's
+[12:13] <shadeslayer> yofel: he's talking about the path stripping stuff right?
+[12:13] <phoenix_firebrd> yofel: when i uupdate, the default patch files are like this
+[12:13] <phoenix_firebrd> shadeslayer: ya
+[12:14] <phoenix_firebrd> why fuzz is not allowed patching?
+[12:14] <yofel> well, it's the default setting to have it with .orig
+[12:14] <yofel> not sure why uupdate would use that though
+[12:15] <yofel> not sure, from man 1 dpkg-source:
+[12:15] <yofel>        Contrary  to  quilt's default behaviour, patches are expected to apply without any fuzz. When that is not the case, you should refresh such patches with
+[12:15] <yofel>        quilt, or dpkg-source will error out while trying to apply them
+[12:16] <shadeslayer> oh fun, that explains why builds fail when there is fuzz
+[12:16] <yofel> wait, you didn't know that? :D
+[12:16] <shadeslayer> let's just say I didn't realize that it was documented behavior
+[12:16] <yofel> heh
+[12:16] <shadeslayer> I thought it was some sort of feature that was missing
+[12:17] <yofel> I think it did change at some point
+[12:17] <phoenix_firebrd> yofel: here is a build log of texi2html http://paste.kde.org/657434/     do you see anything odd or everything is ok
+[12:17] <yofel> as it did with dpkg-source not auto-committing manual changes anymore
+[12:18] <yofel> *blink*
+[12:18] <yofel> phoenix_firebrd: ok, I think I know what's causing *those* LD errors
+[12:18] <yofel> is eatmydata installed in your regular system?
+[12:18] <phoenix_firebrd> yofel: let me check
+[12:19] <phoenix_firebrd> yofel: no
+[12:19] <phoenix_firebrd> yofel: install?
+[12:19] <yofel> yeah, that'll probably help
+[12:19] <phoenix_firebrd> ok
+[12:19] <yofel> as the pbuilder scripts need to run a few commands on the host system (like ln for the debs)
+[12:20] <shadeslayer> "Need to get 969 MB/1,088 MB of archives."
+[12:20] <shadeslayer> :(
+[12:20] <phoenix_firebrd> yofel: should i update pbuilder?
+[12:20] <yofel> nope
+[12:20] <yofel> shadeslayer: upgrading? ^^
+[12:21] <shadeslayer> yeah
+[12:21] <phoenix_firebrd> shadeslayer: I am needing the ec2 for the same purpose
+[12:21] <shadeslayer> upgrading after a long time
+[12:21] <shadeslayer> about 10-15 days
+[12:21] <shadeslayer> phoenix_firebrd: actually I'm upgrading my system :P
+[12:21] <shadeslayer> not pbuilder
+[12:21] <yofel> oh, now that's a lot then...
+[12:21] <shadeslayer> yep
+[12:22] <shadeslayer> didn't even upgrade KDE
+[12:22] <shadeslayer> so most of it is that
+[12:22] <phoenix_firebrd> shadeslayer: some of the apps need some java stuff pre installed before building in the system
+[12:22] <shadeslayer> wot
+[12:22] <yofel> if you build jar's you will need java...
+[12:22] <shadeslayer> anyway, have to go, ciao
+[12:22] <shadeslayer> yofel: but he said pre-installed
+[12:23] <phoenix_firebrd> no somethink called maven-repo-buildhelper
+[12:23] <shadeslayer> yofel: and by pre-installed I infer before dpkg installs build-dep
+[12:23] <shadeslayer> *build-deps
+[12:23] <yofel> phoenix_firebrd: ^ ?
+[12:23] <phoenix_firebrd> ya
+[12:23] <yofel> odd
+[12:23] <yofel> if maven needs it then it's supposed to pre-depend on java
+[12:24] <phoenix_firebrd> yofel: its simple-http
+[12:24] <shadeslayer> Pre-Depends ... heh
+[12:24] <yofel> doesn't matter, maven is a build system for java, ofcourse it would need java to work
+[12:24] <phoenix_firebrd> yofel: this is the package maven_repo_helper
+[12:25] <yofel> phoenix_firebrd: what's the problem exactly
+[12:25] <yofel> maven-repo-helper does depend on default-jre-headless, does it fail to install?
+[12:25] <phoenix_firebrd> yofel: my slow internet connection
+[12:26] <yofel> ok
+[12:26] <phoenix_firebrd> yofel: then i tried to login to ec2 and failed and i halted building it now
+[12:28] <phoenix_firebrd> yofel: the error stop
+[12:28] <phoenix_firebrd> yofel: it worked
+[12:29] <yofel> good, I forgot about that possibility :/
+[12:29] <phoenix_firebrd> yofel: what does fsync do and by not using that what does get affected?
+[12:29] <phoenix_firebrd> yofel: what does fsync do and by not using that what does get affected?
+[12:29] <phoenix_firebrd> yofel: what does fsync do and by not using that what does get affected?
+[12:29] <phoenix_firebrd> oops
+[12:30] <phoenix_firebrd> I am i disconnected?
+[12:31] <tsimpson> fsync flushes any cache buffers to the disk
+[12:31] <phoenix_firebrd> tsimpson: thats what i thought
+[12:32] <phoenix_firebrd> tsimpson: so is fsync called every 10 sec?
+[12:34] <tsimpson> I think it depends on how much I/O there is, but something like that
+[12:38] <phoenix_firebrd> tsimpson: what will happen if i disable fsync?
+[12:39] <phoenix_firebrd> tsimpson: data in the buffer will be written only when unmounting and manually flushing?
+[12:40] <tsimpson> phoenix_firebrd: that's my understanding, yes
+[12:40] <tsimpson> and only flushed if the files aren't removed, like they would be when pbuilder is done
+[12:42] <phoenix_firebrd> tsimpson: I am working in a desktop with no backup power 
+[12:42] <phoenix_firebrd> tsimpson: this wont be good for me
+[12:42] <tsimpson> though the kernel will probably flush at some interval
+[12:42] <phoenix_firebrd> tsimpson: are you sure?
+[12:43] <phoenix_firebrd> tsimpson: is it just for the ext or it applies to all types
+[12:43] <tsimpson> well it only has a finite amount of memory to keep the buffer in
+[12:43] <phoenix_firebrd> tsimpson: thats right
+[12:44] <phoenix_firebrd> yofel: is it compulsary that the files in the debian/patches to have an extensaion .patch or .diff is ok?
+[12:45] <tsimpson> I can't see it being a problem, it would only effect things run with that LD_PRELOAD in the environment
+[12:45] <tsimpson> so it won't effect the rest of the systems calls to fsync
+[12:46] <phoenix_firebrd> tsimpson: ok
+[12:50] <phoenix_firebrd> shadeslayer: is it compulsary that the files in the debian/patches to have an extensaion .patch or .diff is ok?
+[12:59] <yofel> phoenix_firebrd: sorry, was away
+[12:59] <yofel> the files there are named .diff or .patch by convention, as that's what they are
+[13:00] <yofel> but you'll see both used. I usually use .diff
+[13:01] <phoenix_firebrd> yofel: ok then its time to upload
+[13:02] <yofel> phoenix_firebrd: as for fsync. fsync will flush modifications to a file to disk. *Immediately*. It's to tell the filesystem not to wait until it would usually write it to disk
+[13:02] <phoenix_firebrd> yofel: wow that cools my head
+[13:02] <yofel> dpkg runs fsync a lot to make sure its status database files are in a consistent state after a power failure
+[13:02] <phoenix_firebrd> tsimpson: you should note that 
+[13:03] <yofel> so it runs fsync afer pretty much every modification - several times per package
+[13:03] <yofel> in a pbuilder chroot you don't care about consistency, so you don't need fsync either. And disabling it speeds things up a lot
+[13:04] <phoenix_firebrd> yofel: nice
+[13:07] <phoenix_firebrd> yofel: when you modify the files that i uploaded in my ppa for example the log file do you download, edit and then upload or you just edit it online?
+[13:09] <yofel> download, edit, upload
+[13:09] <yofel> Launchpad has no online editing feature
+[13:10] <phoenix_firebrd> yofel: even when you merge from a branch?
+[13:11] <yofel> then I checkout the main branch, and run 'bzr merge <other_branch_url>" which will merge them locally and then I commit and push
+[13:12] <phoenix_firebrd> yofel: what if when you want to edit the changelog before you merge it with the main branch
+[13:13] <yofel> bzr merge will do the merge uncommitted so you can edit it before you push it
+[13:14] <phoenix_firebrd> yofel: edit offline?
+[13:15] <yofel> yes, you do everything on your local system anyway
+[13:16] <phoenix_firebrd> yofel: so to confirm, you downloaded from my bazaar branch edited the changelog and then merged with the main, right?
+[13:16] <yofel> no, I merged yours, edited the changes and committed the merge
+[13:17] <phoenix_firebrd> yofel: ok, thats clear
+[13:17] <yofel> merging a branch doesn't mean you're done. It's just imported as one diff until you commit it
+[13:17] <phoenix_firebrd> right
+[13:18] <yofel> (you only notice that it's a merge from the log)
+[13:18] <phoenix_firebrd> yofel: i was confused about the editing thing, i thought you edited stuff online
+[13:19] <yofel> ah no. Launchpad has no editor there, so whatever you do has to be done locally
+[13:19] <phoenix_firebrd> ok
+[13:24] <phoenix_firebrd> yofel: now packages in my ppa are only built for i386, why is this happening?
+[13:25] <yofel> does the control file have "Achitecture: all" for the binary package?
+[13:25] <phoenix_firebrd> yofel: let me check
+[13:26] <phoenix_firebrd> yofel: ya it says "All"
+[13:26] <yofel> arch all packages are only built on i386 and can later be used on all
+[13:26] <yofel> http://www.debian.org/doc/debian-policy/ch-controlfields.html#s-f-Architecture
+[13:27] <yofel> it just means that there's nothing architecure-specific in there
+[13:27] <phoenix_firebrd> yofel: got it
+[13:28] <phoenix_firebrd> yofel: so i should any if i want my package to be built for i386 and amd64
+[13:29] <yofel> right. The usual situation that you have compiled binaries in "any", and things like images, documentation or scripts in "all"
+[13:30] <phoenix_firebrd> ok
+[13:30] <yofel> *is that...
+[13:31] <phoenix_firebrd> ?
+[13:31] <yofel> just correcting my sentence
+[13:33] <phoenix_firebrd> yofel: is there a deadline to package these http://qa.ubuntuwire.com/uehs/no_updated.html ?
+[13:33] <yofel> usually feature freeze, after that you'll need to get an exception for non-bugfix updates
+[13:34] <phoenix_firebrd> yofel: no not the schedule , for me?
+[13:35] <yofel> that counts for anybody
+[13:35] <phoenix_firebrd> yofel: also is anyone else is doing, to avoid work duplication 
+[13:35] <yofel> updates need to in the archive before feature freeze
+[13:35] <yofel> oh right, forgot about that
+[13:35] <yofel> the common case is to use update request bugs for that
+[13:36] <yofel> look at launchpad for the 'upgrade-software-version' tag
+[13:37] <yofel> you'll have to file a bug to request sponsorship for a package anyway unless you know someone that can upload it
+[13:37] <yofel> see https://wiki.ubuntu.com/SponsorshipProcess
+[13:37] <phoenix_firebrd> yofel: are you talking about the source release schedule or the package schedule ?
+[13:37] <yofel> what's the difference?
+[13:37] <yofel> schedule is
+[13:37] <yofel> !schedule
+[13:37] <ubottu> A schedule of Raring Ringtail (13.04) release milestones can be found here: https://wiki.ubuntu.com/RaringRingtail/ReleaseSchedule
+[13:38] <yofel> the freezes are there and apply to every ubuntu contributor
+[13:38] <phoenix_firebrd> yofel: but the title says "Most popular Ubuntu-specific packages that are not in sync with upstream."
+[13:39] <yofel> where?
+[13:39] <yofel> on the qa page?
+[13:39] <phoenix_firebrd> ya
+[13:39] <yofel> ok, sorry, I think I lost the original question in the discussion...
+[13:40] <yofel> what were you asking again?
+[13:40] <phoenix_firebrd> yofel: if you say that the schedule is followed then why are these packages are not not the latest in the repos
+[13:40] <yofel> nobody updated them?
+[13:40] <phoenix_firebrd> yofel: ok
+[13:40] <yofel> updating packages with ubuntu modifications is a manual process
+[13:41] <yofel> and there's a limited amount of packagers, and updating packages isn't the only thing to do
+[13:41] <phoenix_firebrd> yofel: i thought every package is updated all the time
+[13:41] <yofel> well, it depends on who cares about it
+[13:42] <yofel> there are dedicated teams for various sets of packages, like us for KDE or mozillateam for firefox and co.
+[13:42] <phoenix_firebrd> yofel: so the app maintainer doesn't care about this?
+[13:42] <yofel> any packages that don't fall into those catecories in universe are maintained by the MOTU's
+[13:43] <yofel> packages in main by the core-devs (main packages all have dedicated maintainers though usually)
+[13:43] <yofel> phoenix_firebrd: what app maintainer?
+[13:43] <yofel> it's not the upstream developer's job to make sure all hundreds distributions ship his software
+[13:44] <phoenix_firebrd> yofel: example the developer of nano doesn't care if it is update in all the distros ?
+[13:44] <yofel> and we have no explicit package maintainers in ubuntu like debian does
+[13:44] <yofel> that's his decision
+[13:44] <yofel> we have plenty of upstream folks poking us in here to please update the packages
+[13:45] <yofel> but that's still a rare case compared to the full list of packages
+[13:45] <phoenix_firebrd> yofel: good
+[13:45] <phoenix_firebrd> ya
+[13:46] <yofel> other than that whether a package is updated or not depend on whether an ubuntu-dev notices it and wants to update it
+[13:47] <phoenix_firebrd> yofel: is this auto generated or updated by someone? http://qa.ubuntuwire.com/uehs/no_updated.html
+[13:48] <yofel> automated I think, but I'm not sure
+[13:49] <phoenix_firebrd> yofel: some packages is not the latest in the repos, is that because of the stability taken into account or its not updated simply 
+[13:50] <yofel> unless there is an update bug mentioning a reason, it's usually latter
+[13:51] <phoenix_firebrd> yofel: so if a stable version of the gimp is released today i can package and put it in the beta ppa ?
+[13:52] <yofel> ppa sure, but if you want to update it for the archive talk to the desktop team first
+[13:52] <phoenix_firebrd> yofel: i am kubuntu beta ppa
+[13:52] <phoenix_firebrd> yofel: i am mean kubuntu beta ppa
+[13:55] <yofel> a stable version wouldn't belong in the beta ppa, but the update one. 
+[13:55] <yofel> you would need to be a ninja first anyway to have upload permission. And our PPA's are for KDE related stuff really
+[13:56] <yofel> they don't have unlimited space
+[13:56] <BluesKaj> Hey all
+[13:56] <phoenix_firebrd> yofel: i should put my question like this. why is the gimp not the latest in the normal channel while i have to add a third party ppa to get the latest
+[13:56] <phoenix_firebrd> yofel: when i was talking about the ppa , i was talking symbolically
+[13:56] <phoenix_firebrd> BluesKaj: hi
+[13:57] <yofel> looks up to date to me...
+[13:57] <phoenix_firebrd> yofel: no,  its just an example
+[13:57] <BluesKaj> hi phoenix_firebrd
+[13:58] <yofel> well, as long as you own the PPA, you can put in there what you want as long as you don't violate Launchpad's TOS
+[13:58] <phoenix_firebrd> yofel: for example when ever a stable digikam version is release, if i want it i have to add some philip ppa to get that
+[13:59] <yofel> ah, you shouldn't need that, we try to keep a package for it in our PPA's
+[14:00] <phoenix_firebrd> yofel: sorry couldn't understand
+[14:00] <yofel> phoenix_firebrd: well, I'm not sure what you're asking. Yes, if you want to put an updated version of digikam in your PPA do it
+[14:00] <yofel> we do the same
+[14:02] <phoenix_firebrd> yofel: so you mean that if a stable version of digikam is released, it is packaged and put in the update
+[14:02] <yofel> well, it's like this:
+[14:02] <yofel> if a new digiakm version comes out, someone of us will put an updated package into the development release
+[14:03] <yofel> that is then later backported to the current stable release and possible more in our PPA's
+[14:03] <yofel> if it's a safe backport, someone will file a backport request so it ends up in <release>-backports
+[14:04] <yofel> there isn't really any more than that to it
+[14:05] <phoenix_firebrd> yofel: ok
+[14:05] <yofel> in what of our PPA's it ends up depends on what kind of update it is. A 2.8.0 -> 2.8.1 update would be bugfix and end up in the updates one. 2.7.0 -> 2.8.0 is something for backports
+[14:05] <yofel> the 3.0.0~rc is in the beta ppa
+[14:07] <yofel> phoenix_firebrd: note that this is the kubuntu team workflow
+[14:07] <phoenix_firebrd> yofel: usually i see in the blog, they say a new stable version is released and they give a ppa to get it, i guess thats a zero hour ppas
+[14:07] <yofel> firefox for example as a core package gets full official updates for all supported releases in the archive
+[14:07] <phoenix_firebrd> yofel: ya 
+[14:08] <yofel> yeah, PPA's are the fastest way to get something out
+[14:08] <yofel> providing updates in the archive for anything other than the development release takes a while
+[14:10] <phoenix_firebrd> yofel: does kubuntu contribute security patches upstream?
+[14:10] <yofel> we try to contribute any patches upstream
+[14:11] <phoenix_firebrd> yofel: who is the kubuntu security expert?
+[14:11] <yofel> I'm not sure whether we have one...
+[14:12] <phoenix_firebrd> oh
+[14:12] <yofel> Scott is on the release team and usually knows best what CVE's there are
+[14:15] <yofel> ScottK: do we have someone that looks at the security issues beside you?
+[14:19] <phoenix_firebrd> yofel: http://distrowatch.com/table.php?distribution=kubuntu
+[14:19] <phoenix_firebrd> yofel: in this link the version of xz is shown as alpha in 12.10, is that normal?
+[14:20] <yofel> yeah
+[14:20] <yofel> !info xz-utils
+[14:20] <ubottu> xz-utils (source: xz-utils): XZ-format compression utilities. In component main, is optional. Version 5.1.1alpha+20120614-1 (quantal), package size 87 kB, installed size 384 kB
+[14:20] <yofel> it is a snapshot after all
+[14:21] <phoenix_firebrd> yofel: so alpha allowed in main?
+[14:22] <yofel> it's the same version as in debian. Maybe dpkg needed some new feature
+[14:23] <phoenix_firebrd> yofel: ok
+[14:23] <yofel> phoenix_firebrd: it's up to the maintainer, usually you shouldn't do that, but if it has enough value and no critial bugs it's allowed
+[14:24] <phoenix_firebrd> yofel: thats out of necessity,ok 
+[14:24] <yofel> and i would assume that this got plenty of discussion in debian considering it's importance
+[14:25] <phoenix_firebrd> ok
+[14:28] <phoenix_firebrd> yofel: texi2html is in my ppa, just 1 package in 2 days, because of the republic day holiday and today is sunday.
+[14:28] <yofel> 0.5 packages-per-day is far higher than my quota
+[14:29] <yofel> but then again I wasted the weekend on python and project neon
+[14:29] <phoenix_firebrd> yofel: the project-neon is the best thing
+[14:30] <phoenix_firebrd> yofel: my mind is confined to c++
+[14:30] <phoenix_firebrd> yofel: also BASIC
+[14:30] <yofel> yeah, better stick to that, the pyhon bindings are a packaging insanity
+[14:31] <phoenix_firebrd> :)
+[14:31] <phoenix_firebrd> yofel: apper is python
+[14:32] <phoenix_firebrd> yofel: muon replaced apper because it was not c++ 
+[14:32] <phoenix_firebrd> yofel: why is that so?
+[14:32] <Quintasan> omfg I passed calculus
+[14:32] <phoenix_firebrd> Quintasan: congrats
+[14:32] <yofel> that wasn't really the primary reason, the packagekit apt backend stucking was a more important one
+[14:32] <yofel> *sucking
+[14:33] <Quintasan> I HAVE ABSLOLUTELY NO IDEA what did I write there
+[14:33] <yofel> Quintasan++
+[14:33] <phoenix_firebrd> yofel: ya, qapt is awesome
+[14:33] <Quintasan> I succesfully calculated one integral and did some deriviatives
+[14:33] <Quintasan> nothing more and I got 12/20 points
+[14:33] <yofel> phoenix_firebrd: have fun reading python-qt4-4.9.6/debian/rules : http://paste.kde.org/657524 (very educative ;P )
+[14:33] <Quintasan> this is either magic or I actually get what's going in there
+[14:34] <phoenix_firebrd> bookmarked
+[14:34] <yofel> it'll expire soon, so just look at the package
+[14:34] <phoenix_firebrd> i will include it with my homework :)
+[14:34] <phoenix_firebrd> ok
+[14:34] <yofel> well, you don't really need to understand it...
+[14:35] <yofel> or rather you won't understand it until you know how gnu make handles pattern matching, substitutional references and function calls
+[14:35] <yofel> http://www.gnu.org/software/make/manual/make.html recommended
+[14:37] <phoenix_firebrd> yofel: the top priority in things to learn by me is cmake
+[14:38] <yofel> good idea, we're spending plenty of time debugging upstream buildsystems ;)
+[14:39] <phoenix_firebrd> :)
+[14:39] <phoenix_firebrd> yofel: does publishing a built package in a ppa need an admin approval?
+[14:40] <yofel> no, it's a cronjob that runs every half an hour or so
+[14:40] <phoenix_firebrd> yofel: ok
+[14:43] <phoenix_firebrd> yofel: I think i forgot to debuild after i updated the changelog
+[14:45] <phoenix_firebrd> yofel: I am going to delete the package in the ppa and rename the version from 5.0-0ubuntu1~ubuntu13.04~ppa1 to ?
+[14:46] <phoenix_firebrd> brb
+[14:48] <yofel> phoenix_firebrd: why delete it, just change it to ppa2
+[14:50] <phoenix_firebrd> yofel: ok
+[14:52] <phoenix_firebrd> yofel: the old file name was 01_remove_doc_dir.patch and the new file name is 01_remove_doc_dir.diff. the changelog should reflect as "Refresh 01_remove_doc_dir.diff for the new release"?
+[14:54] <yofel> in a case where you just refresh a patch don't rename it
+[14:54] <yofel> otherwise yes
+[14:55] <phoenix_firebrd> yofel: in the process got renamed, what should i put in the log
+[14:56] <yofel> why was it renamed?
+[14:56] <phoenix_firebrd> yofel: when creating a patch with quilt , i forgot to use the the extension .patch and it was named with an extension .diff by default
+[14:57] <yofel> just rename it back
+[14:57] <phoenix_firebrd> yofel: will that work?
+[14:57] <yofel> as long as you also change it in the series file, yes
+[14:58] <phoenix_firebrd> yofel: i will try that
+[15:01] <phoenix_firebrd> yofel: works
+[15:04] <phoenix_firebrd> yofel: going to bed, good night
+[15:04] <yofel> gn
+[15:13] <sheytan> apachelogger: is your work on U1 for kubuntu done?
+[15:13] <sheytan> i mean, did you drop it?
+[15:14] <apachelogger> ages ago
+[15:15] <shadeslayer> hehe
+[15:15] <shadeslayer> use owncloud
+[15:17] <apachelogger> owncloud, love of my life
+[15:21] <sheytan> apachelogger: im going to
+[15:21] <sheytan> but i need my own server, right?
+[15:21] <sheytan> or a space i bought on someone else's server
+[15:23] <shadeslayer> yep
+[15:23] <shadeslayer> or
+[15:23] <shadeslayer> runners-id.com
+[15:23] <shadeslayer> 5 GB of free space
+[15:23] <shadeslayer> ( shameless plug for a Blue Systems sponsored service :P )
+[15:24] <apachelogger> "give us your data pretty please"
+[15:25] <shadeslayer> it's not as if *I* have access to it
+[15:25] <shadeslayer> I don't even know who runs it :P
+[15:25] <apachelogger> that's what you claim
+[15:25] <shadeslayer> :>
+[15:25] <shadeslayer> I will hax0r your runners-id account
+[15:25] <shadeslayer> and steal all your dataz\
+[15:25] <shadeslayer> :P
+[15:27] <Tm_T> I just configure U1 account once with that gui client and after that it just works
+[15:27] <Tm_T> so I'm not sure anymore what work or integration it would need necessarily
+[15:27] <apachelogger> no one does
+[15:30] <sheytan> :D:D
+[15:30] <apachelogger> FWIW I think you can get an owncloud as cheap as 2 euros a month or something
+[15:30] <sheytan> that is 8 PLN for me :D
+[15:30] <sheytan> it's 2 good beers
+[15:30] <sheytan> i cant afford that
+[15:30] <sheytan> sorry
+[15:31] <apachelogger> 2 beers vs. free data
+[15:31] <apachelogger> we'll take the beer, thank you very much
+[15:32] <sheytan> btw, i have to work for an hour to earn that much money :D
+[15:32] <sheytan> welcome to Poland :D
+[15:32] <apachelogger> downloading mono for wine takes forevr
+[15:32] <sheytan> what you use wine for?
+[15:32] <apachelogger> getting drunk
+[15:32] <sheytan> oh
+[15:32] <sheytan> stupid question
+[15:33] <apachelogger> sheytan: you probably don't need a cloud storage then btw
+[15:33] <tsimpson> you get drunk, then you get mono
+[15:33] <sheytan> apachelogger: i do! :D
+[15:33] <sheytan> well, in my case i get some more money for one hour of work
+[15:33] <sheytan> but in Poland usually you get even less then 2 eur
+[15:33] <apachelogger> ...storing porn in the cloud is not wise
+[15:34] <sheytan> i stream. always.
+[15:35] <apachelogger> you don't need a cloud then
+[15:38]  * shadeslayer needs the cloud for contact storage
+[15:39] <sheytan> apachelogger: well, i use other files too ;d
+[15:39] <sheytan> not only p0rn
+[15:39] <apachelogger> so why do they need to be in the coud?
+[15:39] <apachelogger> shadeslayer: don't you use googleseee for that?
+[15:39] <shadeslayer> I do
+[15:40] <shadeslayer> I fear I'm too tied into Google 
+[15:40] <shadeslayer> I'm more or less at the mercy of Google :P
+[15:40] <apachelogger> personally I have almost no value from synced addressbooks
+[15:41] <apachelogger> people I send mails to I usually do not call and vice versa
+[15:41] <shadeslayer> heh
+[15:41] <apachelogger> though I suspect it is one of the arears where cloud sync actually adds value
+[15:41] <apachelogger> from a business perspective at least
+[15:42] <apachelogger> for the regular person I still think the mail && !call statement holds, particular since I suppose most people don't use mail anymore ^^
+[15:47] <sheytan> apachelogger: i have files like documents and pictures i need to have access to
+[15:48] <sheytan> and my problem is that i forget to put them on a pendrive or something
+[15:48] <sheytan> so i better save it as default in the dropbox folder
+[15:48] <sheytan> so they automatically sync 
+[15:50] <sheytan> does owncloud sync notes too?
+[15:52] <apachelogger> owncloud supports arbitrary plugins
+[15:59] <sheytan> apachelogger: you askd me last time when i showd the lightdm theme if i talk to Nuno. Why?
+[16:00] <apachelogger> sheytan: because we continue to follow upstream's artwork
+[16:00] <sheytan> ah
+[16:00] <sheytan> ok
+[16:01] <sheytan> apachelogger: but KDE didn't switch to lightdm or did they?
+[16:01] <apachelogger> lightdm is a kde project
+[16:02] <sheytan> so KDM is out ?
+[16:02] <shadeslayer> afaik both kdm and lightdm will be in kde-workspace
+[16:02] <apachelogger> plus nuno wanted to do some artwork alignment for 4.11
+[16:02] <shadeslayer> or atleast that's what d_ed is aiming for
+[16:02] <apachelogger> shadeslayer: nuno also advocates lightdm from what I understand
+[16:03] <shadeslayer> apachelogger: I see, probably because of QML stuff though :P
+[16:03] <apachelogger> that is a fair assumption :P
+[16:03] <shadeslayer> what I'm saying is, KDM will be around though probably not actively developed
+[16:03] <shadeslayer> lightdm offers the exact same feature set with the added niceness of QML
+[16:03] <shadeslayer> and being actively developed
+[16:04] <sheytan> shadeslayer: already saw my new lightdm theme? :)
+[16:04] <shadeslayer> though the latter is probably the result of the project being quite new
+[16:04] <shadeslayer> sheytan: yes, imho it clashes with Air
+[16:04] <shadeslayer> dark backgrounds + Air don't go well together
+[16:04] <sheytan> i have a light version too :D
+[16:04] <sheytan> first i was doing dark, cause i done it for my desktop ;)
+[16:05] <shadeslayer> but then again, you can change the background
+[16:05] <shadeslayer> so meh
+[16:05] <shadeslayer> and the login manager should be as un-obtrusive as possible
+[16:06] <shadeslayer> like, Users should have big avatars
+[16:06] <shadeslayer> and password boxes
+[16:06] <shadeslayer> since that's the focus ... hibernating/shutdown/sleeping are just added extras
+[16:07] <shadeslayer> oh and we need to figure out if we can support RDP stuff
+[16:07] <sheytan> i'm not a fan of big things
+[16:07] <shadeslayer> like they showed off at UDS
+[16:07] <shadeslayer> that stuff was awesome
+[16:07] <apachelogger> shadeslayer: rdpwhat?
+[16:07] <sheytan> they don't look good
+[16:07] <sheytan> shadeslayer: what did they show?
+[16:07] <shadeslayer> apachelogger: they established a RDP session right from the login manager
+[16:07] <sheytan> can i see it?
+[16:08] <shadeslayer> so they logged into a Windows session running on EC2
+[16:08] <shadeslayer> from lightdm
+[16:08] <shadeslayer> lemme see if I can pull up the video
+[16:08] <sheytan> sure
+[16:08] <apachelogger> Oo
+[16:08] <apachelogger> things people do with a login manager
+[16:11] <shadeslayer> can't find it
+[16:11] <shadeslayer> apachelogger: actually, it makes sense in a business env
+[16:12] <shadeslayer> sheytan: http://zbloggers.com/wp-content/uploads/2012/11/remote-login-lightdm-ubuntu1210.png
+[16:13] <apachelogger> shadeslayer: does it?
+[16:13] <shadeslayer> apachelogger: yes
+[16:13] <shadeslayer> apachelogger: you have some proprietary service tied into Windows
+[16:13] <shadeslayer> but you have ubuntu deployed across your office
+[16:14] <shadeslayer> so you just setup EC2 and provide access to that one windows machine
+[16:14] <shadeslayer> where that service is running
+[16:14] <apachelogger> so you logout and then login again to get to a windows session?
+[16:14] <apachelogger> that's a funny concept
+[16:14] <shadeslayer> well ... you could spawn a new session
+[16:14] <shadeslayer> like you can do in KDE
+[16:14] <apachelogger> so you can easily switch back to your ubuntu session?
+[16:14] <apachelogger> oh wait
+[16:14] <apachelogger> you can't
+[16:14] <shadeslayer> wot
+[16:15] <shadeslayer> no I mean
+[16:15] <apachelogger> I know what you mean
+[16:15] <shadeslayer> spawn a new X
+[16:15] <shadeslayer> X1 is running unity 
+[16:15] <apachelogger> and it is fom a usage perspective exactly the same as logout and login
+[16:15] <shadeslayer> X2 is running RDP session
+[16:15] <shadeslayer> hm, idk, it made alot of sense to me to have the remote login thingy
+[16:15] <apachelogger> yeah
+[16:16] <apachelogger> in a thin client setup
+[16:16] <shadeslayer> something KDE fails at ? :P
+[16:16] <apachelogger> at the point where I roll out a system that has multiarch on a thin client setup I'll shoot mysefl in the head though
+[16:16] <apachelogger> doubtlessly there are people who'd do that though
+[16:16] <shadeslayer> apparently KDE does too much network IO in a thin client setup
+[16:18] <apachelogger> plasma does too much IO
+[16:18] <apachelogger> so how do you make the touchpad deactivate when typing?
+[16:19] <shadeslayer> hmm
+[16:19] <shadeslayer> synaptiks
+[16:19] <shadeslayer> I think
+[16:19] <shadeslayer> apachelogger: just get one of these http://www.logitech.com/en-us/product/wireless-trackball-m570?crid=8
+[16:20] <Mamarok> asking here as this was probably screwed by the last update: I try to isntall simon and get this error message:  
+[16:20] <Mamarok> CMake Error at /usr/share/cmake-2.8/Modules/FindPackageHandleStandardArgs.cmake:97 (MESSAGE):
+[16:20] <Mamarok>   Could NOT find ALSA (missing: ALSA_LIBRARY ALSA_INCLUDE_DIR)
+[16:20] <Mamarok> how can it not find alsa?
+[16:20] <Mamarok> on Quantal that is^
+[16:21] <apachelogger> -DLIB_SUFFIX=/x86_64-linux-gnu
+[16:21] <apachelogger> shadeslayer: so every kubuntu users is supposed to buy one of those?
+[16:22] <Mamarok> apachelogger: right, so I have to change the build script...
+[16:23] <apachelogger> Mamarok: I'd argue that findalsa.cmake is broken
+[16:23] <shadeslayer> apachelogger: every laptop user
+[16:23] <shadeslayer> touchpads are crap
+[16:23] <apachelogger> libasound is in a multiarch path, so likely that is whythe finder does not find it
+[16:24] <yofel> shadeslayer: that's why all laptops should have a trackpoint
+[16:25] <shadeslayer> idk ... that nub seems slightly unreliable
+[16:25] <shadeslayer> not to mention difficult to find in the dark
+[16:25] <shadeslayer> trackballs++
+[16:27] <shadeslayer> yofel: do you know if {latest-tag} in recipes has ever worked?
+[16:27] <Mamarok> apachelogger: that didn't really help
+[16:28] <shadeslayer> yofel: see https://launchpadlibrarian.net/129687230/buildlog.txt.gz
+[16:28] <Mamarok> still the same error
+[16:28] <yofel> what the hell is that?
+[16:28] <Mamarok> and yes, I erased the build folder :)
+[16:29] <shadeslayer> yofel: tomahawk daily build recipe
+[16:29] <apachelogger> Mamarok: dunno then
+[16:29] <yofel> I meant latest-tag
+[16:30] <shadeslayer> ah
+[16:30] <yofel> oh
+[16:30] <shadeslayer> last tagged version in git?
+[16:30] <yofel> where's the recipe?
+[16:30] <ScottK> yofel: Riddell has done it as well.
+[16:30] <yofel> ok
+[16:30] <ScottK> It's something we all need to be mindful of.
+[16:31] <yofel> shadeslayer: what's ~tomahawk-importer?
+[16:32] <yofel> shadeslayer: huh? we have hash tags now?
+[16:32] <shadeslayer> probably a cronjob that apachelogger setup
+[16:33] <yofel> ah
+[16:33] <apachelogger> yus
+[16:33] <apachelogger> magic machine
+[16:33] <shadeslayer> https://code.launchpad.net/~tomahawk-importer/tomahawk/master
+[16:33] <shadeslayer> apachelogger: stop stealing karma
+[16:33] <apachelogger> omomnom
+[16:33] <apachelogger> it's my script that does all the work!!!
+[16:33] <shadeslayer> apachelogger: that might also explain why it crashes
+[16:33] <yofel> no
+[16:33] <apachelogger> who crashes?
+[16:33] <shadeslayer> bzr
+[16:34] <apachelogger> when does bzr crash? Oo
+[16:34] <shadeslayer> unn
+[16:34] <shadeslayer> uhh
+[16:34] <yofel> shadeslayer: # bzr-builder format 0.3 deb-version 0.6.99.{time}~{latest-tag}-0
+[16:34] <shadeslayer> apachelogger: https://launchpadlibrarian.net/129687230/buildlog.txt.gz
+[16:34] <yofel> latest-tag is 0.4
+[16:35] <shadeslayer> yofel: how? afaik the tag isn't pushed
+[16:35] <yofel> bzr builder docs suck though it seems
+[16:35] <shadeslayer> the cronjob just gets the last diff and applies that to the bzr branch
+[16:35] <yofel> shadeslayer: no, I mean you need format 0.4 if you want to use latest-tag
+[16:35] <shadeslayer> ahhh
+[16:35] <shadeslayer> apachelogger: ^ 
+[16:35] <apachelogger> trololololo
+[16:35] <apachelogger> fuck this shit
+[16:35] <yofel> and ofcourse I had to read bzr-builder source to find that out *-.-
+[16:36] <shadeslayer> errr
+[16:36] <shadeslayer> no?
+[16:36] <shadeslayer> https://help.launchpad.net/Packaging/SourceBuilds/Recipes
+[16:36] <shadeslayer> properly documented there ^
+[16:36] <yofel> oh ok
+[16:36] <yofel> I obviously don't know the whole launchpad documentation yet
+[16:37] <yofel> needs fixing
+[16:37] <shadeslayer> though this is slightly stupid
+[16:37] <apachelogger> a new version for a new sub?
+[16:37] <shadeslayer> if it says 0.3 and uses a 0.4 function it should not complain
+[16:37] <apachelogger> yes that is slightly stupid
+[16:37] <shadeslayer> it should just do the right thing
+[16:37] <apachelogger> it should not require a new version for a new sub :P
+[16:37] <shadeslayer> otoh if it says 0.3 and uses a deprecated function, then complaint
+[16:38] <Mamarok> apachelogger: is there a chance to get a newer vlc backend in Quantal? It still ships 0.6.0
+[16:38] <yofel> the question is rather why it defaults to 0.3
+[16:38] <apachelogger> it does not default to it, the recipe says 0.3
+[16:38] <yofel> a new default recipe uses 0.3. It doesn't use any 0.4 features though
+[16:39] <yofel> nobody cared to update it I guess
+[16:40]  * apachelogger sighs
+[16:41] <apachelogger> Mamarok: there is, once I get a newer release out
+[16:41] <apachelogger> which is now blocked for almost 2 months by lack of QA
+[16:41] <shadeslayer> heh
+[16:42] <shadeslayer> apachelogger: release beta -> get feedback -> release RC -> get feedback -> release
+[16:43] <apachelogger> that does not work for a plugin of a middleware library
+[16:44] <apachelogger> unless the get feedback phases are meant to be >6 months
+[16:44] <shadeslayer> mm
+[16:44] <shadeslayer> I'm sleeping
+[16:44] <shadeslayer> night
+[16:45] <apachelogger> https://launchpadlibrarian.net/129693501/buildlog.txt.gz
+[16:45] <apachelogger> shadeslayer: nini
+[16:45] <shadeslayer> apachelogger: lunchpad is trolling you
+[16:46] <apachelogger> I know
+[16:46] <apachelogger> we should write more software in python I think
+[16:46] <shadeslayer> you mean in ECMA script
+[16:47] <apachelogger> no
+[16:47] <apachelogger> python
+[16:47] <apachelogger> in fact, we should write an OS in python
+[20:23] <BarkingFish> evening :)  anyone else have the problem with an unmet dependency in the last round of updates on raring?

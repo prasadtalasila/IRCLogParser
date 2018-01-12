@@ -1,0 +1,105 @@
+[11:07] <jtv> rvba: just having a look at bug 1092265...  one thing I don't understand is that the node's log mentions "raring" all over the place, not "precise."  I thought you said the node was being set up with Precise?
+[11:07] <ubot5> bug 1092265 in MAAS "juju setup fails on raring" [Critical,Triaged] https://launchpad.net/bugs/1092265
+[11:08] <jtv> Oh, that log is not from the node, is it?
+[11:08] <rvba> jtv: it's booting precise.  What log?
+[11:08] <rvba> The Jenkins' log?
+[11:09] <rvba> That's the report from the installation of the MAAS server… on raring.
+[11:09] <jtv> Yeah...  I was looking at the wrong log there.
+[11:10] <rvba> jtv: I'm trying to debug this in the lab right now… so far, no luck…
+[11:10] <jtv> The console screenshots seem to suggest that the TFTP request times out, or fails in some other way, and the node falls back to local boot.  Is that normal?
+[11:11] <rvba> That's not what I see.  I see the request go through ok (i.e. reach the webserver fine).
+[11:12] <jtv> The webserver?  But it's supposed to go to the cluster controller, right?
+[11:13] <rvba> Node -> pserv -> webapp and then back
+[11:13] <jtv> Oh, depending on whether it's the config or the actual image of course...
+[11:14] <jtv> So what you get to see on the webserver is the cluster controller's API request for PXE config information.
+[11:14] <rvba> Yes
+[11:15] <rvba> This is the pxe config used: http://paste.ubuntu.com/1491555/
+[11:15] <rvba> Looks fine.
+[11:17] <jtv> Do we know chain.c32 is still OK?
+[11:18] <rvba> No.  It definitely looks like the problem is in there.
+[11:19] <rvba> Any idea how to debug this?
+[11:19] <jtv> TFTP server logs.  See if the requests _after_ the one for the config are happening.
+[11:21] <jtv> I guess we'd expect requests for chain.c32, the kernel, and initrd.  And here's hoping they didn't change the naming convention for those again!
+[11:25] <rvba> rarg, I need to clean up all the debugging statements I put in there first…
+[11:27] <rvba> http://paste.ubuntu.com/1491568/ That's the log
+[11:28] <rvba> No sign of the other files being transferred.
+[11:30] <jtv> I do see chain.c32 being mentioned...  but not the images  :(
+[11:30] <rvba> Indeed
+[11:33] <rvba> jtv: If I replace the file chain.c32 with the one from the syslinux package on *quantal*, the boot seems to work.
+[11:34] <jtv> Gah
+[11:40] <jtv> rvba: the syslinux in Quantal is 2.x, and upstream is at 4.x.  Good chance of a major change in Raring I guess.  :(
+[11:41] <rvba> Judging by the size of the files only, there is a major change.
+[11:41] <jtv> I think all you can really do at this point is punt to the server peoples.
+[11:41] <rvba> Yep, I've added a comment on the bug.
+[11:42] <jtv> And I just got my marching orders — time to hop on the scooter and scoot over to the other village.
+[11:44] <jtv> Let's just hope the new syslinux doesn't require any painful changes on our end.  See you tomorrow!
+[11:44] <rvba> jtv: why do you say that the version of syslinux is 2.x in quantal, it says 2:4.05+dfsg-6
+[11:44] <rvba> ?
+[11:44] <rvba> http://paste.ubuntu.com/1491595/
+[11:44] <jtv> Oh!  Argh!  I read the "2" and ignored the rest.
+[11:44] <jtv> Upstream is at... 4.06?
+[11:45] <rvba> http://paste.ubuntu.com/1491596/
+[11:45] <rvba> The versions are not that different.
+[11:45] <rvba> But still, we have a problem :)
+[11:45] <jtv> Clearly!
+[11:46] <rvba> Anyway, I'll poke the server people.
+[11:46] <jtv> What does the "2:" stand for, in the version number?  I probably should know this, but it's not the sort of thing I deal with regularly any more.
+[11:46] <rvba> I don't know either.
+[11:48] <jtv> Oh well.  The upstream wiki did say something about a major change.
+[11:48] <jtv> In 4.06.
+[11:48] <jtv> And I really must run — nn!
+[11:48] <rvba> nn jtv
+[15:49] <rvba> roaksoax: smoser:  Hi guys.  Would you mind having a look at bug 1092265?  I think I identified where the problem is (see my comments on the bug) but this looks like something you guys would know how to fix it.
+[15:49] <ubot5> bug 1092265 in MAAS "Nodes fail to boot from local disk on raring" [Critical,Triaged] https://launchpad.net/bugs/1092265
+[16:32] <roaksoax> robbiew: i'll do some testing but seems problem of newer chain.c32 as you mention
+[16:32] <roaksoax> so there's probably a bug in a code or who knows what would it be
+[16:33] <robbiew> huh?
+[16:33] <rvba> roaksoax: cool, thanks for looking into it.
+[16:36] <roaksoax> robbiew: err sorry :) was for rvba :)
+[16:37] <roaksoax> rvba: maybe something changed in newer syslinux and template needs some additional info in order for it to boot
+[16:38] <rvba> roaksoax: the pxe config used is this: http://paste.ubuntu.com/1491555/
+[16:40] <roaksoax> rvba: yeah seems right
+[16:40] <rvba> And simple :)
+[16:40] <roaksoax> rvba: i have to re-setup environments so it will take me a few hours
+[16:43] <rvba> roaksoax: all right.  I'll be off soon so please send me an email or comment on the bug if you make progress or want me to test things.
+[16:44] <roaksoax> rvba: sure thing
+[16:44] <rvba> ta
+=== ppetraki is now known as ppetraki-busy
+[17:32] <alperkanat> hey there.. i'm trying to test maas with Ubuntu Server 12.10 on virtualbox.. there are 2 vm's each have 2 nics on themselves. 1 is open to public network (internet) and the other is open to private network (192.168.57.x with no DHCP server)
+[17:33] <alperkanat> i've enabled DHCP/DNS on MAAS
+[17:33] <alperkanat> the node seems to find PXE
+[17:33] <alperkanat> but TFTP gives a timeout
+[17:33] <alperkanat> any ideas?
+[18:01] <roaksoax> a/win 14
+=== ppetraki-busy is now known as ppetraki
+[21:46] <bstillwell> I'm working on setting up MAAS on quantal and when attempting to PXE boot a node, it gets hung up trying to download pxelinux.cfg/default
+[21:46] <bstillwell> Any idea what I might have missed?
+[21:47] <bstillwell> I've configured MAAS to handle both dhcp and dns.
+[21:49] <bstillwell> I don't see a /var/lib/maas/tftp/pxelinux.cfg at all.
+[22:07] <bstillwell> What part of MAAS creates pxelinux.cfg?
+[22:29] <roaksoax> bstillwell: check that /etc/maas/maas_local_settings.py has the correct IP for MAAS_URL
+[22:31] <bstillwell> roaksoax: looks good
+[22:34] <bstillwell> I did find one issue with the docs so far.  When running maas-import-pxe-files, you may need to set both http_proxy and https_proxy.
+[22:34] <bstillwell> maas-import-ephemerals uses https
+[22:35] <bstillwell> Oh, and this page points to other pages that don't exist:
+[22:35] <bstillwell> http://www.ubuntu.com/download/help/install-ubuntu-cloud
+[22:35] <bstillwell> specifically steps 4 & 5
+[23:00] <bstillwell> ahh, figured it out
+[23:00] <bstillwell> I disabled i386 and armhf so I wouldn't have to download the largish ephermal images.
+[23:00] <bstillwell> Looks like i386 is needed
+[23:03] <bstillwell> looks like the node is trying to download stuff from archive.ubuntu.com now, but it isn't using the proxy like it should...
+[23:03] <bstillwell> Is that configurable somewhere?
+[23:11] <bigjools> it's set in the preseed
+[23:11] <bigjools> by default it uses a local squid-deb-proxy
+[23:12] <bstillwell> Where's the preseed file at?
+[23:16] <bstillwell> found them: /usr/share/maas/preseeds
+[23:22] <bstillwell> This message needs to be updated:
+[23:22] <bstillwell> You can boot this node using Avahi-enabled boot media or an adequately configured dhcp server. See https://wiki.ubuntu.com/ServerTeam/MAAS/AvahiBoot for instructions.
+[23:22] <bstillwell> That link doesn't work
+[23:29] <bigjools> gah
+[23:29] <bigjools> I think a lot of these bugs were fixed, it's just not released yet
+[23:30] <bigjools> see https://launchpad.net/maas/+milestone/12.10-stabilization
+[23:33] <bstillwell> looks like lots of fixed bugs.  :)
+[23:57] <bstillwell> So on this page it says the updated juju packages will be in main after the release of precise:
+[23:57] <bstillwell> https://maas.ubuntu.com/docs/quantal/juju-quick-start.html
+[23:57] <bstillwell> seems like it should be updated too

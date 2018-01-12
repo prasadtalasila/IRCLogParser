@@ -1,0 +1,451 @@
+[00:00] <Vasa> escott: what filesystem type should i specify for the following command: mount -o remount,rw /dev/xvda1 /
+[00:00] <escott> Vasa, whatever is output as the fs type by "mount"
+[00:01] <Vasa> escott: /dev/xvda1 on / type ext3 (rw,errors=remount-ro,barrier=0)
+[00:01] <Vasa> does that mean its ext3?
+[00:01] <escott> Vasa, yes
+[00:01] <escott> Vasa, i know what it is
+[00:01] <escott> duhhh
+[00:01] <escott> mount -o remount,rw /
+[00:02] <escott> you dont put the device in a remount
+[00:02] <Vasa> i tried the command 	mount -o remount,rw /
+[00:02] <Vasa> escott: mount: cannot remount block device /dev/xvda1 read-write, is write-protected
+[00:02] <escott> so you have something strange with that device whatever it is
+[00:03] <escott> Vasa, if you put mount -t ext3 -o remount,rw /dev/xvda1 / its just going to end up back at the xvda1 is write-protected
+[00:03] <Vasa> yes i see
+[00:04] <Vasa> ok i will try something else
+[00:04] <Vasa> one second
+[00:08] <Vasa> escott: ok I will ask the administrator of the vps to look into the problem, thanks for your help
+[00:41] <dingo311> PeterGriffin: http://paste.ubuntu.com/1578462/
+[01:01] <PeterGriffin> dingo311: I'm think you shouldn't use dhclient
+[01:02] <PeterGriffin> it gets the ip from dhcp server which is the router
+[01:04] <PeterGriffin> how did you disconnected wlan?
+[01:27] <dingo311> PeterGriffin: the router should be setting ip's. apparently i have something thats not allowing that to happen. i dunno what tho
+=== Jikan is now known as Jikai
+[01:37] <MraAlbertina> Hi. on a i686 (x86), while compiling php-5.3 and getting the error "Cannot find libmysqlclient under /usr" from ./config line "--with-libdir=/lib/x86_64-linux-gnu" should i change it to "--with-libdir=/lib/i386-linux-gnu/"?
+[01:40] <MraAlbertina> psst psst... wake up, smell the trophy :p
+[01:43] <MraAlbertina> i went ahead and did it the way i wrote... and no smoke from the system
+[01:43] <MraAlbertina> yet
+[02:28] <keithclark_> How do I enable cups administration over the local network.  When I try to access it via xxx.xxx.xxx.xxx:631/admin I get 'Forbidden'
+[02:39] <escott> keithclark_, /etc/cups/* enable remote administration
+[02:39] <damrock> no mainline kernel adaption with ubuntu patches?
+[02:40] <keithclark_> escott, I'm not sure what you are telling me here
+[02:41] <escott> keithclark_, remote administration is disabled by default presumably in /etc/cups/cupsd.conf
+[02:41] <escott> keithclark_, localhost:631 will work but not 192.168.1.1:631
+[02:45] <keithclark_> escott, I'm trying to access cups via a another computer on the network.  It is running on a headless server
+[02:45] <escott> yes
+[02:46] <escott> keithclark_, and i would repeat that remote administration is disabled by default
+[02:46] <escott> you must enable it first
+[02:46] <keithclark_> >Yes but >I'm not
+[02:46] <keithclark_> Yes, but I'm not sure how to turn it on
+[02:46] <escott> keithclark_, yes but you are "to access cups via a another computer"
+[02:47] <escott> keithclark_, im telling you to look in /etc/cups/cupsd.conf
+[02:48] <escott> keithclark_, grep -C5 local /etc/cups/cupsd.conf
+[02:50] <keithclark_> escott, you are losing me here
+[02:51] <escott> keithclark_, have you looked at the file /etc/cups/cupsd.conf
+[02:51] <keithclark_> yes
+[02:52] <escott> keithclark_, and did you see this bit
+[02:52] <escott> # Only listen for connections from the local machine.
+[02:52] <escott> Listen localhost:631
+[02:55] <keithclark_> There is no line like that
+[02:57] <escott> keithclark_, you need to read "man cupsd.conf" that much is clear
+[02:57] <keithclark_> I did\
+[02:57] <keithclark_> And this https://help.ubuntu.com/11.10/serverguide/cups.html
+[02:58] <keithclark_> Maybe a bug in Ubuntu 12.0?
+[02:58] <keithclark_> 12.0?
+[02:58] <keithclark_> 12.04?
+[02:58] <escott> keithclark_, which is probably not going to mention remote administration but the Listen directive in the configuration is what you need to be looking at
+[02:59] <keithclark_> Listen /var/run/cups/cups.sock
+[03:00] <keithclark_> That is the only 'Listen' line in the file
+[03:00] <pmp6nl> Hello, is 775 good for public_html?  Thanks
+[03:00] <escott> keithclark_, then it is only listening to that file. and you can't access that file from a remote machine so...
+[03:02] <keithclark_> So what?  Add Listen ip:631?
+[03:02] <escott> sure
+[03:03] <keithclark_> didn't work
+[03:03] <escott> you havent notified the server you changed its config files
+[03:03] <keithclark_> I restarted the cups service
+[03:04] <escott> then the ip address you put in is incorrect or you have a firewall blocking
+[03:04] <keithclark_> No firewall
+[03:04] <keithclark_> IP is confirmed
+[03:05] <escott> keithclark_, netstat -lt
+[03:06] <keithclark_> http://pastebin.ca/2307976
+[03:08] <escott> tcp        0      0 billy.local:ipp         *:*                     LISTEN
+[03:09] <keithclark_> I don't know what you are getting at
+[03:10] <escott> billy.local is listening for connections from all addresses on all ports to the ipp port (631)
+[03:10] <keithclark_> Well that is good, no?
+[03:11] <escott> well billy.local is probably defined as 127.0.1.1 which is on the loopback device
+[03:11] <escott> so its the same as localhost
+[03:12] <keithclark_> Ok, so I could connect on the physical machine, but I cannot connect from a remote machine
+[03:15] <keithclark_> I must be missing something here
+[03:21] <keithclark_> Anything else I should try?
+[03:22] <escott> its not something ive ever done but its all going to be in that config file
+[03:23] <escott> its very unclear what you have done... you said you had read the man page on the config file but you seemed confused when i said to look at it
+[03:23] <keithclark_> Yeah, I did this correctly before in an earlier version of ubuntu.  I'm thinking this is a bug
+[03:30] <codepython777> anyone using powerdns here?
+[03:30] <codepython777> powedns vs bind? I mainly need to control dns dynamically (load balancing as well fault tolerance control). Any other suggestions?
+[03:35] <keithclark_> hmm, it does seem like a new bug http://ubuntuforums.org/showthread.php?t=2084459
+[03:45] <keithclark_> Maybe fixed in the next release
+[03:49] <pak> Hi All,Can anyone please suggest me at application for spped test of PCIe
+[04:05] <patdk-lap> pak, no such thing
+=== Jikai is now known as Jikan
+=== Err404NotFound is now known as Error404NotFound
+=== Andrei_ is now known as _Andrei_
+[09:45] <psivaa> Daviey: jamespage: hallyn: It would help if bug 1103982 is looked at, this is causing smoke test failures
+[09:45] <uvirtbot> Launchpad bug 1103982 in ubuntu-meta "cpu-checker is not included in virtual host server installations from 20130120 onwards" [Undecided,New] https://launchpad.net/bugs/1103982
+=== yofel_ is now known as yofel
+[09:57] <dolf> hey everyone. I just updated my ubuntu server from 10.04LTS to 12.04LTS. Grub2 refuses to install though, since the core.img is too large. I have the server installed with mdadm and lvm, and indeed this causes the core.img to not fit in the first 62 sectors of the disk
+[09:57] <dolf> so I guess my option is to realign the partitions of /dev/sda1 and /dev/sdb1
+[09:59] <xnox> currently yes. Grub upstream is trying to bring back the size of core.img back down, since raid+lvm is very common.
+[10:01] <dolf> xnox: ok. But how do I resize the lvm, then the mdadm raid paritions, and subsequently the physical disk parition to accomodate a larger core.img
+[10:02] <dolf> I know how to resize the filesystem, I can also resize the lvm logical volume
+[10:02] <dolf> but after that I am stumped
+[10:03] <xnox> the problem is that XXDDDDD needs to become XXXDDDDD..... which means that you cannot do if with one disk & DD.
+[10:03] <xnox> (cause you will be overwritting stuff you didn't move yet)
+[10:04] <xnox> one option dd one disk with offset to another.
+[10:04] <xnox> move first partition on the first disk.
+[10:04] <xnox> boot degrated & resync.
+[10:05] <xnox> but it's scary & potentially dangerous. Another option is to use a third disk as a temp one.
+[10:51] <jamespage> psivaa, ack
+[12:03] <Noriandir> hi. i'm having problems accessing apache2 server and my ssh server through my external ip. i had no problems with it until today...
+[12:04] <Noriandir> ports 22, 80 and 8080 are open
+=== th0mz_ is now known as th0mz
+=== security is now known as megha
+=== Err404NotFound is now known as Error404NotFound
+[13:53] <zul> jamespage: ping 2 two things (1) can you give a +1 for http://people.canonical.com/~chucks/ca/
+[13:54] <zul> (2) i was thinking of backporting dnsmasq to the cloud archive because of this bug https://bugs.launchpad.net/ubuntu/+source/dnsmasq/+bug/1006898 its too risky to backport the patch to precise because i dont know the consequences
+[13:54] <uvirtbot> Launchpad bug 1006898 in dnsmasq "[SRU] dnsmasq fails at leasing issues when using vlan mode" [Medium,Fix released]
+[13:54] <jamespage> zul, re 1) please build the source package using -v otherwise the version history is incomplete
+[13:55] <jamespage> 2) hmm - lemme think for a minute
+[13:55] <yolanda> hi, anyone with experience in zookeeper? i'm having problems with juju
+[13:56] <zul> (2a) i think there might be a bug in nova because of the kvm rename in the cloud archive version
+[13:56] <zul> jamespage:  http://pastebin.ubuntu.com/1581641/ ergh?
+[13:57] <jamespage> zul: -vXX.YY
+[13:57] <zul> ah thanks
+[13:57] <jamespage> you need to provide the previous version either in the cloud archive or in precise
+[13:59] <zul> (1) fixed
+[14:04] <jamespage> zul, 1) I don't see the fix
+[14:05] <zul> jamespage:  i did debuild -v3.6-0ubuntu1 -S -sa --changes-option=-DDistribution=precise
+[14:05] <jamespage> 3.6-0ubuntu1 is newer that ~cloud0
+[14:06] <zul> so i want 3.6-0ubuntu1~cloud0 right?
+[14:06] <jamespage> zul, you should use -v3.4-1ubuntu1 as that is the version in precise
+[14:07] <zul> ack
+[14:07] <jamespage> that way the CA changes file has all updates between precise and ~cloud0
+[14:07] <jamespage> 2a) kvm -> qemu-kvm right?
+[14:08] <jamespage> zul, I see "qemu-system (>= 1.3.0) | kvm" is that not enough?
+[14:08] <zul> jamespage: actually it should be, i think i need more caffine
+[14:09] <zul> jamespage: should be fine now
+[14:09] <jamespage> zul, still reading 2)
+[14:10] <jamespage> zul, I still think that needs the full SRU
+[14:10] <zul> jamespage: ack ill put it on my todo list
+[14:10] <jamespage> zul, coming up with a regression plan should not be that hard - maybe work with stgraber to identify some good desktop use cases to verify its limited impact
+=== VD is now known as Guest39710
+[14:21] <koolhead17> hello jamespage / zul
+[14:21] <jamespage> hey koolhead17
+[14:22] <zul> hey
+[14:22] <koolhead17> how are things?
+[14:22] <koolhead17> when are we getting Grizzly goodness in plate :)
+[14:23] <zul> koolhead17: soon
+[14:24] <koolhead17> zul: let me know when would you like me to test it. Will do it and file bugs if i find any
+[14:24] <zul> koolhead17: sure
+[14:26] <jamespage> zul, +1 on that python-coverage upload
+[14:26] <zul> jamespage: thanks
+=== slank_away is now known as slank
+=== slank is now known as slank_away
+=== slank_away is now known as slank
+=== jacalvo_ is now known as jacalvo
+[15:13] <zerick> Hi guys, Has anybody had problems with googlebot  flooding your sites?
+=== ia_ is now known as hallyn
+[15:20] <resno> im running ubuntu on vmware esxi, whats the most minimal install i could possible use. in terms of reducing ram usage?
+[15:21] <resno> i feel like the base installs i have are using a bit to much ram
+[15:26] <RoyK> resno: I don't know with esxi, but I guess it'll be about the same as running on kvm. I have VMs down to 128MB
+[15:26] <patdk-lap> the smallest amount of ram I got ubuntu to use was 24megs
+[15:27] <patdk-lap> well, on real hardware
+[15:27] <RoyK> patdk-lap: heh - a recent version? ;)
+[15:27] <patdk-lap> that was 10.04
+[15:29] <resno> RoyK: do you have suggetsions on how to obtain that mythical number?
+[15:29] <RoyK> not relaly
+[15:29] <RoyK> not really
+[15:29] <resno> i used the minimal install but its installed weird stuff i'd never need
+[15:30] <RoyK> I just tried to boot 12.04.1 i386 (32bit) off kvm with 64MB RAM, and it doesn't seem to like that at all
+[15:31] <RoyK> installer comes up with 96MB, though
+[15:31] <RoyK> that's after f4 - install minimal virtual machine
+[15:32] <RoyK> the times I've built *really* small systems, I've normally done it from scratch with a tiny kernel and busybox for the most part
+[15:32] <rbasak> resno: to minimize RAM usage? Start by looking at RAM usage of existing processes.
+[15:33] <zul> jamespage: can you have a look at https://code.launchpad.net/~zulcss/cinder/cinder-ca-g2 it says its not mergable
+[15:33] <RoyK> rbasak: not much to look at for a "minimal virtual system"
+[15:34] <rbasak> Oh I see. Minimize maximum RAM during boot? That's a bit tougher I suppose.
+[15:34] <patdk-lap> well, for me, I started with minimal, then uninstalled a bunch of crap, then lowered ram
+[15:34] <jamespage> zul, hrm - not sure I ever got to the cinder branch for the cloud-archive - it was groken in g1 due to the package importer failing in the distro
+[15:34] <rbasak> Ubuntu isn't really designed for that. Especially with concurrent things at system startup which was done to improve boot time
+[15:34] <RoyK> the installer doesn't seem to like 96MB either
+[15:34] <rbasak> You're probably best going with Debian with a non-parallel init system
+[15:34] <zul> jamespage: do you want one like i did with python-coverage?
+[15:35] <RoyK> perhaps create a vm or template with a bit more memory and then strip down later
+[15:35] <jamespage> zul, sure
+[15:35] <zul> jamespage: k
+[15:35] <RoyK> rbasak: or gentoo ;)
+[15:35] <zul> RoyK: yeah people love to wait around forever for things to build
+[15:37] <rbasak> Things might take a while to build on a system with 64MB RAM.
+[15:38] <RoyK> rbasak: heh - what I meant, was to use a real system for the building and then just create tiny VMs with that build...
+[15:42] <zul> jamespage: http://people.canonical.com/~chucks/ca/
+[15:43] <jamespage> zul: +1
+[15:43] <zul> thanks
+[15:47] <zul> yolanda: ping https://code.launchpad.net/~zulcss/swift/swift-1.7.6/+merge/145201
+[15:47] <yolanda> let me see
+[15:48] <yolanda> zul, easy one, that's boring :)
+[15:48] <zul> yolanda: trying to ease you into the week ;)
+=== guampa is now known as Guest26147
+[15:49] <yolanda> done
+=== guampa_ is now known as guampa
+[16:24] <Omen_> Hello
+[16:54] <RoyK> resno: ping
+[16:56] <resno> RoyK: ya, i was sitting here trynig to figure out why no one had responded lol
+[16:57] <RoyK> heh - just got home - testing a small debian i686 install in a vm to see how slim I can get it ;)
+[16:57] <resno> i'm looking at esxi and i hate seeing a few vms sucking down all this ram.. when they are basically resting
+=== matsubara is now known as matsubara-lunch
+[16:58] <RoyK> which version of esxi?
+[16:58] <resno> 5.0
+[16:58] <patdk-lap> I never cared, just let esxi manage the memory between them
+[16:59] <RoyK> resno: that should support ballooning
+[16:59] <resno> RoyK: ballonning? ill need to learn about that
+[16:59] <patdk-lap> ballooning, compression, shared, swap
+[17:00] <patdk-lap> as long as you install vmware tools into the guests
+[17:00] <RoyK> well, VMs without vmware tools are no good...
+[17:01] <resno> i use the open tools, should i use the vmware specifically?
+[17:01] <RoyK> yes
+[17:01] <patdk-lap> opentools are just as good
+[17:01] <RoyK> rightclick the vm, guest, install vmware tools
+[17:01] <RoyK> patdk-lap: really?
+[17:01] <patdk-lap> well depends what you want
+[17:01] <patdk-lap> but for server, opentools are good enough
+[17:01] <RoyK> vmotion, storage vmotion, lots of things
+[17:02] <patdk-lap> none of that stuff uses tools
+[17:02] <RoyK> not running a single server, though
+[17:02] <RoyK> you sure about storage vmotion?
+[17:02] <patdk-lap> yes
+[17:02] <RoyK> ok
+[17:02] <patdk-lap> storage vmotion uses snapshots
+[17:02] <resno> ive got 3 vms taking up 3587 mb of ram...
+[17:02] <patdk-lap> doesn't matter if the snapshot is consistant
+[17:03] <RoyK> patdk-lap: you can't be sure of that without vmware tools, though
+[17:03] <patdk-lap> no need to be sure about it with svmotion
+[17:03] <patdk-lap> if you wanted to do a *backup* yes, but not svmotion
+[17:04] <patdk-lap> cause the svmotion would just fail, if it didn't work
+[17:04] <RoyK> well, it won't hurt to install vmware tools, will it?
+[17:05] <patdk-lap> ya, you want tools for the simple things like, guest shutdown/reboot, ballooning, timesync, backups
+[17:05] <patdk-lap> need it for FT I believe, and it helps HA
+[17:05] <resno> ft?
+[17:05] <patdk-lap> fault tolerance
+[17:05] <resno> oh
+[17:06] <resno> most of my installs are a single server, so the bells and whistles dont quite apply
+[17:06] <resno> :(
+[17:06] <resno> and from what ive read, its the coolest parts of it
+[17:06] <patdk-lap> ha is simple, esxi server dies, it restarts the vm on other host
+[17:07] <patdk-lap> FT is a live mirror of the vm, so if a esxi host dies, it is already running on a standby machine
+[17:07] <resno> does ha have issues with data missing?
+[17:07] <patdk-lap> well it will be as consistant as the disk was
+[17:07] <patdk-lap> I mean, what happens with missing data when you yank the power cable
+[17:07] <resno> so consistency isnt an issue with either?
+[17:08] <RoyK> well, for some databases, it can
+[17:08] <patdk-lap> FT mirrors the memory/cpustate/... live, it actually runs the vm on two hosts at the same time, EVERYTHING the same
+[17:08] <hallyn> ahs3: hey, do you expect netcf 0.2.3 into experimental soon, or is there a roadblock?  just wondering wehther i should wait to push to raring, or whether i'd risk missing FF
+[17:08] <RoyK> mysql tends to be corrupted somehow and a 'repair table' may be needed
+[17:08] <patdk-lap> for HA, it's like, power cable got pulled, and turned it back on
+[17:09] <RoyK> you'll need pretty good networking for FT to work properly, though
+[17:09] <resno> thats pretty cool
+[17:09] <RoyK> preferably 10G between the nodes
+[17:10] <patdk-lap> yep, and not loose a network connection between failover
+[17:13] <RoyK> resno: for a minimal install, seems debian can live with 56MB
+[17:13] <RoyK> at 48MB, it panics on boot
+[17:14] <RoyK> panic happens during kernel boot, btw
+[17:15] <resno> ah
+[17:15] <resno> RoyK: did you make a reduced size build or can do it myself?
+[17:15] <RoyK> so making a smaller initrd will probably help
+[17:15] <RoyK> this was basic debian server i686
+[17:16] <RoyK> with a custom kernel, I guess you can get it down to at least 32GB
+[17:16] <resno> mb?
+[17:16] <resno> 32GB doesnt seem very small ;)
+[17:17] <RoyK> since it doesn't seem to be using much
+[17:17] <RoyK> http://paste.ubuntu.com/1582934/
+[17:17] <RoyK> heh
+[17:17] <RoyK> yeah - 32MB
+[17:18] <RoyK> resno: http://paste.ubuntu.com/1582938/
+[17:20] <resno> hmm
+[17:21] <resno> heh, i just realized why this one vm is running so rampid
+[17:21] <resno> mysql
+[17:21] <RoyK> ah
+[17:21] <resno> its silly but didnt even occur to me
+[17:21] <resno> and apache too
+[17:21] <RoyK> apache with php?
+[17:21] <resno> yes
+[17:22] <RoyK> apache alone doesn't use much, but php might
+[17:22] <resno> il try installing php-fm, i think its called to optimize a bit
+[17:23] <RoyK> resno: how much memory did you give the vm?
+[17:26] <resno> RoyK: just about a gig
+[17:27] <RoyK> remember that linux will use all available memory for caching
+[17:28] <resno> ha, how could i remember something i didnt know
+[17:28] <RoyK> well, now you do ;)
+[17:29] <RoyK> most (or all?) OSes will do that
+[17:29] <resno> seems likely enough
+[17:29] <resno>  /understandable
+=== Ursinha is now known as Ursinha-afk
+[17:29] <RoyK> perhaps with the exception of some specialized kernels like the Xen kernel, using only a small part for the dom0 bit
+[17:32] <RoyK> resno: but conclusion for mini-vms so far: debian works well with 64MB without custom stuff
+[17:32] <RoyK> can't be bothered to go through the kernel config to make a smaller initrd, though
+[17:34] <resno> RoyK: it doesnt require any fancy configing? just i686 and good to go?
+[17:34] <resno> for the 64mb
+[17:34] <RoyK> yes
+[17:34] <RoyK> resno: I installed it with 256MB, though
+[17:34] <RoyK> but it runs well with 56
+[17:35] <resno> ya, i dont want mind giving it a good amount of ram. i just dont like it being sucked away
+[17:35] <RoyK> it will, unless you use ballooning or similar ways to limit it
+[17:36] <patdk-lap> I keep increasing my vm ram amounts, till the swap/disk usage goes down to a reasonable level
+[17:36] <patdk-lap> but I do have ram to burn
+[17:37] <resno> ive just about burned all my ram..
+[17:37] <RoyK> adding a new vm host to a cluster with less than 128GB would be rather unthinkable IMHO
+[17:37] <resno> all 4 gigs worth
+[17:37]  * resno waits for response
+[17:38] <RoyK> 4 gigs! even my old core2duo machine running kvm has 6 gigs ;)
+[17:38] <RoyK> with new cellphones arriving with quadcore and 2 gigs of ram, well ;)
+[17:39] <RoyK> it'll be interesting when those cellphones come with working kvm...
+[17:39] <resno> haha
+[17:39] <jamespage> hallyn, around?
+[17:40] <RoyK> Cortex-A15 has virtualisation support...
+[17:40] <RoyK> dunno if kvm supports it yet, though
+[17:41] <hallyn> jamespage: yup
+[17:41] <RoyK> resno: http://www.youtube.com/watch?v=uD5Nu-VrHKI
+[17:41] <jamespage> hallyn, bug 1103982
+[17:41] <uvirtbot> Launchpad bug 1103982 in ubuntu-meta "cpu-checker is not included in virtual host server installations from 20130120 onwards" [Undecided,New] https://launchpad.net/bugs/1103982
+[17:42] <jamespage> hallyn, I'm guessing that cpu-checker has been dropped as a dep during the kvm re-org this cycle?
+[17:42] <resno> RoyK: hmm, the possiblies with android
+[17:43] <jamespage> hallyn, it was a dep for qemu-common
+[17:44] <jamespage> hallyn, can we re-instate that? we could stick it in the seed so it gets on the iso but thats a bit more complicated; and does not help non-iso people
+[17:44] <hallyn> jamespage: i dunno, it seems bogus -in quantal i see
+[17:44] <hallyn> Replaces: qemu-kvm (<< 0.12.3-0ubuntu13)
+[17:44] <hallyn> oh, nm, i see << :)
+[17:44] <jamespage> hallyn, :-)
+[17:44] <jamespage> hallyn, its breaking smoke testing ATM as one of the checks is to run kvm-ok
+[17:44] <hallyn> jamespage: but no, its' not the recent reorg, bc it's not installed in quantal either
+[17:45] <hallyn> oh i see
+[17:45] <jamespage> hallyn, quantal has "Recommends: cpu-checker, kvm-ipxe"
+[17:45] <jamespage> and its not transitional
+[17:46] <hallyn> <big sigh>
+[17:46] <jamespage> I guess it needs a new home (the dep that is)
+[17:46] <hallyn> jamespage: do you think qemu-system suffices?
+[17:47] <hallyn> it's got both kvm and qemu-user, so it should be fine
+[17:48] <jamespage> hallyn, I agree +!
+[17:48] <jamespage> +1
+[17:48] <hallyn> jamespage: on it, thanks!
+[17:53] <ahs3> hallyn: sorry, was afk for a bit...no roadblock.  should be RSN -- no later than end of week
+[17:54] <hallyn> jamespage: fix pushed.  thanks, ttyl
+[17:54] <hallyn> ahs3: cool, thanks.  will wait for that then
+[18:03] <zul> hallyn: so i got 1.0.2-rc1 to build this weekend and now -rc2 is out :(
+[18:03] <zul> ahs3: traitor
+[18:03] <hallyn> minor changes i assume
+[18:06] <ahs3> zul: :P
+=== matsubara-lunch is now known as matsubara
+[18:49] <RoyK> anyone here with a linux raid tried to smartctl -l scterc /dev/asdf ? seems hitachi desktop drives support it well, wd doesn't (or perhaps the wd red drives do)
+[18:57] <patdk-lap> asd?
+[18:57] <RoyK> well, it's like WD's TLER
+[18:57] <RoyK> pretty nice for a raid setup
+[19:11] <RoyK> patdk-lap: asd?
+[19:11] <RoyK> patdk-lap: /dev/asdf was just an imposer for the device name :P
+[19:14] <patdk-lap> ah
+[19:15] <patdk-lap> I figured that out
+[19:42] <adam_g> zul: not sure how to handle those 12.04 rebuilds of requests + oauthlib short of stripping out the py3 stuff from d/control + d/rules and maintaning a patch+merge moving forward.
+[19:42] <adam_g> Daviey: ^ any suggestion? am i missing something in the python3 packaging docs?
+[19:42] <zul> adam_g: thats what we might have to do
+[19:47] <zul> adam_g: for requests it looks like we are going to have a delta (fine for crypto and authlib)
+=== funkyHat_ is now known as funkyHat
+=== Ursinha-afk is now known as Ursinha
+=== Nolar2_ is now known as Nolar2
+[20:44] <_Andrei_> such a huge activity on that chan' :)
+[20:44] <RoyK>  
+[20:58] <genii-around> Hello. Is there some convention for dot-files in /etc/skel where you can specify the username ? eg: I'd like a ~/public_html/private/.htaccess file which has a line of: require <username>
+[20:59] <RoyK> genii-around: don't think that's possible with normal skel stuff
+[20:59] <RoyK> better script it
+[21:05] <genii-around> RoyK: OK, thanks. Perhaps I can do something like wrap adduser then run sed immediately after for REPLACETHISSTRING or similar then in the generic .htaccess file
+[21:06] <RoyK> genii-around: or create your own add-user-for-this-server script
+[21:06] <RoyK> probably easier
+[21:08] <RoyK> as in 'useradd -m $1; mkdir /home/$i/public_html; echo asdf > /home/$i/public_html/.htaccess'
+[21:08] <RoyK> s/\\$i/$1/
+[21:09] <genii-around> Hm, interesting.
+[21:10] <RoyK> genii-around: it's easily scriptable in bash
+[21:17] <genii-around> RoyK: I have already a slightly modified adduser script without the call for the gecos fields, perhaps I'll poke around in there. I'm not all that familiar with Perl although I can probably muddle through.
+[21:19]  * RoyK knows perl rather well
+[21:35] <zastern> Anybody built nagios 12.10 sources for 12.04? Any good luck with that?
+[21:35] <zastern> nagios version from 12.10 i mean
+[21:37] <RoyK> zastern: dunno - I left nagios some years ago for icinga - nagios hasn't been actively developed for years
+[21:37] <zastern> RoyK: The latest nagios release came out just this month dude.
+[21:37] <zastern> I'm pretty sure you're not correct.
+[21:37] <RoyK> zastern: another patch, yes
+[21:37] <RoyK> zastern: but active development is halted
+[21:38] <RoyK> zastern: it's patchd, but nothing is improved
+[21:38] <zastern> RoyK: uh the last major release was may 2012
+[21:38] <zastern> do you have any documentation of this major developement being halted?
+=== mahmoh1 is now known as mahmoh
+[21:39] <RoyK> zastern: nagios v3 was released almost 10 years ago. it still contain the same hardcoded html-in-c for the web gui
+[21:39] <RoyK> I've been using nagios/icinga for >10Y
+[21:39] <zastern> oh wow
+[21:40] <zastern> hmm
+[21:40] <zastern> RoyK: sir, nagiox 3 was released in 2008.
+[21:40] <zastern> http://www.nagios.org/projects/nagioscore/history/core-3x
+[21:40] <RoyK> well, it's the same old thing as nagios v1
+[21:40] <RoyK> it's the same codebase
+[21:41] <RoyK> hardcoded html in c for the web ui
+[21:41] <RoyK> some better scheduling here and there, but nothing new
+[21:41] <RoyK> I use icinga - it's a good fork
+[21:41] <zastern> hmm. I wonder if i can use icinga with the puppet nagios providers
+[21:42] <RoyK> yes
+[21:42] <RoyK> it's compatible
+[21:42] <zastern> That's one of the advatages of nagios, the built in providers
+[21:43] <zastern> RoyK: hmm, another advantage is that ubuntu 12.04 has icinga 1.7.2
+[21:43] <zastern> which is fairly current
+[21:43] <RoyK> the only advantage of nagios is the name - the rest is old history. Ethan Galstad left the open Nagios development years ago
+[21:43] <RoyK> Ethan now only works for the commercial nagios part
+[21:43] <zastern> RoyK: that's so odd. I mean from what i'm reading there are still nagios conferences every year, for example
+[21:43] <zastern> RoyK: Commercial nagaios features are never handed down to OSS?
+[21:43] <RoyK> well, of course
+[21:43] <RoyK> I don't know
+[21:43] <Pici> icinga is still open?
+[21:44] <RoyK> icinga is open
+[21:45] <zastern> I'm also interested in sensu
+[21:46] <Pici> I have nagios on a test box here that I've been asking to be replaced with a real server, maybe I'll switch to icinga when that happens.
+[21:57] <tonyyarusso> zastern: Icinga also has an Ubuntu PPA maintained by formorer (sp?)
+[21:57] <zastern> tonyyarusso: mm. I'm also checking out Sensu.
+[21:57] <tonyyarusso> zastern: The Nagios conferences are actually brand new, not "still held".  They've had two so far.
+[21:57] <zastern> But sensu wants you to use rabbitmq, and I'm already using ActiveMQ
+[21:57]  * tonyyarusso knows a smidge about this stuff :P
+[22:00] <tonyyarusso> zastern: As for the development issue, you're both basically correct.  Yes, Nagios has had releases, and they've even bumped up the version numbers in more significant places, but if you look at the actual changelogs not a whole lot has happened.  In contrast, Icinga has been much more aggressive in pursuing actual new feature development.  For most people the most obvious part is the new themable, AJAXy, dynamic web interface.  ...
+[22:00] <tonyyarusso> ... There are also other things that were in the Nagios feature request queue for ages, but never accepted, like supporting more database backends for NDOUtils.
+[22:01] <zastern> Hmm. I don't know what I'll use, but it won't be nagios.
+=== matsubara is now known as matsubara-afk
+[22:55] <phillw> Hi guys, instead of using the mini-iso, do you think that installing ubuntu-server with no 'additional' packages via tasksel would be preferable for people to install a minimal system that they could then use tasksel to install their preferred GUI system (lubuntu / kubutnu / ubuntu etc.) ?
+[23:07] <ndngvr> otisa-G-mVva5VcFY6HD_HgAVHwAyXRGLLb
+[23:11] <sarnold> ndngvr: do you need to reset a password somewhere? :)
+=== slank is now known as slank_away
+[23:21] <quietone> any idea why samba opens/closes a connection for 1 user several times a second? result is they can't access the share.
+[23:22] <sarnold> quietone: open/close like that makes me wonder if access is not being allowed by tcpwrappers -- do you have those configured for samba? (I don't know for certain that samba supports tcp wrappers..)
+[23:23] <quietone> hi sarnold, I'll have to learn about tcpwrappers b4 I answer ;-)
+[23:24] <sarnold> quietone: well, if you didn't set them up, it is unlikely to be the case :) hehe
+[23:24] <sarnold> quietone: check /etc/hosts* files -- somethin like hosts.allow, hosts.deny, or hosts_options, (though I could have punctuation all wrong..)
+[23:25] <quietone> sarnold, yea but we copied configs from CentOS to Ubuntu. We could have missed something.
+[23:25] <quietone> sarnold, ok. but it was working fine yesterday and nothing has changed
+[23:26] <sarnold> quietone: oh :) nice ot know it was working fine :) hehe, I missed that.
+[23:26] <sarnold> quietone: check your logs?
+[23:27] <quietone> sarnold, the log for that machine just has the 'connect to service' then 'closed connection'
+[23:28] <sarnold> quietone: darn :/
+[23:29] <quietone> sarnold, I agree!
+[23:29] <ndngvr> sarnold: Yes, I do now!  Stupid keepassX autotype
+[23:29] <ndngvr> sarnold: thanks for saying something
+[23:30] <sarnold> ndngvr: I figured it'd be easy to overlook :/
+[23:32] <quietone> sarnold, http://pastebin.com/tKTiwbaK
+[23:34] <sarnold> quietone: do other users work okay? or is it just fred?
+[23:34] <quietone> sarnold, just fred today -- tomorrow, who knows!
+[23:34] <sarnold> heh
+[23:35] <quietone> sarnold, fred had this yesterday "create_connection_session_info failed: NT_STATUS_ACCESS_DENIED"
+[23:35] <quietone> i thought i had that one fixed
+[23:45] <quietone> is there a simple explanation of  the above error msg. Is that access to the share or some other file?
+[23:47] <sarnold> quietone: does the 'smbclient' cmmand line client connect to the shares fine? as different users? to different shares? from multiple client machines?
+=== justizin_ is now known as justizin
+=== slank_away is now known as slank
+[23:55] <quietone> sarnold, using smbclient fred can see the share

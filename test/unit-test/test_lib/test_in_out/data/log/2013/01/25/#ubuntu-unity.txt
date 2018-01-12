@@ -1,0 +1,595 @@
+[00:05] <Controlsfreek> bschaefer, yeah, so I'm thinking draw 1 happens before the options are loaded. Draw >2 is when the option is properly loaded
+[00:06] <bschaefer> Controlsfreek, yeah, resize was showing 65 twice for me before it switched to the actual launcher size, but the options are generated xml code that you cant get
+[00:06] <bschaefer> Controlsfreek, so we create the launcher controller, and we can grab the current value and set the option
+[00:07] <bschaefer> Controlsfreek, the problem is we have some of that logic in the unityshell.cpp....which we shouldnt...
+[00:08] <bschaefer> Controlsfreek, look at unityshell.cpp around line 2933, that happens when an options gets changed/or loaded
+[00:08] <bschaefer> and you can see optionGetIconSize(), is what gets the actual icon size in CCSM
+[00:08] <bschaefer> so we should be able to set this right when we create the launcher controller, but that function logic will need to be moved
+[00:08] <Controlsfreek> bschaefer, I'
+[00:08] <bschaefer> (switch logic, as its in a huge function)
+[00:09] <Controlsfreek> bschaefer, I'll have to dig into this after I get the kids to bed.. Thanks for the help.. Very much appreciated!
+[00:09] <bschaefer> Controlsfreek, np! It takes a bit to wrap your head around the compiz options...
+[00:59] <Controlsfreek> bschaefer, Stupid Question- How to you revert back to the non-hacked version of Unity when you are done testing?
+[00:59] <bschaefer> Controlsfreek, rm -rf ~/.compiz-1
+[01:00] <Controlsfreek> i ran unity --replace, then made the mistake of hitting ctrl-c which of course hosed my desktop
+[01:01] <bschaefer> Controlsfreek, haha, I do that all the time, after that you just got to Ctrl+Alt+F<1-6> and just type unity
+[01:01] <Controlsfreek> ah okay. I tried that, but unity never seemed to start properly, so i rebooted
+[01:01] <Controlsfreek> I'll try it again if (when) i end up in the same spot
+[01:02] <bschaefer> yeeah, I still kill my unity a lot with ctrl+z (and then the bg doesn't work sometimes)
+[01:02] <bschaefer> so I have to do that often
+[01:14] <Controlsfreek> bschaefer, hard to determine sequence of events when its all event driven!
+[01:56] <bschaefer> Controlsfreek, yeah, thats where print statements come in handy :)
+[01:56] <bschaefer> if you wanna see when those options get set in unityshell.cpp, add a printf there (or cout), and keep one in Resize, then you get your order :)
+[02:18] <Controlsfreek> bschaefer, yeah, i'm peppering the code with debug printf's :-)
+[08:00] <didrocks> thomi: hey, still around?
+[08:06] <didrocks> veebers: I guess you are sleeping by now? :)
+[08:06] <didrocks> hey sil2100
+[08:06] <sil2100> Hello!
+[08:06] <didrocks> sil2100: how are you?
+[08:10] <didrocks> sil2100: i'll again need your help, still a lot of tests are failing
+[08:10] <didrocks> sil2100: if you can't, I propose reverting all the changes in the refactoring, it's been 3 days it's stuck…
+[08:10] <sil2100> didrocks: in a moment I'll fire up the VPN
+[08:11] <didrocks> sil2100: run 49 of unity
+[08:11] <didrocks> sil2100: those are just the result on ati and nvidia, intel didn't run
+[08:13] <thomi> didrocks: I'm around now, for about 2 minutes - what's up?
+[08:14] <didrocks> thomi: see the email I just sent
+[08:14] <didrocks> thomi: a little teaser before your week-end of an issue we are seeing with autopilot :)
+[08:15] <thomi> didrocks: ahhhh. so if the problem is just with the math, we could run something similar to: 'autopilot list unity | wc -l' to work out how many tests there should be.... rather than using the number of tests reported from AP
+[08:16] <didrocks> thomi: I don't really care as long as jenkins is providing the right number of tests it should run :)
+[08:16] <thomi> yeah
+[08:16] <didrocks> thomi: so if you can work this out next week with chris/fginther (I'm on vacations)
+[08:17] <thomi> yup, I'll talk to them next week.
+[08:17] <thomi> didrocks: I commented on my unity MP - not sure if you've had the time to look at it again... but it'll be next week before it gets merged now anyway...
+[08:17] <didrocks> thomi: thanks a lot :) I'll have a look for the unity MP, with the main promotion and so on, I would appreciate the transition only happening once I'm around
+[08:18] <thomi> didrocks: sure
+[08:18] <didrocks> thomi: great, enjoy your week-end!
+[08:18] <thomi> didrocks: I will - the weather is amazing - I just ate dinner outside in 25 degree sunshine!
+[08:18] <thomi> didrocks: enjoy your vacation in the cold :P
+[08:19] <didrocks> thomi: you can't skii in 25 degree, doesn't fit with my plans either way! :p
+[08:19] <thomi> heh
+[08:19] <thomi> ok, let's catch up when you're back. Cheers
+[08:28] <didrocks> sil2100: what do you think? Should we revert?
+[08:30] <sil2100> didrocks: one more moment, firefox does some problems here...
+[08:34] <sil2100> Jesus, my system is broken today, hoho
+[08:35] <didrocks> sil2100: use your phone, you just need a browser! :)
+[08:37] <sil2100> IndexError: list index out of range <- funny
+[08:39] <didrocks> yep
+[08:40] <didrocks> sil2100: ValueError: ('No icon found that matches: %r', {'tooltip_text': 'Workspace Switcher'})
+[08:40] <didrocks> sil2100: test_launcher_keynav_expo_focus_Single_Monitor_
+[08:41] <didrocks> sil2100: we don't have a workspace switcher icon anymore if we just have one ws
+[08:41] <sil2100> didrocks: ah, ok, right!
+[08:41] <sil2100> I'll fix that - but for the rest, well, looking into how much work it would be ;/
+[08:41] <didrocks> sil2100: all the rest is the list out of range?
+[08:41] <didrocks> apparently
+[08:41] <didrocks> (apart from the traditional test failing)
+[08:42] <sil2100> didrocks: won't reverting be troublesome?
+[08:42] <didrocks> sil2100: so, I would say grep for the workspace switcher first
+[08:42] <didrocks> sil2100: well, it will be, but it's been 3 days everything is stalled
+[08:42] <didrocks> sil2100: I would have prefer we wouldn't commit something that didn't work at all
+[08:43] <didrocks> sil2100: isn't that the switcherModel children items are just not exposed?
+[08:44] <sil2100> didrocks: most apparently, I just hope that's the last thing that's not exported after the refactoring
+[08:47] <sil2100> No one thinks about autopilot when doing refactoring :(
+[08:47] <didrocks> yeah, that's annoying, I should have reverted within the same day
+[08:47] <sil2100> From now on I think I'll simply review every unity refactoring bug to make sure it doesn't break anything for AP
+[08:47] <didrocks> sil2100: also that one: http://10.97.0.1:8080/job/ps-unity-autopilot-release-testing/label=autopilot-intel/lastCompletedBuild/testReport/unity.tests.test_panel/PanelWindowButtonsTests/test_window_buttons_dont_show_on_empty_desktop_Single_Monitor_/
+[08:47] <didrocks> sil2100: seems a cleanup issue?
+[08:47] <didrocks> AssertionError: The test left the system in show_desktop mode.
+[08:48] <didrocks> sil2100: yeah, and ask on them if people tested with autopilot
+[08:48] <didrocks> sil2100: another out of range: http://10.97.0.1:8080/job/ps-unity-autopilot-release-testing/label=autopilot-intel/lastCompletedBuild/testReport/unity.tests.test_dash/PreviewInvocationTests/test_files_lens_preview_open_close/
+[08:48] <didrocks> so something is not exposed as well in the lens previews?
+[08:49] <sil2100> didrocks: good catch - the test_window_buttons might be easily fixable
+[08:49] <didrocks> (this one wasn't failing before)
+[08:50] <didrocks> sil2100: as I'm not around next week, I really wish we can release an unity today. Do you feel it's feasable?
+[08:51] <sil2100> didrocks: I think so - I'll do what I can with AP and unity till noon, and if it'll be more work than this we'll simply think about reverting again...
+[08:51] <didrocks> sil2100: ok, thanks a lot dude! :)
+[08:52] <didrocks> doing the SRU round meanwhile
+[08:52] <didrocks> both quantal and precise
+[08:54] <sil2100> Thanks :)
+[09:25] <didrocks> sil2100: ok, sponsoring bamf, for unity-lens-files, I wonder if we are going to get yielled at for all the noise is the diff (empty lines)
+[09:27] <sil2100> didrocks: ah, I saw those indeed - I was silently hoping we won't, as those are like 'empty'
+[09:27] <didrocks> sil2100: it's making the reviewing team angry most of the time
+[09:27] <sil2100> didrocks: btw. I just hacked away the IndexError: list index out of range for switcher
+[09:27] <didrocks> sil2100: can you preemptively reach out RAOF next week?
+[09:27] <sil2100> didrocks: will do
+[09:27] <didrocks> sil2100: oh sweet! what was it about? :)
+[09:28] <sil2100> didrocks: during the refactoring, well, Sam moved the switcher controller implementation to a pimpl class - and along with it, the switcher's controllers children were moved to the impl object
+[09:28] <didrocks> ok, as we expected this morning then
+[09:29] <sil2100> didrocks: AP tried accessing those children, but they were moved to the impl, so he couldn't find them
+[09:29] <didrocks> that will fix most of the issues
+[09:29] <didrocks> sil2100: you're now fixing the 2/3 small ones that I signaled before? ^
+[09:29] <didrocks> then, we can rerun a test I guess
+[09:29] <didrocks> sil2100: nice work :)
+[09:29] <sil2100> didrocks: but without the need of modifying unity code, I simply made AP aware of that there's that impl
+[09:29] <didrocks> oh sweet
+[09:29] <didrocks> that's even better :)
+[09:29] <sil2100> didrocks: Trevinho just fixed the small missing-workspace icon fixes ;p
+[09:29] <sil2100> didrocks: I approved and it will be merged
+[09:30] <sil2100> Now I'll take care of the other small thing
+[09:30] <didrocks> great! :)
+[09:30]  * didrocks has again some hope for a new release today
+[09:32] <didrocks> sil2100: both SRU sponsored :)
+[09:32] <didrocks> Mirv: your turn now! :)
+[09:36] <didrocks> Mirv: can you remove the doc/ content from your branch? this is adding some noise for no good reason.
+[09:36] <didrocks> Mirv: also, sil2100's branch had some new .desktop files for the tests, I think you need to include them
+[09:36] <didrocks> Mirv: once done, I'll sponsor, looking good :)
+[09:39] <jibel> didrocks, autopilot test done on intel. 46 failures
+[09:42] <didrocks> jibel: thanks! yeah, still the refactoring that was done… sil2100 is working on fixing it :)
+[09:43] <sil2100> didrocks: thanks ;)
+[09:43] <sil2100> didrocks: ah, and the leave-show-desktop issue, ah, it's also a mistake of mine ;) Due to a known show-desktop bug
+[09:43] <didrocks> ah sweet! :-)
+[09:43] <didrocks> one less
+[09:44] <didrocks> sil2100: while those things are merging, do not hesitate to compare with a last well known state (run on the 18th)
+[09:44] <didrocks> sil2100: but you can propose a branch that we can approve already
+[09:44] <sil2100> https://code.launchpad.net/~sil2100/unity/autopilot_fix_switcher_controller_model/+merge/144874
+[09:44] <sil2100> Make sure everything is ok ;)
+[09:51] <Mirv> didrocks: hey!
+[09:51] <didrocks> hey Mirv ;)
+[09:51] <Mirv> didrocks: well there were tidifications to the build but they were reverted from the stable branch for not being SRUable
+[09:52] <didrocks> Mirv: ok, the tests are passing without the .desktop files?
+[09:52] <didrocks> sil2100: approved, ping me with the other fixes once you have them ready :)
+[09:52] <Mirv> didrocks: no, the tests pass when the .desktop files are there, but as another reverted commit was the thing of including them in tarball in addition to bzr - so when you run the tests with those .desktop files on top of tarball, tests pass
+[09:53] <Mirv> so the .desktop files are in the bzr 0.2 branch as well, but not in the tarball
+[09:53] <didrocks> Mirv: hum, I would prefer having them in bzr, as we have for quantal (and without the doc/) if possible
+[09:53] <Mirv> didrocks: ^
+[09:53] <didrocks> Mirv: ah, interesting
+[09:54] <didrocks> Mirv: ok for the .desktop files then, just remove the doc/ changes please
+[09:55] <sil2100> https://code.launchpad.net/~sil2100/unity/autopilot_panel_sdm_placeholder_app/+merge/144878
+[09:55] <sil2100> didrocks: fix for the SDM issue ^
+[09:55] <sil2100> didrocks: will look into the preview things in the dash in a moment
+[09:56] <didrocks> great :)
+[09:56] <Mirv> didrocks: so should I create a new tarball that has manually reverted the doc/ changes that make dist creates?
+[09:57] <didrocks> Mirv: yeah, I would say, just open the tarball, put back old files
+[09:57] <Mirv> ok...
+[09:57] <didrocks> Mirv: to get the SRU team happy about the diff
+[09:57] <didrocks> Mirv: normally, we don't really do new releases :)
+[09:58] <didrocks> Mirv: another way is just cherry-pick the commit
+[09:58] <didrocks> maybe just easier for you?
+[10:06] <veebers> didrocks: sorry, missed your previous message :-) I've read the back log, will talk w/ thomi
+[10:08] <Mirv> didrocks: one way now here: pull  lp:~timo-jyrinki/bamf/ubuntu.02126 again and use https://launchpad.net/bamf/0.2/0.2.126/+download/bamf-0.2.126-nodoc.tar.gz as the orig.tar.gz
+[10:08] <Mirv> same stuff, just doc/ unchanged from 0.2.124.2
+[10:08] <didrocks> veebers: thanks!
+[10:09] <didrocks> Mirv: excellent, having a look!
+[10:09] <didrocks> Mirv: gorgious, taking your tarball as well :)
+[10:10] <Mirv> didrocks: great! and I agree that this is neater for the SRU team.
+[10:10] <didrocks> Mirv: yeah, I can understand why they do have this position :)
+[10:10] <didrocks> Mirv: thanks again, good work :)
+[10:11] <Mirv> you're welcome
+[10:15] <didrocks> veebers: I still don't get why the nvidia tests are failing, and not when we run all the tests :/
+[10:35] <sil2100> Ughh
+[10:36] <sil2100> didrocks: I suddenly dont have imternet right now
+[10:36] <didrocks> sil2100: sux :/
+[10:36] <sil2100> Using my phone and some internet packets
+[10:37] <didrocks> sil2100: I'll rerun the release once your branches merged
+[10:40] <sil2100> didrocks: I'm looking what could have changed that the files lens had no results, but no internet doesnt help :/
+[10:40] <didrocks> sil2100: indeed, good luck :/
+=== sil2100_ is now known as sil2100
+[10:41] <sil2100> Ok, I got internet back!
+[10:41] <sil2100> \o/
+[10:44] <didrocks> sil2100 is back with full powers \o/
+[11:00] <MCR1> Trevinho: Hi. :) Are you here ?
+[11:03] <MCR1> Trevinho:  I did intensive testing regarding the Alt+Enter Fullscreen/Un-Fullscreen shortcut to be sure to not introduce any new issues and found a bug already in Unity trunk:
+[11:04] <Trevinho> MCR1: what's hte problem?
+[11:04] <MCR1> It is currently still possible to invoke the HUD for fullscreened windows
+[11:04] <MCR1> but it is invisible then
+[11:05] <Trevinho> MCR1: one "regression" with that alt+enter I have is that... I used alt+enter to open a new URI in a new tab in ff/chromium and this shourtcut would miss it... .P
+[11:05] <Trevinho> MCR1: yeah, as the menus
+[11:05] <Trevinho> MCR1: we had a problem with that
+[11:05] <MCR1> solution: we should forbid to invoke the HUD and menus -> should be easy
+[11:05] <Trevinho> there's a bug in compiz...
+[11:05] <MCR1> but it should be done
+[11:05] <MCR1> really ?
+[11:08] <MCR1> Trevinho: Don't you think that it would be better to handle this problem in Unity ? I am sorry about your shortcut :-[
+[11:09] <MCR1> Because you can trigger this bug now in trunk.
+[11:09] <MCR1> Simply open a video player with video, double-click it to fullscreen it and then tap ALT to invoke the HUD.
+[11:09] <MCR1> It will still come up, but behind the fullscreened window
+[11:10] <Trevinho> MCR1: well, it depends, for sure we should make unity to draw its window above the fullscreen ones (in certain cases)
+[11:10] <Trevinho> yep
+[11:11] <MCR1> I think the best solution would be forbidding starting the HUD for fullscreen-windows.
+[11:11] <Trevinho> MCR1: the same is for the dash
+[11:11] <Trevinho> MCR1: mh, no... it should above them
+[11:11] <MCR1> uh, did not think about that yet...
+[11:11] <Trevinho> there's a bug available
+[11:11] <Trevinho> MCR1: the HUD is needed also to control apps fullscreen (is one of its most useful cases)
+[11:12] <MCR1> The HUD is a great innovation -> I 100% agree. Who did come up with that ?
+[11:17] <MCR1> Trevinho: Thanks 4 all the info, I am not sure though how to force Unity to draw on top of everything yet, but I'll investigate...
+[11:20] <MCR1> The Panel should already have some code-magic done as On-Top-Windows are still behind it...
+[11:21] <MCR1> The Dash and HUD should probably use the same magic...
+[11:22] <MCR1> It would probably also fix the problem that Docks are on top of Unity's Fullscreen-Dash, making it more or less unusable...
+[11:30] <sil2100> Strange things with the files lens, hm hm
+[11:34] <sil2100> didrocks: I think the test is badly written
+[11:34] <sil2100> didrocks: test_files_lens_preview_open_close <- I'll have to rewrite it, because it works on a broken principle
+=== _salem is now known as salem_
+[11:44] <didrocks> sil2100: ok, I'll try to make a run with the rest meanwhile :)
+[11:53] <luv> last night, I finally got my patch somehow working - so when I right-click a BamfLauncherIcon I get a list of open windows and I can click them to switch between windows quickly - neat
+[11:53] <sil2100> luv: awesome!
+[11:53] <luv> thought there are still bugs in it and one or two memory leaks - I will post the patch (hopefully) next week
+[11:53] <luv> thanks :-)
+[11:55] <sil2100> luv: show it to us once you think it's in good shape ;)
+[12:16] <MCR1> sil2100: bug 627195 is already fixed isn't it ?
+[12:16] <ubot5> bug 627195 in unity (Ubuntu) "Window management - Apps raised from indicators sometimes dont have the focus" [High,Triaged] https://launchpad.net/bugs/627195
+[12:17] <MCR1> I cannot reproduce it anymore...
+[12:17] <MCR1> sil2100: Please forget it - false alarm...
+[12:20] <andyrock> MCR1, that bug is actually a gtk bug + indicator bug + standard bug
+[12:20] <MCR1> urgh
+[12:21] <MCR1> I am having troubles to reproduce it reliably - sometimes it works, sometimes not
+[12:21] <sil2100> ;)
+[12:21] <andyrock> MCR1, in a nutshell gtk_window_present uses a wrong timestamp
+[12:22] <rye> andyrock: is this the same reason why https://bugs.launchpad.net/ubuntu/+source/unity/+bug/1098753 happens?
+[12:22] <ubot5> Launchpad bug 1098753 in unity (Ubuntu) "[raring] Launching media files from dash opens them below active window" [Undecided,New]
+[12:23] <andyrock> rye, it's linked but it can be solved on unity-side
+[12:24] <andyrock> rye, unity-lens-* should use startup notification to launch an app
+[12:25] <andyrock> rye, for example try this: open a nautilus window, than try to open another nautilus using the dash
+[12:25] <rye> andyrock: oh
+[12:25] <andyrock> rye, click on another gtk window before opening the dash
+[12:26] <rye> andyrock: this is weird
+[12:26] <andyrock> rye, now try to open do the same thing using the launcher
+[12:26]  * rye found this - https://bugs.launchpad.net/unity/+bug/721974 
+[12:26] <ubot5> Launchpad bug 721974 in unity (Ubuntu) "Unity should have startup animations for Panel and Launcher" [Undecided,Incomplete]
+[12:26] <andyrock> with the launcher should be fine
+[12:27] <andyrock> ubot5, well the Launcher partially support it
+[12:27] <ubot5> andyrock: I am only a bot, please don't think I'm intelligent :)
+[12:27] <andyrock> lol
+[12:27] <rye> andyrock: yep, launcher is ok
+[12:27] <MCR1> andyrock: I think one of the workarounds is actually working -> CCSM->General Options->Focus Prevention Level->Off (at least for the Indicator Raise issue...)
+[12:27] <andyrock> MCR1, yeah but it's a bad workaround
+[12:27] <andyrock> MCR1, disabling the focus prevention is a bad idea
+[12:28] <didrocks> sil2100: I'm relaunching an unity build + tests now that the switcher branch is merged
+[12:28] <rye> I remember i disabled focus prevention just because nautilus was not playing well (and menus of different app was displayed when nautilus was fullscreen). Now nautilus works properly (for some reason)...
+[12:29] <andyrock> rye, if you use the launcher to launch nautilus yeah it should be fixed
+[12:30] <andyrock> if you want I can tell you how can you fix it for unity-lens-application too
+[12:30] <sil2100> didrocks: ok - will have some more branches/merges ready soon
+[12:31] <didrocks> sil2100: awesome \o/
+=== dandrader is now known as dandrader|afk
+[12:48] <rye> andyrock: to fix - look how the launcher handles app startup and do the same for app lens?
+[12:49] <andyrock> rye, yup :) just make sure to think about testing too
+[12:52] <rye> ok, last question - has anybody knows/spotted anything weird with how the panel is rendered in unity - I am still obsessed over https://bugs.launchpad.net/ayatana-design/+bug/723167 and it's definitely not antialiasing settings that break it
+[12:52] <ubot5> Launchpad bug 723167 in unity (Ubuntu) "Panel does not use standard GTK/Pango font rendering/antialiasing, causing fuzzy fonts" [Medium,Triaged]
+[12:52]  * rye thinks that title needs to be updated
+=== MacSlow is now known as MacSlow|lunch
+[13:27] <sil2100> didrocks: https://code.launchpad.net/~sil2100/unity/autopilot_dash_lens_previews_fixed/+merge/144934
+[13:27] <sil2100> didrocks: this should fix 2 dash lens preview tests failing
+=== rsalveti_ is now known as rsalveti
+=== dandrader|afk is now known as dandrader
+[13:52] <sil2100> Let me take a look at some others
+=== chiluk_away is now known as chiluk
+[14:20] <didrocks> sil2100: excellent!
+[14:21] <didrocks> sil2100: ATI doesn't seem in a good shape now :(
+[14:21] <didrocks> Waiting for Unity
+[14:21] <didrocks> Unity seems to be unavailable (for test suite: unity.tests.test_home_lens)
+[14:21] <didrocks> do you think it can be a timeout issue?
+[14:21] <didrocks> (run 51, ATI)
+=== MacSlow|lunch is now known as MacSlow
+[14:22] <jibel> il aurait planté?
+[14:22] <didrocks> jibel: seems so…
+[14:23] <jibel> oops, wrong window :)
+[14:23] <didrocks> ;)
+[14:23] <didrocks> sil2100: same than with one ws btw on the tests, I think adding some video files for the integration tests will be nice
+[14:26] <didrocks> mterry: hum, needed coffee this morning, I read the message the other way around :)
+[14:26] <didrocks> and blocked on "python" :)
+[14:27] <didrocks> mterry: btw, in addition to what I sent about the crash during the indicator tests on nvidia (I put you on the loop so that you can help them debugging), can you mention as well that it will be good if we can collect in addition to the crash files ~/xsession-errors and /var/log/syslog?
+[14:27] <didrocks> (archived as jenkins artefacts)
+[14:35] <mterry> didrocks, k
+[14:35] <didrocks> thanks :)
+[14:35] <didrocks> mterry: my emails were clear enough I hope?
+[14:38] <mterry> didrocks, I think so.  After skimming, I put it on my TODO this morning, haven't read explicitly
+[14:38] <didrocks> mterry: ok, do not hesitate if any question arise before I disconnect
+[14:38] <didrocks> mterry: I still need to relaunch the tests once now that sil2100 fixed most of the issues due to the refactoring
+[14:39] <mterry> didrocks, who's working on the autopilot side of that issue?  (to write empty failed tests before starting any of them)
+[14:40] <didrocks> mterry: it's another issue, nobody right now AFAIK, I just bootstrapped the discussion
+[14:40] <didrocks> mterry: people in CC of this emails should be the right contacts
+[14:44] <sil2100> didrocks, mterry: you can count on me if anything, for now I'll work on reducing the number of failures more - just I'm having lunch right now
+[14:45] <didrocks> sil2100: excellent, I'm sure mterry will abuse of your kindness :)
+[14:50] <mterry> fginther, hello!
+[14:51] <mterry> fginther, in http://10.97.0.1:8080/job/ps-indicators-autopilot-release-testing/label=autopilot-nvidia/90/ there was a test failure caused by a crashing Xorg
+[14:51] <mterry> fginther, but the crash files aren't part of the artifacts.  Is that because crash files aren't picked up yet, or is it some weird bug with this build?
+[14:52] <fginther> mterry, I believe veebers was looking into this issue
+[14:52] <fginther> mterry, the crash files should be saved
+[14:53] <didrocks> fginther: they aren't, we have the same issue on the unity autopilot job
+[14:53] <fginther> we may be able to manually extract them if the machine has been wiped
+[14:53] <didrocks> like here, we have another crash on ati + some dconf crash
+[14:53] <didrocks> they are not archived
+=== dandrader is now known as dandrader|lunch
+[14:56] <fginther> mterry, didrocks the dconf crash is available on the ati box
+[14:56] <didrocks> fginther: it's not on the artefacts or did I miss anything?
+[14:56] <fginther> didrocks, it's not being copied. it's still sitting on the test machine
+[14:56] <mterry> hm
+[14:57] <didrocks> fginther: jibel reported it manually, but yeah, we need to copy them over jenkins
+[14:57] <fginther> didrocks,  veebers mentioned an issue with apport-retrace which I think is the reason they are not being copies
+[14:57] <fginther> didrocks, I'll investigate a workaround
+[14:57] <mterry> fginther, thanks!
+[14:57] <didrocks> fginther: also, as I was telling tome lines above, we should as well put ~/xsession-errors, /var/log/syslog and Xorg.0.log as artefacts I think
+[14:58] <didrocks> thanks :)
+[14:58] <fginther> didrocks, will do
+[14:58] <didrocks> great ;)
+[14:58] <didrocks> fginther: there are always the 3 jobs to change: indicator/oif/unity
+[14:59] <mterry> didrocks, so I see indicators-head needs manual packaging approval.  Once I review something and llike it, how do I approve it?
+[14:59] <didrocks> mterry: I did it for today to have unity moving, but we can "simulate" what I did
+[14:59] <rperier> hey, could someone look at the merge request 144773 ? I have committed the corresponding autopilot unit test
+[14:59] <didrocks> mterry: so, you did see that the global status was "unstable", isn't it?
+[14:59] <mterry> yeah
+[15:00] <didrocks> clicking on indicators head
+[15:00] <didrocks> the publish job was yellow
+[15:00] <rperier> thanks in advance
+[15:00] <mterry> well, yellow anyway
+[15:00] <didrocks> yeah,  unstable is yellow :)
+[15:00] <didrocks> mterry: look at run 39
+[15:00] <mterry> didrocks, yeah I got as far as reviewing the packaging diff for individual packages
+[15:00] <didrocks> ah good :)
+[15:00] <didrocks> so, then, we need to force the publication
+[15:00] <mterry> didrocks, is this where cu2-run comes in?
+[15:00] <didrocks> yep
+[15:01] <mterry> didrocks, I want a fancy web buttton  :
+[15:01] <didrocks> in jenkins/
+[15:01] <mterry> :)
+[15:01] <didrocks> mterry: well, we need credentials :)
+[15:01] <mterry> didrocks, oauth me!
+[15:01] <didrocks> ahah! :)
+[15:01] <didrocks> ./cu2d-run -P indicators head
+[15:01] <didrocks> for publishing indicators-head
+[15:01] <mterry> didrocks, but OK.  Cool.  Do I have to publish the whole stack or can I specify individual packages on that line too?
+[15:01] <didrocks> I think it's time to share the credentials btw
+[15:02] <didrocks> mterry: no, we validate the integration tests per stack, so the publication is per stack
+=== dandrader|lunch is now known as dandrader
+[16:35] <sil2100> didrocks: one of the failures *might* be a real regression
+[16:36] <didrocks> sil2100: I can test, I'm on the latest ppa
+[16:37] <sil2100> didrocks: for instance the unity.tests.test_dash.PreviewInvocationTests.test_preview_key sometimes fails, it usually fails on a first start - I noticed it's not 100% reproducible, but I noticed that unity sometimes ignores keystrokes when it's still not loaded completely
+[16:37] <sil2100> didrocks: for instance, I reproduced the problem once on my guest session when trying to run the music lens right after starting
+[16:37] <didrocks> sil2100: ah, interesting, so we need to tests, once after loading, one trying to do that as early as possible :)
+[16:38] <sil2100> didrocks: the Super key got registered, but the 'm' stroke went behind unity and landed on my terminal ;p
+[16:38] <didrocks> sil2100: yeah, you're probably right :)
+[16:39] <didrocks> btw, new results for ati/intel, run 52
+[16:39] <didrocks> still waiting on nvidia, crossing fingers
+[16:39] <sil2100> Stressing
+[16:39] <sil2100> I just hope it's enough for a release ;/
+[16:39] <didrocks> sil2100: I hope as well that we won't get Xorg crash this time :)
+[16:42] <fginther> didrocks, hello. if we enable merges to skip the jenkins build process for changelog only updates, can we later run into problems if the changelog contained a version bump?
+[16:43] <didrocks> fginther: not really, because we can't bump build-dep automatically, but if we do that at some point, yeah, it can be
+[16:43] <didrocks> fginther: or you should just add the daily-build ppa as a source
+[16:43] <didrocks> and so we won't have this problem
+[16:45] <fginther> didrocks, ok, that makes sense. thank you
+[16:46] <didrocks> yw :)
+[16:46] <rperier> someone might review a merge request ? (this is a small fix)
+[16:46] <rperier> :)
+[16:46] <bregma> fginther, rumour has it you know where I can find useful test coverage reports for Unity.... is this true?
+[16:46] <didrocks> bregma: ^^
+[16:46] <sil2100> rperier: show us ;)
+[16:46] <fginther> didrocks, the changes to enable this are working, just need some tests, reviews and job config changes...
+[16:46] <rperier> sil2100: https://code.launchpad.net/~rperier/unity/exec-len/+merge/144773
+[16:46] <rperier> ;)
+[16:47] <fginther> bregma, one moment
+[16:47] <didrocks> fginther: oh great! if we have a manual publish in 10/15 minutes, I'll let you know :)
+[16:47] <sil2100> rperier: oh, autopilot test added - nice! Checking it out
+[16:47] <didrocks> fginther: for the unity stack, but then, you'll have to update everyjob
+[16:47] <didrocks> (you really need to automate the job update)
+[16:48] <rperier> sil2100: hehe
+[16:48] <rperier> the fix itself is not *amazing*
+[16:49] <fginther> didrocks, thanks, just give me a heads up on the branch before you push the branch
+[16:49] <rperier> but it does the trick ;)
+[16:49] <fginther> didrocks, I'll try it for real with a branch or two first
+[16:49] <didrocks> fginther: well, if we don't have any packaging change, it will be pushed automatically
+[16:49] <didrocks> fginther: but I can revert approved to needs review
+[16:49] <sil2100> didrocks: can I approve a merge globally, or do you prefer to not merge any new things before the release right now?
+[16:49] <didrocks> if we do that quickly enough, that's fine :)
+[16:50] <fginther> didrocks, ah I see. the revert will work. thanks
+[16:50] <didrocks> sil2100: wait for 15 minutes for safety, but normally, I don't plan to rebuild unity :)
+[16:50] <rperier> sil2100: the bug has been tagged for unity 7.0 ...
+[16:50] <rperier> :)
+[16:50] <sil2100> rperier: it looks good, thanks ;) Get used to google-test and autopilot, since we have a rule that everything that is testable needs to have an automatic test provided in the branch
+[16:50] <sil2100> So you might be writing a lot of tests in the future ;p
+[16:51] <rperier> :p
+[16:51] <rperier> if this is required, np
+[16:51] <bregma> in fact, if all you do is write tests and not change the software, that is a valuable contribution
+[16:51] <mterry> didrocks, et al: I noticed we have a lot of test failures, but that ya'll were working on them.  Where are we on that?
+[16:52] <didrocks> mterry: what do you mean by "a lot"? :)
+[16:52] <sil2100> mterry: what failures do you have in mind ;) ?
+[16:52] <fginther> bregma, does this work? https://jenkins.qa.ubuntu.com/job/unity-mbs-autolanding/357/build=pbuilder,distribution=raring,flavor=amd64/cobertura/?
+[16:52] <didrocks> rperier: I would add to bregma's statement a *very* valuable one :)
+[16:53] <rperier> :)
+[16:54] <didrocks> grrr, game of the day, thanks UTAH, this times, nvidia didn't restart…
+[16:54] <sil2100> huh?
+[16:54] <sil2100> So no nvidia :( ?
+[16:55] <bregma> fginther, that report doesn;t seem very accurate, since it doesn't show about half the code
+[16:56] <alesage> fginther yes it's sneaky b/c it only reports on files *with tests*
+[16:56] <rperier> I might help you fixing/writing tests after this merge if you want :)
+[16:57] <fginther> bregma, yes, there is a problem with one of the coverage tools that causes it to not include files that are not executed during testing. very unfortunate
+[16:58] <mterry> didrocks, sil2100 : Ah nevermind.  I got confused reading the Jenkins page between the 40 unity ones and the indicator (thought we had 40 indicator stack failures)
+[16:58] <bregma> fginther, OK...  do you know how I can build Unity for gcov analysis locally? (I'm  not an expert at cmake)
+[16:59] <rperier> sil2100: thanks to have approved it
+[16:59] <fginther> bregma, I can dig up something
+[16:59] <fginther> bregma, I'll send you mail
+[17:00] <bregma> K, thanks, I need to cross some stuff off my to-do list
+[17:00] <didrocks> mterry: no, it's on the whole unity here ;)
+[17:00] <didrocks> mterry: sil2100: the last run with nvidia, where this time intel UTAH failed was good
+[17:01] <didrocks> mterry: sil2100: I'm powdering just running the publisher job right now and release as it is
+[17:02] <mterry> didrocks, 40 is about normal for unity though right?
+[17:02] <didrocks> mterry: 40/50 yeah
+[17:02] <didrocks> (sum of the 3 configurations)
+[17:02] <didrocks> so 15+ on each
+=== dandrader is now known as dandrader|afk
+[17:04] <sil2100> \o/
+[17:04] <sil2100> \o\
+[17:04] <sil2100> /o/
+[17:04] <didrocks> soooooooo
+[17:04] <sil2100> didrocks: can I globally approve a merge request, or should I wait a moment ;p?
+[17:04] <didrocks> sil2100: you can approve
+[17:04] <sil2100> Ah, I see bregma already did
+[17:04] <didrocks> yeah, seems that he's not really reading IRC :/
+[17:04] <rperier> thanks !
+[17:04] <rperier> :)
+[17:05] <rperier> that's cool ;)
+[17:05] <didrocks> mterry: so, as you can see, arm is still not published
+[17:05] <didrocks> rperier: thanks for your contribution
+[17:05] <rperier> yw
+[17:05] <didrocks> mterry: once, done, as the tests fails and we are going to "bypass/workaround", I'll just run the publisher job
+[17:05] <didrocks> mterry: similar thing than a manual publishing
+[17:06] <didrocks> so ./cu2d-run -P unity
+[17:06] <didrocks> (head is the default release)
+[17:09] <mterry> didrocks, why are we manually publishing this run?  Is 40 tests over the error threshold?  (still not clear at what level those have been set)
+[17:09] <didrocks> mterry: see my discussion above about nvidia not rebooting ^
+[17:09] <didrocks> mterry: so we don't have any nvidia result
+[17:09] <didrocks> because UTAH didn't make it reboot
+[17:09] <rperier> I might help you fixing non-bitesize bugs now, what do you think ? (I try to increase difficulty step by step)
+[17:09] <didrocks> mterry: the previous run, it was UTAH not making intel rebooting :/
+[17:10] <didrocks> mterry: so if one configuration is failing, we are not going to the next step
+[17:10] <mterry> didrocks, sure, OK
+[17:10] <didrocks> but if take this run, and look at the previous one for nvidia
+[17:10] <didrocks> the results are fine
+[17:10] <mterry> didrocks, what is the threshold for errors?
+[17:10] <didrocks> mterry: 8% (but we can get down to 5% in reality) on each configuration
+[17:10] <didrocks> mterry: it's config per config
+[17:10] <didrocks> for unity
+[17:11] <didrocks> for the indicators, it's 2% (meaning, 1 test failing)
+[17:11] <didrocks> per config again
+[17:11] <didrocks> one config being ati, intel or nvidia
+[17:11] <didrocks> if only UTAH was stable…
+[17:11] <mterry> didrocks, and are sil2100 and crew still working on getting to all tests passing, or are we happy with where are and working on features/bugs?
+[17:11] <didrocks> mterry: sil2100 is working on getting the number lower
+[17:12] <mterry> didrocks, cool.  Just trying to get a sense of where we are
+[17:12] <didrocks> mterry: I would be happy to keep the threshold at 3% personnaly, but getting all tests that reliably fails fixed would be a nice improvment
+[17:12] <didrocks> sure sure :)
+[17:12] <mterry> didrocks, oh, gnome-control-center-unity should be added to the unity stack, btw
+[17:13] <mterry> didrocks, any objection?
+[17:13] <didrocks> mterry: not at all :)
+[17:13] <mterry> didrocks, alright, will push to bzr and poke fginther
+[17:13] <didrocks> great! :)
+[17:13] <didrocks> should be in the "misc" stack, maybe?
+[17:13] <didrocks> as no integration tests, and (mostly) independant component
+[17:13] <didrocks> independent*
+[17:14] <mterry> didrocks, it doesn't have tests true
+[17:14] <mterry> didrocks, sure, misc stack
+[17:15] <didrocks> mterry: TBH, I'll just try to release unity and go then, we can see once I'm back and I'll let you add it once you get your creds :)
+[17:16] <mterry> didrocks, add gnome-control-center-unity?  Why wold I need creds for that?
+[17:16] <didrocks> mterry: to the daily release stack
+[17:16] <didrocks> you need to reconfigure the jenkins jobs for the daily release :)
+[17:16] <mterry> didrocks, ah earlier you said fginther did that, but I guess you meant only because I didn't have creds.  OK
+[17:17] <didrocks> mterry: ah no, fginther needs to do the jenkins bot to merge the upstream code
+[17:17] <sil2100> didrocks, mterry: next week the number will be again lower
+[17:17] <didrocks> mterry: this part http://blog.didrocks.fr/public/ubuntu/daily-release/merge-upstream-branch.png
+[17:17] <didrocks> sil2100: excellent!
+[17:18] <didrocks> mterry: we are deploying automatically our jobs for that part: http://blog.didrocks.fr/public/ubuntu/daily-release/daily-release-jenkins-jobs.png
+[17:18] <didrocks> fginther: around for the publication?
+[17:18] <mterry> didrocks, what does this have to do with adding gccu to the misc stack?
+[17:18] <fginther> didrocks, yes
+[17:18] <mterry> didrocks, that's not about landing an upstream branch
+[17:19] <didrocks> mterry: we need to have the facility to land upstream branches
+[17:19] <didrocks> mterry: when we merge back the "latest snapshot"
+[17:19] <didrocks> the branches needs to be merged :)
+[17:19] <didrocks> it's just opening a MP
+[17:19] <didrocks> mterry: <unrelated> so as you can see the check step failed (because of nvidia being stuck) and the rest is green
+[17:20] <didrocks> ("heads" reflect the global status)
+[17:20] <mterry> didrocks, and that's some configuration step above and beyond jenkins being told that this project is part of the misc stack...  OK
+[17:20] <didrocks> mterry: yep :)
+[17:20] <didrocks> so, now, to force the publication, I'm just rerunning the publish job in "force mode"
+[17:20] <mterry> didrocks, alright, will wait until you get back then  :)
+[17:20] <didrocks> mterry: this unfortunately doesn't refresh the "head" job to become green
+[17:21] <didrocks> mterry: so I run  ./cu2d-run -P unity
+[17:21] <didrocks> you can see the publish job running now
+[17:21] <sil2100> Ok everyone, I'll be going for some shopping!
+[17:21] <mterry> didrocks, sure
+[17:21] <sil2100> didrocks: have a nice holiday! ;)
+[17:21] <didrocks> sil2100: have a good week-end! :)
+[17:21] <sil2100> See you
+[17:21] <didrocks> sil2100: thanks, good luck with the tests ;)
+[17:21] <didrocks> fginther: I reverted the status for:
+[17:21] <didrocks> https://code.launchpad.net/~ps-jenkins/unity/latestsnapshot/+merge/144991
+[17:22] <didrocks> https://code.launchpad.net/~ps-jenkins/compiz/latestsnapshot/+merge/144992
+[17:22] <didrocks> https://code.launchpad.net/~ps-jenkins/nux/latestsnapshot/+merge/144993
+[17:22] <didrocks> fginther: so you have 3 to play with :)
+[17:22] <didrocks> fginther: just ensure that they are merged by the EOD :)
+[17:22] <fginther> didrocks, excellent! thanks
+[17:22] <didrocks> fginther: yw :)
+[17:22] <didrocks> mterry: so, as you can see this is the merge back of the snapshot
+[17:23] <didrocks> mterry: the rest is green and the sync file is generated
+[17:23] <didrocks> at 30', a rsync from lillypilly will happen
+[17:23] <didrocks> and sync those 3 components from the ppa
+[17:23] <didrocks> (the cron is running every 15 minutes)
+[17:24] <mterry> didrocks, k
+[17:24] <mterry> didrocks, why does fginther have to do something manual for those snapshot merges?
+[17:25] <didrocks> mterry: oh, he wants to experiment this time to skip rebuilding when merging those snapshot
+[17:25] <mterry> ah
+[17:25] <didrocks> like just taking the MP, recognizing it's this kind of merge and bzr push
+[17:25] <didrocks> will avoid 3 hours of build on compiz for instance
+[17:27] <didrocks> mterry: so, the only thing I don't like is that the global status is showing the "head" one in that case (which can be yellow if there is a manual publish and we rerun the "publish" mode
+[17:28] <didrocks> mterry: I don't want that we rerun all the jobs to skip them (can take time if we have multiple "prepare" packages)
+[17:28] <rperier> I might help you fixing non-bitesize bugs now ?
+[17:29] <rperier> what do you think ?
+[17:29] <mterry> didrocks, I don't follow.  It's red now, but you wish it were yellow if we manually pushed?
+[17:29] <didrocks> mterry: yeah, it's read because the "check" step is read
+[17:29] <mterry> right
+[17:29] <didrocks> (because of nvidia failing)
+[17:29] <didrocks> mterry: normally, if UTAH behaves correctly
+[17:29] <didrocks> we can only have red is the build failed
+[17:30] <mterry> didrocks, are UTAH failures like this common usually?
+[17:30] <didrocks> mterry: yeah :(
+[17:30] <didrocks> more than common
+[17:30] <mhr3> davidcalle, ping/
+[17:30] <mterry> Do we understand why/are we working on that?
+[17:30] <davidcalle> mhr3, pong
+[17:30] <didrocks> mterry: I was asked by qa to "open bugs"
+[17:30] <didrocks> and that's what I'm doing
+[17:30] <didrocks> but the poor level of logs makes them generally just closing them
+[17:30] <mterry> hm
+[17:31] <didrocks> without knowing why it failed…
+[17:31] <mterry> open a bug for more logs  :)
+[17:31] <didrocks> it's already there :/
+[17:31] <didrocks> I got the promess that all issues will be fixed in the 2 weeks coming…
+[17:31] <didrocks> if not, I'll escalate…
+[17:32] <didrocks> because it's really creating a pain for us, provisionning a machine isn't the most complexe piece of the process…
+[17:33] <didrocks> mterry: so yellow on the global status happens if:
+[17:33] <didrocks> - we are in manual publishing mode (packaging changes or upstream stack failed/is in manual publishing mode)
+[17:33] <didrocks> - or if one component were skipped because the version in distro is higher than what we have in trunk
+[17:34] <didrocks> green is… well you got it :)
+[17:34] <mterry> :)
+[17:34] <didrocks> mterry: btw, part 4 on stack dependencies published :)
+[17:35] <didrocks> mterry: so right now, the two blockers, to some up are:
+[17:35] <mterry> didrocks, ah more homework  :)
+[17:35] <didrocks> - UTAH and its reliability
+[17:35] <didrocks> - autopilot in case there is a crash stopping its tests (and silently)
+[17:35] <didrocks> mterry: heh, indeed
+[17:36] <jibel> - UTAH and how to ping jibel to relaunch the jobs ;)
+[17:36] <mterry> didrocks, so UTAH team is slowly looking at UTAH issues.  And autopilot work is unscoped?
+[17:36] <didrocks> jibel: I've already given your name and tell them you can be highly bothered :)
+[17:36] <mterry> er, unworked-on right now
+[17:37] <didrocks> mterry: yep, please push the thread I CCed you forward :)
+[17:37] <mterry> didrocks, I imagine Thomi makes sense there
+[17:38] <didrocks> yep :)
+[17:38] <didrocks> mterry: seeing the road we had to ride (like 120+ tests failing, UTAH failing even more…) we are going in the right directions
+[17:38] <didrocks> those 2 are the last baby steps, I hope :)
+[17:39] <didrocks> (I forgot about the "no test on indicators" that we workarounded by stealing the ones from unity which made sense)
+[17:40] <mterry> didrocks, is that so bad?  I assume they exercise them somewhat well.  But we fear gaps I imagine
+[17:40] <didrocks> mterry: we have quite some gap, that's why I'm not that confident and put the failure trigger to 2% for only one test failure
+[17:40] <didrocks> mterry: once we got more, like for the HUD thanks to libcolumbus (so the other email), I hope that it's a starting point
+[17:41] <didrocks> but like, we have none for changing volume, click on the power indicator, and so on…
+[17:41] <didrocks> or changing telepathy presence status
+[17:41] <didrocks> mterry: the team is quite rigorous, but having at some point a safety net will be good
+[17:42] <didrocks> not as high at all as the 2 other points I mentionned though ^
+[17:43] <andyrock> rperier, any contributon is welcome ;)
+[17:43] <andyrock> rperier, so yeah you don't have to ask to fix bitesize bug
+[17:43] <andyrock> *bugs
+[17:44] <rperier> no I am asking for fixing non-bitesize bugs :D
+[17:45] <andyrock> rperier, it's ok too
+[17:45] <andyrock> just make sure there is a bug report
+[17:48]  * mterry hugs rperier 
+[17:48] <rperier> I fixed 2 bitesize bugs, I was just asking if I could help you fixing tests or important blocking bugs in unity :)
+[17:50] <andyrock> rperier, we have a list: https://blueprints.launchpad.net/ubuntu/+spec/desktop-r-unity-polish
+[17:50] <andyrock> rperier, but most of them are fixed now
+[17:50] <andyrock> feel free to pick one on bugs.launchpad.com/unity
+[17:50] <andyrock> :)
+[17:50] <mterry> didrocks and I were just talking how we could use more tests written too
+[17:50] <rperier> okay, It's noted ;)
+[17:50] <rperier> thanks
+[17:51] <didrocks> rperier: indicators autopilot tests would be awesome as mterry noted!
+[17:56] <didrocks> fginther: do not forget to have the 3 MP merged before the EOD :)
+[17:57] <didrocks> otherwise, you will give a rough start next week to mterry to understand why some jobs are yellow (even if normally, the logs should be clear ;))
+=== salem_ is now known as _salem
+=== _salem is now known as salem_
+=== dandrader|afk is now known as dandrader
+[18:54] <fginther> bregma, bschaefer unity autolanding jobs have been running without issue (16 total) after https://code.launchpad.net/~bregma/unity/initialize_horizontal_drag/+merge/144579
+[18:54] <bschaefer> fginther, \o/
+=== dandrader is now known as dandrader|afk
+[18:56] <bregma> we still have out work cut out for us
+[18:59] <bregma> rperier, are you looking for a bug to fix?  there's one that is vexing and irking me daily: https://bugs.launchpad.net/unity/+bug/1060887
+[18:59] <ubot5> Launchpad bug 1060887 in Unity "Multiple files rebuilt on each run of make" [Undecided,New]
+=== dandrader|afk is now known as dandrader
+=== cyphermox_ is now known as cyphermox
+=== salem_ is now known as _salem

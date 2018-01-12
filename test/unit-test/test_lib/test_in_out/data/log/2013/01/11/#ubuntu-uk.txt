@@ -1,0 +1,446 @@
+=== Ivanka_ is now known as Ivanka
+=== Hornet- is now known as Hornet
+[07:57] <popey> morning
+[08:28] <daubers> Morning
+[08:32] <dw4tkins> moin moin
+[08:33] <MooDoo> morning
+[08:38] <hoover> Morning all
+[09:44] <diplo> Morning all
+[09:44] <diplo> Anyone know of a cross distro way of extracting DOCUMENT_ROOT from apache ?
+[09:45] <SuperMatt> once again my bash history is littered with :q and :wq >.<
+[09:45] <diplo> Only way I can think at the moment is to use getenv with php-cli as that's the only thing that will be cross distro, as paths/names of services differ
+[09:46] <brobostigon> good morning everyone,
+[09:46] <SuperMatt> what are you trying to achive?
+[09:46] <diplo> Install script for our app automated
+[09:46] <diplo> So it basically exports from svn and then moves files to the document root
+[09:47] <diplo> At the moment it's hardcoded to /var/www/html for centos
+[09:47] <diplo> But it broke today as it's on ubuntu in /var/www
+[09:47] <diplo> Basically stuff get's exported to a /tmp dir and moved to it's correct location through the script
+[09:47] <SuperMatt> I would honestly just try to work out if it's debian based or redhat based, and plunk it down wherever
+[09:48] <SuperMatt> and the reason I say that is because some people make other changes and move stuff around
+[09:48] <diplo> yeah i did think that as well..
+[09:48] <diplo> but yeah that is exactly the problem
+[09:48] <SuperMatt> my document root is in a completely different place right now
+[09:48] <SuperMatt> you can't predict everything
+[09:48] <SuperMatt> just give people what they need for a default install
+[09:48] <diplo> We don't run all our customers servers and some maybe in /home or /srv
+[09:48] <SuperMatt> if anyone has changed anything, they have to work it out
+[09:59] <BigRedS> diplo: it's pretty easy to parse out of apache
+[09:59] <BigRedS> knowing the servername
+[10:00] <BigRedS> grep the file and line number out of `apache2 -S` (bear in mind that it always prints to stderr for no good reason), then open that file and the next DocumentRoot directive after that line is the document root of that vhost
+[10:00] <BigRedS> nothing distro-specific at all
+[10:00] <diplo> BigRedS: centos uses httpd
+[10:01] <diplo> I guess I could allow for both, cleanest way I found was grabbing it out of php
+[10:01] <BigRedS> oh yeah, still that's just a -f test
+[10:01] <BigRedS> out of php?
+[10:02] <diplo> $_SERVER['DOCUMENT_ROOT']
+[10:02] <BigRedS> but to do that you need a php document already in the document root
+[10:02] <diplo> php cli and use getenv ?
+[10:05] <popey> AlanBell: Digital Surrey thing looks interesting this month.. a browse around the policy museum included.. http://www.eventbrite.com/event/5204446640/
+[10:12] <Azelphur> I think I really broke Ikea.
+[10:12] <Azelphur> Everything to do with their system I touch seems to break xD
+[10:13] <Azelphur> I've broke their ordering, delivery, and contact systems \o/
+[10:14] <BigRedS> diplo: why would php cli know where a document root is?
+[10:14] <BigRedS> and how would you tell it which one you were interested in?
+[10:17] <diplo> Thought you could grab the $SERVER variable which you can't from the CLI :)
+[10:18] <BigRedS> yeah, you can only get data from the server if the server puts it there
+[10:18] <BigRedS> :)
+[10:19] <diplo> I'll just write a shell script, run this if rh based, run this if debian based
+[10:19] <diplo> ta
+[10:19] <BigRedS> I'd just have the two grepes of apache2 -S or httpd -S and use the one that spits out a line
+[10:19] <BigRedS> you do need to know the servername for that, though, and not just one of the serveraliases
+[10:20] <diplo> apache2 -S need anything else passed to it, getting based user name atm
+[10:22] <BigRedS> getting based user name?
+[10:22] <diplo> heh bad user name
+[10:23] <diplo> It seems that envvars isn't being populated
+[10:23] <diplo> Looking at that now
+[10:23] <BigRedS> ah, you need to have APACHE_RUN_USER and APACHE_RUN_GROUP set I thionk
+[10:23] <BigRedS> which you either used to get by default or used to not need, but has been an issue recently. We use apache2 -S all the time here so it's fixed on almost all the machines incidentally
+[10:24] <BigRedS> oddly, centos's apache doesn't appear to need it
+[10:24] <BigRedS> or httpd
+[10:29] <popey> czajkowski: http://imgur.com/r/aww/2rR3z
+[10:29] <czajkowski> awwwww
+[10:29] <czajkowski> they are the cutest dogs
+[10:31] <popey> lies
+[10:32] <czajkowski> how could you say no to that face
+[10:33] <directhex> like this:
+[10:33] <directhex> NON!
+[10:33] <Laney> with a rolled up newspaper
+[10:33] <dw4tkins> http://i.imgur.com/aHujI.jpg - kitty saying no, by ignoring dog ;)
+[10:35] <czajkowski> Laney: oi you, back on the naughy step!
+[10:36] <Laney> SO UNFAIIIIIIIIIIIIRRRRRRRRRRRRRRRRRRR
+[10:40]  * Laney tries to resist buying out come the wolves on vinyl
+[10:41] <Knightwise> on Vinyl ?
+[10:41] <Knightwise> For real ?
+[10:41] <Laney> yeah
+[10:41] <Laney> it was my christmas pressie
+[10:41] <dw4tkins> If you buy something on vinyl, do you play it once to rip it, then put it away for safe-keeping, Laney?
+[10:42] <Laney> nah
+[10:42] <Laney> i haven't got any super rare collectible stuff
+[10:42] <Laney> it does have a usb connection for ripping though, but i'm not sure if it works on linux
+[10:43] <directhex> ion turntable?
+[10:43] <directhex> those are standard usb sound cards
+[10:44] <Laney> could be
+[10:44] <Laney> i'll try it later
+[10:44] <Laney> oops, my finger slipped
+[11:13] <davmor2> Morning all
+[11:15] <davmor2> Laney: you don't want your finger slipping on vinyl you'll scratch it, or worse still drop it and watch it fly across the room before it shatters into tiny pieces as it hits the wall
+[11:32] <Azelphur> lmfao, a (not very techy) friend of mine just called who I set up with Ubuntu
+[11:32] <Azelphur> Apparently she had one of those "You've got a Virus let us take control of your computer" calls
+[11:32] <Azelphur> long story short, she spent half hour trying to follow their instructions...on Ubuntu
+[11:33] <davmor2> muhahahahaha
+[11:33] <Azelphur> they gave her some mobile number to call back on too
+[11:34] <davmor2> Azelphur: The clue would of been the start of the call that goes, Microsoft or Windows is reporting to us that you have very many viruses :D
+[11:34] <Azelphur> xD
+[11:34] <dw4tkins> Azelphur: that mobile number might be worth passing to the authorities, effectively it's fraud isn't it?
+[11:34] <Azelphur> yea
+[11:34] <Azelphur> wonder where we'd pass it to
+[11:34] <Azelphur> she's had two calls off them and apparently they just cycle through numbers.
+[11:35] <davmor2> trading standards
+[11:35] <dw4tkins> unfortunately they're run from abroad, so there might not be a lot we can do
+[11:35] <Laney> doubt it
+[11:35] <Azelphur> indeed
+[11:35] <Laney> probably the cops if anyone
+[11:36] <dw4tkins> I listened to a recording of one, some dutch guy kept them on the line for ages pretending he was doing things to his virtual machine to get as much information as possible out of them
+[11:36] <Azelphur> dw4tkins: yea I saw that too, I could do that
+[11:36] <davmor2> we can stop their incoming line which will be with a UK based Company, However they just then need to change the number they ring in on and you are back to square one
+[11:36] <Azelphur> I have the number to call back so I could just call them xD
+[11:36] <dw4tkins> slippery customers
+[11:37] <Azelphur> davmor2: yea, and they appear to have that automated, so zero effort
+[11:37] <Azelphur> I was thinking it might be more fun to follow the instructions and gather more info, maybe try and mess with their servers a little ;)
+[11:38] <dw4tkins> yeah, Azelphur - a friend of mine was considering taking revenge and having a virtual machine with various virus-laden files in the document directory so if they copy them, they phone-home or otherwise identify them or mess their machines up
+[11:38] <dw4tkins> honeypot
+[11:38] <Azelphur> fun
+[11:39] <dw4tkins> yeah, so long as it doesn't backfire ;)
+[11:39] <Azelphur> I doubt there's much chance of that xD
+[11:39] <dw4tkins> perhaps, I'm just considering the possibilities
+[11:41] <popey> i didnt think they copied stuff, they generally just want to take your money
+[11:41] <davmor2> They get most perturbed when you tell them you can't find the start button and they insist it is on the bottom left and you say no that is my trashcan :D
+[11:41] <Azelphur> hahaha
+[11:43] <davmor2> they also hang up really quickly when you ask for their company name so you know who to sew along with microsoft for passing on personal information about your machine :D
+[11:44] <Azelphur> lol
+[11:44] <dw4tkins> sue? ;)
+[11:45] <dw4tkins> yeah, I imagine as popey says, they're mostly after your credit card to charge you for 'fixing' the problem, although I wouldn't put it past them to install some kind of botnet.
+[11:45] <davmor2> popey: they want money and they also install adware on your system that bogs everything down and then throws up a nice popup that says Pay for product now to remove these pesky viruses :D
+[11:45] <Azelphur> yea, my thoughts exactly
+[11:45] <davmor2> dw4tkins: Yeah that too but a girls name didn't look at all correct
+[11:45] <Azelphur> dw4tkins: could continually give them invalid credit card names from fake identity generator
+[11:46] <Azelphur> that'd be lulzy
+[11:46] <Azelphur> just see how long you can keep them on the line reading out fake number after fake number
+[11:46] <dw4tkins> yeah, or a credit card that's flagged somehow
+[11:55] <ali1234> i kept one of those guys on the line for about half an hour
+[11:55] <ali1234> eventually he twigged and started calling me names
+[11:56] <Azelphur> haha
+[11:56] <ali1234> we didn't get any more calls though
+[11:57] <ali1234> i heard those operations are run from "legit" call centers out of hours
+[11:58] <Azelphur> fun
+[12:06] <popey> i understood the people doing the calls are convinced they're contracted to MS
+[12:06] <popey> they see nothing wrong
+[12:06] <popey> clearly management do
+[12:12]  * Azelphur shrugs
+[12:12] <czajkowski> danfish: https://t.co/eHedrKiB  This is what Irish GPs have sent to every Irish school!
+[12:14] <ali1234> i like how the first link is blue and the second two are purple
+[12:14] <Azelphur> lol
+[12:15] <mgdm> czajkowski: oooh, fun
+[12:15] <czajkowski> Random odd question
+[12:15] <czajkowski> I have cropped two photos using gimp and now left with a ton of 'white' space background
+[12:15] <czajkowski> any idea how to get rid of this
+[12:16] <czajkowski> I've tried scaling but that's not working
+[12:16] <ali1234> i don't think you cropped it right
+[12:16] <ali1234> wait, is it really white?
+[12:16] <mgdm> czajkowski: there's an 'autocrop image' somewher ein the menus
+[12:16] <ali1234> when you crop it does not resize the window
+[12:17] <ali1234> anyway, rect select then image->crop to selection
+[12:19] <czajkowski> mgdm: ahhh thank you
+[12:19] <czajkowski> thats it
+[12:44] <davmor2> popey: I wonder why VBox plus the X11 driver worked fine for one system and not the other though?
+[12:51] <esmo> t
+[13:09] <mungbean> can i take a dd image of a directory?
+[13:09] <mungbean> (the directory is actually a mount point of a vmware vmdk)
+[13:18] <ali1234> no
+[13:24] <mungbean> ali1234: no matter, i can run foremost on the flat.vmdk file as it is
+[13:25] <mungbean> having a jolly time trying to either crack a password protected rar file or undelete files from a disk
+[13:25] <mungbean> whichever works first
+[13:29] <popey> why do you want to crack it?
+[13:30] <popey> assuming its the rar file that was the exploit on that machine
+[13:30] <mungbean> because it contained a bat file and some exe.s
+[13:31] <mungbean> but didn't contain the storm binaries, so need to know how they got there
+[13:45] <dw4tkins> ah, so the password is encoded in a binary
+[13:45] <dw4tkins> (or dynamically downloaded upon execution, which would actually be quite cunning)
+[14:03] <mungbean> sweet, i banked on a digit only password for the rar
+[14:03] <mungbean> got it at 6 chars
+[14:04] <dw4tkins> nice
+[14:05] <dw4tkins> I assume you're sharing its contents with antivirus companies ;)
+[14:05] <mungbean> scanning the .exe's on virustotal
+[14:05] <mungbean> one of them, sc.exe i assume is to download the storm bot
+[14:06] <mungbean> which the .bat file deletes later
+[14:08] <mungbean> http://paste.ubuntu.com/1520004/
+[14:08] <mungbean> hmm
+[14:08] <mungbean> doesn't seem to explain the presence of storm
+[14:10] <mungbean> hoewver, next step was that they edited the socks proxy to an open port
+[14:10] <mungbean> could they have uploaded storm via ccproxy?
+[14:13] <directhex> so the fake svhhost.exe is storm? or...?
+[14:14] <davmor2> or it is point windows update at a fake server and they can install whatever the hell they like
+[14:15] <directhex> no, that isn't real svchost.exe
+[14:15] <mungbean> virustotal reports svchost as trojan ccproxy
+[14:15] <directhex> it's just lying about its name etc, so it looks normal
+[14:15] <DJones> Heh, had tou laugh at this https://twitter.com/rkkski/status/288956938778189824/photo/1
+[14:15] <mungbean> https://www.virustotal.com/file/a6e21b69443cc6254a1f4684de73c4d72b81137d1a9951515df8b5b73c265b67/analysis/1357913670/
+[14:16] <directhex> DJones, now i know what a critical failure on wp8 looks like, then
+[14:16] <DJones> I thought it might be fake, after all, the background isn't blue
+[14:17] <directhex> DJones, no, that's a windows boot loader screen
+[14:18] <directhex> looks like the windows boot loader itself is corrupt, so it can't be chain-loaded
+[14:18] <directhex> (all WP8 devices use UEFI, so that's the Windows Boot Manager UEFI app, trying to load the Windows UEFI app)
+[14:19] <ali1234> yeah te amusing part is that that is a htc 8x
+[14:19] <ali1234> so it's not windows 8, it's windows 8 phone
+[14:20] <ali1234> http://img.gawkerassets.com/img/183oekmveb1cxjpg/original.jpg
+[14:20] <directhex> WP8, like WinRT, mandates UEFI for boot. so i can see them just re-using the desktop Windows Boot Manager rather than writing a new one from scratch
+[14:21] <ali1234> yes. and not bothering to remove the error message about "insert windows disc"
+[14:22] <directhex> ifdef is hard. let's go shopping.
+[14:23] <dw4tkins> I really, really hate logfiles which aren't properly delimited.
+[14:24] <dw4tkins> Who writes an application and writes a logfile which uses spaces, tabs and commas, as well as equals signs?
+[14:24] <directhex> dw4tkins, freeswitch upstream
+[14:24] <directhex> also xml!
+[14:24] <dw4tkins> directhex: suffice to say I wish this application were that forward thinking
+[14:25] <directhex> all of them. in one log file
+[14:25] <ali1234> what bout json though?
+[14:25] <directhex> no json in freeswitch logs that i've noticed
+[14:25] <mungbean> anyone shed any ligh on this ccproxy business?
+[14:25] <ali1234> especially malformed json
+[14:25] <directhex> just a totally different format for every module
+[14:25] <dw4tkins> I've given up trying to process this logfile with grep, cut, uniq and sort, it's impossible.
+[14:26] <dw4tkins> All I wanted to do was find out how many users were using a tunnelled connection.
+[14:26]  * dw4tkins misses using linux with his day-job
+[14:26] <dw4tkins> anyone looking for a German and French speaking technical support engineer? ;)
+[14:44] <Laney> NEIN
+[14:45] <MartijnVdS> 9
+[14:46] <brobostigon> neun*
+[14:48] <dw4tkins> heh
+[14:48] <MartijnVdS> time for some of the geekiest music ever :)
+[14:48] <dw4tkins> the Mario theme tune?
+[14:48] <MartijnVdS> http://dftba.com/product/y1/ellen-hardcastle-cd
+[14:48] <dw4tkins> Portal song?
+[14:49] <dw4tkins> ah, I was just about to suggest Chameleon Circuit
+[14:49] <dw4tkins> Hank and John Green are awesome, but I'm biased as John liked my '42' t-shirt ;)
+[14:49] <MartijnVdS> dw4tkins: I just read 2 of John's books last week :)
+[14:50] <MartijnVdS> they're coming to the UK early February as well
+[14:50] <MartijnVdS> Starting in.. Swindon.
+[14:54] <dw4tkins> MartijnVdS: of course he'd start in Swindon, makes sense ;)
+[14:54] <dw4tkins> John was in Edinburgh for the book festival a couple years ago
+[15:01] <MartijnVdS> dw4tkins: he seems to be in love with Amsterdam too
+[15:24] <davmor2> http://t.co/HNYikEmV
+[15:25] <dogmatic69> lol
+[15:37] <MartijnVdS> dw4tkins: http://www.youtube.com/watch?v=5Mi5RnzHMfs -- he talks about it a bit in his latest game :)
+[15:37] <MartijnVdS> dw4tkins: (Swindon)
+[15:37] <dw4tkins> Swoodilypoopers
+[15:37] <MartijnVdS> yes, them :)
+[15:40] <popey> http://imgur.com/a/oKMia
+[15:40] <popey> Top Gear Monopoly
+[15:58] <czajkowski> best timed present of chocolate ever!
+[16:00] <dw4tkins> popey: http://imgur.com/a/mdoPg - laser-engraved Monopoly clone
+[16:00] <popey> i love the box
+[16:01]  * czajkowski offers gingerbread men, marshmallows and fudge to all 
+[16:02] <MartijnVdS> ginger breadmen
+[16:03] <brobostigon> yummy,
+[16:03] <dw4tkins> haha, Windows phone asks for the installation disc... http://i.imgur.com/M8Nbl.jpg
+[16:03] <MartijnVdS> dw4tkins: *head -> desk*
+[16:03] <czajkowski> 5 boxes of goodness - https://twitter.com/czajkowski/status/289763545426558976/photo/1
+[16:04] <popey> from...
+[16:04] <AlanBell> a french duck
+[16:04] <czajkowski> hmm first sweet was Marzipan
+[16:04] <czajkowski> ewww
+[16:04] <czajkowski> popey: canonical :)
+[16:05] <czajkowski> was involved in a project with one of the teams there
+[16:05] <czajkowski> so as  thank you they sent me sweets
+[16:05] <czajkowski> :)
+[16:05] <popey> nice
+[16:06] <MartijnVdS> popey: Did Christel ever give you some of the pepernoten I sent to her months ago? :)
+[16:07] <czajkowski> ohh two bags of marshmallows
+[16:07] <czajkowski> my day has just gotten so much better
+[16:08] <popey> no
+=== Lcawte|Away is now known as Lcawte
+[18:59] <ali1234> does anyone know how the dvb-t transmitter groups work?
+=== soreau_ is now known as soreau
+[18:59] <ali1234> https://docs.google.com/spreadsheet/ccc?key=0Amam7h6Tso0TdHFrY19LbDNSYXpzX1hWMC1ZeWEwYkE
+[18:59] <ali1234> trying to make sense of this
+[19:00] <ali1234> compare this to what's in /usr/share/dvb/dvb-t/uk-*
+[19:00] <ali1234> those files are pre-switchover, so they are now all useless and i want to update them
+[19:13] <popey> ali1234: seriously, nobody has updated them post switch-off?
+[19:13] <ali1234> um, yes? seriously
+[19:13] <popey> blimey, I'm surprised, I thought TV types would have
+[19:13] <ali1234> well
+[19:13] <popey> upstream
+[19:13] <ali1234> the old files were auto generated
+[19:13] <ali1234> after DSO they changed the format
+[19:13] <ali1234> to a bunch of crufty PDFs
+[19:13] <daftykins> just goes to show how rubbish TV is :)
+[19:14] <ali1234> i had to do most of it by hand
+[19:14] <ali1234> to get it into a standard format spreadsheet
+[19:15] <ali1234> TV is pretty rubbish but i record films
+[19:15] <ali1234> on BBC HD
+[19:15] <ali1234> cos it's easier than pirating them
+[19:16] <ali1234> i only watch old films when they are on freeview now
+[19:16] <ali1234> i haven't even seen batman 2 yet
+[19:19] <daftykins> at least if you pirate 'em you don't have to pay the TV license :>
+[19:25] <davmor2> ali1234: which batman 2
+[19:25] <ali1234> the one where heath ledger says "why so serious?" for 2 hours
+[19:27] <daftykins> XD
+[19:27] <daftykins> that line is great
+[19:27] <davmor2> ali1234: oh batman 6
+[19:27] <daftykins> when i accused one of my students of allowing a fellow student to copy his work, he got all uppity (which is blatantly a sign i was right)
+[19:27] <daftykins> so i said, in front of the class... WHY SO SRS!?
+[19:27] <daftykins> needless to say he was put in his place
+[19:34] <directhex> ali1234, what's your specific question?
+[19:36] <ali1234> directhex: what are the files in /usr/share/ supposed to correspond to? transmitters or transmitter groups? why do most of the transmitters in each group only carry PSB muxes? what should be put into an initial tuning file for a tx that carries only PSB? put the other muxes from the "main" tx? or just leave them out? and what about tx that carry all muxes but are not the "main" tx for the group? also what about tx sites that carry multiple versions of 
+[19:37] <ali1234> for example Border/Caldbeck appears to carry english and scottish versions of the PSB muxes
+[19:38] <ali1234> it looks like there's a tuning file for each tx site that carries all 6 muxes only
+[19:39] <daftykins> ali1234: are your manual scans still failing, or do you really need all that jazz?
+[19:39] <directhex> http://www.ukfree.tv/ seems to have the data you want?
+[19:39] <ali1234> daftykins: manual scan never worked with mythtv, ever
+[19:39] <ali1234> directhex: it is not in machine readable format
+[19:39] <directhex> well, there is that
+[19:40] <ali1234> i have the data
+[19:40] <ali1234> all questions are about how to interpret it
+[19:42] <daftykins> ali1234: my mate has some experience, i'm conversing with him on another chat protocol. what are all those many dongles you have?
+[19:42] <daftykins> ah he's coming on, sec
+[19:43] <ali1234> i have a dibcom 3000 (doesn't work), a rtl2831 (doesn't work), a rtl2832 (works), and another one that i forgot the chipset of. not that it matters.
+[19:46] <daftykins> he'll be on shortly
+[19:46] <daftykins> he has contacts in very relevant places >:)
+[19:51] <daftykins> there 'e is!
+[19:51] <summat> <3
+[19:51] <daftykins> </Sopranos>
+[19:53] <daftykins> ali1234: attack summat with your tale of woe
+[19:53] <summat> I'd prefer if it caressed, rather than attacked
+[19:53] <summat> personally.
+[19:53] <ali1234> i don't even know where to start
+[19:53] <daftykins> XD
+[19:53] <ali1234> so under linux we have "initial tuning" files
+[19:53] <summat> yep, I ignore such things, personally
+[19:53] <ali1234> which describes the frequencies of the muxes for an "area"
+[19:54] <summat> always do a blind scan
+[19:54] <ali1234> blind scanning doesn't work in all cases
+[19:54] <ali1234> for me, what happens is it picks up transponders from multiple tx sites
+[19:54] <ali1234> then it uses the weaker ones for no reason
+[19:54] <ali1234> also, not all frontends are capable of auto detectng modulation
+[19:54] <ali1234> so this is why we have nitial tuning files
+[19:55] <ali1234> anyway, they haven't been updated post DSO
+[19:55] <summat> well all the info about muxes is available online
+[19:55] <ali1234> indeed it is
+[19:55] <ali1234> in a bunch of malformed PDF files
+[19:55] <ali1234> from ofcom
+[19:55] <summat> naw, much easier
+[19:55] <ali1234> i've turned all of that information into a spreadsheet
+[19:55] <ali1234> https://docs.google.com/spreadsheet/ccc?key=0Amam7h6Tso0TdHFrY19LbDNSYXpzX1hWMC1ZeWEwYkE
+[19:56] <ali1234> but what i don't understand is how the existing tuning files relate to transmitter groups and sites
+[19:56] <ali1234> they don't seem to describe either
+[19:56] <summat> whats your nearest transmitter? in theory
+[19:56] <ali1234> irrelevant, my goal is to update all the initial tuning files with the latest correct information
+[19:57] <daftykins> are you trying to Jim'll fix-it it for the community?
+[19:58] <ali1234> for example, there is a file uk-Fenton
+[19:58] <ali1234> Fenton is part of the Sutton Coldfield transmitter group
+[19:58] <ali1234> which is in Central region
+[19:58] <ali1234> you can find it in my spreadsheet
+[19:58] <ali1234> there is also a uk-SuttonColdfield
+[19:58] <daftykins> FENTOOOOOOOOON!!!! : http://www.youtube.com/watch?v=3GRSbr0EYYU
+[19:58] <daftykins> (sorry.)
+[19:59] <ali1234> so basically my question is why does SuttonColdfield and Fenton get initial files, but, say, Edgbaston does not?
+[19:59] <summat> at a rough guess, noone's ever submitted any?
+[19:59] <ali1234> the obvious answer is that Fenton carries all 6 muxes but Edgbaston does not
+[19:59] <ali1234> it looks like all the full tx sites are covered
+[20:00] <ali1234> no, that's not the reason, all the old files were generated automatically from ofcom data too
+[20:00] <daftykins> so are they just wrong?
+[20:00] <davmor2> ali1234: there are a lot of repeater stations that will have a listing from another station effectively
+[20:01] <ali1234> repeaters don't use the same frequencies as the site they get the feed from
+[20:01] <daftykins> ali1234: bottom line - what are you trying to do? :D
+[20:02] <ali1234> daftykins: to update all the initial tuning files, and add any missing ones
+[20:03] <summat> with all the info you've amassed, coupled with, for instance, the ukfree.tv info for transmitters a la: http://www.ukfree.tv/txdetail.php?a=SK113003
+[20:03] <summat> which gives the modulation etc for every mux carried
+[20:03] <summat> you should have all the info you need
+[20:04] <ali1234> the muxes all use the same modulation now
+[20:05] <ali1234> they are all qam64 except bbc b which is qam256
+[20:05] <daftykins> he just got a connection drop, sec
+[20:06] <daftykins> apparently you've got all the necessary data / sources for said data, so that should be all you need?
+[20:07] <ali1234> yes
+[20:07] <ali1234> data is data
+[20:08] <ali1234> so with some processing i found that the existing tuning files are all the sites that carry all 6 muxes
+[20:08] <ali1234> it seems like an arbitrary choice but there you go
+[20:09] <summat> not sure how much you really need all the relays in there too
+[20:09] <summat> theres hundreds
+[20:09] <ali1234> around 1000
+[20:10] <summat> how many people are going to not use one of the full service transmitters though? realistically
+[20:10] <ali1234> 1144 in fact
+[20:10] <ali1234> although some are listed twice
+[20:10] <ali1234> i don't know, that's why i am asking
+[20:10] <summat> the likelyhood that you're not able to receive any of the full service sites is pretty remote imo
+[20:10] <ali1234> is it expected that people will receive PSB from a relay, and then get COM from the main transmitter?
+[20:10] <ali1234> or are people on the relays basically unable to get COM multiplexes?
+[20:11] <summat> or maybe they are only relaying muxes that would otherwise be unavailable?
+[20:11] <ali1234> that's the same as option 1
+[20:12] <ali1234> the relays typically carry PSB muxes - BBC A BBC B and D34
+[20:12] <summat> yeah, which covers all the channels anyone coming from analogue tv would ever expect, and a few extras
+[20:12] <ali1234> there is exactly one relay that carries only Arqiva A
+[20:12] <ali1234> no idea what's up with that
+[20:13] <ali1234> so i'll just update files that already exist then
+[20:13] <ali1234> which is all the full transmitters (even though some are actually relays apparently)
+[20:15] <summat> I think if you're going to do any relays, you'd have to do them all, and theres only a very few cases where someone would not only require to use the relay only, but also be using linux, and be wanting to tune to freeview on it
+[20:15] <summat> so it seems like an awful lot of files to look after for only a handful of use
+[20:16] <ali1234> i can generate them trivially now that i have all the data in a machine readable format
+[20:17] <ali1234> but it does seem like they will get little use
+[20:17] <directhex> i use a relay
+[20:17] <ali1234> plus there's like 1000 of them
+[20:17] <ali1234> which one?
+[20:17] <ali1234> do you get all 6 muxes?
+[20:18] <summat> I'll be its a full service relay :D
+[20:18] <summat> bet*
+[20:18] <directhex> relays only get 3 muxes
+[20:18] <directhex> most of them anyway
+[20:18] <ali1234> there aren't that many full service relays
+[20:18] <directhex> including mine
+[20:18] <directhex> but the alternative is barely any reception from oxford
+[20:18] <ali1234> probably less than there are transmitter groups
+[20:18] <ali1234> i could tell you in fact...
+[20:20] <ali1234> 64 transmitter groups, 19 full relays, 1144 transmitter sites in total
+[20:21] <ali1234> so only 19 out of over 1000 relays are full relays
+[20:24] <ali1234> is there a rule of thumb to convert ERP into "range"?
+[20:25] <summat> too depedent on terrain I'd imagine?
+[20:25] <ali1234> well, i have the grid references of every site, so i could take that into account too
+[20:25] <summat> well ukfree.tv has coverage maps
+[20:25] <daftykins> it's like the worlds most extensive game of Battleship
+[20:25] <ali1234> yeah
+[20:26] <ali1234> i bet they are directional too
+[20:26] <summat> the big ones seem pretty even in all directions
+[21:14] <ali1234> http://www.youtube.com/watch?v=EsQ07FfCUZI
+[21:14] <ali1234> wat
+[21:14] <daftykins> i don't get it
+[21:15] <ali1234> the screen has nubs
+[21:15] <ali1234> they actually rise from the screen
+[21:15] <ali1234> over each key
+[21:17] <summat> ah yes, that, pneumatically controlled and provide a 'lil haptic nudge so you know when you've pressed
+[21:18] <summat> its a predefined pattern though, not just anywhere
+[21:18] <daftykins> freaky
+[21:18] <daftykins> isn't just haptic enough for people? :)
+[21:20] <ali1234> well people complained when touchscreens first came out
+[21:20] <ali1234> i think most people got used to it though
+[21:20] <ali1234> i guess they've been developing that thing for a few years
+[21:21] <daftykins> 986064
+[21:21] <daftykins> oh the bot's gone
+[21:21] <ali1234> also i wonder what happens if you pop one of the nubs
+[21:30] <summat> you'd be labelled a vandal?
+[21:30] <summat> :)
+[21:39] <AlanBell> bug 986064
+[21:40] <lubotu3> bug 986064 in ndiswrapper (Ubuntu) "FATAL: Module ndiswrapper not found, configuration already contains alias directive 12.04" [Undecided,Fix released] https://launchpad.net/bugs/986064
+[21:40] <AlanBell> you have to let her know it is a bug and not just a number daftykins
+[21:40] <daftykins> ah
+[21:40] <daftykins> indeed, this i now know
+[21:44] <ali1234> #986064 usually works too
+[21:44] <ali1234> but not here
+[21:45] <daftykins> =[
+[22:01] <ali1234> http://al.robotfuzz.com/~al/dvb-t/
+[22:21] <Seeker> Anyone ever tried a Dynamode USB-HDK-E with ubuntu?
+[22:34] <daubers> Seeker: I've used a dynamode with Ubuntu
+[22:34] <daubers> dunno what model it was though
+[22:49] <Seeker> daubers: Cool. Worth a try then
+[22:50] <Seeker> one of my hard drives has died, no spare sata slots
+[22:50] <Seeker> need a way of copying stuff on to a new drive
+[23:02] <AlanBell> http://www.thepoke.co.uk/2013/01/11/proud-owner-of-man-cave-really-alone-and-dying-inside/
+[23:13] <daftykins> AlanBell: :D

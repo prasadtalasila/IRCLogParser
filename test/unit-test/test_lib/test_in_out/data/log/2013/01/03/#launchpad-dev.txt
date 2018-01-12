@@ -1,0 +1,230 @@
+[00:26] <StevenK> And I lose buildbot bingo rather spectacularly.
+[00:26] <StevenK> rick_h_: No fair if you force it.
+[00:40] <rick_h_> StevenK: I didn't touch it :P
+=== slank is now known as slank_away
+[01:46] <StevenK> wgrant: Haha, it takes DF 13 minutes to work out the source size of the primary archive.
+[01:48] <StevenK> I daresay binary size is far worse.
+[01:48] <wgrant> Quite
+[01:49] <wgrant> StevenK: Oh, why didn't you just trivially fix that rev rather than reverting it?
+[01:49] <StevenK> I saw multiple issues in the failures
+[01:49] <wgrant> Wasn't it all just the webservice.py import removals?
+[01:50] <StevenK> I wasn't sure
+[01:50] <StevenK> Quicker to revert and reland
+[01:50] <StevenK> (After checking, if I care)
+[01:51] <StevenK> wgrant: So we can't do the repository size in the request, and we can't do it in a job, and it's too slow for the publisher :-(
+[01:52] <wgrant> Indeed
+[01:52] <StevenK> We could possibly denorm published size onto spph and bpph
+[01:52] <StevenK> And then just traverse that
+[01:52] <wgrant> That would change the definition substantially (and probably fatally), and not be hugely fast anyway
+[01:53] <StevenK> We're running out of places we can do it :-(
+[01:53] <wgrant> It will probably require a redefinition of what an archive's size means, or a (archive, filename)ish denormalised table
+[01:53] <wgrant> Neither of which is easy
+[01:53] <wgrant> Pick another bug :)
+[01:54] <StevenK> Eh, it answers the question you asked last time I bought it up
+[01:54] <wgrant> What was the question?
+[01:54] <wgrant> I'm pretty sure I said it was probably too slow to ever calculate fully in one hit very much
+[01:55] <StevenK> "How long does it take to calculate the size for the primary archive, if we do it in the publisher?"
+[01:55] <StevenK> Or so
+[01:55] <wgrant> Well
+[01:55] <wgrant> If I did pose that question, it was mostly to demonstrate that it was dreadfully slow
+[01:55] <StevenK> Which makes the answer 'an eon or so'
+[01:55] <wgrant> And so your approach was invalid
+[01:56] <StevenK> wgrant: Are you working on the +sharing critical?
+[01:56] <wgrant> No
+[01:56] <wgrant> But it's trivial, so feel free
+[01:57] <wgrant> While you're there you should also check that the unused AP pruner will DTRT in terms of Product.information_type
+[01:58]  * StevenK watches kanban choke his browser
+[02:38] <wgrant> StevenK: That doesn't look very constant...
+[02:46] <lifeless> its slow cause its cold cache IO
+[02:46] <wgrant> Nope
+[02:46] <wgrant> Unless cold cache magically causes 40 repetitions
+[02:46] <lifeless> repo size stuff
+[02:47] <lifeless> back up an hour
+[02:47] <wgrant> Oh, yeah, obviously
+[02:47] <wgrant> There's a lot of rows
+[02:47] <wgrant> Most of which won't be poked much
+[02:47] <lifeless> O(files) will always be slow for that
+[02:47] <wgrant> So the cache will always be slow
+[02:47] <wgrant> s/cache/query/
+[02:47] <lifeless> you need sublinear scaling for that one.
+[02:47] <wgrant> Yes
+[02:47] <wgrant> Of course
+[02:47] <wgrant> That's what i said :)
+[02:47] <wgrant> It needs a complete redesign
+[02:47] <wgrant> hence defer
+[02:47] <lifeless> e.g. event based recalc and a cached value.
+[02:47] <wgrant> Precisely
+[02:48] <wgrant> But it's too slow to even do event-based full recalc in the current model
+[02:48] <wgrant> So it needs to be reworked even further
+[02:48] <lifeless> wgrant: !cite
+[02:48] <lifeless> [its not clear to me that thats the case]
+[02:50] <wgrant> Let's say 20k binaries per DAS
+[02:50] <wgrant> Average of 5 or 6 DASes per series
+[02:50] <wgrant> Maybe 6 published series at a time
+[02:50] <wgrant> + 20k sources per series
+[02:51] <wgrant> So that's >600k pubs for the primary archive
+[02:51] <wgrant> Which isn't huge
+[02:51] <StevenK> And an average of 3 files per publication
+[02:51] <wgrant> But we don't need that hot
+[02:51] <wgrant> So we should keep it cold if we can
+[02:51] <wgrant> StevenK: Not quite, due to binaries it'll be more like 1.5-2 I suspect
+[02:52] <StevenK> wgrant: Then you have things like linux and firefox that build 10,000 binaries
+[02:52] <wgrant> There are better things to keep in wildcherry's cache than millions of Ubuntu rows
+[02:52] <wgrant> When we can relatively easily cache
+[02:53] <wgrant> Similar to branchrevision
+[02:53] <lifeless> how often does the primary archive do deletes (vs updates) ?
+[02:53] <wgrant> Having to keep that hot for anything to work is completely completely stupid
+[02:53] <wgrant> lifeless: > hourly
+[02:53] <wgrant> Since stuff gets superseded
+[02:53] <lifeless> sure
+[02:53] <StevenK> p-d-r is seperate from the publisher
+[02:54] <lifeless> so what I'd be inclined to do is to use something like twitters graph thing to keep this hot
+[02:54] <lifeless> and have a size calculating spout
+[02:54] <wgrant> So
+[02:54] <lifeless> hot as in live in-memory on a small number of machines
+[02:54] <wgrant> Things we can deploy in the next 5 years
+[02:54] <lifeless> heh :)
+[02:54] <wgrant>  - Not a Twitter graph thing
+[02:54] <wgrant> We need a solution to this in the next 12 months
+[02:54] <StevenK> So I think the current query works fine for small PPAs. But it scales horribly
+[02:55] <wgrant> So deploying anything exotic is entirely out of the question
+[02:55] <wgrant> And wildcherry has enough cache issues as it is
+[02:57] <lifeless> you don't need to query wildcherry
+[03:04] <StevenK> wgrant: So we create a proprietary project, set it to public and make certain a PUBLIC AccessPolicy wasn't created?
+[03:06] <wgrant> StevenK: Yes
+[03:08] <wgrant> StevenK: So, more work required on +queue :(
+[03:08] <StevenK> :-(
+[03:08] <StevenK> It still makes too many queries?
+[03:09] <StevenK> DONE precise on qas is 129
+[03:09] <StevenK> Which is like 1/3rd
+[03:09] <wgrant> 24 PackageBuild queries, plus lots of other stuff
+[03:10] <wgrant> https://oops.canonical.com/oops.py/?oopsid=OOPS-566218b1efc27aca3c77c68091a09d83
+[03:11] <StevenK> Yeah, I just read the query log on qas
+[03:11] <StevenK> The lowest hanging fruit is certainly PackageBuild
+[03:14] <StevenK> wgrant: Hm, now I remember. I couldn't get my test cases to make the PB queries so I moved on.
+[03:18] <wgrant> You clearly need more PUBs
+[03:19] <StevenK> 15 isn't enough?
+[03:21] <wgrant> So
+[03:21] <wgrant> Work out where the PB queries come from
+[03:21] <wgrant> Then work out why they aren't appearing in your test
+[03:23] <StevenK> wgrant: However, we can slam the two bugs back to In Progress and qa-ok
+[03:23] <wgrant> Yes
+[03:31] <StevenK> wgrant: Based on my reading of the code, the 16 PUBLIC APs won't be deleted, there are probably APGs holding them in
+[03:34] <wgrant> StevenK: APGs don't hold them
+[03:34] <wgrant> Only APAs and sharing policies do
+[03:35] <wgrant> But the sharing policies will probably keep them
+[03:36] <StevenK> We can fix those up without a code change, though?
+[03:36] <wgrant> Well, we'll delete them manually
+[03:37] <wgrant> _pruneUnusedPolicies keeps anything that's permitted by a sharing policy.
+[03:37] <wgrant> Including any public types that shouldn't have had an AP in the first place.
+[03:39] <StevenK> wgrant: I'm confused, do we need a code change to clean up? Or when you say delete you mean "DELETE FROM" ?
+[03:40] <wgrant> We could switch _pruneUnusedPolicies to always prune policies that are public, but that's pointless because they shouldn't exist in the first place
+[03:40] <wgrant> It would be best to SQL them away manually
+[03:50] <StevenK> 'if not self.obj.archive.private' causes PB lookups? :-(
+[03:50] <wgrant> Sure
+[03:50] <wgrant> Archive is on PB
+[03:51] <StevenK> wgrant: Sure, but from ViewSourcePackageRelease ?
+[03:51] <wgrant> Um
+[03:51] <wgrant> SPR.archive doesn't exist
+[03:51] <wgrant> So no, you're wrong :)
+[03:52] <wgrant> Sounds more like ViewBinaryPackageBuild
+[03:52] <wgrant> Indeed
+[03:52] <StevenK> Right
+[03:54] <StevenK> Perhaps self.factory.makeBuildPackageUpload is missing some bits, then
+[04:35] <StevenK> wgrant: https://code.launchpad.net/~stevenk/launchpad/no-public-for-all-projects/+merge/141700
+[04:43] <wgrant> StevenK: _prepare_to_set_sharing_policy already knows how to restrict it to just private types
+[04:43] <wgrant> We shouldn't duplicate that logic.
+[04:46] <StevenK> Let me move into _ensurePolicies then
+[04:48] <StevenK> wgrant: http://pastebin.ubuntu.com/1490688/
+[04:49] <wgrant> Sounds reasonable
+[04:50] <StevenK> wgrant: Actually, http://pastebin.ubuntu.com/1490691/
+[04:53] <wgrant> Indeed
+[05:09] <StevenK> Oh wonderful, I think I've broken diff generation for that MP
+[05:17] <StevenK> Ah, look at that.
+[05:17] <StevenK> wgrant: Can haz +1 now?
+[05:31] <StevenK> MismatchError: queries do not match: 52 != 87
+[05:31] <StevenK> Success
+[05:33] <wgrant> StevenK: Done
+[05:33] <wgrant> What did you eliminate?
+[05:34] <StevenK> I eliminated nothing. I reached into the BPB's BPR and called addFile
+[05:35] <wgrant> Ah
+[05:35] <StevenK> wgrant: And sorry for my OCD forcing +39/-41 on you :-)
+[05:37] <StevenK> Right, preloading PB gets us down to 73
+[05:46] <StevenK> wgrant: http://pastebin.ubuntu.com/1490769/ gets us to 30 queries on the API, and 57 on the web
+=== almaisan-away is now known as al-maisan
+[05:48] <StevenK> We don't really need to preload PBs, Components and Sections in getAll(), but it was trival.
+[05:49] <wgrant> getAll should basically only be used by getPackageUploads and +queue, right?
+[05:49] <wgrant> So it's probably not too bad to aggressively preload
+[05:49] <StevenK> Pretty much, yes
+[05:50] <StevenK> I'd like to preload away the PackageDiff stuff, but that doesn't look easy
+[05:50] <wgrant> I thought you already looked at doing that
+[05:50] <wgrant> Oh right, you gave up after I told you your trivial implementation wouldn't work?
+[05:50] <StevenK> I did, yes
+[05:51] <StevenK> wgrant: If you're happy enough with that diff I can put together an MP?
+[05:52] <wgrant> IIRC it just iterates over SPR.package_diffs
+[05:52] <wgrant> Which is going to be relatively easily to cachedpropertyify
+[05:52]  * StevenK peers
+[05:52] <wgrant> It's been a while since I was over there
+[05:53] <wgrant> But I don't see why it would do otherwise
+[05:53] <wgrant> Yeah
+[05:53] <wgrant> wgrant@lplucid:~/launchpad/lp-branches/devel$ bzr grep package_diffs lib/lp/soyuz/templates/
+[05:53] <wgrant> lib/lp/soyuz/templates/distroseries-queue.pt:      <tr tal:define="diffs packageupload/sourcepackagerelease/package_diffs"
+[05:53] <wgrant> lib/lp/soyuz/templates/sourcepackagerelease-diffs.pt:       tal:define="diffs context/package_diffs"
+[05:53] <wgrant> cachedproperty
+[05:53] <wgrant> done
+[05:53] <wgrant> (well, plus a couple of lines here and there to prepopulate and invalidate)
+[05:54] <StevenK> It's a SQLMutlipleJoin, so I can cheat by _package_diffs, or rewrite to something actually using IStore
+[05:54] <StevenK> SQLMultipleJoin, even
+[05:55] <wgrant> It's unlikely that much actually cares that it's an SQLMultipleJoin
+[05:55] <wgrant> It can probably be turned into a simple cachedproperty list, but you'll have to look at the other callsites
+[05:57] <wgrant> Seem to be only 5 non-test callsites
+[05:57] <wgrant> ez
+[05:58] <StevenK> wgrant: Eh, easy enough to copy the pattern that PackageUpload uses with sources vs _sources
+[05:59] <wgrant> As I said in the last MP, that's pretty pointless
+[05:59] <wgrant> If nothing needs a resultset then a resultset need not be exposed at all
+[05:59] <wgrant> Never expose unnecessary interfaces
+[05:59] <wgrant> Or you end up with something like Launchpad :)
+[06:00] <wgrant> (it appears that none of the callsites will notice if you make it a lisT)
+[06:00] <StevenK> +    @cachedproperty
+[06:00] <StevenK> +    def package_diffs(self):
+[06:00] <StevenK> +        return list(self._package_diffs)
+[06:01] <wgrant> Bad StevenK
+[06:01] <StevenK> Ah ha, so you *do* want the destruction of the SQLMultipleJoin
+[06:01] <wgrant> It's pointless to keep it
+[06:02] <wgrant> return list(Store.of(self).find(PackageDiff, to_source=self).order_by(Desc(PackageDiff.date_requested)))
+[06:02] <wgrant> done
+[06:04] <StevenK> Right, which I was in the middle of typing when you said that ...
+[06:17] <StevenK> wgrant: Not sure where to invalidate SPR.package_diffs, but that preloading gets us to 53 queries.
+[06:17] <StevenK> Except that the LFA and LFC preloading helps not at all
+[06:20] <wgrant> DId you preload the correct LFAs and LFCs?
+[06:20] <wgrant> wgrant@lplucid:~/launchpad/lp-branches/devel$ bzr grep '\bPackageDiff\('
+[06:20] <wgrant> lib/lp/soyuz/model/packagediff.py:class PackageDiff(SQLBase):
+[06:20] <wgrant> lib/lp/soyuz/model/sourcepackagerelease.py:        return PackageDiff(
+[06:20] <wgrant> lib/lp/testing/factory.py:            PackageDiff(
+[06:22] <StevenK> Easy
+[06:39] <wgrant> Huh
+[06:40] <wgrant> I just removed all the writable bits of the BuildFarmJob and PackageBuild security configuration
+[06:40] <wgrant> And the only tests that appear to fail are those that test the permissions directly
+[06:53] <lifeless> \o/
+[08:50] <czajkowski> aloha
+=== al-maisan is now known as almaisan-away
+[09:11] <adeuring> ood morning
+[09:12] <czajkowski> adeuring: hopefuly not an odd morning either :)
+[09:13] <adeuring> czajkowski: yeah: i need to clean my keayboard from tobacco crumbs...
+[09:15] <adeuring> brb
+=== almaisan-away is now known as al-maisan
+=== al-maisan is now known as almaisan-away
+=== yofel_ is now known as yofel
+=== slank_away is now known as slank
+=== Ursinha-afk is now known as Ursinha
+[16:05] <czajkowski> rick_h_: http://i.imgur.com/OWtoF.jpg
+[16:05] <rick_h_> czajkowski: I'm sending help, hold on tight!
+=== deryck is now known as deryck[lunch]
+=== almaisan-away is now known as al-maisan
+=== al-maisan is now known as almaisan-away
+=== BradCrittenden is now known as bac
+=== deryck[lunch] is now known as deryck
+=== almaisan-away is now known as al-maisan
+=== al-maisan is now known as almaisan-away
+[21:00] <sinzui> buildbot is seriously harshing my mellow
+[22:32] <czajkowski> sinzui: I'm going to go with that's not a good mellow

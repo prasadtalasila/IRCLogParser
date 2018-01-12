@@ -1,0 +1,38 @@
+[21:32] <bizhanMona> HI is there a depency between upstart and dbus? Thx
+=== supster_ is now known as supster
+[23:20] <supster> Does anyone see any issues with this Upstart job? Are there any improvements to make? https://gist.github.com/4678285
+[23:23] <SpamapS> bizhanMona: yes, upstart uses dbus for some things.
+[23:23] <SpamapS> supster: start on startup is *way* too early
+[23:23] <SpamapS> supster: that event happens before any filesystems have been mounted
+[23:23] <SpamapS> supster: and before networking is available
+[23:24] <SpamapS> supster: also chdir is a declarative bit, so you can move that out of the script
+[23:24] <SpamapS> supster: further, newer versions of upstart will log all output at /var/log/upstart/$jobname.log ...
+[23:25] <SpamapS> supster: so you can consider just letting that be your log file..
+[23:25] <supster> SpamapS: I guess  I want start on runlevel [2345] then?
+[23:25] <supster> it will log STDOUT and STDERR there?
+[23:26] <xnox> yes.
+[23:29] <SpamapS> supster: http://paste.ubuntu.com/1591130/
+[23:30] <supster> runlevel [016], not just [016] - right?
+[23:30] <supster> and how is that different than "on shutdown"?
+[23:34] <SpamapS> supster: right, sorry I messed that up. .runlevel [016]
+[23:34] <SpamapS> supster: shutdown is not an event
+[23:34] <SpamapS> supster: that job will never stop
+[23:34] <supster> SpamapS: I see
+[23:34] <supster> SpamapS: if I don't use `set -a` i don't get the env variables from $CONF_PATH
+[23:34] <supster> SpamapS: is there something else wrong?
+[23:35] <SpamapS> supster: ah so $CONF_PATH doesn't export
+[23:35] <supster> correct ... should it?
+[23:35] <supster> i am not sure what the convention is for having a conf file that is just env variables
+[23:37] <SpamapS> supster: well...
+[23:37] <SpamapS> supster: if it were me I'd do it in /etc/init/jobname.override as env statements
+[23:39] <supster> SpamapS: for more context: I am passing things like the port to listen on and the database connection string to my app
+[23:41] <supster> SpamapS: what would the override file look like? just env stanzas? would those be automatically a part of my app's env or do i still need to pass them somehow?
+[23:44] <SpamapS> supster: that override file is parsed just like an upstart file
+[23:44] <SpamapS> supster: the difference is just that you can treat it more like a config file
+[23:44] <SpamapS> supster: actually why not just do those env statements in the .conf ?
+[23:44] <SpamapS> err
+[23:44] <SpamapS> supster: in the upstart job file I mean
+[23:48] <supster> SpamapS: yeah.... my original thought was that it would be better to separate the upstart logic and the application configuration
+[23:48] <supster> SpamapS: because different servers will need to run with different configuration
+[23:49] <supster> SpamapS: but maybe it can just all be in that file
+[23:49] <supster> *the single upstart job file

@@ -1,0 +1,396 @@
+[02:12] <BarkingFish> good morning :)
+[02:14] <BarkingFish> I wonder if someone could spare some time to help me please - i'm back in an old kernel because the one which came with raring's dev branch, 3.8.0-1, won't let me build ndiswrapper :(  Could someone please give me some ideas on how to fix this please?
+[02:15] <BarkingFish> I can't build manually, because make can't find the kernel version in /usr/src/linux-headers-3.8.0-1/ , and dkms won't add, build or install ndiswrapper, claiming the dkms conf already has it, and i can't add it more than once :)
+[02:31] <xnox> BarkingFish, I thought i fixed ndiswrapper!
+[02:31] <xnox> and I now wish you didn't disappear as I need somebody to test my ndiswrapper fixes!
+[02:31] <xnox> *sigh*
+[03:21] <infinity> xnox: It's all the rage in #ubuntu-kernel for people to ask for help and /part less than 10 minutes later.
+[03:21] <infinity> xnox: Eventually, you get so used to it, you just stop responding to people.  Even the ones who stick around.  All two of them.
+[08:02] <ppisati> moin
+=== smb` is now known as smb
+[08:20] <smb> morning
+=== yofel_ is now known as yofel
+[09:01]  * apw yawns
+[09:03]  * apw waves to infinity
+=== henrix_ is now known as henrix
+=== zequence_ is now known as zequence
+[10:15] <caribou_> I have a twisted C compilation situation that I'd need advise for (for makedumpfile)
+[10:15] <caribou_> is here a good place to ask or #ubuntu-devel would be a better place ?
+=== caribou_ is now known as caribou
+[10:15] <caribou> in short, I have source code  lines that don't get compiled, even with optimization turned off
+[10:16] <smb> caribou, Both seems valid. On devel there might be even more people... Now that sounds quite odd...
+[10:17] <smb> Except there is some ifdefs preventing things... 
+[10:18] <caribou> smb: here is an output from gdb disassemble/m : http://paste.ubuntu.com/1569182/
+[10:18] <smb> caribou, which is mostly useless without the source
+[10:20] <caribou> smb: hold on let me fetch it for you
+[10:21] <smb> caribou, Hm, wait... I guess I remember the bits a bit
+[10:22] <caribou> smb: http://goo.gl/iZWUX
+[10:22] <caribou> smb: new lines are added after ...(vm_struct.addr...
+[10:23] <caribou> smb: only the first one added gets compiled in, the 3 others are left out
+[10:24] <caribou> smb: this is to fix makedumpfile so it can extract dmesg with the new variable-length record format btw
+[10:24] <smb> caribou, You are sure its not just cleverly optimized and you only get one assembly block?
+[10:24] <caribou> smb: well I removed the "-O2" out of the CFLAGS, so it shouldn't optimize
+[10:26] <caribou> smb: and there is no other specific CFLAG switch used (only -g and _LARGEFILE_SOURCE macros)
+[10:26] <smb> caribou, Still I would trust a printk in whatever READ_MEMBER_OFFSET is expanded to more that a disassembly. Could be figuring out that the values you are looking for are just relative to some common other offset
+[10:29] <caribou> smb: ok, I'll look at that, thanks
+[10:36] <caribou> smb: thanks for the tip, I think I found it !!!
+[10:36] <smb> caribou, ah, cool. :)
+[10:36] <caribou> smb: READ_MEMBER_OFFSET makes a call to read_vmcoreinfo_long which it typed 'long'
+[10:37] <caribou> smb: those 3 struct members were defined as uint16_t as opposed to the other being u64int_t
+[10:37] <caribou> smb: making them uint64_t gets them compiled...  :-/
+[10:38] <caribou> smb: ok, I must revisit my structure definition then,but I'm on the good path
+[10:39] <smb> Hm, still it would be useful to issue a warning at least if your destination cannot hold the return...
+[10:41] <caribou> smb: well, all the struct definition for the other vmcoreinfo data is defined as long, so I suppose the new ones should be as well
+[10:41] <caribou> smb: but I'll check that
+[10:43] <smb> caribou, certainly it should. And maybe the code is dropped because after conversion the truncated value is always 0, but still
+[10:44] <caribou> smb: I got to get a better understanding of how all this data that is put in the kernel's vmcoreinfo area is managed
+[10:45] <apw> henrix, bjf, we have "lost" the amd64 .ddeb for 3.2.6-36.57 and it was only brought to my attention at 8 days, too late to find out why or fix it.  pitti would like to be told when we are doing our next builds so he can track them
+[10:46] <henrix> apw: hmm... any idea how we lost them?
+[10:46] <apw> henrix, no we dont
+[10:46] <apw> and thats the problem, we keep losing them
+[10:46] <henrix> apw: ok. so, we're currently building P and Q
+[10:47] <henrix> apw: shall i ping pitti? or is he already aware of it
+[10:47] <henrix> ?
+[10:47] <apw> henrix, i've hold him about those two indeed
+[10:48] <henrix> apw: yeah, just reading logs in #ubuntu-devel :)
+[10:48] <apw> arges, you guys keep some .ddebs i beleive ... you don't happen to have linux-3.2.0-36.57 for amd64 do you ?
+[10:55] <cking> apw perhaps we should also archive these .ddebs automatically
+[10:56] <caribou> apw: lemme check, but I think that the .ddebs never made it to the archive
+[10:57] <caribou> arges needed them last week and never found them because they never made it to the archive
+[10:57] <caribou> apw: so since i mirror the archive, I didn't have it either
+[10:57] <caribou> cking: I *do* think so
+[10:58] <caribou> cking: I'm ENOSPACE on my own backup atm
+[10:58] <cking> caribou, yep, that is the main issue with kernel .ddebs
+[10:58] <caribou> cking: I'm mirroring *all* the .ddebs
+[10:58] <cking> yikes
+[11:00] <apw> cking, no we should get the damn thing fixed it cannot be that hard
+[11:00] <apw> cking, to simply keep some files
+[11:01] <cking> apw, that is very true
+[11:02] <apw> cking, hell it is what the archive does, only
+[11:57] <brendand> henrix, can i have links to the tracking bugs for the respun kernels?
+[11:57] <henrix> brendand: sure! for P: bug #1104061 for Q: bug #1103932
+[11:57] <ubot2> Launchpad bug 1104061 in linux (Ubuntu) "linux: 3.2.0-37.58 -proposed tracker" [Medium,In progress] https://launchpad.net/bugs/1104061
+[11:57] <ubot2> Launchpad bug 1103932 in Kernel SRU Workflow prepare-package-meta "linux: 3.5.0-23.35 -proposed tracker" [Undecided,In progress] https://launchpad.net/bugs/1103932
+[11:58] <henrix> brendand: kernels are still building.
+[11:58] <cking> apw, http://smackerelofopinion.blogspot.co.uk/2012/11/non-linear-characteristics-in-draining.html
+[11:59] <henrix> brendand: also, i'm still waiting for the tracking bugs for the quantal lts kernel.
+[11:59] <infinity> henrix: We're vaguely blocked by IS having misplaced two thirds of our ARM buildd capacity.  I'm violently jamming the kernels through, and should have them copied out of the PPA into proposed by my morning.
+[12:00] <henrix> infinity: ack, thanks. yeah, i was expecting to have all of them build "by my morning" :)
+[12:28] <ppisati> infinity: "having misplaced two thirds of our ARM buildd capacity"???
+[12:31] <xnox> ppisati: datacenter move / reorg.
+[12:37] <apw> qevents"canonical.comu3wYhuKPCYvHs2R
+[12:38] <apw> what the hell is that even
+[12:38] <ohsix> a password?
+[12:39] <apw> ohsix, not one of mine, it looks like a bit out of the middle of some xml data i am looking at
+[12:39] <ppisati> xnox: ah ok
+[12:39] <apw> but why its in my but buffer instead of the stuff i wanted ... i don't know
+=== rsalveti_ is now known as rsalveti
+=== chiluk_away is now known as chiluk
+[14:04] <ogasawara> apw: I was gonna prep an upload for Raring.  We don't have a lot queued, but its been about a week and that brcm issue seth fixed seems reason enough.
+[14:04] <ogasawara> apw: you have anything else you want included
+[14:04] <apw> ogasawara, ack, nothing pending from me
+[14:30] <infinity> ppisati: rebase tracking bug is up for precise/ti-omap4
+[14:30] <infinity> ppisati: (quantal should be in shortly)
+[14:31] <ppisati> infinity: wasn't SRU frozen?
+[14:32] <infinity> ppisati: You missed all the excitement over the fsnotify reverts, apparently. :)
+[14:33] <infinity> ikepanhc: Ditto to you, armadaxp for P and Q will need a quick rebase for this.
+[14:33] <ikepanhc> quick rebase?
+[14:34] <infinity> ikepanhc: https://bugs.launchpad.net/ubuntu/+source/linux-armadaxp/+bug/1105115
+[14:34] <ubot2> Ubuntu bug 1105115 in linux-armadaxp (Ubuntu) "linux-armadaxp: <version to be filled> -proposed tracker" [Medium,In progress]
+[14:34] <infinity> ikepanhc: The matching quantal bug should be up shortly.
+[14:34] <ppisati> infinity: ah, k
+[14:35] <ikepanhc> infinity: I've test build today and it looks good to me, can upload it in 1 day
+[14:38] <infinity> ikepanhc: Kay, shiny.  I want to be able to do a rushed QA/verification next week, so landing the rebases by Monday should be fine.
+[14:39] <ikepanhc> infinity: ack
+[14:44]  * herton -> lunch
+[14:49] <infinity> henrix: quantal rebase bugs are up (including the lts-quantal you were waiting on)
+[14:50] <henrix> infinity: yep. i've just exec'ed the bot manually to speed up things ;)
+[14:50] <infinity> henrix: Ahh, lovely.  Thanks. :)
+[14:50] <infinity> henrix: I was already copying, based on seeing that everything was published.
+[14:51] <henrix> infinity: cool. i'll have the lts building later today
+[14:51] <bjf> shankbot should monitor this irc channel so we can tell it to do things
+[14:51] <henrix> bjf: heh, that would be nice :)
+[14:53] <infinity> Does shankbot give me a grace period after I set promote-to-proposed to Fix Released before it goes looking for stuff in the archive?  Or is it just luck of cron timing?
+[14:54] <infinity> (I've been intentionally not setting it until after a publisher run and mirror push, but that does mean actually remembering to twiddle the bug an hour or so after I've done the work)
+[14:55] <henrix> infinity: i don't know the answer for that question, but i'm pretty sure herton does ;)
+[15:19] <infinity> henrix: Alright, I'm going to have a quick nap.  I'll look for lts-Q when I wake up. :)
+[15:19] <henrix> infinity: ack, thanks!
+[15:20] <infinity> (I'm also going to be naughty and Fix Release my task an hour early, let's see if the bot flips out about linux-signed not being in the archive yet)
+[15:20] <infinity> Well, a half hour early, I guess.  It should hit disk in ~30m.
+[15:30] <lantizia> Hi, I've noticed that the kernels shipping with 12.04 and 12.10 are coming compiled with a setting turned on that wasn't present in the config file of the kernel that shipped with 11.10
+[15:31] <lantizia> that setting is CONFIG_SOUND_OSS_CORE_PRECLAIM=y    and also   CONFIG_SOUND_OSS_CORE=y
+[15:31] <lantizia> given OSS was completely removed in the kernel back in 11.04 release was it?      Why has settings for it re-emerged in 12.04 onwards?   That setting it seems to preserves OSS device numbers in case you have OSS compatibility compiled in to the kernel - which clearly it doesn't any longer!!!
+[15:31] <lantizia> But whilst the setting is there, it prevents people from using OSS proxy/emulation techniques such as osspd (which uses fuse/cuse to fake /dev/dsp and redirects it to pulseaudio)
+[15:32] <lantizia> Can anyone help me (I'm not exactly the greatest developer ever, or know the inner workings of the ubuntu development cycle) to see if we can locate a rationale for this setting re-emerging!?
+[15:35] <xnox> lantizia: well each cycle there is config review where config changes are agreed upon. i'm not kernel hacker though so somebody like ogasawara or apw will probably know about it.
+[15:37] <lantizia> ok
+[15:40] <lantizia> omg it's in raring too
+[15:40] <lantizia> looks like raring is/was/unsure going to include an osspd package too (auto copied from debian sid which now has it)
+[15:41] <lantizia> no point if this setting stays in
+[15:41] <apw> lantizia, we would expect OSS to be off, so if it is on that is a fail as far as i know
+[15:41] <apw> lantizia, that said if noone has noticed for 15 months, then it cannot be a huge problem
+[15:42] <lantizia> apw, can I somehow petition to have it removed?  i mean it wasn't there in 11.10 (because OSS has totally been removed - let it die forever) - so someone put it back!
+[15:42] <xnox> well - ndiswrapper provides went unnoticed for a long time as well.....
+[15:43] <apw>   * [Config] CONFIG_SND_PCM_OSS=n using pulseaudio emulation instead
+[15:43] <apw> lantizia, that one there is the one we turned off to allow userspace emulation
+[15:43] <apw> of the OSS stuff
+[15:43] <apw> debian.master/config/config.common.ubuntu:# CONFIG_SND_PCM_OSS is not set
+[15:43] <apw> and it remains off
+[15:44] <lantizia> ok I'm no expert but from what I know osspd (OSS Proxy) basically uses FUSE/CUSE TO make fake /dev/dsp /dev/adsp /dev/mixer etc... so your ancient game/app thinks it's really talking to OSS
+[15:44] <apw> lantizia, if you think something else should be off, we would want a bug filed for that
+[15:44] <lantizia> no need for wrappers (which only work if libc is still compaible which a lot of the time it's not)
+[15:44] <apw> so we can evaluate it on its merits
+[15:44] <lantizia> CONFIG_SND_PCM_OSS isn't my issue
+[15:44] <lantizia> CONFIG_SOUND_OSS_CORE_PRECLAIM is
+[15:44] <apw> arges, you are a sound weeny, does any of your jack pants use OSS ?
+[15:45] <lantizia> as that prevents the creation of  /dev/dsp   /dev/adsp /dev/mixer
+[15:45] <lantizia> i have no idea what you're on about
+[15:46] <apw> lantizia, i am asking someone who does a lot of sound work if we need any OSS 
+[15:46] <apw> at all in his opinion
+[15:47] <apw> SOUND_OSS_CORE_PRECLAIM would default on if SOUND_OSS_CORE gets turned on, but it defaults off
+[15:47] <lantizia> ah sorry arges is a person (oops!) i thought you were saying you 'argues' the following :D
+[15:47] <infinity> https://lists.ubuntu.com/archives/kernel-team/2010-May/010647.html
+[15:47] <infinity> Looks like we intentionally disabled them way back when.
+[15:47] <ogra_> well, preclaim makes sure the device numbers for things like /dev/dsp are hogged all the time by the kernel
+[15:47] <apw> infinity, yeah and something has broght it back, sigh
+[15:48] <apw> ogra_, indeed
+[15:48] <ogra_> so if any userspace emu wants to create them the major devicenumbers are gone
+[15:49] <hggdh> smb: good afternoon, I got a Q for you -- on one of our test machines, running Raning/Xen, I am seeing lowmemorykiller messages being issued (killing libvirtd, xend, and others). The machine is idling... have you seen something like that?
+[15:49]  * apw tries turning it back off
+[15:49] <smb> hggdh, no
+[15:49] <infinity> apw: d5a54f43f357d4814f2c3d53ca3d5c3f6fddebe0
+[15:50] <lantizia> ogra_, it makes me cry :(  technically I have a cold but still...CRY
+[15:50] <infinity> apw: Pulled in by turning on OSS_MIXER, I suspect.
+[15:50] <apw> hggdh, raring/xen, i have recently set one of those up, i think i did when i made the host too small
+[15:50] <apw> smb, didn't we have to make it a bit bigger
+[15:50] <lantizia> osspd is a god send for getting really old Loki ported games working
+[15:50] <infinity> apw: Or, MIXER_OSS, rather.
+[15:51] <lantizia> and it seems the osspd package is going to be in raring (as it was copied from debian sid, and debian just packaged it) - so without fixing the kernel setting... it'll be useless
+[15:51] <smb> apw, Oh, hm, I did forget about that. Though I think I only saw some other messages not the memory killer... but not sure now
+[15:51] <apw> well they seem to be options which are selected, and just turning those two off they stay off
+[15:51] <apw> so i suspect we have them on for nothing ... 
+[15:51] <hggdh> the thing there is out of two machines with Raring/Xen, one does show it, the other does not. Both have the same setup for Xen (this is happening on Dom0)
+[15:51] <apw> infinity, based on what you found i think we are justified in turning it off for raring at least and we can see what happens
+[15:52] <smb> hggdh, Is dom0 set for ballooning or has it maxmem clamped?
+[15:52] <apw> lantizia, can you file a bug against linux and let me know the number so i have something to track it against
+[15:52] <apw> infinity, as far as i can see we have the core turned on, and no drivers using it, so its a complete waste of time
+[15:52] <lantizia> apw, unfortunately I've got this far and to this channel with the knowledge I have by wildly googling... I'm no expert.. i wouldn't even know how I'd file that bug
+[15:53] <apw> ogasawara, you seem to be the one who turned off OSS (the old sound thing) in maverick timeframe, a couple of core bits seem to be back on in R, know of any reason or can i slam them back off
+[15:53] <apw> lantizia, run "ubuntu-bug linux" in a terminal window and folow the prompts :)
+[15:53] <infinity> lantizia: https://bugs.launchpad.net/ubuntu/+source/linux/+filebug
+[15:53] <infinity> lantizia: Or what apw said.
+[15:54] <smb> hggdh, And for the host seeing oom killer, check ps or top to find anything with a big mem footprint
+[15:54] <infinity> apw: They snuck back in in P, actually, when you pulled d5a54f43f357d4814f2c3d53ca3d5c3f6fddebe0
+[15:54] <hggdh> smb: looking
+[15:54] <infinity> apw: Since you're the one who did it, maybe you should ask yourself if you know why. ;)
+[15:55] <hggdh> smb: well, dom0_mem is set to 512k, max=512k...
+[15:55] <lantizia> infinity, is this the oss thing?
+[15:55] <apw> infinity, oh yeah.  looks like some kind of total fail on my part there, then i will unilaterally fix that in R for a start
+[15:55] <smb> infinity, Do you expect to remember anyone of us something that is more than 2 weeks old? ;-P
+[15:55] <infinity> lantizia: Yes.
+[15:56] <smb> hggdh, Ok, so that would be how I set my machine. Which runs a server install
+[15:56] <smb> hggdh, wait
+[15:56] <smb> hggdh, Did you say 512K?
+[15:56] <infinity> He had to have meant 512M.
+[15:56] <hggdh> smb: my bad. 512M
+[15:56] <infinity> If you can boot a dom0 with 512K, I want your setup.
+[15:57] <smb> infinity, Thats what I think he meant but better be sure
+[15:57] <hggdh> :-)
+[15:57] <ogra_> 512k are enough for everyone !
+[15:58] <apw> lantizia, drop me the bug number here when you have it so i can add it to the commit
+[15:58] <smb> hggdh, ok, so yeah 512M may be ok if dom0 does not run other services. Like mine...
+[15:58] <apw> ogasawara, did you do your upload yet ?
+[15:59]  * apw waits impatiently for lantizia to supply the bug number
+[15:59] <smb> apw is patiently as always... :)
+[16:00] <herton> infinity, yes, shank bot wait 1 hour after you set promote-to-proposed to Fix Released
+[16:00] <herton> *waits
+[16:00] <apw> smb, well i want to get this in before ogasawara does her thing
+[16:00] <infinity> herton: Oh, cool.  That's good to know.
+[16:00] <hggdh> smb: will recheck all. I can understand bzr going down on 512M, but not libvirtd
+[16:01] <herton> infinity, 1 hour depends on when the cron job executes, but is a minimum of 1 hour
+[16:02] <infinity> hggdh: If you have anything doing scary python things (say, something using the libvirt or xend python bindings to query/fiddle with stuff), 512M goes fast.
+[16:02] <infinity> hggdh: If you don't want to let your dom0 balloon, give it a swapfile.
+[16:02] <smb> hggdh, Well it does not matter what. If memory gets low *something* has to die. And if it is decided that libvirtd is worthwhile...
+[16:02] <hggdh> infinity: nothing much, usually, apart from building the whole of the kernel tests
+[16:04] <smb> infinity, Actually its always a good idea to have some swap file... 
+[16:04] <infinity> smb: Well, yes.  a dom0 without some healthy swap is probably asking for trouble.
+[16:05] <infinity> smb: (for domUs, running swapless may give you exactly the behaviour you want, depending, but for a dom0, it seems silly to potentially lose the whole system to an unanticipated commit spike)
+[16:06] <infinity> Well, not that you actually "lose the system" if xend or libvirt die.  But it sure looks like it to someone who doesn't know how to recover.
+[16:07] <ogasawara> apw: I have not uploaded yet, was doing some test builds and boots.  feel free to shove your changes up and I'll pull it in
+[16:08] <hggdh> well, just reproduced it by running 'bzr branch' -- LMK kicked in after a while, killed bzr *and* libvirtd
+[16:08] <smb> infinity, Yeah, I certainly would not want any server of mine have none
+[16:08] <ogasawara> apw: I'm not aware of any reason for configs to be flipped back on, other than maybe our cowboy did it
+[16:09] <hggdh> which is sort of a overkill. libvird memory usage did not change (visibly), so killing bzr should have been enough
+[16:09] <smb> hggdh, oom killers definition of "not important" not necessarily goes along with expectation
+[16:09] <hggdh> smb: most certainly agree :-)
+[16:09] <infinity> hggdh: Yeah, that's not really unexpected.  A dom0 that's also used for "real work" needs some healthy swap, and if you care about it also being performant, a ballooning config.
+[16:10] <hggdh> yeah. Will review the implementation on that, and add a bit of swap/balloon
+[16:11] <apw> ogasawara, give me a couple to just get this bug number in
+[16:11] <infinity> smb: It's been a long time since I looked at the oomkiller.  Does it intentionally try to avoid killing things with locked pages or any other such tricks?
+[16:11] <infinity> smb: (Like, it's possible xend and libvirt could be doing things to make themselves less easy prey)
+[16:11] <apw> lantizia, poke
+[16:12] <smb> infinity, It is probably as long or longer since I looked. I thought mlock may prevent things, but then also make the overall situation less good for other things
+[16:12] <lantizia> woops sorry my boss was chatting to me on IM
+[16:12] <lantizia> apw, I'm here!
+[16:12] <lantizia> apw, still need me to do something?
+[16:12] <apw> we are holding waiting for the bug number from you, so i can commit this change
+[16:13] <lantizia> ah! that command thing
+[16:13] <apw> lantizia, ^^
+[16:13] <infinity> smb: locking pages isn't usually the right answer to most problems, but in the xend/libvirt/qemu cases, it would almost seem to be what you'd want anyway.
+[16:13] <apw> yeah especially as probabally the guest memory is real and unswappable, 
+[16:13] <smb> infinity, *maybe* libvirt but xend is deprecated and written in python... 
+[16:13] <apw> but the "controller" for it may get shoved out
+[16:13] <lantizia> apw, I'm on 12.04 still - is that ok?
+[16:13] <infinity> smb: Given that your dom0 (or qemu host in the qemu case) kinda has one really important job, and everything else is secondary.
+[16:14] <apw> lantizia, yes
+[16:14] <infinity> smb: You can totally mlock in python.  Using ctypes.  It's evil.  Don't do it.
+[16:14] <lantizia> ok.. .not donee this before - signing in...
+[16:14] <smb> infinity, I did not even want to think about it. 
+[16:15] <lantizia> apw, is my bug that I'd like BOTH of the OSS related settings in the config to simply not be in there at all (they were not even in the config file for 11.10's kernel)
+[16:15]  * smb shudders
+[16:15] <infinity> smb: Heh.  They're rewriting xend in a real programming language as we speak, right?
+[16:15] <apw> lantizia, you are asking for them to be turned off
+[16:15] <lantizia> ok :D
+[16:15] <apw> i'll put the rest of the info in
+[16:15] <smb> infinity, There was an ocaml version but actually they moved the whole stack to use a library written in c
+[16:16] <infinity> smb: Right.  The C library.  That was what I remembered from UDS.
+[16:16] <infinity> smb: If they also write C tools that link to said library, it will be a glorious day.
+[16:16] <infinity> smb: (If all I ever see is python bindings and crappy python tools, congrats on not solving the problem)
+[16:17] <lantizia> apw, ok - i'm just quickly typing up the whole deal :S
+[16:19] <smb> infinity, They do (xm -> xl) but initially loosing the persistent domU management by that. Ok, it is better done in libvirt the same way as for kvm but then this needs the right libvirt for it. So even more that can go wrong.
+[16:19]  * smb goes into a corner and cries
+[16:19] <infinity> smb: libvirt and I don't get along even remotely.
+[16:19] <infinity> smb: Maybe it's matured by now, but the last time I tried using it, I just got very, very angry and went back to configuring VMs by hand.
+[16:20] <apw> infinity, it works ok as far as i can tell, mostly
+[16:20] <infinity> Which is, y'know, trivial anyway.  Simple config files for Xen, simple command lines for qemu.
+[16:20] <infinity> Or MESSY AS HELL XML files for libvirt.
+[16:20] <smb> infinity, apw also was not very amused, but mostly because of the quality of virt-manager
+[16:20] <infinity> Progress?
+[16:20] <smb> infinity, libvirt itself isn't that bad nowadays
+[16:20] <apw> it did make me mad a few times i guess, but it does seem to do the job pretty well
+[16:21] <apw> thought if i knew what the command lines for each were i might cry that i have been
+[16:21] <apw> through all that pain for something that easy
+[16:21] <apw> lantizia, bug # ?
+[16:22] <lantizia> apw, should I tick it's a security bug?
+[16:22] <infinity> lantizia: No, it's not.
+[16:22] <apw> no
+[16:22] <lantizia> ok :D
+[16:22] <lantizia> https://bugs.launchpad.net/ubuntu/+source/linux/+bug/1105230
+[16:22] <ubot2> Ubuntu bug 1105230 in linux (Ubuntu) "Removal of odd OSS options in kernel compile config file" [Undecided,New]
+[16:22] <lantizia> tada!
+[16:22] <lantizia> ooh i feel all warm and fuzzy
+[16:23] <apw> ogasawara, ok pushed and ready for your fun
+[16:23] <ogasawara> apw: awesome, thanks
+[16:24]  * apw isn't sure how keen he is to SRU this back as far as P
+[16:25] <infinity> apw: Seems reasonably harmless to do so.
+[16:25] <apw> infinity, if it just turns off like that i guess so
+[16:25] <infinity> apw: Assuming it doesn't end up disabling some esoteric driver that only built in 3.2
+=== henrix is now known as henrix_
+=== henrix_ is now known as henrix
+[16:32] <arges> apw: whats up?
+[16:33] <apw> arges, wondering if your jack based setups use OSS drivers for anything
+[16:33] <arges> apw: no don't use OSS, just jack/alsa/pulse
+[16:36] <apw> ogasawara, i think i may have knobbed it
+[16:37]  * apw is investigating
+[16:37] <ogasawara> apw: ok, I'll wait to kick off new builds
+[16:37] <ohsix> osspd is close to being usable, but not
+[16:37] <ohsix> if you want to follow up on that :p
+[16:38] <ohsix> i couldn't make sense of why some of the io 'slaves' wouldn't exit, mathematica would spawn up to 32 then pulse and osspd would start giving up
+[16:39] <apw> ohsix, the problem here is the preclaim isn't it
+[16:39] <ohsix> yes, i was making a comment about the bug
+[16:40] <lantizia> ohsix, ossp is better (compatibility) wise than anything else out there
+[16:41] <lantizia> I even have an untested patch Tejun wrote for me on the linux mailing list that re-enabled mmap support
+[16:41] <ohsix> i don't disagree, but like i (sort of) said, it is almost trivial to find a case where it breaks
+[16:42] <lantizia> I've got Unreal Tournament, Railroad Tycoon 2, Alpha Centauri, SimCIty 3000 and Return to Castle Wolfenstein.... classic native linux games that _really_ need it to work
+[16:42] <ohsix> particularly the one open() one io slave breaks easily
+[16:42] <apw> ogra_, so would we think that just turning off _PRECLAIM would be enough for the older releases to make this work, to minimise the changes there
+[16:43] <lantizia> wrappers can fail due to incompatible libc implementations and such - so having something that looks like the real OSS is a god send
+[16:43] <lantizia> it's a shame to throw some of the best (and very few) commercial linux games away for just a sound issue
+[16:43] <apw> ogasawara, ok i have fixed raring, soz about that
+[16:43] <ogasawara> apw: no worries, thanks
+[16:44] <lantizia> apw, is this being fixed as far back as 12.04 then? wow
+[16:44] <apw> lantizia, what you running as a test bed.  i would like to see if just turning off one of these works in the odler releases
+[16:44] <lantizia> apw, I'm running 12.04 now
+[16:44] <apw> lantizia, i am thinking about it, the fix i have applied to raring is not goain back
+[16:44] <ogra_> apw, sounds like 
+[16:44] <apw> lantizia, i think it would be too much
+[16:44] <apw> but if turning off _PRECLAIM is enough that we might be able to do
+[16:44] <lantizia> yeah it's just PRECLAIM that is the issue
+[16:45] <infinity> apw: Ah-ha, so it was due to MIXER_OSS, I was right? :P
+[16:45] <ohsix> preclaim doesn't let anyone else get the major numbers for oss
+[16:45] <apw> ok ... i'll get you a kernel to test
+[16:45] <ohsix> in case the alsa/oss shim is loaded later
+[16:45] <ohsix> if you were wondering why there needed to be a preclaim :p
+[16:45] <apw> infinity, some shit i cannot see we would want on when we have OSS turned off officially, but i'll let someone testing raring confirm that :)
+[16:46] <apw> ohsix, yep
+[16:46] <infinity> apw: Well, it was off until that ARM merge, and no one complained in maverick or oneiric.
+[16:46] <lantizia> ohsix, whats "alsa/oss shim" ?
+[16:46] <apw> infinity, right i have no compunction turning it off, but if _PRECLAIM will do that is much easier to justify for SRU
+[16:46] <infinity> apw: True.
+[16:47] <ohsix> lantizia: it's a module from alsa that will wire up OSS to an alsa driver, with all the same drawbacks oss ever had :p (one open will block all users, oss and alsa)
+[16:48] <lantizia> ohsix, ah well - nevermind then lol
+[16:55] <wookey> apw: I filed current state of fix against raring: 
+[16:55] <wookey> https://bugs.launchpad.net/ubuntu/+source/linux/+bug/1105251
+[16:55] <ubot2> Ubuntu bug 1105251 in linux (Ubuntu) "Fix cross- linux-tools build" [Undecided,New]
+[16:56] <wookey> I've not checked that native builds are still correct (should be OK, but you never know)
+[17:05] <ogra_> apw, oooh ! i was under the assumption you took all our patches from the qunatal nexus7 kernel, i know for sure the first kernel had loglevel=1 
+[17:06] <ogra_> (which didnt help for these messages either btw)
+[17:06] <ogra_> using the patch you once wrote 
+[17:08] <ogra_> gah, yeah, the patch was dropped :(
+[17:08] <ogra_> console_loglevel = 4;
+[17:08] <apw> ogra_, you should be able to confirm that patch would help via 'loglevel=2' on the kernel command line
+[17:09] <ogra_> will try ... but i'm pretty sure it doesnt catch "err"
+[17:09] <ogra_> iirc it only swallows "info"
+[17:10]  * ogra_ grumbles about the broken reply-to setup of the kernel ML
+[17:25] <ogra_> apw, ok, the majority of messages is gone, i still get "Powering on wifi" "Powering off wifi" all over the screen though
+[17:26] <ogra_> apw, quieten_wifi_power_message.patch quietens that bit
+[17:37]  * ppisati -> rush to the gym
+[18:21] <lantizia> apw, did you say there was a kernel I was going to test for you?
+[18:26] <ogra_> lantizia, no, he said that the fix will go into raring with the next upload
+[18:27] <lantizia> ogra_, I'm sure there was something about just putting the preclaim fix into the previous two releases
+[18:27] <lantizia> and me testing that
+[18:27] <lantizia> lemme find it :S
+[18:29] <lantizia> <apw> ok ... i'll get you a kernel to test
+[18:29] <ogra_> ..."some shit i cannot see we would want on when we have OSS turned off officially, but i'll let someone testing raring confirm that :)" ...
+[18:30] <ogra_> that made me think its raring :)
+[18:30] <ogra_> anyway, you will have a kernel test request in the SRU bug you filed
+[18:30] <lantizia> but before he said what I pasted he was asking what I was running and I said 12.04
+[18:30] <lantizia> o_O what do I do with that then? :D
+[18:30] <ogra_> SRUs dont get into the archive unverified
+[18:31] <ogra_> the bug comment will tell you :) 
+[18:31] <ogra_> (once it is there)
+[18:31] <ogra_> if you are into gaming you should take a look at steam btw ;)
+[18:32] <lantizia> ogra_, already using it :D
+[18:32] <lantizia> Half-Life was released yesterday! lol took them FIFTEEN years to port it to linux :P
+[18:32] <lantizia> i wonder if anything else slipped back into the kernel config options when this ARM version accident merge thing happened
+[18:32] <ogra_> i remember runnning it when UT was recent 
+[18:33] <ogra_> and iirc it ran natively 
+[18:33] <lantizia> nah not HL, but UT was native
+[18:33] <ogra_> hmm, wasnt there a company providing a native runtime for it 
+[18:33] <ogra_> UT ran native, sure 
+[18:34] <lantizia> ogra_, nope... hell even wikipedia is saying it was released yesterday
+[18:34] <lantizia> although the original HL was kinda quake based (modified into GoldSrc)... GoldSrc itself has only just been ported to linux
+[18:35] <ogra_> ah, loki was the name i was looking for 
+[18:36] <lantizia> yeah they ported lots... I have Unreal Tournament, Railroad Tycoon 2, Alpha Centauri, SimCIty 3000 and Return to Castle Wolfenstein to get working with OSS Proxy once this is fixed
+[18:36] <ogra_> right, http://en.wikipedia.org/wiki/Loki_Software agrees with you
+[18:36] <lantizia> what does SRU mean and am I supposed to see it somewhere?
+[18:36] <ogra_> i thought i had HL running with a lokin installer too
+[18:38] <ohsix> but not mathematica bawww
+[18:38] <ohsix> see if the io slaves exit properly for all those games
+[18:39] <lantizia> i hope steam on linux will resurrect UT3 lol -  not willing to place any bets though
+[18:39] <lantizia> ohsix, I wouldn't even know how to check that - and RTCW needs mmap anyway so I can't test that one yet
+[18:39] <lantizia> not until I recompile the kernel with tejuns latest mmap fix
+[18:45]  * henrix -> EOD
+=== henrix is now known as henrix_
+=== cyphermox_ is now known as cyphermox
+[20:03] <marrusl> I'm having trouble finding definitive proof if /proc/cpuinfo reflects "cpuinfo_cur_freq" or "scaling_cur_freq" from /sys.  I think it's the former, does anyone know for sure?
+[20:20] <vanhoof> marrusl: its scaling_cur_freq
+[20:20] <vanhoof> cpu MHz		: 2701.000
+[20:20] <vanhoof> ==> cpu1/cpufreq/scaling_cur_freq <==
+[20:20] <vanhoof> 2701000
+[20:30] <marrusl> vanhoof, thanks!  
+[20:33]  * cking -> EOW
+[20:37] <vanhoof> marrusl: np!
+[20:50]  * ogasawara lunch
+[22:00] <catbus1> Can anyone tell me if I am right about this? The kernel SRU for 3.5.0 has entered the 2nd phase (verification), and if there is any SRU request, it won't be reviewed until 2 weeks later. And if it's good to go, it will be in the -updates at the end of 2/28, 5 weeks later?
+[22:36] <lantizia> apw, arges, infinity, ogra_, ohsix:  RE: The OSS fix from earlier today....   I got in touch with Tejun (the author of osspd), joined the project on SourceForge and I'm making a mailing list (that'll include previous conversations a few of us have had over the last year or so in email)... would you be interested in being on the list and if so PM me what name/e-mail to add.

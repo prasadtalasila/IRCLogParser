@@ -1,0 +1,95 @@
+[00:02] <cjwatson> Seriously?  celeryd log rotation interrupts any branches being scanned at the time?
+[00:03] <cjwatson> Oh, no, there it goes
+[00:03] <wgrant> It wouldn't surprise me.
+[00:03] <cjwatson> Just exceptionally confusing log output
+[00:04] <cjwatson> (It starts up another poolworker of the same name, I think)
+=== slank is now known as slank_away
+[00:13] <cjwatson> Aha, https://launchpad.net/ubuntu/raring/i386/man-db et al is what I'm looking for
+[00:13] <cjwatson> I always find that tremendously difficult to locate
+[00:16] <wgrant> cjwatson: Yeah, I've never been sure how to get there without URL hacking
+[00:16] <wgrant> I believe there is a way
+[00:17] <wgrant> But like https://launchpad.net/ubuntu/raring/+package/man-db it is rather difficult to find
+[00:17] <cjwatson> That's what I always go for first and it's much less useful (to me anyway)
+[00:18] <cjwatson> https://launchpad.net/ubuntu/raring/i386 has a search box that times out a lot
+[00:18] <cjwatson> Maybe it would return something useful if it ever succeeded
+[00:18] <cjwatson> Hm, no, takes me to the DASBPR
+[00:19] <cjwatson> The package relationship links on DASBPR:+index go to DASBP:+index, though
+[00:19] <cjwatson> So that's one way, albeit convoluted
+[00:26] <wgrant> Yeah
+[00:26] <wgrant> By DASBP you mean DSBP?
+[00:26] <wgrant> Ah, no
+[00:26] <wgrant> Nevermind
+[00:27] <cjwatson> I don't think so
+[03:11] <wgrant> StevenK: How's the rewrite?
+[03:12] <StevenK> Painful
+[03:13] <wgrant> Think of all the code you can delete
+[03:13] <StevenK> Not sure I'm at all happy with it
+[03:13] <StevenK> % bzr di | diffstat -s
+[03:13] <StevenK>  10 files changed, 266 insertions(+), 423 deletions(-)
+[03:13] <wgrant> And that's just the start :)
+[03:14] <cody-somerville> StevenK: whatcha doin'?
+[03:14]  * wgrant breaks the build farm
+[03:14] <StevenK> cody-somerville: Rewriting specification search
+[03:18] <StevenK> As well as questioning my sanity as of 4:30pm yesterday.
+[03:19] <wgrant> What did you do?
+[03:21] <StevenK> 4:30pm is approximately when I talked myself into starting specificationsearch.
+[03:21] <wgrant> Heh
+[03:21] <StevenK> wgrant: http://pastebin.ubuntu.com/1543444/
+[03:27] <wgrant> :)
+[03:31] <StevenK> Oh, so you don't wildly object?
+[03:31] <StevenK> % subunit-stats < lp.log | grep Failed
+[03:31] <StevenK> Failed tests:     93
+[03:31] <StevenK> Hmmm
+[03:32] <wgrant> It's a good start
+[03:32] <wgrant> Even better once the tests pass!
+[03:33] <wgrant> Removing this duplication can only be a good thing
+[03:33] <StevenK> I've not done {Distro,Product}Series either
+[03:38] <wgrant> StevenK: What about ProjectGroup?
+[03:39] <wgrant> I didn't really look at the deletion bits of the diff hard enough to notice
+[03:39] <StevenK> ProjectGroup has been subsumed
+[03:39] <wgrant> Ah
+[03:58] <StevenK> % testr failing --list | wc -l
+[03:58] <StevenK> 46
+[03:59] <wgrant> What sort of failurs?
+[04:03] <StevenK> Most of them have been thinko/things I missed while shifting tons of code around
+[04:07] <wgrant> Right :)
+[04:08] <StevenK> % testr failing --list | wc -l
+[04:08] <StevenK> 26
+[04:22] <StevenK> Progress!
+[04:22] <StevenK> % testr failing --list | wc -l
+[04:22] <StevenK> 11
+[04:23]  * StevenK sighs at the specification code using 'filter' everywhere, which neatly masks an internal function
+[04:30] <wgrant> Huh
+[04:30] <wgrant> I didn't break buildbot
+[04:30] <wgrant> Incredible
+=== almaisan-away is now known as al-maisan
+=== al-maisan is now known as almaisan-away
+=== jtv1 is now known as jtv
+=== yofel_ is now known as yofel
+=== slank_away is now known as slank
+=== matsubara is now known as matsubara-lunch
+=== matsubara-lunch is now known as matsubara
+[17:56] <Bert_2> Hi, I sort of forgot how I can change the number of e.g. blueprints there are displayed on a project's blueprintspage per page, anyone know this by hard cause I couldn't find it using grep
+[18:01] <Bert_2> s/hard/heart/
+[18:01] <Bert_2> woops
+[18:03] <cjwatson> ?batch=50
+[18:04] <cjwatson> (etc.)  but if you raise it too high it will probably time out
+[18:04] <cjwatson> ah, or tell you that the maximum is 300
+[18:04] <Bert_2> cjwatson: and where do I set that?
+[18:06] <cjwatson> at the end of the URL
+[18:06] <Bert_2> cjwatson: but that's not a permanent solution now is it
+[18:06] <Bert_2> I was able to raise it from 10 to 20 before
+[18:06] <Bert_2> but I don't remember how the hell I did that xD
+[18:07] <cjwatson> wait, is this your own LP instance?
+[18:07] <Bert_2> cjwatson: yeah
+[18:07] <cjwatson> it would be helpful to say that rather than making us guess :P
+[18:07] <Bert_2> yeah sorry, I guessed you'd expect that based on the fact this is the dev chanel, sorry man
+[18:08] <cjwatson> it's default_batch_size in launchpad-lazr.conf
+[18:10] <Bert_2> cjwatson: awesome, thx :D
+[18:10] <Bert_2> so silly I couldn't remember
+[18:10] <Bert_2> thought it was in some template, so I went looking there
+=== Ursinha-afk is now known as Ursinha
+=== james_w` is now known as james_w
+=== Ursinha is now known as Ursinha-afk
+=== Ursinha-afk is now known as Ursinha
+=== matsubara is now known as matsubara-afk

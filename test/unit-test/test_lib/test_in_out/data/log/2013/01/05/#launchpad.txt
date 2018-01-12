@@ -1,0 +1,52 @@
+=== slank is now known as slank_away
+[01:16] <george_e> Me again :)
+[01:16] <george_e> "File cmake_2.8.9.orig.tar.gz already exists in Primary Archive for Ubuntu, but uploaded version has different contents."
+[01:16] <george_e> Why am I getting this error for uploading a build for Precise to my PPA?
+[01:17] <george_e> ...when CMake 2.8.9 isn't even _in_ the Precise archives?
+[01:20] <tsimpson> george_e: I don't think it matters that it's not in precise, but that it exists at all in the archives
+[01:23] <wgrant> Right, Debian pool-style archives can only have one file of a particular name, regardless of series.
+[01:23] <wgrant> However, that error raises a more disturbing issue
+[01:23] <wgrant> Why does your cmake 2.8.9 tarball differ from the one in Ubuntu?
+[01:24] <wgrant> If it's the original 2.8.9 tarball as the filename suggests, then it should be identical
+[01:24] <george_e> I had to add a "dummy" changelog entry in order to sign the upload with my GPG key.
+[01:24] <wgrant> That won't change the orig.tar.gz
+[01:24] <george_e> Oh right.
+[01:25] <george_e> I got the source from here: https://launchpadlibrarian.net/112824362/cmake_2.8.9.orig.tar.gz
+[01:25] <wgrant> Can you pastebin your .dsc?
+[01:26] <george_e> I'm afraid not - this happened late last night and I was working in /tmp - so it's gone :(
+[01:26] <george_e> So let me try to reproduce it then.
+[01:26] <wgrant> Anyway, you somehow changed that file
+[01:26] <wgrant> That's the URL to the Ubuntu tarball, and it's identical to the one on the upstream download page
+[01:26] <wgrant> So you must have changed it somehow somewhere along the line
+[01:27] <george_e> I'll try it again.
+[01:27] <george_e> No clue how it got changed.
+[05:01] <george_e> Isn't "2.8.9~precise1" >= "2.8.9" ???
+[05:01] <wgrant> george_e: No
+[05:01] <wgrant> ~ is less than anything at all, including the empty string
+[05:01] <george_e> :(
+[05:01] <wgrant> That's its entire purpose
+[05:01] <george_e> Should I have used a dash?
+[05:02] <wgrant> Dashes a special
+[05:02] <wgrant> are
+[05:02] <wgrant> Perhaps you want a +
+[05:02] <george_e> Ah, that would work.
+[05:02] <george_e> Thank you.
+[05:02] <wgrant> http://www.debian.org/doc/debian-policy/ch-controlfields.html#s-f-Version
+[05:03] <wgrant> dpkg --compare-versions 2.8.9~precise lt 2.8.9 && echo "true" || echo "false"
+[05:03] <wgrant> might also be handy
+[05:03] <george_e> Thank you.
+[05:04] <george_e> Also, does the '1' at the end mean anything?
+[05:04] <george_e> Doesn't it have something to do with Debian revisions?
+[05:04] <george_e> Ah - nvm. That link you gave me explains it.
+[05:04] <wgrant> Nothing in particular, it just makes things a bit clearer if you ever need a second revision (it can become ~precise2)
+[05:04] <wgrant> It's very very rarely used in that case
+[05:05] <george_e> Okay. So it's fine at '1' then.
+[05:06] <wgrant> Yep
+[05:07]  * george_e tries the upload again.
+[05:14] <george_e> All of this work and then I discover this:
+[05:14] <george_e> "You can test-build the backport in your PPA with backportpackage:"
+[05:14] <george_e> "$ backportpackage -u ppa:<lp username>/<ppa name> -s raring -d quantal cmake"
+=== Quintasan_ is now known as Quintasan
+=== Ursinha_ is now known as Ursinha
+=== yofel_ is now known as yofel
+=== Ursinha_ is now known as Ursinha

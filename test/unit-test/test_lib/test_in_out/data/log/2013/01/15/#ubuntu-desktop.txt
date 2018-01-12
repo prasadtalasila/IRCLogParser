@@ -1,0 +1,455 @@
+[00:56] <robru> anybody know of a way to make launchpad recipes include a PPA for build-deps?
+[00:57] <xnox> robru: one usually adds ppa dependencies to the ppa, and I thought recipes pull sources from the target ppa.
+[00:57] <xnox> that should just work, tm. or it's a bug.
+[00:58] <robru> xnox, I *thought* recipes would pull sources from the target PPA, but I just checked on a recipe for the first time in a while and I'm noticing that it hasn't actually built in a long time, because another package from the same PPA is not available
+[00:58] <robru> xnox, https://launchpadlibrarian.net/128483890/buildlog.txt.gz quite strange
+[00:58] <xnox> =( sad
+[01:01] <xnox> yes, odd. file a bug on launchpad against launchpad or look for similar onces.
+[01:01] <xnox> robru: i can see at the top of the log that the ppa is added, but then it's a mistery while the build dep was not satisfied.
+[01:02] <robru> xnox, oh, that is quite strange.
+=== m_conley is now known as m_conley_away
+[01:26] <robru> xnox, I'm confused now... one of them just built successfully, but other than that one just now, it seems it hasn't built at all since November. not sure how I didn't notice this until just now ;-)
+[01:37] <jasoncwarner> hey bryce and RAOF , I'm getting some GPU hangs right now and was wondering if you knew anything about them? https://bugs.launchpad.net/ubuntu/+source/xserver-xorg-video-intel/+bug/1099394
+[01:37] <ubot2`> Launchpad bug 1099394 in xserver-xorg-video-intel (Ubuntu) "[sandybridge-m-gt2+] GPU lockup IPEHR: 0x0b160001 IPEHR: 0x01000000" [Undecided,New]
+[01:43] <RAOF> jasoncwarner: Whaddaya know? I just got a GPU hang right then.
+[01:44] <RAOF> Also apparently glyph cache corruption, causing all ‘y’s to appear as tiny subscript ‘t’s.
+[01:45] <jasoncwarner> RAOF I had to reboot to get out of the endless GPU hang loop. Rebooted and got it again. Fun times :)
+[01:45] <RAOF> I think I may have had to VT switch to get X back.
+[01:45] <RAOF> Maybe.
+[01:46] <RAOF> Mmm, glyph cache doesn't like ‘M’ either :)
+[01:46] <RAOF> Looks like the same hang as in the bug you linked, though.
+[01:50] <jasoncwarner> RAOF well, I guess I'm glad I got the same bug as an X guy ;)
+[01:51] <didrocks> confirming the random hanging basically, same hw than jasoncwarner
+[01:51] <didrocks> switching to a VT workaround the issue
+[01:53] <jasoncwarner> didrocks did yours just start? mine seemed to just start today (not sure since I didn't have my computer up for three travel days)
+[02:04]  * RAOF switches to SNA to see if that also hits this problem.
+[02:10] <bryce> jasoncwarner, yeah noticed there's been a spate of -intel bugs come in the last few days.  Are you able to reproduce it fairly easily?  If so might try the prior kernel.
+[02:11] <TheMuso> Yeah I was wondering whether 3.8 would bring along fun stuff like this? Had some 3.8 related audio bugs too afaicr.
+[02:12] <bryce> jasoncwarner, hmm, the other -intel bug reports that have come in the last few days have all different error codes, so probably different random issues
+[02:16] <RAOF> I'm not sure, but I don't *think* this was 3.8 related.
+[02:18] <bryce> could be the ddx; new version was uploaded last week
+[02:19] <bryce> ditto xserver, hmm
+[04:59] <pitti> Good morning
+[06:43] <pitti> Laney, desrt: FYI, I uploaded glib2.0 2.35.4 to ubuntu-desktop PPA
+[06:45] <pitti> Laney, desrt: works fine here (boot, guest session, my own regular session, unity, I tried a few programs etc.)
+[06:46] <pitti> I guess I'll wait until it boots in the PPA, then upload it to -proposed and ask the release guys to block migration so that we wait for all the autopkgtests; sounds ok?
+=== mvo_ is now known as mv
+=== mv is now known as mvo
+[07:55] <jibel> Good morning
+[09:00] <Laney> pitti: you don't see the segfault-on-quit problems?
+[09:00] <Laney> I saw it e.g. with gedit, epiphany
+[09:00] <Laney> https://bugzilla.gnome.org/show_bug.cgi?id=690118
+[09:00] <ubot2`> Gnome bug 690118 in general "Crash when closing last tab of a window using Ctrl-w" [Normal,New]
+[09:01] <pitti> Laney: there was one failed test case in app-info, which I just uploaded a fix for
+[09:01] <pitti> (due to one of our patches)
+[09:01] <pitti> Laney: trying
+[09:01] <Laney> perhaps that is fixed in .4; I just tried .3
+[09:02] <pitti> Laney: I tried in gedit; closing two tabs
+[09:02] <pitti> no crash here
+[09:02] <Laney> let me try
+[09:02] <pitti> the bug report is very unspecific, though
+[09:03] <Laney> hm, not in svn?
+[09:03] <pitti> Laney: no, I thought Debian doesn't want development releases?
+[09:04] <Laney> I committed .3 there and nobody complained :P
+[09:04] <Laney> didn't upload it yet though admittedly
+[09:04] <pitti> oh, ok; then I can add my .4 stuff there, of course
+[09:05]  * Laney builds .4
+[09:07] <pitti> Laney: oh, I see a segfault when quitting gedit
+[09:07] <pitti> not when closing the tabs
+[09:07] <Laney> ah, yes, the bug is confusingly worded in that respect
+[09:08] <pitti> Laney: sorry, I didn't notice that you already packaged .3; let me check my remaining delta
+[09:08] <pitti> Laney: e. g. debian/rules still sets $G_HOME
+[09:09] <Laney> yeah I left that for now for compatibility
+[09:09] <pitti> oh, you mean you left the patch
+[09:09] <pitti> ok
+[09:09] <pitti> I dropped it in the PPA
+[09:09] <Laney> there's a couple of packages that make use of it
+[09:18] <pitti> Laney: mbiebl just pinged me about pre-release in svn, he was a bit surprised
+[09:18] <Laney> oh, I thought he was aware as he saw me committing the other stuff
+[09:18] <Laney> ah, he is here
+[09:19] <Laney> mbiebl: ? (I don't mind uploading it to Ubuntu only if you'd prefer)
+[09:19] <pitti> Laney: ok, I committed my updates to SVN now
+[09:19] <pitti> that reverts my dropping of $G_HOME
+[09:19] <pitti> (i. e. not commit it to SVN)
+[09:19] <Laney> merci
+[09:20] <pitti> that was .4, symbol update, fix broken test by 92_revert_appinfo_command_line.patch, and dropping 08_disable_gapplication_basic_test.patch
+[09:20] <Laney> excellent
+[09:21] <Laney> I think des_rt was looking into that other crasher
+[09:22] <mbiebl> Laney: since exp has become somewhat of a staging ground for 3.6 during freeze,  I guess we'd need another branch for pre-releases
+[09:22] <mbiebl> that said, pitti ist that symbols file breakage fixed by the above?
+[09:22] <pitti> mbiebl: we actually want to run GNOME 3.6 with glib 3.5, FYI
+[09:23] <pitti> (but yes, in general it would be cleaner to have another branch)
+[09:23] <pitti> mbiebl: the removed symbols didn't come back, if you mean that
+[09:23] <mbiebl> hm, ok.
+[09:23] <Laney> the "accidentally exported" ones?
+[09:23] <Laney> (per NEWS)
+[09:23] <mbiebl> g_menu_iter something
+[09:24] <Laney> yeah
+[09:24] <mbiebl> ah, ok. so they were supposed to be private
+[09:24] <Laney> indeed
+[09:26] <mbiebl> http://codesearch.debian.net confirms that they weren't used outside of glib
+=== vrruiz_ is now known as rvr_
+[10:19] <chrisccoulson> good morning everyone
+[10:19] <czajkowski> chrisccoulson: top of the morning to you ;)
+[10:20] <chrisccoulson> hi czajkowski :)
+[11:15]  * Laney emerges from the rabbit hole
+[11:16] <czajkowski> Laney: lost in snow and a selection box were you
+[11:17] <Laney> the snow is now terrifying ice, and no selection box just yet :P
+[11:17] <Laney> been attempting to backport gstreamer 1.0 to pidgin
+[11:17] <Laney> muchos upstream commits
+[11:18] <czajkowski> no snow here today :)
+[11:25] <xnox> Laney: the webcam in ubiquity, I can get it to work. With old ubiquity, I just *gasp* install ubiquity-frontend-gtk package on my machine and edit "ubi-webcam.py" to be "AFTER=language" with priority 13.
+[11:26] <xnox> from command line launch "$ ubiquity" (it may or may not ask for sudo)
+[11:26] <xnox> and then click next and get the webcam page.
+[11:26] <xnox> With current ubiquity - it just works & I can take a picture of myself =)))
+[11:26] <Laney> nice
+[11:26] <xnox> with your branch proposal, I cannot.
+[11:26] <Laney> I didn't know you could launch it like that
+[11:26] <Laney> I told you I couldn't test it
+[11:26] <Laney> will take a look
+[11:27] <xnox> well, I tried the demo & the mvo's ubiquity standalone plugin launcher. Until I came up with this "hack" =)
+[11:27] <xnox> Laney: just don't try to reinstall your machine this way it may crash or wipe your data =P
+[11:28] <xnox> Laney: i am guessing that the detection function to check if webcam is .available() might not be working as advertised. Do you have a webcam though to use these hacks? =)))
+[11:28] <Laney> yeah
+[11:28]  * xnox can be remote webcam face =)
+[11:28] <xnox> ah ok.
+[11:28] <Laney> you can work on it if you want though :P
+[11:29] <xnox> nah =) busy patch piloting
+[11:57] <tkamppeter> I got my Pandaboard yesterday, and Raring actually works on it, X works, but with black screen on my Eizo monitor and with actual display on a Sony Bravia 720p TV from 2007.
+[12:00] <mlankhorst> are you using the same connector on the pandaboard for both?
+[12:04] <tkamppeter> mlankhorst, for the TV I used the left one (HDMI), for the monitor I tried both (HDMI and DVI). The input of the monitor is DVI, the input of the TV is HDMI.
+[12:06] <mlankhorst> what's in /proc/cmdline btw
+=== trijntje_ is now known as trijntje
+[12:25] <tkamppeter_> mlankhorst: 'ro quiet splash root=UUID=2f71c452-1e4e-4bc2-bb9e-bfe731459b05'
+[12:26] <tkamppeter_> mlankhorst, I booted now connected to my monitor via the right output (DVI).
+=== MacSlow is now known as MacSlow|lunch
+=== MacSlow|lunch is now known as MacSlow
+[13:35] <larsu> morning attente, did you see bug #1078694 ?
+[13:35] <ubot2`> Launchpad bug 1078694 in appmenu-gtk (Ubuntu) "Modal dialog broken on Unity" [Undecided,Confirmed] https://launchpad.net/bugs/1078694
+[13:35] <larsu> I'm wondering if we even should disable the menu when a modal dialog pops up
+[13:36] <larsu> aren't modal dialogs out of fashion anyway?
+[13:36] <attente> morning larsu, i haven't seen that yet
+[13:36] <larsu> mpt, what do you think about this bug^^? (the gist of it is: should the global menu be disabled when a modal dialog pops up)
+[13:37] <mpt> larsu, (1) absolutely, and (2) it's a duplicate, conscioususer can tell you where the original is. :-)
+[13:38] <larsu> mpt, thank you :)
+[13:40] <larsu> attente, I assume we're not doing that right now?
+[13:40] <larsu> shouldn't be too hard from the gtk side, just listen to changes in menubar sensitivity
+[13:41] <attente> i can take a look at it
+[13:42] <larsu> thanks :)O
+[13:45] <larsu> attente, okay, just marked as a dup: bug #674605 is the "real" one
+[13:45] <ubot2`> Launchpad bug 674605 in Application Menu Indicator "Transient window wrongly shows menus for its parent" [Medium,Confirmed] https://launchpad.net/bugs/674605
+[13:46] <larsu> attente, by the way: did you fix that empathy bug? (that kept me from trying out your ppa long-term)
+[13:46] <attente> larsu, yep :)
+[13:46] <attente> larsu: but now it's a packaging issue
+[13:46] <larsu> haha
+[13:46]  * larsu loves debian
+[13:47] <larsu> surely someone in this channel can help you :)
+[13:47] <attente> i believe seb128 is away today, ha
+[14:11] <mpt> attente, just disable all the menus temporarily, don't hide them altogether
+=== Sweetsha1k is now known as Sweetshark
+[14:15] <Sweetshark> huh? no seb? outragious!
+[14:16] <didrocks> Sweetshark: he's sleeping
+[14:16] <didrocks> hey :)
+[14:16] <didrocks> Sweetshark: I can wake him up if you want ;)
+[14:16] <didrocks> (roomie at SFO)
+[14:16] <didrocks> he doesn't believe in jetlag and it works for him :)
+[14:16] <czajkowski> wait he actually sleep
+[14:17] <didrocks> czajkowski: it's kind of 6:15 also :)
+[14:17] <czajkowski> ah should be getting up so, :p
+[14:17] <didrocks> ahah, not sure he would appreciate :)
+[14:17] <czajkowski> ah Toshiba support, please reinstall windows and your machine will be fine *wallop*
+[14:18] <didrocks> ahah
+[14:18] <larsu> attente, hm, this means going through all actions and calling set_enabled... but maybe desrt has a better idea :)
+[14:18] <larsu> desrt, ^^
+[14:19] <czajkowski> didrocks: it's lucky they emailed me that rather than a phone call or I'd be having words with them
+[14:19] <pitti> Laney: https://launchpad.net/~ubuntu-desktop/+archive/ppa/+packages has built packages, FYI
+[14:20] <pitti> Laney: I needed to kick the amd64 build for a race condition in the tests
+[14:20] <didrocks> czajkowski: heh, I can imagine ;)
+[14:23] <Sweetshark> didrocks: hey, dont make the seb angry and then blame me. no fair!
+[14:24] <didrocks> Sweetshark: ok, I'll tell him that you insisted on me to wake him up, but I'm a good friend and didn't do it :p
+[14:25] <Sweetshark> czajkowski: see how the french are teaming up on me! ^^
+[14:26] <didrocks> heh
+[14:26] <czajkowski> hah
+[14:26] <czajkowski> it's the french way :p
+[14:26] <Sweetshark> didrocks: Be warned that I have a few tricky libreoffice uploads in my sleeve and if you are not careful you will end up sponsoring them. justsaying.
+[14:27] <didrocks> Sweetshark: oh no /o\
+[14:27] <Sweetshark> muhaha!
+[14:27] <didrocks> Sweetshark: I have some names of people who should sponsor your work :p
+[14:27] <czajkowski> Sweetshark: packaged all better are they :p
+[14:27] <didrocks> I think they commented on a meeting :)
+[14:27] <Sweetshark> didrocks: hrhr
+[14:27]  * mlankhorst installs libreoffice on Sweetshark 
+[14:29]  * Sweetshark lists heavily, almost fall from his chair but then regains balance.
+[14:32] <Sweetshark> didrocks: actually that is kinda the topic I wanted to ping seb about. https://bugs.launchpad.net/ubuntu/+source/libreoffice/+bug/1037111 has a list of 20 backported patches for precise (outside of upstream microreleases as 3.5/precise is EOL upstream) and a testbuild and I need victims^Wcareful testers for that SRU.
+[14:32] <ubot2`> Launchpad bug 1037111 in libreoffice (Ubuntu Precise) "[SRU] LibreOffice 3.5.7 for precise" [High,In progress]
+[14:32] <davmor2> chrisccoulson: https://bugs.launchpad.net/firefox/+bug/1099857 I thought I would cheer you up with this one
+[14:32] <ubot2`> Launchpad bug 1099857 in ubuntuone-music-store "U1MS Player doesn't work in FF on the Nexus 7" [Medium,Confirmed]
+[14:33] <didrocks> Sweetshark: oh nice! I'll tell him about it if you don't manage to get some time online together :)
+[14:35] <Sweetshark> didrocks: yeah, well. I didnt fill the full SRU form for each bug (would just take too long), but made oneline rationale for each patch.
+[14:36] <desrt> larsu: disagree
+[14:36] <desrt> larsu: if we want not to show menus (or to disable them) when a transient is shown, we ought to do just that
+[14:36] <desrt> on the unity side
+[14:36] <didrocks> Sweetshark: hum, I think they will ask you for the SRU process on each bugs to be followed
+[14:36] <didrocks> Sweetshark: but let's check that with your sponsor :)
+[14:37] <larsu> desrt, how would unity know that a dialog is modal?
+[14:37] <desrt> the dialog isn't exporting any menus
+[14:37] <desrt> it's setting transient-for
+[14:37] <desrt> and unity (or bamf?) is following that back to the parent
+[14:37] <desrt> it should just stop doing that
+[14:38] <larsu> well then the menus would be hidden
+[14:38] <larsu> instead of disabled
+[14:38] <desrt> we want them disabled, not hidden?
+[14:38] <larsu> ya
+[14:38] <larsu> mpt, right? ^^
+[14:39] <desrt> hm.
+[14:39] <desrt> load empty action groups into the widget's muxer
+[14:39] <mpt> right
+[14:39] <desrt> that'll disable them :)
+[14:39] <larsu> that will cause roughly as much dbus traffic as disabling them one by one
+[14:40] <larsu> actually, might even be more, because you need to copy the real actions back
+[14:40] <desrt> larsu: no.  on the unity side.
+[14:40] <desrt> there should be no changes made in the app
+[14:40] <larsu> oh
+[14:40] <larsu> OH!
+[14:40] <desrt> native GMenuModel apps won't be doing this
+[14:40] <larsu> yeah that works
+[14:41] <larsu> desrt, why not?
+[14:41] <desrt> why would they?
+[14:41] <mpt> because their items continue working unless specified otherwise?
+[14:41] <larsu> because dialogs don't have a menu?
+[14:41] <desrt> from their viewpoint the menubar becomes inaccessible because it's part of the window and the modal dialog popped over it
+[14:41] <Sweetshark> didrocks: https://launchpad.net/ubuntu/+source/libcmis/0.3.0-1~ubuntu2 <- do you see any obvious reason, why this is still in -proposed? It blocks uploading LibreOffice 4.0 to raring.
+[14:41] <mpt> ah
+[14:42] <desrt> we're the ones that pulled it out...
+[14:43] <larsu> right, so it's the same use-case
+[14:43] <didrocks> Sweetshark: http://people.canonical.com/~ubuntu-archive/proposed-migration/update_output.txt
+[14:43] <didrocks> is it a soname change?
+[14:43] <didrocks> I guess you need to rebuild all rdepends
+[14:43] <didrocks> the system won't create rdepends
+[14:45] <pitti> hey desrt
+[14:45] <desrt> pitti: hi
+[14:45] <desrt> pitti: thanks for the gtk-doc catch
+[14:46] <pitti> desrt: no worries; I've just sent a set of patches to Tim to fix the gstreamer failures
+[14:46] <pitti> one of these days we'll have that stuff work! *dream*
+[14:46] <desrt> which ones?
+[14:46] <desrt> were they using GLIB_DEPRECATED or something?
+[14:46] <pitti> https://jenkins.qa.ubuntu.com/view/Raring/view/JHBuild%20Gnome/ :)
+[14:47] <desrt> looks like the last build worked?
+[14:48] <pitti> desrt: you mean for gtk-build? yes, apparently the "extern" thingy appeared in glib after that
+[14:48] <pitti> in my jhbuild it only started a few days ago
+[14:48] <desrt> i have an interesting catch-22 here.  my gtk-doc always builds against my system glib :)
+=== m_conley_away is now known as m_conley
+[14:55] <Sweetshark> didrocks: hmm, am I allowed to install a *.deb on a porterbox? Otherwise I have a chicken-and-egg-problem: I cant testbuild LO on the arm-porterbox because I cant install the libcmis debs there and I cant get the libcmis debs installed from raring/main as it will stick in -proposed until I upload libreoffice.
+=== Ursinha_ is now known as Ursinha
+[14:56] <didrocks> Sweetshark: hum, that would be a question for jibel or pitti? I'm familiar with porterbox TBH
+[14:57] <pitti> Sweetshark: oui, tu peux
+[14:57] <pitti> Sweetshark: you can run sudo apt-get {update,install} in the schroots
+[14:57] <pitti> ah, no, not dpkg, just apt-get
+[14:58] <pitti> do these things have -proposed apt sources?
+[14:58] <Sweetshark> pitti: thats not what I need, I need dpkg or -proposed
+[14:58] <pitti> Sweetshark: that smells like prodding #is then
+[14:59] <Sweetshark> pitti: I dont think they do. As I did update and still dont have libcmis-0.3.0, which is in proposed.
+[14:59] <Sweetshark> ;)
+[14:59] <pitti> Sweetshark: apt-cache policy libcmis-0.3.0 tells you
+[15:00] <pitti> so yes, c'est l'heure de #is
+[15:01] <Sweetshark> pitti: thanks. already pinged.
+[15:12] <larsu> kenvandine, thanks for looking at the telepathy-indicator MRs. I approved yours, is autolanding set up for it or should I merge manually?
+[15:13] <kenvandine> larsu, it isn't, you can merge it
+[15:13] <kenvandine> larsu, thanks!
+[15:14] <larsu> kenvandine, okay will do. Did you see https://bugs.launchpad.net/telepathy-indicator/+bug/1098549
+[15:14] <ubot2`> Launchpad bug 1098549 in Telepathy Indicator "Chat windows should always be openend automatically (in the background)" [Medium,Triaged]
+[15:14] <larsu> it's blocking a couple of other patches I have
+[15:14] <larsu> (but it's not super-important)
+[15:15] <kenvandine> ugh
+[15:17] <kenvandine> larsu, empathy sees the channel request at the same time as tp-indicator, if it is running
+[15:18] <larsu> kenvandine, ah, right, because empathy is also an approver. This doesn't fix the mein issue though: we want the chat window to pop up in the background but still have something in the indicator
+[15:18] <larsu> afaics, telepathy doesn't have a way to provide for that
+[15:19] <kenvandine> i don't think it does
+[15:19] <kenvandine> the way we trigger empathy to raise the window is by approving it
+[15:19] <larsu> yep, but that removes the message from the queue
+[15:19] <kenvandine> empathy does know if the message is pending though, if the window/tab isn't focused it doesn't get cleared
+[15:20] <kenvandine> i think
+[15:20] <larsu> right, that works when the window is already open
+[15:20] <larsu> not for the first time though
+[15:20] <larsu> looks like we have to move messagingmenu support into empathy after all, but I'd really like to avoid that
+[15:20] <kenvandine> because the window gets focus
+[15:21] <larsu> no, not when you tell it through telepathy that this wasn't a user action
+[15:21] <larsu> it will then open in the background (90% of the time :( )
+[15:21] <kenvandine> ok, then maybe we can handle that
+[15:21] <kenvandine> right now i think we only manage the pending messages on the observer
+[15:22] <kenvandine> maybe we can wire that up differently in the approver
+[15:22] <larsu> that would work from the indicator side, but empathy doesn't tell us when the window eventually does get focus
+[15:23] <kenvandine> yes it does
+[15:23] <larsu> it does? Cool!
+[15:23] <kenvandine> look at the observer code
+[15:23] <kenvandine> i think :)
+[15:23] <kenvandine> telepathy keeps them in some pending queue
+[15:23] <kenvandine> until the chat gets focus
+[15:23] <larsu> I think it doesn't, because we've already approved it
+[15:23] <larsu> I'll definitely have another look
+[15:24] <kenvandine> please do
+[15:24] <kenvandine> i think we consider it handled when we approve it
+[15:24] <kenvandine> but then we start observing that channel
+[15:24] <kenvandine> and we check for pending messages
+[15:24] <kenvandine> maybe we can make that hand off differently
+[15:25] <kenvandine> i haven't looked at that code in ages, but that feature in tp-glib  was added at my request
+[15:25] <kenvandine> :)
+[15:25] <larsu> oh, neat
+[15:25]  * larsu is a bit annoyed at the complexity of telepathy
+[15:25] <kenvandine> so maybe when we approve it, we don't clear it
+[15:25] <kenvandine> and start checking for pending
+[15:25] <kenvandine> before we clear
+[15:25] <kenvandine> yeah... it is very complex
+[15:26] <kenvandine> but also very cool :)
+[15:26] <larsu> hehe
+[15:26] <kenvandine> love to hate it :)
+[16:26] <Laney> xnox: can you give me some more detail on how ubi failed for you please? seems to wfm: http://ubuntuone.com/4pLqMf5Q68ivybJLyd2C8g :-)
+[16:27] <Laney> thanks for the exciting way to test it btw
+[16:27] <Laney> installing ubiquity in a running system feels naughty
+[16:27] <xnox> it's a .deb so why not =)
+[16:28] <xnox> Laney: looks awesome! for me the viewport had "half of the language selection widget" from the previous page. but looks good =) so good to merge I guess ;-)
+[16:28] <xnox> Laney: haha you use lastpass?!
+[16:28] <Laney> maybe I have some stray gstreamer stuff installed?
+[16:29] <xnox> maybe I didn't have enough installed?
+[16:29] <Laney> should all be deps though
+[16:29] <Laney> but you'd get something in the terminal if that's the case I suppose
+[16:29] <Laney> also yeah, lastpass rules ;-)
+[16:30] <xnox> meh, let's upload and see what happens, there are a few people who have webcams and can test iso images.
+[16:30]  * Laney ph33rs
+[16:30] <Laney> but ok
+[16:31]  * Laney always feels compelled to make stupid faces while testing webcam stuff
+[16:31] <xnox> I am dissapoint that nexus4 doesn't have usb host otg & i can't put yubikey into my phone =(
+[16:32] <ogra_> you are one of the lucky ones ?
+[16:33]  * ogra_ would be happy to be able to complain about nexus4
+[16:34] <xnox> ogra_: haha =) I even got two, and sold one ;-)
+[16:34] <Laney> you need a yubikey neo!
+[16:34] <ogra_> evil!
+[16:34] <xnox> Laney: that would be awesome =)
+[16:35] <xnox> Laney: /me has three yubikeys already....
+[16:35] <Laney> heh
+[16:35] <Laney> $50 ...
+[16:36] <xnox> We have sold out of our initial production runs; we are shipping YubiKey NEO in 5 - 7 weeks.
+[16:36] <xnox> meh
+[16:39] <miha> on ubuntu 10.04, evolution now complains about gmail imap ssl cert being "bad", while  openssl s_client -CApath /etc/ssl/certs -connect imap.gmail.com:993  works fine  <- what am i doing wrong (didn't change anything)
+[16:40] <qengho> Hey, have we a meeting now?
+[16:40] <jpds> miha: Don't use openssl, it doesn't do cert verification.
+[16:40] <jpds> miha: Try gnutls-cli
+[16:44] <Laney> qengho: I was assuming there wouldn't be one since people are away
+[16:45] <qengho> Ah well. My status:
+[16:45] <qengho> [desktop-r-chromiumbrowser-improvements]   6/12 DONE  2/12 deferable
+[16:45] <qengho> - chromium-browser v23 released for all stable Ubuntu.  Fixes lots, but introduces one obvious brown-paper-bag bug.  :(
+[16:45] <qengho> - Preparing v24 right now. Should release after #webapps patches are ported.
+[16:45] <qengho> - Getting ARMv7 working so we can release on raring. NEON assumptions in build cause problems.
+[16:45] <qengho> - Starting beta PPA process to get ahead of releases, so there's no release delay. #webapps on board with patching beta instead of stable.
+[16:45] <qengho> EOF
+[16:45] <kenvandine> yay for getting ahead :)
+[16:45] <qengho> Yeah.
+[16:46] <Laney> ah, you're waiting for armhf to be fixed before updating raring?
+[16:46] <Laney> I noticed yesterday that it was behind Quantal
+[16:46] <qengho> Laney: Yes.  That's a policy requirement.
+[16:47] <Laney> well, it's already being held in raring-proposed because of the failure
+[16:48] <miha> jpds: - The hostname in the certificate matches 'imap.gmail.com'.
+[16:48] <miha> - Peer's certificate issuer is unknown
+[16:48] <miha> - Peer's certificate is NOT trusted
+[16:48] <cyphermox> miha: the ca chain is incomplete. is ca-certificates installed? (in case it wouldn't be for some reason)
+[16:49] <cyphermox> or the new gmail certs are signed with a CA that isn't shipped in 10.04
+[16:50] <miha> installed newest version
+[16:50] <mlankhorst> oh right
+[16:51] <cyphermox> miha: can you pastebin the output of openssl s_client -verify 6 -CApath /etc/ssl/certs -connect imap.gmail.com:993 ?
+[16:52] <cyphermox> (I added -verify 6)
+[16:52] <qengho> miha: and specify what country you're in.
+[16:52] <cyphermox> miha: btw; pastebin -> http://paste.ubuntu.com in case you're not familiar with this
+[16:53] <mlankhorst> trying to get kernel fixes upstreamed, working on bugs related to lts stack for 12.04.2 release, trying to get my reservation changes reviewed again, hopefully for inclusion this time.
+[16:53] <miha> ok
+[16:53] <mlankhorst> EOF
+[16:53] <xnox> Laney: do you use lastpass on your mobile? and how does that work?
+[16:53] <Laney> xnox: I swear that OTG worked before but it doesn't now
+[16:53] <Laney> perhaps a newer cyanogen broke it
+[16:53] <cyphermox> xnox: Laney: is that why you mentioned the yubikey NEO?
+[16:54] <Laney> but I just used it to c+p some passwords when setting up apps
+[16:54] <Laney> yes
+[16:54] <cyphermox> hmm
+[16:54] <cyphermox> I never thought of this
+[16:54] <xnox> Laney: ack.
+[16:54] <miha> http://pastebin.ubuntu.com/1534747/  so who's hacking me? :)
+[16:55] <cyphermox> hmm
+[16:57] <cyphermox> unless there is something broken in how evo tries to speak TLS?
+[16:57] <miha> http://www.wolfey.si/tmp/gmailssl.jpg here screenshot
+[16:58] <cyphermox> miha: could you open a bug on launchpad and add a screenshot of the exact
+[16:58] <cyphermox> ah!
+[16:58] <miha> cyphermox: which goverment is trying to spy on me? :p
+[16:59] <cyphermox> meh
+[16:59] <cyphermox> I guess evo just doesn't do ssl quite right; it wouldn't be especially surprising
+[16:59] <mlankhorst> NOT THE CORRECT ONE
+[16:59] <mlankhorst> I like how people get angry about chinese spies
+[16:59] <miha> cyphermox: i'm surprised cause it worked up to today
+[17:00] <miha> update? expired cert?
+[17:00] <miha> new cert from google :)
+[17:00] <miha> just when i got home 2 hours ago i got this
+[17:01] <miha> i could add exception, but i'm well paranoid ;)
+[17:02] <mlankhorst> run in chrome, see if it complains
+[17:03] <miha> chrome does imap?
+[17:03] <mlankhorst> oh right
+[17:06] <cyphermox> miha: that's interesting, it's indeed not the same cert
+[17:07] <mlankhorst> miha: oh if you think you're paranodi.. would you rather have the us government or the chinese government spy on you
+[17:08] <miha> mlankhorst: chinese. i dont plan to go there anytime soon. :)
+[17:08] <miha> we in nato, so usa is more dangerous ;)
+[17:08] <cyphermox> mlankhorst: do we really need to have this kind of conversation here?
+[17:08] <mlankhorst> :D
+[17:08] <cyphermox> miha: what about the IP of imap.gmail.com, what do you get from your location?
+[17:08] <cyphermox> dig imap.gmail.com
+[17:09] <miha> cyphermox:
+[17:09] <miha> http://pastebin.ubuntu.com/1534781/
+[17:10] <Sweetshark> ricotz: If you have a minute, could you have a look at the 3.6.4 backport for precise, that boaz did at: https://launchpad.net/~bdcomp/+archive/backports/+packages ?
+[17:11] <cyphermox> miha: might you be behind a captive portal of some sort?
+[17:12] <miha> cyphermox: well i get same error if i turn my vpn on or off
+[17:13] <miha> they are on different networks, so i doubt it
+[17:13] <miha> hm
+[17:13] <cyphermox> is your vpn encrypted, and actually replacing the default gateway?
+[17:15] <miha> it's my openvpn server, tls, 2048 bit rsa, 128 bit blowfish, after http://wiki.debian.org/OpenVPN#TLS-enabled_VPN
+[17:16] <miha> well, i don't know how secure it is. but i doubt same attacker would set both local wifi and my vpn :p
+[17:18] <miha> guess will try again at work
+[17:40] <miha> thunderbird didn't complain about ssl
+[17:43] <ricotz> Sweetshark, the packaging diff looks reasonable, but i would prefer to use backported dependencies like cmis > 0.2 and a not cluttered changelog
+[17:44] <ricotz> (so i wouldnt want to have a binary copy of it in the libreoffice ppa)
+[17:45] <ricotz> Sweetshark, i am hoping i will find a moment this week to look at it further
+[17:51] <Sweetshark> ricotz: yeah, I had short look at the changelog and would have uncluttered it a bit too. Note though, that I mailed boaz and giving him green light to copy that one over to the libreoffice PPA if he did some testing with it.
+[17:52] <Sweetshark> ricotz: those changes are nice to have, but not critical blockers IMHO. Lets keep boaz motivated, we can need every helping hand ;)
+[17:53] <Sweetshark> ricotz: In case you didnt notice I also backported some 20 patches on top of 3.5.7/precise and uploaded that to the libreoffice-3-5 PPA. This is in preparation of the bug 1037111 SRU.
+[17:53] <ubot2`> Launchpad bug 1037111 in libreoffice (Ubuntu Precise) "[SRU] LibreOffice 3.5.7 for precise" [High,In progress] https://launchpad.net/bugs/1037111
+[17:55] <ricotz> Sweetshark, oh, havent noticed that yet, thanks
+[18:00] <Sweetshark> ricotz: If you want to contribute to the admittedly rather boring task of testing that package and verifying the fixes, you are most welcome of course ;) -- its 20 patches, thus I so far only created a one-line rationale for backporting them on bug 1037111 instead of filling the full SRU-form for all of them.
+[18:00] <ubot2`> Launchpad bug 1037111 in libreoffice (Ubuntu Precise) "[SRU] LibreOffice 3.5.7 for precise" [High,In progress] https://launchpad.net/bugs/1037111
+=== hggdh is now known as hggdh_AFK
+=== jbicha_ is now known as jbicha
+=== tkamppeter_ is now known as tkamppeter
+[18:14] <tkamppeter> jasoncwarner, hi
+=== Ursinha is now known as Ursinha-afk
+=== Ursinha-afk is now known as Ursinha
+=== mterry_ is now known as mterry
+[21:06] <qengho> achiang: about that NSS bug, I don't suppose that machine has "strace" installed already?  I want to see what "-e trace=file" says.
+[21:07] <qengho> ...a lot, I'm sure.
+[21:10] <qengho> Ah, nevermind.
+[21:27] <tkamppeter_> jasoncwarner, hi
+=== mike_ is now known as Guest28451
+[22:04] <dobey> stgraber: hey. can you add ubuntuone-client-data to the ubuntuone package set?
+=== m_conley is now known as m_conley_away
+[22:10] <stgraber> dobey: can you send an e-mail to devel-permissions@lists.ubuntu.com so we have a papertrail for the addition?
+[22:11] <dobey> ah, sure.
+[22:12] <dobey> stgraber: sent
+[22:13] <stgraber> dobey: added
+[22:13] <dobey> stgraber: thanks!
+[22:13] <jbicha> stgraber: hey, would you be able to help with https://lists.ubuntu.com/archives/devel-permissions/2013-January/000440.html ?
+[22:14] <stgraber> jbicha: let me confirm that ubuntu-desktop isn't auto-generated, otherwise any change I do to it will be reverted automatically
+[22:14] <Laney> it is
+[22:15] <jbicha> Laney: how do we fix that then?
+[22:15] <jbicha> explicitly seed them in ubuntu-meta?
+[22:15] <Laney> speak to cjwatson is the established procedure
+[22:15] <jbicha> ok
+[22:16] <jbicha> is robert_ancell around?
+[22:16] <stgraber> right, just confirmed that it's one of those auto-generated. http://bazaar.launchpad.net/~cjwatson/+junk/packageset/files is the magic script
+[22:17] <jasoncwarner> hey tkamppeter_
+[23:33] <Danawar3> Hey ubuntu desktop i find my ubuntu keeps freezing and being very unresponsive could there be a reason for this and how would i troubleshoot such an issue?
+[23:48] <bryce> (well, first step is stick around for a response...)
+[23:55] <popey> http://www.youtube.com/watch?v=jRpxYaQMvcA
+[23:55] <popey> http://www.youtube.com/watch?v=jRpxYaQMvcA

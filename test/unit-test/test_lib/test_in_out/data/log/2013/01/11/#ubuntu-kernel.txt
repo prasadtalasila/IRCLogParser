@@ -1,0 +1,138 @@
+[00:11] <hallyn> stgraber: bug 1098378
+[00:11] <ubot2`> Launchpad bug 1098378 in linux (Ubuntu) "chroot+overlayfs seems to cause umount mis-behavior" [High,Confirmed] https://launchpad.net/bugs/1098378
+=== chiluk_away is now known as chiluk
+[00:47] <infinity> &&^$@! kernel panics...
+[01:01] <infinity> hallyn: Can you try that with 3.8?
+[01:01] <infinity> hallyn: (or try mounting something inside that isn't a tmpfs)
+[01:02] <infinity> hallyn: In the current 3.7 in the archive, there's a tmpfs leak that could be, perhaps, not helping here.
+[01:35] <hallyn> infinity: we confirmed with http://kernel.ubuntu.com/~rtg/Ubuntu-3.8.0-0.1/
+[01:35] <hallyn> can't do an upstream tree as we need overlayfs
+[01:36] <hallyn> it shouldn't be tmpfs since you don't have to mount a tmpfs to trigger it
+[01:41] <infinity> hallyn: Okay, I just saw your script used a tmpfs.  But if it's still there in 3.8, it's not the bug I was thinking of anyway.
+[02:02] <hallyn> infinity: yeah there are commented lines in the script which can be used as an alternate to the tmpfs mount - which mount devpts.  i added tmpfs bc stgraber asked if devpts might be the trigger :)  (it's not)
+[02:05] <MikeMin> Did anyone have any luck with http://rankone.us?
+[04:29] <infinity> apw: When you wake up, we need a new linux-signed to match the current linux (in raring).
+[05:00] <infinity> apw: Nevermind, tim got to it.
+=== smb` is now known as smb
+=== yofel_ is now known as yofel
+=== henrix_ is now known as henrix
+[09:54]  * cking reboots
+[10:04] <henrix> cking: infinity: we are going to make an exception for bug #1040557 verification -- i'm tagging it as verified although we just know it doesn't cause regressions
+[10:04] <ubot2`> Launchpad bug 1040557 in Ubuntu CD Images "UEFI boot live-usb bricks SAMSUNG 530U3C,np700z5c laptop" [Critical,Confirmed] https://launchpad.net/bugs/1040557
+[10:04] <henrix> are you guys fine with that?
+[10:06] <cking> henrix, can I stall on this for 20 mins while I answer an email concerning this fix
+[10:06] <henrix> cking: sure :)
+[10:43] <cking> henrix, i'm fine with it, apw, any thoughts? ^^
+[10:44] <apw> yeah it is very very unlikely to cause problems and if it does it means you don't keys keys or something for a small number of machines
+[10:44] <apw> and the potential upside, our CDs are safer, seems worth that risk to me
+[10:48] <henrix> apw: cking: ack, thanks
+[10:48] <henrix> i'll add a comment to the bug and proceed to testing
+[10:48] <cking> henrix, apw explained it very succinctly 
+[10:49] <henrix> yep, i'll write that down on the comment :)
+[10:49] <henrix> thanks
+[10:49] <apw> henrix, feel free to quote me
+[11:10] <cking> the intelSNA X driver seems to be working fine for me
+[11:28] <jodh> I'm looking at bug 1085766, but the mainline kernel doesn't appear to provide/sys/kernel/debug/tracing/events/fs/ ? 
+[11:28] <ubot2`> Launchpad bug 1085766 in ureadahead (Ubuntu) "/var/log/upstart/ureadahead.log contains garbage" [Undecided,Confirmed] https://launchpad.net/bugs/1085766
+[11:30] <smb> apw, did I not see you talk about this recently...? That we have some event there not upstream
+[11:31] <apw> jodh, yes we have a patch for those trace points
+[11:31] <jodh> apw: ok, thanks. I've updated the bug, but sounds like someone may have to bisect our patchset then.
+[11:31] <apw> jodh, i am told actually there are now generic syscall ones
+[11:32] <apw> jodh, wich are hinted at in our patch
+[11:32] <jodh> apw: if you can send me some details, I'll take a look, but currently ureadahead is broken on seemingly everything but armhf
+[11:35] <apw> jodh, i'll poke it first, it could well be the patch is no longer working
+[11:37] <apw> it is about time someone knew how this worked again
+[11:38] <jodh> apw: see https://bugs.launchpad.net/ubuntu/+source/linux/+bug/1085766/comments/10.
+[11:38] <ubot2`> Launchpad bug 1085766 in ureadahead (Ubuntu) "/var/log/upstart/ureadahead.log contains garbage" [Undecided,Confirmed]
+[11:43] <apw> jodh, yep have the same in mine,
+[11:49] <cking> didn't the tracing output change in 3.7-3.8 
+[13:00] <ogasawara> henrix: hi, when is the 3.2.0-36 kernel in precise-proposed getting promoted to -updates?  today?
+[13:03] <ogasawara> henrix: oh wait, or is this the one we're letting this one bake an extra 3 weeks for the point release
+[13:08] <herton> ogasawara, it still has next week for testing on the schedule, waiting on security-signoff/certification-testing right now. I believe will be promoted some time next week
+[13:09] <herton> ogasawara, indeed, from what I remember this will be the one for the point release, not sure if it will be on hold or not
+[13:10] <ogasawara> herton: ok thanks.  I assumed we'd still promote it to -updates, we just wouldn't turn the crank on a new cycle.
+[13:11] <ogasawara> bjf: is my assumption correct ^^
+[13:11] <herton> ogasawara, yes that's correct
+[13:11] <ogasawara> herton: perfect, thanks
+[13:21]  * henrix -> lunch
+[13:31] <apw> jodh, ok this is part kernel, part ureadahead issues, am testing the fixes now
+[13:45] <jodh> apw: thanks - sounds intriguing :)
+[13:48] <apw> jodh, deprecation of an interface we are using for ureadahead and change of type affecting the interfaces for open in the kernel
+[13:48] <apw> i'll get some patches out shortly
+[13:51] <jodh> apw: thanks. I wonder how are we going to stop this sort of thing happening in the future though? Is there a list of deprecated interfaces that we could grep the archive for say?
+[13:52] <ogra_> one good step would be more detailed error msgs in ureadahead
+[13:53] <ogra_> it took me half a day to find the issue on the nx7 ... if it woulld have told me "cant open /sys/foo/bar" that would have been easier than having "exited with startus 5"
+[13:53] <jodh> yeah, I think that + mountall could do with some 'nose-cone polishing'. I've written a crude DEP-8 test for ureadahead that would detect the bug we're discussing, but if we can catch incorrect syscall usage before apps hit the archive, all the better ;)
+[13:54] <ogra_> ++ indeed
+[13:54] <jodh> ogra_: strace :)
+[13:54] <ogra_> yeah, thats what i resorted to indeed
+[14:04] <sforshee> apw, what was the bug you were seeing with the wl driver?
+[14:04] <sforshee> does it look anything like bug 1097509?
+[14:04] <ubot2`> Launchpad bug 1097509 in bcmwl (Ubuntu) "wl kernel module on BCM4313 causes kernel taint on boot" [Undecided,New] https://launchpad.net/bugs/1097509
+[14:35] <apw> sforshee, yes thats the one i'd say, looks identicle
+[14:35] <apw> sforshee, see teh latest bcmwl upload for the duplicate bug
+[14:35] <sforshee> apw, ack. thanks
+=== chuck_ is now known as zul
+=== henrix is now known as henrix_
+=== henrix_ is now known as henrix
+[15:36] <bjf> cking, bug 1098584
+[15:36] <ubot2`> Launchpad bug 1098584 in ubuntu-kernel-tests "ecryptfs.extend-file-random.sh.btrfs fails with "Failed to write 32 bytes, position nnnn: No space left on device"" [Undecided,New] https://launchpad.net/bugs/1098584
+[15:36] <cking> ta
+[15:39] <tyhicks> cking: hmm... there should have been enough free disk space there
+[15:40] <cking> tyhicks, yep, it is strange, I'm going to see if I can reproduce this one
+[15:48] <apw> jodh, ok the fixes for ureadahead are in, and linux changes are fix_committed
+[15:51] <jodh> apw: thanks very much!!
+[15:52] <apw> jodh, not sure when they will be uploaded for linux just yet, cirtainly by -rc4
+[16:01]  * cking reboots
+[16:06]  * cking reboots again,sigh
+=== chiluk is now known as chiluk_away
+[16:12] <apw> ogasawara, i am considering whether to upload this ureadahead change as it is not an abi bumper, and we are so far for -rc4
+[16:12] <ogasawara> apw: works for me
+[16:13] <apw> ogasawara, rtg, have anything in the pipeline for raring ?
+[16:13] <ogasawara> apw: he's out today so I assume he's already pushed anything he had
+[16:32] <apw> ogasawara, ok will check the lists and then roll it up
+[16:32] <apw> tseliot, one for you: https://bugs.launchpad.net/ubuntu/+source/bcmwl/+bug/1098628
+[16:32] <ubot2`> Launchpad bug 1098628 in bcmwl (Ubuntu) "BCM4313: bcmwl binary drivers do not work correctly with IPv6 hosts" [Undecided,New]
+[16:32] <ogasawara> apw: ack, thanks
+[16:34] <tseliot> apw: hmm... let me check
+[16:38] <tseliot> apw: did it use to work?
+[16:38] <apw> tseliot, i doubt i had ipv6 when i first switched away from wl
+[16:39] <apw> tseliot, and generally i use brcmsmac to give it some testing
+[16:40] <hggdh> herton: is bug 1095815 going to be set as a dup of bug 1097919?
+[16:40] <ubot2`> Launchpad bug 1095815 in linux-lts-quantal (Ubuntu) "linux-lts-quantal: 3.5.0-22.33~precise1 -proposed tracker" [Medium,In progress] https://launchpad.net/bugs/1095815
+[16:40] <ubot2`> Launchpad bug 1097919 in Kernel SRU Workflow "linux-lts-quantal: 3.5.0-22.34~precise1 -proposed tracker" [Undecided,In progress] https://launchpad.net/bugs/1097919
+[16:40] <tseliot> apw: does it help if you do something like this? System Settings -> Network ->  Wireless -> [select your network(s)] -> Options... -> IPv6  Settings -> Method: Ignore
+[16:41] <apw> tseliot, if i rmmod wl and modprobe brcmsmac it works fine, so i assume system level is configured
+[16:41] <apw> correctly
+[16:42] <tseliot> apw: what happens if you reinstall the previous upstream release?
+[16:42] <apw> it doesn't work with v3.8 right ?
+[16:42] <herton> hggdh, done
+[16:43] <hggdh> herton: thank you
+[16:43] <henrix> hggdh: sorry, i should have done that 2 days ago...
+[16:44] <hggdh> herton: no prob, I just wanted to be sure I was Doing The Right Thing ;-)
+[16:44] <tseliot> apw: right, I didn't port that driver to 3.8. Wait does 3.7 make any difference with this issue?
+[16:44] <apw> tseliot, dunno to be honest
+[16:45] <apw> tseliot, ask me in the bug to remind me, i've rebooted this latop 10 times today for other kernel issues, and frankly i cannot cope with rebooting again today
+[16:45] <hggdh> apw: for the record, bcmwl V5 only works with 3.7 up to, and including, 3.7.0-5
+[16:45] <tseliot> apw: hehe, ok, I understand ;)
+=== chiluk_away is now known as chiluk
+=== chiluk is now known as chiluk_away
+[17:18]  * cking reboots 
+[18:20] <infinity> apw: Say, what's the point of uploading a kernel whose only changes are a commit and a revert of that commit? :P
+[18:22] <infinity> apw: Oh, despite the weird changelog, I guess it has a 1-line diff.
+=== chiluk_away is now known as chiluk
+=== chiluk is now known as chiluk_away
+=== chiluk_away is now known as chiluk
+[18:45]  * henrix -> EOW
+=== henrix is now known as henrix_
+=== chiluk is now known as chiluk_away
+=== chiluk_away is now known as chiluk
+=== chiluk is now known as chiluk_away
+=== chiluk_away is now known as chiluk
+=== rsalveti_ is now known as rsalveti
+[19:35] <apw> infinity, indeed there is a (v3.7+) on the ends
+=== chiluk is now known as chiluk_away
+=== chiluk_away is now known as chiluk
+=== sabayonuser2 is now known as Tuxkalle
+=== chiluk is now known as chiluk_away
+=== chiluk_away is now known as chiluk

@@ -1,0 +1,496 @@
+=== Sweetsha1k is now known as Sweetshark
+=== figarocorso is now known as miky_jr
+=== figarocorso is now known as miky_jr
+=== yofel_ is now known as yofel
+=== zequence_ is now known as zequence
+=== figarocorso is now known as miky_jr
+[13:18] <Aeefire> hey guys.
+=== Ursinha_ is now known as Ursinha
+=== rsalveti_ is now known as rsalveti
+=== chiluk_away is now known as chiluk
+[16:01]  * ogra_ waves
+[16:01] <seb128> ogra_, dholbach: is there a meeting today?
+[16:01] <seb128> hey
+[16:02] <dholbach> I'm in a separate meeting right now
+[16:02] <dholbach> ogra_ announced it before, so I'd assume that yes
+[16:02] <ogra_> seb128, well, at least for a quick status run-down, yes
+[16:02] <seb128> who is leading?
+[16:02] <janimo> hi
+[16:02] <seb128> is there an agenda?
+[16:02] <ogra_> nope
+[16:02] <ogra_> we could make one up for next week though
+[16:02] <ogra_> #startmeeting
+[16:02] <meetingology> Meeting started Fri Jan 25 16:02:49 2013 UTC.  The chair is ogra_. Information about MeetBot at http://wiki.ubuntu.com/meetingology.
+[16:02] <meetingology> Available commands: #accept #accepted #action #agree #agreed #chair #commands #endmeeting #endvote #halp #help #idea #info #link #lurk #meetingname #meetingtopic #nick #progress #rejected #replay #restrictlogs #save #startmeeting #subtopic #topic #unchair #undo #unlurk #vote #voters #votesrequired
+[16:03] <ogra_> hey everyonw, this is the nexus7 status meeting
+[16:03] <kyleN> hi
+[16:03] <ogra_> i'll give a quick summary of what happened this week ...
+[16:03] <ogra_> so thanks to jani who wrote a prototype in GO, we now have auto-rotation working !
+[16:03] <ogra_> as well as the ambient light sensor
+[16:04] <ogra_> (i took the prototype and implemented it in shell, as an interim solution)
+[16:04] <ogra_> togather with the autorotation, an xorg fix landed that makes touch input in portrait mode work
+[16:04] <janimo> if we are to integrate with gnome-system-daemon we need changes to the kernel so we expose an input interface as that daemon expects
+[16:05] <janimo> we may get it this cycle or we may just stick with the shell daemon, not sure yet
+[16:05] <ogra_> right, the question is if we will keep g-s-d in this form on the later tablet setup
+[16:05] <janimo> I have been looking into it the past few days though and I'd like to get it done properly
+[16:05] <ogra_> right, the shell daemons are really just interim solutions
+[16:05] <janimo> no idea. What is the later tablet setup - related to ubuntu phone?
+[16:05] <seb128> g-s-d is being discussed
+[16:05] <ogra_> i found it important for testing the features to have it in asap
+[16:06] <seb128> we want to reduce its scope for sure
+[16:06] <ogra_> so we can see how the UI reacts to rotation etc
+[16:06] <seb128> so if it's as easy to implement those feature in other places feel free
+[16:06] <janimo> seb128, well it is certainly easier but at the cost of extra footprint that a separate daemon brings
+[16:06] <janimo> something we keep ignoring and that got us into this bloated mess in the first place :)
+[16:06] <seb128> right
+[16:07] <seb128> well, we should perhaps implement those feature in unity itself for example
+[16:07] <ogra_> well, i wouldnt mind a small daemon in C
+[16:07] <janimo> we were supposed to have a push for reducing memory footprint this cycle, at leats not add extra stuff if we can't make it lower :)
+[16:07] <ogra_> depending on the feature though
+[16:07] <seb128> the issue is that the higher number of process, the higher cost in context switches, wakeups, memory usage, etc
+[16:07] <ogra_> janimo, as long as the new extra stuff is smaller i dont care :)
+[16:08] <ogra_> janimo, btw, did tvoss talk to you ?
+[16:08] <janimo> this daemon is by far not among the high footprint daemons but everything adds up
+[16:08] <janimo> nope
+[16:08] <ogra_> he seems to work on an API for sensor stuff
+[16:08] <janimo> nice, I'll follow up after the meeting
+[16:08] <ogra_> so if there is something in the works we could use, that might help
+[16:09] <ogra_> i pointed him to you ... hm
+[16:09] <ogra_> (days ago)
+[16:09] <janimo> well I discovered g-s-d covers accel and screen rotation, but only with a paritcular type of accelerometer in the kernel
+[16:09] <janimo> there's no unifying interface
+[16:09] <ogra_> right
+[16:09] <seb128> seems better to build on that codebase
+[16:09] <ogra_> though the question is, will we stay with g-s-d at all for sensors
+[16:09] <seb128> rather than to write a new one
+[16:09] <janimo> also discovered by accident while poking in sysfs that my x86 laptop has an accelrometer
+[16:10] <janimo> which also does not work with g-s-d
+[16:10] <seb128> ogra_, no immediate plan to replace g-s-d, and we can easily move bits of code out of gsd to some other source later if needed
+[16:10] <ogra_> ok
+[16:10] <seb128> ogra_, it's not like the work would be wasted
+[16:10] <seb128> I would improve g-s-d as a start
+[16:10] <seb128> seems the less work path
+[16:10] <janimo> well sensors are not that separate from settings, it makes sense imo to have light sensor integrated in backlight settings and other screen related stuff
+[16:10] <ogra_> right, making g-s-d actually generic deinitely helps
+[16:11] <ogra_> definitely
+[16:11] <janimo> so from what limited knowledge I have g-s-d seems the place for it - if we plan on keeping g-s-d that is
+[16:11] <ogra_> right
+[16:11] <seb128> we do plan to keep it in the near futur
+[16:11] <ogra_> i'm just careful because i heard we might not ... but what seb128 said, it helps in general
+[16:11] <seb128> we might move some bits out to small "on-demand" services
+[16:11] <ogra_> ++
+[16:12] <ogra_> once upstart can handle it :)
+[16:12] <janimo> I hope those are not written in python though
+[16:12] <seb128> like if "rotation" can be an upstart daemon we could span the helper from an upstart script
+[16:12] <seb128> and take it down again
+[16:12] <ogra_> yeah
+[16:12] <ogra_> thats what i do atm
+[16:12] <seb128> upstart daemon->signal
+[16:12] <ogra_> but for the session side it uses Xsession.d
+[16:12] <janimo> rotation does not seem like an on-deman thing though, I expect people want it on all the time with a tablet
+[16:12] <ogra_> instead of upstart ...
+[16:12] <seb128> well, if the rotation triggers an upstart signal we can bind a script to it
+[16:12] <ogra_> janimo, in android i dont :)
+[16:13] <seb128> that would avoid having the code running all the time to poll for the rotation event
+[16:13] <ogra_> if i read a book and lie on the side in bed i dont want it rotating all the time
+[16:13]  * seb128 always turn off autorotate
+[16:13] <seb128> it's more annoying than useful
+[16:13] <ogra_> seb128, well, the polling is the biggest issue atm, yeah
+[16:14] <ogra_> the daemon is like 20 lines of shell :)
+[16:14] <ogra_> wouldnt eat much if it wouldnt have to poll every second
+[16:14] <ogra_> in the current state its one of the biggest CPU consumers though
+[16:14] <janimo> we could fix that by doing the poll in the kernel and firing off uevents when things change
+[16:14] <seb128> can we make xorg/the kernel to send a signal?
+[16:14] <ogra_> yeah
+[16:14] <janimo> needs some coding but can be done - not sure if it's the right place though
+[16:15] <ogra_> kernel
+[16:15] <seb128> it might be worth dropping an email on ubuntu-devel list?
+[16:15] <lool> Apparently gsd reads an ID_INPUT_ACCELEROMETER_ORIENTATION property via gudev
+[16:15] <seb128> to get input from kernel people?
+[16:15] <janimo> seb128, but we also need to add code to interpret the raw data and keep track of orientation in the kernel then - moving the shell code to kernel C code
+[16:15] <ogra_> lool, rhight, which only very few accelerometers seem to trigger
+[16:16] <lool> If I understand what you folks are saying: 1) this doesn't work on N7 2) we would like to change this from poll to event-based
+[16:16] <janimo> seems a bit crazy - but this sensor does not have an orientation even itself unless loaded with proprietary firmware which we do not have
+[16:16] <lool> so on 1), do we know what to do to set this property right?
+[16:16] <ogra_> lool, right, but 0.5) we only have the free part of the driver
+[16:16] <janimo> lool, I am looking into this now. The nexus7 sensor is dumb
+[16:16] <lool> and 2), do we have a way to trigger something in the active session based on udev events?
+[16:16] <janimo> and only provides raw accel data
+[16:16] <ogra_> lool, which doesnt give us 100% of the features
+[16:17] <lool> I think there's an udev bridge for upstart, can we use it?
+[16:17] <janimo> lool, g-s-d listens to udev events from accel devices
+[16:17] <ogra_> right, we just need the events
+[16:17] <janimo> so that part is covered if we make our kernel side similar to what is already handled
+[16:17] <ogra_> yeah
+[16:17] <lool> janimo: ah so it's not poll, it's already uevent based
+[16:17] <janimo> so an input device with uevents, polling
+[16:17] <janimo> lool, right.
+[16:18] <ogra_> our current driver doesnt even provide a device
+[16:18] <lool> so we only miss a correct kernel path for this
+[16:18] <janimo> when the currenlty handled (asus-laptop pega I think) accel fires off an ACPI even saying rotation changed
+[16:18] <ogra_> so these bits need adding
+[16:18] <janimo> the driver emits an uevent
+[16:18] <janimo> a udev helper is called that reads the raw data and calculated orientation - again, as uevents cannot carry metadata
+[16:18] <janimo> and exports that as env -var
+[16:18] <janimo> udev property I mean
+[16:19] <janimo> and g-s-d reads it
+[16:19] <ogra_> that sounds like a really slow process
+[16:19] <ogra_> compared to what we do atm
+[16:19] <janimo> lool, the rewason I am not sure about the kernel part is that there is no standard kernel way of exposing accels, g-s-d uses one of the existing approaches
+[16:19] <ogra_> i wonbder if we couldnt have that with less players involved
+[16:20] <janimo> but for instance it does not work with my acer accelerometer either, that too does things a bit differently
+[16:20]  * xnox realises it's meeting time.
+[16:20] <janimo> ogra_, well g-s-d as our shell script could just read raw data and handle everything, but would need to have a lot of sensor specific code
+[16:20] <janimo> and would need to do detection
+[16:20] <janimo> udev handles detection of device at least
+[16:20] <ogra_> and would need to poll
+[16:21] <ogra_> right, i just wonder if that cant be done more direct ... udev->xorg
+[16:21] <janimo> so the g-s-d stuff seems ok to me, just that restrict all sensor to the input subsystem (nexus is on IIO does not even provide an input device)
+[16:21] <ogra_> and have g-s-d only intercept if the user actually switches it off
+[16:21] <janimo> and a specific devnode with input_struct layout as a joystick (X, Y, X values)
+[16:22] <ogra_> yeah
+[16:22] <janimo> it is doable, I'll keep at it for a few more days
+[16:22] <ogra_> well, lets not go to much into detail
+[16:22] <ogra_> we'll see what you come up with ;)
+[16:22] <ogra_> xnox, want to give an update ?
+[16:22]  * xnox also thought that udev is ought to be generating the events from accelorometer and then g-s-d or whatever can piggy back on top. Gives us the most flexibility to consume those events.
+[16:23] <janimo> and take into account the galaxy nexus too which has a sensor from the same family but different
+[16:23] <ogra_> same but different ... yay
+[16:23] <janimo> I'd rather we not have to add code to every sensor if upstream decides they are all going to be IIO and not input devices
+[16:23] <xnox> I finished usb-creator support for flashing nexus7 tablets using .img + .bootimg files.
+[16:23] <ogra_> wohooo
+[16:23] <janimo> so maybe changing g-s-d is better long term
+[16:23] <ogra_> janimo, yeah
+[16:23] <xnox> Currently it only "recognises" nexus7 ID_VENDOR_ID and ID_MODEL_ID
+[16:24] <ogra_> thats enough for a start
+[16:24] <ogra_> we can add a big database over time :)
+[16:24] <xnox> so if there are other devices please send me their VENDOR_IDs / MODEL_IDs
+[16:24] <seb128> janimo, maybe drop a summary email to ubuntu-devel@ about the rotation/g-s-d/kernel topic? might be better for discussion
+[16:24] <janimo> xnox, nexus devices you mean?
+[16:24] <ogra_> once we switch to nexus4 and nexus10 :)
+[16:24] <ogra_> seb128, ++
+[16:24] <janimo> seb128, I will follow up to the original thread once I have a bit more info
+[16:24] <xnox> janimo: yeah, i do want ids of the nexus range to be in the usb-creator.
+[16:24] <xnox> janimo: but I don't have them.
+[16:24] <seb128> janimo, thanks
+[16:25] <janimo> xnox, so galaxy nexus phone too?
+[16:25] <ogra_> [action] jani to mail ubuntu-devel about accelerometer plans
+[16:25] <meetingology> ACTION: jani to mail ubuntu-devel about accelerometer plans
+[16:25] <xnox> janimo: yes please.
+[16:25] <xnox> janimo: we don't have images for those devices yet, but I'd like usb-creator to know about them already.
+[16:26] <xnox> (.img + .bootimg style images that is)
+[16:26] <janimo> xnox, one thing I remember is that both nexus 7 and galaxy report different USB IDs depending on whether they booted in recovery mode or regular android
+[16:26] <ogra_> note though that the phone installation functions differently from our installation procedure
+[16:26] <xnox> janimo: currently I trigger on two ID_MODEL_IDs
+[16:26] <kyleN> ogra, when appropriate, I have a short topic.
+[16:26] <ogra_> (i assume we can adjust that though)
+[16:26] <ogra_> kyleN, well, we dont have an agenda atm. feel free to just start when its quiet
+[16:27] <ogra_> i.e. now :)
+[16:27] <xnox> ogra_: yeah. =/ given enough demand we can add additional types of flashing. the *.bootimg and *.img backend took only have a day to code in the end.
+[16:27] <kyleN> Before the holidays there was some discussion of using valgrind to find memory leaks and thereby improve Ubuntu for resource constained devices.
+[16:27] <kyleN> I worked on apport-valgrind, which was released into raring as part of apport.
+[16:28] <ogra_> nice !
+[16:28] <kyleN> This allows you to run valgrind for an executable (to find memory leaks) while first populating a temporary directory with available debug symbols for the executable, which makes the resulting valgrind log file more complete and useful (because more symbols names are filled in, making the stack traces clearer)
+[16:28] <kyleN> Alex Chiang submitted a needed patch for this that landed in valgrind.
+[16:28] <kyleN> and in Ubuntu/R
+[16:28] <kyleN> This is a first step. There are many aspects to this. I started a blog to cover some of this: http://kylenubuntu.blogspot.com/
+[16:28] <ogra_> you need to blog about that, that extends far beyond nexus7
+[16:28] <kyleN> I expect to add more blog posts soon on this topic.
+[16:29] <kyleN> DONE
+[16:29] <ogra_> and sounds helpful everywhere
+[16:29] <ogra_> time you get onto planet !
+[16:29] <seb128> I was going to say
+[16:29] <seb128> nobody is going to read those if they are not on planet
+[16:29] <kyleN> do I need a rocket ship to get there? ;)
+[16:29] <seb128> no offense to your blog popularity ;-)
+[16:29] <ogra_> just ubuntu membership
+[16:29] <janimo> BTW, nexus 7 testers please http://people.canonical.com/~jani/linux-image-3.1.10-8-nexus7_3.1.10-8.21_armhf.deb
+[16:30] <kyleN> ack
+[16:30] <ogra_> note that this will break your touchscreen :P
+[16:30] <janimo> for me this deb fixes sound on boot without having to do a suspend. I'd like other opinions too
+[16:30] <janimo> well log in via ssh and install http://paste.ubuntu.com/1570120/ over /usr/bin/acceld :)
+=== fenris is now known as Guest10857
+[16:31] <ogra_> janimo, is that need ? i would just drop the "Rotatet "right"" from xorg.conf
+[16:31] <ogra_> *Rotate
+[16:32] <ogra_> anyway, the current nx7 looks pretty good already ... we have one big showstopper bug left though
+[16:32] <ogra_> bug 1068994
+[16:32] <ubottu> bug 1068994 in ubuntu-nexus7 "button1 gets stuck after a while" [Critical,Confirmed] https://launchpad.net/bugs/1068994
+[16:32]  * ogra_ pokes the bot
+[16:33] <janimo> ogra_, it needs to correlate xrandr names to xinput rotation matrix. The latter get shifted with the kernel 90 degree rotation
+[16:33] <janimo> so it is needed
+[16:33] <ogra_> and after the fix for portrait mode i must say that i clearly suspect compiz to be at fault, not xorg
+[16:33] <ogra_> if the bug occurs to me, i can still hit the ubuntu key on onboard to switch apps, and i can interact withj the app content
+[16:34] <ogra_> what doesnt take any input are window frames, panel and launcher
+[16:34] <ogra_> all therr are compiz
+[16:34] <ogra_> *three
+[16:34] <ogra_> so i start to suspect compiz itself has an issue here
+[16:35] <ogra_> what we are also still missing is bluetooth
+[16:35] <ogra_> is cyphermox around ?
+[16:36] <ogra_> the quantal image has some hacks to push the binary firmware into the driver when BT starts ... we dont have that in raring atm (and i'm not sure we want it)
+[16:37] <ogra_> so it would be good to know the plans here, can we get it to work without the binary bits, if not, ho do we integrate them properly
+[16:37] <ogra_> *how
+[16:37] <ogra_> seb128, could you forward that question ?
+[16:38] <seb128> ogra_, sure
+[16:38] <ogra_> (probably also better discussed by mail=
+[16:38] <seb128> yeah, sounds like something for ubuntu-devel@ as well
+[16:38] <ogra_> what else did i miss ?
+[16:38] <seb128> is anyone working on collecting the valgrind datas from the community?
+[16:38] <ogra_> do we have anyone from QA  around ?
+[16:39] <ogra_> plars, ?
+[16:39] <seb128> what about optimizing processes running?
+[16:39] <ogra_> oh, definitely
+[16:39] <seb128> who?
+[16:39] <seb128> I want to start organizing those better
+[16:39] <seb128> so I want to get everybody in touch
+[16:40] <ogra_> how about we make a task table and people can pick from it ...
+[16:40] <lool> Gema and Paul Larson both mentioned activities related to collecting smem output in QA labs
+[16:40] <seb128> we have started doing a table with lool
+[16:40] <ogra_> unclaimed tasks will then be forcefully assigned
+[16:40] <seb128> we need to publish it
+[16:40] <ogra_> great
+[16:40] <seb128> we have also some blueprints
+[16:40] <ogra_> lool, yeah, i know plars wroks on nexus stuff
+[16:40] <ogra_> (thus the ping)
+[16:41] <plars> ogasawara: hi, I'm here
+[16:41] <ogra_> i implemented preseeding support for him last week
+[16:41] <plars> grr
+[16:41] <ogra_> hehe
+[16:41] <plars> ogasawara: sorry
+[16:41] <plars> ogra_: yes, I'm here, but in about 30 different irc windows at the moment :)
+[16:41] <ogra_> plars, so anything you want to tell us about nx7 work ?
+[16:42] <ogra_> seb128, for collecting stuff from the community it sounds like balloons might be the right guy
+[16:42] <plars> ogra_: just that I got your email about preseeding and I am anxious to try it, but I was off yesterday and haven't gotten to it yet today
+[16:42] <plars> ogra_: assuming that works, we should be able to automate installs on the nexus in the lab and have automated tests running pretty soon
+[16:42] <ogra_> ok, i'm not sure it works 100% yet, please bug me if there are issues
+[16:43] <seb128> ogra_, ok, I think I will try to draft a "status update/summary/how we organize a bit better going forward" email early next week
+[16:43] <seb128> ogra_, I will run the draft through you, lool and some others before sending
+[16:43] <plars> ogra_: if you have an example preseed or script for munging it into the image already, that would streamline things considerably
+[16:43] <ogra_> seb128, great, lets turn that (or parts of it) into our meeting agenda
+[16:44] <ogra_> plars, heh, no, i dont, i used to abuse tobin as a preseed stoirage in the past :)
+[16:44] <ogra_> oh, btw, do we have anyone from the kernel team here ?
+[16:45] <ogra_> cking used to work on power management on the nx7
+[16:45] <ogra_> and it got really really bad since we switched to raring
+[16:45] <janimo> ogra_, it's the same kernel though right?
+[16:46] <ogra_> from battery values <50% on i get a battery popup every second until the device shuts down (3-4h long)+
+[16:46] <ogra_> janimo, nope, it was re-based on the later android release
+[16:46] <janimo> ah right
+[16:46] <ogra_> i got these issues since the first raring kernel landed
+[16:46] <janimo> so a quantal kernel has no such issues ?
+[16:47] <Aeefire> hey guys.
+[16:47] <janimo> could be a raring userland policy bug as well
+[16:47] <cking> ogra_, has a bug been filed so we can track that?
+[16:47] <ogra_> percentage and time are totally off all the time and i get weird power messages on charging or after a few hours of usage
+[16:47] <ogra_> cking, sure
+[16:47] <ogra_> janimo, yeah, could be, i also noticed that upower shows an additional usb charger
+[16:47] <ogra_> i dont think that was there in quantal
+[16:49] <ogra_> cking, bug 1093543
+[16:49] <ubottu> bug 1093543 in ubuntu-nexus7 "Battery status behaves erratically" [Medium,Confirmed] https://launchpad.net/bugs/1093543
+[16:49] <ogra_> (sorry, tootk a moment to find it)
+[16:50] <cking> ogra_, thanks, i'll look at that one
+[16:50] <ogra_> great
+[16:50] <ogra_> i think we talked about it before btw
+[16:50] <ogra_> but didnt find any cause
+[16:51] <ogra_> ok ...
+[16:51] <ogra_> anyone from the community around with questions etc ?
+[16:51] <ogra_> doesnt look like
+[16:52] <ogra_> doesn anyone want to bring something up before i close ?
+[16:52] <ogra_> going once
+[16:52] <seb128> ogra_, do we know if the pointer/grab lock issue is being worked or making any progress?
+[16:52] <seb128> it's pretty much a blocker if you want to use the nexus
+[16:52] <ogra_> seb128, tjaalton sent it upstream
+[16:52] <ogra_> seb128, its not as bad as you think
+[16:52] <seb128> is it just sitting there or did somebody pick itup?
+[16:53] <ogra_> i use the nx7 all day, if you use it carefully you can get through with only having the issue once a day
+[16:53] <seb128> lol
+[16:53] <ogra_> i think it rots upstream
+[16:53] <seb128> "if you use it carefully"
+[16:53] <tjaalton> seb128: upstream knows about it, pinged him earlier this week but no new patches to try
+[16:53] <janimo> ogasawara, are you using a mouse?
+[16:53] <seb128> like explain to users to not use the indicators? ;-)
+[16:53] <ogra_> there was quite some activity in the beginning
+[16:53] <ogra_> but that died
+[16:53] <ogra_> janimo, indeed not :)
+[16:54] <ogra_> tjaalton, did you try with the latest fixes, its really only compiz that freezes
+[16:54] <stgraber> "if you make sure not to use the touchscreen on your tablet, you're fine"
+[16:54] <tjaalton> ogra_: hm, no
+[16:54] <ogra_> tjaalton, i can interact with everything else on the desktop just fine
+[16:54] <tjaalton> oh
+[16:54] <tjaalton> sweet
+[16:54] <ogra_> just not panel, launcher and *window frames*
+[16:54] <seb128> lol, because who needs to use a panel or launcher? ;-)
+[16:55] <ogra_> but firefox content, terminal, onboard etc work fine
+[16:55] <ogra_> seb128, well, if i just read a long article in FF, all i need is the grab'n drag extension to work ;)
+[16:56] <ogra_> and switching apps works fine via onboard (_hit the ubuntu key, pick the number of your app)
+[16:56] <ogra_> tjaalton, so i think it would be worth taking a second look with focus on compiz
+[16:57] <ogra_> 3 min left ... anything else ?
+[16:58] <tjaalton> ogra_: update the lp bug and I'll ask peter again where the bug is. the previous logs we had did show that the grab state was fooked, but.. we'll see
+[16:58] <ogra_> tjaalton, well, there were a bunch of issues with input fixed in the last xorg upload
+[16:58] <ogra_> so i would suspect we might have cleared the xorg side now
+[16:58] <tjaalton> oh the patch bryce put back in? yeah sorry about that, it was a bad merge by me :)
+[16:59] <tjaalton> mistakenly dropped a patch that fixed the rotation
+[16:59] <ogra_> well, i think bryce and danien van vugt added patches
+[16:59] <tjaalton> when merging new bugfix release
+[16:59] <ogra_> *daniel
+[16:59] <tjaalton> xserver only got this one back
+[16:59] <tjaalton> also a point release before that
+[16:59] <ogra_> well, todays raring  works pretty well for me
+[17:00] <ogra_> apart from the compiz hang
+[17:00] <ogra_> no other input issues here
+[17:00] <ogra_> ok, time is up
+[17:00] <ogra_> going once
+[17:00] <ogra_> going twice
+[17:00] <ogra_> #endmeeting
+=== meetingology changed the topic of #ubuntu-meeting to: Ubuntu Meeting Grounds | Calendar/Scheduled meetings: http://fridge.ubuntu.com/calendar | Logs: https://wiki.ubuntu.com/MeetingLogs | Meetingology documentation: https://wiki.ubuntu.com/meetingology
+[17:00] <meetingology> Meeting ended Fri Jan 25 17:00:41 2013 UTC.
+[17:00] <meetingology> Minutes (wiki):        http://ubottu.com/meetingology/logs/ubuntu-meeting/2013/ubuntu-meeting.2013-01-25-16.02.moin.txt
+[17:00] <meetingology> Minutes (html):        http://ubottu.com/meetingology/logs/ubuntu-meeting/2013/ubuntu-meeting.2013-01-25-16.02.html
+[17:00] <tjaalton> could be that the apps that are working are using XI1 and it's the multitouch-aware clients (XI2) that are busted
+[17:00] <ogra_> thanks everyone, see you next week :)
+[17:00] <kyleN> cheers
+[17:01] <seb128> thanks
+[17:01] <ogra_> tjaalton, yeah
+[17:01] <tjaalton> I'll verify that next week
+[17:01] <tjaalton> .au is well past beer-o-clock already
+[17:01] <tjaalton> :)
+[17:08] <ogra_> tjaalton, oh, are you at LCA ?
+[17:11] <tjaalton> ogra_: no, but upstream is from there
+[17:11] <ogra_> heh, ok
+=== doko_ is now known as doko
+[17:59] <Pajn> Just checking, the ubuntu-tv meeting will start soon, right?
+[18:00] <mhall119> Pajn: yes
+[18:00] <Pajn> thanks!
+[18:00] <mhall119> tgm4883: whenever you're ready
+[18:03] <tgm4883> I'm here
+[18:03] <tgm4883> bobweaver, are you here too?
+[18:04] <mhall119> he may not be here for this one
+[18:05] <tgm4883> #startmeeting Ubuntu-TV Community Meeting
+[18:05] <meetingology> Meeting started Fri Jan 25 18:05:06 2013 UTC.  The chair is tgm4883. Information about MeetBot at http://wiki.ubuntu.com/meetingology.
+[18:05] <meetingology> Available commands: #accept #accepted #action #agree #agreed #chair #commands #endmeeting #endvote #halp #help #idea #info #link #lurk #meetingname #meetingtopic #nick #progress #rejected #replay #restrictlogs #save #startmeeting #subtopic #topic #unchair #undo #unlurk #vote #voters #votesrequired
+=== meetingology changed the topic of #ubuntu-meeting to: Ubuntu Meeting Grounds | Calendar/Scheduled meetings: http://fridge.ubuntu.com/calendar | Logs: https://wiki.ubuntu.com/MeetingLogs | Meetingology documentation: https://wiki.ubuntu.com/meetingology | Ubuntu-TV Community Meeting Meeting | Current topic:
+[18:05] <tgm4883> #chair tgm4883 mhall119
+[18:05] <meetingology> Current chairs: mhall119 tgm4883
+[18:05] <tgm4883> So since this is our first community meeting, it's a bit unstructured
+[18:06] <tgm4883> #topic Community Questions
+=== meetingology changed the topic of #ubuntu-meeting to: Ubuntu Meeting Grounds | Calendar/Scheduled meetings: http://fridge.ubuntu.com/calendar | Logs: https://wiki.ubuntu.com/MeetingLogs | Meetingology documentation: https://wiki.ubuntu.com/meetingology | Ubuntu-TV Community Meeting Meeting | Current topic:  Community Questions
+[18:06] <tgm4883> Are there any questions from anyone in the community?
+[18:06] <steve_fi> I have a few, can just fire them all out?
+[18:06] <tgm4883> fire away
+[18:07] <tgm4883> I'll make subtopics for them, so it's well organized
+[18:07] <steve_fi> according to the wiki, you still need unity 2d to get UbuntuTV to work, but it seems that Ubuntu is moving from that ... is there any plans to support it in unity3d any time soon?
+[18:08] <tgm4883> #subtopic according to the wiki, you still need unity 2d to get UbuntuTV to work, but it seems that Ubuntu is moving from that ... is there any plans to support it in unity3d any time soon?
+[18:08] <tgm4883> hmm, I'm assuming that meetingology got that
+[18:08] <tgm4883> I've got no input on that question. mhall119?
+[18:08] <mhall119> steve_fi: yes, since last year the efforts have been focused on re-writing everything in Nux and Unity 3d, but it's not been a very easy process
+[18:09] <tgm4883> AFAIK, bobweaver works on most of that. Unfortunately he isn't here
+[18:10] <mhall119> yeah, he's been the only one working on it
+[18:10] <tgm4883> jhop said he'd be a little late as well, although IDK if he knows any more
+[18:10] <mhall119> various issues with the compexity of compix and the lack of good Nux documentation has been holding it back
+[18:10] <tgm4883> lastly, I also pinged willcooke about the meeting, but didn't hear back
+[18:10] <steve_fi> ah ok, next is just does anyone know if the current build of UbuntuTV works at all on Raring?
+[18:11] <tgm4883> #subtopic does anyone know if the current build of UbuntuTV works at all on Raring?
+[18:11] <tgm4883> I'd say it's doubtful. But again, a question for bobweaver
+[18:11] <mhall119> I think bobweaver has the unity2d version working in Quantal now, and available in PPA that makes it easier to install and try
+[18:11] <bobweaver> steve_fi,  no I or at least I dont.  also the phone uses qml so once the phone code is released then there is that
+[18:11] <tgm4883> o/
+[18:11] <bobweaver> everything that I have is 12.04
+[18:11] <steve_fi> ah ok, thanks for the information!
+[18:11] <bobweaver> yo
+[18:12] <mhall119> hi bobweaver
+[18:12] <bobweaver> hello
+[18:12] <tgm4883> steve_fi, more questions?
+[18:13] <steve_fi> Nope, that's all for now thanks
+[18:13] <tgm4883> ok
+[18:13] <tgm4883> anyone else have any questions?
+[18:13] <tgm4883> Lets move on to status updates, and we'll ask for questions again at the end
+[18:14] <tgm4883> #topic Status Updates
+=== meetingology changed the topic of #ubuntu-meeting to: Ubuntu Meeting Grounds | Calendar/Scheduled meetings: http://fridge.ubuntu.com/calendar | Logs: https://wiki.ubuntu.com/MeetingLogs | Meetingology documentation: https://wiki.ubuntu.com/meetingology | Ubuntu-TV Community Meeting Meeting | Current topic:  Status Updates
+[18:14] <tgm4883> bobweaver, any updates?
+[18:15] <bobweaver> as far as ?
+[18:15] <tgm4883> bobweaver, anything you want to update
+[18:16] <bobweaver> nope maybe that I will be just doing things(coding) for fun and the "heck" of it . until the phone goes public. maybe I have a lot of personal things going on
+[18:17] <tgm4883> ok
+[18:17] <tgm4883> mhall119, anything to update
+[18:18] <mhall119> no, but hopefully we'll have more to report once the Phone code is public and we can start getting an idea of how it will integrate with desktop and TV
+[18:18] <tgm4883> ok
+[18:18] <tgm4883> DVR/Guide update
+[18:19] <tgm4883> I made a large push this week with the guide scope. I'd say it is 95% done.
+[18:19] <tgm4883> I still need to get a guide lens written, as I'm still using the videos lens for it
+[18:19] <tgm4883> It also needs packaged
+[18:20] <tgm4883> I'll need to figure out how to package a python library as well. The library for accessing the mythtv services is probably only 30% done, but it's the 30% we need :)
+[18:21] <mhall119> tgm4883: I can try and help with that
+[18:21] <tgm4883> 100% done would mean supporting everything the services API allows, but we won't use most of that for Ubuntu TV so we can consider that portion complete
+[18:21] <tgm4883> mhall119, that would be very helpful :)
+[18:21] <tgm4883> I was going to do a video this morning showing off the features, but that didn't happen
+[18:21] <tgm4883> I will do one soon though
+[18:22] <tgm4883> now that the guide scope is mostly finished
+[18:22] <tgm4883> #action tgm4883 to make video showing mythtv features
+[18:22] <meetingology> ACTION: tgm4883 to make video showing mythtv features
+[18:22] <tgm4883> The DVR scope is as it was last week. 95% done
+[18:23] <tgm4883> The last 5% on both scopes will come after packaging and user testing
+[18:23] <tgm4883> #action tgm4883 mhall119 package mythtvservices library and both mythtv scopes
+[18:23] <meetingology> ACTION: tgm4883 mhall119 package mythtvservices library and both mythtv scopes
+[18:23] <bobweaver> tgm4883,  what are you targetin for that lens ?
+[18:24] <tgm4883> bobweaver, what do you mean?
+[18:24] <tgm4883> what version?
+[18:24] <bobweaver> version of Ubuntu ?
+[18:24] <tgm4883> well, we'll need an update from mhall119 on that
+[18:24] <tgm4883> mhall119, did that bug get sorted?
+[18:24] <mhall119> tgm4883: the gobject dee stuff?
+[18:25] <tgm4883> yea
+[18:25] <tgm4883> bug 1096708
+[18:25] <ubottu> bug 1096708 in dee (Ubuntu) "'SharedModel' object has no attribute 'append' using Python 3 on 12.04" [Undecided,New] https://launchpad.net/bugs/1096708
+[18:25] <mhall119> I pinged some folks about it, but I guess they haven't looked into it yet
+[18:25] <tgm4883> bobweaver, to answer your questions, the scopes currently work on 12.10 and above. If that bug gets fixed, then it will work on 12.04 and above
+[18:27] <tgm4883> For anyone unaware, Unity lens/scopes work across platforms. So these lens/scopes I'm writing can be used in a regular Ubuntu Unity Desktop
+[18:28] <tgm4883> That's about all the update I have
+[18:28] <tgm4883> Any other updates from anyone?
+[18:29] <tgm4883> Guess not
+[18:29] <tgm4883> In that case, I'm going to open it back up for questions
+[18:29] <tgm4883> #topic Community questions/comments/concerns
+=== meetingology changed the topic of #ubuntu-meeting to: Ubuntu Meeting Grounds | Calendar/Scheduled meetings: http://fridge.ubuntu.com/calendar | Logs: https://wiki.ubuntu.com/MeetingLogs | Meetingology documentation: https://wiki.ubuntu.com/meetingology | Ubuntu-TV Community Meeting Meeting | Current topic:  Community questions/comments/concerns
+[18:29] <mhall119> thanks tgm4883!
+[18:29] <tgm4883> If anyone has any questions/comments/concerns/ideas/etc, now is the time to shout them out
+[18:32] <zuric> Hi, what the status of Unity 3D portage ?
+[18:33] <mhall119> zuric: stalled for now, we're waiting to see what is going ot happen with the QML Phone shell
+[18:33] <tgm4883> zuric, that was answered earlier and will be available in the logs. But a short recap... what mhall119 said
+[18:33] <zuric> ok thanks
+[18:34] <Pajn> Is any community effort wanted at this time?
+[18:34] <mhall119> Pajn: absolutely
+[18:34] <steve_fi> is help wanted on a specific version of Ubuntu?
+[18:35] <steve_fi> with regards to testing and submitting bugs?
+[18:35] <tgm4883> Community help is always wanted. I'd say we're at a point where we can actually accept help now
+[18:35] <tgm4883> previously, we weren't really in a position to accept community help, as there wasn't a whole lot to test
+[18:36] <mhall119> steve_fi: there isn't a whole lot to test atm, you can try tgm4883's MythTV scopes if you have a MythTV backend
+[18:36] <tgm4883> at least for me, I'll get the mythtv stuff packaged this week with mhall119's help
+[18:37] <bobweaver> for every one that would like to try out the newest code that I have been making you can it is built almost daily
+[18:37] <bobweaver> the ppa is u2t
+[18:37] <bobweaver> I will get link
+[18:37] <bobweaver> https://launchpad.net/~u2t/+archive/bleedingedge
+[18:37] <mhall119> also anybody who wants to hack on that
+[18:37] <mhall119> it's Qt/QML right?
+[18:38] <bobweaver> that in no way is going to be the UBuntu TV but I am sure that there is going to be things that are intergrated
+[18:38] <bobweaver> yeah that is unity 2d
+[18:38] <bobweaver> there is all sorta beta code up in there
+[18:38] <mhall119> so anybody who wants to experiment with some UI stuff, you can use that branch
+[18:38] <bobweaver> but that is like a playground
+[18:39] <bobweaver> yeah I have not pushed branch
+[18:39] <bobweaver> latest things that I have done to that are as follows
+[18:40] <bobweaver> made so one can switch launcher to rght or left, added previews , made new lens view and a full dbus settings changer
+[18:40] <bobweaver> add welcome screen mock up (what I think is going to be phone )
+[18:41] <bobweaver> that will be nice to look at
+[18:41] <bobweaver> but if there is anyone that wants to write into 3d have at it But I want nothing to do with NUX or compiz besides in unity2d spread
+[18:42] <bobweaver> there is alot things that need to be know about the phone only time will tell
+[18:43] <bobweaver> but if qml will be real easy to tie in
+[18:44] <bobweaver> but if anyone wants to hack at that with me have at it.
+[18:45] <bobweaver> I gotta run thanks mhall119  and tgm4883  and everyone else.  sorry about early this week (I have a lot going on (personal))
+[18:45] <tgm4883> If anyone has any questions/comments/concerns/ideas/etc, now is the time to shout them out
+[18:51] <tgm4883> ok, since we're getting toward the end of our time and nobody has asked any more questions I'm going to wrap this up in about 2 minutes
+[18:51] <tgm4883> so if anyone has any questions/comments/concerns/ideas/etc, now is the time to shout them out
+[18:53] <tgm4883> #endmeeting
+=== meetingology changed the topic of #ubuntu-meeting to: Ubuntu Meeting Grounds | Calendar/Scheduled meetings: http://fridge.ubuntu.com/calendar | Logs: https://wiki.ubuntu.com/MeetingLogs | Meetingology documentation: https://wiki.ubuntu.com/meetingology
+[18:53] <meetingology> Meeting ended Fri Jan 25 18:53:17 2013 UTC.
+[18:53] <meetingology> Minutes (wiki):        http://ubottu.com/meetingology/logs/ubuntu-meeting/2013/ubuntu-meeting.2013-01-25-18.05.moin.txt
+[18:53] <meetingology> Minutes (html):        http://ubottu.com/meetingology/logs/ubuntu-meeting/2013/ubuntu-meeting.2013-01-25-18.05.html
+=== noy_ is now known as noy
+=== cyphermox_ is now known as cyphermox
+[22:13] <solarcloud_3srcn> Guess there's no App Review Board Meeting at 10pm till 11pm UTC today ...

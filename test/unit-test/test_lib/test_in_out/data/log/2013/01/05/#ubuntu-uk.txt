@@ -1,0 +1,667 @@
+[00:39] <ali1234> done: https://github.com/ali1234/jono-qml
+[00:44] <ali1234> just need some sounds now
+[00:50] <cocoa117> ali1234, can sticky bit (chmod +t xxx) apply to the subdirectories and files?
+[00:50] <cocoa117> or is there a way to do it?
+[00:50] <cocoa117> i mean kind like set it by default for a particular directory
+[00:51] <ali1234> that's what it is for
+[00:51] <ali1234> not sure how it work on subdirectories
+[00:52] <cocoa117> as admin, i want all the subdirectories and files can only be deleted by its owner, the group user can read/write to it, but can't delete it
+[00:52] <cocoa117> again, as admin, i want to set the rules, not monitoring every new file/directoires created
+[00:53] <cocoa117> never mind, i guess ACL is only way to go
+[00:53] <ali1234> i dunno if it's possible or not, i would have to google it
+[00:53] <ali1234> but yeah ACLs
+[01:19] <aquarius__> erk. my disk seems to be failing. Lots of disk errors in dmesg, and it's been "remounted read-only". I'm afraid to reboot in case it's all torched, but equally I have no idea what to do next. Anyone still around?
+[01:19] <aquarius__> I'm not even totally sure anyone can see what I'm writing :0
+[01:20] <directhex> aquarius__, yes, your send buffer works
+[01:20] <aquarius__> directhex: ah, that's at least useful
+[01:20] <directhex> aquarius__, the thing to do is get your important data somewhere safe, stat
+[01:20] <aquarius__> no-one seems to be awake in #ubuntu-kernel :(
+[01:20] <directhex> you have a handy replacement disk and usb caddy, right?
+[01:20] <aquarius__> important data largely is somewhere safe already
+[01:20] <aquarius__> either in bzr in launchpad, in U1, or in my mailbox.
+[01:21] <aquarius__> this is why I run deja-dup for backups
+[01:21] <aquarius__> #ubuntu seem to be too busy arguing about skype being non-free to actually answer support questions, hey ho :)
+[01:21] <aquarius__> directhex: I don't, however, have a replacement disk
+[01:22] <aquarius__> and I don't seem to be able to copy things with nautilus to the ssh box on the network
+=== Lcawte is now known as Lcawte|Away
+[01:23] <aquarius__> although I can ssh to it from a terminal, so I'm copying stuff to the server in case everything goes tits up
+[01:24] <aquarius__> what I'm most worried about is: what do I *do*? I mean, if I reboot and it doesn't come up, I'll be really annoyed. But I have no idea how to fix this in the short term
+[01:24] <directhex> mount -o remount,rw /
+[01:24] <directhex> :D
+[01:24] <aquarius__> (in the long term the answer is presumably "shout at lenovo until they give me a new disk for my less-than-one-year-old laptop
+[01:24] <aquarius__> directhex: if I just remount it, what might go wrong?
+[01:25] <directhex> (they'll make you run some disk diagnostics from an iso)
+[01:25] <aquarius__> I mean, dmesg has lots of "the journal aborted" in it
+[01:25] <directhex> it might toast your superblocks and eat all your data
+[01:25] <aquarius__> right. That's what I'd like to avoid, obviously :)
+[01:25] <directhex> no "AIEEEEEEEEEEEEEEEEE!!!!!!!!!!!" in your kernel? it's fiiiiiine.
+[01:25]  * directhex flees
+[01:25] <directhex> anyway, bed
+[01:25] <aquarius__> heh
+[01:25] <aquarius__> cheers, pal
+[01:25] <aquarius__> you are so far the most helpful person ever :)
+[01:26] <aquarius__> go to bed.
+[01:26] <directhex> i am more helpful than anyone else you've asked about this, though
+[01:26] <aquarius__> that's what I meant
+[01:26] <directhex> through virtue of being the only one to reply
+[01:26] <aquarius__> I wasn't being sarcastic in the least :)
+[01:26] <aquarius__> you are indeed the most helpful
+[01:26] <aquarius__> thanks for nothing, ubuntu support community ;-)
+[01:27] <directhex> and technically even if i'd said "COAT IT IN HONEY" that statement would be true. thank you einstein, everything *is* relative! :D
+[01:27] <aquarius__> srs, before you go: would you recommend (a) remount rw and see what happens, (b) reboot and see what happens, (c) something else?
+[01:27] <ali1234> don't remount it rw
+[01:28] <directhex> i'd try to scp valuable data to *anything* i had access to, then consider the entire partition compromised & useless
+[01:28] <directhex> possibly not in that order
+[01:28] <aquarius__> ali1234: aha, more advice. Thank you. What would you recommend next?
+[01:28] <ali1234> buy a new harddisk
+[01:28] <directhex> journal aborts kinda mean it's borked... unless, and this is a total edge case, it's the kernel up its own arse and not a physical issue at all
+[01:29] <aquarius__> directhex: yeah, that's what I'm doing, although pretty much all my valuable data is already saved elsewhere as well. Being this well-prepared is something of a new experience for me, but I'm glad I did it :)
+[01:29] <aquarius__> OK. Can I somehow diagnose whether the hardware is borked?
+[01:29] <directhex> and it might get cleared up by a reboot. buuuuuuuuuuuuuuut... lots of people use the kernel, and how many of them have phantom disk failures? not many
+[01:29] <directhex> aquarius__, http://support.lenovo.com/en_US/downloads/detail.page?&DocID=DS025448 - but that means a reboot
+[01:29] <aquarius__> I think we can all agree that the disk is fucked in the medium term, and I can copy stuff off it right now, and I should do that and then go buy a new disk
+[01:30] <aquarius__> is that it? I mean... should I try and fix things somehow?
+[01:30] <ali1234> no, actually you should turn it off and not turn it on again until you have a new disk
+[01:30] <ali1234> and a usb caddy
+[01:30] <aquarius__> what's a usb caddy for?
+[01:30] <ali1234> then you put the new disk in the usb caddy
+[01:30] <ali1234> boot up a live image
+[01:30] <aquarius__> directhex: yeah, I saw that. Mine's not on the list.
+[01:31] <ali1234> use ddrescue to image the drive onto the new drive
+[01:31] <aquarius__> directhex: this is an ideapad u300s, not a thinkpad
+[01:31] <ali1234> then you run recovery on the new drive to repait the filesystem
+[01:31] <ali1234> then you recovery whatever you can
+[01:31] <aquarius__> ali1234: aha. That's useful info.
+[01:31] <ali1234> then you reinstall
+[01:31] <ali1234> don't but the broken disk in the usb caddy
+[01:32] <ali1234> usb does not like broken disks at all and will cause you more problems
+[01:32] <aquarius__> OK.
+[01:32] <ali1234> like, at the first error, the disk will just go silent
+[01:32] <ali1234> which will prevent ddrescue from skipping badblocks
+[01:32] <aquarius__> sending it back to lenovo will cause them to write windows over the top of the disk anyway, so I lose all my data regardless :)
+[01:33] <ali1234> they will replace the hard disk anyway if it is broken
+[01:33] <aquarius__> yeah
+[01:33] <aquarius__> but then I have no laptop for weeks, which is why I don't want to do that :)
+[01:33] <directhex> excuse to buy an ssd!
+[01:34] <aquarius__> it *has* an SSD
+[01:34] <aquarius__> it's a flamin' one-year-old ultrabook
+[01:34] <aquarius__> the disc should not be dead.
+[01:36] <aquarius__> the really annoying thing is: I took the "support me if it breaks" thing from pcworld, of all places, and it ran out after twelve months, which was about 20 days ago.
+[01:38] <aquarius__> might be wrong abou tthat. I'll ring 'em in the morning.
+[02:54] <ball> Does Ubuntu ship with a command-line disk partitioning tool?
+[02:59] <ball> Ah, cfdisk?
+[03:10] <Whoop> yes
+[03:12] <ball> Whoop: Thanks
+[06:42] <ddfgt> hi
+[06:42] <ddfgt> how i can mount windows share on ubuntu?
+[06:43] <ddfgt> someone here?
+[06:44] <dogmatic69> ddfgt: tried smbmount?
+[06:44] <ddfgt> yes..
+[06:44] <dogmatic69> smbmount //server/path /local/path
+[06:45] <ddfgt> but it's ask for password..
+[06:45] <ddfgt> but if i do it with nautilus i'm only put the ip..
+[06:45] <dogmatic69> add -o credentials=/home/user/.smbpassword,uid=1000,gid=1000
+[06:46] <dogmatic69> make the .smbpassword file with your details
+[06:46] <dogmatic69> username=foo
+[06:46] <dogmatic69> password=bar
+[06:46] <dogmatic69> that is all you need in it
+[06:46] <dogmatic69> the uid/gid is your user / group id
+[06:47] <ddfgt> but i dont need a username / password for this share...
+[06:47] <dogmatic69> you just said it asks for it
+[06:50] <ddfgt> if i click in nautilus "file > connect to server" select "windows share" and put only the IP address - it is work fine..
+[06:50] <ddfgt> but when i try to make mount  - it's ask for password..
+[06:51] <ddfgt> dogmatic69, ?
+[07:16] <ddfgt> any idea?
+[08:21] <ali1234> "Today begins a new phase for Ubuntu, and it's a phase that requires our leadership."
+[08:22] <ali1234> anyone want to have a go at explaining what exactly that means?
+[08:22] <ali1234> specifically who is "our"?
+[08:25] <ali1234> also, since you can't "lead" an abstract concept, Ubuntu must refer to a group of people here, so who is that?
+[08:54] <ddfgt> hi
+[08:55] <ddfgt> how i can mount my NAS in ubuntu?
+[09:00] <bigcalm> Awake far too early on a Saturday morning. What to do?
+[09:01] <kvarley> ddfgt: If it's plugged in via ehternet to your LAN it should just be available in "Browse Network" on the left side of the file manager
+[09:01] <kvarley> bigcalm: if it's me, PHP + coffee + music always works nicely
+[09:02] <bigcalm> kvarley: PHP is my day job. Maybe some Python this morning
+[09:02] <kvarley> Does anybody know how big the images for Ubuntu for phones will be?
+[09:02] <ddfgt> kvarley, - this is work fine.. but i want to mount it..
+[09:03] <bigcalm> kvarley: look for the minimum specs for phones that will work with it. That might hint at size
+[09:03] <AlanBell> kvarley: my guess would be not bigger than the nexus 7 image
+[09:03] <kvarley> ddfgt: When you browse the NAS from there it will automatically mount it to /media/devicename
+[09:03] <AlanBell> kvarley: could be a lot smaller if they don't include irrelevant stuff like LibreOffice
+[09:03] <kvarley> ddfgt: If you're looking at manually mounting it, you need to look up samba command line examples and just substitute your info in there.
+[09:04] <ddfgt> kvarley, i try now
+[09:04] <kvarley> AlanBell: It looks amazing. Watching a demo video with Mark playing with a Nexus. I MUST buy a nexus now haha :)
+[09:04] <kvarley> It's way more responsive and fluid that I thought it would be at this stage
+[09:07] <ddfgt> kvarley, i can browse it with the nautilus.. if i do ls /media/ i cant see it..
+[09:07] <kvarley> ddfgt: Ah sorry, it will mount it it ~/.gvfs/ (~/ is your home folder)
+[09:08] <bigcalm> I wondered where nautilus mounts ended up
+[09:08] <ddfgt> kvarley, - king!
+[09:09] <AlanBell> kvarley: yeah, if you look past the odd marketing it might well be quite fun to use and develop for
+[09:09] <bigcalm> AlanBell: looking for a good on-screen keyboard and/or number pad. Any pointers?
+[09:09] <AlanBell> I am not going to go out and buy last years phone to run it on
+[09:10] <AlanBell> bigcalm: well I only really know about onboard, which is a comprehensive keyboard, but not a consumer focussed keyboard
+[09:10] <AlanBell> caribou is the gnome one which is more touchscreen/consumer focussed
+[09:10] <bigcalm> Ah. You might have realised that I need this for a kiosk mode
+[09:11] <bigcalm> Aha. I shall have a look, ta
+[09:11] <kvarley> AlanBell: That's my issue, I really want to try and test it but my current phone is a single core device with limited resources. Looking at the prices, it's still ~£400 for the top nexus 4 so I may as well wait until the next gen phones are out and pick up one of them.
+[09:11] <AlanBell> by which I mean doesn't have keys that normal people don't use like tab and backtick
+[09:12] <AlanBell> or alt-gr :)
+[09:12] <kvarley> ddfgt: If you want it mounted permanently or to a different folder (/media/devicename for example) check askubuntu for guides on samba mounting or this one - https://wiki.ubuntu.com/MountWindowsSharesPermanently
+[09:12] <bigcalm> Fine by me :)
+[09:13] <AlanBell> bigcalm: in that case caribou or maliit
+[09:14] <AlanBell> I am almost certain that Maliit will be the keyboard for Ubuntu phone
+[09:15] <bigcalm> Not seeing Maliit in USC
+[09:15] <bigcalm> Will try caribou 1st
+[09:20] <ddfgt> kvarley, tnx
+[09:26] <kvarley> Technically my phone could run the entry level Ubuntu
+[09:27] <kvarley> 1GHz single core CPU, 768MB RAM. Only thing is only 1GB ROM on the phone
+[09:27] <kvarley> Assuming I could install the OS to the microSD and just the bootloader stuff on the phone's ROM it'd work
+[09:27] <kvarley> But porting to old hardware won't be fun so it probably won't happen
+[09:32] <AlanBell> anyone played Ryzom?
+[09:40] <brobostigon> good morning everyone.
+[10:09] <kvarley> I want to run a server on my LAN for running git and a web server but I need it to have a desktop environment on as well for some of the people who'll use it. Would I be better installing the desktop version of Ubuntu (or a derivative) instead of installing the server version then installing a gui on top of that?
+[10:10] <bigcalm> This is odd. Still haven't found out how to start/use caribou
+[10:20] <bashrc> You could maybe use something like a Raspberry Pi as a web server or git server
+[10:28] <kvarley> bashrc: Not powerful enough, I'm looking to run many vhosts on the machine so it'll be pretty intensive. I currently have a webserver and git setup on the rpi, it's useful but won't handle the databases and vhosts
+[10:29] <kvarley> bashrc: I might just end up running something like Zentyal on it which ships with a desktop environment and other useful stuff. Ubuntu based too so it might be pretty good.
+[10:42] <AlanBell> kvarley: I would install the desktop version
+[10:53] <MartijnVdS> http://www.youtube.com/watch?v=hTR2tVr2a6A
+[10:54] <kvarley> AlanBell: Would you install the desktop version vs Zentyal?
+[10:55] <bashrc> I think you can install Debian on Raspberry Pis.  It would certainly be a low power solution for something like hosting a home page.
+[10:56] <kvarley> bashrc: It's not for hosting a homepage. It's going to be a testing web dev server so the rpi isn't powerful enough.
+[10:56] <bashrc> ok
+[10:56] <kvarley> bashrc: I own 2 raspberry pi's with debian running on them :)
+[11:07] <AlanBell> kvarley: we have zentyal running for our mail server, but I tend to prefer servers that are the same as my laptop so I can reproduce things easily
+[11:11] <popey> morning all
+[11:30] <popey> AlanBell: ali1234 https://launchpad.net/qml-toolkit bug reporting now enabled
+[11:30] <AlanBell> popey: is that for the documentation as well as the toolkit or do I talk to dpm or someone about that?
+[11:31] <popey> thats more for the toolkit itself
+[11:32] <popey> for documentation, speak to mhall119 or dpm, yes
+[11:32] <AlanBell> ok, great
+[11:37] <ali1234> what about design bugs?
+[11:37] <ali1234> like the "resolution independence" thing
+[11:41] <AlanBell> yeah, I was just wondering about that
+[11:42] <ali1234> the only out and out bug i found is that ogg files won't play in Qt multimedia
+[11:46] <ali1234> popey: what about bugs in the qt5 in the mobile sdk ppa?
+[11:47] <ali1234> i didn't use any ubuntu specific QML at all; it was unecessary
+[11:56] <AlanBell> 1gu is quite big really
+[11:58] <popey> perhaps file them there and we can reassign
+[11:58] <popey> better to get things recorded
+[11:58] <AlanBell> just did
+[11:58] <popey> cool
+[11:59] <AlanBell> so is this project manhatten?
+[12:00] <AlanBell> bug 1096341
+[12:00] <lubotu3> bug 1096341 in UI Toolkit "GU image size advice is wrong" [Undecided,New] https://launchpad.net/bugs/1096341
+[12:06] <ali1234> bug 1096345
+[12:06] <lubotu3> bug 1096345 in UI Toolkit "QML/Qt Multimedia won't play OGG files" [Undecided,New] https://launchpad.net/bugs/1096345
+[12:15] <ali1234> AlanBell: mwc reference looks like a dead giveaway
+[12:16] <popey> mwc reference?
+[12:16] <AlanBell> https://launchpad.net/~bzoltan is the maintainer of that project and is a member of the manhattan team and not much else
+[12:17] <popey> Zoltan does the SDK stuff
+[12:17] <ali1234> and the timeline the last item is "mwc update"
+[12:17] <AlanBell> which in turn leads to the project https://launchpad.net/manhattan/+series
+[12:17] <ali1234> https://launchpad.net/manhattan/+milestone/mwc-update
+[12:17] <AlanBell> not that this is particularly revealing or anything
+[12:17] <ali1234> it would have been if we had seen it last week
+[12:18] <ali1234> but i guess thats why it has a silly codename etc
+[12:18] <popey> exactly
+[12:28] <neuro> the phone project was codenamed the manhattan project?
+[12:28] <AlanBell> so HUD stuff, if I run "UBUNTU_MENUPROXY="libappmenu.so" DESKTOP_SESSION='ubuntu' gnome-terminal" then gnome-terminal runs, but has an application menu and doesn't export the menu to dbus
+[12:28] <neuro> jings
+[12:28] <AlanBell> running in a gnome shell session
+[12:28] <AlanBell> neuro: they have a bunch of private placename projects
+[12:29] <neuro> now i *really* have reservations
+[12:29] <neuro> please not to be shipping me a phone that can, you know, SPLIT FREAKIN' ATOMS
+[12:30] <popey> heh
+[12:30] <neuro> i don't want an OS with system specifications measured in kilotons or roentgens as well as MHz
+[12:30] <popey> manhattan being a city
+[12:31] <neuro> and also the "Manhattan Engineering District"
+[12:32] <neuro> http://en.wikipedia.org/wiki/File:Manhattan_District.svg
+[12:32] <neuro> that red bloom around the star at the top of the emblem looks awfully like that floaty swirly stuff around the circle on the phone lock screen ... sorry, welcome screen
+[12:32] <neuro> SUSPICIOUS
+[12:32] <popey> hah
+[12:32]  * AlanBell likes atom smashing
+[12:33] <AlanBell> higgs boson powered phone \o/
+[12:33] <penguin42> AlanBell: Bit heavy aren't they?
+[12:33] <neuro> ooh
+[12:33] <neuro> is that where you receive data packets before you request them?
+[12:34] <neuro> google now has the generic female voice, siri has the binty voice in the US, weakest link guy here ... ubuntu phone would have THE GOD (particle) VOICE
+[12:35] <neuro> I'M SORRY, THERE ARE NO NUCLEAR PARTICLE ACCELERATORS NEAR YOU!
+[12:35] <neuro> i could totally do the voice of the phone
+[12:35] <popey> more like "THAT FEATURE IS DISABLED ON YOUR MORTAL REALM"
+[12:35] <neuro> i do a mean Movie Trailer Man voice, i could do that
+[12:35] <AlanBell> oh, I will turn on my speech synth
+[12:36] <neuro> IN A WORLD ... WHERE (UBUNTU) ONE HAS YOUR DATA ...
+[12:36] <neuro> ... ONE PHONE WILL RISE ...
+=== Lcawte|Away is now known as Lcawte
+[12:37] <neuro> ... and with that phone, Apple will ultimately dominate the mobile market with their clean, usable UI and massive, stable development base.
+[12:37] <neuro> IN THEATRES NOW.
+[12:37] <neuro> (THIS PHONE IS NOT YET RATED)
+[12:38] <neuro> actually, any lugradio/hashlugradio alumni in the vicinity may remember my Enemy Territory "plug" 30 second bit i did ...
+[12:38] <neuro> that was almost my Movie Trailer Man voice
+[12:38] <ali1234> it should have "the voice"
+[12:38] <neuro> jeez, i wonder if that's still kicking about
+[12:39] <neuro> ali1234: the weirding voice?
+[12:39] <ali1234> YES THAT ONE
+[12:39] <neuro> not sure i'd want a phone to have that
+[12:39] <ali1234> well done for getting the reference
+[12:39] <ali1234> i am happy now
+[12:39] <neuro> "ANNNNNSWWWWEEEERRRRR TTTHHHEEE PPPPPHHHHOOOOONEEEEEEE ...." "Er, I must answer the phone, it seems, excuse me"
+[12:41] <neuro> popey: oh dear god, i've found it: http://neuro.me.uk/projects/lugradio/audio/clan.trailer.mp3
+[12:41] <AlanBell> http://mumble.libertus.co.uk:59125/
+[12:41] <popey> i miss our ET nights
+[12:41] <neuro> timestamp 2005-03-18 05:05
+[12:42] <neuro> some of the guys have been trying to start them up again
+[12:42] <neuro> it's causing problems because the client is so frickin' old
+[12:42] <popey> yeah
+[12:42] <popey> i ended up playing on windows
+[12:42] <popey> also the anti-cheat site went down
+[12:42] <popey> punkbunster?
+[12:42] <popey> -n
+[12:42] <Azelphur> popey: is there an XBMC remote for iPhone?
+[12:42] <AlanBell> http://bit.ly/VBCdEZ
+[12:42] <neuro> yup
+[12:43] <neuro> all the ones i tried before i switched to Plex were a bit naff
+[12:43] <popey> yes Azelphur
+[12:43] <Azelphur> is it possible to link to things in the apple market like androids market:// links?
+[12:43] <popey> yes
+[12:43] <Azelphur> cool :)
+[12:44] <popey> https://itunes.apple.com/gb/app/official-xbmc-remote/id520480364?mt=8&uo=4
+[12:44] <Azelphur> ah nice, I just give that link and if you qr code scan it on an iPhone it takes you straight to the store?
+[12:44] <ali1234> i clicked on those mp3 links and rhythmbox crashed :(
+[12:44] <popey> there's a link on the page on the left
+[12:45] <popey> takes you to an itms:// link
+[12:45] <Azelphur> ah yes, cool ty :)
+[12:45]  * Azelphur is making a qr code for his TV 
+[12:46] <neuro> and in the app store inside itunes, click the drop down next to the price/downloaded button, you can copy the http link for later shenanigans
+[12:46] <Azelphur> even though it's a bit of an android fest around these parts, https://www.dropbox.com/s/8aq2gle8x1z50fq/2012-12-30%2002.53.03.jpg haha
+[12:46]  * neuro 's home is an apple home
+[12:47] <neuro> (the ubuntu servers and two windows machines aside)
+[13:00] <AlanBell> running notepad-qml it outputs "Connected to accessibility bus at:  "unix:abstract=/tmp/dbus-zd04t68yLB,guid=52f7e497947d5291bfbd696650e821e9" "
+[13:00] <AlanBell> but it is silent in orca
+[13:02] <AlanBell> ali1234: do you know how rotation works? moving from portrait to landscape?
+[13:03] <ali1234> in what respect?
+[13:03] <AlanBell> does QML have some kind of notion of it?
+[13:03] <AlanBell> I can't see anything in the ubuntu QML stuff about screen orientation and the videos all seem to be portrait only
+[13:04] <ali1234> there is a sensor API in Qt mobility
+[13:04] <ali1234> it has stuff like that
+[13:04] <ali1234> it's not QML core though so ... that's why i was asking if it was available yesterday
+[13:04] <AlanBell> I am more thinking of the UI transition and whether things should move about to take advantage of width
+[13:05] <ali1234> QML is all about ttransition
+[13:05] <penguin42> is it done as xrandr?
+[13:08] <ali1234> well considering that QML runs on windows, mac, android, symbian as well, i'd say that's irrelevant
+[13:09] <ali1234> AlanBell: stuff like this is why there's much more to it than just throwing together a load of open source stuff
+[13:09] <ali1234> hardware adaption is serious business
+[13:10] <ali1234> tbh i'm not convinced ubuntu phone even has a landscape mode yet
+[13:10] <ali1234> i don't really seeing it happen in any of the demos
+[13:14] <AlanBell> yeah, I was just wondering if that was available for free by using QML or if it was in the not-done pile. If they had done it as part of the project they would no doubt have shown it off
+[13:15] <ali1234> well nothing in QML will work if you don't wire it up to your hardware
+[13:17] <AlanBell> indeed
+[13:27] <bashrc> Has anyone tried that qmlscene command?  I just get a segfault whenever I run it
+[13:31] <ali1234> yes, it works for me
+[13:31] <ali1234> try running it in gdb
+[13:31] <ali1234> oh, did you add restart shell after running the install command? it adds stuff to the environment
+[13:36] <bashrc> maybe I need to restart
+[13:40] <bashrc> still the same segfault
+[13:41] <bashrc> gdb indicates the problem is in libGL.so.1
+[15:05] <daubers> Afternoon
+[15:06] <popey> lo
+[15:10]  * daubers has finally had his mop chopped
+[15:10] <AlanBell> pics or it didn't happen
+[15:11] <daubers> :p
+[15:14] <popey> i should get mine done
+[15:14] <AlanBell> are you going to CES?
+[15:15] <popey> no
+[15:16] <popey> thankfully ☺
+[15:21] <ubuntubhoy> Anyone care to spend the time to sort 12.04 not booting beyond 'checking battery state' please ??
+[15:36] <penguin42> ubuntubhoy: Be careful, the actual text there is not necessarily the cause - that may be just the last thing printed before it went south
+[15:39] <penguin42> yeh, adb shell on my cheapo Android TV dongle
+[15:43] <ali1234> hmm, a question
+[15:43] <ali1234> can you take a 32 bit binary, disassemble it to assembly code, and then rebuild it as 64 bit?
+[15:44] <sagaci> good luck with that
+[15:44] <penguin42> ali1234: There are ways of doing that; it's hard to do statically, easier to do dynamically
+[15:44] <ali1234> i don't see a problem doing this. what could possibly go wrong?
+[15:44] <penguin42> ali1234: There are a few problems
+[15:45] <penguin42> ali1234: FOr example, the data structures returned by the kernel in 64bit mode are different/longer
+[15:45] <penguin42> ali1234: Secondly finding all the code statically is very hard
+[15:45] <ali1234> it's a windows device driver :P
+[15:46] <penguin42> ali1234: It's normally simpler to wrap a 64bit wrapper around the victim and make calls to 32bit code whenever you need to do that; on linux you can do that for userspace code with libffi
+[15:46] <penguin42> (and a lot of work)
+[15:46] <ali1234> yeah... it's a device driver tho :)
+[15:46] <ali1234> i want to use a 32 bit driver on 64 bit windows
+[15:47] <penguin42> ali1234: I'm not sure what Windows offers for that; it's tricky - for example if the OS allocated a buffer in an area above 4GB and passed you a pointer what would you do?
+[15:47] <ali1234> it offers nothing at all
+[15:48] <ali1234> hmm good point
+[15:48] <ali1234> for a wrapper
+[15:48] <ali1234> but if i'm recompiling the whole thing as 64 bit, i'd do nothing
+[15:49] <ali1234> i mean i could disassemble it, look at all the API calls and then rewrite it in C and rebuild for 64 bit, but it seems like a large part of that work could be automated
+[15:49] <penguin42> ali1234: It's possible the OS has a way of saying 'hey allocate below 4GB please and make 32bit calls' but the other way is your wrapper has to copy data around
+[15:51] <ali1234> it's a usb driver so it isn't writing directly into PCI memory or anything like that
+[15:56] <penguin42> ali1234: Right, but the OS might pass you a buffer full of data
+[15:57] <ali1234> yes, but always by a known documented API
+[15:58] <ali1234> i wonder if you can "puppet" a windows driver into running in user mode
+[15:58] <ali1234> then the 32 bit code could run
+[16:02] <penguin42> ali1234: What type of driver?
+[16:02] <ali1234> a TWAIN driver
+[16:03] <penguin42> ah scanner?
+[16:17] <ali1234> according to the internet you can take the drive for a different scanner and hack the IDs and it just works
+[16:18] <penguin42> ali1234: I suspect that depends if they have the same underlying hardware - I guess a lot are the same hardware with a different label on
+[16:18] <ali1234> they all use the same backend on sane
+[16:19] <penguin42> ah well yeh
+[16:19] <penguin42> can you just get sane for windows?
+[16:19] <ali1234> no
+[16:19] <ali1234> only the crappy sane front end tool
+[16:19] <ali1234> which just uses twain under windows
+[16:19] <directhex> yes. but only for network scanners.
+[16:20] <ali1234> (and there's a twain bridge too)
+[16:29] <ali1234> hmm it partially works
+[16:50] <popey> AlanBell: see they want to do an askubuntu like stackexchange for openerp? http://area51.stackexchange.com/proposals/43481/openerp?referrer=DbZiUIEEr0odmpKS2kqovw2
+[16:51] <AlanBell> yup, I am one of the followers
+[16:52] <AlanBell> dunno why it didn't link to my profile properly though, it picked up all your reputation and treated me like a newbie
+[17:38] <directhex> http://store.steampowered.com/hwsurvey - more than twice as many people running steam on 64 bit than 32 bit, even though only 32 bit is "supported"
+[17:38] <directhex> on ubuntu, that is
+[17:39] <daftykins> ^_^
+[17:40] <directhex> more people running ubuntu than 32-bit windows 8
+[17:40] <directhex> more people running 64-bit ubuntu than 64-bit XP
+[17:40] <directhex> all interesting stats IMHO
+[17:42] <daftykins> indeed
+[17:42] <penguin42> 0.81% ubuntu (and I bet some of the other is Linux_ which maybe higher than I expected
+[17:45] <daftykins> you ever get the feeling of deja vu when tagging new additions to your music collection 0o
+[17:45] <daftykins> could've sworn i've done this before >_<
+[17:47] <daftykins> directhex: are the games 64-bit native on Ubuntu? just the steam client that's 32?
+[17:49] <directhex> daftykins, some of the games are 64-bit native, but 64-bit native games cannot use the steam overlay or achievements
+[17:49] <daftykins> haha, oopsy
+[17:49] <daftykins> interesting, thanks
+[17:59] <directhex> daftykins, there's only a 32-bit libsteam.so
+[18:01] <daftykins> is it really that hard to make things 64-bit? i thought it'd just be the format of the variables and that'd be it
+[18:01] <daftykins> though, this is why i'm no coder ^_^
+[18:13] <penguin42> So what's the sudden interest in qml?
+[18:14] <popey> penguin42: ubuntu phone
+[18:14] <popey> see http://developer.ubuntu.com/get-started/gomobile/
+[18:14] <penguin42> ah thanks
+[18:15] <penguin42> popey: So that's qml driving unity/gnome?
+[18:16] <penguin42> qml->qt->gnome ?
+[18:16] <popey> gnome has nothing to do with it really
+[18:17] <penguin42> well, what's the widget set - is it qt or gtk/gnome widgets?
+[18:17] <penguin42> or nux?
+[18:37] <daftykins> there been any news on all that EFI boot laptop bricking yet?
+[18:38] <penguin42> daftykins: Yeh
+[18:39] <penguin42> daftykins: It seems to only be a certain range of Samsungs, the current belief seems to be that it's the samsung-laptop kernel module that has a disagreement with the bios and they're going to disable that module from loading when in EFI mode
+[18:39] <daftykins> ah-har, neat
+[18:39] <daftykins> think some Macs were doing it too though?
+[18:39] <penguin42> not heard of any bricking
+[18:40] <penguin42> there are a lot of broken EFI bioses though; there have been reports of one that will only boot images with names of Windows version ... or RedHat Linux version ...
+[18:40] <penguin42> and there was another Samsung one somewhere where it has some odd hidden menu options
+[18:41] <daftykins> ;/
+[18:41] <daftykins> i'm not fond of Windows EFI installs
+[18:41] <daftykins> extra hassle and no perceivable benefit
+[18:41] <penguin42> nod
+[18:41] <daftykins> other than being GPT to get over the disk size limitation ofc
+[18:41] <daftykins> but nobody sane installs an OS into a single partition on a 3+TB drive :D
+[18:41] <penguin42> hmph, this is annoying; I've not got enough USB bits or the uSD card to carry on playing with my new toy
+[18:42] <daftykins> what do you need? card reader?
+[18:43] <penguin42> well, this thing has one USB socket and a uSD slot; so a powered USB hub would probably do it; or the uSD card that my Amazon vendor has screwed up sending me
+[18:43] <directhex> ... huh. colour me astonished: WP8 appears not to use any MTP-Z nonsense. plugged into ubuntu: works fine in nautilus. i can see my photos and stuff
+[18:44] <daftykins> why on earth do you have one of those phones directhex ? :>
+[18:44] <directhex> Ringtones folder just contains an MP3 i pushed on via the windows sync app
+[18:44] <directhex> daftykins, because i really really really really really like the windows phone UX, and android gives me stomach ulcers
+[18:44] <daftykins> you have no love for android? but it's lovely :>
+[18:45] <directhex> android is the kde 3 of smartphones.
+[18:45] <daftykins> too much UI prettification with mass slowdown and resource waste as a consequence? :>
+[18:45] <directhex> ...that's what i just said
+[18:46] <daftykins> just checking!
+[18:46] <daftykins> at least they've finally begun optimising instead of just throwing faster hardware at it
+[18:48] <directhex> i'll believe it when i see it
+[18:48] <directhex> you can't trust a new android phone, it degrades over time as badly as win98
+[18:48] <daftykins> true, i suppose both carry on
+[18:49] <ali1234> popey: you post my software on g+ and the license trolls are bugging me within 10 seconds :S
+[18:49] <popey> haha
+[18:49] <daftykins> i haven't done anything about trying the solution to my Desire's 150MB /data issue yet
+[18:49] <ali1234> "public domain isn't a real license"
+[18:49] <popey> so i see
+[18:50] <ali1234> half tempted to switch license to BSD with a clause stating that the json guy can't use it
+[18:50] <ali1234> i am such a troll
+[18:50] <popey> hah
+[18:50] <daftykins> ^_^
+[18:59] <ali1234> so what's the diff. between BSD and MIT?
+[19:07] <Azelphur> https://dl.dropbox.com/u/3832397/misc/2012/December/wifi.png thoughts? gonna stick this on my wall :P
+[19:08] <daftykins> haha nice
+[19:08] <daftykins> surely that's QR and not NFC though, unless you're gonna put some kinda tag beneath?
+[19:09] <ali1234> and then set up a captive portal that renders webpages through that upside down proxy
+[19:09] <Azelphur> gonna put a tag on the back of the sheet :)
+[19:09] <Azelphur> ali1234: rofl :p
+[19:09] <popey> upsidedownternet
+[19:09] <popey> or just capture all packets
+[19:09] <daftykins> Azelphur: really neat idea, think i shall do the same once i move out! how did you generate it?
+[19:11] <Azelphur> I used the instawifi android app, it writes NFC tags and generates QR Codes
+[19:12] <daftykins> 8D
+[19:12] <popey> do the codes work with ios devices?
+[19:12] <Azelphur> popey: dunno, scan it! :p
+[19:12] <popey> oh yeah ☺
+[19:12] <popey> phone not to hand
+[19:13] <popey> not sure what I'd scan it with.. does it go to a url?
+[19:13] <popey> i mean, I have an app, but usually only use it for barcodes on products
+[19:13] <Azelphur> it runs a wifi: URL
+[19:15] <daftykins> my phone is so stupid at picking the right wireless network in this house ¬_¬
+[19:15] <daftykins> they always want to pick the low signal one
+[19:15] <Azelphur> so the QR code contains "wifi:S;Azelphur:T;WPA:P;wqpzsjyipeguyvrd;;"
+[19:15] <Azelphur> daftykins: same, haha
+[19:15] <popey> daftykins: which phone?
+[19:16]  * daftykins installs InstaWifi
+[19:16] <daftykins> popey: the old school HTC Desire
+[19:16] <popey> i find android devices hang onto a weak singnal
+[19:16] <daftykins> she's 3 now, bless 'er
+[19:16] <popey> -n
+[19:16] <popey> iphone and ipad seem to switch to the strongest one fine
+[19:16] <daftykins> i think it's just fail prioritisation
+[19:16] <popey> and ubuntu ☺
+[19:16] <Azelphur> in my house Ubuntu always used to connect to the wrong AP
+[19:17] <daftykins> heh, had a feeling it'd require root, so it must read the wpa supplicant config
+[19:17] <Azelphur> yea, I don't think it requires root, just optional extra
+[19:18] <daftykins> did you screenshot the code out of the app, or use the share feature 0o
+[19:18] <Azelphur> share, emailed it to myself
+[19:18] <daftykins> ah-ha :D
+[19:19] <daftykins> if the dev made it output to SVG that'd be neat
+[19:19] <Azelphur> indeed
+[19:19] <Azelphur> QR Codes scale pretty well anyway.
+[19:19] <daftykins> ja
+[19:19] <daftykins> i love the ones in Borderlands 2 :>
+[19:19]  * Azelphur prints onto glossy paper
+[19:20] <daftykins> 8D
+[19:20] <Azelphur> printer falls over and dies.
+[19:20] <Azelphur> and makes grinding noises
+[19:20] <Azelphur> oshit -.-
+[19:20] <Azelphur> that does not sound healthy at all o.O
+[19:21] <Azelphur> I think my printer doesn't like this glossy paper lol, it took it in a bit, announced that there was an error, I told it to paper feed and it started grinding and not doing a lot
+[19:22] <daftykins> X|
+[19:22] <daftykins> printers. glad i don't own one \o/
+[19:23] <Azelphur> think I put it in upside down, maybe that's why.
+[19:23] <daftykins> :)
+[19:24] <daftykins> finally culling some junk on my storage
+[19:24] <daftykins> so tempting to ditch all SD films XD
+=== IdleOne is now known as alacran
+[19:25] <popey> ʘ‿ಠ
+[19:26] <ali1234> i want to drop all non-HD channel from my mythtv
+[19:26] <ali1234> but i can't figure out how
+[19:26] <MartijnVdS> \o
+[19:26] <MartijnVdS> ali1234: mysql mythdb
+[19:26] <MartijnVdS> ali1234: DELETE FROM tv_channels WHERE
+[19:26] <MartijnVdS> wtc.
+[19:26] <MartijnVdS> etc.*
+[19:26] <ali1234> yeah i know but i can't figure out that table for channels because it is insane
+[19:27] <MartijnVdS> yeah I figured it wouldn't be that easy
+[19:27] <ali1234> and they only come back when i retune anyway
+[19:27] <ali1234> mythtv seriously needs a rewrite
+[19:28] <ali1234> bored gnome developers should have done that instead
+[19:28] <ali1234> the UI can't even work with a mouse let alone a touch screen
+[19:29] <popey> wasnt someone forking it?
+[19:29] <ali1234> not that i know of
+[19:29] <popey> torque?
+[19:29] <popey> torc
+[19:29] <MartijnVdS> is gnome-dvb still a thing/
+[19:29] <popey> https://github.com/Torc/torc
+[19:30] <ali1234> sounds good
+[19:30] <ali1234> but... mythtv is so brittle i'm afraid to mess with it
+[19:30] <ali1234> since it's working ok at the moment
+[19:30] <ali1234> next time it breaks though...
+[19:32] <popey> every time I moan about mythtv people suggest other options like VDR
+[19:32] <MartijnVdS> VDR wants to take over your entire system, even more than MythTV
+[19:33] <MartijnVdS> and last time I checked it was dead-ish as well
+[19:34] <MartijnVdS> I mean.. their home page looks like it's from 1995
+[19:34] <MartijnVdS> and they mention "SUse 10 with 2.6.13"
+[19:34] <ali1234> VDR is madness
+[19:35] <ali1234> everyone who uses it is certifiably insane
+[19:35] <ali1234> especially that "VDR_MAN" guy
+[19:36] <MartijnVdS> "Unfortunately no public repository is being actively used for development of VDR on a patch-by-patch basis. "
+[19:36] <MartijnVdS> (http://linuxtv.org/wiki/index.php/VDR)
+[19:36] <ali1234> VDR is mythtv for people who grew up with  teletype terminals that print on paper
+[19:37] <MartijnVdS> The commits to the git repository are giant code bombs which mirror the tar files on the VDR homepage.
+[19:37] <MartijnVdS> ali1234: as I said, there's gnome-dvb
+[19:37] <MartijnVdS> but last time I used it it was .. flaky
+[19:38] <directhex> gah, i'm so very close :/
+[19:38] <MartijnVdS> it's supposed to work with a totem plugin
+[19:39] <Azelphur> how odd, my printer prints fine onto this random card I have sitting around
+[19:39] <Azelphur> but if I give it photo paper, it goes nuts
+[19:39] <MartijnVdS> Azelphur: because photo paper is shiny?
+[19:39]  * Azelphur shrugs
+[19:40] <MartijnVdS> ali1234: I love the VDR linuxtv-wiki page:
+[19:40] <MartijnVdS> ali1234: TODO list
+[19:40] <MartijnVdS> ali1234: or, what needs to happen coz it's the freakin' 21st century already and splattering plugins, patches and scripts over 50+ websites and several forums and mailing lists is ueberlame:
+[19:41] <ali1234> well, mythtv ain't much better :/
+[19:41] <ali1234> and yeah yeah gnome-dvb
+[19:41] <daftykins> gah Explorer is so buggy >_<
+[19:41] <ali1234> but that doesn't support headless operation, which is kind of a deal breaker
+[19:41] <ali1234> come to think of it, i don't think VDR does either
+[19:42] <daftykins> delete this folder please Windows 'no the thumbs.db file is locked' - but it's only locked because you locked it ¬_¬
+[19:42] <MartijnVdS> ali1234: I've switched to "timeout" + testdvb + szap
+[19:42] <ali1234> i rolled my own system like that
+[19:42] <MartijnVdS> ali1234: it's ugly but I get huge .ts files that I can manipulate with avconv
+[19:42] <ali1234> i had a full web interface that fetched xml files and it even streamed the live tv or recordings into a embedded vlc plugin
+[19:43] <ali1234> and then i lost the code
+[19:43] <ali1234> i don't even know how i lost it
+[19:43] <ali1234> i might still have it somewhere but i've been looking for it for about 4 years
+[19:43] <MartijnVdS> too bad the DVB api is so hard to use from anything but C
+[19:43] <MartijnVdS> (and even then..)
+[19:43] <ali1234> well i just used the dvbstream + tzap
+[19:43] <ali1234> and shellscripts on cgi
+[19:44] <MartijnVdS> dvbstream doesn't work reliably for me :(
+[19:44] <ali1234> and cron
+[19:44] <ali1234> it was awesome
+[19:44] <ali1234> i wish i still had it
+[19:44] <ali1234> i would work much better these days, now that vlc and firefox doesn't suck
+[19:45] <MartijnVdS> I've been thinking of making something proper in Python or Perl
+[19:45] <MartijnVdS> biggest problem is EPG storage/management
+[19:45] <ali1234> i dumped listing to flat xml files
+[19:46] <ali1234> with some shellscript i found
+[19:46] <MartijnVdS> also, the fact that "tuning" (szap) is separate from "viewing" (dvbstream)
+[19:46] <MartijnVdS> I have 100mbit upstream now, so I could watch HD channels from home at work 8-)
+[19:46] <ali1234> then the cgi would use cat and globbing to join them up into a listing for a channel between a time period
+[19:47] <ali1234> EPG was the best part of it
+[19:48] <ali1234> i'm now going to pointlessly grep my old harddrives for the code once more
+[19:48] <MartijnVdS> to boldly grep where no man has grepped before
+[19:49] <ali1234> well damn
+[19:49] <ali1234> i've accidentally overwritten one of my external hard drives with an installation ISO
+[19:49] <ali1234> that sucks
+[19:50] <daftykins> >_<
+[19:50] <daftykins> nasty
+[19:50] <ali1234> wait, no i haven't
+[19:51] <ali1234> it's just refusing to mount for some reason
+[19:51] <ali1234> hmm
+[19:51] <czajkowski> popey: http://i.imgur.com/p94e2.jpg  one for you
+[19:51] <daftykins> XD
+[19:51] <ali1234> oh, the cable isn't plugged in >.<
+[19:52] <daftykins> 130GB reclaimed deleting rubbish films
+[19:52] <daftykins> not too bad
+[19:53] <daftykins> really is therapeutic deleting things :>
+[19:56] <ali1234> i accidentally /usr/bin the other day
+[19:56] <ali1234> that was fun
+[19:57] <ali1234> i was able to install --reinstall all packages from dpkg database though, so it was fixed quite easily
+[20:00] <Azelphur> https://www.dropbox.com/s/2ejlj624exmmgk7/2013-01-05%2019.58.07.jpg finished job
+[20:00] <Azelphur> why green paper? because my printer hates me.
+[20:02] <penguin42> Azelphur: I assume that really causes people to redirect people to some random evil network
+[20:02] <Azelphur> penguin42: nope, it's actually functional and does what it says on the tin xD
+=== alacran is now known as IdleOne
+[20:08] <popey> ali1234: not so easy when /usr/bin and /bin are merged?
+[20:09] <ali1234> doubt it would have made much difference actually
+[20:09] <ali1234> nothing in /bin was actually useful except for /bin/sh
+[20:09] <ali1234> i had to copy livecd /usr/bin into the system first
+[20:13] <popey> ah
+[20:15] <solarcloud_3scrn> how descriptive of such acomment :D
+[20:16] <solarcloud_3scrn> Does anyone know how many of the distro's on distrowatch have a So-called 'App center' .. I'm thinking they such have come on a bit in the last few years ?
+[20:17] <solarcloud_3scrn> **they should have ..
+[20:18] <popey> i expect most do
+[20:18] <popey> if you count "apt-get install foo" as an app centre
+[20:18] <solarcloud_3scrn> Des anyone have the web-link for the wekly podcast over at distro-watch ??
+[20:18] <solarcloud_3scrn> **Does
+[20:19] <popey> its linked at the top of their site
+[20:19] <popey> http://distrowatch.com/podcast/dww20121224.ogg
+[20:19] <popey> http://distrowatch.com/podcast/dww20121224.mp3
+[20:20] <solarcloud_3scrn> great, thanks.
+[20:22] <solarcloud_3scrn> Wow, Bruc3 really sounds good in this one .. It's a year's summary .. Of course I must say, there are other podcasts .. https://wiki.ubuntu.com/Podcasts
+[20:42] <daftykins> hrmm, is there a way to work out what's causing so much IO in ubuntu server VMs?
+[20:43] <daftykins> any maintenance tasks perhaps that cause high IO briefly?
+[20:44] <jacobw> iotop
+[20:45] <ali1234> hmm... i found it!
+[20:46] <jacobw> ali1234: you did?
+[20:46] <ali1234> yes, i found the code that i lost for years
+[20:46] <daftykins> jacobw: ty sir
+[20:46] <ali1234> it's basically a TV player app done as a html app
+[20:47] <ali1234> except i did it before html apps were cool
+[20:48] <ali1234> and instead of using a typical SQL/NOSQL database for the backend, it's all done with shell scripts and flat files
+[20:48] <ali1234> it only needs a webserver with cgi and haserl
+[20:48] <ali1234> gonna try to set it up...
+[20:48] <jacobw> that sounds great
+[20:49] <ali1234> for the tv player you just need firefox and vlc plugin
+[20:50] <ali1234> this would actually be really good for an androd tablet
+[20:50] <ali1234> assuming you could get one that could play HD video
+[20:57] <jacobw> i'd be interested to see it
+[21:00] <daftykins> ah-har, keep seeing python appear doing landscape things. not sure if that's what's causing the activity yet though
+[21:02] <jacobw> daftykins: what kind of IO are you seeing?
+[21:02] <daftykins> well, i just see the hard disk get hammered occasionally in my server by seeing the light on, plus irssi on one of my VMs begins to chug when i'm only connected via local LAN
+[21:03] <daftykins> it's a dedi-VM disk
+[21:04] <jacobw> libvirt using a dedication disk?
+[21:04] <jacobw> *dedicated
+[21:04] <daftykins> nah vmware
+[21:04] <daftykins> Windows 7 host (gasp)
+[21:05] <jacobw> ok
+[21:08] <jacobw> well, you could check IO in the VM then check that only vmware uses that disk from Windows and check that irssi isn't lagging with the server
+[21:09] <daftykins> sure, it typed slowly as i heard the disk go so i'm pretty sure it's disk activity
+[21:09] <daftykins> i've got KiTTY sessions open with both VMs with iotop running now :>
+[21:10] <daftykins> though it warns me... CONFIG_TASK_DELAY_ACCT not enabled in kernel, cannot determine SWAPIN and IO %
+[21:12] <daftykins> identified it :)
+[21:12] <daftykins> for some reason one VM is quite frequently running...
+[21:12] <daftykins> python /usr/bin/landscape-package-reporter --quiet
+[21:12] <daftykins> damn you landscape! *shakes fist*
+[21:13] <jacobw> sudo apt-get remove landscape-common
+[21:13] <daftykins> sure could, better would probably be to de-reg the system
+[21:14] <daftykins> thanks anywho :)
+[21:16] <jacobw> :)
+[21:48] <ali1234> http://al.robotfuzz.com/~al/epg/
+[21:48] <ali1234> check it
+[21:49] <daftykins> no dataz
+[21:50] <jacobw> that's nice
+[21:50] <ali1234> not only no dataz, it's also not executing any of the server side scripting at all
+[21:50] <ali1234> that's how much of it is static
+[21:51]  * directhex continues to wait
+[21:51] <ali1234> that's why you see the shell script, instead of the output from it
+[21:52] <ali1234> i don't think i should fix the cgi, this code is hilariously insecure
+[21:56] <jacobw> :)
+[22:01] <ali1234> source if you want to play with it http://al.robotfuzz.com/~al/epg/epg.tar.gz
+[22:01] <ali1234> don't put it on a public server though, unless you want to get owned
+[22:03] <ali1234> hmm wait i already uploaded this http://al.robotfuzz.com/~al/random/epg.tar.gz and then forgot about it
+[22:49] <solarcloud_3scrn> mark___ what .. shuttle.-buy-us-a-bus- worth ?
+[22:50] <solarcloud_3scrn> obviously, he's not a bowler.
+[22:50] <popey> ʘ‿ಠ
+[22:51] <solarcloud_3scrn> popey, hazchem signs n'again, popey  ??
+[23:51] <directhex> GOTCHA!
+[23:51] <daftykins> ?
+[23:53] <directhex> Device 0 (VID=0421 and PID=0661) is a Nokia Nokia Lumia WP8.
+[23:53] <directhex> Sending /data/Media/Music/FischerSpooner/Unknown Album/03. Emerge.mp3 to Music/Emerge.mp3
+[23:53] <directhex> W
+[23:53] <directhex> O
+[23:53] <directhex> R
+[23:53] <directhex> K
+[23:53] <directhex> S
+[23:55] <daftykins> that not been done before?
+[23:55] <directhex> never worked properly in WP7
+[23:57] <directhex> and since wp8 can patch itself (unlike wp7 which needed the zune desktop app for patches), wp8 is no worse than iphone as a desktop linux user's choice

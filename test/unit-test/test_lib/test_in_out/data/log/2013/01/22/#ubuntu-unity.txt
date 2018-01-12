@@ -1,0 +1,286 @@
+[02:32] <Controlsfreek> I'm looking at Bug #1099815, which seems to be a bitesize bug. I'm completely new to unity/nux. Trying to figure out the lifecycle of LauncherOptions. Is there documentation on how the options get populated (aside from their default values in the constructor)?
+[02:32] <ubot5> bug 1099815 in unity (Ubuntu) "Launcher starts with default size then jumps to configured one on login" [Undecided,New] https://launchpad.net/bugs/1099815
+[02:33] <Controlsfreek> Was expecting to see a function that loads values from a config file of some sort...
+[02:34] <Controlsfreek> A nudge in the right direction would be much appreciated! Thanks
+[02:54] <jrr> how might I make the top menu bar only display on my primary screen?
+[09:37] <popey> seb128: seems unity in ubuntu-desktop/daily-build is broken today?
+[09:37] <popey> i get no launcher or panel
+[09:37] <popey> (morning btw) ☺
+[09:38] <popey> segfault in libunityshell.so
+[09:38] <popey> [   96.792983] compiz[2973]: segfault at 70 ip 00007f86ac6c291a sp 00007fff37a906a0 error 4 in libunityshell.so[7f86ac4ea000+409000]
+[09:39] <davidcalle> popey, I can confirm
+[09:39] <popey> thanks davidcalle
+[09:39] <sil2100> huh
+[09:39] <duflu> popey: CLI; way of the future [tm]
+[09:39]  * popey gets his VT101 out
+[09:40] <seb128> popey, hey, I'm not running the daily ppa but seems you got people to confirm
+[09:42]  * davidcalle was running trunk via unity-team/staging when it happened yesterday afternoon
+[09:42] <popey> davidcalle: do we have a bug filed for it?
+[09:43] <davidcalle> popey, I wasn't sure if it was a driver or Unity issue, since the move to SNA was done at the same time. No bug yet AFAIK.
+[09:44] <popey> I'm on nVidia
+[09:44] <davidcalle> Intel for me
+[09:45] <sil2100> So maybe the latest commit?
+[09:46] <popey> sil2100: can you take a look pls?
+[09:46] <sil2100> popey: will do
+[09:46] <popey> thanks
+[09:48] <sil2100> davidcalle: you're using staging, right?
+[09:48] <davidcalle> sil2100, not anymore, but I was indeed
+[09:49]  * popey purges the ppa until fixed
+[09:54] <sil2100> popey: what version did you use that was segfaulting?
+[09:54] <sil2100> Was it 6.12.0daily13.01.21-0ubuntu1 for unity?
+[09:57] <popey> one mo
+[09:58] <popey> no
+[09:58] <popey> looks like from http://paste.ubuntu.com/1558044 that I installed 13.01.22 atr ~09:30 today
+[09:58] <sil2100> Oh, ok, so what versions did you use that were crashing? from daily0build?
+[09:58] <popey> oh, no, hang on
+[09:59] <popey> yes, 22 at 9:30
+[09:59] <popey> if I'm reading that grep of /var/log/dpkg right
+[09:59] <popey> so i updated at 9:30 (my time in the logs) and saw the issue at 09:37, yes looks like 13.01.22
+[10:01] <sil2100> Ok, so hm, there's no compiz update this day
+[10:01] <sil2100> Thanks, looking further
+[10:01] <seb128> sil2100, the segfault is in unity
+[10:01] <seb128> so doesn't need to be a compiz update
+[10:02] <sil2100> popey: is it segfaulting every time? Since the difference between 21 and 22 is just one build-related commit
+[10:03] <sil2100> popey: did you try 21 yesterday without any problems?
+[10:03] <popey> yes, 21 was fine
+[10:03] <sil2100> Actually, nux might also be involved
+[10:03] <popey> i had 21 installed and running when 22 was installing
+[10:03] <popey> ran all day with 21 running fine yesterday
+[10:03] <sil2100> If there are some new commits of course...
+[10:05] <sil2100> Ok, testing something
+[10:10] <sil2100> popey: ok, so, try updating nux as well
+[10:10] <popey> to what?
+[10:10] <sil2100> popey: it seems that there was probably some inside ABI break in the last big commit and unity deps didn't get updated
+[10:10] <sil2100> popey: to the one in daily
+[10:10] <sil2100> popey: since from your logs I didn't see nux getting updated
+[10:11] <popey> i specifically grepped for unity
+[10:11] <sil2100> So, nux was 22 as well?
+[10:12] <sil2100> Since I experienced a similar segfault when having upgraded unity and compiz without nux
+[10:12] <popey> one mo..
+[10:12] <sil2100> But this might be a different case
+[10:12] <popey> sil2100: http://paste.ubuntu.com/1558124
+[10:13] <popey> thats the full log from 20th to now
+[10:14] <sil2100> Ok, so it was there, interesting
+[10:18] <sil2100> popey: is it possible for you to use latest unity but revert nux to the previous daily? (18)
+[10:18] <rperier> what is the module used to ask the Launcher what is the running app ? BamfApplicationManager ?
+[10:18] <rperier> hey btw
+[10:18] <popey> lets see
+[10:24] <popey> sil2100: http://paste.ubuntu.com/1558193  - that works
+[10:25] <sil2100> popey: ok, so as I thought, nux is the problem - and the reason why I don't get the crash is probably that I'm using staging right now
+[10:26] <sil2100> popey: and it seems that there might have been a difference in what was built before what
+[10:27] <sil2100> hah, indeed!
+[10:28] <sil2100> libnux-4.0-common amd64 4.0.0daily13.01.18-0ubuntu1
+[10:28] <sil2100> So, the problem is:
+[10:29] <sil2100> unity in the daily PPA has been build with nux 4.0.0daily13.01.18-0ubuntu1, which is the old one, after which the 22nd nux has been built - and in nux there seems to be some ABI break that requires unity to be built with the latest nux to work
+[10:29] <sil2100> So, because unity was built using old nux, and the daily PPA has the new nux in it, which is not compatible with unity built with the old nux, there is a crash
+[10:30] <sil2100> In staging there is no such problem because nux has been built there 18 hours ago and unity 5 hours ago, so unity was built using latest nux
+[10:30] <sil2100> How to fix that? Nux probably needs an ABI bump first of all
+[10:31] <MCR1> Hi :) I can confirm staging is still working on raring and the Dash flies with the new blur 8-)
+[10:32] <MCR1> Quality of the blur has somewhat regressed, but functionality and speed are much more important for the Dash
+[10:33] <MCR1> it was quite unusable with free gallium-radeon driver at least...
+[10:39] <sil2100> popey: now, I don't really have a clue how to fix the daily PPA...
+[10:40] <sil2100> popey: since the broken packages are already there, not sure if I can push anything to that place
+[10:40] <seb128> sil2100, you should be able to land an unity rebuild no?
+[10:41] <sil2100> seb128: I don't think I have any permissions for that PPA
+[10:44] <seb128> sil2100, should it autoland rebuilds if there are new commits?
+[10:44] <seb128> where is didrocks today?
+[10:44] <sil2100> seb128: not entirely sure how daily works, but I think it's only rebuilding per-day
+[10:45] <sil2100> seb128: so, since the last build was 6 hours ago, I think it will rebuild tomorrow at soonest
+[10:45] <sil2100> seb128: not sure, I was hoping he'll be around ;p
+[10:45] <seb128> he might still be jetlagged
+[10:54] <MCR1> speaking of the devil ;)
+[10:55] <sil2100> didrocks: my man!
+[10:55] <didrocks> hey sil2100
+[10:55] <sil2100> didrocks: how are you?
+[10:56] <didrocks> jetlag apparently
+[10:56] <didrocks> awaken from 1am to 4am
+[10:57] <sil2100> For everyone interested: https://code.launchpad.net/~sil2100/nux/bump_abi/+merge/144270
+[10:58] <MCR1> didrocks: Hi :) Do you know why Unity is recommending the package "hud", there is no such package anywhere ? Is this some kind of joke ?
+[10:58] <didrocks> MCR1: this package will come soon
+[10:59] <didrocks> why would we put joke in the packaging?
+[10:59] <MCR1> ah, ok
+[10:59] <MCR1> I do not know - I was just wondering
+[10:59] <sil2100> It's an easter egg
+[10:59] <sil2100> We're waiting for easter to release it
+[10:59] <sil2100> It hatches then
+[10:59] <sil2100> ;)
+[10:59] <MCR1> It sounds good: Unity recommends using the hud ;)
+[11:00] <rperier> the bug 692444 is still valid and need to be fixed ? I see  "confirmed->Fix committed" and "fix committed -> confirmed"  a lot of times
+[11:00] <ubot5> bug 692444 in nautilus (Ubuntu) "Launcher - clicking trash or device icons multiple times opens multiple instances" [Undecided,In progress] https://launchpad.net/bugs/692444
+[11:00] <sil2100> rperier: let me check, but from what I remember it's still an issue
+[11:00] <MCR1> yes it is
+[11:00] <MCR1> rperier: Still valid
+[11:04] <luv> I am planning to alter my unity to show list of windows when i right click an icon in the launcher - that is i can switch to the window I want based on it's windows title without going through the spread
+[11:04] <luv> saves time and all
+[11:04] <rperier> ok, as the trash is "hardcoded" into launcher/TrashLauncherIcon.cpp and executes "xdg-open trash://" directly,  we could ask bamf to focus the window with the title "trash" (or ask the launcher to focus the window), what do you thing ? There is a module to do that easily in unity ? or I need to use bamf directly ?
+[11:04] <luv> anyone would be interested in the patch or should i not bother and just keep it to myself?
+[11:05] <sil2100> rperier: hm, I think the best person to ask is Trevinho ^
+[11:05] <rperier> Trevinho: ping
+[11:05] <luv> or have a look at BamfLauncherIcon.cpp how it is done there
+[11:05] <sil2100> luv: I would be interested in such a patch - what I would recommend is to send this to the design team for comment
+[11:06] <sil2100> luv: for instance, you could file in a bug that's targetting unity as Wishlist and ayatana-design, attach the branch there and wait for comment from the design
+[11:06] <luv> sil2100: well, i'm going to get it done anyone for myself so i dont really need design team's comments i know what i want ;-)
+[11:06] <rperier> lunch time, bbl
+[11:07] <luv> i will put the bug on my github and see you guys link when im done and then you can take it from there
+[11:07] <sil2100> luv: it's not about modifying your approach, but getting to know if the unity design team would find it useful
+[11:07] <luv> sil2100: right, i will do that when im done
+[11:08] <luv> a bit of sarcasm here ... do i have to be subtle about the idea and make it seem they actually came up with it to make them accept it ;-)
+[11:09] <luv> s/bug/patch/
+[11:11] <luv> anyway, im not comfortable just filing a bug (and wishlist for that matter) because in my experience it always leads nowhere (no hard feelings, that's just how it is ... and I have been told bunch of times to use ML or IRC)
+=== _salem is now known as salem_
+=== mmrazik is now known as mmrazik|lunch
+=== mmrazik|lunch is now known as mmrazik
+[12:14] <rperier> before trying to solve the above bug, I am trying to install unity-trunk from 12.10 in $HOME/staging (so I need bamf 0.4) . bamf from trunk tries to install Bamf-3.gir into /usr/share/gir-1.0 and does not respect the $PREFIX variable
+[12:25] <Trevinho> rperier: I've already done some nautilus work to get that working properly
+[12:26] <rperier> The problem is the trash launcher does not call nautilus directly but xdg-open
+[12:30] <rperier> so as long as xdg-open is used from the trash launcher, the solution should work for all files managers compatibles with xdg-open and should not be specific to nautilus . Except if you plan to call "nautilus trash://" directly
+[12:30] <rperier> imho
+[12:30] <rperier> however, I am still a beginner, I could be wrong
+[12:34] <Trevinho> rperier: well, caliing that is ok to me... Relying on windows name is not a proper solution, I'd prefer to fix nautilus since it's what we use
+[12:36] <rperier> ok, so that's probably better for me to find another bug in this case, no ? (if the fix is in nautilus and not in unity...)
+[12:37] <seb128> Trevinho, what you mean "fix nautilus"?
+=== MacSlow is now known as MacSlow|lunch
+[12:50] <didrocks> seb128: I think he meant "exposing the tabs through a dbus API" or something like that
+[12:50] <didrocks> like location path…
+[12:51] <seb128> didrocks, oh, ok
+[13:03] <rperier> Trevinho: If the problem is mostly on the nautilus side, does unity need to be fixed or not ?
+=== dandrader is now known as dandrader|lunch
+[13:56] <rperier> well, I will find another bug, because apparently the previous one is still under discussion and I am probably not the good person to work on it ;)
+[14:00] <rye> uhm, i can reproduce flickering in dash on my acer aspire one device
+[14:01] <rye> ah, sorry, ubuntu-x, not here - https://bugs.launchpad.net/ubuntu/+source/xserver-xorg-video-intel/+bug/1100970
+[14:01] <ubot5> Launchpad bug 1100970 in xserver-xorg-video-intel (Ubuntu) "transparent dash background flickers on intel graphics" [Undecided,Incomplete]
+=== MacSlow|lunch is now known as MacSlow
+[14:15] <rye> however, it looks like dash blur "overlay" is rendered too low and too to the left here - https://bugs.launchpad.net/ubuntu/+source/unity/+bug/1100970 - added unity task too
+[14:15] <ubot5> Launchpad bug 1100970 in xserver-xorg-video-intel (Ubuntu) "Dash background flickers and blur is misplaced on intel graphics" [Undecided,Confirmed]
+[14:35] <didrocks> sil2100: if you bump abi, you need to have unity deps on the new nux version
+[14:36] <didrocks> otherwise, in the ppa, unity will maybe still build against the previous nux
+[14:36] <didrocks> mterry: nux is always breaking its ABI, we have something similar to compiz to handle that
+[14:36] <didrocks> mterry: basically, this file is stripped down and generate a virtual provides:
+[14:36] <didrocks> see Provides: libnux-abiversion-${nuxabiversion}
+[14:37] <didrocks> and it's using that string in debian/rules to generate the right version
+[14:37] <didrocks> then, when building against nux
+[14:37] <mterry> didrocks, ah, OK thanks
+[14:37] <didrocks> we have a similar thing in debian/rules to see against which nux we built against
+[14:37] <didrocks> and dep against that
+[14:37] <didrocks> not stellar, but no good other way when upstream keeps breaking the ABI
+[14:38] <didrocks> mterry: however, as told to sil2100, to ensure next daily-build is working, we need to ensure unity build-dep until nux is built
+[14:38] <didrocks> mterry: can you ensure we get that dummy merge bumping the version in?
+[14:39] <mterry> didrocks, sure.  sil2100 , have you started working on that?
+[14:45] <sil2100> didrocks: ok!
+[14:47] <sil2100> mterry: I'm working on it right now
+[14:47] <didrocks> sweet
+[14:47] <mterry> sil2100, alright, I'd be happy to do the review when you're done
+[14:56] <sil2100> didrocks: so a dummy empty merge is enough?
+[14:57] <didrocks> sil2100: hum? no, you need to bump the build-dep for the next day ppa build
+[14:58] <sil2100> didrocks: ah, yes yes ;) I wasn't thinking when I was asking that it seems
+[14:58] <didrocks> :)
+[14:58] <didrocks> better to ask before anyway ;)
+[14:59] <didrocks> ping me if you have issues to identify what versionning you should put here
+[14:59] <didrocks> mterry: maybe you already know the rule btw ^
+[15:00] <mterry> didrocks, not off the top off my head.  I imagine SONAME gets bumped and the day will be incremented
+[15:01] <mterry> didrocks, so libnux-4.0-1 with a version of the next daily build?
+[15:04] <didrocks> mterry: no, the binary packages statys the same (as we don't version ABI changes thanks to this provides:)
+[15:04] <didrocks> let's see with which version numbers comes in in his MP and then we can discuss :)
+[15:06] <sil2100> My branch is open to discussion ;p
+[15:07] <mterry> didrocks, oh I misunderstood how the magic happened then.  You're saying the magic is on the consumer (unity) side?
+[15:08] <didrocks> mterry: yeah, we need to tell unity to build after nux
+[15:08] <didrocks> as both are built at the same time, uploaded to the ppa
+[15:08] <didrocks> sil2100: ok, that was a nice try :)
+[15:08] <didrocks> https://code.launchpad.net/~sil2100/unity/unity_bump_nux_deps/+merge/144324
+[15:08] <didrocks> sil2100: but in fact not!
+[15:09] <sil2100> !
+[15:09] <sil2100> :)
+[15:09] <didrocks> theorically it's fine, for the daily release :)
+[15:09] <didrocks> BUT
+[15:09] <didrocks> we need first to pass the jenkins merger
+[15:09] <didrocks> which doesn't have this version
+[15:09] <didrocks> so we'll get a rejection
+[15:09] <sil2100> uh, right
+[15:09] <didrocks> so we need to use the version which corresponds to that change in the staging ppa
+[15:09] <sil2100> Well, I was thinking we could get this merge in tomorrow, but this would mean a one-day lag that's probably not necessary...
+[15:10] <sil2100> Oh, ok
+[15:10] <sil2100> Ah, indeed, since it's using daily + bzr revision
+[15:10] <didrocks> sil2100: so, the version is not that important, bu you can put: 4.0.0daily13.01.18bzr752
+[15:10] <didrocks> even if it's not exact by one commit :)
+[15:11] <didrocks> anyway, distro won't have that one
+[15:11] <didrocks> it will get 4.0.0daily13.01.23 as you invocated
+[15:11] <mterry> didrocks, I know why we need to bump unity, I meant the magic of calculating which version is which ABI is happening on the unity side?  I guess I'm confused by what you said happened automatically when the ABI was bumped
+[15:11] <didrocks> and 4.0.0daily13.01.18 < 4.0.0daily13.01.18bzr752 < 4.0.0daily13.01.23
+[15:11] <didrocks> so we are good
+[15:11] <sil2100> Yes, but I see compiz anyway has something like that, since they're compatible
+[15:11] <didrocks> mterry: oh, that's separate, yeah, let's finish then and I'll reexplain :)
+[15:11] <didrocks> that*
+[15:12] <didrocks> sil2100: yeah, for compiz, it was a day when I just triggered a rebuild
+[15:12] <didrocks> (of unity)
+[15:12] <didrocks> sil2100: mterry: I'm still opened to the discussion on the fact we can avoid that btw
+[15:12] <didrocks> like autobumping automatically everyday the build-dep on what's part of the stack
+[15:12] <mterry> didrocks, but the daily build has 01.22
+[15:13] <mterry> didrocks, not .18
+[15:13] <didrocks> urgh?
+[15:13] <didrocks> mterry: ah, daily ppa you mean
+[15:13] <mterry> didrocks, yeah
+[15:13] <didrocks> mterry: yeah, but this one was never published
+[15:13] <mterry> didrocks, oh...
+[15:13] <didrocks> it failed because of the ABI breakage
+[15:13] <didrocks> mterry: https://jenkins.qa.ubuntu.com/view/cu2d/view/Unity%20Head/
+[15:13] <didrocks> see this beautiful red :)
+[15:14] <mterry> didrocks, OK
+[15:14] <mterry> didrocks, and if it had gotten released, the staging would have based its bzr suffixes on .22 anyway
+[15:15] <didrocks> mterry: yep
+[15:15] <didrocks> mterry: kenvandine: btw, I was thinking that we can have a google hangout on how to monitor those dailies now that they are working
+[15:15] <kenvandine> didrocks, hey yeah we should
+[15:15] <didrocks> I was thinking like in 45 minutes from now, but on Thursday
+[15:15] <didrocks> does this work for you?
+[15:15] <mterry> sure
+[15:16] <kenvandine> wfm
+[15:16] <didrocks> excellent
+[15:16] <didrocks> let me try to schedule this on our calendars
+[15:16] <didrocks> robru and cyphermox ok'ed that time
+[15:17] <didrocks> mterry: kenvandine: I won't be around next week, so you will have to look closely to the releases ;)
+[15:18] <didrocks> sil2100: btw, tell me once you did the change :)
+[15:25] <didrocks> sil2100: approved
+[15:25] <didrocks> mterry: FYI ^
+[15:25] <didrocks> mterry: so on the nux ABI thingy
+[15:25] <didrocks> mterry: this string is used to generate a virtual package
+[15:25] <mterry> cool
+[15:25] <didrocks> libnux-core-<date>
+[15:26] <didrocks> we extract the date from the file in debian/rules from nux
+[15:26] <mterry> yup like libnux-abiversion-20121204
+[15:26] <mterry> ok
+[15:26] <didrocks> and when generating with dh_gencontrol the control file, we inject it
+[15:26] <mterry> but unity doesn't use it?
+[15:26] <didrocks> yep :)
+[15:26] <didrocks> unity uses it
+[15:26] <didrocks> so this string ends up in a header
+[15:26] <didrocks> that libnux-dev installs
+[15:26] <sil2100> didrocks: thank you!
+[15:27] <didrocks> sil2100: yw, thank to you :)
+[15:27] <didrocks> in unity debian/rules we do something similar
+[15:27] <didrocks> NUX_ABIVERSION := $(shell sed -rn 's/^\#define[[:space:]]+NUX_ABIVERSION[[:space:]]+//p' /usr/include/Nux-4.0/Nux/ABI.h )
+[15:27] <mterry> k..
+[15:27] <didrocks> and in debian/control we dep on libnux-core-<date>
+[15:27] <didrocks> that we inject with     dh_gencontrol -- -Vcoreabiversion=$(CORE_ABIVERSION) -Vnuxabiversion=$(NUX_ABIVERSION)
+[15:28] <didrocks> (coreabiversion is the misnamed compiz one)
+[15:28] <MCR1> \o/ seems we got a working Compiz Firepaint GLES port !
+[15:28] <didrocks> mterry: making more sense?
+[15:29] <mterry> didrocks, so all consumers of nux have to do that?
+[15:30] <didrocks> mterry: right, "all" being one… unity
+[15:30] <mterry> didrocks, (and that would normally mean we don't have to manually bump unity's dep version like we just did -- but we had to because we used the new blur API?)
+[15:30] <didrocks> mterry: all compiz consumers have the same thing too (it was the plugins before)
+[15:30] <didrocks> mterry: yeah, theorically we don't need to bump it, but the new blur API forced us to
+[15:31] <didrocks> mterry: I'm still open to a discussion on autobumping the build-dep automatically everyday for what is part of the stack
+[15:31] <didrocks> it's theorically wrong, but TBH, should we really care?
+[15:32] <mterry> didrocks, not sure.  It's not like we make it possible to backport to previous releases anyway (i.e. we don't need the deps to be accurate to help other people doing a backport)
+[15:33] <didrocks> mterry: yeah, the question is in practice, do we really backport only part of the stack?
+[15:33] <mterry> didrocks, but that means that if part of the stack has a problem (like nux did), it will stop other parts of the stack
+[15:33] <didrocks> mterry: most of the time, we need to backport everything within the stack
+[15:35] <didrocks> mterry: I have no strong opinion TBH, if we have this kind of issues too often, I guess this is a possible workaround
+=== dandrader|lunch is now known as dandrader
+=== mmrazik is now known as mmrazik|afk
+=== dandrader is now known as dandrader|afk
+=== dandrader|afk is now known as dandrader
+[20:56] <Trevinho> seb128: any idea why my compiz vsize/hsize parameters are set back to old default values when I change them from ccsm? bschaefer has the smae
+[20:57] <Trevinho> same*
+[21:23] <seb128> Trevinho, no idea no
+=== salem_ is now known as _salem
+=== lborda_ is now known as lborda

@@ -1,0 +1,46 @@
+[00:01] <GeorgeJ> I'm running Ubuntu 12.10. I've installed deluged and deluge-web. The problem is: deluged comes with an init script in /etc/init.d, which, as long as I can tell tells upstart when the service starts, here's the file: http://paste.ubuntu.com/1497703/. The problem is, I wrote an upstart job for deluge-web as such: http://paste.ubuntu.com/1497681/. However, when I do sudo service deluged start, it does not also start deluged-web. 
+[00:02] <GeorgeJ> What could I be doing wrong? sudo service deluge-web start works just fine.
+[00:24] <xnox> don't use start-stop-daemon
+[00:25] <xnox> setuid/setguid commands are available as upstart stanzas, see upstart cookbook
+[00:25] <xnox> i don't know if umask is needed
+[00:29] <xnox> GeorgeJ: increase upstart verbosity (see cookbook) and then fully stop everything, start deluged and inspect what events are emitted. Maybe deluged fails to start? or is already running (aka -web missed the event already)
+[00:30] <GeorgeJ> xnox: I stopped both services(and checked to make sure). And then just started deluged, to no avail.
+[00:30] <GeorgeJ> I'll check how to increase verbosity.
+[00:44] <GeorgeJ> xnox: I've added --verbose, should the log not be /var/log/syslog?
+[00:45] <xnox> dmesg or syslog, can't remember. And it's with initctl call not "--verbose" =/ how did you increase verbosity?
+[00:46] <xnox> http://upstart.ubuntu.com/cookbook/#initctl-log-priority set to debug level
+[00:46] <xnox> $ sudo initctl log-priority debug
+[00:46] <GeorgeJ> I've added --verbose to the linux line in grub.
+[00:49] <xnox> oh... extreme =)
+[00:50] <GeorgeJ> I've stopped and started ufw(which has an upstart job in /etc/init), but got no events in /var/log/kern.log /var/log/syslog and /var/log/dmesg :(
+[00:50] <GeorgeJ> Even even done sudo initctl log-priority debug
+[00:52] <xnox> GeorgeJ: I got them in $ dmesg
+[00:52]  * xnox ponders why they are there and not elsewhere.
+[00:56] <GeorgeJ> xnox: Yes, it seems that `dmesg` indeed show the events. But not for my script, meh :(
+[00:57] <GeorgeJ> Well, not MY script, that script.
+[00:57] <xnox> and you removed init-script and only have upstart jobs at this point?
+[00:58] <GeorgeJ> No, I have the init script. I don't like to remove files that were installed by packages.
+[01:00] <xnox> but then you have clashing names.... 
+[01:00] <xnox> GeorgeJ: and it's config files under /etc/ you are safe to modify/remove them. If you want audit, install etckeeper that does version control the whole /etc.
+[01:02] <GeorgeJ> xnox: Cool!
+[01:03] <GeorgeJ> Well, the installed init script is at /etc/init.d/deluged and it starts deluged just fine.
+[01:03]  * xnox thought you are rewriting it to be an upstart job?! no?!
+[01:03] <GeorgeJ> I want to start another binary called, deluge-web, so I've added http://paste.ubuntu.com/1497681/ at /etc/init/deluge-web/conf
+[01:03] <xnox> ah.. I see.
+[01:03] <GeorgeJ> Oh no, I'm adding one.
+[01:05] <xnox> I have no clue if sysv scripts emit events that upstart jobs can see.
+[01:07] <GeorgeJ> Well, there's no reason I'd assume so either, but the init script(http://paste.ubuntu.com/1497703/) contains start-stop-daemon, is that not the script telling upstart that the daemon started?
+[01:07] <xnox> GeorgeJ: you can cheat and in `deluge-web` pre-start stanza do `service deluge start`.
+[01:08] <xnox> GeorgeJ: no.
+[01:08] <GeorgeJ> Aha! Then that's completely understandable.
+[01:09] <GeorgeJ> Nah, I just start deluge-web independently, it shouldn't really matter in this case. I'll just bug the package maintainer to remove the init scripts and add the proper upstart jobs!
+[01:09] <xnox> initscripts are big pile of crap, there is an upstart-sysv bridge that can manage and run them in a similar fashion to upstart jobs, but I don't know which events get emitted, if any.
+[01:10] <xnox> GeorgeJ: yeap, file a bug on launchpad requesting an upstart job against that package.
+[01:11] <GeorgeJ> xnox: Hmm, is there a template, or an existing such bug request I could use to make it easier? I've never really filed a bug before. Or, should I just describe my problem?
+[01:13] <xnox> GeorgeJ: `ubuntu-bug deluge` follow promts and type "please provide an upstart job" you may want to say that you have other upstart jobs that depend on that one.
+[01:15] <xnox> Good night!
+[01:15] <GeorgeJ> xnox: Thank you very much! Good night!
+[17:13] <Aeyoun> Hi. I have a problem with deb packaging. Every file in debian/* is copied over to the build-area *except* for the upstart file so it fails to be detected by dh_installinit and is not included in the package. Hoping there is some knowledge overlapp here so I can get some help.
+[17:14] <Aeyoun> I have studied other deb packages and cannot see that any of them are doing anything different from what I am doing.
+[17:35] <SpamapS> Aeyoun: the file should be named packagename.upstart or packagename.jobname.upstart
+[17:36] <Aeyoun> SpamapS, I have tried naming it upstart, packagename.upstart, and packagename.jobname.upstart. all fail. (All are valid, though. The dh_installinit util looks for all of them.)

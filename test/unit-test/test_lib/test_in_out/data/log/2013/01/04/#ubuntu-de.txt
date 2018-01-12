@@ -1,0 +1,555 @@
+=== caillean_ is now known as caillean
+[00:15] <nevchen> nabend
+=== DaKu is now known as daku
+=== _Bausparfuchs is now known as Bausparfuchs
+=== apollo13_ is now known as apollo13
+=== Guschtel is now known as DrGuschtel
+=== caillean is now known as caillean_
+=== caillean_ is now known as caillean
+=== Cylly is now known as Loetmichel
+[10:50] <fragender> hallo. ich habe eine frage bzgl. des einbinden von /boot bei einer dualboot verschlüsselung von win7 & ubuntu 12.04
+[10:50] <fragender> im wiki steht unter dem Punkt "Bootmanager einrichten" von live cd starten - gemacht
+[10:51] <fragender> nun /boot partition von ubuntu einbinden
+[10:51] <fragender> wie mache ich das? das wiki konnte mir nicht groß helfen dabei :/
+[10:52] <fragender> und im darauffolgenden satz steht /boot nach /mnt/boot einbinden
+[10:52] <apollo13> naja erstmals: wie und was hast du verschlpsselt
+[10:52] <fragender> muss man /boot erst einbinden oder direkt nach /mnt/boot?
+[10:52] <apollo13> das was am installierten ubuntu /boot ist/war wir auf der live cd nach /mnt/boot gemountet
+[10:53] <fragender> habe die schritte aus dem wiki befolgt. erst win installiert, dann ubuntu und verschlüsselt, danach win verschlüsselt
+[10:53] <apollo13> welches wiki, genauen link…
+[10:53] <apollo13> außerdem verschlüsselt man bevor man ubuntu installiert
+[10:53] <fragender> http://wiki.ubuntuusers.de/Dualboot_verschl%C3%BCsseln
+[10:54] <kubine> Title: Dualboot verschlüsseln › Wiki › ubuntuusers.de (at wiki.ubuntuusers.de)
+[10:55] <apollo13> und das problem ist jetzt was? boote mit der livecd und mounte die boot partition nach /mnt/boot
+[10:55] <apollo13> http://wiki.ubuntuusers.de/mount
+[10:55] <kubine> Title: mount › Wiki › ubuntuusers.de (at wiki.ubuntuusers.de)
+[10:57] <fragender> mount -t /boot /mnt/boot?
+[10:57] <apollo13> nein
+[10:57] <fragender> oder mount -t ext4 /boot /mnt/boot
+[10:57] <apollo13> abgesehen davon dass es nicht gehen würde würde dass das /boot von der livecd nach /mnt/boot mounten
+[10:57] <apollo13> du musst die boot partition vom system angeben, nicht von der livecd
+[10:57] <apollo13> und den typ findet er im normalfall selber raus
+[10:58] <fragender> ok
+[10:58] <fragender> also z.b. so /dev/sda5/boot /mnt/boot ?
+[10:59] <apollo13> nein, du willst dir wirklich mal http://wiki.ubuntuusers.de/mount gründlich durchlesen
+[10:59] <kubine> Title: mount › Wiki › ubuntuusers.de (at wiki.ubuntuusers.de)
+[10:59] <apollo13> und bitte schau zu dass du das zeugs verstehst, sonst machst du mehr kaputt :/
+[11:02] <fragender> deswegen frage ich ja hier nach hilfe weil ich das nicht verstehe
+[11:06] <fragender> soll ich also erst den mountpunkt erstellen und dann den befehl ausführen?
+[11:10] <apollo13> ob der mountpoint vorhanden sein muss oder nicht steht auf in dem von mir verlinkten artikel
+[11:10] <fragender> ja aber weil ich mir unsicher bin frage ich nach
+[11:12] <fragender> ich würde es nun so machen sudo mkdir /mnt/boot und danach mount /dev/sda5/boot /mnt/boot
+[11:15] <Frickelpit> fragender: ist sda5 eine eigene partition für /boot?
+[11:15] <fragender> ja
+[11:15] <Frickelpit> wozu also noch das /boot hinter /dev/sda5? ;-)
+[11:16] <fragender> dachte weil auch der einhängepunkt /boot war
+[11:16] <Frickelpit> fragender: auf /dev/sda5 befindet sich quasi nur der ordner /boot und den willst du nach /mnt/boot haben
+[11:16] <fragender> ja
+[11:16] <fragender> http://media.cdn.ubuntu-de.org/wiki/attachments/14/04/alternate7-boot.png
+[11:16] <fragender> so wie da hatte ich es gemacht
+[11:16] <Frickelpit> ergo musst du nur deinem system sagen, r soll /dev/sda5 nach /mnt/boot einhängen
+[11:16] <Frickelpit> *er
+[11:17] <fragender> und vorher das mit  sudo mkdir /mnt/boot?
+[11:17] <Frickelpit> genau
+[11:17] <Frickelpit> sonst kann er ja die partition nicht einhängen
+[11:18] <fragender> vielen lieben dank :)
+[11:18] <Frickelpit> np
+=== daku is now known as DaKu
+[11:28] <fragender> habe es nun wie folgt eingegebn und folgendes erhalten:
+[11:28] <fragender> sudo mkdir /mnt/boot
+[11:28] <fragender> sudo mount /dev/sda5 /mnt/boot
+[11:28] <fragender> sudo dd if=/dev/sda of=/mnt/boot/truecrypt.mbr count=1 bs=512 
+[11:28] <fragender> 1+0 records in
+[11:28] <fragender> 1+0 records out
+[11:28] <fragender> 512bytes (512 B) copied, 0,00675874 s. 75,8 kB/s
+[11:28] <fragender> sudo gedit /mnt/boot/grub/menu.lst
+[11:28] <fragender> doch in der geöffneten datei gibt es nichts.also sie erscheint vollkommen leer
+[11:31] <Frickelpit> fragender: gewöhn dir an, wenn du schon im Terminal arbeitest dann auch ein Editor fürs Terminal zu nehmen (nano z.b.). grafische programme mit sudo öffnen ist immer so eine sache
+[11:31] <Frickelpit> ausserdem, wenn grub2 genutzt wird, gibt es keine menu.lst mehr
+[11:32] <fragender> habe gedit genutzt weil es das erste beschriebene war was mir http://wiki.ubuntuusers.de/Editor vorgeschlagen hat
+[11:32] <kubine> Title: Editor › Wiki › ubuntuusers.de (at wiki.ubuntuusers.de)
+[11:33] <Frickelpit> da steht aber kein sudo gedit ;-)
+[11:33] <fragender> ja. aber im wiki steht Hierzu öffnet man in einem Editor[11] mit Root-Rechten die Konfigurationsdatei von Grub, welche unter /mnt/boot/grub/menu.lst liegen sollte.
+[11:33] <fragender> deswegen habe ich es so gemacht
+[11:36] <fragender> wenn es die menu.lst die ich bearbeiten soll nicht soll ihc die zwischenschritte aus dem http://wiki.ubuntuusers.de/Dualboot_verschl%C3%BCsseln#Bootmanager-einrichten überspringen und nur den letzten fehel also sudo grub-install --root-directory=/mnt /dev/sda  ausführen (angepast) 
+[11:36] <kubine> Title: Dualboot verschlüsseln › Wiki › ubuntuusers.de (at wiki.ubuntuusers.de)
+[11:41] <Frickelpit> fragender: für grub 2 musst du ein eigenes script anlegen, wenn du einen eintrag hizufügen möchtest. http://wiki.ubuntuusers.de/GRUB_2/Konfiguration#Skripte-in-etc-grub-d
+[11:41] <kubine> Title: Konfiguration › GRUB 2 › Wiki › ubuntuusers.de (at wiki.ubuntuusers.de)
+[11:50] <Frickelpit> fragender: bitte keine ungefragten queries. support gehört hier hin
+[11:51] <fragender> ok
+[11:51] <fragender> <fragender> ich habe es gerade noch einmal kurz getestet. also die installation habe ich wie http://wiki.ubuntuusers.de/Dualboot_verschlüsseln vorgegeben nun soweit gemacht und wenn ich meinen pc starte kommt als 1. der truecryptloader, wenn ich dieses abbreche aber nicht die auswahl für ubuntu
+[11:51] <fragender> <fragender> ziel ist es aber entweder direkt von anfang zu wählen was ich starten möchte oder truecrypt mit ESC abwählen und ubuntu starten
+[11:51] <fragender> <fragender> und mit hilfe der grub2 konfiguration kann ich das schaffen?
+[11:51] <fragender> <fragender> in dem artikel steht auch, dass der grub bootloader wiedeer in den mbr geschrieben werden muss
+[11:52] <koegs> fragender: ich mach das etwas anders
+[11:52] <koegs> ich lasse den grub in die root-partition von Ubuntu schreiben anstatt in den mbr
+[11:53] <koegs> wenn du dann Truecrypt mit Esc abbrichst, musst du nur noch die richtige Partition wählen und Grub wird gestartet
+[11:53] <koegs> bzw. /boot-Partition anstatt /
+[11:54] <fragender> und wie kann ich das ausgehend von meiner jetztigen situation (win7 und ubuntu installiert und verschlüsselt und gerade mit livecd drauf) machen
+[11:55] <koegs> hm, ich glaub am stressfreiesten wäre ne schnelle Neuinstallation von Ubuntu, auch wenn es andere Methoden per Live-CD gäbe
+[11:56] <koegs> ansonsten: http://wiki.ubuntuusers.de/GRUB_2/Reparatur#chroot-Methode
+[11:56] <kubine> Title: Reparatur › GRUB 2 › Wiki › ubuntuusers.de (at wiki.ubuntuusers.de)
+[11:58] <fragender> und wie müsste ich es mit einer neuinstallation machen?
+[12:01] <koegs> fragender: neu-installieren mit vollverschlüsselung und dann grub eben in /dev/sda5 oder so schreiben lassen, also da wo /boot liegt, ansonsten alles gleich... windows und truecrypt lässt du unangetastet
+[12:03] <fragender> wie kann ich den grub direkt in eine partition erstellen?
+[12:04] <koegs> fragender: eben nicht nach /dev/sda installieren, sondern die richtige Partition angeben...
+[12:06] <fragender> aber wie. habe bei der installation nie eine auswahl dafür gefunden
+[12:07] <fragender> würde es wie von dir hier versuchen
+[12:07] <fragender> http://wiki.ubuntuusers.de/GRUB_2/Reparatur#chroot-Methode
+[12:07] <koegs> nach welcher anleitung gehst du vor?
+[12:07] <kubine> Title: Reparatur › GRUB 2 › Wiki › ubuntuusers.de (at wiki.ubuntuusers.de)
+[12:08] <jokrebel> NVidia Frage: Warum kann ich auf nem DELL Precision M70 (Quadro FX go 1400) eine Auflösung von 1680x1050 fahren, während am "großen Bruder" DELL Precision M90 (Quadro FX 2500M) nur maximal  1440x900 einstellbar ist?
+[12:08] <fragender> @kubine und das was man unter Standard Desktop-System macht reicht?
+[12:09] <koegs> fragender: kubine ist ein bot und liest nur die seitentitel vor
+[12:09] <fragender> haha ja :D meinte dich^^
+[12:09] <fragender> sorry
+[12:09] <fragender> bin in der zeile verrutscht
+[12:09] <spY|da> jokrebel, definiere das ein wenig genauer
+[12:10] <koegs> jokrebel: laut notebookcheck hat der M90 nur 1440x900
+[12:10] <spY|da> vllt mein er ja ein externes display 
+[12:11] <koegs> fragender: wie hast du vorher grub installiert?
+[12:12] <jokrebel> spY|da: Naja - das M90 ist größer und neuer als das M70. Und unter WindowsXP geht von der Auflösung her auch mehr IIRC. Find es halt irritierend, dass das 17"er nicht nur gleiche sondern sogar höhere Auflösung kann.
+[12:12] <jokrebel> spY|da: Nein, nicht extern
+[12:13] <fragender> koegs: so wie während der installation von ubuntu 12.04 alternate abverlangt mit der bestätigung das in dem mbr zu installieren
+[12:13] <koegs> jokrebel: informier dich bitte über die Specs, pberall steht fürs M90: 1440x900
+[12:13] <koegs> fragender: da sagst du eben nein
+[12:13] <spY|da> jokrebel, dann bist du wie koegs sagte vom display selbst limitiert 
+[12:13] <fragender> koegs: und wenn man nein sagt dann in die boot partition?
+[12:14] <koegs> genau
+[12:14] <fragender> ok da installiere ich das noch einmal neu und würde dich bei fragen kontaktieren
+[12:26] <jokrebel> Hm, ja. Muss wohl am verbauten Display liegen, weil extern sollte wesentlich mehr möglich sein.
+[12:27] <fragender> koegs: muss ich wenn grub mit in boot installiert wird die größe erweitern, also mehr als 250mb?
+[12:28] <koegs> nope
+[12:28] <koegs> sollte reichen
+[12:28] <fragender> und grub in /boot bzw. bei mir sda5 schreiben?
+[12:29] <koegs> genau
+=== beaver74_ is now known as beaver74
+=== yofel_ is now known as yofel
+=== DaKu is now known as daku
+[13:23] <fragender> koegs: hat geklappt :) vielen danke
+[13:23] <koegs> fragender: gerne doch
+[13:23] <fragender> einen angenehmen tag euch noch
+[13:23] <fragender> und vielen dank allen die mir geholfen haben
+[13:23] <fragender> sehr nett hier
+[13:26] <orbit00> langsam dreh ich durch....mein Wifi lässt sich einfach nicht einschalten nach neuinstallation
+[13:26] <apollo13> was sagt denn sudo rfkill list
+[13:27] <orbit00> kein wlan0 gefunden...
+[13:27] <apollo13> muss ja nicht wlan0 heißen
+[13:28] <apollo13> hier heißts zb phy0
+[13:28] <orbit00> lässt sich normalerweise über hotkey fn+F2 starten...ist aber jedesmal aus wenn ich die Linuxdistri hochfahre
+[13:29] <apollo13> wie gesagt: was sagt sudo rfkill list, was sagt das BIOS und was fürn wlan chip ist das
+[13:29] <apollo13> abgesehen davon, welche Linuxdistri exakt?
+[13:29] <orbit00> ist ein broadcom 
+[13:29] <orbit00> linux mint
+[13:29] <apollo13> orbit00: damit bist du hier leider falsch
+[13:30] <koegs> !mint > orbit00 
+[13:30] <kubine> orbit00: Support für Linux Mint gibt es in #linuxmint-help auf irc.spotchat.org , mehr Infos dazu: http://community.linuxmint.com/tutorial/view/12
+[13:30] <orbit00> hm...alles auf englisch dabei ist mint doch auch debian ...oder
+[13:31] <apollo13> wenn mint debian ist was machst du dann in einem ubuntu channel? :þ
+[13:31] <apollo13> wobei auch in debian werden sie dir sagen dass du sie mit mint in ruhe lassen sollst
+[13:31] <orbit00> aha..okay
+[13:31] <EUdSSR> orbit00: broadcom chip is pain in the ass, kauf dir was anständiges
+[13:32] <apollo13> EUdSSR: das ist bei laptops immer so leicht…
+[13:32] <orbit00> na dann...danke für eure Hilfe
+[13:32] <EUdSSR> usb wlan stick?
+[13:32] <apollo13> np, viel grlück
+[13:32] <apollo13> EUdSSR: sehr sinnvoll
+[13:37] <laze1989> orbit00: Ist eventuell bcrmsmac und b43 gleichzeitig geladen?
+[13:37] <laze1989> apollo13: Sry, ich meinte dich.
+[13:38] <apollo13> bei mir bist falsch ;)
+[13:38] <laze1989> Ach, war doch orbit00. Ich glaube ich brauche eine Brille... ^^
+[13:47] <BlackMage> apollo13: ich dachte mint basiert auf Ubuntu?
+[13:48] <dAnjou> BlackMage: weiß aber keine sau, was die da gefrickelt haben
+[13:49] <dAnjou> deswegen werden hier nur offizielle derivate unterstützt
+[13:50] <apollo13> BlackMage: inzwischen gibts schon ne abart die auf debian basiert iirc, aber keine ahnung mich interessiert mint nicht wirklich
+[13:51] <BlackMage> dAnjou: kann man das nicht im Source nachgucken?
+[13:51] <dAnjou> joo, die linux mint leute sollen das mal machen
+[13:51] <dAnjou> wir hier nich
+[13:51] <dAnjou> is aber jetz auch OT
+[14:36] <abc> Ich habe eine WinTV Nova HD S2 und bekomme sie nicht zum laufen. (Ubuntu 12.10) linux-firmware-nonfree habe ich schon installiert. Was muss ich noch installieren, damit ich die Karte zum laufen bekomme?
+[14:38] <redknight> azrael_: KOnnte dir mittlerweile geholfen werden?
+[14:43] <jokrebel> abc: Ist das über USB? Dann bitte mal die Ausgabe von lsusb nopasten
+[14:43] <jokrebel> !pasten > abc
+[14:43] <kubine> abc: Nicht selbst geschriebener Text wird im IRC sehr unleserlich und unhandlich. Deshalb sollten mehr als 3 Zeilen immer in einen sogenannten Nopaste-Service wie z.B. http://paste.ubuntuusers.de/ abgelegt werden. Nach dem Speichern kannst du dann die URL der Seite kopieren und sie statt des Textes hier im Channel posten.
+[14:44] <abc> die karte ist über pci
+[14:46] <dadrc> dann eben lspci
+[14:47] <abc> ausgabe von lspci: http://paste.ubuntuusers.de/412517/
+[14:47] <kubine> Title: lspci › Ablage › ubuntuusers.de (at paste.ubuntuusers.de)
+[14:51] <dadrc> Also, angeblich geht die. Wie weit kommst du denn?
+[14:52] <niklas__> Hallo ich benötige hilfe bei der ubuntu version 12.04
+[14:52] <dadrc> niklas__, einfach fragen
+[14:52] <abc> @dadrc: Wenn ich mit Kaffeine die tv-karte einrichten will, wird sie nicht angezeigt.
+[14:53] <niklas__> bei mir kann ich die Helligkeit nicht verstellen mit Fn und der passenden Taste zeigt er an das er was verändert aber die Helligkeit bleibt gleich
+[14:55] <dadrc> abc, pack mal bitte ein `lsmod` in einen Pastebin
+[14:56] <abc> mein lsmod: http://paste.ubuntuusers.de/412522/
+[14:56] <kubine> Title: lsmod › Ablage › ubuntuusers.de (at paste.ubuntuusers.de)
+[14:57] <dadrc> abc, mach mal ein `sudo modprobe cx88xx`, das sollte den Treiber für die Karte laden
+[14:57] <abc> ok. das mach ich mal...
+[14:58] <abc> da kommt folgender fehler: 'FATAL: Module cx88xx not found.'
+[14:58] <dadrc> niklas__, mehr Infos. Was für ein Laptop, ging das schon mal, ...
+[14:59] <dadrc> abc, was genau ist das für ein Ubuntu und welche Kernelversion nutzt du?
+[14:59] <abc> der computer ist neu. ich hatte schonmal eine andere wintv karte probiert aber die ging auch nicht (und wurde auch als nicht unterstützt ausgewiesen).
+[15:00] <dadrc> `uname -a` gibt die Kernelversiona us
+[15:00] <niklas__> ja natürlich Ich hab einen Medion Akoya E6226 mit nem Intel CORE i3 Prozessor
+[15:00] <abc> Linux linux-marcel 3.5.0-21-generic #32-Ubuntu SMP Tue Dec 11 18:51:59 UTC 2012 x86_64 x86_64 x86_64 GNU/Linux
+[15:01] <dadrc> abc, und in /lib/modules/3.5.0-21-generic/kernel/drivers/media/video/cx88/ gibt es keine cs88xx.ko-Datei?
+[15:01] <dadrc> *cx88xx.ko
+[15:02] <abc> wenn ich 'ls /lib/modules/3.5.0-21-generic/kernel/drivers/media/video/cx88/' eingebe, kommt keine ausgabe
+[15:03] <dadrc> erklärt zumindest, wieso die karte nicht geht: das entsprechende kernelmodul fehlt
+[15:03] <abc> und wo bekomme ich das her?
+[15:04] <dadrc> Das ist die Frage, eigentlich sollte es automatisch installiert werden
+[15:04] <abc> ich habe mein ubuntu über eine dvd aus der pcwelt linux installiert. Kann es daran liegen?
+[15:04] <apollo13> apt-file search cx88xx.ko ist dein freund ;)
+[15:04] <dadrc> Jo
+[15:04] <abc> ok
+[15:05] <dadrc> linux-image-extra-3.5.0-21-generic, würd ich behaupten
+[15:05] <abc> kann ne weile dauern, mein internet ist gerade ziemlich langsam
+[15:06] <dadrc> Das Paket da installieren, dann nochmal versuchen
+[15:07] <dadrc> niklas__, sagt mir leider nichts. Du könntest mal versuchen, ob es mit dem Programm "xbacklight" funktioniert.
+[15:07] <abc> das 'apt-file update' soll ca. 45 minuten dauern...
+[15:08] <dadrc> abc, kannste erstmal abbrechen
+[15:08] <dadrc> stattdessen das paket da installieren
+[15:08] <apollo13> dadrc: linux-image-extra-3.5.0-21-generic ist dann wohl kaum schneller installiert :þ
+[15:08] <abc> abbgebrochen
+[15:08] <niklas__> +dadrc, werd ich probieren 
+[15:08] <dadrc> apollo13, nö, aber dafür ist es zielführend :)
+[15:08] <larstk> hi
+[15:09] <abc> welches paket installieren?
+[15:09] <dadrc> abc: linux-image-extra-3.5.0-21-generic
+[15:09] <abc> über apt-get?
+[15:09] <dadrc> Wie auch immer du willst.
+[15:09] <apollo13> http://packages.ubuntu.com/search?suite=quantal&arch=any&mode=exactfilename&searchon=contents&keywords=cx88xx.ko stimmt sogar
+[15:09] <dadrc> Also, apt-get ist 'ne gute Idee.
+[15:09] <kubine> Title: Ubuntu -- Package Contents Search Results -- cx88xx.ko (at packages.ubuntu.com)
+[15:09] <dadrc> apollo13, ;P
+[15:10] <abc> apt-get macht die ausgabe, dass es schon die neuste Version ist
+[15:10] <apollo13> debsums installieren und schaun wie viel errors das schmeißt
+[15:10] <apollo13> hast mal während ner installtion stromkabel gezogen?
+[15:11] <abc> ne
+[15:11] <apollo13> naja auf jeden fall kannst mit --reinstall schaun obs dadurch behoben wird
+[15:11] <dadrc> ↑
+[15:11] <abc> werde ich machen
+[15:12] <apollo13> und dann würde ich aber mit debsums wirklich schaun was dem system noch so fehlt^^
+[15:12] <dadrc> ist auf jeden fall keine schlechte idee
+[15:12] <abc> linux-image-extra-3.5.0-21-generic wird garnicht heruntergeladen... er installiert es aus dem cache. ist das schlimm?
+[15:12] <apollo13> wenn der download kaputt war ja
+[15:12] <dadrc> wenn die dateien danach da sind, nicht.
+[15:12] <dadrc> sonst... ja.
+[15:13] <abc> ich hatte es ja nie heruntergeladen
+[15:13] <dadrc> So langsam befürchte ich, dass die PC-Welt-Hansel da Mist gemacht haben
+[15:13] <abc> debsums läuft...
+[15:13] <larst> tach! :)
+[15:14] <dadrc> larst, hallo. wenn du eine frage hast, einfach stellen.
+[15:14] <larst> jo
+[15:14] <dadrc> abc, kannst währenddessen schon mal gucken, ob es die datei jetzt gibt.
+[15:14] <larst> also es ist schwieirg für mich zwischen ubuntu 12.04 und 12.10 zu entscheiden
+[15:14] <abc> mach ich...
+[15:14] <larst> ich habe ivy bridge und i7 3770 mit intel hd 4000
+[15:15] <dadrc> wenn nicht: `sudo apt-get clean && sudo apt-get install linux-image-extra-3.5.0-21-generic`
+[15:15] <apollo13> dadrc: das tut ohne --reinstall erstmal gar nix
+[15:15] <dadrc> äh, richtig. mit --reinstall
+[15:16] <abc> die Datei cs88xx.ko ist jetzt vorhanden 
+[15:16] <dadrc> larst, wenn du neu in Sachen Linux bist, würd ich eher zu 12.04 raten. Das ist schön stabil und macht kaum Zicken.
+[15:16] <dadrc> abc, na dann, probier mal den modprobe-Befehl von vorhin und guck, ob die Karte dann geht
+[15:17] <larst> dadrc: okay danke
+[15:17] <abc> ... liefert keine ausgabe. Ist das richtig?
+[15:17] <larst> dadrc: einzige frage ist noch ob ich xfce oder unity nehmen sollte
+[15:17] <apollo13> larst: das musst __du__ wissen :)
+[15:17] <dadrc> abc, dann sollte das Modul jetzt in lsmod auftauchen
+[15:18] <larst> apollo13: was benutztn du? :)
+[15:18] <apollo13> larst: weder noch :þ
+[15:18] <abc> das modul tacht auf.
+[15:18] <larst> apollo13: ich würde gerne g nome 3 nutzen, aber das macht ja fehler mit ubuntu
+[15:18] <dadrc> larst, XFCE ist eher der klassische Windowslook, Unity ist ein moderneres Konzept, einige mögen es, viele nicht.
+[15:18] <apollo13> larst: ach?
+[15:19] <larst> apollo13: leider
+[15:19] <dadrc> abc, schon mal gut. Was sagt Kaffeine?
+[15:19] <larst> apollo13: oder siehst du es anders
+[15:19] <apollo13> ich habe leider kein ubuntu um das beurteilen zu können
+[15:19] <larst> ok
+[15:19] <abc> muss ich ubuntu erst neustarten?
+[15:19] <larst> apollo13: ja einige themes zicken rum
+[15:19] <larst> und einige programme haben ein "onlyShowIn=Unity"
+[15:19] <dadrc> abc, nein
+[15:19] <larst> in deren program.desktop files
+[15:20] <dadrc> Fatal, das kann man ja auch garnicht ändern :)
+[15:20] <abc> ok dann probier ichs mal
+[15:20] <apollo13> dadrc: das theme? oh doch
+[15:20] <larst> apollo13: klar kabnn man  ändern
+[15:20] <dadrc> apollo13, Ironiedetektor aktivieren, bitte :>
+[15:20] <larst> apollo13: ich wollte zukitwo einsetzen
+[15:20] <abc> in kaffeine kann ich die karte immer noch nicht nutzen...
+[15:20] <larst> apollo13: aber das ist einzig und alleine unter ubuntu fehlerhaft, bei debian läufts
+[15:21] <dadrc> abc, dann bräucht ich jetzt mal die Ausgabe von `dmesg`
+[15:23] <abc> dmesg: http://paste.ubuntuusers.de/412527/
+[15:23] <kubine> Title: dmesg › Ablage › ubuntuusers.de (at paste.ubuntuusers.de)
+[15:26] <dadrc> abc, wofür benutzt du die karte gerade? dvb-t?
+[15:26] <abc> DVB-S
+[15:27]  * apollo13 würde einfach mal rebooten nicht dass das der falsche treiber war^^
+[15:27] <abc> ok. melde mich dann gleich wieder..
+[15:28] <larst> apollo13: nutzt du debian?
+[15:28] <apollo13> ja
+[15:28] <larst> wheezy?
+[15:28] <apollo13> experimental
+[15:28] <apollo13> aber das maschiert richtung OT
+[15:28] <koegs> larst: für offtopic-gespräche bitte in den query oder #ubuntu-de-offtopic
+[15:28] <larst> ok
+[15:28] <apollo13> koegs: nix query, lass mich in ruhe :þ
+=== germanstudent^af is now known as germanstudent
+[15:30] <abc> bin wieder da
+[15:30] <abc> ich habe mal kaffeine aufgemacht und siehe da: ES GEHT
+[15:30] <dadrc> Na dann
+[15:31] <apollo13> ja dann hatte dadrc entweder den falschen treiber gefunden oder der tut beim booten noch was anderes
+[15:31] <abc> vielen dank!
+[15:31] <apollo13> kannst ja mal mit lsmod schaun was jetzt geladen ist ;)
+[15:31] <dadrc> zumindest war er in linux-extras :)
+=== Guschtel is now known as DrGuschtel
+[15:32] <abc> in lsmod steht, dass er geladen wird. also ist jetzt alles gut.
+[15:35] <apricot> ich will "goober" installieren. Dazu Eintrag in sources.list: deb http://deb.goober.com/pkg release_name - Frage. release_name, ich habe Ubuntu 12.04
+[15:36] <dadrc> apricot, guck bei denen nach, was die so anbieten
+[15:36] <dadrc> Wobei das schwer werden könnte, http://deb.goober.com/pkg gibt es zumindest nicht
+=== ThreeM_ is now known as ThreeM
+[16:02] <rhagu> hallo, ich möchte, dass mein server jeden sonntag nacht einen befehl ausführt, geht das mit folgendem Befehl: "sudo crontab -e" und dann: "23 59 * * 0 zpool scrub datenraid"  Geht das? 
+[16:04] <dadrc> 59 23, sonst ja
+[16:06] <rhagu> +dadrc danke
+=== Tero21_ is now known as Tero21
+[16:08] <rhagu> wenn ich sudo crontab -e mache, dann wird der befehl auch von root ausgeführt, oder?
+[16:08] <k1l> ja
+[16:08] <rhagu> top, vielen dank!
+[16:10] <rhagu> noch eine frage: Ich lasse gerade diff laufen um zwei Ordner auf Unterschiede zu überprüfen und es dauert gerade ewig, gibt es da eine Möglichkeit den Fortschritt anzeigen zu lassen? evtl wie bei dd mit kill -USR1 ID ?
+[16:12] <k1l> diff? ich würde da eher fdupes oder fslint nehmen (eines war mit gui, das andere ohne)
+=== Tero21_ is now known as Tero21
+[16:13] <dAnjou> naja, diff und fdupes/fslint erfüllen unterschiedliche aufgaben
+[16:13] <rhagu> +k1l naja das war die einzige Anleitung die ich auf die Schnelle im inet gefunden habe und hat auch rel. gut funktioniert. Da es jetzt schon einige Zeit läuft (mehrere h) würde ich es ungerne abbrechen um ein anderes Programm auszuprobieren
+[16:14] <dAnjou> rhagu: jenachdem, was du machst, kannst du auch die ls -R diffen
+[16:14] <dAnjou> das sollte schneller gehen
+[16:14] <dAnjou> ich kann meld nur empfehlen, wenn es grafisch sein darf
+[16:15] <dAnjou> und diffs will man eigentlich nich im terminal analysieren
+[16:16] <rhagu> naja ich hab hier gerade die live iso am laufen und wichtige daten schon per rsync rüberkopiert aber um nochmal auf nummer sicher zu gehen will ich schauen ob beide ordner (+inhalt) identisch sind
+[16:17] <dAnjou> da kannst du rsync eigentlich schon vertrauen
+[16:17] <rhagu> sudo diff --brief -r /media/1TB/     /media/6253644F704F0626/alter\ Server\ Rettung/ dauert jetzt halt schon ewig
+[16:21] <swed1> Hallo, ich habe Ubuntu12.04 und dort auch Wine installiert. Dem Wine möchte ich ein paar dlls die benötigt werden hinzufügen. In das system32 Verzeichnis wurden diese schon kopiert. Laut wiki müssen diese nun in der Wine Konfiguration im Tab Bibliotheken aktiviert werden. Aber wie geht das? Sollen die in der Dropdown Liste schon vorhanden sein, oder muss ich da was neu anlegen? Wenn neu anlegen, was soll ich da reinschreiben?
+[16:30] <jokrebel> swed1: http://wiki.ubuntuusers.de/Wine#Eine-dll-fehlt
+[16:30] <kubine> Title: Wine › Wiki › ubuntuusers.de (at wiki.ubuntuusers.de)
+[16:34] <swed1> ja ist mir bekannt, mir gehts um den teil " ... trägt im Tabreiter "Bibliotheken" die DLL dann als "native" ein."
+[16:34] <swed1> Kann ja sein das ich grad auf dem Schlauch steh, aber wie mach ich das?
+[16:35] <swed1> Was muss ich da angeben? Den Dateinamen?
+[16:38] <jokrebel> swed1: Da muss man die dll die man ersetzen will wohl auswählen und dann kann man sie gegen was eigenes austauschen (so wie ich das sehe)
+[16:39] <jokrebel> swed1: Und da bei "Bearbeiten" kann man dann auch u.A. native auswählen.
+[16:39] <ben1u> kann mir jemand helfen ein Logitech USB Headset unter Lubuntu 12.04 zum laufen zu bekommen?
+[16:39] <swed1> Ja, aber die dll die ich in das system32 Verzeichnis kopiert habe, taucht in der Liste garnicht auf
+[16:39] <ben1u> also ist nicht für mich, sondern ne Chatfreundin.
+[16:40] <swed1> also falls sie auftauchen sollte
+[16:40] <jokrebel> swed1: Und laut welchem Wiki arbeitest Du?
+[16:40] <ben1u> Bus 005 Device 002: ID 046d:c52e Logitech, Inc.
+[16:40] <swed1> jokrebel: dein link von oben
+[16:40] <ben1u> sie will es unter Skype nutzen.
+[16:42] <jokrebel> swed1: http://www.meinubuntu.de/2009/06/12/dll-dateien-mit-wine-installieren/ vielleicht hilft dies auf die Sprünge.
+[16:42] <kubine> Title: DLL-Dateien mit Wine installieren - Ubuntu hilfe (at www.meinubuntu.de)
+[16:43] <m3t4lukas> hey Leute, wie kann man auf ubuntu-server das Tastaturlayout ändern?
+[16:48] <andrej235> Hi
+[16:49] <laze1989> ben1u: Bei meinem G-irgendwas Headset musste ich es ins USB einstecken und neu starten, damit der Sound auch dadurch kam. Ansonsten waren immer die Speaker aktiv.
+[16:49] <k1l> m3t4lukas: http://wiki.ubuntuusers.de/Spracheinstellungen#Tastatur
+[16:49] <kubine> Title: Spracheinstellungen › Wiki › ubuntuusers.de (at wiki.ubuntuusers.de)
+[16:49] <k1l> wenn du nicht die locales meinst
+[16:50] <andrej235> Ich habe da eine Seltsamkeit bzgl. release upgrade: http://pastebin.com/bN7ejGz6 Also, sollte ich was updaten ode rkann ich das so lassen (™).
+[16:50] <kubine> Title: Welcome to Ubuntu 12.04.1 LTS (GNU/Linux 3.2.0-35-generic x86_64) * Document - Pastebin.com (at pastebin.com)
+[16:51] <k1l> andrej235: ist das do-release-upgrade mit root rechten (sudo) passiert?
+[16:51] <andrej235> k1l: Sowohl mit sudo als auch ohne kommt die Meldung.
+[16:51] <k1l> andrej235: ansonsten kann es sein, dass dein release-prompt auf LTS steht, und das ding in der MOTD aber auch normale upgrades (12.10) anmerkt
+[16:53] <andrej235> k1l: Okay.
+[16:56] <xubuntu347> hi
+=== gum is now known as Guest18294
+[17:00] <ben1u> Wo sind eigentlich die Audio-Einstellungen unter Lubuntu 12.04?
+[17:01] <ben1u> Ich finde sie nicht.
+[17:01] <xubuntu347> sind die nicht nicht im ereignis teil
+=== Doofnuf is now known as Funfood
+[17:11] <ben1u> xubuntu347: Ereignisteil?
+[17:16] <m3t4lukas> k1l: da vird ubuntu-server nicht beschrieben...
+[17:26] <m3t4lukas> bei setxkbmap 
+[17:27] <m3t4lukas> bei "setxkbmap de" kommt die meldung 'Cannot open display "default display"'
+[17:29] <bekks> Läuft überhaupt ein X Server?
+[17:35] <m3t4lukas> nein
+[17:35] <m3t4lukas> warum auch...
+[17:35] <m3t4lukas> tist ein server, aber wie kann ich dann das tastaturlayout verändern?
+[17:35] <bekks> Dann ist die Meldungvöllig logisch. Wo kein X Server, da kann auch kein X-basiertes Programm funktionieren.
+[17:37] <apollo13> sudo dpkg-reconfigure keyboars<tab><tab> bzw dpkg-reconfigure console-setup für globale defaults iirc
+[17:37] <m3t4lukas> bekks, dass die logisch ist, hab ich auch verstanden, und dass es nicht funktionieren würde wusste ich auch schon vorher, aber dann kann niemand sagen ich hätte es nicht versucht
+[17:39] <apollo13> rofl
+[17:40] <apollo13> oh vlt ist es auch console-data und nicht console-setup, hab hier grad kein ubuntu
+[17:40] <apollo13> aber eine variante von den dreien geht definitiv, vor allem wenn das ein buggy 12.04 ist :)
+[17:43] <apollo13> m3t4lukas: hast du deine frage eigentlich einmal in google eingegeben? meine antworten sind nämlich so ziemlich das erste was man dort findet ;)
+[17:44] <apollo13> und in dem was dir k1l nettweise verlinkt hat steht auch meine antwort drin, man sollte vlt nur von oben bis unten lesen und nicht sagen dass serverconsoles dort nicht behandelt werden
+[17:44] <m3t4lukas> hab ich schon gemacht, aber selbst nach einem restart steht es noch auf englisch
+[17:44] <m3t4lukas> hab grad nochmal neu installiert...
+[17:45] <apollo13> was __genau__ hast du gemacht und wie
+[17:47] <apollo13> vor allem: was sagen grep CODESET /etc/default/console-setup  und cat /etc/default/keyboard und wie bist du mit dem server verbunden
+[17:50] <m3t4lukas> verbunden bin ich über vnc
+[17:50] <apollo13> okay dann wundert mich nix
+[17:50] <m3t4lukas> was meinst du damit?
+[17:50] <m3t4lukas> kann ich über vnc ssh aktivieren?
+[17:51] <apollo13> ja
+[17:51] <m3t4lukas> *hechel*
+[17:51] <apollo13> aber ich frag mich gerade ob du mit einem server spielen solltest wenn du nicht weißt wie man ssh aktiviert?
+[17:51] <m3t4lukas> irgendwann muss man es lernen
+[17:53] <apollo13> m3t4lukas: ja aber bitte mit einem server zu hause 
+[17:53] <apollo13> oder in einer VirtualBox maschine oder irgendwas
+[17:53] <m3t4lukas> jap
+[17:54] <m3t4lukas> habs eh schon rausgefunden :)
+[17:54] <m3t4lukas> danke :)
+[17:54] <m3t4lukas> bin drauf
+[18:04] <num7> hi, sometimes my linux mint 14 break down like someone plug off the power cable what could be the reason for this?
+[18:04] <num7> sorry wrong channel
+[19:03] <leszek> hi
+=== ArsiRC|znc is now known as ArsiRC
+[19:11] <jokrebel> wie bring ich denn meiner AQemu KVM bei, dass ich eine direkte LAN-IP des Routers bekomme? (Bei Virtualbox hieß das glaub ich "Bridgeing" oder so)
+[21:02] <style__> hi - gibts ne möglichkeit per ubuntu xbmc fernzusteuern mit der netbook tastatur?
+[21:03] <dadrc> xbmc hat ein webinterface, wenn ich mich recht erinnere
+[21:03] <dadrc> tada.
+[21:17] <style__> ich hätte lieber ne tastaturfernsteuerung
+[21:18] <ppq> dann kauf dir eine kabellose mediacenter-minitastatur
+[21:18] <ppq> da gibts von microsoft eine nette (ja, das meine ich jetzt ernst)
+=== germanstudent is now known as germanstudent^af
+[21:20] <dadrc> germanstudent^af, bitte das afk-Skript aus. Danke.
+[21:20] <bekks> ppq: Ja, aber deren BElegung ist totaler Mist.
+[21:26] <abc> bei mir werden in kaffeine keine privaten TV Sender (nicht in HD) gefunden. Was muss da eingestellt werden?
+[21:26] <bekks> Verwendest du DVBS/C/T?
+[21:26] <abc> DVB-S
+[21:35] <abc> kennt sich keiner mit kaffeine aus?
+[21:36] <bekks> Doch, aber ich habe kein DVBS :)
+[21:36] <abc> oh. Macht das innerhalb von Kaffeine so große unterschiede?
+[21:37] <bekks> Das liegt eher an den völlig unterschiedlichen Techniken.
+[21:37] <abc> ist der unterschied so groß?
+[21:38] <abc> hast du DVBT oderDVBC
+[21:39] <bekks> Der Unterschied ist eine völlig andere Technik, und ich habe DVBT.
+[21:40] <abc> gibt es einen anderen channel, wo ich fragen kann?
+[22:04] <Incarus> Hat ein Channel-mod grad kurz Zeit?
+[22:07] <Fuchs> mh? 
+[22:07] <Fuchs> Incarus: wo brennt es? 
+[22:07] <Incarus> via Query
+[22:08] <Fuchs> meinetwegen
+[22:14] <ghaz``> danke Fuchs
+[22:14] <Fuchs> keine Ursache. Hoi :) 
+[22:23] <Incarus> und jetzt... diskutieren wir über... ubuntu?
+[22:24] <Fuchs> an sich nein, der Kanal hier waere fuer Supportfragen zu / rund um ubuntu. Siehe topic :) 
+[22:27] <m3t4lukas> hier eine frage: ich habe das Paket phpmyadmin installiert und hätte jetzt gedacht, dass es unter http://<server-domain>/phpmyadmin verfügbar wäre, ist es aber nicht...
+[22:27] <bekks> Wie hast Du es denn installiert?
+[22:28] <Fuchs> m3t4lukas: wenn vorher ein httpd installiert und konfiguriert wurde: ja. Sonst muss das noch sein, und der muss dann natuerlich auch laufen. Siehe auch http://wiki.ubuntuusers.de/MySQL/Werkzeuge#phpMyAdmin
+[22:28] <kubine> Title: Werkzeuge › MySQL › Wiki › ubuntuusers.de (at wiki.ubuntuusers.de)
+[22:30] <m3t4lukas> Fuchs, auf der Hauptseite kommt ein It works!
+[22:32] <Fuchs> m3t4lukas: dann sollte das gehen. Falls das post-install Skript das nicht fuer Dich gemacht hat, musst Du die im Wiki erwaehnte Konfiguration noch kopieren. 
+[22:35] <frickel-Stephan> Hallo, 
+[22:35] <frickel-Stephan> direkt eine Lamerfrage
+[22:35] <m3t4lukas> konfiguration verlinkt und daemon neugestartet, jetzt geht es, vielen Danke :)
+[22:35] <frickel-Stephan> Ubuntu - Postfix Mailserver - SMTP funktioniert aber weder pop noch imap
+[22:36] <m3t4lukas> PHPMyAdmin: "Verbindung für den controluser, wie er in Ihrer Konfiguration angegeben ist, ist fehlgeschlagen."
+[22:37] <guntbert> frickel-Stephan: dafür brauchst du dovecot
+[22:38] <frickel-Stephan> Ich habe das Paket dovecot-postfix genommen
+[22:38] <I-Punkt> m3t4lukas,hast du für den Mysql user ein Passwort vergeben?
+[22:39] <m3t4lukas> nein, wie geht das?
+[22:39] <m3t4lukas> eigentlich habe ich bei der installation den root und das rootpasswort angegeben
+[22:39] <frickel-Stephan> guntbert: laut portscan sind auch die Ports offen. 
+[22:40] <I-Punkt> Bei der Installation des MySql-Servers wird automatisch ein "root"-Account angelegt.
+[22:40] <frickel-Stephan> Über die Konsole kann ich mich auch mit den Nutzern einloggen und auf das Verzeichnis zugreifen. 
+[22:40] <I-Punkt> aber ohne Passwort
+[22:41] <m3t4lukas> ich habe das passwort manuell geändert
+[22:41] <I-Punkt> hat nix mit lokalem root zu tun
+[22:41] <m3t4lukas> mysqladmin -u root -p password "L"
+[22:41] <I-Punkt> MySql-root ist nicht Superuser namens root!
+[22:41] <guntbert> frickel-Stephan: schau einmal, was sudo service dovecot status sagt
+[22:41] <m3t4lukas> ich weiß
+[22:42] <frickel-Stephan> guntbert: dovecot start/running, process 615
+[22:43] <m3t4lukas> statt dem L natürlich das Passwort
+[22:44] <guntbert> frickel-Stephan: schau in /etc/dovecot/dovecot.conf nach, so weit ich mich erinnere sind beide services zunächst disabled
+[22:44] <I-Punkt> so sollte es sein. Und dieser root kann sich locht auf server.ip/phpmyadmin einloggen?
+[22:44] <I-Punkt> nicht
+[22:47] <frickel-Stephan> guntberg: http://paste.ubuntuusers.de/412532/ Welche Zeile meinst du? 
+[22:47] <kubine> Title: Unbenannt › Ablage › ubuntuusers.de (at paste.ubuntuusers.de)
+[22:48] <I-Punkt> m3t4lukas, kannst du dich als Wartungs-User "debian-sys-maint" am MySQL-Server anmelden?
+[22:49] <m3t4lukas> sry, ich habe sql noch nie über die Konsole gemacht...
+[22:49] <I-Punkt> m3t4lukas, Ubuntu legt noch einen weiteren Benutzer an: "debian-sys-maint". Mit Hilfe dieses MySQL-Benutzers startet und stoppt Ubuntu den SQL-Server
+[22:50] <m3t4lukas> aber ich bekomme das: Check that mysqld is running and that the socket: '/var/run/mysqld/mysqld.sock' exists!
+[22:50] <guntbert> frickel-Stephan: ist bei mir schon zu lange her - bittte schau in /etc/dovecot/conf.d/ nach  ...
+[22:50] <m3t4lukas> Check that mysqld is running and that the socket: '/var/run/mysqld/mysqld.sock' exists!
+[22:51] <m3t4lukas> root@<server>:/# /etc/init.d/mysqld start
+[22:51] <m3t4lukas> -bash: /etc/init.d/mysqld: No such file or directory
+[22:52] <I-Punkt> sudo service mysql restart
+[22:53] <I-Punkt> bzw ohne sudo, du bist ja bereits root
+[22:54] <frickel-Stephan> guntbert: Sorry ich finde da nichts was ich noch aktivieren müsste um imap oder pop3 zum funktionieren zu bewegen. 
+[22:58] <azrael__> guten abend mein bootloader erkennt die win7 partition nicht ich habe mein bisherigen lösungsansatz hier zusammen getragen hoffe mir kann geholfen werden http://paste.ubuntu.com/1497566/
+[22:58] <kubine> Title: Ubuntu Pastebin (at paste.ubuntu.com)
+[22:59] <frickel-Stephan> azrael__ bei Münster ? 
+[22:59] <frickel-Stephan> bzw. Ennigerloh? 
+[23:00] <guntbert> frickel-Stephan: wie gesagt, ist bei mir schon eine Weile her, dass ich mail server administriert hab - sorry
+[23:00] <m3t4lukas> I-Punkt: root@<server>/# service mysql restart
+[23:00] <m3t4lukas> restart: Unknown instance:
+[23:00] <azrael__> nein
+[23:01] <frickel-Stephan> Ah ich dachte schon von der abkaus mensch... 
+[23:01] <frickel-Stephan> äh abakus
+[23:02] <frickel-Stephan> guntbert trotzdem vielen Dank dachte mir schon das das nicht so einfach ist. 
+[23:02] <frickel-Stephan> Ich versuche es morgen noch einmal.
+[23:03] <guntbert> frickel-Stephan: wenn du englisch kannst: https://help.ubuntu.com/12.04/serverguide/email-services.html
+[23:03] <kubine> Title: Email Services (at help.ubuntu.com)
+[23:06] <m3t4lukas> mit service mysql start hat es funktioniert, ich werde den server mal neu starten, wenn es dann wieder beim start nicht hochgefahren ist, weiß ich ja, was ich zu tun habe...
+[23:08] <I-Punkt> m3t4lukas,  Laufen bei dir irgendwelche CMS?
+[23:08] <m3t4lukas> content management systeme? nein
+[23:09] <azrael__> liebes support-team, beschäftigt sich jmd mit meinem problem ich würde gerne eben ein reboot vornehmen?
+[23:09] <m3t4lukas> der server ist für ein server-programm gedacht, was auf dem server laufen soll
+[23:09] <m3t4lukas> *das mysql
+[23:09] <bekks> Und für welches Serverprogramm...?
+[23:09] <I-Punkt> m3t4lukas, Glaskugel .-)
+[23:10] <m3t4lukas> craftbukkit und von mir geschriebene c++ Programme
+[23:11] <I-Punkt> m3t4lukas, Im Grunde ein Selbstläufer. Bei der Installation von Mysql wir ein Passwort für den adm. User root erfragt. Dann einfach phpmyadmin aus den Paketquellen installieren und via server.ip/phpmyadmin als root anmelden. Das läuft eigentlich durch
+[23:12] <m3t4lukas> das war der weg, den ich gegangen bin
+[23:13] <m3t4lukas> er startet den service beim hochfahren nicht
+[23:13] <I-Punkt> kommst du drauf, wenn du ihn selber startest?
+[23:14] <I-Punkt>  service mysql start dann via Browser server.ip/phpmyadmin
+[23:14] <azrael__> so ich habe einen fortschritt gemacht der bootloader wird angezeigt allerdings KEIN windows 7
+[23:15] <m3t4lukas> ja, das geht
+[23:16] <I-Punkt> azrael__, hast du ein update-grub ausgeführt?
+[23:16] <azrael__> jetzt bin ich verunsichert momentchen
+[23:17] <m3t4lukas> apache2 service wird auch nicht automatisch gestartet
+[23:18] <azrael__> ja hatte ich
+[23:18] <ppq> azrael_: dein paste liest sich so, als gäbe es da bloß zwei partitionen auf deiner festplatte: eine vfat- und eine ext4-partition. kannst du mal ein 'sudo parted -l' nopasten?
+[23:19] <azrael__> http://paste.ubuntu.com/1497620/
+[23:19] <kubine> Title: Ubuntu Pastebin (at paste.ubuntu.com)
+[23:20] <azrael__> die partition EXISTIERT wenn ich beim  booten escape und übers hp bootmenue wähle ist windows 7 anwählbar
+[23:20] <I-Punkt> m3t4lukas, wer oder was verhindert denn den Start von apache und mysql beim Booten. Die sollten doch automatisch starten bei einer standartinstallation
+[23:21] <ppq> azrael_: im UEFI loader? ok. das kann auch ein überbleibsel sein. lässt es sich damit starten? nein, oder?
+[23:21] <azrael__> ich kann win 7 starten
+[23:22] <ppq> interessant. hast du mehrere festplatten?
+[23:22] <m3t4lukas> ich weiß nicht, was es verhindert...
+[23:23] <I-Punkt> m3t4lukas: Mit Start-/Stop-Skripten und Runlevel kenne ich mich nicht aus. sorry. 
+[23:24] <m3t4lukas> okay, trotzdem danke, ich bin mich da gerade am reinfuchsen
+[23:24] <azrael__> nein eine
+[23:25] <I-Punkt> m3t4lukas, abegesehen davon, dass du ein Start-/Stop-Skript und Runlevel-Problem hast, kannst du den, wenn du beide Dienste gestartet hast, via phpmyadmin als root auf die Datenbanke zugreifen? Das war ja eigentlich dein Problem...
+[23:26] <ppq> azrael_: dann noch ein 'sudo gdisk -l /dev/sda' bitte
+[23:26] <ppq> azrael_: ggf. gdisk installieren vorher
+[23:27] <azrael__> http://paste.ubuntu.com/1497638/
+[23:27] <kubine> Title: Ubuntu Pastebin (at paste.ubuntu.com)
+[23:29] <ppq> aha, du hast also gpt mit protective mbr, also quasi zwei partitionstabellen. das xubuntu ist in der "echten" gpt tabelle, während windows vermutlich in der protective mbr tabelle steckt, dazu bitte mal noch ein 'sudo fdisk -l', dann haben wir alle möglichkeiten durch ;)
+[23:30] <m3t4lukas> I-Punkt: ja, das geht dann
+[23:31] <azrael__> http://paste.ubuntu.com/1497641/
+[23:31] <kubine> Title: Ubuntu Pastebin (at paste.ubuntu.com)
+[23:32] <abc> kennt sich hier jemand mit dvb-s und kaffeine aus?
+[23:32] <bekks> Stell doch einfach deine Frage ;)
+[23:33] <I-Punkt> m3t4lukas, na super, der Rest ist Fleißarbeit. http://wiki.ubuntuusers.de/Dienste , um den apache automatisch zu starten. Da er das aber eigentlich tun sollte, solltest du mal die Logs studieren. Grüße
+[23:33] <kubine> Title: Dienste › Wiki › ubuntuusers.de (at wiki.ubuntuusers.de)
+[23:33] <abc> Wenn ich in Kaffeine einen Sendersuchlauf mache, werden relativ wenig Sender gefunden. Bei den Deutschen werden nur die Privaten Sender in HD und alle Öffentlichen gefunden. Ich möchte jedoch auf die Privaten ohne HD sehen.
+[23:34] <abc> was muss ich machen, dass ich auch die Privaten sender sehen kann?
+[23:37] <ppq> azrael_: schade, fdisk zeigt wohl keine protective mbr partitionen an. naja, jedenfalls hat das windows offenbar seine partitionen dort angelegt.
+[23:37] <ppq> azrael_: problem ist jetzt, dass xubuntu früher oder später die windows partitionen überschreibt, wenn die hdd sich füllt. 
+[23:38] <azrael__> wie gehe ich jetzt am besten vor ohne neuinstallation von xubuntu
+[23:38] <azrael__> und wenn ich alles platt mache gibt es eine für dummies anleitung ?
+[23:39] <I-Punkt> abc, da würde mir nur einfallen, manuell die channels.conf beizusteuern. DVB-S Karten funktionieren, oder nicht. 
+[23:39] <azrael__> ich schein ja bei der partitionierung was falsch gemacht zu haben
+[23:39] <ppq> azrael_: nicht du, sondern das windows setup, das eine mbr partitionstabelle angelegt hat
+[23:39] <abc> I-Punkt, eine channels.conf habe ich schon mit w_scan gemacht. Wie kann ich die jetzt in Kaffeine "einbauen"?
+[23:40] <ppq> azrael_: du solltest windows und xubuntu neu installieren. für windows ist es etwas umständlich, den uefi-modus zu erzwingen, damit es direkt gpt anlegt... kannst du englisch?
+[23:40] <azrael__> nicht fliessend sprechen ;)
+[23:42] <ppq> azrael_: da das ganze nur die windowsinstallation betrifft, lass uns das eben in den offtopic-channel verlegen.. #ubuntu-de-offtopic
+[23:44] <I-Punkt> abc: googeln channels.conf zu kaffeine. Ich nutze keines davon
+[23:44] <I-Punkt>  abc:   cp channels.conf ~/.kde/share/apps/kaffeine/channels.dvb
+[23:45] <abc> wie kann ich eine channels.dvb anlegen? Die ist ja soweit ich weiß anders aufgebaut als eine channels.conf...
+[23:46] <I-Punkt> abc,  im netz gibt es ein Script vdr2kaffeine, damit kann man channels.conf von vdr nach kaffeine channel.dvb konvertieren. einfach mal googeln. ich nutze es nicht und müsste auch suchen...
+[23:46] <I-Punkt> n8

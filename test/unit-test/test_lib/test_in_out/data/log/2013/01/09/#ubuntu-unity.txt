@@ -1,0 +1,626 @@
+=== salem_ is now known as _salem
+[03:18] <smspillaz> bregma: do you know what the status of those reviews I had up were ? They seem to just be sitting there ...
+[03:19] <bregma> we've been discussing requirements for change to the Switcher
+[03:19] <smspillaz> so I'll need to rewrite them again ? :(
+[03:19] <bregma> maybe
+[03:19] <smspillaz> argh
+[03:19] <smspillaz> maybe I will just fork unity .... this is getting annoying
+[03:21] <bregma> previous problems came from being in a hurry, we taking a moment to think long-term before the next wave of slip hits the fan
+[03:21] <smspillaz> bregma: so one of the things I've learnt is that our short cycles make it impossible to "think things through"
+[03:21] <smspillaz> by the time you've done all the thing its feature freeze
+[03:22] <smspillaz> *thinking
+[03:24] <bregma> well, that has to change or else there's a certain future and it isn't my idea of a successful one
+[03:24]  * duflu remembers fondly the luxury of being able to go away and develop for months and months without interruption or short cycle requirements
+[03:24] <smspillaz> bregma: good luck with that one
+[03:24] <bregma> heh, yeah, I'll need it
+[03:25] <smspillaz> bregma: the only way to survive in a situation like this is to embrace constant improvement over perfection
+[03:26] <smspillaz> because I've seen it happen again and again. We have something that gets us 75% of where we want to go and then people spend forever nitpicking over the details to make it so that every change is "perfect" and then feature freeze happens and you go from 0% to 0%
+[03:27] <smspillaz> examples: sheet style dialogs, mesh icons in the switcher, coverflow, the entire /unity/+activereviews
+[03:27] <duflu> Isn't the problem the lack of people doing nitpicking?
+[03:28] <smspillaz> no the problem is when nitpicking turns a review that should take 3 days into one that takes 13 weeks
+[03:29] <smspillaz> short cycles are a problem, yes. But the best thing we can do is adapt rather than pretend that we don't have short cycles
+[03:30] <bregma> well, there are plenty of problems across the spectrum, and there are ways to avoid those problems
+[03:31] <duflu> I think pretending can be realistic. If something's not ready or people are not confident that it's ready then the next release is only 6 months away. That lines up with commercial software practice where the cycle is measured in years, not months. And it works but is incredibly frustrating to tell people "yeah it won't be released for a year or so"
+[03:32] <smspillaz> duflu: the graveyard of bleeding baby deer that is the unity activereviews page begs to differ that this is an effective solution
+[03:36] <duflu> smspillaz: I haven't got hold of David yet but do you still want to drop the netbook over?
+[03:37] <smspillaz> duflu: maybe sometime today. When do you leave ?
+[03:39] <duflu> smspillaz: A few hours after midnight on Sat morning :(
+[03:39] <smspillaz> lovely
+[03:52] <smspillaz> bregma: in any case ... let me know when you've finalized a design for the switcher that you want. I've got lots of work sitting there waiting that will really help you with where you want to go. its your teams choice as to whether or not engagement happens or it just sits there and does nothing
+[07:08] <mmrazik> didrocks: it looks like the libdbusmenu tests are failing when both archs are scheduled to be built on the same builder host. If I try to execute 2 instances of xvfb-run at the same time one of it usually fails with the same error
+[07:08]  * mmrazik is just reading the man page if it is possible to randomize the server #
+[07:09] <didrocks> mmrazik: oh, interesting, even if it's run in a pbuilder?
+=== amithkk is now known as Guest39143
+[07:09] <didrocks> so it's not multiprocess?
+[07:09] <mmrazik> didrocks: only tried locally
+[07:09] <mmrazik> ie no pbuilder
+[07:09] <didrocks> ah :)
+[07:09] <didrocks> but yeah, maybe it's what is happening
+[07:10] <mmrazik> didrocks: there is xvfb-run -a
+[07:11] <mmrazik> didrocks: shall I just create a separate MP for that to try it out (and eventually merge) ?
+[07:11] <didrocks> mmrazik: yeah, please do :)
+[07:11] <didrocks> mmrazik: we call it in debian/rules FYI
+[07:11] <didrocks> debian/rules:xvfb-run dh_auto_test --builddirectory=builddir/$*
+[07:11] <mmrazik> didrocks: ack.
+[07:18] <mmrazik> mhm... this is going to be difficult to test as the jobs were scheduled to be built on two different builder hosts
+[07:19] <didrocks> mmrazik: it was scheduled to be built on two different builder hosts? so the failure I just got is not linked to that, isn't it?
+[07:20] <mmrazik> didrocks: hard to tell. in the last case when one of the arch failed it was building on the same host.
+[07:20] <mmrazik> didrocks: my MP with xvfb-run -a is now being built on two different hosts
+[07:20] <mmrazik> didrocks: as well as the last message in your MP (which passed)
+[07:21] <mmrazik> so the hypothesis sill holds
+[07:21] <didrocks> mmrazik: ok, so let's try to get that merged in :)
+[07:21] <didrocks> mmrazik: if we can have that in 2 separate MP, it will be awesome
+[07:21] <didrocks> mmrazik: like, get yours merged
+[07:21] <mmrazik> didrocks: https://code.launchpad.net/~mrazik/libdbusmenu/xvfb-run-a/+merge/142448
+[07:21] <didrocks> and then, we can try again getting https://code.launchpad.net/~didrocks/libdbusmenu/bootstrap2/+merge/142446 merged
+[07:22] <mmrazik> the CI job is running right now (but as I said -- on two different hosts so I expect it will pass)
+[07:22] <didrocks> approved, let's see how it goes :)
+[07:22] <mmrazik> ack
+[07:22] <didrocks> at least, we'll have 2 MP
+[07:31] <mmrazik> didrocks: so the autolanding job just started and both archs are building on the same jenkins slave
+[07:32] <didrocks> mmrazik: sweet, can't wait for the result! :)
+[07:32] <didrocks> the ci passed
+[07:32] <didrocks> let's see autolanding
+[07:37] <mmrazik> didrocks: it probably was the issue because now I see in the logs that one of the server is running on :99 while the other on :100
+[07:39] <didrocks> mmrazik: excellent! so it's something that is leaking through the bindmount of pbuilder
+[07:39] <didrocks> I didn't thought about it
+[07:39] <didrocks> think*
+[07:40] <didrocks> mmrazik: let's continue crossing fingers, that would rock :)
+[07:40] <mmrazik> didrocks: not sure if leaking. I think this is by design. Even in chroot certain resources like sockets I shared (I think)
+[07:40] <didrocks> mmrazik: right, I meant leaking like "not being isolated"
+[07:40] <didrocks> but there are good reasons for that, I can see
+[07:40] <didrocks> I thought though this was done in /tmp
+[07:45] <mmrazik> didrocks: mhm.. the autolanding tests passed but the merge failed with the chk root keys error :-/
+[07:51] <didrocks> mmrazik: urgh, so you are getting the same issue?
+[07:52] <didrocks> you just bzr branch trunk, rihgt?
+[07:52] <didrocks> right*
+[07:52] <mmrazik> didrocks: yes. And you bootstrap2 branch is going to have it too (I just failed to checkout it).
+[07:52] <mmrazik> didrocks: yes
+[07:52] <mmrazik> didrocks: I justr tried the reconcile think and will try to push to a different location in lp
+[07:52] <didrocks> mmrazik: ok, keep me posted…
+[07:52] <didrocks> mmrazik: at least, good news that it seems to have work :)
+[07:54] <mmrazik> didrocks:  no luck :-/
+[07:55] <mmrazik> no idea how to proceed with this :
+[07:56] <didrocks> let's go on #bzr maybe?
+[07:56] <mmrazik> didrocks: wasn't francis already there?
+[07:57] <didrocks> mmrazik: he sent an email, but it was in the US time, we will maybe grab some european folks
+[08:22] <didrocks> mmrazik: do you mind rerunning the merge process? (for your branch first)
+[08:22] <didrocks> so that if we see other issues, we can debug with the bzr guys fast enough ;)
+[08:26] <mmrazik> didrocks: just got merged: https://code.launchpad.net/~mrazik/libdbusmenu/xvfb-run-a/+merge/142448
+[08:26] <didrocks> \o/
+[08:27] <didrocks> mine mine mine now! :-)
+[08:29] <mmrazik> didrocks: the jenkins job just started
+[08:29] <didrocks> mmrazik: refiling coffee meanwhile :)
+[08:42] <didrocks> mmrazik: and merged \o/ Thanks again :-)
+[08:43] <mmrazik> great :) it only took a day or so :)
+[08:45] <didrocks> heh
+[08:49] <sil2100> didrocks: hi!
+[08:49] <didrocks> hey sil2100! how are you?
+[08:49] <sil2100> didrocks: the fix introduced by https://code.launchpad.net/~brandontschaefer/unity/skip-switcher-lazy-loading-timer/+merge/142396 should fix some of the indicator failures \o/
+[08:50] <sil2100> Yesterday evening we found this one and analyzed as a possible reason for all those annoyances
+[08:50] <didrocks> sil2100: yeah, I saw that, I'm running an unity rebuild right now and then, will rerun the indicator ones
+[08:51] <didrocks> sil2100: I saw the discussion, it's awesome :)
+[08:51] <didrocks> sil2100: however, on your branch… I didn't see anything proposed on the autopilot side
+[08:51] <didrocks> so maybe worth to merge it meanwhile?
+[08:52] <sil2100> You mean, the fix for the test_mouse_changes_selected_hud_button I proposed yesterday?
+[08:53] <didrocks> yep
+[08:53] <sil2100> Not sure if we should change the default rate for all mouse movements
+[08:53] <didrocks> yeah, I wonder as well
+[08:53] <didrocks> so, that's why I think we should merge yours for now
+[08:53] <didrocks> and we can eventually remove that later on
+[08:53] <sil2100> Indeed I'll have to consult Thomi, but sometimes it's not necessary, and it would only slow down the tests
+[08:53] <didrocks> if autopilot changes it
+[08:53] <didrocks> wdyt?
+[08:53] <sil2100> Yea, I think so too
+[08:53] <didrocks> want me to approve drastically?
+[08:54] <sil2100> didrocks: please ;) Some free karma for you as well ;p !
+[08:54] <didrocks> heh, here is a drastic approval!
+[08:55] <didrocks> sil2100: nice work! :-)
+[08:55] <didrocks> sil2100: do you know if you can still work on other remaining failures meanwhile I rerun a full test?
+[08:55] <didrocks> sil2100: and how did it go with mterry, was he able to setup his configuration fine?
+[09:01] <sil2100> didrocks: he went to eat lunch and do errands, I sent him instructions on how to run autopilot for indicators, but I didn't hear back from him
+[09:01] <sil2100> So I don't know
+[09:01] <didrocks> ok :)
+=== mmrazik is now known as mmrazik|afk
+=== mmrazik|afk is now known as mmrazik
+=== cking_ is now known as cking
+=== mmrazik is now known as mmrazik|afk
+=== mmrazik|afk is now known as mmrazik
+=== mmrazik is now known as mmrazik|afk
+=== _salem is now known as salem_
+=== MacSlow is now known as MacSlow|lunch
+=== francisco is now known as Guest79688
+=== mmrazik|afk is now known as mmrazik
+=== gatox is now known as gatox_brb
+[12:17] <didrocks> sil2100: did you wait on the result or working on the next() prev() tests?
+[12:19] <didrocks> there are 8/9 hud tests failing from what I can see
+[12:20] <sil2100> didrocks: after Brandon's fix?
+[12:20] <sil2100> And my icon fix?
+[12:20] <didrocks> yeah, just without your "move slower the mouse"
+[12:20] <sil2100> huh
+[12:20] <sil2100> So the 4 tests I fixed by fixing the regression still fail?
+[12:20] <sil2100> Same for gedit_undo?
+[12:20] <sil2100> Doesn't make sense
+[12:21] <didrocks> https://jenkins.qa.ubuntu.com/job/ps-unity-autopilot-release-testing/label=autopilot-ati/lastCompletedBuild/testReport/
+[12:21] <didrocks> https://jenkins.qa.ubuntu.com/job/ps-unity-autopilot-release-testing/label=autopilot-intel/lastCompletedBuild/testReport/
+[12:21] <didrocks> https://jenkins.qa.ubuntu.com/job/ps-unity-autopilot-release-testing/label=autopilot-nvidia/lastCompletedBuild/testReport/
+[12:21] <didrocks> there is not the gedit_undo, isn't it?
+[12:21] <sil2100> Oh, so it's not for the indicators?
+[12:21] <didrocks> we run hud tests as well, isn't it?
+[12:21] <sil2100> Ok, some other tests fail I see
+[12:22] <didrocks> yeah, only the hud ones (I rerun all the tests, as I was rebuilding unity)
+[12:22] <didrocks> so this is with all the fixes, but the slower mouse move
+[12:22] <sil2100> Yes, but the prev next and undo things stopped failing, some new failures appeared, hm
+[12:22] <didrocks> which don't impact those tests?
+[12:22] <didrocks> yeah
+[12:22] <sil2100> Ok, let me look in detail into this
+[12:23] <didrocks> thanks :)
+[12:25] <MCR1> didrocks, sil2100: Hi :) HUD in Unity trunk also has problems to show the correct icon, but overrides the correct icon with the first one all the time...
+[12:27] <MCR1> didrocks, sil2100: The icon from the first HUD line always overwrites all others, which is quite bad :(
+[12:29] <didrocks> hum, I can see in trunk always the right icon here
+[12:30] <MCR1> didrocks, sil2100: Also something with the blur gotta be done - the blur function is incredibly slow, especially with free drivers...
+[12:30] <sil2100> didrocks: ok, so, there is one HUD fix I will add now which I forgot to commit and push yesterday for fixing the focuses_window_on_mouse_down
+[12:30] <sil2100> MCR1: hmm, didn't notice that
+[12:30] <sil2100> With the HUD I mean
+[12:30] <MCR1> sil2100: Maybe it is MCR-specific then - strange though...
+[12:30] <didrocks> sil2100: oh oh nice! :)
+[12:31] <sil2100> didrocks: but those 8 new HUD failures I see for the first time ;p
+[12:31] <didrocks> sil2100: maybe we don't run them as part of the indicators tests, let me recheck. I just stumbled above them
+[12:32] <didrocks> sil2100: hum, we do run unity.tests.test_hud
+[12:32] <didrocks> so they should be run, isn't it?
+[12:33] <didrocks> ok, first getting your merge in and rebuilding unity :)
+[12:33] <sil2100> Right, so maybe latest unity trunk broke something? Since those never failed before
+=== gatox_brb is now known as gatox
+[12:33] <didrocks> sil2100: yeah, maybe brandon's fix has this side effect of not hiding this bug :)
+[12:34] <sil2100> hehe\
+[12:34] <didrocks> send the MP once ready! :)
+[12:35] <MCR1> When I open the Dash or HUD here, running video starts to stutter, the blur kills my framerate completely (on quite fast hardware ATI HD 5750) - this does not happen with fglrx, but with free gallium radeon driver...
+[12:41] <didrocks> sil2100: I'm about to leave for some exercice, I would like just to have your merge in the queue before you have it handy :)
+[12:44] <sil2100> didrocks: ok, pushing ;)
+[12:51] <didrocks> mmrazik: hey, how can I see which packages are installed in jenkins-qa/job/ps-indicators-autopilot-release-testing/46/label=autopilot-intel/ ?
+[12:51] <didrocks> mmrazik: even if only the indicators should be installed, I've a similar result than when using the whole ppa
+[12:52] <didrocks> so I wonder if it doesn't take unity from the ppa
+[12:52] <didrocks> sil2100: any luck btw? :)
+[12:53] <mmrazik> didrocks: #46 is still running you will be able to see it only after it has finished
+[12:53] <mmrazik> didrocks: here it is for #45: https://jenkins.qa.ubuntu.com/job/ps-indicators-autopilot-release-testing/45/label=autopilot-ati/artifact/results/artifacts/machine-config/dpkg-list.log/*view*/
+[12:53] <mmrazik> you need to go to the machine and then there are build artifacts
+[12:53] <mmrazik> and there its in results/artifactrs/machine-config dir
+[12:54] <sil2100> didrocks: https://bugs.launchpad.net/unity-2d/+bug/1060262 <- it's released? Where?
+[12:54] <ubot5> Launchpad bug 1060262 in unity-2d "Unity-2D SRU-1 needs releasing" [Medium,Fix released]
+[12:54] <didrocks> mmrazik: look at job/ps-indicators-autopilot-release-testing/46/label=autopilot-intel/artifact/results/artifacts/machine-config/dpkg-list.log
+[12:54] <sil2100> It's not released...
+[12:54] <didrocks> mmrazik: it has unity from the ppa where it shouldn't
+[12:55] <didrocks> sil2100: I based on the date, please revert if I've mistaken
+[12:55] <sil2100> I specifically pushed it back to the queue to get it released again, since last time it got rejected :<
+[12:55] <didrocks> mmrazik: see ii  libunity-core-6.0-5                       6.12.0daily13.01.09.1-0ubuntu1           i386         Core library for the Unity interface.
+[12:55] <sil2100> Now it'll land in the sponsoring queue from the beginning again :<
+[12:55] <didrocks> sil2100: well, juts revert to fix committed
+[12:55] <didrocks> sil2100: that doesn't change a thing :)
+[12:56] <sil2100> ;)
+[12:58] <didrocks> sil2100: so, at least, with that, we have the confirmation that the tests for hud fails now
+[12:59] <didrocks> sil2100: btw, you know that you have the ogv?
+[12:59] <didrocks> sil2100: for the test failing
+[12:59] <sil2100> didrocks: yes, I watch it every time - I'm using apview ;)
+[12:59] <sil2100> A really useful tool btw.!
+[12:59] <mmrazik> didrocks: weird... I'm just looking at the preseed and I don't see anything wrong there. dist-upgrade happens before adding the ppa
+[12:59] <didrocks> sil2100: apview?
+[13:00] <mmrazik> didrocks: is it possible that something like bamfdaemon pulls all that in as a dependency?
+[13:00] <mmrazik> ok
+[13:00] <mmrazik> bamf is probably a bad example...
+[13:00] <didrocks> mmrazik: no, it's not, it's a good one
+[13:00] <didrocks> so bamf broke its abi
+[13:00] <didrocks> so there is a newer package
+[13:00] <didrocks> do you have the apt install log?
+[13:01] <sil2100> didrocks: https://code.launchpad.net/~autopilot/+junk/apview
+[13:01] <didrocks> we should maybe "force" the version for the rest
+[13:01] <mmrazik> didrocks: not really :-/
+[13:01] <mmrazik> didrocks:  let me try to ssh to the machine. maybe its around there
+[13:01] <didrocks> mmrazik: or abort if we see that it wants to install something more than just those packages
+[13:02] <didrocks> because it means that the stack can't be released alone
+[13:02] <didrocks> jibel: FYI ^
+[13:02] <didrocks> I guess that's what happened, but a confirmation would be good
+[13:03] <mmrazik> didrocks: you mean to abort the build?
+[13:03] <didrocks> sil2100: oh nice! :)
+[13:03] <mmrazik> (i.e. jenkins build)
+[13:03] <didrocks> mmrazik: yeah, or exiting on error
+[13:03] <didrocks> like if we try to install more than just the list specified
+[13:04] <mmrazik> didrocks: are the install logs somewhere around in the system?
+[13:04] <didrocks> I think jibel is looking for them
+[13:05] <mmrazik> didrocks: http://pastebin.ubuntu.com/1512782/
+[13:05] <mmrazik> jibel: ^
+[13:05] <mmrazik> thats from /var/log/apt/history.log
+[13:05] <mmrazik> if I interpret it correctly it indeed upgraded libunity et al
+[13:06] <Mirv> sil2100: I tend to use fix committed for bugs that actually have the fixed package on its way to the release in the system
+[13:06] <mmrazik> didrocks: I'm not really an expert on preseed, though (where this is happening). I fear that if I remove the "-y" the install will just silently fail but the testing will go on
+[13:06] <Mirv> sil2100: and in progress until that
+[13:06] <Mirv> ie. unity-2d still needs the push to the queue, I think?
+[13:07] <didrocks> mmrazik: yeah, so it's the cause
+[13:07] <didrocks> mmrazik: I think -y shouldn't be needed, indeed, as we specify all binaries, jibel am I right?
+[13:08] <didrocks> not sure if a command on preseeding failed if it will failed though
+[13:08] <jibel> didrocks, I don't think -y is the problem here, it just answer yes to all prompts but apt will abort if there is an undesirable situation
+[13:09] <didrocks> jibel: well, the issue is that the ppa is there for it
+[13:09] <didrocks> jibel: so it's not undesirable
+[13:09] <didrocks> it will just pull more from the ppa
+[13:09] <didrocks> which is what we don't want
+[13:09] <didrocks> (when specifying what we want to install)
+=== Guest39143 is now known as amithkk
+[13:11] <didrocks> libbamf3-0 became libbamf3-1
+[13:11] <jibel> didrocks, could unity be pulled by dependency ?
+[13:11] <didrocks> so running the check with only and only the indicator stack should failed
+[13:11] <didrocks> jibel: right
+[13:11] <didrocks> as we have a version in the ppa build for unity against libbamf3-1
+[13:11] <jibel> I mean versionned dependency
+[13:12] <didrocks> well, not versionned, it's a binary package name change due to soname change
+[13:12] <didrocks> but the result is the same
+[13:12] <didrocks> so apt is telling "I can't install libbamf3-1 alone"
+[13:12] <didrocks> "oh, there is a unity in the ppa that can match the dep, let's install it"
+[13:13] <didrocks> which is what we don't want when installing in the ppa (and don't use "check with whole ppa")
+[13:13] <jibel> a solution could be to pin the ppa with high score to not auto-install packages
+[13:13] <didrocks> the ideal plan is that the install should just fail and that's it.
+[13:13] <didrocks> jibel: you meant, low score?
+[13:14] <jibel> or low I never remember which direction priority goes :)
+[13:17] <jibel> didrocks, or if it doesn't work, hold all the packages in the ppa excepted those we want to install/upgrade
+[13:18] <didrocks> jibel: I wonder if it will work apart from holding, yeah
+[13:19] <didrocks> and you do think that utah will see the preseeding failing and we'll get the apropriate rejection?
+[13:19] <jibel> didrocks, heh, that's another story
+[13:21] <didrocks> mmrazik: can you try to add to the preseed where we explicit set the packages to install:
+[13:22] <didrocks>  /etc/apt/preferences.d/pinning-ppa with: http://paste.ubuntu.com/1512873/
+[13:22] <didrocks> mmrazik: this before the apt-get update
+[13:22] <mmrazik> didrocks: but having that for the unity stack update is no good, right?
+[13:23] <didrocks> mmrazik: no, only when we provide a package list
+[13:23] <mmrazik> ok
+[13:23] <didrocks> so that it doesn't impact "build with whole ppa" as well
+[13:24] <MCR1> sil2100, didrocks: If you have a minute: https://code.launchpad.net/~mc-return/unity/unity.merge-fix-redundant-assignment-of-variables-to-themselves/+merge/142512
+[13:25] <didrocks> MCR1: approved, thanks :)
+[13:25] <MCR1> np
+[13:27] <sil2100> hehe, thanks
+=== mterry_ is now known as mterry
+[13:31] <sil2100> didrocks: so anyway, at least I know now that the 8 additional failures are real regressions ;)
+[13:31] <didrocks> mmrazik: feel free to launch the jenkins job for the indicators once you have done the change (it seems ATI has stalled)
+[13:31] <didrocks> sil2100: yeah, good to have tests, isn't it? :)
+[13:31] <mmrazik> didrocks: ok
+[13:31] <sil2100> Indeed! ;)
+[13:32] <didrocks> sil2100: please keep me posted, and let's try to sync with mterry once here
+[13:32] <mterry> didrocks, hello!
+[13:32] <mterry> didrocks, I'm mostly back to operational
+[13:32] <didrocks> oh already around? :)
+[13:32] <didrocks> it's early for you, isn't it?
+[13:32] <mterry> didrocks, yeah early start today, since I'm likely going to be slow to ramp up today (still recovering from hard drive break)
+[13:33] <didrocks> mterry: urgh, hard drive breakage and real world test of your recovering then? :)
+[13:34] <mterry> didrocks, eh, I don't need most of the backup contents for work
+[13:34] <mterry> didrocks, that was mostly a million bzr branches and pbuilder chroots and such
+=== dandrader is now known as dandrader|afk
+[13:34] <didrocks> ah ok, not a great loss fortunately :)
+[13:35] <mterry> didrocks, let's hope so.  I haven't actually tried to restore my backup yet  :)
+[13:35] <didrocks> sil2100: btw, you should introduce mterry to apview for debugging the autopilot failing tests, it looks nice, indeed :)
+[13:37] <mterry> didrocks, so do we have the results of an autopilot run after those couple fixes yesterday?
+=== MacSlow|lunch is now known as MacSlow
+[13:37] <didrocks> mterry: yep, and there is a regression apparently from those fix (or the bug is not hidden anymore):
+[13:38] <didrocks> mterry: https://jenkins.qa.ubuntu.com/job/ps-unity-autopilot-release-testing/label=autopilot-nvidia/lastCompletedBuild/
+[13:38] <didrocks> mterry: look at the "hud" ones
+[13:39] <sil2100> The fix that Brandon made shouldn't cause that regression, since hm, it somehow doesn't seem related - but maybe it now leads to a stupid race condition
+[13:39] <didrocks> I think sil2100 has fixed unity.tests.test_hud.HudBehaviorTests.test_closes_then_focuses_window_on_mouse_down
+[13:39] <didrocks> right?
+[13:39] <didrocks> it's the one in the pipe for merging?
+[13:39] <sil2100> didrocks: ...most probably ;p
+[13:39] <sil2100> Yes ;)
+[13:40] <mmrazik> didrocks: done but I'm really not sure it will help. I fear that the apt-get install will fail but the process/testing will continue with the old packages
+[13:41] <didrocks> and also look at run 46/ https://jenkins.qa.ubuntu.com/job/ps-indicators-autopilot-release-testing/
+[13:41] <didrocks> mmrazik: let's see how it goes with the logs
+[13:41] <didrocks> so https://jenkins.qa.ubuntu.com/job/ps-indicators-autopilot-release-testing/label=autopilot-intel/lastCompletedBuild/testReport/
+[13:42] <didrocks> and https://jenkins.qa.ubuntu.com/job/ps-indicators-autopilot-release-testing/label=autopilot-nvidia/lastCompletedBuild/testReport/
+[13:42] <didrocks> there are those 8 news + the one which should be fixed by now + the _prev/_next one
+[13:42] <didrocks> mterry: we can have the videos of the test execution, sil2100 can maybe help you with that?
+[13:43] <didrocks> anyway, I'll let you organize as you prefer, I really need to go out for exercising now or I will become crazy :)
+[13:43] <mterry> didrocks, #46 is way better than that first link
+[13:43] <didrocks> mmrazik: I'll look at run #47
+[13:44] <didrocks> mterry: this link is only the hud and indicators tests
+[13:44] <didrocks> mterry: the other link is all the tests :)
+[13:44] <mterry> ah yes
+[13:45] <didrocks> mmrazik: another solution will be to add a test at start which checks the version of things that are not supposed to be upgraded
+[13:46] <didrocks> and abort if it fails
+[13:46] <didrocks> not sure if it's possible
+[13:47] <MCR1> didrocks: Here another minor improvement: https://code.launchpad.net/~mc-return/unity/unity.merge-reduce-scope-of-some-variables/+merge/142516
+[13:49] <mmrazik> didrocks: yep. would be possible. Just the whole thing starts to be a hackish bunch of scripts :-/
+[13:50] <didrocks> mmrazik: yeah :/
+=== dandrader|afk is now known as dandrader
+[13:52] <mterry> sil2100, so of these 11 current failures I'm seeing in #46, it sounds like you fixed one?  (focuses_window_on_mouse_down)  I guess I'll look at the panel tests
+[14:05] <MCR1> in lp:unity/panel/PanelIndicatorEntryView line 263 we can find this:
+[14:05] <MCR1> gint pos = gtk_widget_path_append_type(widget_path, GTK_TYPE_MENU_BAR);
+[14:05] <MCR1> line 264: pos = gtk_widget_path_append_type(widget_path, GTK_TYPE_MENU_ITEM);
+[14:06] <MCR1> line 263 is redundant, but is line 264 the correct one ?
+[14:08] <MCR1> line 332, 333 the same happens...
+[14:14] <mterry> sil2100, I think I understand why a couple of the panel tests fail
+[14:14] <mterry> sil2100, the first Alt+F10 does not work
+[14:14] <mterry> sil2100, but subsequent ones do
+[14:15] <MCR1> mterry: I can confirm this observation
+[14:15] <mterry> I don't know enough about the codebase to offer a fix, but hopefully one of ya'll do
+[14:18] <sil2100> mterry: thanks for the info, good catch!
+[14:18] <sil2100> I'll try to fix this in a moment
+[14:30] <mmrazik> didrocks: ignore #47. It had a faulty preseed.
+[14:30] <mmrazik> just started #48
+[14:31] <mterry> Do we have a handle on the hud regression?
+[14:51] <bregma> funny, I can't repro that hud problem manually on a fully updated (from the daily PPA) raring system no matter how hard I try
+=== mmrazik is now known as mmrazik|otp
+[14:55] <mterry> bregma, I can
+[14:55] <mterry> bregma, I can't, however, repro the hovering indicators panel test
+[14:56] <mterry> bregma, oh wait, you mean manually?  I was running the autopilot test locally and it failed
+[14:56] <bregma> manually, yes
+[14:56] <mterry> bregma, so I open an app, open the dash, then press alt?
+[14:56] <bregma> would that means the problem is the test and not the target software?
+[14:57] <mterry> bregma, I get the bfb icon even doing it manually
+[14:57] <bregma> oh, so you expect the dash icon to not show up in the HUD even through the dash was open when you invoked the HUD?
+[14:58] <mterry> bregma, that seems to be what the test is testing
+[14:58] <mterry> bregma, the test wants the calculator icon to appear in the HUD
+[14:59] <bregma> OK, understood now
+[14:59] <bregma> I thought that was what https://code.launchpad.net/~sil2100/unity/hud_icon_bfb_fix/+merge/141977 was supposed to fix
+[15:00] <bregma> looks like it didn't
+[15:00] <sil2100> Yes, it was fixing it before actually
+[15:00] <sil2100> Now it's broken again
+[15:00] <sil2100> I'll check in a moment what's up
+[15:02] <bregma> btw, does anyone have any idea why the global menus have stopped working in raring?  They come back if you manually install indicator-appmenu but that smacks of some broken packaging somewhere to me
+[15:02] <MCR1> didrocks, sil2100: Another one (minor performance optimization): https://code.launchpad.net/~mc-return/unity/unity.merge-remove-assignment-of-values-never-used/+merge/142527
+[15:03] <mterry> bregma, that sounds like I would expect.  indicator-appmenu is necessary to show the menus
+[15:03] <mterry> bregma, you mean, something uninstalled indicator-appmenu for you?
+[15:04] <bregma> it was not installed, and I didn;t notice any packages being uninstalled in my last upgrade
+[15:04] <bregma> even if something uninstalled it and I didn't notice (quite possible), it still sounds like broken packaging
+[15:05] <mterry> bregma, it could happen if you dist-upgraded before libraries were fully transitioned...
+[15:05] <bregma> sure, me and everyone else who is using raring, sounds fishy
+[15:05] <mterry> bregma, the package is on the CD
+[15:06] <mterry> bregma, they are working for me..
+[15:06] <bregma> did you do a fresh install or an upgrade?
+[15:06] <mterry> bregma, upgrade
+[15:07] <mterry> bregma, this was yesterday though.  Maybe something was temporarily broken in the past
+[15:07] <sil2100> bregma: the reason for that might be libbamf
+[15:08] <sil2100> bregma: since we switched recently from libbamf3-0 to libbamf3-1 in packaging
+[15:08] <bregma> maybe, and all the people who are complaining about no global menus got caught by it
+[15:09] <bregma> my concern is all the people who have been tracking raring:  if at least three of us have had this happen then how many non-unity-developers have had it happen?
+[15:14] <didrocks> bregma: do you have any kind of ppa? many are tracking staging
+[15:14] <didrocks> bregma: and staging don't have the rebuild of indicator-appmenu against the new bamf
+[15:14] <mterry> bregma, i dunno, library transitions happen all the time.  apt-get and update-manager both warn you about removing packags
+[15:14] <didrocks> because of the soname breakage
+[15:15] <mterry> didrocks, welcome back!
+[15:15] <didrocks> mterry: thanks! it's freezing outside :)
+[15:16] <didrocks> I backlogged, mterry, do you have some tests that you can work on fixing or is sil2100 over them? (at least, nice catch! ;))
+[15:16] <mterry> didrocks, the hovering indicators test I was trying to figure out still
+[15:16] <mterry> didrocks, that's the last unknown from the set of 11
+=== mmrazik|otp is now known as mmrazik
+[15:17] <bregma> yes, apparently I have staging in my sources:  if that's the cause of the problem I'm not worried
+[15:17] <didrocks> that would be awesome :)
+[15:18] <didrocks> bregma: I'm 99.42% sure it's the cause ;)
+[15:22] <mmrazik> didrocks: AFAIC build #48 just didn't install anything and executed the tests :-/
+[15:22] <MCR1> didrocks: Could you please take a look @ https://code.launchpad.net/~mc-return/unity/unity.merge-reduce-scope-of-some-variables/+merge/142516 and https://code.launchpad.net/~mc-return/unity/unity.merge-remove-assignment-of-values-never-used/+merge/142527 - I am 99.42% sure they are correct :)
+[15:23] <didrocks> mmrazik: yeah, the pinning is not good
+[15:23] <didrocks> MCR1: sorry, if I didn't answer it's because I don't have the time for it right now ;)
+[15:23] <didrocks> mmrazik: I think the only way right now will be to install
+[15:24] <didrocks> mmrazik: and having a script parsing the log of this apt-get install
+[15:24] <MCR1> thaught you might have missed it, sorry 4 stressing ;)
+[15:24] <didrocks> MCR1: no worry ;)
+[15:24] <didrocks> mmrazik: and see if there is anything more than the list we gave, wdyt?
+[15:24] <mmrazik> didrocks: yeah... I don't see to many other options either
+[15:25] <didrocks> mmrazik: you do have the log right, you can abort right away, just having one test and exiting in error?
+[15:25] <didrocks> I don't know this UTAH thing enough
+[15:25] <didrocks> well UTAH/linked to jenkins
+[15:25] <mmrazik> me neither. It would be best to fail the installation
+[15:25] <mmrazik> directly in preseed
+[15:26] <didrocks> I think it's possible to do that in preseed
+[15:26] <didrocks> like redirect the apt-get install to a file
+[15:26] <didrocks> and then a stupid script parsing that
+[15:26] <didrocks> ?
+[15:28] <sil2100> mterry: wait, hovering indicators?
+[15:28] <sil2100> It's failing again?
+[15:28] <mterry> sil2100, did that get fixed?  I'm working off #48
+[15:28] <sil2100> mterry: we concluded that it was caused by the switcher fix Brandon did...
+[15:29] <sil2100> mterry: is the build 48 using the latest unity packages?
+[15:29] <sil2100> mmrazik: ^ ?
+[15:30] <mterry> sil2100, should be.  It looks like the latest build
+[15:30] <sil2100> mterry: since didrocks executed tests using the latest unity in a different jenkins job and the failure wasn't there anymore
+[15:30] <sil2100> https://jenkins.qa.ubuntu.com/job/ps-unity-autopilot-release-testing/label=autopilot-intel/lastCompletedBuild/testReport/
+[15:30] <mmrazik> sil2100: no
+[15:30] <sil2100> Here it was not reproducable anymore
+[15:30] <didrocks> mterry: oh yeah, don't look at #48
+[15:30] <sil2100> I think 48 is broken
+[15:30] <didrocks> it's our test to install only what we want :)
+[15:31] <didrocks> so it didn't pick anything from the ppa
+[15:31] <didrocks> sil2100: you can breathe! :)
+[15:31]  * sil2100 breathes
+[15:31] <sil2100> phew!
+[15:31] <mterry> heh, sorry
+[15:31] <didrocks> so, from what I understand, all the issues are on sil2100's plate?
+[15:31] <didrocks> for the indicators* one?
+[15:32] <sil2100> Yes, from the indicators side, yes
+[15:32] <sil2100> From ibus side as well, still didn't find the time to wrap that up
+[15:32] <didrocks> sil2100: it's less important right now
+[15:33] <mterry> yay for things being on sil2100 's plate!
+[15:33] <didrocks> mterry: so you can jump on the indicator-without-test-running side if you will?
+[15:33] <didrocks> I don't think it's a better tradeoff though :)
+[15:33] <mterry> didrocks, sure.   what's that side?  :)
+[15:34] <didrocks> mterry: the remaining components where we can't run tests under a chroot
+[15:34] <mterry> didrocks, ah that cyphermox was working on
+[15:34] <didrocks> mterry: so, from yesterday, it moved a little bit, dbusmenu tests are now running
+[15:34] <didrocks> yep
+[15:34] <didrocks> the trick was to add -a to xfvb-run
+[15:34] <didrocks> as we can have multiple pbuilder on the same machine
+[15:35] <mterry> didrocks, ah interesting
+[15:35] <didrocks> and so they step on each other shoes
+[15:35] <didrocks> I think the display is available through the bindmount or something like that
+[15:35] <mterry> odd, I wouldn't have guessed that
+[15:35] <didrocks> yeah, same for me TBH…
+[15:35] <didrocks> but here, multiple tests and trials showed the fact
+[15:36] <didrocks> so, cyphermox is still doing libappindicator, and fighting on indicator-session (not sure if he needs help on that)
+[15:36] <didrocks> telepathy-indicator is free and needs love
+[15:36] <mterry> didrocks, OK, on it
+[15:36] <didrocks> thanks! once those are done, the whole indicator stack will be bootstrapped :)
+[15:36] <mterry> didrocks, thanks for review, my log of our conversation the other day about these got lost with my hard drive
+[15:37]  * mterry is revealed to have the complete lack of memory that he tries to hide with notes
+[15:37] <didrocks> mterry: well, those infos were not really important, so good :)
+[15:38] <didrocks> mterry: the difference is that I use physical notes!
+[15:38] <didrocks> mmrazik: are you doing this failure at install or do you need help?
+[15:38] <cyphermox> yeah I have two things I want to check on indicator-session, but if that fails I'm out of ideas
+=== mmrazik is now known as mmrazik|otp
+[15:39] <cyphermox> as for libappindicator, need to pick things up from where they were monday, that is I got logs that should show how the environment is between the gtk2 and gtk3 tests, and we need to figure out what's causing the gtk3 tests to reproducibly fail
+[15:40] <cyphermox> the gtk2 tests always pass :/
+[15:40] <mterry> didrocks, pfft, we'll see if you survive a fire
+[15:40] <mterry> though...  i guess i wouldn't either
+[15:40] <mterry> didrocks, pfft, we'll see if you survive a strong wind!
+[15:40] <didrocks> mterry: like, "my disk are fire-proof now, see with you damned physical notes!"
+[15:40] <didrocks> good point on the wind :)
+[15:40] <didrocks> and yeah, already experienced
+[15:40] <mterry> :)
+[15:41] <cyphermox> ah. I trust all my notes to Ubuntu one ! :D
+[15:41] <didrocks> I loosed track of all my disorganized organization of my desk :)
+[15:41] <didrocks> cyphermox: doesn't have the paper plugin though :p
+[15:41] <cyphermox> sadly
+[15:41] <cyphermox> it's the one only thing I still need to buy for my hourse -- a fireproof safe
+[15:42] <didrocks> heh
+[15:42] <MCR1> I use the Compiz water plugin to kill any fire 8-) and the wizard plugin against wind ;)
+[15:42] <mterry> cyphermox, and keep your laptop in it?  :)
+[15:43] <mterry> who named telepathy-indicator?  it's backwards
+[15:43] <seb128> mterry, blame kenvandine
+[15:43]  * mterry shakes fist at tedg 
+[15:43] <mterry> whoops, I meant kenvandine
+[15:43] <seb128> he probably spent too much time with ted
+[15:44] <mterry> But my brain was like "naming problem, must be tedg"
+[15:44] <kenvandine> haha
+[15:44] <kenvandine> :-D
+[15:44] <mterry> Sorry tedg
+[15:44] <seb128> well, you can still blame ted
+[15:44] <MCR1> mterry:  yeah, it should be indicator-* 4 all of them (easier to find via commandline)
+[15:44]  * kenvandine blames tedg for everything
+[15:44] <mterry> seb128, where'd you come from?  :)
+[15:45] <mterry> you just like to chime in on naming blame  :)
+[15:45] <seb128> mterry, I saw an opportunity to troll tedg on naming, couldn't miss it
+[15:45] <seb128> sorry :p
+[15:45] <tedg> Hmph
+[15:45] <seb128> tedg, hey, happy new year! ;-)
+[15:46] <seb128> tedg, I hope "not naming stuff" is in your new resolutions ;-)
+[15:46] <tedg> Yeah, I know the year of the snake is a stupid name, I didn't do that one :-)
+[15:46] <seb128> hehe
+[15:46] <tedg> Heh, should have "not start any new projects" as one.
+[15:46] <tedg> We've got enough.
+[15:46]  * MCR1 immediately starts the wizard when hearing 'happy new year'
+[15:47] <mterry> didrocks, telepathy-indicator doesn't have any tests...?
+[15:47] <seb128> dumdumdum
+[15:47] <tedg> For telepathy-indicator you guys might ping larsu, as I think he was going to look at it.
+[15:47] <bregma> doesn't *fail* any tests either
+[15:47] <mterry> :)
+[15:47] <mterry> larsu, ^
+[15:48] <didrocks> mterry: oh, I don't even know, this one wasn't even looked at :)
+[15:48] <mterry> didrocks, ah well.  all its tests pass man!
+[15:48] <didrocks> mterry: hem hem :p
+[15:48] <larsu> mterry, I'm fixing a couple of issues in it, I didn't plan on adding tests (but I guess I could since it turns out I'm making quite some changes)
+[15:49] <larsu> I wonder if there's a good way already to test telepathy components
+[15:49] <mterry> larsu, we love tests to pieces
+[15:49] <sil2100> brb
+[15:49] <larsu> so I hear :)
+[15:49] <tedg> larsu, Seems like there should be a dummy telepathy plugin.
+[15:49] <larsu> tedg, yeah, probably. I'll have a look once I get to it
+[15:53] <didrocks> mterry: so at least, prepping the package inline if not already done meanwhile :)
+[15:53] <mterry> cyphermox, let me see those build logs for gtk2/gtk3.  maybe I'll catch something
+[15:53] <mterry> didrocks, guh you're right, it's not inline
+[16:04] <cyphermox> mterry: I have a branch for inlineing telepathy-indicator
+[16:05] <mterry> cyphermox, oh nice
+[16:05] <mterry> good thing I didn't start that immediately
+[16:05] <cyphermox> yeah
+[16:05] <cyphermox> didrocks: you had already reviewed it too:
+[16:05] <mterry> :)
+[16:05] <cyphermox> mterry: https://launchpadlibrarian.net/127835347/buildlog_ubuntu-raring-i386.libappindicator_12.10.9-0ubuntu1~mtrudel1_FAILEDTOBUILD.txt.gz logs for gtk2 vs. gtk3
+[16:05] <mterry> didrocks, btw, I finally set up vpn
+[16:06] <cyphermox> didrocks: mterry: https://code.launchpad.net/~mathieu-tl/telepathy-indicator/inline/+merge/137366
+[16:07] <mterry> cyphermox, is there a libappindicator branch that enables tests?
+[16:07] <cyphermox> mterry:
+[16:08] <cyphermox> https://code.launchpad.net/~mathieu-tl/libappindicator/fix-tests
+[16:08] <mterry> cyphermox, awesome.  I'll play with it and see if I notice anything
+[16:09] <cyphermox> mterry: thanks
+[16:10] <alesage> perhaps I should set up a Jenkins job for telepathy-indicator
+[16:11] <alesage> if no-ones aware of one existing :)
+[16:11] <cyphermox> right
+=== dandrader is now known as dandrader|lunch
+=== amithkk is now known as mechanobot
+[16:59] <didrocks> mterry: sweet on vpn \o/ (sorry still on a hangout)
+[17:23] <MCR1> Trevinho, thanks 4 approval ;)
+[17:24] <Trevinho> MCR1: yw ;)
+=== dandrader|lunch is now known as dandrader
+[18:29] <mterry> cyphermox, so the libappindicator seems to be because of the warnings themselves spit out by at-spi2 (vs at-spi1 for gtk2).  Any stderr output fails the test.
+[18:30] <mterry> cyphermox, I'm not sure whether it's better to try to make at-spi2 happier or allow stderr output
+[18:30] <cyphermox> just that, seriously?
+[18:30] <cyphermox> thing is, seems to me like both should complain equally if the issue is that it's missing a display
+[18:30] <mterry> cyphermox, I added a simple g_warning to one of the tests and it failed it
+[18:30] <cyphermox> both should have a display set ;)
+[18:30] <cyphermox> right
+[18:30] <cyphermox> well, it makes sense
+[18:31] <mterry> cyphermox, yeah, but different at-spi implementations
+[18:31] <cyphermox> I was trying to make at-spi happy really by figuring out why it can't see it has a display
+[18:31] <cyphermox> but I didn't have much luck
+[18:31] <mterry> hm
+[18:31] <mterry> then maybe easier to allow stderr  :)
+[18:31] <cyphermox> in theory the tests are supposed to be run in xfvb already
+[18:31] <mterry> I think these tests all use g_assert to fail the things they care about
+[18:31] <mterry> agreed
+[18:31] <cyphermox> or gtester / dummy X
+[18:32] <mterry> I tried switching to xvfb-run, but that didn't help
+[18:32] <cyphermox> but yeah, can we have the tests ignore stderr?
+[18:32] <mterry> Or maybe we could turn off at-spi all together?
+[18:32] <mterry> I don't know how to ignore stderr yet, but that might be easier
+[18:33] <cyphermox> I don't know how to do either ;)
+[18:33] <cyphermox> seems very wrong to have stderr fail for these tests though; because there are so many dependencies and many we don't care so much about
+[18:33] <mterry> That's a part of gtest I believe (not gtester)
+[18:34] <mterry> yeah, seems not-robust since these tests use asserts to test the interesting bits
+[18:34] <cyphermox> it adds unnecessary complexity and uncertainty to the tests if they depend on all the external deps to be properly configured enough to be happy and not spew to stderr
+[18:34] <cyphermox> aye
+[18:35] <cyphermox> and that's what tests should do -- depend on nothing at all, or the least possible, and assert whatever needs assertin'
+[18:35] <cyphermox> but heh
+[18:36] <mterry> well, I'll look into making gtest happy
+[18:36] <mterry> with stderr
+=== parasight_ is now known as parasight
+=== dandrader is now known as dandrader|afk
+[19:53] <noclue> hello
+=== dandrader|afk is now known as dandrader
+[20:07] <mterry> cyphermox, oh btw: http://paste.ubuntu.com/1513984/
+[20:07] <mterry> cyphermox, sorry for delay.  Had unrelated pbuilder problems and then I forgot  ;)
+[20:07] <mterry> cyphermox, it seems to work for me
+[20:08] <cyphermox> weee
+[20:08] <cyphermox> nice
+[20:08] <mterry> Although... Actually I might have only tested a subset of the tests
+[20:08] <mterry> well
+[20:08] <cyphermox> anyway, np; I was trying to make sense of the NM patches, seeing which ones could be dropped or sent upstream, before I start to mess with the proxy stuff
+[20:08] <mterry> If you see other tests failing that I forgot to uncomment before submitting to you, just use the same trick
+[20:09] <cyphermox> mterry: got a branch now
+[20:09] <cyphermox> ?
+[20:09] <cyphermox> or do you mean I should apply this patch?
+[20:09] <mterry> cyphermox: I was thinking just the patch
+[20:09] <cyphermox> ok
+[20:10]  * mterry is lazy, though I realize it was probably more work to make the patch
+[20:10] <cyphermox> bah, I'll just add it to my branch and push it
+[20:10] <cyphermox> (or anyway, submit a MP)
+[20:29] <cyphermox> mterry: were you trying in a ppa or locally?
+[20:29] <cyphermox> IIRC it was only really failing in ppa
+[20:30]  * cyphermox is trying now
+[20:30] <mterry> I saw it failing in a chroot.  And I just retested my patch and it fails again in a chroot.   :(
+[20:30] <mterry> Gosh darn it
+[20:30] <cyphermox> holy crap, there's still so much delay in getting ppa builds :(
+[20:31] <cyphermox> I hate this, it's so annoying
+[20:31] <cyphermox> I really need to setup a good PPA-like rig on my server to run no-web-access-no-nothing builds that get all the dependencies
+[20:32] <cyphermox> mterry: I tried to setup soyuz on a container a few times but it takes too long, I never have time to finish and then I get lost in the steps :P
+[20:34] <cyphermox> I think I'll hire my friend and give him acces to my server to get this done
+[20:34] <mterry> :)
+[20:34] <mterry> Well, for now assume my patch is bad.  :(  I'll work more on it
+[20:35] <cyphermox> ack
+[20:37] <cyphermox> mterry: that's usually the problem though, things work in sbuild and pbuilder, but fail when it gets to the ppa
+[20:37] <cyphermox> it seems to be due to some little parts of the environment are available when you run things in sbuild or pbuilder, because they are running on your system
+[20:38] <cyphermox> I ran things on my server too, and things tend to work there as well, but it *does* have a little more than just ubuntu-minimal or whatever is on a soyuz chroot
+[20:38] <mterry> cyphermox, that's fair, but this was actually me not testing well enough in my own darn chroot  ;)
+[20:39] <cyphermox> mterry: fair enough ;)
+[20:39] <cyphermox> it seemed fishy anyway
+[20:39] <cyphermox> the two tests that fail seem to be only set-menu and set_label or whatever
+[20:39] <mterry> It got me further.  I think this is roughly the right path...  Maybe
+[20:40] <cyphermox> it seems the right path yeah
+[20:40] <mterry> Now I have to figure out why it was working sort of before
+[20:40] <cyphermox> even for indicator-session locally, the test usually works, but sometimes it times out
+[20:41] <cyphermox> mterry: feels kind of like this: https://www.youtube.com/watch?v=yjpd9D4Kc4Q
+[20:42] <mterry> :)
+[21:45] <highvoltage> hi!
+[21:45] <highvoltage> in edubuntu we want to set 2 dconf values in org.compiz.profiles.unity.plugins.unityshell
+[21:46] <highvoltage> but the schema for that doesn't exist by default so we can't override it
+[21:46] <highvoltage> is that a bug or are we doing it wrong?
+=== salem_ is now known as _salem

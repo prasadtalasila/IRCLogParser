@@ -1,0 +1,125 @@
+=== dfc is now known as Guest82651
+=== zz_chihchun is now known as chihchun
+=== plars-off is now known as plars
+=== XorA is now known as XorA|gone
+=== solarcloud_AFK is now known as solarcloud_3scrn
+=== hrww is now known as hrw
+[07:49] <dholbach> good morning
+[08:41] <jodh> I've updated the wiki with details of dual-booting with MultiROM: https://wiki.ubuntu.com/Nexus7/Installation#Details_of_installing_MultiROM_and_Modified_Recovery_to_Enable_Dual-Boot. Would be great if someone could "test" this section (and maybe add screenshots ;-)
+[09:30] <dholbach> jodh, I made a tiny few little changes to the doc: https://wiki.ubuntu.com/Nexus7/Installation?action=diff&rev2=28&rev1=27
+[09:31] <dholbach> jodh, trying to boot raring-preinstalled-deskto give me "Error - Kexec-hardboot support required to boot this ROM. Use kernel with kexec-hardboot support. Touch anywhere to close"
+[09:31] <dholbach> booting "Internal" seems to work though
+[09:32] <jodh> dholbach: sounds like you forgot to flash the kexec kernel (step 25).
+[09:32] <dholbach> weird - let me retry
+[09:32] <jodh> dholbach: you can go back and do that now if you boot into the bootloader, then into recovery and select MultiROM.
+[09:33] <dholbach> let me try
+[09:56] <dholbach> jodh, that made it work - perfect
+[09:56] <jodh> dholbach: great! :)
+[10:00] <dholbach> ogra_, looks like the background is still corrupted during oem-config - also onboard was hidden by the wifi dialog, so I couldn't enter anything in there
+[10:01] <dholbach> hum, I can't enter anything at all?
+[10:01] <ogra_> dholbach, both known issues, i wonder if we should switch back to metacity
+[10:01] <ogra_> a reboot fixes the input issue
+[10:01] <dholbach> do we have bug reports for both?
+[10:01] <ogra_> i think so
+[10:04] <dholbach> can't find either of them
+[10:05] <ogra_> bug 1093050
+[10:05] <ubot2> Launchpad bug 1093050 in ubuntu-nexus7 "OnBoard doesn't work on text boxes during initial setup" [Medium,Incomplete] https://launchpad.net/bugs/1093050
+[10:05] <ogra_> is the input one
+[10:05] <dholbach> ah yes, I must have overlooked that one
+[10:05] <ogra_> bug 1080437 is one incarnation of the other issue
+[10:05] <ubot2> Launchpad bug 1080437 in ubiquity (Ubuntu Raring) "no background during the 13.04 daily install" [High,Confirmed] https://launchpad.net/bugs/1080437
+[10:06] <ogra_> or bug 1088692
+[10:06] <ubot2> Launchpad bug 1080674 in cairo "duplicate for #1088692 [QEMU] Corrupted desktop screen for raring desktop installation in QEMU guest (Cirrus graphics). Affects KVM but not VBox." [Medium,Confirmed] https://launchpad.net/bugs/1080674
+[10:06] <dholbach> ah ok, I was just looking at https://bugs.launchpad.net/ubuntu-nexus7 nevermind
+[10:07] <ogra_> or it could be bug  1081260
+[10:07] <ubot2> Launchpad bug 1081260 in ubiquity (Ubuntu) "/usr/lib/ubiquty/wallpaper crashes after boot of livecd" [Undecided,Confirmed] https://launchpad.net/bugs/1081260
+[10:07] <ogra_> not sure about that one, but it is cosmetic anyway
+[10:07] <ogra_> the input one is worse
+[10:08] <ogra_> jodh, be very careful about the dual boot images, afaik the userspace has some very heavy hacks, i'm not sure we can accept bugs from such an install
+[10:11] <xnox> I managed to get a wallpaper to work - instead of wallpaper use gnome-settings-daemon to paint the wallpaper, which doesn't help derivatives =(
+[10:14] <ogra_> jodh, in fact i would prefer if we would not have any instructions on the wiki that make them look official and just have the XDA link instead so people grok it is some modified third party image
+[10:16] <ogra_> xnox, well the input stuff is more worrying than shiny wallpapers :)
+[10:16] <ogra_> (which we could just call modern art :P )
+[10:19] <jodh> ogra_: feel free to remove them if you wish. I appreciate there are risks, but I thought I'd share as imho it might encourage more to explore Ubuntu on the Nexus if they could keep the existing image.
+[10:19] <dholbach> yes, we had a number of requests already
+[10:19] <dholbach> what kind of "heavy hacks" were you referring to?
+[10:19] <jodh> ogra_: added to which, the existing instructions on dual-booting that I'd found on the web were confusing at best ;)
+[10:21] <jodh> ogra_: just a thought - if we keep the instructions, is there any way we could have apport detect that the Ubuntu image was booted via kexec and thus flag any bugs raised as "potentially tainted" (particularly useful for kernel bugs I guess).
+[10:24] <ogra_> dholbach, look at the xda thread
+[10:24] <ogra_> i havent inspected them
+[10:24] <ogra_> until someone has i wouldnt recommend that image on the official install instructions
+[14:34] <reisei> hi, all! Can I access the Nexus 7 accelerometer from Ubuntu? I need to get the values,
+[14:36] <Tassadar> reisei: take a look at http://bazaar.launchpad.net/~jani/+junk/nexus/view/head:/nexus.go
+[14:37] <Tassadar> accelerometer is used in there to rotate the screen
+[14:38] <reisei> Tassadar: but I need just the values :)
+[14:38] <Tassadar> that's why I said take a look, there is the path to accelerometr data in there
+[14:39] <Tassadar> this looks like it's folder: /sys/bus/iio/devices/iio:device0/
+=== cmagina_away is now known as cmagina
+[14:40] <ogra_> Tassadar, long outdated
+[14:40] <ogra_> the images already have accel support
+[14:40] <Tassadar> well yeah, I just wanted to show him how to access the data, and it is pretty easy to see in that code
+[14:41] <ogra_> reisei, make sure to have the latest ubuntu-defaults-nexus7 package installed, it ships accelerometer support
+[14:41] <ogra_> in /usr/bin/acceld is the very simple shellscript that reads the values
+[14:41] <Tassadar> oh, okay
+[14:42] <ogra_> i'll add something similar for the ambient sensore the next days
+[14:42] <ogra_> *sensor
+[14:52] <reisei> ogra_: thanks!
+[14:52] <reisei> Tassadar: thanks too!
+[16:17] <plars> ogra_: hi, around?
+[16:17] <plars> ogra_: we talked last week about having a fully installed image for n7, is that available now?
+[16:17] <ogra_> plars, sorry, i'm a bit behind but working on it
+[16:18] <plars> ogra_: no worries, any ETA?
+[16:18] <ogra_> but you wouldnt have any fun with it anyway until we have images again ...
+[16:19] <ogra_> seems the livefs builder park is moving or so, the last three image build attempts failed and #is couldnt give me an ETA
+[16:19] <plars> ogra_: ah, I saw there is no image since 20th, but wasn't sure what was wrong
+[16:19] <ogra_> plars, i plan to have the code ready and uploaded tomorrow during my day, but you will need the stuff built into the image to use it
+[16:20] <plars> ogra_: ok, sounds good
+[16:20] <ogra_> with luck they are back again tomorrow, i'll make sure you get an image with the bits inside once they are
+[16:21] <jragon> Hi
+=== chihchun is now known as zz_chihchun
+[16:27] <ogra_> achiang, bug 1103000, do you remember why we dropped that patch ? i forgot why, i just remember many things were broken when we tried
+[16:27] <ubot2> Launchpad bug 1103000 in ubuntu-nexus7 "Need to charge from USB hub with power connector" [Undecided,New] https://launchpad.net/bugs/1103000
+[16:28] <achiang> ogra_: hm, i think it caused hangs
+[16:28] <achiang> ogra_: like it broke the rest of USB
+[16:29] <achiang> ogra_: but janimo would know for sure
+[16:29] <ogra_> oh, right, i remember now, yeah, it broke the whole USB stack
+[16:30] <ppisati> how do i tell flash-kernel to install my $dtb?
+[16:30] <ogra_> ppisati, i doubt it has any DTB support at all yet
+[16:30] <ppisati> ah
+[16:30] <ogra_> apart from kernels where you cat'ed the dtd at the end
+[16:31]  * ppisati wonders again why we updated flash-kernel...
+[16:31] <ppisati> ogra_: attached dtb is not an option for multiplatform
+[16:32] <ogra_> ppisati, indeed
+[16:32] <ogra_> ppisati, file a whishlist bug ... some code how you would do it manually would also help
+[16:32] <ogra_> i'll try to get to it
+[16:33] <ppisati> ogra_: i'll do once i push my fist multiplatform kernel (probably tonight or tomorrow)
+[16:33] <ogra_> k, thx
+[16:33] <ogra_> ppisati, and we updated because the former version was even more painful
+[16:34] <ppisati> ogra_: the previous version had more stuff hardcoded, but it had DTB support
+[16:34] <ppisati> ogra_: i just decided to update my im6x to latest flash-kernel to try it out
+[16:34] <ppisati> ogra_: and it was a bad decision :)
+[16:34] <ogra_> i could have told you :P
+[16:35] <ppisati> anyhow
+[16:36] <ppisati> it i like the /usr/share/flash-kernel/db/
+[16:36] <ppisati> s/it//
+[16:37] <ppisati> */usr/share/flash-kernel/db/ thing
+[16:37] <ogra_> yeah, thats the biggest benefit the upgrade brought us
+=== nemik_ is now known as nemik
+[16:47] <Tassadar> ogra_: should I add ubuntu-nexus7 as affected project to bug 1089038? It is relevant mostly to nexus 7, and now it is just sitting among all other bugs in initramfs-tools package
+[16:47] <ubot2> Launchpad bug 1089038 in initramfs-tools (Ubuntu) "[PATCH] Add support for booting from subdirectory in root" [Undecided,Confirmed] https://launchpad.net/bugs/1089038
+[16:48] <ogra_> well, its a pretty generic initramfs feature, i dont thinnk its nexus7 related
+[16:51] <Tassadar> okay, I just felt like I should try to push things a bit from time to time
+[16:52] <ogra_> well, the review team is subscribed, no need for making noise
+[16:52] <ogra_> it will be in the sponsoring/reviewers queue
+[16:53] <ogra_> though your chances are likely higher to get it in if you send it to debian, it adds additional delta to debians initramfs-tools
+[16:54] <ogra_> which ubuntu will have to maintain
+[16:54] <Tassadar> I've sent it to ubuntu because I use it in my multi-boot tool, but it also needs the loop option (mounts image as root), which is only in ubuntu
+[16:55] <ogra_> yes, still, its a burden ubuntu would have to carry
+[16:56] <ogra_> having it in debian will get it us for free
+[16:56] <Tassadar> maybe I could send both to debian....
+[16:57] <ogra_> right, that surely makes things easier on the ubuntu side
+=== XorA|gone is now known as XorA
+=== yofel_ is now known as yofel
+[20:08] <sim590> Anyone's got an idea why a partition table would just disappear?
+[20:09] <sim590> I just booted my TF101 today and my partition table was gone..
+=== solarcloud_3scrn is now known as solarcloud_AFK

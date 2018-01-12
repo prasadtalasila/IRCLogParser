@@ -1,0 +1,70 @@
+[11:48] <bac> morning frankban, teknico.
+[11:48] <frankban> hi bac 
+[11:49]  * bac starts reviewing
+[11:49] <teknico> bac, good morning
+[11:49] <bac> teknico: better today?
+[11:50] <teknico> bac, yes, much better, thanks :-)
+[11:51] <bac> frankban: first one done.  land away
+[11:52] <frankban> thanks!
+[12:10] <bac> frankban: 'file not found' reviewed.  teknico can you do a second review?
+[12:11] <bac> teknico: nm, i see you're on it
+[12:11] <teknico> bac, I am :-)
+[12:11] <frankban> bac, teknico: thanks
+[12:12] <frankban> bac: I think the comment you suggested makes sense
+[12:24] <bac> frankban: good
+[13:39] <bac> hi teknico, do you have a moment to chat about bug 1102640?
+[13:39] <_mup_> Bug #1102640: Selecting a target service when adding a relation brings up the menu <juju-gui:Triaged> < https://launchpad.net/bugs/1102640 >
+[13:47] <bac> hi bcsaller
+[13:50] <bcsaller> hey :)
+[14:05]  * teknico is back from lunch
+[14:05] <teknico> bac, sure
+[14:06] <bac> sorry bcsaller, i didn't see you respond.  i was going to ask if your branch fixed bug 1102640 but i see it didn't
+[14:06] <_mup_> Bug #1102640: Selecting a target service when adding a relation brings up the menu <juju-gui:Triaged> < https://launchpad.net/bugs/1102640 >
+[14:06] <bac> teknico: ok, regular hangout?
+[14:07] <teknico> bac, yep
+[14:08] <bcsaller> bac: That may be covered by the fix, I didn't see that one to specifically include it in testing ,checking now
+[14:09] <bcsaller> bac: appears to be fixed as well
+[14:09] <bac> bcsaller: not really
+[14:09] <bac> on call.  want to join?
+[14:09] <bcsaller> bac: yeah
+[14:13] <frankban> bac, bcsaller: one test fails in trunk, adding the trivial fix in my current branch, landing soon.
+[14:18] <bac> frankban: thanks
+[14:18] <bcsaller> frankban: thanks
+[14:53] <gary_poster> you guys rock, thank you
+[15:27] <bac> bcsaller: i think i fully understand what is going on now...but not how to fix it.  can we chat before or after the standup?
+[15:27] <bcsaller> bac: sure
+[15:34] <bac> alejandraobregon, goodspud, teknico, benji: call now
+[15:35] <alejandraobregon> bac: hi, we're at the sprint in a meeting, sorry we can't join..
+[15:35] <bac> alejandraobregon: right, forgot
+[15:35] <alejandraobregon> bac: no worries
+[15:42] <bac> bcsaller: can you give me a quick idea on where to make the framework changes?
+[15:44] <bcsaller> bac: it looks like we *could* but don't need to. app/assets/javascripts/d3-components.js:202 We do assign the global d3.event object
+[15:44] <bcsaller> and can use that to cancel the event
+[15:45] <bcsaller> so the proper fix should be available now
+[15:46] <bac> bcsaller: oh, nice
+[16:35] <bac> bcsaller: using d3.event to preventDefault did not prevent serviceClick from being called.  a crude work-around that does work is http://paste.ubuntu.com/1560040/
+[16:38] <bcsaller> bac: I think you want stopPropagation, not preventDefault
+[16:38] <bac> bcsaller: ok i'll try that
+[16:43] <bac> bcsaller: neither stopPropagation nor stopEvent prevent serviceClick from being called
+[16:44] <bcsaller> bac: hmm, that seems wrong because it should. I'll poke around a bit but don't let that interfere with what you're doing.
+[16:44] <bac> bcsaller: did you note i was using d3.event.sourceEvent?  the actuall d3.event doesn't have those methods.
+[16:45] <bac> bcsaller: i'm going to grab some lunch
+[16:45] <bcsaller> The event facade should have them as well, but I'll look into it more, thanks
+[16:47] <therve> is the gui supposed to work in firefox?
+[16:47] <therve> I can't make it work for some reason here
+[16:47] <therve> but it works in chromium
+[16:55] <gary_poster> therve, not really, no.  We occasionally make sure it works in FF but we won't say it is supported until we have something like daily CI tests for the browser.  That's almost certainly happening in the next two months.  Meanwhile, we use chromium because it is wildly faster, particularly for the things we are doing.
+[17:02] <gary_poster> Medium priority: FF seems to be broken.
+[17:12] <hazmat> gary_poster, bummer
+[17:12] <gary_poster> y
+[21:05] <bac> bcsaller, benji: can you have a look at my review?
+[21:05] <benji> bac: sure
+[21:05] <bac> thanks
+[21:06] <bcsaller> bac: doing it now
+[21:06] <bac> great
+[21:10] <bac> bcsaller: i attempted to come up with a test but so far have not been able to craft one
+[21:11] <bac> bcsaller: the existing test doesn't simulate click events but calls the underlying methods directly.
+[21:11] <bac> bcsaller: so, i'll make a card and perhaps collaborate with someone tomorrow to figure out how to get something working
+[21:11] <bcsaller> bac: a card is fine. 
+[22:03] <benji> away
+[22:31] <gary_poster> goodspud, try http://10.19.1.40:8888/

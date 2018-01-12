@@ -1,0 +1,252 @@
+=== chiluk is now known as chiluk_away
+=== dayangkun_ is now known as dayangkun
+[06:52] <amitk> apw: smb: can you remind me again how we deal with ABIs? Why Ubuntu-3.5.0-21.32 is actually a 3.5.7 kernel?
+[08:04] <ppisati> moin
+[08:16] <smb> ppisati, moin moin
+[08:17] <smb> amitk, Not exactly related to ABI :) That is the -21. in the version
+[08:18] <smb> We never reflected the upstream stable number in our version. So that remains always 0
+[08:45] <amitk> smb: That is where I was confused. I was thinking of the -21 as the ABI, but I couldn't remember where the .0 came from
+[08:46] <amitk> smb: so we never change the .0, correct?
+[08:46] <smb> amitk, Right
+[08:46] <amitk> smb: thanks
+[08:47] <smb> amitk, I think that is actually consistent with the orig.tar we use. Which is always the upstream release tarball (except for the accidental version in Hardy which luckily will go away soon)
+[08:50] <amitk> smb: ok, makes sense when thinking of it in relation to the upstream release tarball and diffs
+=== smb` is now known as smb
+=== henrix_ is now known as henrix
+[09:37] <apw> we would have liked to make it 3.8-21 style, but userspace very commonly looks at the kerel version string and asumes it can pull 3*int off the front of it, bad userspace
+[09:37] <amitk> apw: ack, that discussion is coming back to me now...
+[10:30] <caribou> smb: did you notice that the SRU request for the latest crash version got turned down ?
+[10:30] <caribou> smb: https://bugs.launchpad.net/bugs/1064475
+[10:30] <ubot2> Launchpad bug 1064475 in crash (Ubuntu Quantal) "crash version is outdated. Needs to import Debian version of the package" [Medium,In progress]
+[10:31] <smb> caribou, Yes, I saw it yesterday and was just reading through it again right now and thinking about a response
+[10:32] <caribou> smb: ok, just wanted to be sure you were aware of it
+[10:32] <smb> caribou, Yeah, thanks. I am. :)
+[12:52] <ogra_> rtg, gah, seems the config change wasnt enough ... ureadahead still cant find /sys/kernel/debug/tracing/events/fs/do_sys_open (and in fact it isnt there)
+[12:53] <rtg> ogra_, hmm, lemme check into it.
+[12:53] <ogra_> i thought that option would be enough
+[12:55] <ogra_> do we carry any ureadahead specific patch in our main kernel the nexus one could be missing ?
+[12:57] <rtg> ogra_, I don't think so, but I need to check that all the required options are enabled in the N7 kernel. First I have to research what they are :)
+[12:57] <ogra_> heh
+[12:57] <ogra_> k
+[12:57] <ogra_> i'll go on digging here as well
+[13:08] <rtg> apw, do you recall what is required for ureadahead ? AFAICT its just CONFIG_DEBUG_FS=y and CONFIG_FTRACE=y
+[13:10] <ogra_> ENABLE_DEFAULT_TRACERS ?
+[13:12] <apw> rtg, i think so, we might be carrying a patch for a tracepoint
+[13:12] <ogra_> (intrestingly not available on my precise x86 )
+[13:13] <rtg> apw, I was just trying to find if we are carrying a ureadahead patch. if so, its not got ureadahead in the description.
+[13:14] <rtg> apw, likely it was just a tracepoint, right ?
+[13:14] <apw> it was a tracepoint, and i think it was going upstream
+[13:14] <apw>     UBUNTU: SAUCE: trace: add trace events for open(), exec() and uselib()
+[13:14] <apw>     UBUNTU: SAUCE: (no-up) trace: add trace events for open(), exec() and uselib
+[13:14] <rtg> apw, is that raring ?
+[13:15] <apw> (lucid, precise)
+[13:15] <apw>     UBUNTU: SAUCE: (no-up) trace: add trace events for open(), exec() and uselib
+[13:15] <apw> quantal
+[13:15] <rtg> ok, then the N7 kernel would need it 
+[13:15] <apw> same in raring
+[13:15] <apw> so there it is
+[13:16] <apw> from the description i suspect that upstart should be being fixed to no longer need it
+[13:16] <rtg> ogra_, ok, looks like the N7 kernel needs another patch,
+[13:16] <apw> assuming the "syscall trace events whenever that gets merged"
+[13:16] <apw> comment is accurate
+[13:16] <ogra_> yeah
+[13:17] <apw> jodh, hey ... do you look after ureadahead now ?
+[13:19] <apw> rtg, might be steve actually
+[13:20] <rtg> apw, well, I'm pretty sure that patch is needed for N7 regardless.
+[13:20] <apw> rtg, yep i would say so indeed
+[13:20] <ogra_> ...
+[13:20] <ogra_> openat(3, "events/fs/do_sys_open/enable", O_RDWR|O_LARGEFILE) = -1 ENOENT (No such file or directory)
+[13:20] <ogra_> ...
+[13:21] <ogra_> whatever gets me that file in sysfs will do ;)
+[13:21] <rtg> ogra_, if memory serves, ureadahead did its own mounting internally in the program.
+[13:21] <ogra_> ah
+[13:21] <apw> yeah cause it is very very early
+[13:22] <apw> but those may only exist if the trace points exist
+[13:22] <apw> which brings us back to the patch
+[13:22] <ogra_> so it mounts the whole fs subdir ? 
+[13:22] <ogra_> (since all of that is missing here)
+[13:22] <apw> well i think it mounts sysfs doesn't it?
+[13:22] <rtg> it mounts the debugfs file system
+[13:23] <ogra_> k
+[13:23] <apw> debugfs, what he said
+[13:23] <apw> but i suspect the hierachy is made by declaring the tracepoints
+[13:24] <rtg> ogra_, I have an N7 I can test on before I upload again.
+[13:24] <ogra_> ok
+[13:24] <ogra_> you need to drop quiet and splash to see the ureadahead error
+[13:24] <ogra_> though a manual trace from userspace should help as well for testing
+[13:25] <apw> rtg, ogra_, yeah the trace point name match the only ones in fs on my system
+[13:25] <rtg> ogra_, it'll take me a bit since mine is still on Quantal.
+[13:25] <ogra_> great !
+[13:25] <ogra_> rtg, well, i'm up to date, probably uploading it somewhere and me pulling it is faster
+[13:26] <rtg> ogra_, ok, gimme a bit.
+[13:26] <ogra_> no hurry :)
+[13:26] <apw> rtg, by the looks of it this generic framework for syscalls may have made it in
+[13:26] <apw> see /sys/kernel/debug/tracing/events/syscalls#
+[13:27] <apw> we probabally could switch to that and drop the patches
+[13:27] <rtg> apw, perhaps stick that on a blueprint as a work item so we don't forget ?
+[13:27] <apw> ack
+[13:28] <apw> done
+[13:34] <ogra_> rtg, while you're at it, i only ran into the ureadahead issue because i was trying to get plymouth working ... it seemingly has an issue somewhere between fbcon and font handling (running console-setup before plymouth kiks in fixes it apparently) ... comparing the kernel configs, i see 8x8 enabled on x86 while only 8x16 is enabled on the nexus, could you also add 8x8 (in the hope that magically fixes plymouth)
+[13:37] <rtg> ogra_, um, which config option is that exactly ?
+[13:37] <ogra_> oh ...
+[13:37] <ogra_> the option would be CONFIG_FONT_8x8=y
+[13:37] <ogra_> but i just see there is another difference
+[13:37] <rtg> ah, font. I was looking for FB_*
+[13:38] <ogra_> ogra@nexus7:~$ grep FONT /boot/config-3.1.10-8-nexus7 
+[13:38] <ogra_> CONFIG_FONTS=y
+[13:38] <ogra_> gra@anubis:~/Desktop/nexus/kerneltree/nexus7$ grep FONT /boot/config-3.2.0-35-generic 
+[13:38] <ogra_> # CONFIG_FONTS is not set
+[13:38] <ogra_> thats intresting 
+[13:38] <rtg> ogra_, I have CONFIG_FONTS=y, CONFIG_FONT_8x16=y
+[13:39] <ogra_> yep, same here 
+[13:39] <ogra_> but x86 has:
+[13:39] <ogra_> # CONFIG_FONTS is not set
+[13:39] <ogra_> CONFIG_FONT_8x8=y
+[13:39] <ogra_> CONFIG_FONT_8x16=y
+[13:39] <ogra_> i dont really get how CONFIG_FONTS can be unset but the single fonts are still available
+[13:40] <rtg> ogra_, I don't know what that option does. lemme read up on it
+[13:40] <rtg> ogra_, Say Y here if you would like to use fonts other than the default
+[13:40] <rtg>           your frame buffer console usually use.
+[13:41] <ogra_> yeah, reading that too here
+[13:41] <rtg> so 8X8 and 8X16 would be the defaults
+[13:41] <ogra_> ah, k 
+[13:41] <rtg> or 8X16 at least. 8X8 isn't enabled on the N7
+[13:41] <ogra_>  yeah, if i enable it they are preselected 
+[13:41] <ogra_> 8x8 isnt enabled because it was explicitly disabled then
+[13:42] <ogra_> i dont see any reason why 
+[13:42] <rtg> probably
+[13:42] <rtg> ogra_, do you think its impacting plymouth ?
+[13:43] <ogra_> not sure, plymouth hardlocks if i dont cann console-setup first ... or at least setfont 
+[13:43] <ogra_> very hard to debug since i cant get any crash info, but setting the fonts in userspace seems to work 
+[13:44] <ogra_> s/cann/run/
+[13:44] <ogra_> weird typo ...
+[13:44] <apw> henrix, remind me, when i do a derivative with tracking bug, what do i change when i have uploaded it, i did it all wrong last time
+[13:45] <rtg> well, I can turn on 8X8....
+[13:45] <ogra_> in any case setting CONFIG_FONTS and not having 8x8 and 8x16 is a difference to our x86 kernel
+[13:45] <rtg> I'll make them hogeneous
+[13:45] <ogra_> thx
+[13:45] <ogra_> i'll see if that helps ... else i still need to do additional userspace hackery
+[13:46] <ogra_> it at least roules out one potential issue 
+[13:46] <ogra_> -o
+[13:46] <apw> henrix, my reading of the wiki is i should just make the prepare-*'s in_progress and then upload them
+[13:46] <henrix> apw: not sure i understand you're question, but usually you need to set the prepare-package-* tasks to 'in progress'
+[13:47] <henrix> apw: correct
+[13:47] <apw> and will shankbot handle the world from there
+[13:47] <henrix> apw: yep, the bot will monitor the progress
+[13:47] <apw> ok great
+[13:47] <henrix> apw: once the builds are ready, it will set the prepare tasks to 'fix released' and will set the 'promote-to-proposed' to 'in progress'
+[13:48] <apw> ok great
+[13:54] <henrix> apw: oh! i guess you we're talking about the lowlatency kernel... in this case, i believe the process is slightly different because you have the 'upload-to-ppa' task
+[13:55] <henrix> apw: in this case you'll need to set the prepare-package-* tasks manually to 'fix released' and the 'upload-to-ppa' to 'in progress'
+[13:55] <henrix> apw: and then the bot will take over.  it will set the 'upload-to-ppa' to 'fix released' once the packages are built
+=== dayangkun_ is now known as dayangkun
+[13:58] <apw> henrix, ok
+[13:59] <apw> yep presumably that is so 'they' can make the package, and 'we' can shove them in the PPA
+[14:00] <henrix> apw: although i guess that 'they' and 'we' is actually the same person :)
+[14:00] <apw> well no in this case it won't be eventually, this cycle they made the git bit and i am spinning from there
+[14:00] <apw> next time they will make the packages, i hope
+[14:01] <henrix> cool
+[14:03] <herton> apw, henrix, note that you set only prepare-package to 'fix released', and upload-to-ppa to 'in progress', prepare-package-meta can be left to 'in progress' and the bot will take care of it
+[14:03] <herton> it's confusing right now, I have plans to change that, on my todo
+[14:03] <herton> as well as it make "smarter", so if the bug has not the correct states it can try to fix itself
+=== ppetraki_ is now known as ppetraki
+[14:04] <herton> or prepare-package-meta to 'invalid', if there was no abi bump
+[14:15] <apw> herton, that is a mind-bending semantic indeed
+=== chiluk_away is now known as chiluk
+=== pgraner` is now known as pgraner
+[14:29] <rtg> ogra_, http://kernel.ubuntu.com/~rtg/Ubuntu-3.1.10-8.21.1
+[14:30] <rtg> it has the font changes as well as the trace point patch for ureadahead
+[14:30]  * ogra_ downloads
+[14:30]  * rtg -> biab
+=== bipul is now known as Bipul`
+=== Bipul` is now known as bipul
+[14:41] <apw> herton, one for your long-term-todo list for shankbot ... change the title from <to be filled> to a valid version once the packages appear
+[14:45] <apw> herton, and did you as you change the lowlatency task, or you as shankbot
+[14:45] <ogra_> rtg, ureadahead works fine, thanks a lot !
+[14:45] <herton> apw, noted, should be possible to do it. No, I just changed it, that should be in progress
+[14:45] <ogra_> the font changes at least didnt cause any regression, havent tested more yet
+[14:45] <rtg> ogra_, excellent.
+[14:46] <rtg> I'll upload this version then
+[14:46] <apw> herton, i suspect shankbot could fix those too
+[14:46] <herton> apw, yep, I plan to make it able to fix these
+[14:47] <apw> it is quite opaque even with the wiki, i am bound to get this wrong time and time again :)
+[14:47] <apw> herton, and ... that is lowlatency in the pipe for Q and R
+[14:56] <ppisati> apw: UBUNTU: [Config] highbank -- disable DTB install" -- why?
+[14:57] <ogra_> to confuse you :)
+[14:57] <ppisati> indeed
+[14:57] <apw> ppisati, we don't make a highbank kernel anyhow and that bit stopped working
+[14:57] <apw> so i wacked it on the head
+[14:57] <ppisati> ah ok
+[14:57] <apw> bitrot setting in, we won't be able to get it back for much longer
+=== arges_ is now known as arges
+[15:45]  * ogasawara back in 20
+[15:52] <jsalisbury> **
+[15:52] <jsalisbury> ** Ubuntu Kernel Team Meeting - Today @ 17:00 UTC - #ubuntu-meeting
+[15:52] <jsalisbury> **
+[16:55] <ogasawara> bjf: http://reqorts.qa.ubuntu.com/reports/rls-mgr/rls-r-tracking-bug-tasks.html
+[17:01] <jsalisbury> ##  
+[17:01] <jsalisbury> ## Meeting starting now
+[17:01] <jsalisbury> ##
+=== jsalisbury changed the topic of #ubuntu-kernel to: Home: https://wiki.ubuntu.com/Kernel/ || Ubuntu Kernel Team Meeting - Tues January 15th, 2013 - 17:00 UTC || If you have a question just ask, and do wait around for an answer!
+[17:25] <philwyett> Can Toshiba laptop owners have some love and have bug 1048631 looked at and the patch in 3.8 put in raring and precise. Thanks :-)
+[17:25] <ubot2> Launchpad bug 1048631 in linux (Ubuntu) "If electrical cable is plugged in then Toshiba Satellite C855-10M reboots instead of shoutdown " [Medium,Confirmed] https://launchpad.net/bugs/1048631
+=== yofel_ is now known as yofel
+[17:49] <jwi> philwyett: if there's a patch upstream that fixes the bug, you probably want a kernel SRU. see https://wiki.ubuntu.com/StableReleaseUpdates#Kernel
+[17:49] <philwyett> jwi: Ok, will look. Thanks
+=== henrix is now known as henrix_
+=== henrix_ is now known as henrix
+[18:21] <apw> philwyett, if you add the sha1 of the patch you think fixes it, then we can spin you test kernel with it on to confirm, and go from there
+[18:21] <apw> jsalisbury, ^^
+[18:22] <jsalisbury> apw, ack.  philwyett I'll update the bug and spin up a test kernel.
+[18:23] <apw> henrix, did i just hear we are respinning some of the kernels ?
+[18:23] <henrix> apw: yep, we need to respin P and Q
+[18:23] <apw> balls
+[18:24] <henrix> right, you need to respin lowlatency as well... :-/
+[18:24] <bjf> apw, why?
+[18:24] <bjf> oh
+[18:24] <apw> bjf, cause i just got them to spin lowlatency, and reviewed and sponsored them
+[18:24] <philwyett> apw, jsalisbury: https://bugs.launchpad.net/ubuntu/+source/linux/+bug/1048631/comments/48
+[18:24] <ubot2> Launchpad bug 1048631 in linux (Ubuntu) "If AC electrical cable is plugged in then certain model Toshiba laptops reboot instead of shutdown" [Medium,Confirmed]
+[18:25] <bjf> apw, well, the good news is that we are skipping the next cycle
+[18:25] <bjf> apw, we are just going to make this one really, really painful :-P
+[18:25] <apw> heh
+[18:26] <henrix> apw: its a pita to sync with everyone prep'ing kernels: stable team, lowlatency (you), armadaxp (ike), ...
+[18:26] <jsalisbury> philwyett, thats great.  so this should be automatically fixed in Raring when we rebase to v3.8.  I'll look and see if it will be queued for upstream stable and see how easy a backport would be.
+[18:26] <henrix> apw: ah, and the testing team, as they may start testing ahead
+[18:26] <apw> yeah, i wonder if we are asking too early to prep them, hmmm
+[18:27] <jsalisbury> philwyett, can you test v3.8-rc2 to confirm the bug is fixed: http://kernel.ubuntu.com/~kernel-ppa/mainline/v3.8-rc2-raring/
+[18:27] <jsalisbury> philwyett, if it is, please update the bug.
+[18:27] <jsalisbury> philwyett, we can then look at getting in into stable releases
+[18:27] <apw> jsalisbury, thanks
+[18:27] <philwyett> jsalisbury: Thanks will do and adjust bug as necessary.
+[18:28] <jsalisbury> philwyett, great, thanks!
+[18:28] <jsalisbury> apw, anytime ;-)
+[18:32]  * rtg -> lunch
+[18:56] <bjf> rtg, i did get raring and the 3.8 rc2 kernel installed on my intel box. nouveau is working just fine right now.
+[18:57] <bjf> rtg, i'll be able to do more testing when the dkms pkg is ready
+[18:59] <rtg> bjf, tseliot says it won't be ready until tomorrow
+[18:59] <bjf> rtg, that's ok with me
+[19:04] <philwyett> jsalisbury: Updated bug report. 3.8.0-rc2 mainline worked fine. Laptop shutdown correctly.
+[19:23] <jsalisbury> philwyett, great.  I'll see if it's already been submitted for stable and update the bug.
+[19:23] <philwyett> jsalisbury: Superb.  Many thanks.
+[19:24] <jsalisbury> philwyett, np.  thanks for testing.  I may have a stable kernel for you to test if that's ok.  I'll update the bug if it's needed.
+[19:25] <philwyett> jsalisbury: That's fine. Anythinng to help.
+[19:26] <jsalisbury> philwyett, thanks
+[19:28] <bjf> rtg, 3.8-rc8 kernel works fine on macbook-air
+[19:28] <rtg> bjf, cool
+[19:29] <rtg> bjf, its actually -rc2
+[19:29] <bjf> finger-bug
+[19:35] <jsalisbury> philwyett, it looks like commit b7e3830 wasn't cc'd to stable.  The commit applied cleanly to Precise.  I'll build a Precise test kernel and post a link to it in the bug.  If all goes well I'll send a request upstream for inclusion in 3.2.
+[19:38] <philwyett> jsalisbury: Will you also build the lts-quantal kernel? I can test 3.2 of course but I use the lts-quanttal kernel due too bug 1088829
+[19:38] <ubot2> Launchpad bug 1088829 in linux (Ubuntu) "USB devices not detected in USB 3.0 ports" [Medium,Incomplete] https://launchpad.net/bugs/1088829
+[19:39] <jsalisbury> philwyett, I can also build a Quantal kernel for testing.
+[19:39] <philwyett> jsalisbury: Nice one.
+[19:39] <jsalisbury> philwyett, are you using amd64 or i386?
+[19:39] <philwyett> amd64
+[19:40] <jsalisbury> philwyett, great.  I'll post links to the bug shortly.
+[19:40] <philwyett> jsalisbury: Thanks.
+[21:01]  * rtg -> EOD
+=== henrix is now known as henrix_
+=== sabayonuser2 is now known as Tuxkalle
+=== chiluk is now known as chiluk_away
+=== kentb is now known as kentb-out

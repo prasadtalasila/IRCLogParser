@@ -1,0 +1,74 @@
+[00:50] <xnox> doko: partially reverted devscripts upload (re-introduced python2 public module) to unbreak ubuntu-dev-tools (e.g. update-maintainer & pull-lp|debian-source)
+[00:50] <xnox> bug 1099091
+[00:50] <ubot2`> Launchpad bug 1099091 in devscripts (Ubuntu) "pull-debian-source crashed with ImportError in __main__: No module named devscripts.logger" [Medium,Confirmed] https://launchpad.net/bugs/1099091
+[01:22] <infinity> xnox: I think that's pretty much exactly what doko had planned to do, except for the python:Depends (he was planning to leave that undeclared)
+[01:37] <superm1> cjwatson: i was just taking a look to see the 12.04.2 candidate images for mythbuntu and noticed that i386 is erroring out during the cdimage generation.  it's at least effecting mythbuntu and kubuntu it looks like, but xubuntu is working
+[01:42] <infinity> Were mythbuntu and kubuntu going to be doing point releases?
+[01:42] <superm1> Yeah
+[01:42] <superm1> well mythbuntu yes, i'm not sure if kubuntu was
+[01:43] <superm1> mythbuntu isn't doing the interim ubuntu releases from LTS to LTS, so to keep up with new HWE we're doing point releases
+[03:05] <ScottK> infinity: Yes.
+[03:06] <ScottK> Kubuntu has always done them before.
+[03:08] <infinity> Kay.  Well, we'll make sure they build. :P
+[04:17] <micahg> infinity: xubuntu should be participating in 12.04.2 as well
+[05:00] <superm1> infinity: what's the magic that pulls in the quantal xorg and kernel stack into the images?  it didn't seem to be through seeds.
+[05:02] <micahg> superm1: https://launchpad.net/ubuntu/precise/+source/livecd-rootfs/2.65.7
+[05:03] <superm1> ah gotcha.  so that will need to rev again for all the other flavors doing the same thing
+[05:42] <infinity> cjwatson: Kernels in precise-proposed should be in a reasonably stable state, by the way.
+[05:42] <infinity> cjwatson: (Sorry, would have released them earlier, but got sidetracked most of the day with the new PPC buildd)
+[09:17] <xnox> infinity: well it took me ~ same time to upload the fix as it would have to fetch the old deb and downgrade =)
+[09:18] <infinity> xnox: Works for me.  I try to avoid python packaging if I can help it, so I was leaving it to someone else. :P
+[09:20] <xnox> discrimination =)
+=== henrix_ is now known as henrix
+[09:46] <psivaa> cjwatson: xnox: the raring desktop images failed to build, unity appear to have unmet dependencies, is there a bug open for that yet?
+[09:47] <infinity> psivaa: Oh, it's probbaly just a component mismatch.
+[09:47] <infinity> psivaa: Fixed.
+[09:48] <xnox> psivaa: well, it's visible here: http://people.canonical.com/~ubuntu-archive/testing/raring_probs.html as well.
+[09:48] <xnox> so no need for a bug report.
+[09:48] <xnox> infinity: thanks.
+[09:49] <cjwatson> superm1: Do you intend to use the quantal xorg and kernel stacks, then?
+[09:49] <psivaa> infinity: xnox: ok thanks
+[10:52] <xnox> I don't seem to be getting emails when sponsoring into "raring" (auto-override  -> raring-proposed).
+[11:02] <infinity> cjwatson: Care to give a quick nod to the linux-meta-ac100 uploads in precise/quantal for me?  They match changes made in all the other metas in the current SRU rounds and in Q/R.
+[11:03] <infinity> cjwatson: (The quantal version is intentionally higher than the raring one, I intend to copy it over once it's through the process, since the ac100 kernerls are identical in Q/R)
+[11:06] <smartboyhw> ASWRYIO[\
+[11:16] <cjwatson> infinity: done
+[11:17] <cjwatson> infinity: precise kernels are all built ready for d-i acceptage now, right?
+[11:22] <cjwatson> oh, you said yes above
+=== yofel_ is now known as yofel
+=== henrix is now known as henrix_
+=== henrix_ is now known as henrix
+=== doko_ is now known as doko
+=== rsalveti_ is now known as rsalveti
+=== Ursinha_ is now known as Ursinha
+=== zequence_ is now known as zequence
+[15:09] <superm1> cjwatson: yes that was the plan.  we'd be doing our point releases with the updated stacks
+[15:10] <superm1> so that people with newer hardware still had the ability to install our point releases too
+[16:03] <cjwatson> infinity: uploading a new ubuntu-meta with the linux-headers recommendations removed entirely
+[17:44] <infinity> cjwatson: Oh, hrm.  While you were fixing the linux-headers/desktop-recommends business, doing the other arches might have been nice too. :)
+[17:44] <cjwatson> infinity: The others didn't have such deps
+[17:44] <cjwatson> <cjwatson@sarantium ~/src/ubuntu/ubuntu-meta/precise/ubuntu-meta-1.267.1>$ grep linux-headers *
+[17:44] <infinity> Oh, indeed, armel used to, but that got fixed.
+[17:44] <cjwatson> <cjwatson@sarantium ~/src/ubuntu/ubuntu-meta/precise/ubuntu-meta-1.267.1>$
+[17:45] <infinity> Nevermind, then. :P
+[17:48] <infinity> cjwatson: And for livecd-rootfs, mythbuntu seems to be missing xserver-xorg-lts-quantal?
+[17:48] <infinity> cjwatson: Or did they just want the kernel, but not X?
+[17:49] <cjwatson> Whoops
+[18:00] <bdmurray> is it just me or does the cups upload in the quantal proposed queue seem heavy handed?
+[18:01] <cjwatson> infinity: uploaded an improved version
+=== hggdh is now known as hggdh_AFK
+[18:08] <infinity> bdmurray: Ugh.  Yes.
+[18:08] <infinity> bdmurray: "daemons get auto-respawned" is no reason to ignore crashing software.
+[18:11] <bdmurray> infinity: right, exactly
+[18:12] <infinity> Oh, that reminds me, I should reject doko's eglibc in the queue before someone else accepts it.
+[18:12] <infinity> (I plan to replace it with something with a few more fixes, not reject it outright)
+[18:13] <infinity> bdmurray: I'm also not sure what he means by "due to the temporarily introduced ..."
+[18:13] <infinity> bdmurray: That seems to imply an SRU that he plans to back out? :P
+=== jbicha_ is now known as jbicha
+=== Ursinha is now known as Ursinha-afk
+=== Ursinha-afk is now known as Ursinha
+[19:25] <micahg> cjwatson: can I be added for notifications for the precise xubuntu ISOs as well?
+[19:30] <superm1> thanks cjwatson
+=== henrix is now known as henrix_
+[23:56] <bdmurray> perhaps update-manager in quantal could be fast tracked - it fixes bug 1097907
+[23:56] <ubot2`> Launchpad bug 1097907 in update-manager (Ubuntu Quantal) "Cannot upgrade from quantal (12.10) to raring (13.04)" [Critical,Fix committed] https://launchpad.net/bugs/1097907

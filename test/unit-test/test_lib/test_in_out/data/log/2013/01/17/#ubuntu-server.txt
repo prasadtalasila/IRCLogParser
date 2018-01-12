@@ -1,0 +1,350 @@
+[00:48] <adam_g> smoser: fyi tested the same test case on a quantal image, didn't affect that c-i version
+[00:49] <smoser> right.
+[00:50] <smoser> maas is the worst case for us here.
+[00:50] <smoser> we can block just about everything else out by not releasing an updated image.
+[00:50] <smoser> utlemming, ^
+[00:50] <smoser> please do not release a cloud-image until bug 1100491 has worked its way through.
+[00:50] <uvirtbot> Launchpad bug 1100491 in cloud-init "[SRU] cloud-init 0.6.3-0ubuntu1.3  failing to process juju-generated userdata" [Critical,In progress] https://launchpad.net/bugs/1100491
+[00:56] <adam_g> roaksoax: comin atya https://code.launchpad.net/~gandelman-a/charms/precise/hacluster/avoid-osras/+merge/143626
+=== cpg|away is now known as cpg
+[01:29] <azbyin> hi all..
+[01:30] <azbyin> I'm trying to install nvidia cuda on an ubuntu server 12.10 installation
+[01:30] <azbyin> for some reason i am unable to blacklist the nouveau driver
+[01:30] <azbyin> it seems to always be loaded
+[01:31] <escott> azbyin, i think you have to update-initramfs for the blacklist to make it into the initrd
+=== Err404NotFound is now known as Error404NotFound
+=== th0mz_ is now known as th0mz
+[08:29] <AtuM> Hello... is there a known howto page available for drbd+ocfs2+pacemaker installation in 12.04 ?
+[08:53] <ketan985> hi everyone
+[09:05] <mocha> hi, i want to know is motherboard compatible with ubuntu server 12.04? 	Motherboard s1155 Intel H77 ATX DH77KC Intel BLKDH77KC
+[09:06] <mocha> cpu and ssd does not matter, correct?
+[09:49] <mocha> is Intel H77 ATX DH77KC Intel BLKDH77KC motherboard compatible with ubuntu server 12.04? any driver problems or other negative response about it?
+[09:51] <lifeless> mocha: check the hardware database
+[09:53] <lifeless> http://www.ubuntu.com/certification/catalog/
+[09:54] <lifeless> mocha: and https://friendly.ubuntu.com/
+[09:59] <mocha> lifeless: thank, and if i dont find anything... then what? is only way "plug and pray" or is something else i can do before buy hardware?
+[09:59] <lifeless> you could ask the vendor
+[13:03] <zul> jamespage: ping can you have a look at the nova ftbfs for me im totally stumped (the testsuite failures)
+[13:04] <jamespage> zul: in the lab?
+[13:05] <zul> jamespage: yeah if you back out the fix-ubuntu-tests.patch you can see what im talking about
+[13:06] <jamespage> zul, just disable that patch right?
+[13:06] <zul> jamespage: yeah i rather not have to skip tests i would like to see why they are failing (was thinking about this last night)
+[13:07] <jamespage> zul, +1
+[13:08] <jamespage> zul, on another matter who's uploading updated dependencies for the grizzly cloud archive?
+[13:08] <jamespage> http://reqorts.qa.ubuntu.com/reports/ubuntu-server/cloud-archive/grizzly_versions.html
+[13:09] <jamespage> looks sparse to me
+[13:09] <jamespage> just been debugging the build failure for alembic in the grizzly-trunk-testing PPA - needs new sqlalchemy
+[13:09] <zul> lovely
+=== smw_ is now known as smw
+[13:12] <zul> jamespage: ill take a look at the cinder failure as well today
+[13:13] <jamespage> zul, actually leave that with me - I can fix the current build failure for precise easily
+[13:13] <jamespage> zul, are you referring to the skipped tests?
+[13:13] <zul> jamespage: ok yeah
+[13:14] <zul> also i have 2 mp for novaclient and quantumclient i think
+=== cpg is now known as cpg|away
+[13:34] <jamespage> zul, just review - both look OK but can you fixup the trailing , on the list of BD on one of them
+[13:40] <zul> jamespage: sure
+=== Err404NotFound is now known as Error404NotFound
+[14:14] <freeflyi1g> jamespage: does openvswitch (1.9.0~git20130115.ca71f5b-0ubuntu1) works for you? I mean the dkms kernel module, here the module can't be loaded with kernel 3.8.0-0-generic in raring
+[14:15] <jamespage> freeflyi1g, it was working for me yesterday
+[14:15] <jamespage> I can check again...
+[14:16] <jamespage> freeflyi1g, does it build OK?
+[14:16] <jamespage> i.e. the dkms modules
+[14:16] <freeflyi1g> jamespage: it was built successfully
+[14:16] <freeflyi1g> ERROR: could not insert 'brcompat': Unknown symbol in module, or unknown parameter (see dmesg)
+[14:16] <jamespage> freeflyi1g, ah! I know what that is
+[14:17] <jamespage> freeflyi1g, that probably means you have the stock openvswitch module which ships with the kernel loaded
+[14:17] <freeflyi1g> jamespage: lemme check
+[14:17] <jamespage> OR the bridge module is already loaded
+[14:19] <freeflyi1g> jamespage: yep, works by unloading stock openvswitch module
+[14:19] <freeflyi1g> jamespage: thanks
+[14:22] <jamespage> freeflyi1g, np - I had a head scratching moment about that yesterday
+[14:22] <jamespage> freeflyi1g, you know the brcompat module is deprecated now and will be removed from openvswitch (probably this year)
+=== slank_away is now known as slank
+[14:53] <zul> jamespage: ping https://code.launchpad.net/~zulcss/openstack-ubuntu-testing/glance-grr-mad/+merge/143702
+[14:55] <jamespage> zul, have you pinged upstream about the distruption that is going to cause
+=== Ursinha_ is now known as Ursinha
+[14:55] <zul> jamespage: sent the info ttx but he hasnt responded yet
+[15:00] <ttx> zul: hmm?
+[15:00] <ttx> oh. pastebin. looking
+[15:00] <zul> yeah
+[15:02] <ttx> zul: ok, continuing discussion in #openstack-infra. no idea where that comes from
+[15:03] <voxadam> I have a little box running LTS that sits and does its thing without my thinking about it. While this is great it does cause one problem for me, I forget to check for security updates. This is especially problematic because the box faces the internet. What automatic or semiautomatic solutions are there for such a situation?
+[15:06] <ogra_> voxadam, https://help.ubuntu.com/community/AutomaticSecurityUpdates
+=== gondoi_ is now known as gondoi
+=== duckydan_ is now known as duckydan
+=== schmidtm_ is now known as schmidtm
+[16:10] <zul> yolanda: can you retarget the branch for lp:~openstack-ubuntu-testing/ceilometer/grizzly please, otherwise looks good
+[16:16] <yolanda> zul, done it
+=== Ramjett_ is now known as Ramjett
+[16:46] <jamespage> smoser, getting this error from cloud-init on precise - http://paste.ubuntu.com/1541976/
+[16:46] <jamespage> any ideas?
+[16:47] <smoser> https://bugs.launchpad.net/ubuntu/+source/cloud-init/+bug/1100491
+[16:47] <uvirtbot> Launchpad bug 1100491 in cloud-init "[SRU] apt_sources broken in 0.6.3-0ubuntu1.3 [regression]" [Critical,Fix committed]
+[16:50] <jamespage> smoser, ta
+[16:51] <smoser> jamespage, just begging in -devel now to get that into -updates sooner.
+[16:51] <jamespage> smoser, yes please - its breaking all of the automated deployment testing on precise
+[16:51] <jamespage> juju never makes it onto the server....
+[17:10] <anuaimi> does anyone know if the debian experimental 2.4 packages are usable on Ubuntu (12.04)?
+[17:10] <anuaimi> does anyone know if the debian experimental Apache 2.4 packages are usable on Ubuntu (12.04)?
+[17:18] <ikla> how do I reinstall grub from a chroot?
+[17:18] <ikla> I booted my another linux up and mounted the drive, I just need to chroot and install grub again
+=== yofel_ is now known as yofel
+[17:33] <happyface> why is the default niceness for new processes 20 on my ubuntu server? isn't it usually 0?
+[17:36] <RoyK> hm.. nice is usualy 5
+[17:36] <RoyK> seems it's 10 on precise
+[17:37] <happyface> RoyK, yeah any ideas? limits.conf is empty too
+[17:37] <sarnold> happyface: that's odd; do you have any /etc/security/limits.conf settings that would fiddle with your nice values? Or somewhere else in login path?
+[17:37] <RoyK> happyface: which ubuntu version?
+[17:37] <RoyK> happyface: 0 is normal priority, btw
+[17:37] <sarnold> happyface: are you positive it's nice value and not priority that's 20? all my nice 0 tasks are running with priority 19 on my 12.04 LTS laptop...
+[17:38] <RoyK> nice 0 == ''
+[17:38] <happyface> sarnold, ah I think you're right
+[17:38] <RoyK> priority is defined by the kernel dynamically
+[17:39] <sarnold> happyface: ps -A -o pid,nice,pri
+[17:39] <RoyK> or just run top :P
+[17:39] <happyface> yup, silly mistake :p
+[17:39] <sarnold> ah, so they are both in top :) hehe
+[17:39] <happyface> I only got onto this because my other developer was freaking out
+[17:40] <happyface> thanks :P
+[17:47] <axisys> how can I tell if it is a LUN or physical disk?
+[17:47] <axisys> lspci shows
+[17:47] <axisys> 07:00.0 RAID bus controller: Adaptec AAC-RAID (rev 09)
+[17:47] <axisys> mdstat show
+[17:47] <axisys> md0 : active raid1 sdb1[1] sda1[0]
+[17:48] <axisys> how can I tell if sda is either JBOD disk or a LUN provisioned by the raid controller?
+[17:49] <RoyK> axisys: use a tool for the RAID controller - it's usually exposed as a SCSI device, and linux normally can't see what's underneath
+[17:49] <RoyK> most RAID controllers have tools for linux showing the underlying structure
+[17:52] <axisys> I wonder if this is a pass through one.. would be easier to replace with bigger size disk then
+[17:53] <RoyK> axisys: what controller?
+[17:53] <axisys> 12:47:39 < axisys> 07:00.0 RAID bus controller: Adaptec AAC-RAID (rev 09)
+[17:54] <RoyK> axisys: http://hwraid.le-vert.net/wiki/Adaptec
+[17:54] <axisys> RoyK: thanks
+[17:54] <RoyK> iirc that raid controller is a 'true' raid controller, so if configured with RAID, it should show up as a single device in linux
+[17:55] <RoyK> but then, you can always configure it in JBOD mode, dunno
+[17:55] <axisys> I usually only create single disk raid0 luns
+[17:55] <axisys> easier to manage at OS that way
+[17:56] <RoyK> yeah, I prefer software RAID over hw raid too
+[17:56] <RoyK> configuring each disk as raid0 is normally the same as JBOD
+[17:57] <axisys> RoyK: yep.. I would prefer rip the controller out and talk to the disk directly if I could.. lol
+[17:57] <RoyK> axisys: perhaps better if you have SSDs, since most (or all?) RAID controllers don't support TRIM/UNMAP
+[17:57] <koolhead17> hi all
+[17:58] <axisys> they have 300G SSDs relatively cheap?
+[17:58] <axisys> RoyK: ^
+[18:00] <axisys> I already have the drivers ofcourse.. cuz I am using the disks.. but trying to find out if that url has a link for the arcconf binary.. using ubuntu 10.04 64bit
+[18:01] <RoyK> axisys: what sort of machine is this?
+[18:01] <RoyK> aac-raid on motherboard?
+[18:01] <axisys> http://hwraid.le-vert.net/wiki/DebianPackages got it!
+[18:01] <axisys> [   19.006845] Adaptec aacraid driver 1.1-5[2461]-ms
+[18:01] <axisys> [   19.006891] aacraid 0000:07:00.0: PCI INT A -> GSI 17 (level, low) -> IRQ 17
+[18:01] <axisys> [   19.006897] aacraid 0000:07:00.0: setting latency timer to 64
+[18:02] <axisys> [   19.460000] IRQ 17/aacraid: IRQF_DISABLED is not guaranteed on shared IRQs
+[18:02] <RoyK> !pastebin
+[18:02] <ubottu> For posting multi-line texts into the channel, please use http://paste.ubuntu.com | To post !screenshots use http://imagebin.org/?page=add | !pastebinit to paste directly from command line | Make sure you give us the URL for your paste - see also the channel topic.
+[18:02] <axisys> [   22.599531] scsi2 : aacraid
+[18:02] <axisys> RoyK: my bad
+[18:07] <axisys> http://pastebin.com/c0figCNK
+[18:08] <RoyK> looks like JBOD to me
+[18:09] <axisys> please explain (learning)
+[18:09] <RoyK> I guess you'll have to reconfigure new devices in the controller's BIOS if replacing drives, though, but that may be different with other BIOSes than the ones I've tried
+[18:09] <axisys> I am thrown off by logical device with raid level simple_volume
+[18:09] <RoyK> JBOD == just a bunch of disks
+[18:10] <RoyK> aka no RAID config on the RAID controller
+[18:10] <axisys> i thought each disk is configurd as raid0 lun
+[18:10] <axisys> no?
+[18:10] <RoyK> yes, which means no redunancy on the controller
+[18:11] <axisys> RoyK: correct..
+[18:11] <axisys> i do the raid1 using the software raid
+[18:11] <RoyK> yes, so did also mdstat show
+[18:12] <axisys> so if I want to replace with larger disk.. I will have to take it offline in md first and then offline in the raid controller while system is live..
+[18:12] <axisys> correct?
+[18:13] <RoyK> in your raid-1, yes
+[18:13] <RoyK> do you plan something raid-[56] for the other drives?
+=== negronjl` is now known as negronjl
+[18:13] <axisys> no .. i only use raid1 and raid10 in OS
+[18:14] <axisys> disks are cheap
+[18:15] <RoyK> just thinking if you were using raid-5 or raid-6 (which may be slower, but in the case if raid-6, safer), it would be easier to use a disk as a spare, so you could replace that and mdadm --replace to that before removing a device
+[18:17] <axisys> gotcha..
+[18:18] <RoyK> raid-10 will allow for a single drive failure per mirror, raid-6 will allow for any two drives failing without data loss
+[18:19] <RoyK> so unless you're placing a high-traffic database or something like that needing high iops, better use raid-6 (IMO)
+[18:24] <axisys> so if I want to replace it bigger size disk I need to take the system down?
+[18:24] <RoyK> that depends on the controller firmware
+[18:24] <axisys> I was hoping arcconf can offline it and allow to put a new disks and online it back
+[18:25] <RoyK> last I worked with that controller, it needed the new device to be defined in its BIOS
+=== wedgie_ is now known as wedgie
+[18:26] <RoyK> iirc it's designed to handle hotplug, but only if it's controlling its own RAID
+[18:26] <axisys> http://pastebin.com/MgBGn2sF
+[18:26] <axisys> firmware version
+[18:26] <RoyK> no idea
+[18:26] <RoyK> better try it
+[18:26] <axisys> i am looking for how to offline a disk
+[18:26] <RoyK> axisys: if you have another drive that will fit in there, just try it
+[18:27] <RoyK> axisys: I guess this system isn't in production yet?
+[18:27] <axisys> RoyK: it is in production
+[18:27] <axisys>  DELETE                  | deletes one or more logical devices
+[18:27] <axisys> that might do it
+[18:27] <axisys> once i remove it from md raid1
+[18:28] <RoyK> just make sure to run a scrub before you remove a disk
+[18:28] <RoyK> something like echo check > /sys/block/md0/md/sync_action
+[18:29] <axisys> I thought this should be enough
+[18:29] <axisys> mdadm /dev/md0 --fail /dev/sdb1 --remove /dev/sdb1
+[18:30] <RoyK> that works well
+[18:30] <RoyK> but then, if there are errors on the other side of the mirror, you're in trouble
+[18:30] <RoyK> so better run a check first
+[18:32] <RoyK> what is the application for this server?
+[18:35] <adam_g> jamespage: zul http://people.canonical.com/~agandelman/g2_deps/ are these okay to upload to grizzly-staging CA pocket? they'll get rid of all/most the red in staging @ http://status.qa.ubuntu.com/reports/ubuntu-server/cloud-archive/grizzly_versions.html
+[18:36] <zul> damn it i havent looked at it
+[18:36] <zul> gimme a couple of minutes
+[18:37] <zul> shouldnt ceph be precise-grizzly?
+[18:37] <zul> adam_g: ^^^
+[18:37] <RoyK> axisys: ?
+[18:38] <zul> adam_g: alembic looks ok
+[18:39] <zul> adam_g: why is leveldb needed?
+[18:39] <adam_g> zul: actually, yeah, exclude the ceph stuff
+[18:40] <zul> adam_g: k
+[18:45] <zul> adam_g: they look good although you will need a newer testrepository (ubuntu6 runs the testsuite during the build)
+[18:45] <zul> and we already talked about ceph
+[18:46] <axisys> RoyK: oops.. sorry went to pick up something for lunch..
+[18:46] <zul> adam_g: i think we might need the openvswitch snapshot from raring in there as well
+[18:46] <axisys> RoyK: it is for splunk
+[18:46] <RoyK> so I guess no big needs for high iops :P
+[18:47] <axisys> RoyK: yep
+[18:49] <RoyK> then my suggestion is, get a couple of 1-2TB drives and create a raid-5 on those, copy the data over to them (or perhaps you have another server somewhere), and start from scratch with two drives in raid-5, add more drives as needed, extend to raid-6 if you're paranoid
+[18:49] <axisys> looks like only disks (raid0 luns) under raid10 will be replaced with bigger disk
+[18:49] <axisys> RoyK: ^
+[18:49] <RoyK> you can do all that dynamically
+[18:49] <RoyK> (mdadm raid, I mean)
+[18:49] <SpamapS> smoser: hey, are you aware of any bugs in cloud-init's handling of the legacy 'user:' cloud-config option?
+[18:49] <stemid> anyone had success with user --groups staff in kickstarting ubuntu Precise? whenever I add --groups staff to the user line in my kickstart file the install stops at the user creation bit, as if the whole line is made invalid by this.
+[18:49] <SpamapS> smoser: having some trouble with it in 12.10 images
+[18:50] <RoyK> axisys: I'm quite sure that's not right - I think replacing drives with bigger ones in a raid-[56] should work well
+[18:50] <smoser> SpamapS, it would not surprise me if there were a bug, but i thought we'd got it working right.
+[18:50] <smoser> SpamapS, example ?
+[18:51] <axisys> raid10 gives best performance
+[18:51] <RoyK> axisys: yes, it does, but do you need that performance?
+[18:51] <axisys> I guess I will trun off splunk and then run check and offline and fail on each disk.. at a time
+[18:51] <RoyK> axisys: if you don't, better spend time on safety
+[18:52] <RoyK> axisys: install sysstat and enable it and you'll see over time what the i/o load is
+[18:52] <RoyK> probably very low
+[18:52] <SpamapS> smoser: trying to use heat w/ stock 12.10 images
+[18:52] <SpamapS> smoser: http://paste.ubuntu.com/1542277/
+[18:53] <SpamapS> smoser: ec2-user is created, but never gets ssh keys
+[18:53] <axisys> we have all splunk servers on raid10.. wont have enough time to redo all
+[18:54] <SpamapS> smoser: root does actually end up getting the specific ssh key though
+[18:54] <jamespage> adam_g, yes - leveldb, ceph (in that order - otherwise it won't pickup the new version)
+[18:54] <jamespage> thats the bobtail release
+[18:54] <jamespage> and python-hp3parclient as well
+[18:54] <jamespage> for cinder
+[18:57] <adam_g> jamespage: okay, adding hp3parclient. what are we doing with ceph? 0.56.1 into precise-grizzly?
+[18:58] <SpamapS> smoser: also in root's authorized_keys file, the user is not 'ec2-user', it is 'NONE'
+[18:59] <RoyK> axisys: well, raid-10 should do as well, but I don't know it too well in terms of replacing drives
+[18:59] <SpamapS> smoser: hrm, you know what? This was with 0.7.0-ubuntu2 ... let me try again w/ the latest cloud image.
+[19:00] <adam_g> zul:
+[19:00] <adam_g> http://people.canonical.com/~agandelman/g2_deps/testrepository/
+[19:01] <zul> +1
+=== io is now known as IdleOne
+=== matsubara is now known as matsubara-afk
+[19:07] <adam_g> zul: this guy, too http://people.canonical.com/~agandelman/g2_deps/python-hp3parclient/
+[19:07] <zul> +1
+[19:10] <RoyK> axisys: just make sure you scrub the pool before replacing anything
+[19:11] <smoser> SpamapS, it is a bug.
+[19:11] <RoyK> axisys: try at off hours first, after a scrub, to remove a drive and reinsert another, perhaps the raid tool can do a rescan and recreate a raid-0 on that drive, after that you should be able to mdadm --add that drive
+[19:15] <jamespage> adam_g, yes please re ceph
+[19:15] <jamespage> but please make sure the leveldb package is updated first; there are some improvements worth having :-)
+[19:16] <jamespage> 0.56.1 is the next lts release
+[19:16] <adam_g> jamespage: ok
+[19:20] <axisys> echo check > /sys/block/md10/md/sync_action should do for md10 or something else?
+[19:20] <axisys> RoyK: ^
+[19:20] <SpamapS> smoser: good to know. Is there a good workaround?
+[19:21] <smoser> you can just declare it in the new form
+[19:21] <SpamapS> smoser: heat wants to work with 10.04
+[19:21] <smoser> that would be ignored then.
+[19:21] <smoser> (the new form would be ignored on 10.04).
+[19:21] <smoser> so just declare both.
+[19:21] <smoser> i think
+[19:21] <RoyK> axisys: it works for all raid levels
+[19:21] <SpamapS> smoser: I'll try that
+[19:21] <smoser> but please opne a bug.
+[19:26] <SpamapS> smoser: http://paste.ubuntu.com/1542348/
+[19:26] <SpamapS> smoser: so, like that?
+[19:27] <smoser> no
+[19:28] <smoser> ditc line 6, SpamapS
+[19:28] <SpamapS> smoser: the example sucks then :)
+[19:28] <smoser> that refers to the OS's "default" user
+[19:28] <smoser> ie, you'd get 'ubuntu' created.
+[19:28] <SpamapS> ah
+[19:28] <smoser> the example is right, it just didnt' fit what you wanted
+[19:29] <SpamapS> smoser: perhaps.. comments? :)
+[19:29]  * SpamapS admits, he did not read the comments
+[19:29] <SpamapS> or the docs
+[19:29] <SpamapS> so.. yeah.. perhaps SpamapS sucks
+[19:29] <smoser> i think you might want to add 'default: true' to your user's definition
+=== alienth_ is now known as alienth
+[19:36] <smoser> SpamapS, please open a bug.
+[19:37] <SpamapS> smoser: \o/
+[19:37] <SpamapS> smoser: new style works
+[19:39] <SpamapS> actualy no
+[19:39] <SpamapS> I mis-read the ci-info
+[19:40] <SpamapS> still only the root user gets the key
+[19:45] <SpamapS> smoser: ah, default: true so that it gets the ssh key..
+[19:46] <smoser> well, adding 'default' turns it into the "default" user.
+[19:46] <smoser> which the ssh-import uses
+[19:46] <smoser> can you show me what you have now ?
+[19:47] <SpamapS> smoser: http://paste.ubuntu.com/1542389/
+[19:48] <SpamapS> smoser: trying with default: true
+[19:51] <smoser> SpamapS, just fyi, apparently (through documentation i just read) you can snpecify ssh authorized keys for each user.
+[19:51] <smoser> and even per-user ssh-import-ids
+[19:51] <smoser> but it still "should work" what you want
+[19:51] <SpamapS> smoser: in this case I just want the instance keypair for the user. :)
+[19:52] <smoser> anyone else having issues with ec2 today?
+[19:52] <smoser> euca-describe-instances is blocking
+[19:52] <SpamapS> smoser: still no ssh keys for ec2-user with 'default: true'
+[19:59] <SpamapS> smoser: I am thinking this might be something else in the stack causing issues
+[19:59] <SpamapS> smoser: booting a quantal instance with just that userdata produces a key just fine
+[20:00] <SpamapS> smoser: as in, just 'user: ec2-user'
+[20:01]  * SpamapS decides to consider it over lunch
+[20:03] <smoser> well, SpamapS please open abug if its not working right.
+[20:03] <smoser> but i thought i had reproduced
+=== frojnd_ is now known as frojnd
+[20:25] <jkyle> I have a file that's been modified after installation. when dpkg prompts for how you want to handle it
+[20:25] <jkyle> how can I force apt to accept the maintainer's version? I tried -y & --force-yes
+=== blkperl_ is now known as blkperl
+[20:46] <adam_g> jamespage: thoughts on retargetting the nova live migration charm work under review as merges into the respective branches of ~openstack-charmers, to condense the # of in-flight changesets?
+=== Ursinha is now known as Ursinha-afk
+[20:58] <jamespage> adam_g, sounds like a good idea - I've been having trouble keeping track
+[21:01] <adam_g> jamespage: yah, same here. ill see about resolving conflicts and proposing some merges to the ~openstack-charmers branches for nova-compute, nova-c-c, keystone, glance. also gonna stick a rabbitmq-server charm with hacluster support and propose changes to the amqp hooks of the other charms
+[21:07] <jamespage> +!
+[21:07] <jamespage> +1even
+[21:13] <capauciell> ciao
+[21:13] <capauciell> !list
+[21:13] <ubottu> capauciell: No warez here! This is not a file sharing channel (or network); read the channel topic. If you're looking for information about me, type « /msg ubottu !bot ». If you're looking for a channel, see « /msg ubottu !alis ».
+=== Ursinha-afk is now known as Ursinha
+[22:03] <hallyn> say (looking at an untriaged bug) is tomcat7 explicitly not meant to run with oracle java?
+[23:02] <TLoT> is it possible to restrict only certain SSH logins to have key-auth only?
+[23:02] <TLoT> thereby prevent password auth for a user?
+[23:03] <sarnold> most admins prefer disabling password auth for everyone
+[23:04] <TLoT> true, however i can't do that globally because of one user.
+[23:04] <TLoT> who is already on ther eceiving end of hell for using insecure passcodes
+[23:08] <adam_g> roaksoax: ping
+[23:09] <sarnold> TLoT: the only thing I can think of -- and it's a bit ugly, but I'm saying it in the hopes that someone else will have a good idea :) -- is to run a second sshd, with a different set of PAM modules (pam_succeed_if?), on a different port for your special user.
+[23:09] <TLoT> eww that does sound ugly :p
+[23:09] <TLoT> i'd rather just kick the one user who needs password-only auth to /dev/null :P
+=== ariel__ is now known as Guest88403
+[23:12] <Guest88403> anybody here?
+[23:12] <sarnold> TLoT: oh! pam_succeed_if could probably do it just for the one user
+[23:13] <sarnold> TLoT: .. without a second daemon.
+[23:14] <TLoT> sarnold, still ugly
+[23:14] <TLoT> Guest88403, sup
+[23:15] <sarnold> TLoT: sure, but much less ugly.
+[23:16] <Guest88403> can you show me how to put my ip on the map
+[23:24] <roaksoax> adam_g: pong
+[23:26] <irv> how do i make a directory writable by my user
+[23:27] <adam_g> roaksoax: are you doing work on DRBD /w the hacluster stuff?
+[23:27] <roaksoax>  adam_g yes
+[23:28] <adam_g> roaksoax: where at? and hows it going? thinking maybe need that for this rabbit stuff
+[23:28] <roaksoax> adam_g: most of the stuff is here: https://code.launchpad.net/~andreserl/charms/quantal/mysql/hacluster-support
+[23:28] <roaksoax> all of the stuff for now
+[23:29] <roaksoax> so it is up to mysql to set its own DRBD stuff and then passes resources,constraints, etc to hacluster to be configured
+[23:36] <adam_g> roaksoax: hmm. wondering if theres anyway to make the drbd stuff more consumable from other charms.
+[23:39] <roaksoax> adam_g: we can have some of it in an external lib or something. I wanted to make it in the hacluster charm at first but in reality it didn't fit there
+=== cpg|away is now known as cpg

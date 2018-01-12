@@ -1,0 +1,144 @@
+[04:32] <micahg> ScottK: could you please process Bug #1095008 ?
+[04:32] <ubot2> Launchpad bug 1095008 in spread-phy (Ubuntu) "Please move spread-phy to multiverse" [Wishlist,Confirmed] https://launchpad.net/bugs/1095008
+[04:34] <ScottK> Looking
+[05:14] <ScottK> micahg: Done.
+[06:11] <micahg> ScottK: thanks
+=== henrix_ is now known as henrix
+[11:23] <Riddell> why might digikam not be migrated from proposed?  it's marked as a valid candidate as is opencv it depends on
+[11:25] <xnox> Riddell: looking at http://people.canonical.com/~ubuntu-archive/proposed-migration/update_output.txt there are a few packages that are attempted to migrate together (see very bottom, for-last "trying easy from autohinter")
+[11:26] <xnox> somehow scilab-sivp & scilab-swt become uninstallable, holding back opencv, digikam and others.
+[11:28] <Laney> sivp FTBFS on armhf, probably that
+[11:28] <xnox> both of those need rebuild against new opencv & all will be good? (/me will try this after python-qt4 build finishes)
+[11:28] <xnox> =(
+[11:28] <Laney> they have been (afaics from the changelog anyway)
+[11:33] <cjwatson> "valid candidate" - "nothing wrong with this package itself but haven't yet checked whether it makes anything else uninstallable"
+[12:34] <xnox> Laney: Riddell: i hit retry button on sivp build, and now it has unmet dependencies.
+[12:34] <xnox> (it did build fine in debian on arm long time ago)
+[12:42] <Riddell> xnox: hmm, maybe we should just remove the package?
+[12:45] <cjwatson> mdeslaur: could you merge m2crypto when you get a minute?
+[12:45] <xnox> Riddell: i now wonder if it still builds in Debian...
+[12:46] <cjwatson> (oops, above should have been in #-devel, oh well)
+=== mmrazik is now known as mmrazik|afk
+[13:37] <micahg> xnox: I think the root of the scilab/sivp build trouble on armhf is a curious gluegen2 armhf failure
+[13:46] <psivaa> cjwatson: could we expect precise desktop i386 images to be available later today?
+[13:51] <cjwatson> psivaa: only if somebody fixes them
+[13:51] <cjwatson> I see my two attempts last Friday weren't complete
+[13:51] <psivaa> cjwatson: would you know if somebody would attempt?
+[13:51] <cjwatson> maybe
+[13:52] <psivaa> cool
+[13:53] <cjwatson> I see the problem anyway
+[13:56] <cjwatson> infinity: please use ./run-tests before committing to cdimage
+[13:57] <cjwatson> (fixing)
+=== mmrazik|afk is now known as mmrazik
+[14:03] <ogra_> cjwatson, is that new ?
+[14:03]  * ogra_ notes down
+[14:05] <cjwatson> ogra_: as of mid-September
+[14:05] <cjwatson> only useful for the bits rewritten in Python
+[14:05] <ogra_> k
+[14:10] <cjwatson> psivaa: fixed now
+[14:12] <psivaa> cjwatson: thank you
+=== plars_ is now known as plars
+=== mmrazik is now known as mmrazik|otp
+=== bjf is now known as bjf[afk]
+=== mmrazik|otp is now known as mmrazik
+=== doko_ is now known as doko
+[16:39] <bdmurray> Was maverick recently removed from archive.ubuntu.com?  There is an ubuntu-release-upgrader test that tries to get the maverick dist upgrader and started faling recently.  While I can just change the dist-upgrader it tries to get, I was curious if it changed recently.
+[16:50] <xnox> bdmurray: maybe the test should be using ubuntu-distro-info and get the upgrade tarball for _all_ supported releases. Since maverick has been EOL for a while now.
+[16:51] <tumbleweed> or the test suite should be entirely offline
+[17:00] <cjwatson> test suites should absolutely be entirely offline
+[18:07] <Riddell> where can I find which libav packages are prohibited from CDs?
+[18:07] <xnox> Riddell: blacklist in the seeds.
+[18:07] <cjwatson> No, not blacklist.
+[18:07] <cjwatson> I mean not the blacklist file.
+[18:08] <cjwatson> There are "blacklist" seed entries, i.e. those beginning with "!".
+[18:08] <cjwatson> And it's libavcodec* and anything that depends on it, so basically all of them.
+[18:10] <Riddell> aah yes
+=== bjf[afk] is now known as bjf
+=== henrix is now known as henrix_
+=== henrix_ is now known as henrix
+=== henrix is now known as henrix_
+=== henrix_ is now known as henrix
+[18:55] <infinity> cjwatson: Want to give a quick review of http://paste.ubuntu.com/1507399/ before I upload it?
+=== henrix is now known as henrix_
+=== Ursinha_ is now known as Ursinha
+=== rsalveti_ is now known as rsalveti
+[19:35] <cjwatson> infinity: I'd be a lot more comfortable if the abitable stuff was signed off by Debian
+[19:36] <cjwatson> oh, wait, this is precise
+[19:36] <infinity> cjwatson: It's a direct backport from Debian.
+[19:37] <infinity> cjwatson: http://anonscm.debian.org/gitweb/?p=dpkg/dpkg.git;a=commitdiff;h=ad0cb5d13dc92e52f0a877b9af9839d04721a209
+[19:37] <cjwatson> Yeah, I misread the changelog.  LGTM.
+[19:38] <infinity> Technically, we don't need the backport of the abitable stuff for Soyuz (since it doesn't care about bits, just that the arch exists), but I figured a complete backport would be less confusing if someone tries to use this for cross-building. :P
+[19:39] <cjwatson> Agreed
+[19:52] <cjwatson> ah, I think I see why the Chinese edition is failing to build
+[19:52] <cjwatson> set -o pipefail
+[19:52] <cjwatson> not used to programming with that
+[20:43] <infinity> cjwatson: It wouldn't hurt my feelings if you re-reviewed and approved that dpkg in the queue for me. :)
+[20:44] <infinity> cjwatson: (I missed Makefile.in in the diff I gave you before, fixed it in the actual upload, and it all seems to DTRT in a precise chroot)
+[20:45] <infinity> cjwatson: Score one for TDD, I guess, I didn't notice that abitable wasn't working right until I wrote up the SRU test case. :P
+[21:23] <infinity> cjwatson: Hrm.  Opinion.  Do you think there's value in taking all the lucid-cat dpkg backports (xz, armhf, arm64, x32) and uploading them to lucid-updates?
+[21:24] <infinity> cjwatson: I did the same thing for apt a year ago, so there's a certain precedent here.
+[21:25] <cjwatson> Yeah, I think so
+[21:26] <cjwatson> approved precise
+[21:27] <infinity> Danke.  When that passes my verification, I'll do lucid too.
+[21:27] <infinity> Oh, hrm.  We might not want to do lucid, actually.
+[21:28] <infinity> It would add a new pre-depend on xz-utils.
+[21:28] <infinity> Though, we're not building point releases anymore, so the worst that happens is people pull in a new package on upgrade.
+[21:28]  * infinity waffles.
+[21:30] <cjwatson> I vaguely recall that being "entertaining" until some of the lzma/xz packages were reorganised post-lucid
+[21:30] <cjwatson> So you might be right that it's worth avoiding ...
+[21:30] <infinity> Could do a backport of the current xz support that links liblzma instead of forking xz-utils.  liblzma appears to be installed most places anyway.
+[21:33] <infinity> I kinda just want all our internal infrastructure to be precise yesterday, so I can stop worrying about this.
+[21:33] <infinity> And DTRT going forward with SRUs instead of forks.
+[21:33] <cjwatson> Yeah.  It seems to be in very slow progress
+=== chrisccoulson_ is now known as chrisccoulson
+[21:35] <cjwatson> infinity: RT#57611 FYI
+[21:36] <cjwatson> infinity: ^- that livecd-rootfs should fix the persistent Chinese edition failures
+[21:39] <infinity> Ooo, we have speedy diffs again.
+[21:42] <infinity> I'm shocked that GNU grep doesn't have a switch to always exit 0.
+[21:46] <infinity> cjwatson: I'm slightly amused by "cd && ls | grep -v" instead of "find -name -a ! -name", but I guess the smaller change is more readable here.
+[21:47] <jdstrand> all the armel buildds seem offline. I'm not up-to-date on how we handle armel vs armhf-- if armel is needed somewhere (eg, the security ppa), will they magically become available?
+[21:47] <infinity> jdstrand: I magically make them available.
+[21:48] <infinity> jdstrand: Also, there's one. :P
+[21:48] <jdstrand> infinity: so that is a manual thing?
+[21:48] <jdstrand> oh, so there is
+[21:48] <infinity> jdstrand: (There's been one for months, except when I add more for big SRU/security floods)
+[21:48] <jdstrand> I see
+[21:48] <infinity> Which seems like might be needed right now.
+[21:49] <jdstrand> infinity: are you alerted in some way as to when it is needed?
+[21:49] <jdstrand> other than by an irc conversation :)
+[21:49] <infinity> jdstrand: No, I just look at the queues occasionally.
+[21:49] <jdstrand> cool
+[21:49] <infinity> jdstrand: It's on my TODO to get rid of arch-specific buildds, but it's somewhere down the list.
+[21:50] <infinity> (requires a slight rewrite of how we create the queues, and then a bit of smarts in the buildd table and buildd-manager to understand that buildds can build more than one arch)
+[21:50] <jdstrand> well, there are a few pending for our ppa, but I won't be able to publish them today. I can say that firefox is coming in a bit and chromium maybe tonight
+[21:50] <infinity> Another firefox?
+[21:50] <infinity> I just built a bunch of those on the weekend.
+[21:50] <infinity> Bah.
+[21:51] <jdstrand> the one from before (yesterday?) had a translations bug that only just got fixed. chrisccoulson uploaded something a few minutes ago, but there needs to be another upload
+[21:51] <infinity> Hrm.  Kay.  If he's doing uploads, I wonder if he plans to fix the quantal/armel FTBFS too.
+[21:52] <jdstrand> infinity: we talked about that briefly-- we are likely going to pass on it. apparently upstream only really cares about armv6 atm
+[21:52] <jdstrand> we'll get a bug filed with them and hopefully pick it up in a few weeks
+[21:52] <infinity> jdstrand: Grr.  Upstream's code actually works on armv5, they just messed up the detection.
+[21:52] <jdstrand> armv6+ that is
+[21:53] <infinity> jdstrand: If I can find the time to fix it before 18.0.1/19.0, I'll pass something along.
+[21:53]  * jdstrand is not authoritative on that point, just passing along what I've been told
+[21:53] <infinity> But missing one release isn't world-ending.
+[21:53] <jdstrand> no-- and it isn't one of the supported ones either. it is a shame to have had it compile before and not now, which is why I'd like the bug
+[21:54] <infinity> Yeah, I want it fixed because it's broken, not because "we" care.
+[21:54]  * jdstrand nods
+[21:54] <infinity> And it personally annoys me when upstreams break architectures.
+[21:54] <jdstrand> yeah
+[21:55] <jdstrand> 'only really cares about' is probably too strong. they probably just aren't building for armv5 any more
+[21:55] <infinity> Mozilla and Chrome seem to be the worst offenders for constantly regressing arch support, too.  I wonder what it is about web browser developers.
+[21:55] <jdstrand> I guess that does infer some level of caring in and of itself...
+[21:56] <jdstrand> yeah, it is weird
+[21:56] <chrisccoulson> tbf, the code that has broken is actually from chrome ;)
+[21:56] <chrisccoulson> (skia)
+[21:56] <infinity> True.
+[21:56] <infinity> (This time)
+[23:12] <cjwatson> infinity: find would be better, but yeah, I went for smaller change - are you holding off on it due to the obscure coe?
+[23:12] <cjwatson> *code
+[23:13] <infinity> cjwatson: Oh, no.  I just forgot to hit enter in a terminal.
+[23:13] <infinity> La la la.
+[23:14] <infinity> cjwatson: Acceptificated.
+[23:15] <cjwatson> ta

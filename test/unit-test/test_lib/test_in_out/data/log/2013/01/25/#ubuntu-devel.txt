@@ -1,0 +1,449 @@
+[00:11] <Kano> cjwatson: why is grub2-signed not build against current grub2-11?
+=== slank is now known as slank_away
+[00:12] <Kano> interestingly it shows 2.00-11ubuntu1 but the changelog shows 2.00-7ubuntu13??
+[00:13] <Kano> http://changelogs.ubuntu.com/changelogs/pool/main/g/grub2-signed/grub2-signed_1.10/changelog
+[00:16] <Kano> cjwatson: btw. you should check kubuntu, ubuntu boots but kubuntu does not
+=== rickspencer3_ is now known as rickspencer3
+[00:47] <vagrantc> cjwatson: do you know if the current process for building live CDs on ubuntu is basically: https://lists.debian.org/debian-live/2011/06/msg00152.html ?
+[00:48] <vagrantc> or anyone, really...
+[01:12] <slangasek> vagrantc: that's not a complete description of our build process, but it's accurate as far as the livefs /on/ the CD is concerned
+[01:13] <slangasek> (there's an extra layer of indirection, where the livefs is fed to a different build server that puts it into a hybrid filesystem along with the bootloader, on-disk package archive, etc)
+[01:22] <vagrantc> slangasek: is it expected to build self-hosting... i.e. precise can build a precise live image?
+[01:23]  * vagrantc was hoping to create customized images through an automated process, but most of the docs recommend using uck
+[01:25] <slangasek> vagrantc: wrt the livecd-rootfs and live-build packages, yes
+[01:26] <vagrantc> slangasek: i must be missing something(s)... it flounders at many steps along the way.
+[01:28] <vanhoof> vagrantc: perhaps http://paste.ubuntu.com/1567760/ will help
+[01:28] <slangasek> vagrantc: well, again since we only use live-build for the livefs creation, it's possible the packages don't work OOTB when you use them to create a full ISO
+[01:28] <vanhoof> vagrantc: that yields good results for me
+[01:29] <vagrantc> vanhoof: thanks, will give it a go.
+[01:29] <vagrantc> slangasek: i can get it to create a squashfs, but no ISO image.
+[01:29] <slangasek> vagrantc: right, which is exactly how we're using it ;)
+[01:30] <vagrantc> so it "works"
+[01:30] <slangasek> and the ISO image creation scripts are unfortunately not sorted out for releasing
+[01:30]  * vagrantc hrms
+[01:30] <vagrantc> hopefully vanhoof's suggestion will get me what i need.
+[06:05] <pitti> Good morning
+=== Sweetsha1k is now known as Sweetshark
+[07:53] <dholbach> good morning
+[08:18] <BWMerlin> Nvidia has released new stable drivers, what is the process for these to be included into the ubuntu repositories?
+=== smb` is now known as smb
+=== yofel_ is now known as yofel
+[09:27] <tjaalton> siretart: hey, are libva & intel-vaapi-driver syncable from experimental?
+=== tkamppeter_ is now known as tkamppeter
+=== henrix_ is now known as henrix
+=== zequence_ is now known as zequence
+[10:09] <tjaalton> at what time UTC are the daily-live images getting built? and is there a build-log available somewhere?
+[10:11] <xnox> tjaalton: people.canonical.com/~ubuntu-archive/
+[10:11] <xnox> livefs-build-logs/
+[10:11] <xnox> and
+[10:11] <tjaalton> thanks
+[10:11] <xnox> cd-build-logs/
+[10:11] <xnox> depends which stage you are after.
+[10:11] <xnox> tjaalton: sometime around now, but it takes time to sync and publish the iso tracker can give you an overview.
+[10:12] <xnox> http://iso.qa.ubuntu.com/qatracker/milestones/243/builds
+[10:12] <xnox> e.g. some stuff is from today other isn't (some have failed)
+[10:13] <jibel> tjaalton, if you're searching with version of -intel was in there, you'll have it in the manifest http://cdimage.ubuntu.com/daily-live/20130124/raring-desktop-amd64.manifest
+[10:13] <xnox> ubuntu desktop builds failed due to missing python-oneconf, which has been resolved now as far as I can see.
+[10:13] <jibel> *which
+[10:13] <tjaalton> jibel: ah, yeah
+[10:13] <jibel> xserver-xorg-video-intel	2:2.20.19-0ubuntu1
+[10:13] <tjaalton> didn't think of that :)
+[10:13] <tjaalton> so not the snapshot from yesterday then
+[10:14] <tjaalton> wonder what else changed so the installations passed..
+=== caribou_ is now known as caribou
+[10:27] <apw> pitti, we seem to be missing the amd64 ddebs for linux-3.2.0-36.57, can we tell why ?
+[10:32] <pitti> apw: sorry, that got built 8 days ago, so they are already gone from the buildds :(
+[10:32] <pitti> apw: for debugging that it would be good if you could poke me the next time an upload/accept/build happens, so that I can save the ddebs from the buildds some where and then debug how they appear/disappear on ddebs.u.c.?
+=== sil2100_ is now known as sil2100
+[10:45] <apw> pitti, well i think we did some new ones in the last two days
+[10:48] <apw> pitti, the latest P and Q kernels
+[11:01] <apw> pitti, some support folks mirror these and they say it never appeared as they don't have them
+[11:04] <pitti> apw: no, they were built on January 8 and 9 respectively
+[11:04] <pitti> https://launchpad.net/~canonical-kernel-team/+archive/ppa/+build/4200994
+[11:04] <pitti> https://launchpad.net/~canonical-kernel-team/+archive/ppa/+build/4200999
+[11:04] <pitti> apw: checking if lamiak and panlong respond to ddeb fetching
+[11:05] <pitti> apw: one important difference is that they are being built in a PPA instead of the normal distro; that might play into it
+[11:05] <apw> pitti, i am saying that their non-deleting mirror of ddebs.u.c never got a copy of them, so more than likely they were not added to ddebs rather than deleted
+[11:05] <pitti> *nod*
+[11:06] <pitti> hm, htey do use the normal distro builders (blessed PPA), so it's not that
+[11:09] <pitti> so raring's ddebs are there; I'll copy them in case they disappear as well
+[11:09] <pitti> (for investigation)
+[11:09] <Kano> hi, where is the script that creates the current iso images incl. shim?
+[11:10] <pitti> apw: ok, I made a hardlink backup tree of http://ddebs.ubuntu.com/pool/main/l/linux/
+[11:10] <pitti> apw: but I'm afraid we really need a fresh (i. e. < 7 days) build from the PPA in order to investigate this :(
+[11:11] <pitti> or get ddebs into Launchpad properly
+[11:11] <Kano> 12.10 kubuntu was not bootable, only grub showed with secureboot
+[11:11] <Kano> ubuntu worked
+[11:11] <Kano> the linux command did not succeed there
+[11:12] <apw> pitti, we built two like yesterday
+[11:12] <Kano> cjwatson: can you help?
+[11:14] <apw> pitti, in fact linux - 3.2.0-37.58 is building still for armhf, but built on x86
+[11:15] <pitti> apw: ah, great; looking at that one
+[11:15] <pitti> oooh! I have an idea
+[11:16] <pitti> apw: so the build happens in the PPA at day 1; the ddebs are fetched, but they aren't put into the Packages.gz indexes as they are not in the distro yet
+[11:16] <infinity> pitti: Oh, is it the delay of the SRU process that's getting them killed/lost? :/
+[11:16] <pitti> apw: then on a day > 5 the kernel is copied to the distro
+[11:16] <pitti> apw: at that point ddeb-retriever will have them cleaned up, as they appear nowhere in the distro
+[11:16] <infinity> (Though, I usually do my copies in under 5 days, that's certainly not guaranteed)
+[11:16] <pitti> it isn't really built with that "copy from PPA" model in mind
+[11:17] <pitti> but let me check the ddebs on the buildds
+[11:17] <apw> and that would explain amd64 as that is typically done the quickest
+[11:17] <apw> so would hit 5 days soonest
+[11:17] <pitti> so 3.2.0-37.58 isn't on https://launchpad.net/ubuntu/+source/linux/+publishinghistory yet, as expected
+[11:18] <infinity> pitti: This could also explain random complaints about security updates without ddebs, since they follow the same PPA->archive model, and VERY often have a testing delay of a week or more before unembargoing.
+[11:18] <pitti> but http://ddebs.ubuntu.com/pool/main/l/linux/ has them
+[11:18] <BWMerlin> Nvidia has released new stable drivers, what is the process for these to be included into the ubuntu repositories?
+[11:19] <infinity> BWMerlin: tseliot tends to be on top of this.
+[11:19] <pitti> apw: ok, I think we nailed it; I'll bump the "max age" of unowned kernel debs to a month
+[11:19] <apw> pitti, could we perhaps add a " version <= newest pocket version "
+[11:19] <pitti> we have the space now
+[11:19] <apw> well that cannot hurt for sure
+[11:19] <infinity> pitti: Special-casing kernels doesn't help security.
+[11:19] <infinity> pitti: But I suspect kernels are the major use-case people notice.
+[11:20] <infinity> pitti: (And this should all go away sooner, rather than later...)
+[11:20] <pitti> yeah, we'll need some ">=" version comparison as apw suggests
+[11:20] <apw> i would think not removing a .ddeb which represents a version in the future ever would fix it right for everything
+[11:21] <pitti> ah, since we switched to germanium the "max age" is back to 14 days
+[11:21] <infinity> apw: Except then we would have ddeb cruft ~forever for people who build test packages in devirt PPAs, or kernel/security/etc building something that doesn't get copied, or even package removals from -proposed.
+[11:21]  * pitti bumps to a month
+[11:21] <pitti> ^ for all packages
+[11:21] <pitti> /dev/cciss/c1d0p1     393G   19G  370G   5% /
+[11:21] <pitti> *shrug* :)
+[11:21] <infinity> pitti: Shiny.
+[11:21] <pitti> err, that actually:
+[11:21] <pitti> /dev/mapper/ddebs_vg  2.8T  517G  2.3T  19% /srv
+[11:22] <apw> heh
+[11:22] <infinity> pitti: I'm going to try to find the time next week to look into the librarian solution (again), so maybe we can stop worrying about the hackish attempts at aging, and you can just do 1:1 mapping from published binaries to their matching ddebs.
+[11:23] <BWMerlin> infinity: I am trying to find information about it's progress, I have checked the bug tracker but couldn't find any mention of it
+[11:23] <infinity> BWMerlin: That was a hint to, perhaps, ask tseliot, who does these updates.  What version is this new stable version?
+[11:23] <pitti> infinity: that'd be great indeed; that doesn't relieve germanium of the two hours that it takes to produce indexes, but at least it would solve the "data loss" problem
+[11:23] <BWMerlin> 313
+[11:25] <tjaalton> BWMerlin: it's an experimental version..
+[11:25] <infinity> BWMerlin: Ahh, yeah, we still seem to be at 310ish.  But ping tseliot if you're curious.  I suspect he already knows about the new upstream, but it doesn't hurt to politely ask.
+[11:25] <infinity> (keyword: politely)
+[11:26] <BWMerlin> tjaalton: there are new 310 and 313 drivers
+[11:26] <tjaalton> 310 is the stable one
+[11:26] <tjaalton> which raring has
+[11:26] <infinity> tjaalton: Though, not the same version as upstream.
+[11:27] <infinity> tjaalton: (310.19 vs 310.32)
+[11:27] <tjaalton> ok
+[11:28] <tjaalton> released on monday, so quite fresh
+[11:29] <BWMerlin> yes, I have some errors with the current version that I am hoping that new version corrects
+[11:31] <tjaalton> ubuntu-bug nvidia-graphics-drivers-310
+[11:31] <tjaalton> maybe not necessary though
+[11:37] <siretart> tjaalton: I would think so, but testing it beforehand wouldn't hurt
+[11:38] <tseliot> infinity: I only have to upload the latest nvidia driver (310.32). I worked on it yesterday and I hope to upload it today
+[11:38] <siretart> tjaalton: I think I have even testbuilt them, but nothing more
+[11:40] <tjaalton> siretart: what can it be tested with? :)
+=== _salem is now known as salem_
+[11:40] <tjaalton> I tried a year ago and it was a disaster back then
+[11:41] <siretart> tjaalton: that's a good point :-)
+[11:43] <Kano> kubuntu raring does not start with secure boot and quantal does not too
+[11:43] <tjaalton> siretart: I could try with the mplayer port with va-api support
+[11:43] <Kano> why not?
+[11:45] <tjaalton> siretart: the gstreamer situation is a bit weird still, with all the various branches etc
+[11:48] <Riddell> Kano: hmm I think we have some things missing from our seeds
+[11:49] <xnox> Kano: as far as I know #kubuntu is not SB enabled.
+[11:51] <siretart> tjaalton: neither mplayer nor mplayer2 support vaapi
+[11:51] <cjwatson> Riddell: if you want it done for 12.04.2, let me know and I should be able to sort it out on Monday.  (But it ought to be done for 13.04 first, really.)
+[11:52] <Kano> xnox: but it starts grub, so shim must be there
+[11:52] <Kano> it just can not load the kernel/initrd then
+[11:53] <infinity> Kano: Missing linux-signed-generic, I assume?
+[11:53] <Kano> no idea
+[11:54] <Kano> i got my efi enabled board yesterday
+[11:54] <tjaalton> siretart: there is a ppa which has a version that does
+[11:54] <tjaalton> apparently
+[11:55] <siretart> tjaalton: that's some bastardized fork of an outdated codebase, whose create seems to have no interest in submitting his work upstream.
+[11:55] <siretart> s/create/creator/
+[11:55] <tjaalton> siretart: ah, well I'm interested to see if I can reproduce a bug in the driver :)
+[11:56] <siretart> tjaalton: :-)
+[11:56] <tjaalton> not really interested in the player itself
+[11:57] <siretart> i would appreciate if people would stop calling it mplayer, the mplayer 'situation' is already way too confusing as it is right now.
+[11:57] <siretart> with 'it', I mean that vaapi fork
+[11:57] <Kano> siretart: did you get it compiled? i only saw 3 branches
+[11:58] <siretart> Kano: i'm not interested in outdated, stale code branches, so no.
+[11:59] <Kano> siretart: there is a git repo, did you look there?
+[11:59] <siretart> no
+[11:59] <Kano> http://gitorious.org/vaapi/mplayer
+[11:59] <Kano> but somehow you would need all 3 branches merged
+[11:59] <siretart> last activity, August 20, 2012.
+[11:59] <tjaalton> siretart: is there some other player with vaapi support?
+[12:00] <Kano> tjaalton: sure, xbmc
+[12:00] <Kano> tjaalton: and vlc
+[12:00] <siretart> tjaalton: vlc exists, and I'm told gstreamer can do vaapi as well (but I haven't tested that)
+[12:00] <tjaalton> vlc is fine
+[12:00] <Kano> no compared to xbmc vlc is bad
+[12:00] <siretart> Kano: too bad that we do not have xbmc in ubuntu
+[12:00] <Kano> then compile it
+[12:00] <Kano> 5 min on a new box
+[12:00] <tjaalton> not that interested
+[12:01] <tjaalton> vlc is fine if it allows me to repro the bug
+[12:01] <ogra_> we do have xbmc
+[12:01] <Kano> has too high cpu load
+[12:02] <ogra_> in raring at least
+[12:02] <siretart> ogra_: omg. how did this pass ftp-master license review?
+[12:02] <Kano> it is even in debian
+[12:03] <Kano> because it is build without internal ffmpeg
+[12:03] <Kano> i prefer the normal xbmc with builtin ffmpeg
+[12:03] <ogra_> siretart, dunno,didnt check, i just know it is famous on arm recently
+[12:04] <siretart> Kano: that's my main concern with it. in debian/experimental it is built against internal ffmpeg, which makes it IMO unsuitable for a distribution usage.
+[12:04] <siretart> ogra_: well, not my call anyways.
+[12:04] <siretart> gotta work to do, bbl
+[12:04] <Kano> there are so many branches that i build it directly anyway
+[12:04] <Kano> you need a different branch for xvba
+[12:06] <Kano> does not take long to compile, maybe it takes longer to dl the code ;)
+[12:12]  * xnox crashed software center =)
+[12:21] <xnox> ... i'm one of 2298 times who managed it.
+[12:22] <mvo> xnox: whats the bugnumber?
+[12:22] <davmor2> mvo: how do
+[12:23] <xnox> mvo: created from errors bug 1105021 , I have a fix for it already, testing now + will propose a merge. It only affects raring (based on errors data)
+[12:23] <ubottu> bug 1105021 in software-center (Ubuntu Raring) "/usr/share/software-center/update-software-center-channels:NameError:<module>:check_for_channel_updates_and_trigger_axi:trigger_axi_update_and_wait" [High,Confirmed] https://launchpad.net/bugs/1105021
+[12:23] <mvo> xnox: are you on it already?
+[12:23] <xnox> mvo: yeah. It's just missing an import =)
+[12:24] <mvo> cool
+[12:24] <xnox> and I know how to trigger it ;-)
+[12:24]  * mvo hugs xnox
+[12:24]  * xnox hugs ev for giving me data to react to this
+[12:30] <mitya57> hi barry :)
+[12:35] <bdrung> Sweetshark: mail responded. when will be the latest time to send you stuff before you leave for vacation?
+[12:38] <Sweetshark> bdrung: today is my last day, and while I leave at ~midnight, I still have some packing to do.
+[12:41] <bdrung> okay
+[12:52] <ev> xnox: yay!
+[12:54] <xnox> mvo: so how does one install i386 packages only, via software center? do I must provide a :amd64 package that simply depends on :i386 package? (e.g. like skype & skype-bin) cause VMware view client is in the app-install-data now (i fixed it localy) & yet it is "not found"
+[12:56] <infinity> xnox: Oh, have you hijacked vmware-view-client from me?
+[12:56] <infinity> xnox: Not that I mind if the answer is yes. :P
+[12:56] <xnox> infinity: no, I haven't. I'm trying to teach software center that one can install vmware-view-client on amd64 machines.
+[12:56] <xnox> via app-install-data-partner.
+[12:57] <infinity> xnox: If software-center can't see multiarch binaries from secondary arches, that seems like an SC bug.  Pretty please don't work around it with dummy amd64->i386 packages. :/
+[12:58] <xnox> ev: I've used errors to fix a crasher, I even made a merge proposal for errors to fix a small bug there. Clearly you should code review my usb-creator branch in return =))))
+[12:58] <infinity> (We could repackage vmware-view-client like Skype, but we really shouldn't have to)
+[12:59] <xnox> infinity: ok, i'll just mark it i386 only in app-install-data, but then like most desktops that want to use vmware-view-client won't be able to install it via usual ways.
+[12:59] <xnox> infinity: it's not fair to hour office building buddies.
+[12:59] <xnox> s/hour/our/
+[12:59] <infinity> xnox: Well, it *is* i386-only.  The point I'm making is that software-center should still show it anyway if you have i386 enabled.
+[13:00] <infinity> xnox: Does this fiddling mean that its stack is actually installable now?
+[13:01] <infinity> Ahh, it is in raring now, at least.
+[13:01] <xnox> yeah, it is =)
+[13:03] <infinity> xnox: I vaguely remember not caring before because its dependencies weren't all multiarched.  Looks like that's been fixed in precise too now.  Shiny.
+=== MacSlow is now known as MacSlow|lunch
+[13:04] <infinity> xnox: So, yeah.  I *could* repackage it with a foo/foo-bin approach like skype, but I'd rather you get mvo's opinion on why SC doesn't display it in the current state, and how/if that should be fixed.
+[13:04] <infinity> xnox: Cause cross-arch deps like that are a hackish workaround, not something we should be doing just cause.
+[13:05] <infinity> xnox: (For skype, it was to enable smooth upgrades, since there used to be a skype:amd64 that depended on ia32-libs, there never was such a thing for vmware-view-client)
+[13:05] <xnox> for enough earl gray tea & biscuits foo/foo-bin in -partner is not that hard =)
+[13:05] <infinity> xnox: No, it's not hard, it's *wrong*.
+[13:05]  * xnox makes a sad face, starts crying and says "but i like biscuits" =))))))
+[13:05] <infinity> xnox: skype should be the exception here (due to the upgrade path issue), not the rule.
+[13:05] <xnox> ok.
+[13:06] <xnox> let me experiment and see if there is a regular reproducer in the archive.
+[13:06] <xnox> well. i guess partner kind of is, but i'm sure there was something like that synced from debian as well
+[13:06] <infinity> You'll be hard-pressed to find things in the regular archive that only exist on one arch and are sensibly multiarched.
+[13:07] <infinity> Some kernels, perhaps, but they don't show up in SC anyway.
+=== cpg is now known as cpg|away
+[13:07] <infinity> vmware-view-client seems like a good enough testcase, don't see why you'd need another.
+[13:08] <xnox> true.
+[13:12] <infinity> xnox: I doubt SC understands multiarch at all, but if it does, it might be accidentally assuming that packages without MA headers aren't valid candidates?
+[13:13] <xnox> infinity: on the other hand one should not see 2 gnome-terminals.
+[13:13] <infinity> xnox: More realistically, though, it's probably just not even looking at foreign arches.
+[13:13] <infinity> xnox: Why would you?
+[13:13] <janimo> pitti, hi, are we following udev in systemd currently?
+[13:14] <infinity> xnox: apt-cache search gnome-terminal && apt-cache search vmware-view-client : you only see one of each, it picks the best candidate.
+[13:14] <infinity> xnox: This is no different than having more than one candidate in, say, release, updates, security, and proposed.  SC only shows you the "best", not all of them, I hope. :P
+[13:14] <xnox> hmm...
+[13:14] <janimo> pitti, as in backporting changes from it but not rebuilding from that source tarball?
+[13:16] <infinity> janimo: I was pretty sure slangasek had master plans to start building udev directly from the systemd sources at some point.
+[13:16] <infinity> janimo: It was one of the driving factors for me getting kmod in the archive.
+[13:16] <infinity> janimo: But something may have stalled there.
+[13:18] <bdrung> Sweetshark: do you have SRU plans for bug #628105?
+[13:18] <ubottu> bug 628105 in libreoffice (Ubuntu) "[Upstream] Text not black in LibreOffice" [Undecided,Confirmed] https://launchpad.net/bugs/628105
+[13:20]  * janimo just made a local change to udev only to discover it being already added in systemd/udev two weeks ago
+[13:22] <infinity> bdrung: Did you get that cherrypicked to upstream stable branches, or only land it on trunk?
+[13:22] <infinity> bdrung: (If you'd had it cherrypicked, SweetShark would be picking it up 'for free' in SRUs)
+[13:23] <pitti> janimo: no, we don't right now
+[13:23] <infinity> bdrung: Otherwise, you may have missed the boat for precise for now, as he just did a big point release update. :/
+[13:23] <pitti> janimo: I have the most current standalone udev release in the raring bzr branch, but it doesn't work right now
+[13:23] <pitti> janimo: I also built some test packages with systemd's udev, which do seem to work
+[13:24] <pitti> but I didn't spend much time on it, as it bumps soname, requires changing our ConsoleKit, and I don't have enough time to do all that
+[13:25] <bdrung> infinity: in landed only in trunk (and will be part of 4.0). i saw that a sru upload landed in proposed. the question is if there are other outstanding fixes that will be bundled for after the point release
+[13:25] <bdrung> s/in/it/
+[13:25] <infinity> bdrung: Well, I'm sure he'll do another micro release at some point, so just making sure this is queued up for that would be reasonable.
+[13:25] <infinity> bdrung: (Shame that didn't happen for this current upload)
+[13:26] <ev> xnox: will do :)
+[13:27] <bdrung> infinity: IIRC, the currently accepted sru upload stuck in the unapproved queue for some time
+[13:28] <infinity> bdrung: I could kill off the two ARM builds of LibreOffice if you and SweetShark can agree on a quick follow-up with one or two small bugfixes. :P
+[13:28] <bdrung> Sweetshark: ^
+[13:28] <infinity> bdrung: The current one was only in unapproved for an hour or two.  The previous one was in for a while until it was rejected, yeah.
+[13:29] <janimo> pitti, for udev package changes should I file a bzr merge req on https://code.launchpad.net/~ubuntu-branches/ubuntu/raring/udev/raring ?
+[13:29] <pitti> janimo: please don't for now, as that's the new version which is failing horribly
+[13:29] <pitti> janimo: i. e. either just push --overwrite it with what's actually in raring (I have a local copy of teh branch here, it's fine), or just dput
+[13:30] <bdrung> infinity: i am busy with university stuff. so please poke sweetshark (or me in a few hours)
+[13:30] <janimo> pitti, ah dput  without touching bzr branches? I am fine with that
+[13:30] <infinity> bdrung: I should be busy napping.  It's 6:30am and I haven't done that yet.
+[13:31] <infinity> bdrung: But if you guys agree on replacing the current proposed version with something with one (or a few) small, auditable bugfix(es), I'm okay with that, and likely to accept it.
+[13:31] <infinity> bdrung: Shame about the buildd resources, but life's like that sometimes.
+[13:31] <infinity> bdrung: Beats pushing two rapid updates to end users.
+=== Ursinha_ is now known as Ursinha
+=== rsalveti_ is now known as rsalveti
+[13:32] <bdrung> infinity: i would go for replacing the current proposed version, but let's wait for Sweetshark's comment. the diff is auditable: https://launchpadlibrarian.net/129007971/autocolor.debdiff
+[13:34] <infinity> bdrung: Yeah, that diff is totally auditable, and I'm happy with it.  I was implying that there may be other forgotten fixes one might want to sneak in too.  Given the age of this one, that seems like a likely scenario. :P
+[13:34] <bdrung> infinity: IIRC, the other one or two bug fixes landed in the proposed version
+[13:36] <infinity> Anyhow.  Quick nap time.
+[13:46] <seb128> bdrung, infinity: please let libreoffice where it is
+[13:46] <seb128> it tooks us 1.5 months to get that version accepted in proposed
+[13:46] <seb128> we will do follow up uploads
+[13:47] <seb128> but we need to get that one through, and I'm not wanting to play "let's kick it out and replace it"
+[13:47] <seb128> especially that Sweetshark is off for 2 weeks starting tonight
+=== chiluk_away is now known as chiluk
+[14:00] <mpt> ev, is backporting the error tracker to 11.10 or earlier still a realistic possibility, or shall I drop that from the spec?
+[14:00] <ogra_> 11.10 goes out of support in april ...
+[14:01] <mpt> So does 10.04, right?
+[14:01] <ogra_> sounds pretty pointless unless you want a catchall for 11.10->12.04 upgrade errors
+[14:01] <ogra_> 10.04 on the desktop
+[14:01] <mpt> yeah
+[14:01] <ogra_> server still stays for 2 years
+[14:01] <mpt> and we don't have server error tracking yet anyway
+[14:03] <mpt> Dropped: https://wiki.ubuntu.com/ErrorTracker?action=diff&rev2=142&rev1=141
+[14:17] <mpt> ev, for these developer settings for the error tracking, I wonder if we could/should offer blacklisting of any package that you have installed from a PPA
+[14:19] <mpt> I guess "could" depends on bug 1091228
+[14:19] <ubottu> bug 1091228 in apt (Ubuntu) "No record of which repository a package was installed from" [Medium,New] https://launchpad.net/bugs/1091228
+[14:20] <cjwatson> Not really
+[14:21] <cjwatson> I mean, it doesn't matter if you've installed it from a PPA and it has since been copied into the primary archive, does it?
+[14:21] <mpt> sure it does
+[14:21] <cjwatson> Well, I guess if it's been superseded by a later version then it might be hard to tell
+=== MacSlow|lunch is now known as MacSlow
+[14:21] <mpt> Well, it depends on the motivation I guess
+[14:22] <cjwatson> But I'd have thought a reasonable first cut would just be to check the current origins (analogous to apt-cache policy)
+[14:22] <mpt> If the motivation for not wanting to report PPA errors is to avoid spamming the error tracker with errors Ubuntu developers can't fix, then as soon as it's copied into the primary archive, they can fix them
+[14:22] <mpt> but I was thinking more developers who are using a PPA for testing before going to MyApps/ARB
+[14:24] <mpt> Even then, for both us and them, it would be more interesting if we could give the developers access to those error reports, than to spend time letting their beta testers block just those error reports...
+[14:34] <BWMerlin> I keep getting the following error when I try to install glx-alternative-nvidia The following packages have unmet dependencies: glx-alternative-nvidia : Depends: glx-diversions (= 0.2.2) Depends: glx-alternative-mesa E: Unable to correct problems, you have held broken packages.
+[14:34] <BWMerlin> Is this a bug I need a report or am I doing something wrong?
+[14:45] <xnox> mpt: an error or a bug in the software is still an error and a bug. no matter where it was installed from. and it's better to fix everything in ppa before it hits MyAPps/ARB/archive.
+[14:46] <mpt> yeah
+[14:46] <xnox> i guess it's screws with the statistics and graphs.
+[14:46] <mpt> For example, we're just hooking up Firefox errors so that we'll count them before sending them on to Mozilla, (almost) purely for statistical rigor
+[14:47]  * xnox so wants to see chromium vs firefox stability. But I guess regardless, the $default browser will always crash more.
+[14:48] <mpt> We'd have to measure program running time to know that
+[14:48] <mpt> but we don't even know Ubuntu running time at the moment (which is why the 12.04 graph has a weekly pulse)
+=== slank_away is now known as slank
+[14:59] <barry> mitya57: hi
+[14:59] <infinity> BWMerlin: We don't use glx-alternative-nvidia with the Ubuntu shipped drivers.
+[15:00] <mitya57> barry: we wanted to discuss something about the docs
+[15:00] <barry> mitya57: yep, debian wiki page and pybuild
+[15:02] <mitya57> barry: I'm also interested in packaging-guide page, it will be good to merge those two at some point
+[15:02] <barry> mitya57: +1
+[15:16] <mitya57> barry: ideally the main section should tell about pybuild (I would take p1otr's announcement as a base), and then "Other approaches"
+[15:16] <mitya57> section which will describe the old way
+[15:17] <barry> mitya57: in the packaging guide or wiki or both?
+[15:17] <mitya57> I've stolen some text from Debian wiki (both your article and p1otr's) when writing the u-p-g page, the things I added are
+[15:17] <mitya57> sphinx stuff, debian/rules snippet and a list of requirements
+[15:18] <mitya57> both
+[15:19] <mitya57> ... and info about lintian4py
+[15:27] <lantizia> Hi, I've noticed that the kernels shipping with 12.04 and 12.10 are coming compiled with a setting turned on that wasn't present in the config file of the kernel that shipped with 11.10
+[15:27] <lantizia> that setting is CONFIG_SOUND_OSS_CORE_PRECLAIM=y
+[15:28] <lantizia> also CONFIG_SOUND_OSS_CORE=y
+[15:28] <lantizia> now given OSS was completely removed in the kernel back in 11.04 release was it?
+[15:29] <lantizia> Why has settings for it re-emerged in 12.04 onwards?   That setting it seems preserves OSS device numbers in case you have OSS compatibility compiled in to the kernel - which clearly it doesn't any longer
+[15:29] <lantizia> But whilst the setting is there, it prevents people from using OSS proxy/emulation techniques such as osspd (which uses fuse/cuse to fake /dev/dsp and redirects it to pulseaudio)
+[15:29] <infinity> lantizia: You want #ubuntu-kernel
+[15:30] <lantizia> lol - I did ask in #ubuntu which channel would be best, nevermind I'll reask there
+[15:30] <lantizia> but if anyone does know how I can do about looking for a rationale of why that was re-included let me know :D
+=== henrix is now known as henrix_
+=== fenris is now known as Guest10857
+=== henrix_ is now known as henrix
+[16:35] <slangasek> seb128: hey, do you know if there's a reason we still have the gnome-power-manager package in the desktop seed?  It looks to me like the only things it still contains are a pointless GUI tool and some icons which I think we're not using
+[16:37] <psusi> it has been annoying me for some time now that the gui tool has had features removed to the point of becoming pointless
+[16:37] <seb128> slangasek, for the "pointless GUI tool" :p
+[16:37] <stgraber> slangasek: gnome-power-statistics is called by the power indicator
+[16:37] <psusi> I tried last year to put some back, but upstream didn't seem to want to
+[16:37] <stgraber> slangasek: that's what you see when you click on a batter in the indicator
+[16:37] <psusi> ohh, right... -manager, not -settings
+[16:38] <stgraber> (and FWIW I actually use that "pointless GUI tool" ;))
+[16:38] <slangasek> seb128, stgraber: oh, sure enough - I was only clicking on 'settings' which showed something different :)
+[16:39] <mdeslaur> s/pointless/confusing/
+[16:39] <stgraber> jdstrand: libseccomp has now built on both i386 and amd64, including the testsuite run (thanks to kees who fixed the testsuite failure)
+[16:39] <jdstrand> stgraber: ack
+[16:59] <amigadave> jcastro: hey, i am an upstream developer (of Vino) and would like to see error reports for that project on errors.ubuntu.com
+[17:00] <amigadave> jcastro: poking you as per https://wiki.ubuntu.com/UbuntuBugControl#Application :-)
+[17:06] <ev> amigadave: unfortunately that's not possible yet. We're working with Canonical's legal team to come up with an NDA that will allow us to share that information with trusted third-party developers like yourself.
+[17:06] <ev> Really glad you're interested in getting at it though! :) Hopefully we'll have something together soon.
+[17:06] <ev> slangasek: ^
+[17:08] <amigadave> ev: thanks for the information
+[17:08] <ev> amigadave: sure thing
+[17:10] <jtaylor> is this a gcc bug or me doing something I shouldn't: http://paste.ubuntu.com/1570281/
+[17:11] <jtaylor> I know complex is not c++ but why should it stop working?
+[17:11] <slangasek> ev: ack :)
+[17:20] <barry> xnox: hah! i had the same s-c automerge failures.
+[17:25] <xnox> hm?! =)
+=== doko_ is now known as doko
+=== salem_ is now known as _salem
+=== _salem is now known as salem_
+[18:15] <mterry> Is there a bug status that makes status.ubuntu.com treat it as postponed?
+[18:19] <xnox> unlink from blueprint
+[18:19]  * xnox hides =))))
+[18:23] <slangasek> mterry: target bug to release, mark 'wontfix' for that release
+[18:23] <mterry> xnox, :)
+[18:23] <mterry> slangasek, ah hmm.  OK thanks
+=== henrix is now known as henrix_
+=== ximion is now known as ximion-afk
+=== ximion-afk is now known as ximion
+=== ximion is now known as ximion-afk
+=== ximion-afk is now known as ximion
+[19:40] <kirkland> sladen: ping
+[19:41] <kirkland> sladen: what would it take to get the Apple unicode logo &#xF8FF into the Ubuntu font?
+[19:42] <bluefoxxx> why is the Apple logo a Unicode symbol
+=== cyphermox_ is now known as cyphermox
+[19:44] <sarnold> bluefoxxx: the ubuntu logo also has a spot in the 'private extensions' space, it's in at least one font shipped by ubuntu..
+[19:45] <bluefoxxx> aha
+[19:46] <slangasek> kirkland: other than Apple tendering an offer for Canonical? ;)
+[19:49] <robru> mterry, oops, I'm late for a lunch date. gotta run! chat about this later?
+[19:49] <robru> mterry, whoops, wrong channel too. so scattered! ;-)
+[20:24] <dobey> barry: ping, i've added the dep3 headers, and pushed the patch to an upstream bug report, for https://code.launchpad.net/~dobey/ubuntu/raring/twisted/fix-pygtkcompat/+merge/144550 can you re-review/sponsor it now? :)
+[20:25] <barry> dobey: i'll do it before cob today (probably in an hour or so)
+[20:26] <dobey> barry: thanks, it fixes a pretty critical crash happening in ubuntuone-client, and is blocking me uploading a new version of that, or rhythmbox-ubuntuone, at least. :)
+[20:26]  * barry nods
+[20:27] <barry> dobey: actually, nm.  i'll do it now, thanks
+[20:27] <dobey> ah ok, thanks much!
+[20:29] <stokachu> barry: if you get a moment could you look over bug 1103644 and let me know what issues you see (if any of course :)
+[20:29] <ubottu> bug 1103644 in python-tz (Ubuntu) "Please merge python-tz 2012c-1 (main) from Debian unstable (main)" [Wishlist,In progress] https://launchpad.net/bugs/1103644
+[20:30] <barry> stokachu: that one will have to wait til later today ;)
+[20:30] <stokachu> barry: thats cool man
+[20:33] <stokachu> anyone have any experience packaging stuff that requires google test? (libgtest-dev) i couldnt find any documentation that describes the proper way to make sure those source files are built when an application depends on it
+[20:35] <stokachu> only stuff i could find was manually running cmake and copying over the static libs to our library path
+=== ximion is now known as ximion-afk
+=== ximion-afk is now known as ximion
+=== ximion is now known as ximion-afk
+=== ximion-afk is now known as ximion
+[21:48] <jamin> any chance of getting some attention on this report: https://bugs.launchpad.net/ubuntu/+source/xserver-xorg-input-evdev/+bug/1075478
+[21:48] <ubottu> Ubuntu bug 1075478 in xserver-xorg-input-evdev (Ubuntu) "bluetooth keyboards and mice not working after suspend/resume" [Undecided,Confirmed]
+=== salem_ is now known as _salem
+[21:49] <jamin> there have been several similar reports, the referenced report has an functional work around for the issue
+=== cpg|away is now known as cpg
+=== ximion is now known as ximion-afk
+=== ximion-afk is now known as ximion
+=== ximion is now known as ximion-afk
+=== ximion-afk is now known as ximion
+[22:11] <slangasek> plars: ping
+[22:11] <plars> slangasek: hi
+[22:11] <slangasek> plars: hey there!
+[22:12] <plars> slangasek: heya, good to talk to you again :)
+[22:12] <slangasek> plars: :) have you seen the mail thread with the questions about whether we're profiling memory at the right point in these new jenkins jobs?
+[22:13] <slangasek> plars: would be great if we could have this profiling a logged-in desktop session before Monday
+[22:13] <plars> slangasek: yes, just saw that and I'm updating the job so that it auto logs in
+[22:13] <slangasek> ok cool
+[22:14] <plars> slangasek: from what I'm seeing, 'd-i passwd/auto-login boolean true' ought to work for that right?
+[22:14] <slangasek> plars: I confess that I don't know
+[22:15] <slangasek> plars: it /sounds/ plausible ;)
+[22:17] <plars> d-i preseeding is a bit of a dark art
+[22:18]  * plars is hoping for a 'd-i everything/just-freaking-work boolean true'
+[22:18] <plars> :)
+[22:18] <roadmr_> plars: that's the correct d-i setting, I think at some point it didn't actually result in lightdm auto-logging in, but these days it should
+[22:19] <plars> roadmr_: ok, good to know. It ought to be real obvious if that breaks in this instance since the main output of the test is a process list
+[22:19] <roadmr_> plars: back when that problem was spotted, we worked around it by plastering this in the success_command: http://paste.ubuntu.com/1571093/
+[22:19] <plars> roadmr_: ok, good to know
+[22:22] <roadmr_> plars: there was a bug about this, fix-released by now: https://bugs.launchpad.net/ubuntu/+source/casper/+bug/819624
+[22:22] <ubottu> Ubuntu bug 819624 in casper (Ubuntu Oneiric) "casper doesn't configure autologin for lightdm properly" [High,Fix released]
+=== cpg is now known as cpg|away
+=== cpg|away is now known as cpg
+[23:09] <dylan-m> Hey, mpt, I think that Technical description pane in Software Updater feels a little clunky and out of place, so I'm thinking of fooling with the thing to maybe get rid of those tabs. Did you have any plans for it already?
+[23:39] <barry> stokachu: still around?
+[23:41] <slangasek> cyphermox: I have now seen the dnsmasq debian/rules as a result of this SRU and am now very sad

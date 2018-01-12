@@ -1,0 +1,283 @@
+[06:12] <pitti> Good morning
+[06:14] <pitti> desrt: the one commit we reverted that makes the "close last tab" crash go away is now causing the critical that we see in deja-dup's test
+[06:15] <pitti> desrt: pythonpath> really? that seems to work for me, e. g. in jhbuild I get
+[06:15] <pitti> $ PYTHON=python3 jhbuild run python3 -c 'import gi; print(gi._overridesdir)'
+[06:15] <pitti> /home/martin-scratch/gnome/lib/python3.3/site-packages/gi/overrides
+[06:16] <pitti> desrt: there is no "list", there's only one override dir per python version
+[06:37] <robru> pitti, good morning! Thanks for merging my dbusmock stuff. we really needed that ;-)
+[06:37] <pitti> hey robru, good morning
+[06:37] <robru> pitti, just curious, when do you think dbusmock 0.4.0 will be officially released?
+[06:37] <pitti> robru: my pleasure!
+[06:38] <pitti> robru: fun thing, another Canonicalizen pinged me yesterday about the daily packages, and said "they are great, but they would be perfect with logging over D-BUS" :-)
+[06:38] <robru> pitti, haha, great
+[06:39] <pitti> robru: if you just need packages, you can always use the debs from https://code.launchpad.net/~pitti/+archive/daily-builds
+[06:39] <pitti> robru: but if you need it as a build dep, I can release it this week still if it's urgent
+[06:40] <robru> pitti, not urgent; I already backported the package for a PPA that we're using in quantal. just curious how long it will be before I can drop that backport and use an official package ;-)
+[06:40] <pitti> robru: I want to work on some more g-s-d test cases this week, for that I'm probably going to need some more templates
+[06:41] <pitti> so I think I'll release next week
+[06:41] <robru> pitti, cool, no worries.
+[06:41] <robru> pitti, take the time to make it great ;-)
+[06:41] <pitti> heh
+[06:41] <robru> pitti, I mean, it's already great, but you know what I mean ;-)
+[06:42] <robru> don't rush it ;-)
+[07:27] <jibel> good morning
+[07:37] <robru> hey pitti, since I'm now trying to write a vala wrapper around this dbusmock api you just merged... do you have any guesses as to what the vala method signature definition would look like for a method that returns 'a(tsav)'? I'm quite new to Vala so I really don't have a clue here.
+[07:40] <pitti> robru: hm, I'm afraid my Vala exercises have been quite a while ago, and I didn't get beyond a 50 liner :(
+[07:40] <pitti> so not off the top of my head
+[07:40] <robru> pitti, hehe, ok. I'm also much more comfortable with python ;-)
+[07:41] <robru> pitti, but I'm trying to learn and I can't seem to find much documentation here ;-)
+[07:41] <pitti> but for C, a() maps to a normal array, t to guint64, s to a normal string in vala; for av I'm not sure, how Vala maps variants
+[07:41] <pitti> robru: I had expected that you'd use GDBus and that this just gives you a single Variant?
+[07:41] <robru> pitti, not sure...
+[07:42] <robru> pitti, I'm expanding some existing code that was written by kenvandine, and it seems he's made a new object that inherits directly from GLib.Object, and somehow this is able to make dbus calls...
+[07:43] <robru> pitti, http://bazaar.launchpad.net/~super-friends/libfriends/trunk/view/head:/tests/vala/dbusmock.vala
+[07:43] <pitti> wow, that is all? magic
+[07:44] <pitti> seems Vala has GDBus built in then? nice
+[07:44] <robru> pitti, so that I've already successfully expanded to cover ClearCalls, which is nice and easy with void return value, but yeah, I have no idea how to define the return value for this crazy a(tsav) thing
+[07:44] <pitti> robru: I guess once you figured out how Vala represents multiple return values in general, it should be rather easy
+[07:44] <robru> pitti, yes, vala is very magical, and it makes it somewhat difficult to learn :-(
+[07:46] <robru> pitti, are you aware of any documentation for vala, specifically about return values? All I've been able to find is like 'string[]' or 'int[]' and those don't even begin to encompass this object...
+[07:46] <pitti> I guess you can always start with directly calling the GDBus methods, like dbusmock.call_sync()
+[07:46] <robru> pitti, I'm not familiar with call_sync
+[07:47] <pitti> robru: standard glib API: http://developer.gnome.org/gio/2.26/GDBusProxy.html#g-dbus-proxy-call-sync
+[07:47] <pitti> but that requires you to assemble and disassemble the GVariants yourself, so if vala provides some syntactic sugar around it it's certainly interesting to find out how that works
+[07:50] <robru> pitti, I wonder if I could just say GVariant[]
+[07:53] <robru> pitti, https://live.gnome.org/Vala/DBusServerSample comes close to giving a hint:  a(ii) maps to Foo[] where Foo might be defined as
+[07:53] <robru> struct Foo { public int a; public int b };
+[07:54] <pitti> oh, clever
+[07:54] <robru> pitti, so it sounds like I need to make a struct of 'tsav'
+[07:54] <robru> but what does 'av' map to?
+[07:54] <robru> Variant[] I guess
+[07:54] <pitti> right
+[07:55] <pitti> so a struct Call { gint64, string, Variant[] }, and then let it return Call[] ?
+[07:55] <robru> so: struct CallSignature { public int a; public string b; public Variant[] c } or something
+[07:55] <robru> hehe
+[07:55] <robru> pitti, ok, I'll play with this, and if I can get it to work I'll let you know (and also update that wiki...
+[07:55] <pitti> ok, tuples mapping to structs makes perfect sense (that's what they are really)
+[07:56] <robru> pitti, any thoughts on where that struct definition goes in the vala file? should it be in the class level, namespace level, or toplevel?
+[07:56] <pitti> robru: I'd put it right above the d-bus interface definition, i. e. where you define GetCalls()
+[07:56] <pitti> but it shouldn't matter much
+[07:56] <robru> pitti, ok, thanks
+[08:02] <pitti> robru: NB that it's really a guint64, not just int
+[08:02] <pitti> 't', not 'i'
+[08:06] <robru> pitti, valac tells me 'guint64' type name could not be found. maybe vala calls it something different?
+[08:06] <pitti> http://references.valadoc.org/#!api=glib-2.0/uint64
+[08:06] <pitti> robru: uint64
+[08:06] <robru> pitti, ah, thanks
+[08:07] <robru> pitti, ok, I seem to be getting somewhere... it almost compiles ;-)
+[08:19] <robru> pitti, ok, so let's say I got this to compile and I'm able to get this Call struct from dbus... now how do I create a new instance of the struct with the expected values in order to compare it against the returned struct?
+[08:19] <robru> pitti, basically, "how do I instantiate a struct"?
+[08:19] <robru> ;-)
+[08:20] <pitti> robru: the vala tutorial shows that, too
+[08:20] <pitti> https://live.gnome.org/Vala/Tutorial#Structs
+[08:20] <robru> pitti, thanks. Dunno why this isn't showing up on the googles.
+[08:50] <Sweetsha1k> morning all!
+=== Sweetsha1k is now known as Sweetshark
+[08:51] <Sweetshark> LibreOffice 4.0 beta1/raring build succeeded on armel \o/
+[08:52] <pitti> hey Sweetshark
+[08:52] <pitti> Sweetshark: niice! after only a week or so? :-)
+[08:53] <Sweetshark> pitti: two days
+[08:55] <chrisccoulson> good morning everyone
+[08:56] <Laney> hey
+[08:56] <Sweetshark> one lib is 64MB alone.
+[08:57] <Laney> mvo: Hey ;-) I was looking at errors.u.c yesterday and it seems that two popular s-c bugs are fixed in the 5.2 branch but it's not released to precise yet
+[08:57] <Laney> are you waiting on some more changes there? I'd be happy to upload it otherwise ...
+[09:01] <mvo> Laney: not waiting for anything else, go ahead with the upload if you want
+[09:01] <Laney> great
+[09:01] <Laney> mvo: university life treating you well?
+[09:02] <chrisccoulson> hi Laney, Sweetshark, pitti
+[09:02] <chrisccoulson> mvo! Hi :)
+[09:02]  * pitti waves to chrisccoulson and mvo
+[09:02] <Laney> ahoy there
+[09:02] <pitti> hey Laney
+[09:03]  * Laney sees snow is forecast all tomorrow and over the weekend
+[09:03] <robru> pitti, ok, so this seems to be working, not just compiling but actually tests passing: http://bazaar.launchpad.net/~robru/libfriends/dbusmock/revision/53
+[09:03] <mvo> Laney: takes a bit to get used to it (again) but its a interessting change
+[09:03] <mvo> hey chrisccoulson
+[09:03] <mvo> and hey pitti
+[09:03] <Sweetshark> chrisccoulson: good morning. Now we only need qengho to complete the fat apps crew.
+[09:04] <pitti> robru: that looks beautiful!
+[09:04] <pitti> robru: err, comparing raw hash values?
+[09:04] <robru> pitti, well, it's littered with FIXME's, but other than that it's pretty slick I guess ;-)
+[09:04] <pitti> robru: why not comparing strings?
+[09:05] <robru> pitti, yeah, I dunno why, but if I compared the string value it would just fail. wouldn't say why, but the assertion would just fail
+[09:05] <pitti> or variant types and values?
+[09:05] <pitti> robru: well, it's a Variant, so you need to call .get_string() or .get_int() or whatever the argument type is
+[09:06] <robru> pitti, I tried comparing variants to strings, I tried constructing string variants and comparing those, I tried extracting the string from the variant and comparing strings, just could *not* get it to compare equally. the hash value was all that would work
+[09:06] <pitti> robru: what's the result of myvariant.get_string()? does that assert?
+[09:06] <pitti> about wrong data type or so?
+[09:07]  * Laney sees "use gstreamer1.0
+[09:07] <Laney> " in LO \o/
+[09:07] <pitti> \o/++
+[09:08] <robru> pitti, test-service.vala:137.21-137.51: error: The name `to_string' does not exist in the context of `GLib.Variant'
+[09:08] <robru>             assert (calls[0].call_args[0].to_string() == "twitter");
+[09:08] <pitti> robru: get_string, not to_string :)
+[09:08] <robru> d'oh!
+[09:08] <pitti> http://developer.gnome.org/glib/2.28/glib-GVariant.html
+[09:08] <pitti> devhelp FTW
+[09:09] <robru> pitti, ah, better. other objects in vala use to_string, so I was confused ;-)
+[09:09] <pitti> robru: well, to_string is the Vala API; g_variant_get_string() is GLib
+[09:09] <pitti> Vala is by and large just syntactic sugar around C and GLib
+[09:10] <pitti> a lot of tasty sugar admittedly, but still
+[09:15] <Laney> I think you can also cast to the appropriate type to dereference GVariants in vala too :-)
+[09:15] <robru> pitti, yeah, the trick is that I have no background in C, so Vala is basically indecipherable magic to me. Too many layers of misdirection going on, totally inscrutable ;-)
+[09:15] <robru> I'm sure for C programmers it's like the slickest thing.
+[09:15] <pitti> Laney: oh, so you can do "(string) my_variant" ?
+[09:15] <Laney> yeah
+[09:15] <pitti> robru: oh my, yes
+[09:15] <pitti> more sugar then :)
+[09:19] <robru> pitti, ok, here's the overall diff here, cleaned up, with both GetCalls and ClearCalls in play: https://code.launchpad.net/~robru/libfriends/dbusmock/+merge/143649
+[09:19] <pitti> :)
+[09:56] <pitti> Laney: desrt's patch in https://bugzilla.gnome.org/show_bug.cgi?id=690118 works very well
+[09:56] <ubot2`> Gnome bug 690118 in general "Crash when closing last tab of a window using Ctrl-w" [Normal,New]
+[09:56] <pitti> Laney: I guess I'll drop the revert in svn and add that patch instead, and reupload?
+[09:56] <pitti> that ought to fix déja-dup
+[09:57] <Laney> yay
+[09:57] <Laney> revert the revert and apply that sounds good to me
+[10:00] <pitti> having to wait for all the autopkgtest to succeed makes the update take very long, but IMHO it's so worth it
+[10:02] <Laney> yeah I look forward to the day when all the automation works seamlessly
+[10:02] <pitti> it's also a nice system to prevent the temptation of "yeah, we'll fix it later"
+[10:04] <pitti> Laney: pushed to svn, and glib2.0_2.35.4-0ubuntu3 uploaded; crossing fingers
+[10:04]  * Laney wonders how cdimage.u.c manages to be consistently so fast
+[10:05] <Laney> 13009 kBps
+[10:05] <pitti> no release nor milestone these days?
+[10:05] <Laney> zsyncing a precise daily
+=== Quintasan_ is now known as Quintasan
+[10:43] <pitti> glib/i386 built and succeeded all tests
+=== vrruiz_ is now known as rvr_
+=== MacSlow is now known as MacSlow|lunch
+[13:40] <Laney> pitti: deja-dup blue again \o/
+[13:45] <pitti> Laney: and all built now: https://launchpad.net/ubuntu/+source/glib2.0/2.35.4-0ubuntu3
+[13:45] <Laney> yep
+[13:45] <Laney> good to unblock you think?
+[13:45] <pitti> looks like all the reverse dependency tests succeede
+[13:45] <pitti> d
+[13:45] <pitti> Laney: rumble!
+[13:48]  * Laney fired ze missiles
+=== MacSlow|lunch is now known as MacSlow
+[13:57] <desrt> Laney: hey.  did you see https://bugzilla.gnome.org/show_bug.cgi?id=690118#c21 ?
+[13:57] <ubot2`> Gnome bug 690118 in general "Crash when closing last tab of a window using Ctrl-w" [Normal,New]
+[13:57] <desrt> Laney: would be fun to give that a run through the autopkgtests before i commit it.  is that possible?
+[13:58] <Laney> desrt: pitti uploaded that this morning and confirmed that the tests pass immediately before your question :-)
+[13:58] <pitti> desrt: many thanks for that fix!
+[13:58] <desrt> oh
+[13:58] <desrt> great :)
+[13:58] <desrt> i'll commit it then.  thanks, guys :)
+[13:59] <Laney> thank you for the fix!
+[13:59] <desrt> i introduced the problem.  i owed it :p
+[13:59] <pitti> desrt: we just gave it green light to make it into raring
+[13:59] <pitti> yay for glib 2.35!
+[14:00] <desrt> sweet!
+[14:01]  * Laney → lunchwards
+[14:01] <Laney> need to go out to the shop to get some food... freezing cold...
+[14:01]  * Laney dreads
+[14:02] <pitti> it has snowed non-stop since yesterday evening here
+[14:02] <pitti> biking to Taekwondo was "fun"
+[14:37] <cyphermox> morning
+=== Ursinha_ is now known as Ursinha
+=== m_conley_away is now known as m_conley
+[15:11] <Laney> only one dubious sliding incident :-)
+[15:12] <Laney> hey cyphermox
+[15:12] <cyphermox> Hey Laney
+[16:59] <achiang> kenvandine: what are the chances of getting this guy SRU'
+[16:59] <achiang> ed into 12.04 - https://bugs.launchpad.net/xchat-indicator/+bug/587902
+[16:59] <ubot2> Launchpad bug 587902 in XChat Indicator "PM alert remains in indicator if sender changes his nickname" [Undecided,Fix released]
+[17:01] <kenvandine> achiang, i can give it a shot
+[17:01] <kenvandine> achiang, can you test it on precise?
+[17:02] <achiang> kenvandine: i am in fact, tortured daily by that bug since i run precise. :)
+[17:02] <kenvandine> :)
+[17:02] <achiang> kenvandine: i will be the first to test it for you!
+[17:02] <kenvandine> achiang, cool
+[17:02] <kenvandine> i'll give it a shot then
+[17:02] <achiang> hurray!
+[17:02] <kenvandine> achiang, i can't run anything in virtualbox atm, which is killing me!
+[17:03] <achiang> kenvandine: i'll run it on my "actualbox" ;)
+[17:12] <desrt> seb128: will is complaining that you tried to make him do packaging :p
+[17:13] <kenvandine> desrt, packaging is good for the soul
+[17:15] <desrt> like flagellation?
+[17:15] <kenvandine> haha
+[17:38] <attente> hey cyphermox
+[17:39] <attente> i'm not really sure how one would go about writing an automated test for this
+[17:39] <attente> https://code.launchpad.net/~attente/indicator-appmenu/indicator-appmenu/+merge/143531
+[17:44] <attente> maybe pitti can advise
+[17:54] <alesage> attente, possibly I can help :)
+[17:54] <attente> alesage, recommendations welcome :)
+[17:55] <seb128> desrt, heh, packaging is a desktop team skill ;-)
+[17:56] <alesage> attente, I think we can write an autopilot test for this, just trying to grok the MP
+=== m_conley is now known as m_conley_away
+[18:13] <desrt> seb128: what happened to "we have more than enough packagers!"? :)
+[18:21] <seb128> desrt, doing a package once is different from being a full time packager...
+[18:22] <desrt> seb128: i know.  i tease.
+[18:22] <desrt> i'm just jealous... i still haven't learnt packaging yet :p
+[18:22] <seb128> I can give you some packaging work!
+[18:22] <desrt> uh... brb
+[18:40] <chrisccoulson> desrt, you want some packaging work?
+[18:41] <desrt> uh... brb
+[18:41] <chrisccoulson> heh
+[18:41] <chrisccoulson> desrt, i've got this browser here....
+[18:41] <chrisccoulson> ;)
+[18:43] <chrisccoulson> kenvandine, i thought you said virtualbox didn't work?
+[18:43] <kenvandine> chrisccoulson, i can't boot anything in virtualbox on any of my raring machines
+[18:43] <kenvandine> it just hangs
+[18:43] <chrisccoulson> kenvandine, hmmm, it works fine here
+[18:43] <chrisccoulson> it booted the first time i tried it ;)
+[18:43] <kenvandine> :/
+[18:43]  * kenvandine cries
+[18:44] <kenvandine> chrisccoulson, do you have an SSD?
+[18:44] <chrisccoulson> kenvandine, yeah
+[18:44] <desrt> you guys need to get with libvirt
+[18:44] <desrt> that's some _seriously_ awesome stuff
+[18:44] <kenvandine> desrt, will it do unity 3d?
+[18:45] <desrt> oh.  maybe not :)
+[18:45] <kenvandine> not so awesome :)
+[18:45] <desrt> well, it does unity 3d
+[18:45] <desrt> but i think it's llvmpiped
+[18:46]  * desrt has a fedora, win32 and ubuntu-unity box in there
+[18:46] <desrt> the best part is that they just run in the background and i can ssh in
+[18:46] <desrt> you can even set them to boot up when your machine boots up
+[18:46] <chrisccoulson> heh, i wouldn't want that. my machine boots slow enough already ;)
+[18:46] <sarnold> I once discovered that I had five kvm VMs running for a while that I'd forgotten about. I was impressed :)
+[18:47] <chrisccoulson> heh
+[18:47] <kenvandine> virtualbox can run them headless
+[18:47] <chrisccoulson> i don't use vm's that much at all, what with only having a 120GB SSD ;)
+[18:47] <chrisccoulson> space is scarce
+[18:47] <chrisccoulson> like, <100MB scarce most of the time ;)
+[18:49] <chrisccoulson> kenvandine, oh, it hung on shutdown
+[18:49] <kenvandine> nothing will boot for me
+[18:49] <kenvandine> even a new VM
+[18:51]  * desrt has a 120GB SSD, 4 vms and more space than he knows what to do with
+[18:51] <desrt> this is my working laptop, though -- lots of code but no movies, music, etc.
+[19:44] <jbicha_> seb128: do we still need to keep the pcsc-lite diff? http://bugs.debian.org/531592 has been marked fixed for a while
+[19:45] <ubot2> Debian bug 531592 in libpcsclite1 "libpcsclite1: move to /lib" [Normal,Fixed]
+[19:46] <seb128> jbicha_, I don't know, I did the merge because it was an easy one but I'm not familiar with the source, better to ask cjwatson
+[20:18] <bcurtiswx> is anyone doing a PPA build of empathy 3.7.X for raring ?
+[20:18] <bcurtiswx> maybe it's in the GNOME3 PPA i didn't look
+[20:22] <bcurtiswx> I guess that would be where it would go if there was one, sry for the noise :)
+[20:22] <ricotz> bcurtiswx, i was looking into it, not ready though
+[20:23] <bcurtiswx> ricotz, great. I suspect lots of dep issues :) thx!
+[20:24] <ricotz> bcurtiswx, actually not ;)
+[20:24] <ricotz> no dep issues that is
+[20:25] <bcurtiswx> ricotz, sweet
+=== Ursinha is now known as Ursinha-afk
+[21:16] <kenvandine> achiang, lp:~ken-vandine/xchat-indicator/lp_587902
+[21:16] <kenvandine> achiang, can you build that package locally and test it?
+[21:20] <achiang> kenvandine: building
+[21:20] <kenvandine> achiang, thx
+=== bschaefer_ is now known as bschaefer
+[21:30] <achiang> kenvandine: do you want to try torturing me? :)
+[21:30] <achiang> kenvandine: send me a private /msg
+[21:30] <achiang> kenvandine: then change your /nick
+[21:30] <kenvandine> i would love to :)
+=== kenvandine is now known as ken[torture]
+[21:31] <achiang> kenvandine: the old behavior was that if you changed your /nick before i could respond to the old /nick, the indicator got stuck blue
+[21:31] <achiang> ken[torture]: but it's all good now. i am torture free!
+[21:31] <ken[torture]> :)
+[21:31] <ken[torture]> thanks
+[21:34] <ken[torture]> achiang, ok, uploaded
+[21:34] <ken[torture]> now it is up to the SRU team :)
+[21:35] <achiang> w00t!
+[21:39]  * cyphermox goes to get dinner
+=== Ursinha-afk is now known as Ursinha
+[21:41] <achiang> ken[torture]: even if they dont' accept it, i've already installed it on my system and will happily run this until 14.04 is released. :)
+=== ken[torture] is now known as kenvandine
+[23:12] <tkamppeter> jasoncwarner, hi

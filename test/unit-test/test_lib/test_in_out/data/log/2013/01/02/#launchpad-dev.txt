@@ -1,0 +1,208 @@
+[00:58] <StevenK> wgrant: If you remember the duplicated SPPH queries, both are caused deep inside lazr.restful :-(
+[01:16] <wgrant> StevenK: Why does it make them?
+[01:17] <StevenK> wgrant: One of them is due to a call to checkAuthenticated, I don't understand the second
+[01:18] <wgrant> Right
+[01:18] <wgrant> But lazr.restful doesn't magically make DB queries any more than anything else does
+[01:18] <wgrant> The fix is usually the same
+[01:20] <StevenK> wgrant: http://pastebin.ubuntu.com/1486577/ is a diff between the two tracebacks
+[01:22] <wgrant> StevenK: Right, so it's pretty clear what's going on
+[01:22] <wgrant> Do you see it?
+[01:23] <StevenK> wgrant: I wish it was pretty clear to me what's going on. :-(
+[01:23] <wgrant> Well, look at the traceback
+[01:23] <wgrant> It's the launchpad.View adapter for SourcePackageRelease
+[01:23] <StevenK> It calls the security adapter twice to redact fields?
+[01:23] <wgrant> Possibly delegated from elsewehere
+[01:25] <StevenK> Oh, one of them is checkAuthenticated and another is checkUnauthenticated?
+[01:29] <wgrant> No
+[01:29] <wgrant> One's LimitedView, one's View
+[01:30] <wgrant> Probably on different objects
+[01:31] <wgrant> From the traceback we can see that in both cases it's on PackageUpload, which delegates to SourcePackageRelease, which queries the published archives
+[01:32] <StevenK> wgrant: Oh, in which case there isn't much we can do
+[01:32] <StevenK> Without stapling cachedproperties into SPR and fiddling with get_property_cache and friends
+[01:34] <wgrant> But the entire branch is like that
+[01:34] <wgrant> That's sort of the entire point
+[01:34] <wgrant> To eliminate exactly this
+[01:34] <StevenK> Right, but it's one query? :-)
+[01:35] <wgrant> One query per packageupload
+[01:35] <wgrant> O(n) queries
+[01:35] <wgrant> Verboten
+[01:36] <wgrant> You already presumably precache the PUSs and PUBs
+[01:36] <wgrant> The SPPHs shouldn't be that awkward
+[01:46] <StevenK> wgrant: Right, but the SPPH query is coming from the SPR, not the PU
+[01:47] <wgrant> StevenK: Sure
+[01:47] <wgrant> Is that a problem?
+[01:47] <wgrant> You have the SPRs already
+[01:47] <wgrant> Because you preloaded them
+[01:47] <wgrant> So you can additionally preload their published archives
+[01:48] <StevenK> Ahh, but the browser code preloads the SPRs, IPackageUploadSet.getAll() does no such thing.
+[01:48] <wgrant> Huh?
+[01:48] <wgrant> If you're not already preloading the SPRs, then you've missed a step
+[01:49] <wgrant> There must be extra queries before the SPPH queries
+[01:49] <wgrant> To get the SPRs
+[01:49] <wgrant> Which means you've preloaded them, in which case you already have them
+[01:49] <wgrant> Or you haven't preloaded them, in which case you should be preloading them to eliminate O(n) SPR queries
+[01:51] <wgrant> So, if you're looking at the SPPH queries, you have either already preloaded the SPRs or you need to
+[01:52] <StevenK> Blink
+[01:52] <StevenK> 1 PU == 27 queries. 5 PUes == 55
+[01:53] <wgrant> Hmm?
+[01:53] <wgrant> Is that surprising?
+[01:54] <StevenK> I wasn't expecting that large a jump
+[01:54] <StevenK> Another ten maybe, not 28
+[01:57] <wgrant> That's only <5 queries for each
+[03:53] <wgrant> StevenK: https://code.launchpad.net/~wgrant/launchpad/bug-1095188/+merge/141579
+[03:59] <StevenK> wgrant: Did you have a plan about the test failure?
+[03:59] <wgrant> Oh
+[03:59] <wgrant> I thought you might fix that, given you're in the blamelist
+[03:59] <wgrant> I was just tempted to bump the grace period to 20 years
+[03:59] <StevenK> That sounds a bit harsh
+[04:00] <StevenK> wgrant: I decided I wanted to swap back in my knowledge about the PU branch so I could actually finish it off.
+[04:00] <StevenK> 17	- # I have chosed to use this simple solution for now.
+[04:00] <StevenK> 18	- # -- kiko, 2006-07-11
+[04:01] <StevenK> I'm not sure whether to be scared, horrified or impressed.
+[04:01] <StevenK> wgrant: return None is implied
+[04:01] <wgrant> Sure
+[04:02] <wgrant> But I find it best to be explicit
+[04:02] <StevenK> But it's +8/-16, so I care little
+[04:02] <StevenK> wgrant: r=me
+[04:03] <StevenK> Interesting how it shows r16391 in Unmerged revisions
+[04:03] <wgrant> The scan failed
+[04:03] <wgrant> Because of a cold cache
+[04:03] <wgrant> When I land my testfix in 30s it'll realise r16391 is there
+[04:03] <wgrant> Because I primed the cache
+[04:03] <StevenK> Of your branch or devel?
+[04:03] <wgrant> devel
+[04:03] <StevenK> I'm a little afraid of your testfix diff, TBH
+[04:04] <wgrant> It's going to be less terrifying than reworking archiveuploader'
+[04:04] <wgrant> s datetime usage to be mockable
+[04:06] <StevenK> That's true
+[04:09] <StevenK> wgrant: Oh, it's a doctest change. That's okay, then
+[04:12] <wgrant> Hmm
+[04:12] <wgrant> I am missing some Launchpad email
+[04:12] <wgrant> StevenK: Did you get mail about your +1?
+[04:12] <StevenK> Yeah
+[04:13] <wgrant> Mysterious
+[04:13] <wgrant> Timestamp?
+[04:13] <StevenK> 0303
+[04:13] <wgrant> 0403?
+[04:14] <StevenK> Received by mangled.wedontsleep.org (Postfix, from userid 112) id 5322736BBF; Wed,  2 Jan 2013 15:03:35 +1100 (EST)
+[04:14] <wgrant> Right, 0403 :)
+[04:15] <wgrant> I quite mysterously did not get that
+[04:20] <StevenK> You got the other mail about you proposing it?
+[04:20] <wgrant> Yep
+[04:20] <StevenK> Mail queue on indium?
+[04:32] <StevenK> wgrant: Down from 55 to 34. Still trying to distill out where preloading will still help.
+[04:33] <wgrant> Everywhere
+[04:33] <StevenK> Sorry, let me be more clear.
+[04:33] <StevenK> Still trying to distill out what else should be preloaded to help.
+[04:34] <wgrant> Well
+[04:34] <StevenK> Oh, related archives of the SPRs.
+[04:34] <wgrant> Find things that still make queries
+[04:34] <wgrant> Preload them :)
+[05:01] <StevenK> wgrant: Yes, which requires digging through a ton of scrollback because each query gives a seperate traceback
+[05:01] <StevenK> Anyway, down to 30.
+[05:01] <StevenK> There are five SPPH queries I can't seem to shake
+[05:02] <StevenK> If I load_referencing SPPHs and then load_related the Archive, it still makes the queries
+[05:04] <wgrant> StevenK: eg?
+[05:05] <StevenK> wgrant: An example query?
+[05:07] <wgrant> And where it comes from
+[05:07] <wgrant> And how you are doing the preload
+[05:08] <StevenK> wgrant: The query is coming from ISourcePackageRelease.published_archives, and I'm doing the preload by:
+[05:08] <StevenK> publications = load_referencing(
+[05:08] <StevenK>     SourcePackagePublishingHistory, sprs, ['sourcepackagereleaseID'])
+[05:08] <StevenK> load_related(Archive, publications, ['archiveID'])
+[05:08] <wgrant> You're missing a critical bit there
+[05:08] <wgrant> Remember what we discussed two weeks ago?
+[05:09] <StevenK> wgrant: Setting published_archives to a cachedproperty and using get_property_cache? Or the primary key bit?
+[05:09] <wgrant> Both
+[05:09] <wgrant> Because published_archives is a revert PK lookup, Storm can't cache it automatically
+[05:09] <wgrant> You have to stuff it in manually, with get_property_cache
+[05:10] <wgrant> s/revert/reverse/
+[05:12] <StevenK> Hmmm, so I guess the SPPHs are inconsequtial here. But then I need to map the archives back to the SPR via it
+[05:13] <StevenK> loltpg
+[05:13] <wgrant> Right
+[05:14] <StevenK> Hmm, it may only want the archive id
+[05:14] <wgrant> This is a slightly abnormal case, because it's a straight double reverse lookup
+[05:14] <StevenK> The code isn't very clear
+[05:14] <wgrant> What do you mean?
+[05:14] <StevenK> return sorted(archives, key=operator.attrgetter('id'))
+[05:14] <wgrant> published_archives is a collection of Archive objects
+[05:14] <wgrant> THat returns archives, sorted by id
+[05:14] <StevenK> Oh, it's the sort key is the id
+[05:15] <wgrant> Yes
+[05:15] <StevenK> wgrant: So I can load_related all the archives, but then I need those objects to append using get_property_cache?
+[05:16] <wgrant> StevenK: You'll probably want to load and keep a list of all the relevant publications, then load all their archives
+[05:16] <wgrant> Then you can go through each pub, and append pub.archive to the SPR.published_archives cache
+[05:23] <StevenK> AttributeError: 'DefaultPropertyCache' object has no attribute 'published_archives'
+[05:23] <StevenK> :-(
+[05:34] <StevenK> Hm. If I get_property_cache(pubs[0].packageupload) it has sources, builds and customfiles, but my get_property_cache(publication.sourcepackagerelease) has nothing
+[05:36] <wgrant> StevenK: Do you have it decorated?
+[05:37] <StevenK> wgrant: Which part? published_archives is decorated by @cachedproperty, yes
+[05:39] <wgrant> What statement produced that exception?
+[05:39] <StevenK>         spr = get_property_cache(publication.sourcepackagerelease)
+[05:39] <StevenK>         spr.published_archives.append(publication.archive)
+[05:40] <wgrant> appending to what?
+[05:40] <wgrant> You can't append to a value that doesn't exist :)
+[05:41] <wgrant> You need to set it to something first
+[05:41] <StevenK> spr.published_archives = [] isn't really helpful, since multiple publications might reference the same SPR?
+[05:42] <wgrant> Sure
+[05:42] <wgrant> You'll need to set it to [] only if it doesn't already exist
+[05:43] <wgrant> Or go through and set them all to [] before you start appending anything
+[05:43] <wgrant> The latter might be better
+[05:46] <StevenK> Two loops of publications and get_property_cache makes me sad
+[05:46] <wgrant> Erm why?
+[05:46] <wgrant> One loop of SPRs to initialise the property caches
+[05:46] <wgrant> Then one loop of pubs to populate the SPR caches
+[06:31] <StevenK> wgrant: O HAI, https://code.launchpad.net/~stevenk/launchpad/moar-preload-distroseries-queue/+merge/141581
+[06:33] <wgrant> StevenK: So it's 27 queries regardless of PU count?
+[06:42] <StevenK> wgrant: Yes. Bumping that range(5) to range(6) and running the test still passes.
+[06:43] <StevenK> wgrant: I'm a little tempted to rip prefill_packageupload_caches out to lp.soyuz.adapters.queue or something
+[06:50] <lifeless> how long till you've rewritten all of LP ? :)
+[06:50] <StevenK> lifeless: Shorter if you help.
+[06:51] <lifeless> StevenK: Heh :). Intruiging suggestion.
+[06:53] <StevenK> wgrant: My review is still in progress, or I've scared you off?
+[06:56] <wgrant> #-ops
+[07:11] <wgrant> StevenK: Why'd you move TestLaunchpadSecurityPolicy_getPrincipalsAccessLevel to ZopelessLayer?
+[07:12] <StevenK> wgrant: At a guess, that test has no layer at all
+[07:12] <StevenK> I'm happy to drop that change and the import
+[07:12] <wgrant> Right, don't add things to layers if they don't need to be there :)
+[07:13] <wgrant> Layerless tests are much much faster
+[07:19] <StevenK> wgrant: Still reviewing the packageupload branch, or shall I stop working and move onto rewriting transmission-daemon's postinst in anger?
+[07:20] <wgrant> I'm reviewing
+[09:07] <adeuring> good morning
+[09:34] <czajkowski> adeuring: ello were you working on blueprints there for a while before christmas?
+[09:34] <adeuring> czajkowski: IIRC I did not any serious work on blueprints
+[09:36] <czajkowski> adeuring: ah ok trying to work out what could be happening on a bug
+[09:36] <adeuring> czajkowski: gah, yes, i did some pivacywork on them
+[09:36] <czajkowski> https://bugs.launchpad.net/launchpad/+bug/1095235
+[09:36] <_mup_> Bug #1095235: Bogus dependencies in Blueprint graph <Launchpad itself:New> < https://launchpad.net/bugs/1095235 >
+[09:36] <adeuring> ...disclosure...
+[09:36] <czajkowski> but this isn't disclosure but wonring if it may be a knock on effect
+[09:36]  * adeuring needs a memory upgrade
+[09:36] <czajkowski> adeuring: good holiday :)
+[09:37] <adeuring> czajkowski: ;) anyway, what's the prolem?
+[09:38] <czajkowski> extra dependencies showing up
+[09:39] <adeuring> czajkowski: is there a bug about anywhere or some other discussion?
+[09:39] <czajkowski> adeuring: the one I just posted in here ..
+[09:40] <adeuring> czajkowski: thanks (seems need new eyes too)
+[09:40] <czajkowski> :)
+[09:40] <czajkowski> brb I need to reboot
+[09:42] <czajkowski> back
+[10:05] <czajkowski> adeuring: any ideas?
+[10:06] <adeuring> czajkowski: not really for now. I think that's something for the maintenance team. At first, I'd do an SQL query to see what dependencies really exist in the DB and go on from there.
+[10:07] <czajkowski> nods
+[10:07] <czajkowski> ok thanks adeuring
+[10:47] <StevenK> czajkowski: The blueprint dependency code is a little frightening
+[10:47] <czajkowski> StevenK: aloha and welcome back
+=== yofel_ is now known as yofel
+=== slank_away is now known as slank
+=== teknico_ is now known as teknico
+=== abentley changed the topic of #launchpad-dev to: http://dev.launchpad.net/ | On-call reviewer: abentley | Firefighting: - | Critical bugs: <150
+=== deryck is now known as deryck[lunch]
+=== almaisan-away is now known as al-maisan
+=== al-maisan is now known as almaisan-away
+=== deryck[lunch] is now known as deryck
+=== BradCrittenden is now known as bac
+=== abentley changed the topic of #launchpad-dev to: http://dev.launchpad.net/ | On-call reviewer: - | Firefighting: - | Critical bugs: <150
+[23:52] <StevenK> wgrant: Did you peer at the incremental diff?
+[23:55] <wgrant> StevenK: Looks reasonable
+[23:58] <StevenK> wgrant: Perhaps we shouldn't hardcode -20 in nascentuploadfile.txt

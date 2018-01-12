@@ -1,0 +1,310 @@
+=== slank is now known as slank_away
+[01:54] <hazmat> davecheney, he asked to ask, but never actually asked re #juju
+=== imbrando1 is now known as nodnaebmi
+[02:26] <davecheney> hazmat: well, that is two problems
+[02:50]  * hazmat is missing how to query store stats w/ usernames
+[03:35] <hazmat> aha username is last on stats
+[07:17] <TheMue> *: Morning all.
+[07:39] <fwereade_> TheMue, heyhey
+[08:09] <fwereade_> TheMue, do you have a bit of time for reviews today? if so: https://codereview.appspot.com/7095049/ should only require simple sanity checks; but https://codereview.appspot.com/7095059/ is complex and important, and I would especially appreciate reviews focusing on the logic expressed therein and the clarity with which it is done so
+[08:12] <TheMue> fwereade_: Sorry, not now. I'll drive into town to upgrade my notebook to run more test vms in a few moments and this afternoon I'm out of office as I told yesterday. But I'll take a look when I'm back from the city and this evening.
+[08:12] <fwereade_> TheMue, ok, no worries: enjoy :)
+[08:12] <TheMue> fwereade_: Thx.
+[08:14] <fwereade_> rogpeppe1, morning
+[08:14] <rogpeppe1> fwereade_: yo!
+[08:17] <rogpeppe1> fwereade_: i'm with you about dfc's remarks on 7095059.
+[08:17] <fwereade_> rogpeppe1, cool, good to know that if I'm crazy I'm not alone ;p
+[08:18] <rogpeppe1> fwereade_: i think i've seen a similar complaint from dave before actually, also misguided.
+[08:18] <fwereade_> rogpeppe1, yeah, I think so too
+[08:23] <rogpeppe1> wallyworld: morning
+[08:24] <rogpeppe1> wallyworld: so it *was* possible to use an authenticating client, i guess?
+[08:26] <rogpeppe1> fwereade_: could i have a post-facto LGTM on https://codereview.appspot.com/7106052/ for form's sake, please? gustavo stated it here on IRC but didn't reply to the CL.
+[08:26] <fwereade_> rogpeppe1, looking
+[08:28] <fwereade_> rogpeppe1, done
+[08:28] <rogpeppe1> fwereade_: thanks
+[08:29] <rogpeppe1> fwereade_: i think it's ok for the Dead methods to exist for the convenience of the tests, tbh - it's just a line of code
+[08:29] <fwereade_> rogpeppe1, yeah, I'm not *really* bothered about it :)
+[08:30] <rogpeppe1> fwereade_: and i'm going to be adding a Dead method to api.Server (used outside of tests), so there'll be good company
+[08:30] <fwereade_> rogpeppe1, cool :)
+[08:31] <fwereade_> wallyworld, fwiw I just reviewed https://codereview.appspot.com/7086055/ with basically 1 question -- if you have a quick response to that now you can probably get an LGTM by the time you start work tomorrow(?)
+[09:15] <aram> moin
+[09:15] <rogpeppe1> aram: hiya
+[10:56] <fwereade_> rogpeppe1, https://codereview.appspot.com/7137044 might be trivial, I would appreciate your opinion
+[10:59] <rogpeppe1>  fwereade_a 500 line diff trivial? i don't think so. (well, i'd need to spend a reasonable amount of time on it, so it's not trivial for me...)
+[11:00] <rogpeppe1> fwereade_: ^
+[11:00] <rogpeppe1> fwereade_: i'll have a look in a bit though
+[11:01] <fwereade_> rogpeppe1, fair enough -- maybe the term I was looking for is "mechanical"
+[11:02] <rogpeppe1> fwereade_: it might've been mechanical for you, but it's not easy for me to see the relationship between old and new, i'm afraid. i'll have to look quite hard to see that the new is equivalent to the old.
+[11:02] <fwereade_> rogpeppe1, np at all, I understand my perspective is skewed ;)
+[11:02] <rogpeppe1> fwereade_: sometimes it's easier to write than to read...
+[11:03] <fwereade_> rogpeppe1, heh, I have become very familiar with those InferEndpoints blocks
+[11:18] <fwereade_> niemeyer, morning
+[11:20] <niemeyer> fwereade_: Yo
+[11:29] <wallyworld> rogpeppe1: yeah, i figured it out
+[11:29] <rogpeppe1> wallyworld: cool.
+[11:30] <rogpeppe1> niemeyer: hiya
+[11:30] <niemeyer> rogpeppe1: Hey ho
+[11:30] <wallyworld> fwereade_: i had another look at the ec2 implementation and it uses auth with the public bucket, so i did the same
+[11:31] <fwereade_> wallyworld, ok, fair enough, thanks
+[11:32] <wallyworld> fwereade_: i initially thought as you did and messed up the first go at it
+[11:32] <wallyworld> fwereade_: so in essence, you need auth to write to the public bucket, but then can use wget etc without auth to get stuff from it
+[11:33] <fwereade_> wallyworld, ah ok, hmm, let me backpedal a mo
+[11:33] <fwereade_> wallyworld, in what circumstances is it sensible for a juju client to write to the public bucket?
+[11:34] <wallyworld> fwereade_: give me a few minutes, on a standup
+[11:34] <fwereade_> wallyworld, ah sorry
+[11:34] <wallyworld> fwereade_: np, i was the one who pinged you
+[11:41] <rogpeppe1> fwereade_: in normal circumstances, a juju client will never be able to write to the public bucket.
+[11:41] <rogpeppe1> fwereade_: but by using the normal authentication, we make it possible for the tests to write to the public bucket without adding any more code.
+[11:42] <niemeyer> rogpeppe1: Agreed. It's even safe to say that the real public bucket is never written to.
+[11:42] <niemeyer> (by juju)
+[11:43] <fwereade_> rogpeppe1, I'm not sure I generally approve of that approach -- what code are you actually saving? just not having to create a client with auth in the tests?
+[11:43] <niemeyer> fwereade_: How to test the public bucket if it's always empty?
+[11:44] <fwereade_> niemeyer, er, I'm not suggesting that the tests should not put stuff in the public bucket
+[11:44] <rogpeppe1> fwereade_: we'd need more code to create a bucket that's neither of the ones provided by the Environ
+[11:45] <fwereade_> niemeyer, I'm saying that it seems weird to give the provider authenticated access to something it should not need, just to save the effort of creating an authenticated client in the tests
+[11:46] <rogpeppe1> fwereade_: tbh, i'm not sure there's a good use case for the swift unauthenticated connection
+[11:46] <niemeyer> fwereade_: I'm probably out of context there
+[11:46] <rogpeppe1> fwereade_: why not always present your credentials. at worst they're ignored.
+[11:46] <niemeyer> fwereade_: I'm reading that as "It's weird to create authenticated access just to save the trouble of creating authenticated access", which makes no sense
+[11:47] <fwereade_> rogpeppe1, the "in the tests" bit is important
+[11:47] <niemeyer> fwereade_: That's probably the bit I'm missing.. what's that again?
+[11:48] <fwereade_> niemeyer, AIUI the contents of the public-bucket should be available to anyone, and should never be written to by juju
+[11:48] <niemeyer> fwereade_: That is the case, but not in tests
+[11:49] <fwereade_> niemeyer, right
+[11:49] <niemeyer> fwereade_: We write to a bucket in tests, and set it as the public bucket, because we need content in it
+[11:49] <fwereade_> niemeyer, yes, this is not hard or complicated
+[11:49] <niemeyer> fwereade_: That's what it seems to me as well
+[11:50] <fwereade_> niemeyer, I just don't understand why the *environ* needs to have an authed connection when there is never any real use case, and creating a separate authed connection -- to write with -- in the tests is trivial
+[11:51] <rogpeppe1> fwereade_: in goamz there's no way to create an unauthed connection. is that a problem?
+[11:51] <fwereade_> niemeyer, it feels like the justification is "meh, it's convenient" but IMO it's misleading to put test-only code into an implementation without heavily flagging it with comments
+[11:52] <niemeyer> fwereade_: Hmm
+[11:52] <niemeyer> fwereade_: I see
+[11:52] <fwereade_> rogpeppe1, well, at least it's behind a PublicStorage interface -- if we weren't casting back to Storage in the tests I probably wouldn't care how it was implemented
+[11:53] <niemeyer> fwereade_: But I'm not sure I agree.. let me reverse the question: what's the *problem* with the current implementation?
+[11:54] <fwereade_> niemeyer, the problem is that the openstack code became less clear -- it took me some time to understand that the change to an authed connection was entirely to accommodate the tests
+[11:54] <niemeyer> fwereade_: AFAIK, there's nothing wrong with downloading files from S3 while being identified
+[11:55] <niemeyer> fwereade_: That's a pretty problem from what we've been discussing thus far
+[11:55] <niemeyer> pretty different
+[11:55] <fwereade_> niemeyer, yeah, this is true -- the context is entirely "why did this change add something that is only needed for the tests?"
+[11:55] <fwereade_> niemeyer, if "we did it that way before" is all the justification we need then I'll shut up
+[11:56] <niemeyer> fwereade_: No, I think you're right in your argument.. it's just the problem statement that was hard to grasp
+[11:56] <niemeyer> fwereade_: It's not about S3, or goamz, or the ec2 environ
+[11:56] <niemeyer> fwereade_: It's about openstack
+[11:57] <niemeyer> fwereade_: So you're saying just returning an authed connection with the public bucket is tricky?
+[11:57] <niemeyer> fwereade_: (with openstack)
+[11:57] <fwereade_> niemeyer, it seems like code that doesn't need to exist
+[11:57] <niemeyer> fwereade_: What's that code?
+[11:57] <niemeyer> fwereade_: Or where is it?
+[11:58] <fwereade_> niemeyer, https://codereview.appspot.com/7086055/
+[11:58] <fwereade_> niemeyer, actually https://codereview.appspot.com/7086055/diff/5001/environs/openstack/provider.go#newcode223
+[11:59] <fwereade_> niemeyer, the whole business of casting a PublicStorage to a Storage in the tests strikes me as a touch icky, because it doesn't seem like creating a separate connection in the tests would be very hard at all... I may be missing something?
+[11:59] <niemeyer> fwereade_: What's the code that shouldn't exist?
+[12:00] <fwereade_> niemeyer, the commented change that I linked?
+[12:00] <niemeyer> fwereade_: Are we talking about 5 or 6 characters?
+[12:01] <fwereade_> niemeyer, if you want to reduce it to that, don't worry, rubber-stamp LGTM
+[12:02] <niemeyer> fwereade_: I'm being silly.. I'm actually honestly trying to understand what you're arguing about.. when I hear "code that shouldn't exist" I think about maintenance
+[12:02] <niemeyer> fwereade_: That doesn't look like it
+[12:02] <niemeyer> fwereade_: If what you're arguing about is purely conceptual, I think this is actually correct
+[12:02] <niemeyer> fwereade_: For other reasons
+[12:02] <fwereade_> niemeyer, it is as simple as "why are we using a type with writey methods when they are not required?"
+[12:03] <niemeyer> fwereade_: Having an authenticated connection is not just about writing
+[12:03] <niemeyer> fwereade_: It's also about reading
+[12:03] <niemeyer> fwereade_: Think the case of private clouds
+[12:03] <rogpeppe1> niemeyer: that's a good point. it might be fine to have a public bucket that's only readable by the given user.
+[12:03] <rogpeppe1> niemeyer: but not writable
+[12:04] <rogpeppe1> niemeyer: assuming openstack has ACLs
+[12:05] <niemeyer> fwereade_: The only change I see in this CL is "use credentials when accessing the public bucket", with a trivial one-liner.. it doesn't look bad by itself on that ground
+[12:05]  * mgz catches up with the log on this topic
+[12:06] <fwereade_> niemeyer, ok, so, no default public-bucket for openstack?
+[12:06] <niemeyer> fwereade_: That said, if tests are requiring the public bucket interface to have write methods, it does sound sensible to fix the test to not require that.
+[12:06] <niemeyer> fwereade_: Wait what?
+[12:06] <niemeyer> fwereade_: I didn't see that coming.. what's the relation?
+[12:06] <fwereade_> niemeyer, well, if we're authenticating the connection, those credentials need to be recognised by the public bucket server... right?
+[12:06] <rogpeppe1> niemeyer: no public tests require that
+[12:06] <fwereade_> niemeyer, I may be on crack
+[12:07] <rogpeppe1> niemeyer: it's only in the provider-savvy test code that it makes that assumption
+[12:07] <fwereade_> niemeyer, it seems like a stretch to assume that your local credentials will work with whatever public-bucket weprovide by default
+[12:08] <niemeyer> fwereade_: Will swift block a read of a publicly available file if a signature is provided?
+[12:08] <fwereade_> niemeyer, honestly I have no idea
+[12:09] <niemeyer> fwereade_: Ah, interesting.. you're thinking of the case across clouds I suppose
+[12:09] <fwereade_> niemeyer, I think the cross-cloud case is here today if weprovide some sort of default public-bucket for openstack
+[12:09] <fwereade_> niemeyer, and I think we do want to
+[12:10] <fwereade_> niemeyer, even if we advise people to keep a local tools bucket to save bandwidth, not depend on us, etc, I think we also want a default "let's try juju with this openstack" to work without messsing around like that
+[12:10] <niemeyer> fwereade_: Yeah, you mean default public bucket as in default storage in a random swift server for all openstack providers
+[12:11] <niemeyer> fwereade_: That's a good point
+[12:11] <fwereade_> niemeyer, yeah, I assumed we'd have to have something like that
+[12:11] <niemeyer> fwereade_: I doubt the signature would go by if the user doesn't exist, of course
+[12:11] <niemeyer> fwereade_: Sure, I just didn't have that context in mind
+[12:12] <fwereade_> niemeyer, np, it's an awful lot harder to communicate the context than it is the problem
+[12:12] <niemeyer> fwereade_: For supported clouds, we will have a default public bucket, in the cloud itself, so that's not an issue
+[12:12] <rogpeppe1> niemeyer: the other side of the coin is when there's a public bucket that isn't fully public, of course, just shared
+[12:12] <niemeyer> fwereade_: and that's what I had in mind when you said "real public bucket"
+[12:13] <fwereade_> niemeyer, ah yeah, I'd discarded those as "easy to deal with" and basically forgotten about them ;p
+[12:13] <niemeyer> fwereade_: Cool, I think the context is in sync now
+[12:14] <niemeyer> fwereade_: Agreed, it'd be best for the test to not enforce that need
+[12:14] <niemeyer> fwereade_: Since it should be easy to
+[12:14] <fwereade_> niemeyer, yeah, that was my read of the situation
+[12:14] <mgz> "public" is meaning too many different things in this conversation...
+[12:14] <niemeyer> fwereade_: We can be smarter about having credentials when operating in the same cloud in the future
+[12:15] <fwereade_> niemeyer, I imagine the thing to do there is clean up the public-bucket/public-bucket-url business
+[12:15] <niemeyer> fwereade_: But that's a scenario we don't have to test/code right now, to make things simpler
+[12:15] <fwereade_> niemeyer, ie if there's a public-bucket, it's assumed to be in the same cloud and accessible by name
+[12:16] <fwereade_> niemeyer, public-bucket-url has a default pointing to our super-public bucket (heh :/)
+[12:16] <fwereade_> niemeyer, and public-bucket-url is only used in the absence of public-bucket
+[12:16] <fwereade_> niemeyer, sane?
+[12:16] <niemeyer> fwereade_: Not sure.. the matter of "defaults" is that it depends on the cloud being run
+[12:16] <mgz> fwereade_: that's not really ideal from an openstack perspective
+[12:17] <fwereade_> niemeyer, agreed -- maybe that's a big derail
+[12:17] <niemeyer> fwereade_: We'll want juju itself to be able to figure when it can use a public bucket in the same cloud, and to fallback to that public-bucket-url when it doesn't know better
+[12:18] <niemeyer> fwereade_: So that's not really a matter of "what is set", but rather of "where am I"
+[12:19] <fwereade_> niemeyer, ok, yes, that makes sense
+[12:19] <fwereade_> mgz, I'm interested to hear your perspective on what I suggested
+[12:19] <fwereade_> mgz, because I'm not really comfortable with what I've seen of those settings, but that is almost certainly down to ignorance
+=== rogpeppe1 is now known as rogpeppe
+[12:29] <wallyworld> fwereade_: i'll let mgz fill you in on the fine details, i'm quite tired tonight and need some sleep soon. the openstack provider implementation wrt public buckets was done similar to the existing ec2 way of doing it and was done is such a way to make the existing juju tests pass
+[12:30] <fwereade_> wallyworld, yep, np, enjoy your sleep :)
+[12:30] <wallyworld> ie a container was created for the public storage, and made readable by all, but the tests need to writw to it, hence need auth
+[12:30] <wallyworld> the readable by all bit then allows wget etc to fetch the tools
+[12:30] <fwereade_> wallyworld, sure, I understand, I'm just saying there's no justification for auth in the implementation when it's only there so the tests can cast an interface to another and abuse it ;p
+[12:31] <wallyworld> fwereade_: yeah, i understand your concerns. i took the approach that the exisitng tests were all ok and i just needed to write code to make them pass aka TDD :-)
+[12:32] <fwereade_> wallyworld, I'm doing my very best to criticize the code alone, rather than your approach to it, and I'm sorry if it'snot coming across that way
+[12:33] <mgz> fwereade_: so, the main issue is that for unauthenticated read access, we just want a url
+[12:33] <wallyworld> fwereade_: oh no, don't apologise. i have a thick skin and in any case did not in any way take your concerns badly. i'm very glad you raised them
+[12:33] <mgz> to put stuff there, we need authentication and a bunch of extra details
+[12:33] <fwereade_> wallyworld, cool :)
+[12:33] <wallyworld> i love a good robust discussion
+[12:33] <wallyworld> especially when it comes to improving the code base
+[12:33] <mgz> the tests fake out the global bucket in order to test that, and write tools to a temporary test globabl bucket
+[12:34] <fwereade_> mgz, we are in agreement so far
+[12:36] <wallyworld> fwereade_: so whatever is decided, i'd love it to be from a holicstic perspective and if changes are needed we fix the tests as a whole with possible changes to both ec2 and openstack providers if required. perhaps we can land my mp as is and follow up with a separate branch
+[12:42] <mgz> well, apart from the naming being a pain, and a lack of commands to propogate tools, I think we're happy
+[12:43] <fwereade_> wallyworld, I'm -0 on that but I will think more on it -- I think there's a real distinction between ec2 and openstack, because we don't need to take cross-env credentials into account
+[12:44] <fwereade_> wallyworld, mgz: if the client really will work when it tries to read a bucket with the wrong credentials, I think it's fine
+[12:44] <fwereade_> wallyworld, mgz: but if so it certainly deserves commenting
+[12:45] <rogpeppe> i'd like to know what actually happens if you use invalid credentials on an openstack node when reading from a publicly-accessible container.
+[12:45] <wallyworld> fwereade_: i thought we only needed the public container for wget and the like?
+[12:46] <mgz> the read should really not be trying to give a token at all.
+[12:46] <wallyworld> rogpeppe: i did read that there is/was a bug of some sort that raised a 401 when it shouldn't but i need to find the reference to that, and in any case, it might also be fixed
+[12:47] <wallyworld> anyways, i'll go sleep and catch up with things tomorrow. thanks for the inetresting discussion
+[12:49] <fwereade_> wallyworld, mgz: if it works, and there's a comment pointing out that the credentials might be wrong but it doesn't matter, then I'd be ok with landing that as-is, along with a bug pointing out that the live tests make some slightly icky assumptions about the nature of provider storage and it would be nice if they didn't
+[12:49] <fwereade_> wallyworld, cheers
+[12:49] <fwereade_> wallyworld, I'll add some notes to the CL
+[13:26] <rogpeppe> niemeyer, fwereade_: simple change to goamz/ec2/ec2test to support compressed user data: https://codereview.appspot.com/7135045
+[13:27] <rogpeppe> niemeyer: i wonder if it might make sense to have ec2 always compress user data. i'm not sure.
+[13:28] <rogpeppe> niemeyer: in fact, scratch that, it should definitely not.
+[13:30] <niemeyer> rogpeppe: I think it should attempt to uncompress based on the magic instead of picking any errors as uncompressed
+[13:31] <rogpeppe> niemeyer: i wondered about that. gzip.NewReader reads the header - i could bail out if NewReader fails.
+[13:31] <rogpeppe> niemeyer: rather than duplicating the header magic
+[13:32] <niemeyer> rogpeppe: I still think it should simply read the magic
+[13:33] <niemeyer> rogpeppe: if string(data[:magicSize]) == "foo" { profit }
+[13:33] <niemeyer> rogpeppe: Pretty simple
+[13:33] <rogpeppe> niemeyer: i'm not sure though. user data is arbitrary - there's nothing to say that user data with a valid gzip header followed by random contents is necessarily invalid
+[13:33] <rogpeppe> niemeyer: that's a cloudinit thing, not a user data thing
+[13:34] <niemeyer> rogpeppe: user data is not arbitrary.. it's fine to explode if we don't reckon it in our own test server
+[13:35] <rogpeppe> niemeyer: i thought cloudinit was just one way of using user data
+[13:35] <niemeyer> rogpeppe: Hmm.. you're right actually
+[13:35] <niemeyer> rogpeppe: -1 on the change then
+[13:35] <niemeyer> rogpeppe: This is ec2 test server.. there's nothing about cloudinit there
+[13:36] <rogpeppe> niemeyer: yeah, i suppose so.
+[13:36] <rogpeppe> niemeyer: i was trying to avoid having environs/ec2 knowing about the compression scheme.
+[13:37] <niemeyer> rogpeppe: If it knows about interpreting a cloud-init oriented configuration, it should know about what cloud-init expects
+[13:38] <rogpeppe> niemeyer: the cloudinit package knows about that (i'd just added a RenderCompressed method)
+[13:38] <rogpeppe> niemeyer: but i guess i can either remove that, or just document that the compression format is gzip
+[13:38] <niemeyer> rogpeppe: If it doesn't know about interpreting a cloud-init oriented configuration, there's no reason for it to know about the compression
+[13:39] <niemeyer> rogpeppe: Seems self-exclusive.. you only have to uncompress if you care about the data
+[13:39] <niemeyer> rogpeppe: If you care about the data, it's natural to know its format
+[13:41] <rogpeppe> niemeyer: yeah, and the environs/ec2 tests know that the cloudinit data is in yaml format, so they may as well know it's compressed too.
+[13:42] <niemeyer> rogpeppe: +1
+[13:50] <rogpeppe> niemeyer: ok, here's the CL to compress the cloudinit data: https://codereview.appspot.com/7138044/
+[13:52] <rogpeppe> niemeyer: user data now down to 4984 bytes, much better
+[13:54] <niemeyer> rogpeppe: Reviewed
+[13:56] <rogpeppe> niemeyer: thanks. a reasonable point. will add trivial.Gzip and probably Gunzip too for symmetry
+[13:56] <niemeyer> rogpeppe: Super, thanks
+[14:32] <rogpeppe> niemeyer: updated accordingly:  https://codereview.appspot.com/7138044
+[14:51] <niemeyer> rogpeppe: Reviewed
+[14:51] <rogpeppe> niemeyer: submitted
+[14:51] <rogpeppe> niemeyer: thanks
+[14:54] <niemeyer> rogpeppe: np!
+=== slank_away is now known as slank
+[15:14] <niemeyer> fwereade_: Is it okay if I use state-service-api as a chance to review the whole death-and-destruction doc?
+[15:17] <rogpeppe> fwereade_, niemeyer: PTAL https://codereview.appspot.com/7085062
+[15:17] <rogpeppe> fwereade_: i'll do some reviews now. what's your highest priority?
+[15:19] <fwereade_> niemeyer, that works for me
+[15:19] <niemeyer> fwereade_: Coo
+[15:19] <niemeyer> l
+[15:19] <fwereade_> rogpeppe, any of them really :)
+[15:20] <niemeyer> I'll step out for lunch though, as it's pretty late
+[15:20] <niemeyer> biab
+[15:20] <fwereade_> niemeyer, enjoy
+[16:27] <rogpeppe> fwereade_: what does EnterScope immediately followed by LeaveScope accomplish?
+[16:28] <fwereade_> rogpeppe, create the subordinate but get back to the expected starting state for the initial tests (ie nothing in scope)
+[16:29] <rogpeppe> fwereade_: so in the real system, what calls EnterScope to cause the subordinate to be created?
+[16:29] <fwereade_> rogpeppe, the principal unit agent
+[16:30] <rogpeppe> fwereade_: ah, so the subordinate agent starts already in scope, then leaves scope when it dies?
+[16:31] <fwereade_> rogpeppe, no -- the action of the principal entering scope causes the subordinate to be created; when the subordinate's unit agent is running it will enter scope, and at that point the two units will see each other
+[16:31] <rogpeppe> fwereade_: ah, i see noe
+[16:31] <rogpeppe> w
+[16:34] <fwereade_> rogpeppe, (and fwiw: the principal and the subordinate each leave scope independently when they observe themselves, or the relation, to be Dying)
+[16:35] <rogpeppe> fwereade_: you've got a couple of reviews
+[16:36] <fwereade_> rogpeppe, cheers
+[16:37] <mramm> hazmat: rogpeppe: we still doing that API sync call?
+[16:38] <rogpeppe> mramm, hazmat: yes, i just noticed that. am ready if you are.
+[16:38] <mramm> I'm alone in the hangout, hanging out
+[16:38] <rogpeppe> mramm: i just joined then left :-)
+[16:39] <mramm> interesting
+[16:51] <fwereade_> rogpeppe, comments on https://codereview.appspot.com/7137044/ when you have a mo
+[16:54] <hazmat> mramm2, rogpeppe sorry i got double booked
+[16:54] <hazmat> totally missed it.. i'm in the hang out now if you've got time
+[16:56] <hazmat> mramm2, rogpeppe should i reschedule for tomorrow?
+[16:57] <rogpeppe> hazmat, mramm2: i'm ok if you are
+[16:57] <hazmat> rogpeppe, mramm2 let's do tomorrow.. i have another meeting starting now..
+[16:57] <rogpeppe> hazmat: ok, np
+[16:57] <hazmat> rogpeppe, thanks
+[17:00] <rogpeppe> fwereade_: replied
+[17:00] <fwereade_> rogpeppe, SGTM, thanks
+[17:13] <niemeyer> fwereade_: The first bug described in the death doc went a bit over my head
+[17:13] <niemeyer> fwereade_: Would appreciate some quick exchange on it when you have a moment
+[17:38] <fwereade_> niemeyer, ping -- I must be brief -- the issue is that the Uniter uses its relation state dir to record what relations it's joined, while actually it should be using... what relations it's joined
+[17:38] <niemeyer> fwereade_: He
+[17:38] <niemeyer> y
+[17:39] <niemeyer> fwereade_: Hmm
+[17:39] <aram> holly shit, I've been scammed. I bought 12 SD cards for my raspberry pis, and I bought expensive ones that can do 30MB/sec, and they were all chinese pirate copies that can't even do 1MB/sec.
+[17:39] <fwereade_> niemeyer, so if an instance dies, and a UA comes up on a fresh instance, it won't leave dying relations because it doesn't know it's in them
+[17:40] <fwereade_> aram, ouch, crap :(
+[17:40] <niemeyer> fwereade_: Okay, the doc can probably be reworded a bit then
+[17:40] <niemeyer> fwereade_: It's trusting on logic we don't even have yet
+[17:40] <niemeyer> I think
+[17:40] <fwereade_> niemeyer, I *think* that the provisioner will start fresh instances
+[17:41] <fwereade_> niemeyer, but I'd have to check
+[17:41] <niemeyer> fwereade_: For an already deployed machine with running units? That'd be awkward
+[17:42] <niemeyer> fwereade_: I'd expect some clean up to take place in those cases
+[17:42] <niemeyer> fwereade_: With some kind of formal acknowledgement in the logic handling it that things went bad
+[17:42] <niemeyer> fwereade_: I don't recall us having that yet, at least
+[17:42] <fwereade_> niemeyer, ah, hmm, looks like we don't
+[17:43] <fwereade_> niemeyer, funny, could have sworn it went in quite early
+[17:45] <niemeyer> fwereade_: Either way, the point is valid.. it just seems worded in an involved way
+[17:45] <niemeyer> fwereade_: The core point, if I get it, is that if the known unit state is corrupted, it won't auto-recover
+[17:48] <fwereade_> niemeyer, yeah -- but I think it would recover ok if we didn't use local dirs as evidence of relation membership
+[17:48] <niemeyer> fwereade_: Or maybe not.. you offer solutions there as well.. my comprehension of the problem just seems to have made the wordin gmore clear somehow
+[17:49] <fwereade_> niemeyer, haha
+[18:14] <rogpeppe> aram: presumably you bought from a reputable seller, so have some comeback... ?
+[18:14] <aram> yeah.
+[18:14] <rogpeppe> aram: bummer though
+[18:14] <aram> yeah.
+[18:15] <aram> btw, Plan 9 works really really well.
+[18:15] <rogpeppe> aram: on the pi?
+[18:15] <aram> Linux is comically slow.
+[18:16] <aram> yes.
+[18:16] <rogpeppe> aram: cool
+[18:16] <aram> though quake 3 runs really well because it is 3D.
+[18:16] <rogpeppe> aram: have you tried inferno?
+[18:16] <aram> not yet.
+[18:17] <rogpeppe> aram: what are you planning to do with your pis?
+[18:17] <aram> the first thing In want to do is implement a full TCP/IP stack over the GPIO ports. I'd like to learn more about TCP/IP this way.
+[18:18] <rogpeppe> aram: what's the point? can't you just implement a transport?
+[18:18] <rogpeppe> aram: assuming you're doing it under plan 9
+[18:19] <aram> yes, I'll do the transport at first, but I want to learn more about implementing TCP/IP in general.
+[18:26] <rogpeppe> i'm off for the night
+[18:26] <rogpeppe> see y'all tomorrow
+[18:26] <aram> cheers
+=== slank is now known as slank_away

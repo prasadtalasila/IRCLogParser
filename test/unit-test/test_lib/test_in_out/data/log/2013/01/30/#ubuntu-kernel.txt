@@ -1,0 +1,199 @@
+[06:03] <chiluk> anyone know if there is some sort of metering on the kernel-team list?  I used git send-email to send a patch request about 30 minutes ago, and it still hasn't shown up.
+[06:05] <chiluk> oh well, if it's not there by the morning I guess I'll resend.
+[06:05] <chiluk> night all
+=== smb` is now known as smb
+[08:16] <ppisati> smb: moin
+[08:16] <smb> ppisati, morning
+[08:16] <smb> infinity, No, it actually uses other timer related functions which need librt. The configure script test was just wrong.
+[08:52]  * smb reboots 
+[09:12] <apw> chiluk, it is moderated if you are not a member, so if you use the wrong email addy ...
+[09:18] <apw> smb, ppisati, moin
+[09:18] <smb> apw, morning
+[09:22]  * apw flags already
+[09:22] <ppisati> apw: moin
+[09:23] <apw> ppisati, i am going to look at your arm -arm branch today, it needs some serious reading
+[09:23] <ppisati> apw: ack
+[09:24] <ppisati> apw: since i'll pull more patches in the future, another option is that we spin an arm-multiplatform topic branch
+[09:25] <ppisati> apw: that will predate the omap4 branch
+[09:25] <ppisati> apw: so i'll have more freedom to pull in patches from upstream and vendors
+[09:25] <ppisati> apw: without hurting master (and the stable team)
+[09:25] <apw> ppisati, it is quite close right now, it would be a shame to miss the chance to have them in one, but i can see your desire too
+[09:26] <ppisati> apw: yep, just wait until bjf complains :)
+[09:26] <apw> ppisati, i assume versatile and the like will always be 'no delta'
+[09:26] <apw> ppisati, so we could probabally have a -generic for arm with whatever is close, and then if something gets too big we could split that off
+[09:26] <ppisati> apw: yes, versatile is 100% upstream
+[09:26] <apw> ppisati, anyhow either way the branch contains the same stuff :)
+[09:27] <apw> so the review and test side is not about the destination
+[09:28] <apw> ppisati, i suspect we will try it as part of master for the experience and make a judgement nearer release if we want to pull some or all out
+[09:29] <ppisati> apw: i agree
+[09:33] <apw> and indeed leann has pulled it in already :)  now to re-review it
+=== henrix_ is now known as henrix
+=== zequence_ is now known as zequence
+=== yofel_ is now known as yofel
+[10:13] <psivaa> apw: Would like to know if there is any update/feedback on bug 1100386 pls
+[10:13] <ubot2> Launchpad bug 1100386 in linux (Ubuntu) "Raring server installations on VMs fail to reboot after the installations" [High,Confirmed] https://launchpad.net/bugs/1100386
+[10:17] <apw> psivaa, hmmm, no, i think we know what to do about that iirc, what did i decide i needed
+[10:20] <smb> apw, I think that was the cirrus vs. efi fb issue
+[10:20] <apw> smb, yeah.  and i think i had a change for that, somewhere, dammit
+[10:23] <psivaa> apw: smb: ok thanks, it would also help if you could comment on/assign the bug please
+[10:30] <ppisati> brb
+[12:03] <apw> psivaa, done
+[12:03] <apw> ogasawara, i am reviewing the ppisati pull you applied
+[12:09] <psivaa> apw: thank you
+[12:12] <ogra_> is the handling of DTB in our packages documented somewhere ? i get asked frequently about how we handle that by arm people that rol their own kernel packages
+[12:53] <tjaalton> I have a fresh quantal installation, ran dist-upgrade on it and it didn't pull the latest headers, although linux-headers-generic got updated
+[12:54] <tjaalton> now 'apt-get --fix-policy install' would fix the situation, but how is it possible to get in this situation? I enabled fglrx for testing stuff and things were "broken" :)
+[12:54] <tjaalton> -situation
+[12:55] <tjaalton> maybe not the right channel to ask
+[12:58] <ogra_> tjaalton, well, do you have the metapackage installed ?
+[12:58] <ogra_> linux-generic ?
+[12:58] <tjaalton> ogra_: no
+[12:59] <ogra_> why ?
+[12:59] <tjaalton> but linux-headers-generic, which depends on 
+[12:59] <tjaalton> ..the headers package
+[12:59] <tjaalton> it's a fresh install, it doesn't seem to pull it
+[12:59] <ogra_> its a requirement 
+[12:59] <tjaalton> how so?
+[12:59] <tjaalton> l-h-g did get updated, but it didn't pull the dependency
+[13:00] <ogra_> linux-$flavour is what gets installed during the build process
+[13:00] <ogra_> and this pulls in everything else (including the headers)
+[13:00]  * henrix -> lunch
+[13:00] <ogra_> its very weird if you dont have it after a fresh install, thats definitely a bug 
+[13:00] <tjaalton> it's a tree of metapackages, l-h-g is installed and that alone should've pulled the real one
+[13:01] <ogra_> well, linux-$flavour missing wil break on dist-upgrades at some point, it has to be there
+[13:01] <tjaalton> --fix-policy suggests a bunch of other packages too, like ecryptfs-utils etc
+[13:02] <tjaalton> it just depends on l-i-$f, l-h-$f
+[13:02] <ogra_> well, i dont get how you got into that situation at all 
+[13:02] <tjaalton> me neither :)
+[13:02] <ogra_> linux-$flavour cant tecnically be missing on a fresh install unless you forcefully remove it
+[13:03] <tjaalton> dpkg.log doesn't show it being removed
+[13:04] <ogra_> you should talk to the guys fiddling with the UEFI stuff, i bet it is related to changes there, but technically if linux-$flavour is missing you have a bigger prob
+[13:04] <tjaalton> I'll ask on -release
+[13:04] <ogra_> ++
+[13:15] <apw> tjaalton, i am interested
+[13:15] <apw> tjaalton, could you paste which packages you do have installed
+[13:16] <apw> oh i might have an idea, what is causeing it
+[13:16] <apw> tjaalton, so i need the list of headers packages and versions you have so i can check
+[13:18] <tjaalton> apw: http://paste.ubuntu.com/1589593/
+[13:19] <tjaalton> one thing that might cause issues is that I did change it to use my local mirror before the dist-upgrade, and it doesn't have i386 mirrored
+[13:19] <apw> so waht do you think is missing
+[13:20] <tjaalton> nothing anymore :)
+[13:20] <tjaalton> I can reinstall it to check again
+[13:21] <tjaalton> actually, l-h-3.5.0-17-generic isn't installed
+[13:21] <tjaalton> which should be there from the installation? dpkg.log shows it
+[13:22] <apw> yeah i would have expected it to be, but i don't think i can be to blame for removing it
+[13:22] <apw> oh and i bet it is too old
+[13:22] <apw> so it doesn't have the Suggests: from linux-image which would normally
+[13:23] <apw> stop it being deinstalled (in later kernels in that series and in raring0
+[13:23] <apw> so that is a known 'corner case' where apt-get autoremove can zap some of your headers
+[13:23] <apw> but it should be older headers not newer ones
+[13:23] <tjaalton> ah
+[13:23] <apw> and you should have gotten the new one installed without effort
+[13:23] <tjaalton> funny that dpkg.log doesn't show the removals
+[13:23] <apw> and that if not working is worrying
+[13:40] <brendand> henrix, ping
+[13:41] <henrix> brendand: hey!
+[13:42] <brendand> henrix, i was thinking, it would be useful if we could get an email when our task in the tracking bugs goes to Confirmed. is it possible to implement that in your scripts?
+[13:42] <brendand> henrix, it's just bug mail so easily gets lost
+[13:44] <henrix> brendand: right, this would require changing the bot, which is maintained mainly by herton.
+[13:45] <herton> brendand, let me know which email you want a notification sent and I'll add
+[13:45] <henrix> brendand: i use mailfilters myself ;)
+[13:47] <brendand> henrix, sure - but getting a whole team all set up with the proper mail filters...
+[13:47] <henrix> :)
+[14:09] <apw> ppisati, this -omap merge, if i build that does it work on omap4 as well ?
+[14:09] <ppisati> apw: yes
+[14:09]  * apw will test that
+[14:09] <ppisati> apw: audio, video, usb, srial, etcetc
+[14:10] <apw> ppisati, great
+[14:10] <ppisati> apw: beware that you'll have to use the hdmi output close to the edge of the board, they swapped it in 3.5
+[14:11] <apw> ppisati, thanks for the warning, piece of junk
+=== smartboyhw_ is now known as smartboyhw
+[14:46] <apw> sforshee, i am assiging you the cnd delta review, cause they sound like your kind of patches and you acked at least one :)  could you have a look and try and figure out if they still make sense
+[14:46] <sforshee> apw, ack
+[14:47] <apw> sforshee, on https://blueprints.launchpad.net/ubuntu/+spec/hardware-r-kernel-delta-review
+[14:51] <sabari> Hi 
+[14:52] <sabari> I am running Ubuntu 12.04 and when I run Oprofile to understand the CPU Utilization, I found that more time is spent on mem_cgroup_uncharge_common
+[14:52] <sabari> can some one explain what this is?
+[14:53] <sabari> We want our processes to be run effectively and more than 50% of the cpu is currently used by the system
+[14:56] <sabari> I also see free_pcppages_bulk as well 
+[14:59] <ohsix> when the system is mostly sleeping, the apparent cpu usage of the things it's doing between sleeps will be higher
+[15:00] <sabari> Ohsix is this for me?
+[15:01] <ohsix> yes
+[15:02] <sabari> I did profile the process which said that it is using 100% CPU
+[15:30] <bjf> brendand, can't your email client filter for those specific bug emails and flag them for you? 
+[15:30] <bjf> brendand, i'm not wild about special casing bot code for individuals
+[15:32] <brendand> bjf, ok - i'll see what i can do to avoid it
+[15:43]  * ogasawara back in 20
+[16:04] <qengho> ppetraki: Hi hi.  I'm trying to boot a Pandaboard with a raring desktop image.  ogra_ suggested I talk to you about today's image on cdimage not starting or kernel hanging or something.
+[16:05] <qengho> Er, ppisati, sorry, I meant you.  ^
+[16:06] <ogra_> ppisati, could anything regarding the changes you work on be at fault here (do we need to switch the builds to new kernels or so)
+[16:06] <ppisati> qengho: nope, since the R kernel is a Q kernel
+[16:07] <ppisati> qengho: do you have serial output?
+[16:08] <qengho> ppisati: Er, no.  I haven't even seen a DB9 cable this decade.  :(
+[16:09] <ppisati> qengho: did you first try a Q image on that board? did it work?
+[16:10] <ppisati> qengho: anyhow, modify uEnv.txt and delete "quiet splash", if you are lucky you should get some output on the lcd
+[16:10] <ppisati> qengho: or was it preEnv.txt? don't remember, check both
+[16:11] <ogra_> the latter
+[16:11] <qengho> ppisati: Er, okay.  I don't get any HDMI output at all, even a sync signal, at present.  FWIW.
+[16:11] <ogra_> ppisati, the heartbeat LED gets stuck
+[16:11] <ogra_> that sounds like its even before initrd
+[16:12] <ogra_> could be the bootloader indeed, hard to say without info from serial 
+[16:12] <qengho> I'll try to find a Q image.  Pointers accepted.
+[16:12] <ogra_> but afaik the bootloader hasnt changed since precise or so
+[16:13] <ppisati> qengho: don't you get a purple screen?
+[16:14] <ppisati> qengho: http://releases.ubuntu.com/quantal/ubuntu-12.10-desktop-armhf+omap4.img
+[16:16] <ppetraki> qengho, it happens a lot :)
+[16:17] <cnd> sforshee: apw: I can help review the patch delta
+[16:17] <cnd> is there a list of the patches somewhere?
+[16:17] <sforshee> cnd, https://wiki.ubuntu.com/KernelTeam/Specs/RaringKernelDeltaReview
+[16:18] <sforshee> cnd, I'd appreciate the help. It looks like a couple of patches that stalled when you tried to upstream them.
+[16:18] <cnd> sure, let me take a look
+[16:20] <sforshee> herton, there's a patch that's been posted for stable that improves wireless performance during background scans. I don't think there's been a backport to 3.5, but the patch for 3.4 applies cleanly.
+[16:20] <sforshee> herton, http://www.mail-archive.com/stable@vger.kernel.org/msg30134.html
+[16:22] <herton> sforshee, ack, will look into queuing it
+[16:22] <sforshee> herton, thanks. It really does help a lot. I had posted an equivalent patch before finding out about that one.
+[16:24] <cnd> sforshee: so those two synaptics patches are meant to make the 3 or 4 year old dell mini netbooks with a two-button clickpad work properly
+[16:24] <cnd> superm1 told me those types of trackpads will never be made again, because they were terrible
+[16:24] <sforshee> heh
+[16:25] <cnd> and yeah, it looks like it stalled due to people not following up upstream
+[16:25] <cnd> I have one of these netbooks, and I'd rather say at this point it's practically so slow as to be unusable
+[16:25] <cnd> and I have the newer model :)
+[16:25] <cnd> so I guess at this point we can decide to keep the patches to keep the machines humming along alright
+[16:26] <cnd> but either now or later we might as well drop the patches
+[16:26] <cnd> the patches merely set an informational property bit
+[16:26] <cnd> and users can still manually enable clickpad mode in the X synaptics drivers
+[16:27] <sforshee> hmm... they're easy enough to keep around I guess
+[16:28] <sforshee> it doesn't sound like there's much use in trying to further pursue it upstream though
+[16:29] <sforshee> cnd, thanks for the help. I guess I'll recommend hanging onto them as long as they keep applying cleanly.
+[16:30] <cnd> k
+[16:30] <sforshee> maybe some people are still trying to run ubuntu on those machines, who knows
+[16:30] <cnd> you never know
+[16:30]  * ppisati rushes out, be back later
+[16:46] <sforshee> apw, I updated the raring delta review suggesting that we keep cnd's patches as long as they aren't causing any problems and mark them no-up. Anything else I need to do to follow up?
+[16:55] <ogasawara> sforshee: thanks for that, I'll go ahead and mark em no-up.  that should take care of the review, go ahead and mark that as done.
+[16:55] <sforshee> ogasawara, ack
+=== henrix is now known as henrix_
+=== henrix_ is now known as henrix
+[18:58] <apw> sforshee, hey ... fancy checking another patch for me, it seems we have "input: fix weird issue of synaptics psmouse sync lost after resume" which needs looking at as well
+[18:58] <apw> that would close out another wi
+=== Amoz_ is now known as Amoz
+[19:51] <ogasawara> jdstrand: thanks for the wi tip
+[19:51] <jdstrand> heh, sure
+[19:52] <jdstrand> I was surprised how fast the response hit my inbox and now even more surpised how fast you read it :)
+=== henrix is now known as henrix_
+[22:18] <antarus> arges: Curious what the status is on https://bugs.launchpad.net/ubuntu/+source/unity/+bug/806248 and if there is anything I can do to move it along?
+[22:18] <ubot2> Ubuntu bug 806248 in unity (Ubuntu Precise) "unity::TimeUtil::TimeDelta returns an int value which overflows after 24 days of uptime" [High,In progress]
+[22:18] <antarus> (SRU for P)
+[22:19] <arges> antarus: hi
+[22:19] <arges> antarus: i'm waiting on somebody to upload it
+[22:19] <arges> antarus: so we just need a sponsor
+[22:22] <antarus> ok
+[22:26] <antarus> but ubuntu-sponsors are not even CC'd?
+[22:26] <arges> hmm thought i added that
+[22:27] <antarus> you probably did but there was some schenanigans with the debdiff
+[22:27] <antarus> peopel seem to hate on them lately
+[22:27] <antarus> which sucks because bzr is awful ;p
+[22:28] <arges> yea, i usually am submitting kernel patches or debdiffs. so trying to learn the bzr workflow too
+[22:28] <antarus> I'll see if I can bribe spamaps to upload it
+[22:29] <antarus> he seems to be wednesday's sponsor de jure
+[22:29] <arges> antarus: awesome thanks

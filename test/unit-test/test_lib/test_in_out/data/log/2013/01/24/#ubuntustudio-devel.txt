@@ -1,0 +1,134 @@
+[01:04] <falktx> damn launchpad builds are slow
+[01:49] <micahg> falktx: need an official backport? ;)
+[01:49] <falktx> micahg: need to get into debian first 
+[01:50] <falktx> micahg: do you have any experience on that?
+[01:50] <micahg> getting into Debian? no
+[01:51] <micahg> http://mentors.debian.net/
+[01:51] <micahg> if it's multimedia related, I could help if I actually registered an SSH key with alioth
+[01:51] <falktx> I once registered to alioth as guest
+[01:52] <micahg> I'm registered, I just can't do anything until I create an SSH key for alioth
+[01:52] <micahg> which package?
+[01:52] <falktx> cadence
+[01:52] <falktx> if you want to take a peak:
+[01:52] <falktx> https://launchpad.net/~falk-t-j/+archive/cadence/+sourcepub/2945130/+listing-archive-extra
+[01:52] <falktx> it's a git version, so no orig tarball
+[01:53] <micahg> I don't see an ITP
+[01:53] <falktx> ITP?
+[01:53] <micahg> intent to pacakge
+[01:53] <falktx> I'm blind related to real debian business
+[01:55] <falktx> I need to first finish the software though
+[01:58] <micahg> ok, well, I could help you maintain it under Debian Multimedia I suppose (I can't upload though)
+[02:02] <falktx> I need to speak with alessio later it seems
+[02:02] <falktx> I'll ask him why the debug builds too
+[02:02] <micahg> falktx: when you're ready, you'll want to run lintian on the binaries as there is quite a mess there
+[02:04] <falktx> I've already done that
+[02:04] <falktx> package is almost clean
+[02:07] <micahg> falktx: try lintian -iIEv --pedantic
+[02:07] <falktx> run that over what?
+[02:07] <micahg> .changes for the binaries
+[02:08] <micahg> I got several screens of warnings and errors
+[02:08] <falktx> ok let me try that
+[02:16] <falktx> hm yeah, I need to install into /usr/lib as 644 not 755
+[02:19] <falktx> nice verbose output
+[02:19] <falktx> micahg: thanks for the tip! 
+[02:20] <micahg> falktx: you're welcome
+[02:22] <falktx> hm, cadence 32bit builds finished
+[02:22] <falktx> anyone would like to try?
+[02:23] <falktx> sudo add-apt-repository -y ppa:falk-t-j/cadence
+[02:23] <falktx> sudo apt-get update
+[02:23] <falktx> sudo apt-get install cadence
+[02:23] <falktx> :)
+[02:29] <falktx> (64bit packages building)
+[02:44] <ScottL> we now have a @ubuntustudio twtitter feed :-)
+[02:50] <falktx> alls builds finished
+[04:41] <Len-nb> falktx, Cadence on the tweaks screen, clicking on LADSPA, DSSI, LV2 or VST opens that option, it would be nice if a second click closes it. VST is off the bottom of my screen so I can't click on it to get it back unless I move the window up off the top of the screen.
+[04:42] <falktx> hm, not sure if qt allows that
+[04:44] <Len-nb> I guess my screen is just too small :)
+[04:47] <Len-nb> I'm 1024x600 on this netbook... maybe not your target machine :)
+[04:49] <falktx> it depends on the theme
+[05:31] <Len-nb> falktx, what are the Timer and Announce ports that show up in Catia when show ALSA-MIDI is selected?
+[05:32] <Len-nb> what program is used for alsa-jack bridging?
+[05:33] <falktx> the ports are just what alsa reports 
+[05:33] <falktx> I don't use them, nor do I know if they are useful at all, but they are reported by alsa
+[05:33] <Len-nb> OK
+[05:34] <falktx> alsa-jack bridging is done in cadence (the main tool)
+[05:35] <Len-nb> So not alsa-in or zita-ajbridge. ok
+[05:36] <falktx> lol
+[05:37] <falktx> it actually uses alsa-in/out and possibly zita
+[05:37] <falktx> don't judge a book by its cover ;)
+[05:37] <falktx> I just named it "ALSA Audio Bridge" because it makes more sense
+[05:38] <falktx> like "ALSA MIDI Bridge" instead of "A2J MIDI Bridge"
+[05:38] <falktx> or a2jmidid
+[05:43] <Len-nb> I am told that zita is better quality than alsa_in
+[05:44] <Len-nb> Uses less cpu too. I haven't really done a good compare though.
+[05:45] <Len-nb> I have been trying lots of add things the last while just to see if they work.
+[05:47] <Len-nb> netjack has taught me some things. Jack (pulse and netjack too) use more resources for more ports.
+[05:47] <Len-nb> This should be obvious
+[05:48] <Len-nb> but it didn't really hit me till I tried netjack with 20i/20o lines and ran pulse bridged to it and jack was reporting dsp 57%
+[05:50] <Len-nb> Then I tried comparing two PCI cards 2 tracks and 10 without net and it still showed the difference in dsp use.
+[05:51] <Len-nb> So I now know that my D66 uses the same resources as the d1010
+[05:51] <Len-nb> because the ice1712 looks like 12in/10out
+[06:01] <Len-nb> falktx, how come Cadence reports a different latency than qjackctl? qjackctl says 17.4 and cadence says 5.3... using -p256
+[06:03] <falktx> qjackctl can access the buffer/periods setting and calculates using that too
+[06:03] <falktx> cadence does not because jack doesn't provide that API
+[06:03] <falktx> the qjackctl calculation is kinda wrong, it assumes jack was start ONLY via qjackctl which is not always the case
+[06:04] <falktx> Len-nb: oh, and zita uses *much more* CPU than alsa_in/out
+[06:04] <falktx> plus, it's buggy
+[06:05] <Len-nb> it is quite new. I haven't seen any bugs yet though.
+[06:05] <falktx> I did, random crashes
+[06:05] <falktx> it doesn't like that apps are constantly opening and closing
+[06:05] <Len-nb> anyway off to bed. Thanks for the new toy I'll play more later.
+[07:22] <zequence> ScottL: Nice (about the twitter)
+[13:25] <smartboyhw> Hey yo scott-work 
+[13:26] <smartboyhw> Why is Canonical turning Ubuntu into LTS releases ONLY? Is Canonical in a finanicial  crisis such that they couldn't even maintain the new releases?
+[13:28] <scott-work> smartboyhw: i don't have the answer
+[13:28] <smartboyhw> scott-work, I knew that:P You aren't even an Canonical employee:P
+[13:29] <jussi> smartboyhw: because it makes sense t do that...
+[13:29] <scott-work> however, i would suggest this is a decision based on desired results
+[13:29] <smartboyhw> jussi, for what sense?
+[13:29] <jussi> (and no, not canonical employee either)
+[13:29] <scott-work> i speculate this is to support other items, perhaps the phone or tablet endeavours
+[13:29] <jussi> smartboyhw: because they are trying to achieve a stable product across form factors
+[13:30] <smartboyhw> jussi, well then I think having a release once per year is better than two
+[13:30] <jussi> its pretty much like this anyway, but slightly convoluted, so they are removing the "busy work" 
+[13:30] <jussi> 2 years is actually a very nice cadence
+[13:53] <astraljava> smartboyhw: From what I understand, companies that matter use LTS releases only, and pay for the support on those. They don't care about the intermediate, "testing releases" if you will. Having those milestones quite frankly just eat up valuable core dev time, that could be better spent in polishing the valuable releases.
+[13:54] <astraljava> Users like us can use rolling releases in between just fine, what does it matter whether we have to do-release-upgrade in between LTS releases?
+[13:55] <astraljava> I haven't read the official announcement nor followed the discussion henceforth, so that's just my reflection on hearsay and gossip. :)
+[13:55] <smartboyhw> lol
+[13:56] <smartboyhw> astraljava, well it's half-gossip, a Canonical employee (to be exact, it is Leann Ogasawara, the Canonical Ubuntu Kernel Team Manager) said about it in a on-air video:P
+[14:24] <scott-work> jussi: you bring up a good point, i imagine there is a nice inflection point of release schedule versus efficient work
+[14:24] <scott-work> i.e. too quick release brings too much "busy work" of announcing, emailing, testing compared to actual development
+[14:25] <jussi> scott-work: mind, he other side of it is that releases bring publicity, which is a good thing...
+[14:26] <scott-work> very true ;)
+[14:26] <smartboyhw> scott-work, but two years is way too far I think
+[14:27] <scott-work> smartboyhw: perhaps for non-corporate desktop users, techies, or developers...but maybe this is a slightly conservative starting point for consideration when phones and tablet and tvs are thrown into the mix
+[14:27] <scott-work> perhaps when the other products are established, practices are standardized, and teams are more fleshed out, then the cadence may shift to one year per release
+[14:29] <smartboyhw> yeah
+[14:30] <jussi> smartboyhw: tell me something - how often does microsoft release a new windows version?
+[14:30] <smartboyhw> jussi, wait this is a different scenario
+[14:30] <jussi> smartboyhw: how so? 
+[14:31] <smartboyhw> Also don't forget, there is AT LEAST Developer Preview and Consumer Preview and Release Preview for Windows 8
+[14:31] <smartboyhw> That will mean for us like three releases
+[14:31] <smartboyhw> jussi, and also Ubuntu is open source, while Windows is not
+[14:32] <jussi> smartboyhw: so consider, with a rolling release, the techie/developer etc dont need to have those previews - they always are up to date where the development is up to
+[14:34] <smartboyhw> jussi, so tell me then: How does a rolling release prepare for betas (and presumably Alphas)?
+[14:35] <jussi> Hrm?
+[14:35] <smartboyhw> jussi, think
+[14:35] <smartboyhw> One user wants the newest things for his computer
+[14:35] <smartboyhw> Let it's June 2015
+[14:35] <smartboyhw> The last LTS should be 14.04 (April 2014)
+[14:36] <smartboyhw> Then the user will need to spend a lot of time (after installation) to actually upgrade all his packages!
+[14:36] <jussi> smartboyhw: I dont think they meant that point releases on the lts's were going away
+[14:36] <jussi> in anycase, I need to run - Ill be happy to annoy you later
+[14:36] <smartboyhw> jussi, and I will be leaving soon either
+[14:48] <astraljava> smartboyhw: The advantage of getting rid of intermediate releases is that there's no need to support several releases at once. Just shove an updated package into the rolling release, you're done. Only a handful (two?) LTS releases needing support at the same time.
+[15:47] <scott-work> that was an interesting comment about updating packages after installation. i wonder how true that might be
+[20:53] <len-1304> what is oneconf? and should it be a part of US?
+[20:54] <len-1304> (it is right now)
+[20:58] <zequence> Looks like something to do with ubuntuone
+[20:58] <len-1304> Should we black list it?
+[20:59] <zequence> Maybe we should add a workitem on clearing up why we have it
+[20:59] <len-1304> It seems to be crashing... maybe because we don't have U1.
+=== zequence_ is now known as zequence
+=== zequence_ is now known as zequence

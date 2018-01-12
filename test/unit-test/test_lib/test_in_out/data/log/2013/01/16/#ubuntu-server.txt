@@ -1,0 +1,383 @@
+[00:01]  * patdk-lap gave up on dk and only use dkim
+=== slank is now known as slank_away
+[00:07] <m_tadeu> dkim is listening in some weird port
+=== hggdh_AFK is now known as hggdh
+[00:09] <sarnold> orudie: be confident in your ACLs, back them up with iptables rules. you don't want to run an open proxy for the world.
+[00:13] <orudie> sarnold, so in the ACL I can allow by ip or host ?
+[00:13] <sarnold> orudie: I would allow by IP, it feels less likely to break
+[00:14] <patdk-lap> for the client side
+[00:14] <patdk-lap> for the allowed websites to visit, host is fine
+[00:14] <orudie> well squid.conf looks huge and difficult to digest for someone who never used it before
+[00:15] <orudie> so I just need some guidance
+[00:15] <sarnold> orudie: indeed, I remember last time I set it up (10 years back?) spending two or three days reading the manual and configuration file comments...
+[00:19] <orudie> sarnold, okay, going to start looking at the conf file now ...
+[00:23] <orudie> I wonder what squid enables on default
+[00:47] <LeChacal> hello all, i am trying to use the output of "/usr/lib/update-notifier/apt-check" in  a bash script but its output doesn't seem to be going to stout, i can't store its out put to a veriable and even trying to do a redirect to /dev/null still outputs to the stout. Looking at it code it is a python script, i am not formiluar with python so maybe there is something i am missing. Wondering anyone could sheds some light on what is goin go.
+[00:48] <sarnold> LeChacal: at least some of the writes are going to standard error
+[00:48] <sarnold> LeChacal: programs start with three standard IO streams -- standard input, standard output, and standard error
+[00:49] <sarnold> LeChacal: programs can also do IO directly to the terminal, but that is less common
+[00:49] <sarnold> LeChacal: it's not so different to capture hte standard error: foo 2> /path/to/file
+[00:49] <LeChacal> sarnold: that is bizare all of its output is going to stderr i didn't even think to check that unitl you metioned it
+[00:50] <sarnold> LeChacal: so you could have your program capture it like: apt-check > /tmp/output 2> /tmp/error
+[00:50] <LeChacal> sarnold: thank you
+[00:50] <sarnold> LeChacal: to get both, you could use apt-check 2>&1 > /file/for/output
+[01:40] <t0th_-> ec2?
+[01:40] <t0th_-> here?
+[01:47] <luminous> hello, how do i move a block from <foo_ip> to the top of a ufw list?
+[01:48] <luminous> I want my explicit IP blocks to superceed all allows
+[01:48] <luminous> that is the default deny policy
+=== cpg|away is now known as cpg
+=== imbrando1 is now known as nodnaebmi
+[02:47] <jdstrand> luminous: you can use 'ufw insert ...'. maybe I don't understand the question...
+[02:48] <luminous> jdstrand: can you insert 0 or -1?
+[02:51] <jdstrand> luminous: '1' is all you need to be first
+[02:51] <luminous> jdstrand: except that if you have existing rules there, ufw doesn't gracefully bump the rest down..
+[02:51] <jdstrand> sure it will
+[02:52] <luminous> it yelled at me about an existing rule.. so I am confused
+[02:52] <jdstrand> that is a different error
+[02:52] <luminous> oh, I see.. hah
+[02:53] <jdstrand> that is telling you that you already have that rule in your ruleset
+[02:53] <jdstrand> sudo ufw status numbered
+[02:53] <luminous> yea, I see what you mean
+[02:53] <jdstrand> sudo ufw delete <the old rule>
+[02:53] <jdstrand> sudo ufw insert 1 <the new rule>
+[02:53] <luminous> ty!
+[02:53] <jdstrand> np :)
+[02:56] <luminous> ah... and auth.log is once again silent :)
+[03:55] <lvmer1> what is a good pdf annotation program for ubuntu server?
+[04:24] <escott> i confused parted as to the filesystem on a device. It was ext4, then I made it into a raid, then i made it into lvm on top of raid, but parted is still reporting ext4
+[04:24] <escott> anything i can do to make it report correctly
+[04:24] <escott> partition table is gpt, i dont see anything in the table that indicates ext4
+[04:27] <sarnold> escott: isn't that changing the partition type? (82, 83, etc..)
+[04:28] <escott> sarnold, no the type is FD00
+[04:28] <escott> sarnold, i think parted is reading the contents to try and determine it
+[04:28] <sarnold> escott: ah, gpt changed things quite a bit then :)
+[04:29] <escott> sarnold, yes and no. "fd" was the old fdisk type, "fd00" is gdisks way of doing the crazy GUID that is the type for raid-autodetect in gpt
+[04:30] <escott> technically ext4 is in some sense correct for /dev/sdc1 because I have ext4 inside lvm inside mdadm on /dev/sdc1
+[04:30] <escott> but i would rather it say lvm, or none for the filesystem
+[04:31] <sarnold> but it'd nice if tools knew exactly what is going on, to save trouble in the hurried wee hours when things break :)
+[04:32] <escott> yeah its just confusing to look at that and know its wrong.
+=== Err404NotFound is now known as Error404NotFound
+=== Jeeves__ is now known as Jeeves
+=== metasansana is now known as antipatternexper
+=== antipatternexper is now known as antipatternsyes
+[10:41] <Diegosnat> hi guys! What's openchange??
+[10:41] <Diegosnat> I do not understand what it does
+[10:46] <miguitas> Diegosnat: it seems a implementation of microsoft exchange protocols, its only a library
+[10:47] <Diegosnat> right
+[10:47] <Diegosnat> so I still need a mail system
+[10:48] <miguitas> you need make a mail system with this library, if you want a exchange server try openexchange
+[10:52] <Diegosnat> miguitas, is it free?
+[10:58] <miguitas> Diegosnat yes http://en.wikipedia.org/wiki/Open-Xchange check license limitations
+=== motmot is now known as liva
+[11:40] <Kuschelwolle> Herzlich Willkommen in der Freiheit! Kein Kick Kein Ban nur Fun! lg Lukas #ubuntu-de-offtopiic
+[11:42] <jamespage> zul, adam_g_: Just uploaded a snapshot version of openvswitch to raring FYI
+[11:43] <jamespage> it tested OK locally; decided to upload as the dkms package is broken in raring anyway so it does move us forward.
+[12:19] <stanman246> hi in here, i'm collecting netflow data with nfsen. anyone using this?
+[12:19] <stanman246> have a couple of small q's ...
+=== Err404NotFound is now known as Error404NotFound
+=== yofel_ is now known as yofel
+=== cpg is now known as cpg|away
+[14:13] <jamespage> hallyn, is anything funky going on with lxc in raring ATM?  lxcbr0 appears but does not get assigned an IP address...
+[14:16] <andygraybeal> how do you guys safely shut down your virtual machines when there is a power outtage using a UPS?
+[14:17] <andygraybeal> if the UPS shutdowns the libvirt/kvm host, will the machines be shutdown gracefully as well?
+[14:17] <ikonia> shell script ?
+[14:17] <ikonia> when the host detects running on UPS and it power doesn't return within X seconds, do a shutdown
+[14:17] <andygraybeal> ikonia, okay sounds like a plan
+[14:17] <ikonia> andygraybeal: no, the hypervisor will be shutdown while the machines are running
+[14:17] <ikonia> thats why a script to shutdown the guests is better in my view
+[14:17] <ikonia> then let the host manage the rest
+[14:17] <andygraybeal> *nods
+[14:21] <hallyn> jamespage: see bug 1099155
+[14:21] <uvirtbot> Launchpad bug 1099155 in network-manager "[raring] No ip assigned to bridge and no routes added for routed network" [Critical,Confirmed] https://launchpad.net/bugs/1099155
+[14:22] <jamespage> hallyn, w00t!
+[14:22] <jamespage> thanks - guessed you would already know about it:-)
+[14:22] <hallyn> jamespage: not sure that's a "w00t" :)
+[14:23] <jamespage> hallyn, probably not
+[14:23] <jamespage> :-(
+=== frojnd_ is now known as frojnd
+=== diego_ is now known as Diegosnat_
+[14:36] <isthakur> Hi everyone I want to setup a thinclient setup with linux server and windows OS for client over tftp. is that possible with ltsp?
+[14:37] <patdk-wk> it MUST use tftp?
+[14:37] <patdk-wk> strange restriction
+[14:37] <isthakur> is there any other option
+[14:38] <patdk-wk> there are tons of options
+[14:38] <isthakur> i know about tftp only
+[14:38] <isthakur> I dont want to use rdp
+[14:38] <Kentarou> hi guys, i have setup a samba shared printer but when i try to view printing preferences the windows explorer got crashed, i'm using x64 both the server and the client. Any Idea?
+[14:38] <Kentarou> its find on x86 though
+[14:39] <jamespage> zul, glance client is borked in raring - jsonschema got pushed up to 0.7
+[14:39] <patdk-wk> isthakur, maybe what you mean is, I want to setup an ltsp enviroment for windows os based clients?
+[14:39] <Kentarou> its fine on x86 though
+[14:39] <jamespage> (wants 0.2)
+[14:39] <jamespage> looking now
+[14:39] <isthakur> yea thats true
+[14:39] <zul> jamespage: gah
+[14:39] <patdk-wk> not sure windows will work like that at all
+[14:39] <patdk-wk> isthakur, I would recommend likely you look into using ipxe and iscsi boot for windows
+[14:41] <zul> jamespage: im just sending a fix upstream
+[14:41] <andygraybeal> there is no dana
+[14:41] <andygraybeal> err.. sorry
+[14:42] <Kentarou> any advice?
+[14:43] <isthakur_> is it possible to use wine with ltsp
+[14:43] <isthakur_> Wine on LTSP clients
+[14:45] <zul> jamespage: odd...jsonschema is not in the tools/pip-requires
+[14:46] <jamespage> zul, yeah - its really odd
+[14:47] <jamespage> I can find any reference to it in the install either
+[14:48] <isthakur_> I want to setup an ltsp enviroment for windows os based clients or client that can run some windoes bases softwares such as dreamweaver, photoshop etc
+[14:49] <isthakur_> I wouldn't mind to use wine or any other windows emulator
+=== slank_away is now known as slank
+[15:33] <jamespage> zul, did you see that the g2 upload of cinder FTBFS?  some tests failed...
+[15:33] <zul> jamespage: yeah someone else fixed it im going to take a closer look at it today
+[15:34] <jamespage> zul, 'fixed it' as is skipped failed tests i.e. disabled gating
+[15:34]  * jamespage sighs
+[15:34] <zul> jamespage: skipped failed
+[15:34] <jamespage> zul, "  * debian/patches/series: Enable skip_failed_tests to fix FTBFS."
+[15:35] <zul> jamespage: yeah...ill take a look
+[15:35] <jamespage> yolanda, taking a look at that cinder branch now (have ovs out of the way).
+[15:35] <zul> jamespage: lemme finish what im doing here
+[15:35] <jamespage> zul, dude - no rush
+[15:35] <jamespage> its 'fixed' after all
+[15:35] <jamespage> :-)
+[15:36] <zul> not fixed properly
+[15:36] <yolanda> ok
+[15:47] <Eagleman> Why keeps apache saying this in the logs? File does not exist: /var/www/website/HTTP/html  ?
+[15:48] <zul> because it doesnt?
+[15:48] <Eagleman> What is requesting the file then?
+[15:49] <Eagleman> when i visit my website the file is somehow requested, or there wont be an error
+=== martinbarriviera is now known as ichikata
+[16:13] <yolanda> jamespage, did you already to the merge for my MP?
+[16:14] <jamespage> yolanda, I did - I needed to merge an out-of-band update from raring as well
+[16:14] <jamespage> so I tweaked the versioning to support that and merged it
+[16:14] <yolanda> ok, great
+[16:36] <zul> jamespage: https://code.launchpad.net/~zulcss/python-quantumclient/grizzly-ftbfs/+merge/143545
+[16:42] <zul> jamespage: https://code.launchpad.net/~zulcss/python-novaclient/grizzly-ftbfs/+merge/143546
+[17:01] <anti-neutrino> Hi guys
+[17:01] <anti-neutrino> need some help in disabling IPv6 *completely* from my ubuntu server
+[17:02] <anti-neutrino> surprisingly .. even after setting the right parameters in my sysctl.conf (and reboot) .. still my services are opening a IPv6 connection on this one host in my cluster
+[17:05] <RoyK> anti-neutrino: can't you just block ipv6 with iptables?
+[17:06] <RoyK> anti-neutrino: if you add "ipv6.disable=1" to the grub config, it shold do the trick
+[17:06] <RoyK> kernel boot param
+[17:18] <anti-neutrino> ohh ok .. havent tried that
+[17:18] <anti-neutrino> I was relying on sysctl.conf
+[17:19] <ckramer> I'm troubleshooting a strange one. Anyone ever seen a bind mount show different file contents?
+[17:22] <TheLordOfTime> will unattended-upgrades autoinstall security updates to everything but the kernel?
+[17:26] <ckramer> going to chalk that one up under kernel silliness. the 12.04 box was due a restart for kernel updates. My bind mount sanity returned after the system rebooted.
+[17:32] <stiv2k> hello
+[17:33] <stiv2k> anyone here
+[17:33] <stiv2k> that can help me with this http://i.imgur.com/SBICT.jpg
+[17:33] <sarnold> stiv2k: irc tends to work best if you ask detailed questions from the start :)
+[17:33] <stiv2k> sarnold: lol
+[17:33] <stiv2k> im asking in a roundabout way
+[17:33] <sarnold> oh jeeze, still fighting that? oooooof.
+[17:33] <stiv2k> i havent tried anything since last week
+[17:34] <stiv2k> i dont know what to do :S
+[17:34] <sarnold> heh, I can't blame you.. :)
+[17:34] <stiv2k> i need to speak with an expert
+[17:34] <stiv2k> on this
+[17:34] <stiv2k> im not familiar with what the error is trying to tell me
+[17:35] <TheLordOfTime> who here on the server team knows how we handle server-related bugs?
+[17:35] <TheLordOfTime> and specifically whether changing the init.d file counts as a valid solution for a bug.
+[17:44] <michele> after installing ubuntu, how do I recall this screen? http://i.stack.imgur.com/Nu44s.jpg
+[17:46] <hallyn> michele: tasksel I believe (though I haven't done it)
+[17:53] <jcastro> michele: I just answered your question on AU
+[17:53] <jcastro> `sudo tasksel` should do what you want
+[17:55] <michele> jcastro: right, thanks!
+[17:55] <michele> jcastro: can you also tell me how to bring up the other screen i mention in the comment?
+[17:57] <jcastro> here you go: http://askubuntu.com/a/26/235
+[17:58]  * sarnold looks for the +1 button on irc..
+=== diego_ is now known as diegosnat
+[17:58] <michele> very good jcastro , thank you again
+[18:01] <diegosnat> has any of you tried to integrate samba4 with imap???
+[18:03] <frojnd> Hi there. Has anyone played and configure ligttpd? I'm having serious problem enabling php support even though by https://help.ubuntu.com/community/lighttpd#PHP I should only lighttpd-enable-mod fastcgi Yet I keep getting 403 - Forbidden
+[18:03] <frojnd> When I visit info.php
+[18:03] <TheLordOfTime> *cough* use nginx *cough*
+[18:03]  * TheLordOfTime is biased
+[18:04] <TheLordOfTime> frojnd, you should read the error logs
+[18:04] <TheLordOfTime> 403 forbidden suggests your file permissions are borked
+[18:04] <qhartman> I second the rec for nginx, if you have a good reason to not use Apache....
+[18:04] <frojnd> TheLordOfTime: what permissions should they be? error log gives me: Path         : /var/www/info.php -- file found
+[18:05] <TheLordOfTime> that suggests a 404 not a 403
+[18:05] <frojnd> I can pastebin the whole error log
+[18:05] <TheLordOfTime> IMO nginx is easier to configure php and proxying than lighty
+[18:05] <TheLordOfTime> if that's all you're doing at least
+[18:05] <frojnd> TheLordOfTime: I'll be using it for wordpress so php mysq
+[18:05] <frojnd> something light
+[18:06] <TheLordOfTime> frojnd, nginx-light can achieve it with some minor configuration
+[18:06] <frojnd> TheLordOfTime: if you have time I'd be much appriciated if you can bare with me
+[18:06] <TheLordOfTime> but i am biased against lighty and apache
+[18:06]  * TheLordOfTime works with nginx all the time, and has bug handling specializations in the nginx package
+[18:06] <frojnd> TheLordOfTime: ok let me try nginx
+[18:06] <TheLordOfTime> frojnd, if you go the nginx route, sudo apt-get install nginx-light php5-fpm
+[18:06] <TheLordOfTime> then lemme give you a basic config
+[18:07] <TheLordOfTime> also, sudo apt-get install php5-mysql
+[18:07] <sarnold> TheLordOfTime: why nginx-light?
+[18:07] <TheLordOfTime> sarnold, basic core modules
+[18:07] <TheLordOfTime> unless they need SSL support, nginx-light is a lighter version of nginx
+[18:08] <frojnd> TheLordOfTime: in future I'll probably need ssl
+[18:08] <frojnd> but in compare how faster is nginx to apache
+[18:08] <TheLordOfTime> frojnd, then nginx-full
+[18:08] <TheLordOfTime> i don't have benchmark stats on bookmark unfortunately
+[18:08] <TheLordOfTime> but nginx is a bit lighter on memory IMO
+[18:09] <sarnold> TheLordOfTime: ah, save a few kilobytes then :)
+[18:09] <TheLordOfTime> sarnold, mhm.
+[18:09] <TheLordOfTime> sarnold, unless they say they need SSL and a wider range of modules i suggest nginx-light
+[18:09] <TheLordOfTime> which is the barebones but still operational version of nginx
+[18:10] <TheLordOfTime> personally, i put nginx-full on all my systems
+[18:10] <TheLordOfTime> but all my systems and VMs have at least 512MB RAM so i can spare the few extra kilobytes of RAM
+[18:10] <TheLordOfTime> php5 and mysql are the memory whores though
+[18:11] <TheLordOfTime> frojnd, which ubuntu are you on?
+[18:11] <frojnd> 12.4
+[18:11] <TheLordOfTime> 12.04 or 12.10?
+[18:11] <frojnd> so nginx-full php5-fpm ?
+[18:11] <TheLordOfTime> i ask because php5-fpm's listening dynamics were changed for 12.10 and later
+[18:11] <TheLordOfTime> frojnd, php5-mysql as well
+[18:11] <RoyK> TheLordOfTime: heh - mysql only uses what you tell it to use, php can be a bit hungry, though, especially with apache
+[18:11] <TheLordOfTime> at the bare minimum
+[18:12] <TheLordOfTime> RoyK, apache in and of itself eats more memory than php+mysql combined
+[18:12] <TheLordOfTime> which is why i started using nginx :P
+[18:12] <RoyK> mod_php is linked into apache, so you'll have to dig deep to see if php or apache is using that memory
+[18:12] <TheLordOfTime> frojnd, the default configuration file should be sufficient if you uncomment the PHP section, i can go write up a basic config if you want
+[18:13] <TheLordOfTime> since i run a wordpress blog on nginx + php5-fpm + mysql
+[18:13] <RoyK> php won't use much memory unless it's used :P
+[18:13] <frojnd> TheLordOfTime: ok all installed nginx-full php5-fpm php5-mysql
+[18:13] <RoyK> php with nginx is rather slim, but rather slow as well, compared to apache
+[18:13] <RoyK> if you have half a gigabyte, it should suffice for most things
+[18:13] <RoyK> 1GB for all
+[18:13] <frojnd> TheLordOfTime: that would be awesome
+[18:14] <TheLordOfTime> RoyK, if you're not running anything intense nginx works fine
+[18:14] <TheLordOfTime> with php
+[18:14] <RoyK> sure, but something like wordpress is rather intense, so there apache would probably be better
+[18:14] <TheLordOfTime> RoyK, lets not argue webserver preference mmkay?
+[18:14] <TheLordOfTime> RoyK, they said lighty
+[18:14] <frojnd> TheLordOfTime: just please help me :)
+[18:14] <TheLordOfTime> lighty's evil
+[18:15] <RoyK> TheLordOfTime: heh - I just use apache with php
+=== matsubara is now known as matsubara-afk
+[18:16] <hallyn> zul: have you been able to build libvirt lately?  I'm getting weird dep failures https://launchpadlibrarian.net/128637930/buildlog_ubuntu-raring-amd64.libvirt_1.0.0-0ubuntu5_FAILEDTOBUILD.txt.gz
+[18:16] <zul> hallyn: i havent tried whats going on?
+[18:17] <zul> hallyn: weird lemme check
+[18:17] <hallyn> zul: well the configure failure suggests kernel-ehaders is missing, but i don't think that's it
+[18:17] <daguz> So, I'm running ubuntu server under xen for some development peoples.  I've been able to install and follow recipes to make it work.  Are there some guidelines as far as replicating these hosts?  What about booting with UUID?  I'm a little confused how that should work for me.
+[18:17] <hallyn> fails to compile linux/if_bridge.h: present but cannot be compiled
+[18:17] <RoyK> hallyn: new kernel?
+[18:18] <hallyn> RoyK: i assume the ppa builders are on hardy like the rest of the farm, so hope that's not hte problem
+[18:19] <hallyn> zul: well ok, let me dig deeper, i jsut wanted to make sure you didn't know off the top of your head
+[18:19] <zul> hallyn: lemme try here
+[18:19] <TheLordOfTime> frojnd, absolute base config: http://paste.ubuntu.com/1538319/
+[18:19] <TheLordOfTime> i've commented out the SSL portion, because you don't have SSL yet (I assume)
+[18:20] <TheLordOfTime> frojnd, NOTE: the followoing must be confirmed:
+[18:20] <TheLordOfTime> www-data (user or group) must have read access to the entire directory structure up to the document root
+[18:20] <adam_g_> roaksoax: ping
+[18:21] <TheLordOfTime> so if you have /home/iamevil/html/blah as the docroot, www-data has to be able to see the directories and read anything in folder 'blah' at the end of that docroot
+[18:21] <frojnd> so I must chown -R www-data:www-data /var/www/myserver if /var/www/myserver is documentRoot?
+[18:21] <TheLordOfTime> frojnd, chown -R [user]:www-data at least
+[18:22] <frojnd> what do I put for user? you mean ssh user?
+[18:22] <TheLordOfTime> frojnd, typically, in my /var/www/*, [user] is root
+[18:22] <TheLordOfTime> or my ssh user
+[18:22] <TheLordOfTime> but typically i put my stuff in userspace
+[18:22] <TheLordOfTime> to avoid using /var/www/
+[18:22] <zul> hallyn: looks like this https://www.redhat.com/archives/libvir-list/2013-January/msg00930.html linux/if_bridge.h changed in 3.8 looks like it
+[18:23] <frojnd> I'll ask about this few minutes later let me use your config and configure it first TheLordOfTime
+[18:23] <TheLordOfTime> frojnd, :)
+[18:25] <TheLordOfTime> frojnd, also, proof of concept using userspace: https://lordoftime.info/
+[18:25] <TheLordOfTime> which is my wordpress blog
+[18:25] <TheLordOfTime> (usually used specifically for ubuntu stuff)
+[18:25] <frojnd> TheLordOfTime: and I already have questions, server_name and yoursite.tld
+[18:25] <TheLordOfTime> frojnd, server_name's a directive DO NOT CHANGE
+[18:26] <TheLordOfTime> yoursite.tld is where you want your site to listen on
+[18:26] <TheLordOfTime> i.e. ip address, yourdomain.com, etc.
+[18:26] <hallyn> zul: all right lemme try https://www.redhat.com/archives/libvir-list/2013-January/msg00936.html
+[18:26] <TheLordOfTime> space-delimited
+[18:26] <TheLordOfTime> frojnd, what domain/address is your blog going to be listening on?  privmsg it to me if you want security
+[18:26] <TheLordOfTime> s/security/privacy/
+[18:26] <zul> hallyn: my google foo is awesome today
+[18:26] <TheLordOfTime> oops resend
+[18:27] <TheLordOfTime> i had +g on xD
+[18:27] <hallyn> zul: it is - thanks :)
+[18:27] <TheLordOfTime> frojnd, resend the privmsg
+[18:27] <roaksoax> adam_g_: pong
+[18:27]  * TheLordOfTime had filtering on and did not receive the privmsg initially
+[18:28] <roaksoax> adam_g_: whats up? :)
+[18:28] <adam_g_> roaksoax: hey, was just looking at the hacluster charm for use with rabbitmq.
+[18:29] <roaksoax> adam_g_: ok...
+[18:29] <adam_g_> roaksoax: i had some questions but reading the code answered most of them. i might make a MP against ~openstack-charmers/charms/quantal/hacluster/trunk that will avoid installing openstack-resource-agents unless they're actually needed
+[18:30] <roaksoax> adam_g_: cool! :) just let me know if you have any left or want to merge something
+[18:36] <hallyn> zul: alas, those two patches don't fix it
+[18:36] <zul> hallyn: ergh
+[18:36] <zul> lemme finish what im doing here and ill have a look
+[18:37] <hallyn> aha /usr/include/linux/if_bridge.h:172:20: error: field 'ip6' has incomplete type
+[18:37] <hallyn> zul: no, wait, i think the second patch had a thinko
+[18:44] <hallyn> zul:  i think this is technically a bug in the kernel headers, so asking on #ubuntu-kernel
+=== slank is now known as slank_away
+[19:16] <diegosnat> is it true that zentyal sync active directory users with emails?
+[19:19] <adam_g_> roaksoax: have you ever seen this trace upon adding thre relation between subordinate and primary service? http://paste.ubuntu.com/1538474/
+[19:23] <roaksoax> adam_g_: nope never
+[19:26] <roaksoax> adam_g_: are you doing rabbitmq with drbd?
+[19:27] <adam_g_> roaksoax: not yet. gonna start with mirrored queues
+[19:27] <roaksoax> ack!
+[19:44] <iron_houzi> Do I have to reboot my computer if I make changes to /etc/default/locale?
+[19:44] <antix> no
+[19:45] <iron_houzi> If I want to permanently set locale to en_US.UTF-8, do I have to have this set in both /etc/default/locale AND /etc/environment ?
+=== Guest22917 is now known as turtl3
+[20:30] <TheLordOfTime> frojnd, :P
+[20:31] <Free99> hey everyone. I have a bunch of VMs running on what needs to be a publicly accessible bridge. Advice I keep getting is to disable iptables and arptables on the bridge using sysctl, but if I'd rather limit access by using specific iptables rules, is that possible?
+[20:34] <adam_g_> roaksoax: will is_clustered() // "clustered=`relation-get -r $r_id clustered $unit`" only return True if the cluster is configured/crm is up/the resources are active and not waiting on more peers?
+[20:42] <roaksoax> adam_g_: where is that?
+[20:45] <adam_g_> roaksoax: cinder/glance
+[20:45]  * roaksoax looks
+[20:46] <adam_g_> roaksoax: found what i was looking for, but yea. hacluster sets 'clustered' in its relation when its done with cluster bootstrap, so that clustered services know the cluster is actually up
+[20:47] <roaksoax> adam_g_: exactly
+[20:47] <roaksoax> adam_g_: keystone implements it differently
+[20:47] <roaksoax> ah no
+[20:47] <roaksoax> it is is just it is in shell
+[20:47] <roaksoax> :)
+[20:48] <adam_g_> roaksoax: which of the charms actually request a resource be created with an RA from the openstack-resource-agents package?
+[20:49] <roaksoax> adam_g_: quantum
+[20:50] <roaksoax> tha's the only one so far
+[20:50] <adam_g_> ah
+[20:54] <roaksoax> adam_g_: btw.. are you using canonistack?
+[20:55] <adam_g_> roaksoax: no
+[20:56] <adam_g_> roaksoax: is openstack-resouce-agents available for precise somewhere? i'd be great if this hacluster could be used on releases since 12.04
+[20:56] <roaksoax> adam_g_: nope it is not
+[20:56] <roaksoax> adam_g_: i was planning on getting it into the cloud-archive if possible
+[21:36] <adam_g_> smoser: ping
+[21:37] <smoser> adam_g_, hey
+[21:38] <adam_g_> smoser: noticed im failing to bootstrap nodes using juju+MAAS, cloud-init is failing: http://paste.ubuntu.com/1539094/ noticed a new precise SRU ~7 hours ago. any relation?
+=== pug is now known as Guest7849
+[21:39] <smoser> adam_g_, $*@!
+[21:40] <smoser> adam_g_, please file a bug.
+[21:41] <Daviey> great news eh?
+[21:41] <adam_g_> smoser: ack
+[21:41] <roaksoax> Daviey: i do have great news, new upstream version of maas in raring
+[21:41] <roaksoax> Daviey: bad news is something is f'd with chain.c32 and fails to localboot
+[21:42] <smoser> adam_g_, please attach output ec2metadata --user-data
+[21:42] <smoser> and /var/log/cloud-init.log
+[21:42] <Daviey> roaksoax: woooot
+[21:42] <adam_g_> smoser: yup
+[21:43] <Daviey> roaksoax: and :(
+[21:43] <roaksoax> yeah :(
+[21:52] <adam_g_> smoser: is it possible to just run user-data thru cloud-init on-demand, without a reboot?
+[21:52] <smoser> mostly, yes.
+[21:53] <smoser> rm -Rf /var/lib/cloud
+[21:53] <smoser> precise ?
+[21:55] <adam_g_> smoser: yes, precise
+=== Guest7849 is now known as DaveR
+[22:01] <adam_g_> smoser: rm -rf /var/lib/cloud .. and then ?
+[22:01] <smoser> http://paste.ubuntu.com/1539204/
+[22:01] <smoser> try that
+[22:03] <adam_g_> smoser: thanks
+[22:08] <adam_g_> smoser: https://bugs.launchpad.net/bugs/1100491 if you haven't seen the spam yet.
+[22:08] <uvirtbot> Launchpad bug 1100491 in cloud-init "cloud-init 0.6.3-0ubuntu1.3  failing to process juju-generated userdata" [Undecided,New]
+[22:22] <smoser> adam_g_, are you able to just test fo rme ... (i have testd, but want you to verify at lesat that re-run script)
+[22:23] <smoser> http://bazaar.launchpad.net/~smoser/ubuntu/precise/cloud-init/lp-1100491/files
+[22:23] <adam_g_> smoser: with that diff, i reran everything as in that pastebin of yours, and ended up with packages and agents
+[22:23] <smoser> k.
+[22:23] <smoser> i'm gonna upload to -proposed then.
+[22:26] <smoser> adam_g_, could you please do the SRU info on that bug for me ?
+[22:26] <smoser> i have to run now.
+[22:26] <smoser> i've just uploaded to precise-proposed
+[22:29] <adam_g_> smoser: ok.
+[22:54] <lvmer1> My minidlna files.db  only shows approx. 9000 audio files, while the folder has 38,000. I've increased the watches & I've forced several reloads, but I still get the exact same number 9000 something audio files.  All the 25,000 picture files show up perfectly, so I'm curious what the problem is. All the audio files are mp3
+=== antipatternsyes is now known as metasansana
+=== adam_g_ is now known as adam_g

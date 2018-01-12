@@ -1,0 +1,390 @@
+[02:25] <Lupita> Ayuda PF ! edite mi archivo fstab y despues guarde y ahora no lo puedo volver a editar y no arranca ubuntu
+[02:25] <Lupita> ¿que hago?
+[02:26] <init> tenes un livecd/usb a mano?
+[02:26] <Lupita> init, si
+[02:26] <init> estas desde el? :P
+[02:27] <Lupita> reiniciare wait
+[02:27] <init> Lupita: ? estas desde el pc
+[02:27] <init> ah, entiendo, dale
+[02:28] <Lupita> init, no estoy en otra maquina, try ubuntu whitout installing cierto?
+[02:29] <init> yep, en el cd de ubuntu
+[02:29] <Lupita> ok
+[02:29] <Lupita> init, ya esta entrado.
+[02:29] <Lupita> :S nervios
+[02:29] <init> que cambios hiciste? tenes backup del fstab?
+[02:30] <Lupita> init, lo unico que hice fue agregar entre el defalt,acl puse defaul,umask=777,acl
+[02:30] <Lupita> solo agregue unmask=777
+[02:30] <Lupita> init, inicio en modo grafico.
+[02:31] <init> ya tenes el liveusb?
+[02:31] <Lupita> no, no tengo back up, pero le saque foto al archivo. init
+[02:31] <Lupita> init, si ya entro.
+[02:31] <init> sabes montar el disco?
+[02:31] <Lupita> pues mas o menos
+[02:31] <Lupita> mont umont lo bassico ja
+[02:31] <Lupita> :S
+[02:32] <init> en que particion tenes el ubuntu? si no sabes, podes pasar la salida de "sudo fdisk -l" por pastebin?
+[02:33] <init> !pastebin
+[02:33] <kubot> Pastebin es un servicio para pegar mucho texto sin inundar el canal, se encuentra en http://paste.ubuntu.com (asegurate de darnos la dirección de tu paste) - Ver también en el topic.
+[02:33] <dzup> no no, no puedes poner eso de 777, no es windows esto hombre!, quitalo!
+[02:35] <Lupita> init, http://pastebin.com/nrBUvaUn
+[02:35] <dzup> ...o lupita (mujer), eso no se puede usar, umask 777 es muy crazy como para que linux trate de cargar, si lograras cargar con 777 umask de seguro arruinarias tu linux, simplemente no se hace.
+[02:35] <Lupita> dzup, no sabia :(
+[02:36] <dzup> Lupita, en dado caso, dejanos ver tu /etc/fstab y explica porque querias hacer eso?
+[02:36] <init> Lupita: hace desde el terminal, "sudo mkdir /mnt/ubuntu" y despues "sudo mount /dev/sda1 /mnt/ubuntu"
+[02:37] <init> el primer comando va a crear el directorio, el segundo va a montar la particion en el nuevo directorio
+[02:38] <Lupita> init, listo
+[02:39] <init> Lupita: que muestra "ls /mnt/ubuntu"?
+[02:40] <Lupita> init, http://pastebin.com/uh3SKjV0
+[02:41] <init> hm
+[02:41] <Lupita> ?
+[02:41] <init> hace "sudo umount /mnt/ubuntu"
+[02:41] <Lupita> ok
+[02:44] <Lupita> init, http://pastebin.com/ig3TpMDg
+[02:44] <init> cd /otro/directorio :P
+[02:44] <Lupita> ok
+[02:44] <Lupita> listo
+[02:45] <Lupita> ya
+[02:45] <init> y ahora el umount, y realmente, nunca use lvm asi que no se como se maneja, voy a buscar
+[02:45] <guampa> lvm
+[02:45] <guampa> Lupita: sudo vgscan
+[02:45] <guampa> y pasa por pastebin
+[02:46] <Lupita> command no found guampa
+[02:46] <guampa> sudo apt-get install lvm2
+[02:46] <guampa> y luego reintenta el comando
+=== ubuntu is now known as lupita2
+[02:50] <dzup> lo unico que ocupa es editar /etc/fstab y quitar lo de umask 777
+[02:50] <guampa> si pero el raiz esta en un lvm
+[02:50] <lupita2> http://pastebin.com/qcpAHNBc
+[02:50] <dzup> rei iciar y profit
+[02:50] <guampa> lupita2: sudo vgchange -a y
+[02:51] <lupita2> http://pastebin.com/XZ1VrrgJ
+[02:52] <guampa> lupita2: sudo lvscan
+[02:52] <lupita2> http://pastebin.com/Q71BLGYE
+[02:52] <guampa> ok
+[02:53] <guampa> sudo mount /dev/servidor/root /mnt/ubuntu
+[02:53] <lupita2> ya
+[02:53] <guampa> sudo gedit /mnt/ubuntu/etc/fstab
+[02:54] <guampa> y ahi estas en el fstab para corregir el error
+[02:54] <guampa> pasalo si podes por paste para ver que tiene
+[02:54] <lupita2> listo
+[02:54] <lupita2> reinicio me voy a la otyra maquina
+[02:54] <guampa> ok
+[02:55] <lupita2> sudo reboot
+[02:55] <lupita2> ups
+[02:55] <lupita2> ja
+[03:00] <lupita3> Listo !! :DDDDD
+[03:00] <guampa> :)
+[03:00] <lupita3> guampa, dzup , init
+[03:00] <lupita3> Muchas Gracias !
+[03:00] <lupita3> :D
+[03:00] <init> :D
+[03:00] <lupita3> pero antes de irme les voy a platicar por que lo hice
+[03:01] <guampa> lupita3: porque lo hiciste?
+[03:01] <lupita3> resulta que esta es una maquina con samba pero el saba no es un samba de confugracion en el smb.conf si no que lo hice con nautilus en donde la caprta compartida es ta en /lib/ no se que USERSHARE
+[03:02] <guampa> ah si, p47 hoy mas temprano?
+[03:02] <lupita3> guampa, el problema es que cuando un usuario hace un .txt lo crea bien pero usuario 2 no lo puede guarrdar por que se genera un permismo diferente
+[03:02] <guampa> en realidad si esta usando smb.conf
+[03:02] <guampa> solo que con usershares
+[03:02] <lupita3> guampa, es hermano...
+[03:02] <guampa> que se manejan x usuario
+[03:02] <lupita3> jaja lo tengo junto a  mi guampa jaja
+[03:02] <lupita3> pero so soy lupita :D
+[03:02] <guampa> o/
+[03:02] <guampa> k
+[03:02] <guampa> mira
+[03:03] <lupita3> guampa, e hecho el es el culpable
+[03:03] <lupita3> de esto
+[03:03] <lupita3> guampa, no podemos :S
+[03:04] <guampa> bueno pa empezar quisieron dar permisos "samba" a terceros clientes
+[03:04] <guampa> pero lo intentar hacer modificando los permisos en el server
+[03:04] <guampa> esta bien el intento, pero eso no funciona
+[03:05] <lupita3> guampa, entonces que hago para que cada usuarrio cree 777 en carpetas y archivos?
+[03:05] <guampa> por que queres que se usen esos permisos tan extraños?
+[03:05] <guampa> ademas de potencialmente peligrosos
+[03:06] <lupita3> guampa, todo esta bajo control por que usamos acl
+[03:06] <lupita3> pero el problema es que cuando dos users entrar por ejemplo a carpeta uno
+[03:06] <lupita3> en carpeta uno usuario dos no puede guardar el file de usuario uno solo leer
+[03:07] <guampa> pero entonces no tienen bien las acl
+[03:07] <lupita3> antes guampa si se podia por que el samba en smbconf estaba bien configurado y creamos las mascaras
+[03:08] <lupita3> el problema es que con samba o smb.conf no podemos mover los permisos en modo grafico con nautilus y son mass de 1000 carptas
+[03:08] <guampa> para cambiar los permisos masivamente se usa la linea de comandos
+[03:08] <lupita3> hace dos años hicimos las acls de manera manual pero imaginate 1000 carptas y
+[03:09] <lupita3> guampa, si, pero no todos los usuarios entrar en una sola carpeta
+[03:09] <guampa> claro el tema es que no te puedo ayudar exactamente porque no se con precision los casos de uso
+[03:09] <lupita3> usuario1 entra en carpeta1 y carpeta2 pero no entra por ejemplo en carpeta1/hola/yo/yo
+[03:09] <guampa> aver, tienen un recurso samba que acceden varios usuarios
+[03:09] <lupita3> si
+[03:10] <guampa> ustedes quieren que todos los usuarios puedan leer lo de todos?
+[03:10] <guampa> en todo el arbol bajo ese recurso?
+[03:10] <lupita3> mira...
+[03:10] <lupita3> supongamos que hay tre carpetas
+[03:10] <lupita3> 1
+[03:10] <lupita3> 1,2,3 y dentro hay 9
+[03:11] <lupita3> y tenemos 3 users unos pueden entrar a 1 pero solo pueden entrar a una subcapeta de 9
+[03:11] <lupita3> pero no acaba en segundo nivel si no en 6 u 8 niveles
+[03:11] <lupita3> mira...
+[03:11] <lupita3> si se pudiera montar un file en el smb.conf y que de manera grafica pudieramos mover los acl no habria ningun problema
+[03:12] <lupita3> guampa, el problema es que ubuntu solo no lo permite si compartimos una carpeta con nautilus y no desde smb.conf
+[03:12] <lupita3> ese es el punto.
+[03:12] <guampa> no, mas alla de los usershares se puede usar el smb.conf a discrecion
+[03:12] <lupita3> pero no se que pasa, antes de formatear teniamos un FC6 y si funcionaba pero como te repito, los acl los moviemos de forma manual desde consola
+[03:12] <guampa> y controlar exactamente desde ahi, incluso se pueden desactivar los usershares
+[03:13] <lupita3> si si podemos por ejmeplo compartir home/hola/test
+[03:13] <lupita3> pero...
+[03:14] <lupita3> no podemos modificar los acl desde mautilis es decir dese click derecho y habilitar usuarios y el problema con acl es que desde que creas una carpeta todos pueden entrar, entonces el problema no acaba en crear los permisos si no en deshabilitar a los usuarios
+[03:14] <lupita3> me explico?
+[03:14] <lupita3> es raro por que en la pc de mi hermano que es un ubuntu de escritorio si se puede
+[03:14] <lupita3> este es un ubuntu server
+[03:15] <lupita3> es muy raro desde la pc de mi hermano configurao samba de sde smb.conf y desde pues voy a nautiulus y muevo los permisos con "EICIEL" si ningun pproblema p
+[03:15] <guampa> "EICIEL" ?
+[03:15] <lupita3> pero en ubuntu server el EICIEL no fucniona si no comparto l a carpeta con click derecho compartir
+[03:15] <lupita3> si
+[03:16] <guampa> que es eso?
+[03:16] <lupita3> Eiciel para manipular los alc desde nautilus
+[03:16] <guampa> ah, es una extension para manejar ACL en gui?
+[03:16] <lupita3> http://dailypackage.fedorabook.com/uploads/2008-05-08-eiciel.png
+[03:16] <guampa> mm
+[03:17] <lupita3> asi lo tenemos pero el problema es que solo es con el file share de nautilus, puedo compartir desde smbconf pero no puedo manupular los permisos con eiciel y no se por que, solo pasa con eso por que coo te repito en la pc de mi hermano si es posible.
+[03:17] <guampa> ok ok
+[03:18] <lupita3> he tratado de buscar soporte refrente a eso pero no hay
+[03:18] <guampa> aver, entonces el problema es que el share de ubuntu no mapea correctamente los ACL en el share
+[03:18] <guampa> y ustedes estan intentando hacer el share configurando smb.conf
+[03:18] <guampa> correcto?
+[03:18] <lupita3> por eso para nosotros es importane que los chmod 777 se fijen para todos de todas maneras lo ACL ya estan fijados
+[03:19] <guampa> eso no tiene sentido
+[03:19] <lupita3> guampa,  asi es
+[03:19] <lupita3> por que ?
+[03:19] <guampa> porque el modo igual afecta el acl
+[03:19] <lupita3> no no afecta
+[03:19] <guampa> no es que como tenes ACLs puestos en un elemento los permisos normales no lo van a afectar
+[03:20] <lupita3> si le pongo que no enra no entra
+[03:20] <guampa> en una terminal, tira getfacl <algo con acl>
+[03:20] <guampa> vas a ver que los permisos normales aparecen
+[03:20] <lupita3> asi es pero ahi mismo restringo la entrada  de un user
+[03:20] <lupita3> getfact -m user:rwx file
+[03:21] <lupita3> y si le pongo user:--- no entra aun que tenga 777777777
+[03:21] <guampa> igual, por mas que tengas acl ponele permisos que tengan sentido
+[03:21] <lupita3> :)
+[03:21] <guampa> si pero si en un -R de repente borras un entry entran a correr los permisos
+[03:21] <guampa> o si un default mal puesto no pone un acl
+[03:22] <lupita3> si pero por eso cada carpeta tiene un permiso diferente
+[03:22] <lupita3> para un user diferente
+[03:22] <guampa> ok, hasta aca
+[03:22] <guampa> mas o menos te entiendo, ahora aver si logro que me expliques lo que quiero saber
+[03:22] <lupita3> dime
+[03:22] <lupita3> que no te queda claro
+[03:23] <lupita3> ?
+[03:23] <guampa> cual es el objetivo "general" en todo esto, clara y concisamente. porque me da la sensacion que pueden llegar a estar, no errandole, sino que puede haber una mejor manera
+[03:23] <guampa> pero necesito saber exactamente que tipo de modo de trabajo estan queriendo armar
+[03:24] <guampa> me explico?
+[03:24] <lupita3> si si. ok mira
+[03:25] <lupita3> tenemos como 30 users pero el server solo hay ahorita 8 el punto es que en hay /FILE1/ y dentro hay como 30 carpetas que a su vez tienen como 40 careptas y las sub carpetas ienen como otras 3
+[03:25] <lupita3> o 30
+[03:25] <lupita3> y cada carpeta tiene como 1000 files en xls
+[03:25] <guampa> bueno, tienen un arbol de carpetas y archivos xls
+[03:25] <guampa> ok
+[03:25] <guampa> y 30 users
+[03:25] <lupita3> algunos solo pueden entrar a /1/2y en 2
+[03:25] <lupita3> hay 30 files
+[03:26] <lupita3> y solo pueden entrar a 1 y a los otrso 29 no
+[03:26] <lupita3> me explico?
+[03:26] <lupita3> ya se lo que me dirias
+[03:26] <lupita3> hay grupos y pone un share en smb.conf peo es imposible
+[03:26] <lupita3> mira...
+[03:26] <guampa> no si entiendo
+[03:26] <guampa> tenes que usar ACL si lo queres bajo el mismo tre
+[03:26] <guampa> *tree
+[03:27] <guampa> yo tengo eso configurado aca
+[03:27] <guampa> en mi desktop
+[03:27] <lupita3> si me pongo a compartir files lo que va pasar es que cada user cuando entre se confundiria por que en su maquins MS veria como 100 files
+[03:27] <lupita3> a donde me voy ?? a donde SI puedo entrar ?
+[03:27] <lupita3> es un asco de esa manera.
+[03:27] <lupita3> si, el problema es que muchos ya no pueden entrar al tercer nivel
+[03:28] <lupita3> y algunos si entran pero solo a ciertas carpetas en el tercer nivel
+[03:28] <lupita3> me explico?
+[03:28] <lupita3> antes lo teniamos con FC6 y fiuncionaba bien, pero imaginte poner un acl para cada user
+[03:28] <guampa> de los 30 users, hay 1 solo que es especial no? y puede acceder a //share/1
+[03:28] <lupita3> nos vamos a tarde dias dias y dias
+[03:28] <lupita3> si el mio
+[03:28] <lupita3> JA
+[03:28] <guampa> los otros 29 pueden acceder a todo lo demas pero no a //share/1
+[03:29] <lupita3> si algnos
+[03:29] <lupita3> algunos entran en 1/2/18 y ya
+[03:29] <lupita3> no a 17 16 14 etc
+[03:29] <guampa> D:
+[03:29] <guampa> es un despelote eso xD
+[03:29] <lupita3> asi es.. pero me rehuso a poner windows
+[03:29] <guampa> no es que no depende del OS
+[03:29] <guampa> parece estar mal estructurado
+[03:29] <lupita3> no quiero virus.
+[03:29] <lupita3> tu crees?
+[03:30] <lupita3> alguna sugerencia?
+[03:30] <guampa> cuantos grupos diferentes de acceso hay?
+[03:30] <guampa> tendrias que agruparlos
+[03:30] <lupita3> no hay grupos !
+[03:31] <lupita3> es que simplemente es imposible
+[03:31] <lupita3> por que muchos coinciden en algunas carpetas
+[03:31] <lupita3> ya lo intente pero no funciono.
+[03:31] <guampa> lo que pasa es que se van a volver locos
+[03:31] <lupita3> no
+[03:31] <guampa> es muy dificil administrar un arbol de tantos niveles y los default acl para tantas combinaciones de acceso
+[03:32] <guampa> sea graficamente o por CLI
+[03:32] <lupita3> antes estabamos asi y sin problema, pero lo que no quiero ahora es fijar todo otra vez en cosola
+[03:32] <lupita3> por cli ?
+[03:32] <lupita3> que es eso?
+[03:32] <guampa> cli = consola
+[03:32] <guampa> en realidad cli = consola "de texto"
+[03:32] <guampa> gui = consola tambien, pero grafica
+=== linux is now known as linux-es
+[03:34] <lupita3> esta complicado pero no es imposible
+[03:34] <lupita3> :S
+[03:34] <lupita3> espero...
+[03:34] <lupita3> jajaj
+[03:34] <guampa> lo unico que los puedo ayudar es repitiendoles que asi van a tener problemas seguido, tiene que haber una manera de darle mas estructura a eso
+[03:34] <guampa> no, imposible no es
+[03:34] <guampa> es absurdamente engorroso y eso si o si les va a seguir trayendo problemas
+[03:35] <lupita3> guampa, yo queria mudar las estrucutas con los acl pero no pude por eso estoy en aprientos
+[03:35] <lupita3> mira... las estructuras ya estan
+[03:35] <lupita3> ya las hice
+[03:35] <lupita3> ya todo esta como estaba antes pero lo hice con nautilus EICEIL
+[03:35] <lupita3> hasta ahi acabo mi problema
+[03:36] <guampa> y vos decis que samba no respeta los acl o algo asi?
+[03:36] <lupita3> pero ahora todas lass mañana tengo que llegar a hacer chmod 777 -R *
+[03:36] <guampa> jajaja
+[03:36] <lupita3> lo que quiero es que cada vez que un user haga uun file se haga con 777
+[03:36] <lupita3> eso es todo, lo demas es lo de menos.
+[03:36] <lupita3> pero no lo hice desde smbn.conf
+[03:36] <guampa> mira, creo que hay un param de samba que tiene el modo por defecto de creacion de archivos y directorios
+[03:37] <lupita3> el smb.conf esta intacto
+[03:37] <guampa> usando usershares la config creo que se hacia en el home del usuario que arma los shares
+[03:37] <linux-es> ayuda con EFI  no carga windos 7
+[03:37] <lupita3> lo tuve que hacer compartiendo un file de modo grafico y eso no me permite poner en el smbn.conf mask 777
+[03:38] <lupita3> los usersshares hasta donde yo se se hacen en var/lib/samba/usershares
+[03:38] <lupita3> ahi estan pero si abro el file por ejemplo "empresa" no se si este bien ponerle umask = 777
+[03:39] <guampa> si, cualquier directiva que se acepte en un share puede ir
+[03:39] <guampa> y si no me equivoco tendria que tomar los globales
+[03:39] <lupita3> mira deja te pongo en pastebin el contenido del fileshare
+[03:39] <lupita3> wait.
+[03:39] <guampa> por lo que si pones umask = 777 en smb.conf lo tendria que poner por defecto para los usershares
+[03:39] <guampa> jeje, igual todo esto esta mal, pero buen :P
+[03:40] <lupita3> no no esta mal, lo creo ubuntu wait
+[03:42] <Lupita> guampa, http://pastebin.com/LkzCZr4w
+[03:43] <lupita3> ahi le pongo create mask = 0774 y folder mask ?
+[03:43] <lupita3> o en lass globales de smb.conf ? que opnias ? ja
+[03:44] <lupita3> el punto es que cuando alguien se loge y haga un txt o xls o lo que sea se haga con los tributos 777
+[03:48] <guampa> claro, ponelo en smb.conf
+[03:49] <guampa> si esta fuera de un share lo toma como default para los shares
+[03:51] <lupita3> haber hare la prueba
+[03:52] <linux-es> algien tiene conocimientos de grub, es q no arranca win7 dice problema al cargar EFI
+[03:52] <linux-es> :(
+[03:53] <lupita3> guampa, create mask = 777 y directory mask = 777
+[03:53] <lupita3> voy a reiniciar samba
+[03:54] <Lupita> /etc/init.d/smbd restart
+[03:54] <Lupita> pruebo...
+[03:54]  * init reinicia Lupita
+[03:55] <lupita3> init, guampa wow
+[03:55] <lupita3> creo que ya
+[03:56] <lupita3> ese era el problema ?
+[03:56] <lupita3> deja compruebo
+[03:56] <lupita3> wait...
+[03:58] <lupita3> JAJAJAJAJ guampa init  ese era el problema
+[03:58] <lupita3> YA ESTA :P
+[03:58] <lupita3> WE ARE SO HAPPY !
+[03:58] <lupita3> :D
+[03:59] <guampa> :P
+[03:59] <guampa> igual estan locos
+[03:59] <guampa> pero bueno :)
+[03:59] <lupita3> me siento una diosa !!!
+[03:59] <lupita3> :D
+[03:59] <guampa> lol
+[03:59] <lupita3> jajaj guampa lo se !
+[03:59] <lupita3> JAJAJ
+[03:59] <lupita3> :D
+[04:00] <init> el antiflood
+[04:00] <guampa> ^
+[04:00] <init> en un minuto te saca el quiet :P
+[04:00] <guampa> tenemos un bot anti-festejos :3
+[04:01] <init> ya paso mas de un minuto, wat
+[04:01] <guampa> hm, deja lo saco yo
+[04:02] <guampa> listo
+[04:02] <init> bue
+[04:02] <init> uBOTu tenia un toque de lag
+[04:04] <lupita3> ?
+[04:05] <guampa> uBOTu-fr es el bot que controla el antiflood, por eso te aplico un quiet de un minuto
+[04:06] <lupita3> bueno, me despido. Muchas gracias a TODOS !
+[04:06] <guampa> suerte
+[04:06] <lupita3> guampa, ¡Muchas Gracias! gracias por hacer que no nos corran JAJAJA !
+[04:26] <Costeelation> hola chicos
+[04:27] <Costeelation> queria saber si alguien conoce algun comando similar al «chkdsk»  de 'Dos' :) o alguna aplicacion q me compruebe y corrija errorer en un disco
+=== julian is now known as Guest50687
+[07:42]  * xoan buenas
+[11:21] <asir2> holaaa
+[11:23] <asir2> golfoss
+[16:25] <Catbuntu> Hola
+[16:59]  * xoan buenas
+=== init is now known as Exio
+=== semanat is now known as bones
+[17:14] <vitimiti> hallo
+[17:14] <bones> ola
+[17:16] <bones> k tal
+[17:19] <bones> hallo
+=== octavio is now known as Guest52652
+[18:43] <p47> Hey guampa, ¡Muchas Gracias! ;)
+[18:44] <guampa> de nada p47 :P
+[19:02] <fmonroy> Hola  a todos, les comunico que estoy trabajando en un proyecto personal
+[19:03] <fmonroy> Libro Corre Linux Corre - Capítulo 1 Libro NO oficial basado en la distribución
+=== io is now known as IdleOne
+=== raul is now known as Guest14364
+[19:04] <fmonroy> Ubuntu, puedes descargar el capítulo 1 acá
+[19:04] <fmonroy> http://aceptarocancelar.blogspot.com.es/2013/01/corre-linux-corre.html
+=== Catbuntu is now known as Catmint
+[19:36] <Artemis3> que fastidio los pdf
+[19:37] <Artemis3> fmonroy, no pudes usar algo que permita al texto fluir? compra un ereader...
+[19:47] <fmonroy> Artemis3 claro que lo publicaré en mejor formato, de momento es el primer capítulo
+[19:47] <Artemis3> algo amigable para ebooks
+[19:47] <fmonroy> si
+=== debsan_ is now known as debsan
+[19:57] <p47> guampa, dime que tienes experiencia con openvpn dimelo dimelo JAJA
+[19:58] <guampa> !openvpn
+[19:58] <kubot> OpenVPN is a vpn technology in Ubuntu, sudo apt-get install openvpn and then see http://openvpn.net/ and see the documentation "HOWTO" noting you have already installed it. ;-) It rocks!
+[19:58] <guampa> tengo, lo que no tengo es tiempo hoy :P
+[19:59] <p47> jajaj guampa no pasa nada
+[22:13] <ivedci89> cuando la energia este criticamente baja no me aparece opcion alguna ubuntu 12.04
+[22:14] <ivedci89> solo me aparece apagar...
+[22:14] <ivedci89> pero quiero darle como configurcion suspender o hibernar
+[22:14] <mimecar> tienes partición de swap?
+[22:14] <ivedci89> si
+[22:15] <mimecar> si está activada deberías poder hibernar
+[22:15] <fzeta> sudo pm-suspend, ivedci89
+[22:15] <mimecar> a no ser que tengas tan poca batería que no de tiempo
+[22:15] <ivedci89> gracias fzeta
+[22:15] <fzeta> sudo pm-hibernate
+[22:15] <fzeta> sudo pm-hibernate
+[22:15] <ivedci89> ahhh
+[22:17] <ivedci89> claro , mi bateria esta dañada
+[22:17] <ivedci89> y a veces dura menos de 15 minutos
+[22:17] <linux-user> Holaa a todos
+[22:17] <ivedci89> hola linux-user
+[22:18] <linux-user> Alguien sabe como tripear blu rays en linix
+[22:18] <ivedci89> tripear?
+[22:18] <mimecar> linux-user, ya has hecho lo básico primero antes de preguntar?
+[22:18] <linux-user> Ripear
+[22:19] <ivedci89> ah
+[22:19] <linux-user> Te refieres a google
+[22:19] <ivedci89> ni idea
+[22:19] <mimecar> si
+[22:19] <linux-user> Sip pero no encuentro nada
+[22:19] <mimecar> https://www.google.es/search?q=ripear+blue+ray+ubuntu
+[22:19] <mimecar> no te sirve nada de eso?
+[22:20] <linux-user> Ahy un monton para windoz
+[22:21] <linux-user> So nadie sabe como
+[22:21] <mimecar> te podemos ayudar con dudas concretas
+[22:21] <mimecar> que tengas con alguno de los tutoriales que existen
+[22:23] <linux-user> ...pero cual tutorial ...si no hay ninguno... para linux
+[22:23] <mimecar> en el enlace que te he puesto tienes varios
+[22:23] <linux-user> Ke mas conkreto kieres ... mi pregunta es conkreta
+[22:23] <linux-user> Para linuxx???
+[22:23] <mimecar> cuando sigas un tutorial y te quedes bloqueado en un paso
+=== julian is now known as Guest2984
+[23:19] <liher> hola
+[23:19] <liher> alguien sabe como modificar los elementos del menu de aplicaciones en ubuntu 12.04 y cairo dock?

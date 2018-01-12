@@ -1,0 +1,130 @@
+=== plars-off is now known as plars
+=== zequence_ is now known as zequence
+[09:39] <soren> Which component deals with the log_{host,port} boot parameters?
+[09:42] <soren> I would have thought something like base-installer or debian-installer{,-utils) but grepping through them for "log_host" seems to give me nothing.
+[09:42] <cjwatson> rootskel
+[09:42] <cjwatson> You were close :)
+[09:42] <wenchien> for #944614, is this a valid fix? http://bazaar.launchpad.net/~wenchien/ubiquity/precise-proposed.lp944614-ver02/revision/5430
+[09:43] <cjwatson> wenchien: Using self.page seems sensible, but I don't see how setting it to None specifically in calculate_closed makes sense
+[09:44] <cjwatson> calculate_closed only closes the special keyboard query window, not the page
+[09:44] <wenchien> cjwatson: ah...
+[09:44]  * cjwatson looks around
+[09:46] <soren> cjwatson: Oh. Excellent, thank you.
+[09:47] <soren> cjwatson: I see that it makes no attempt at passing that information on to the installed system. Do you know if there's a d-i (preseed) option for that or do I need to manually fiddle with rsyslog config?
+[09:47] <cjwatson> The latter, I think
+[09:48] <soren> Alright.
+[09:48] <soren> cjwatson: Cool, thanks.
+[09:48] <cjwatson> wenchien: Actually, no, I don't really think self.page is right here either.  Think about what that code is doing: it's applying the keyboard variant you selected to the running system
+[09:48] <cjwatson> wenchien: I don't think that it's correct to skip that just because the user happened to hit Enter a bit too quickly
+[09:49] <cjwatson> wenchien: The correct fix is to apply the keyboard variant even if the dbfilter has gone away, by starting up another one if necessary: that's what I meant in my previous review
+[09:50] <cjwatson> wenchien: (Or, perhaps, by inhibiting page switching if there's a pending layout change)
+[09:51] <cjwatson> wenchien: The same goes for keyboard_layout_timeout
+[09:51] <cjwatson> wenchien: Do you see what I mean?  I understand the desire to just make the error go away, but I think doing that just masks an underlying problem.
+[09:54] <wenchien> cjwatson: humm, okay, so you would like a valid dbfilter in keyboard_variant_timeout(), if it's not valid, create one, right?
+[09:55] <cjwatson> It might be simpler to hook into the place where the dbfilter is destroyed and ensure that all pending timeouts are processed
+[09:56] <wenchien> cjwatson: this issue happens when you click next on the keyboard layout page, and then click back on the following page, can't see why there is a pending layout change... @@a
+[09:56] <cjwatson> stgraber explained that in his review
+[09:56] <wenchien> oh, ok
+[09:57] <cjwatson> Technically, apply_keyboard doesn't need a dbfilter as such (well, aside from being a method on one, but that could be shuffled around), so you *could* start a new debconf-communicator if you're lacking one, but that would be inefficient
+[09:57] <cjwatson> I think it'd be easier and quicker to hook into teardown of the console-setup page
+[10:01] <cjwatson> e.g. I suspect you could modify Page.cleanup there to call self.ui.cleanup, then you could have PageGtk.cleanup sort out any pending timeouts and have PageKde.cleanup do nothing
+[10:05] <wenchien> cjwatson: will try that, thanks! :)
+[15:07] <directhex> how do i preseed a "no items selected" value for a multiselect in d-i?
+[15:08] <cjwatson> "d-i foo/bar multiselect"
+[15:09] <directhex> hm, must be breaking it somewhere else
+[15:11] <directhex> i'm trying to work around the vexing issue of grub-pc being pulled in (and asking me questions) during package install, and grub-installer.udeb doing it again, later on. stupid customized tasks.
+[15:18] <cjwatson> Any reason you can't just avoid installing grub-pc earlier?  It's wrong to do so anyway because that means you only cope with certain hardware.
+[15:25] <directhex> i'm already overdue on this. bios-only grub nonsense is good enough for a first cut
+[15:32] <cjwatson> I'm not totally sure what you're asking for is possible, though I might be able to figure it out given a DEBCONF_DEBUG=developer log of the whole installation
+[15:55] <antarus> cjwatson: do you know if it is possible to use auto-partitions (w/expert recipe I guess) but also preserve one existing partition?
+[15:55] <antarus> cjwatson: essentially we have folks upgrading from lucid to precise, and they want to keep their /home, but wipe everything else
+[15:56] <antarus> but we want to build a pxe target that will just do it for them
+[15:59] <cjwatson> That's a long-standing missing feature, really
+[15:59] <cjwatson> The problem is a lack of a good way to specify the partition in question in the recipe format
+[15:59] <nuclearbob> xnox: I hear you might be able to help us with an intermittent but relatively common issue we're having doing preseeded nfs-based ubiquity installs?
+[16:00] <cjwatson> So we can sort of do it for some limited cases (e.g. reuse a swap partition), but not I think that one, sorry
+[16:00] <antarus> ok
+[16:00] <xnox> nuclearbob: go ahead =) I am waiting to hear more details.
+[16:00] <cjwatson> If you wanted to try to help figure it out, grepping for reusemethod in partman-auto would be the place to start
+[16:00] <antarus> cjwatson: if we were to add this feature...
+[16:00] <antarus> ok partman-auto
+[16:00] <antarus> I mean honestly we should have added this feature to partman-auto like six years ago
+[16:00] <antarus> but alas, we were poorly staffed then :/
+[16:01] <cjwatson> bug 195608
+[16:01] <ubot2> Launchpad bug 195608 in partman-auto (Ubuntu) "[Feature Request] enhance recipe format to allow specifying an existing partition" [High,Triaged] https://launchpad.net/bugs/195608
+[16:01] <xnox> nuclearbob: how are you preseeding & what issue you experience.
+[16:01] <antarus> It is tougher to get staff to fix stuff like this now, since we run the LTS and won't actually get the fix for a while
+[16:01] <nuclearbob> xnox: so since last cycle we've been using cobbler to do preseeded installs using ubiquity and a desktop image exported over nfs.  early in this cycle, we started running into an issue where sometimes, if the machine hasn't received any keyboard or mouse input, it'll get some of the way through the installer, and then the screen will go black and the machine will stop responding until it's power cycled
+[16:02] <cjwatson> antarus: Ah, heh, that bug has a link to a sketch of a solution in a branch of mine ...
+[16:03] <cjwatson> It's limited and no doubt needs both fixes and extensions
+[16:04] <xnox> nuclearbob: and "by early in the cycle" you can pin point exact date?
+[16:05] <nuclearbob> xnox: I haven't definitively reproduced the problem on any image before 2012-12-19
+[16:05] <antarus> cjwatson: ok thanks for the information :)
+[16:05] <nuclearbob> xnox: when I did my initial survey of working images, I was treating the problem as constant rather than intermittent, so it's possible I missed some images that might fail, but quantal and older images have never displayed the issue to my knowledge
+[16:08] <ogra_> nuclearbob, is that still the same thing we discussed recently ?  iirc you claimed it started on dec. 20th back then
+[16:09] <xnox> nuclearbob: and we literarly have no logs while it's hanging?
+[16:09] <nuclearbob> ogra: I'm not exactly sure about the 19th, I've seen that image fail, but I don't know if it was this bug or something else
+[16:09] <xnox> nuclearbob: /me ponders if we somehow can have them on serial / tty / over the network
+[16:10] <ogra_> k, i just remembered the date ...
+[16:10] <nuclearbob> xnox: we can, that's setup, I just haven't goten anything useful out of it yet
+[16:10] <nuclearbob> xnox: I tried just running getty on it, and every time I did that, I couldn't recreate the bug
+[16:10] <gema> nuclearbob: does that suggest it may be a race?
+[16:10] <nuclearbob> xnox: the logging to serial setup we use for vms isn't working on the hardware for some reason, so if you have thoughts on that, I'd be interested in alternate configurations to try
+[16:11] <xnox> rumour has it stgraber was poking this already as well?!
+[16:11] <nuclearbob> gema: it may, yes, since it's not occurring on every run
+[16:11] <nuclearbob> yes, he was helping me try to take a look, but I couldn't get him any logs
+[16:11] <gema> xnox: he needed us to reproduce it before he could do anything
+[16:11]  * ogra_ would rather suspect an nfs locking issue or so
+[16:11] <nuclearbob> every time I get on the machine to get logs, the issue doesn't occur
+[16:11] <gema> xnox: we need help with the reproducing it part
+[16:11] <nuclearbob> ogra_ do you know how we might be able to rule that out?  I don't know how else to do a remote ubiquity install on physical hardware
+[16:12] <xnox> ogra_: same here, but there are no relevant nfs nor kernel changes that early in the cycle. it was still 3.7 kernel and nfs-utils didn't change. And no scary changes in ubiquity.....
+[16:12] <nuclearbob> ogra_ if we could get off nfs, I'd be pretty happy
+[16:13] <ogra_> i wonder ... dont we have nbd support as well ? or some iscsi setup might do
+[16:13] <nuclearbob> once upon a time I tried packing the squashfs into the initrd that I used over pxe, but I couldn't get casper to pick it up since it wasn't on a device
+[16:13] <ogra_> wow, brave
+[16:13] <ogra_> 800MB initrd ?
+[16:14] <nuclearbob> yeah, it booted
+[16:14] <nuclearbob> just couldn't get casper to use the squashfs
+[16:14] <stgraber> ogra_: no nbd support yet, it's on my todo for Edubuntu though. We have cifs support though
+[16:14] <ogra_> ah, yeah, cifs
+[16:15] <ogra_> i knew there were alternatives :)
+[16:18] <gema> so, nuclearbob, can we use cifs?
+[16:18] <xnox> bug 1096943 I am guessing =)
+[16:18] <ubot2> Launchpad bug 1096943 in ubiquity (Ubuntu) "Ubiquity freezes during nfs-based desktop install from recent live destkop images on physical hardware" [High,New] https://launchpad.net/bugs/1096943
+[16:18] <xnox> looks like you attached some logs?!
+[16:18] <nuclearbob> gema: yeah, if we can get the kernel parameters to use cifs instead of nfs, we should be able to change the setup commands to use that
+[16:19] <gema> nuclearbob: check with bjf or sconklin
+[16:19] <nuclearbob> that's what I got out of a machine when I did an empty preseeed, logged in, started ssh, and started ubiquity manually
+[16:20] <nuclearbob> not quite the same circumstances, and stgraber said when we did that the install completed, but since x locked up, I coultn'd click okay to reboot
+[16:22] <xnox> yeah, you could have preseeded just the "autoreboot"
+[16:23] <xnox> "Jan  7 16:05:06 ubuntu ubiquity: sudo: unable to resolve host ubuntu" unrelated but looks like networking or /run is not setup properly in the live environment during the install, or the scripts that are executed =/
+[16:23] <nuclearbob> how do I use a preseed when launching ubiquity from the command line?
+[16:24] <stgraber> xnox: that error is issued when /etc/hostname, /etc/hosts and /proc/sys/kernel/hostname don't match, it's unrelated to networking
+[16:24] <nuclearbob> will it still pick up one in /preseed.cfg ?
+[16:24] <xnox> stgraber: yes, true.
+[16:24] <stgraber> xnox: it typically happens when you try to run sudo from a chroot that has a different hostname from the host
+[16:24] <xnox> which is correct. yeah.
+[16:26] <xnox> nuclearbob: one can set environment variable to trick ubiquity into running in the automatic mode. or, since we now have script hooks support, one can drop a script to preseed that when ubiquity starts.
+[16:27] <xnox> "preseed that" means preseed the restart command.
+[16:28] <nuclearbob> xnox: it sounds like we could use the hooks to run the normal preseed after getting an ssh server started on the machine
+[16:29] <xnox> yeah. so hooks are executable files in "/usr/lib/ubiquity/dm-scripts/install" dir.
+[16:30] <xnox> they may not have '.' in their name.
+[16:30] <xnox> nuclearbob: or you can trick ubiquity into running in preseeded mode by simply setting "UBIQUITY_AUTOMATIC" environmental variables.
+[16:31] <nuclearbob> xnox: that sounds easier
+[16:31] <xnox> and I really mean setting. as in it can be anything.
+[16:36] <xnox> ev: blast from the past, I like your style =)))) https://wiki.ubuntu.com/Installer/Bootstrapping
+[16:36] <xnox> I tend to replace bits and bobs, but that is useful when doing complete redesign =) like you did, or I might have to do again soon.
+[16:37] <xnox> nuclearbob: you can fiddle with debconf on the command line to preseed just a couple of values. http://feeding.cloud.geek.nz/posts/manipulating-debconf-settings-on/
+[16:38] <nuclearbob> xnox: I feel like it would better recreate the bug's conditions to use the whole preseed we'd normally use, if that makes sense to you
+[16:38] <nuclearbob> xnox: it'll be easy to get that into the live fs once ssh is running too
+[16:38] <xnox> nuclearbob: that would be great as well!
+[16:38] <xnox> even better.
+[16:39] <xnox> nuclearbob: we might potentially want to do this all the time, to always get nfs logs / debug what not. Cause even if we fix this once, it will be needed again (when new hw, what not breaks down again)
+[16:40] <nuclearbob> xnox: I'm working in getting the installer syslog sent over the network to the host machine
+[16:41] <xnox> well.... if one gets rsyslogd up an running and sending it over the network that should work.
+[16:43] <nuclearbob> yep, that's the plan
+[16:43] <xnox> nuclearbob: just make sure the limits are cranked up and there is no throttling, cause with debconf set to developer verbosity it can be overwhelming.
+[16:45] <nuclearbob> xnox: good to know, thanks
+[16:56] <ev> xnox: oh god, I remember that thing
+[16:57] <xnox> =))))

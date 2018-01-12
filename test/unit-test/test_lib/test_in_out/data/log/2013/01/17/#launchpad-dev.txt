@@ -1,0 +1,183 @@
+[01:31] <StevenK> wgrant: https://code.launchpad.net/~stevenk/launchpad/drop-populate-specification-aag/+merge/143627
+[01:42] <wgrant> StevenK: Self-review?
+[01:44] <StevenK> wgrant: Happy to do, wondering if you agree with deciding to not run it against sampledata.
+[01:45] <wgrant> StevenK: I forget -- will it un-null access_grants if it's public?
+[01:45] <wgrant> If it will, then it's not a no-op and should be run
+[01:45] <wgrant> But IIRC it leaves access_grants null in that case, so it will be a no-op
+[01:49] <StevenK> wgrant: http://pastebin.ubuntu.com/1540007/
+[01:50] <wgrant> Right, no-op
+[02:30] <wgrant> StevenK: Need any help with the model branch?
+[02:41] <StevenK> wgrant: Yes
+[02:41] <wgrant> Push branch, show test failures :)
+[02:41] <StevenK> wgrant: http://pastebin.ubuntu.com/1540093/ is the diff; test failures are http://pastebin.ubuntu.com/1536679/
+[02:45] <StevenK> wgrant: I can push the branch if you'd prefer that to a diff.
+[02:46] <wgrant> StevenK: Have you replicated the Product.active check that was in visible_specification_query?
+[02:46] <StevenK> Oh god
+[02:47] <StevenK> That's so not the place for it
+[02:47] <wgrant> Mmm, it was not unreasonable
+[02:47] <wgrant> Given that the spec search stuff isn't in a single place, like bugtasksearch is
+[02:48] <StevenK> Now I will have to revert the tables bit :-(
+[03:47] <StevenK> My query seems to fail
+[03:47] <StevenK> It won't return distribution specs :-(
+[03:48] <wgrant> StevenK: You failed to left join properly
+[03:49] <wgrant> You need to left join product and then say (product.active IS NULL or product.active)
+[03:58] <wgrant> StevenK: Did you see danilos' confirmation of my suspicion this morning?
+[03:58] <wgrant> The deps thing is indeed a regression from the privacy work, so your rewrite will fix it
+[03:58] <StevenK> I'm not sure if my rewrite is brutal enough for that yet
+[03:59] <StevenK> Anyway, looking at that next.
+[04:00] <StevenK> wgrant: And yes, I saw it because Curtis asked me about it.
+[04:01] <wgrant> Well
+[04:01] <wgrant> The rewrite involves reverting all the previous changes
+[04:01] <wgrant> So it will be :)
+[04:01] <StevenK> It does not
+[04:01] <wgrant> :(
+[04:02] <StevenK> There are fair amount of changes which are required, like passing users around
+[04:02] <wgrant> Ah, of course
+[04:09] <StevenK> wgrant: https://code.launchpad.net/~stevenk/launchpad/use-specification-aag/+merge/143630
+[04:16] <wgrant> StevenK: r=me with a comment, but please check performance on DF first
+[04:20] <StevenK> wgrant: I think I need a LeftJoin in sharingjob, too
+[04:21] <wgrant> StevenK: Ah, yes, so you do
+[04:21] <StevenK> wgrant: So http://pastebin.ubuntu.com/1540213/
+[04:21] <wgrant> In fact sharingjob shouldn't be considering product.active at all
+[04:22] <StevenK> wgrant: I can change it to only append privacy_query[-1], but that's a bit horrid
+[04:23] <wgrant> Yeah, that's not a solution :)
+[04:23] <wgrant> I guess do the left join but otherwise leave it as it is
+[04:24] <StevenK> I can shift out the product stuff out of get_specification_privacy_filter and do it all callsites bar that one, but I like that even less
+[04:34] <StevenK> wgrant: DF has been patched, and has actually swapped back in enough to render pages.
+[04:39] <StevenK> wgrant: The main query of blueprints.dogfood.l.n/~ takes 240ms
+[04:41] <StevenK> The old query on prod is roughly the same, but prod is a lot faster than DF
+[04:45] <StevenK> For https://blueprints.dogfood.launchpad.net/nova , the query is 10ms
+[04:46] <wgrant> StevenK: Grab an explain analyze of the slow query
+[04:47] <StevenK> On DF, or prod?
+[04:48] <wgrant> DF
+[04:48] <wgrant> We know that prod's is terrible :)
+[04:49] <StevenK> wgrant: http://pastebin.ubuntu.com/1540253/
+[04:50] <StevenK> wgrant: And the query http://pastebin.ubuntu.com/1540256/
+[04:52] <wgrant> StevenK: Right, that looks fine.
+[04:53] <wgrant> It's terrible, but that's not the fault of your changes
+[04:53] <StevenK> Heh
+[04:54] <StevenK> Distribution is quick, but that doesn't involve the new columns at all, Product is like 10ms
+[04:54] <wgrant> Hm, it should involve the new columns
+[04:55] <StevenK> Distribution doesn't filter at all
+[04:55] <StevenK> By access_policy/grants, I mean
+[04:55] <StevenK> No private distributions, ergo no private blueprints for any distribution.
+[04:56] <wgrant> :/
+[04:56] <wgrant> It just assumes that they're all public
+[04:56] <wgrant> Doesn't even check
+[04:56] <StevenK> I can fix that, if you wish
+[04:57] <StevenK> Which would involve Storm-ifying it
+[04:57] <wgrant> Which is not a bad thing at all :)
+[04:57] <wgrant> Ideally we'd unify blueprint search like bug search is
+[04:58] <StevenK> Well, I can do that too ...
+[04:58] <wgrant> That's probably a bit more of an effort
+[04:58] <wgrant> But maybe
+[05:06] <StevenK> wgrant: http://pastebin.ubuntu.com/1540277/
+[05:09] <wgrant> StevenK: orlf
+[05:09] <wgrant> have you looked at the query log for Person:+specs?
+[05:09] <StevenK> Yeah, I glanced it
+[05:10] <wgrant> First it checks if there are any specs
+[05:10] <wgrant> Then it gets the specs
+[05:10] <wgrant> Then it counts the specs
+[05:10] <wgrant> Then it checks if there are any specs
+[05:10] <wgrant> StevenK: You could get ops to check the new query on prod
+[05:11] <StevenK> Haha
+[05:11] <wgrant> Given it's all populated there now
+[05:11] <StevenK> wgrant: The EXPLAIN or just run the query for timing?
+[05:11] <wgrant> explain analyze
+[05:11] <wgrant> but oh god have you tried the old query on DF?
+[05:11] <wgrant> Your eyes may burn
+[05:11] <StevenK> Show me?
+[05:12] <wgrant> 1.4s with tonnes of merge joins
+[05:12] <StevenK> Haha
+[05:12] <wgrant> http://paste.ubuntu.com/1540286/
+[05:12] <wgrant> The new one could be considered to be a marginal improvement
+[05:13] <StevenK> Haha
+[05:13] <StevenK> Did you spot your typo in the name field?
+[05:13] <wgrant> yes, before I submitted but I'm sick enough that I really couldn't be bothered fixing it
+[05:14] <StevenK> wgrant: So, specificationsearch, or leave it?
+[05:14] <wgrant> Depends on what sort of callsites we have
+[05:31] <StevenK> Bah, is_not_in doesn't exist
+[05:37] <wgrant> Not(...is_in)
+[05:37] <StevenK> Yeah
+[05:37] <StevenK> wgrant: http://pastebin.ubuntu.com/1540315/ works, do you want it in the branch?
+[05:38] <wgrant> StevenK: Can Specification.completeness_clause now be Stormified?
+[05:38] <wgrant> Not sure what other non-Storm callsites there would be
+[05:39] <wgrant> +                clauses.append(
+[05:39] <wgrant> +                    SQL('Specification.fti @@ ftq(%s)' % quote(constraint)))
+[05:39] <wgrant> fti_search is a helper for that, IIRC
+[05:39] <StevenK> wgrant: Yeah, I just switched to that
+[05:40] <StevenK> Distribution, DistroSeries, Product and ProductSeries want it
+[05:41] <wgrant> Are they all stormified?
+[05:41] <StevenK> Sorry, DistroSeries, ProductSeries and ProjectGroup
+[05:41] <StevenK> And all three are not
+[05:43] <wgrant> Hee hee
+[05:43] <wgrant> I'll leave the explanation of that to the reader
+[05:44] <StevenK> "When we get around to specificationsearch"
+[05:44] <StevenK> Which I'm getting dangerously close to just starting
+[05:44] <StevenK> Because this is just pathetic
+[05:50] <wgrant> Ah
+[05:50] <wgrant> Not actually exploitable, sadly
+[05:51] <wgrant> Since permissions for private specs don't seem to be precached
+[05:51] <wgrant> So you just get a 403
+[05:51] <wgrant> (but that also means there's probably a timeout bug on any page that lists lots of private specs)
+[05:51] <wgrant> StevenK: So, how do you feel about doing specificationsearch? :)
+[05:52] <wgrant> 'cause what we have today is sort of buggy as shit
+[05:52] <StevenK> wgrant: So, guess what I started about 5 minutes ago
+[06:01] <wgrant> StevenK: Bug #1100617 is relevant
+[06:01] <_mup_> Bug #1100617: Blueprint searches don't precache permission checks <blueprints> <fallout> <private-projects> <timeout> <Launchpad itself:Triaged> < https://launchpad.net/bugs/1100617 >
+[08:19] <czajkowski> morning
+[10:40] <stub1> link to online help on the recipe page seems to have disappeared
+=== stub1 is now known as stub
+[14:22] <gmb> benji, gary_poster, bac: So, in a fit of giddiness I tried to get around the only-one-external-link-in-a-card problem; if you have time to look at it, see https://code.launchpad.net/~gmb/lp2kanban/cards2workitems/+merge/143543 for the latest update. If not, I'll just land yesterday's work and make a new branch for the new stuff.
+[14:23] <benji> gmb: cool; I may have time later today to look at it
+[14:24]  * gary_poster on call
+=== slank_away is now known as slank
+[14:29] <gmb> benji, Okay; in that case I'll land yesterday's work (I'm hoping to be able to show this off to people in Austin) and make a fresh branch and merge proposal.
+[14:29] <benji> k
+[14:38] <gmb> benji, New merge proposal is here for your delectation when you get a chance: https://code.launchpad.net/~gmb/lp2kanban/dont-rely-on-external_system_url/+merge/143700
+[14:38] <benji> gmb: cool
+=== Ursinha_ is now known as Ursinha
+=== _mup__ is now known as _mup_
+=== salgado is now known as salgado-lunch
+=== salgado-lunch is now known as salgado
+[16:47] <cjwatson> Hm - is it just me or is lib/lp/soyuz/templates/binarypackagepublishinghistory-listing-detailed.pt dead?  I can't actually see a way to get at it, short of URL-hacking to add +listing-details
+[16:56] <cjwatson> Maybe it is there somewhere and I'm just too stupid to find it.
+[17:00] <czajkowski> I'd hardly think you could you of all people cjwatson are stupid !
+[17:18] <deryck> cjwatson, my approach to that if I can't find any real reference to it is to remove the zcml that hooks up the template, run tests, and see what breaks. you're probably right.
+=== yofel_ is now known as yofel
+=== mthaddon` is now known as mthaddon
+=== deryck is now known as deryck[lunch]
+=== matsubara is now known as matsubara-afk
+[19:30] <lifeless> czajkowski: LP sets a pretty high bar on smarts-needed-to-tell-whats -used :)
+=== deryck[lunch] is now known as deryck
+=== Ursinha is now known as Ursinha-afk
+=== Ursinha-afk is now known as Ursinha
+=== StevenK_ is now known as StevenK
+[23:13] <wgrant> cjwatson: I think DASBPR:+index used to use it, but hasn't since 3.0
+[23:14] <wgrant> It's unused now, and I think the only callsite of its source counterpart is DSSPR:+index
+[23:14] <wgrant> Everywhere else uses +listing-archive-extra
+[23:14] <wgrant> IIRC
+[23:36] <cjwatson> Argh, you know unused code is old when bzr log goes back to a Mark commit
+[23:36] <cjwatson> (Not the same thing)
+[23:37] <wgrant> Heh, yes.
+[23:37] <wgrant> cjwatson: What was it?
+[23:38] <cjwatson> lib/lp/soyuz/browser/publishedpackage.py - removing it as part of my current branch
+[23:40]  * cjwatson wonders if database/schema/launchpad.html still has a useful purpose
+[23:40] <cjwatson> Aside from indicating that publishedpackage was once "a very large view"
+[23:41] <cjwatson> wgrant: How do I actually get to a BinaryPublishingRecordView in the webapp?  I can't come up with a suitable URL
+[23:43] <wgrant> Huh
+[23:44] <wgrant> How has publishedpackage survived...
+[23:44] <wgrant> I deleted some related bits years ago
+[23:44] <wgrant> But apparently missed the browser stuff
+[23:44] <wgrant> I guess I didn't think it existed :)
+[23:44] <wgrant> Ah
+[23:44] <wgrant> And it doesn't actually mention 'publishedpackage' anywhere in it, so a grep would have failed
+[23:45] <wgrant> launchpad.html can probably die
+[23:45] <cjwatson> $ wc -l database/schema/launchpad.html
+[23:45] <cjwatson> 30685 database/schema/launchpad.html
+[23:46] <wgrant> Indeed
+[23:46]  * cjwatson removes :)
+[23:46] <wgrant> cjwatson: Also, https://launchpad.net/~wgrant/+archive/ppa/+binarypub/25603241/+record-details
+[23:49] <cjwatson> Ah.  Are there no more polished paths that use stuff from there?
+[23:49] <cjwatson> This is in aid of trying to figure out which bits of the webapp I need to update to show phased_update_percentage
+[23:49] <wgrant> cjwatson: That's the only URL, but ZCML could reference those views.

@@ -1,0 +1,332 @@
+=== XorA is now known as XorA|gone
+[01:53] <wookey> infinity: trying to MA crossbuild eglibc2.17 falls over quickly with:
+[01:53] <wookey> configure: error: --enable-multi-arch support requires assembler and linker support
+[01:53] <wookey> which is dull
+[01:56] <doko__> you should forward-port the patches from the -cross-toolchain packages, or wait until infinity does do so
+[01:57] <wookey> ah. OK.
+=== zz_chihchun is now known as chihchun
+[02:10] <mrspinx> Hi
+[02:11] <mrspinx> Is ubuntu going to run on the nexus 4 phone, I have been googling I have not really seen any news
+=== chihchun is now known as zz_chihchun
+=== doko__ is now known as doko
+=== zz_chihchun is now known as chihchun
+[06:47] <lud> I have an M960 android tablet , its posibble to boot an image?
+[07:42] <nils__> I have installed my Nexus7 fresh from here http://cdimage.ubuntu.com/daily-preinstalled/current/ then connected to my wifi access point but cannot ssh to a second machine has anybody had this behaviour before?
+[07:42] <dholbach> good morning
+[07:42] <nils__> good morning
+[07:42] <nils__> ssh from a different machine connected via wifi works.
+[07:44] <nils__> same problem the other way round. Before the new fresh installation I had installed ssh server via apt-get install ssh and I also couldn't connect from the other machine to the Nexus7
+[07:44] <dholbach> ogra_, I have /etc/initramfs/post-update.d//flash-kernel failing - what do I do?
+[08:42] <Rjs> nils__: (about what you spoke about 10 hours ago) I've been using the usb gadget ethernet on nexus7 for a while, and it was very easy to setup and has worked well (just like on my openmoko gta02)
+[08:42] <Rjs> nils__: I simply compiled the kernel with USB_CDC_COMPOSITE instead of USB_G_SERIAL (composite is ethernet + serial so I didn't have to touch any serial port settings at all), added a few lines to /etc/network/interfaces to configure a static IP, and installed openssh-server
+[08:44] <infinity> ogra_: ^
+[08:44] <infinity> ogra_: Sounds like switching from USB_G_SERIAL to USB_CDC_COMPOSITE should Just Work.  We probably should.
+[08:44] <raster> Rjs: USB_CDC_COMPOSITE???? THATS the config i was looking for!
+[08:44] <raster> yargh!
+[08:45] <raster> thanks muchly!
+[08:45] <kulve> why not g_multi while at it..
+[08:45] <infinity> And Rjs is suddenly the most popular man in the channel for the next 5 minutes. :P
+[08:46] <Rjs> I had no use for a usb-storage gadget so I didn't use g_multi to save myself the trouble of finding out how it should be configured :)
+[08:46] <raster> who needs it
+[08:46] <raster> when u have usbnet
+[08:46] <raster> and can just use nfs
+[08:46] <raster> :)
+[08:46] <raster> or sshfs
+[08:46] <raster> :)
+[08:46]  * raster makes a happy dance
+[08:47] <suihkulokki> usb storage standard need to die
+[08:47] <raster> well for anything less dumb th an a piece of flash media
+[08:47] <raster> (ie sd card at most)
+[08:47] <raster> mtp isnt amazingly better
+[08:48] <raster> tho its an improvement
+[08:48] <ogra_> infinity, when you moved abopotimg into livecd-rootfs, did you remove the code that marks it as manually installed from ac100-tarball-installer ? or do we do it twice now ?
+[08:48] <Rjs> one thing I'm not sure about is how the usb network would look like in network manager if I hadn't configured a static IP in /etc/network/interfaces (I think it's just a normal "wired" interface, but I'm not sure if it has plugged-in detection or not, so NM might think that it's always there and try DHCP or something even if it isn't plugged in)
+[08:48] <infinity> ogra_: There was code marking it manually installed?  Why didn't you close the bug that said it wasn't, then? :P
+[08:48] <suihkulokki> while usb-storage was convinient, it also a) effectively mandates FAT b) makes it impossible to use the media on the device itself while it is being exported over usb storage
+[08:49] <Rjs> but I guess that would be easy to try... for me, setting a static IP was much easier than playing around with DHCP (then I'd also need a DHCP server on the machine I connect the nexus7 to)
+[08:49] <infinity> ogra_: Ahh, I see it.  No, I didn't remove that.  Will do now.
+[08:49] <suihkulokki> b meaning you can't export your root partition, and thus people have to split partitions to support usb storage, leading to inefficient use
+[08:50] <infinity> ogra_: (Also, that call would have been a lot less painful if you'd used apt-mark instead of apt-get, for the next time you have to perpetrate such a hack)
+[08:50] <raster> Rjs:  what device does it come up as?
+[08:50] <suihkulokki> a meaning you suffer from a redmond-based patent troll
+[08:50] <raster> eth0?
+[08:50] <ogra_> infinity, thx, it wont help with bug #1041290 though (unless we rebuild the images for precise/quantal)
+[08:50] <ubot2> Launchpad bug 1041290 in livecd-rootfs (Ubuntu) "apt-get autoremove wants to remove abootimg" [Undecided,Fix released] https://launchpad.net/bugs/1041290
+[08:50] <ogra_> infinity, will do
+[08:51] <ogra_> anyway, daily vet visit now ...
+[08:51] <Rjs> raster: I think it was eth0 on the nexus7 and usb0 on the host computer (though that might depend on the kernel version)
+[08:51]  * ogra_ is back in ~1h
+[08:51] <infinity> ogra_: No, won't fix the past, no, but such is life.
+[08:51] <raster> Rjs: cool
+[08:51] <raster> pc-side i'm good
+[08:51] <raster> just wanted to know so i can pre-configture iot while the kernel builds
+[08:52] <raster> and when i boot just magically have it work (tm) :)
+[08:52] <raster> as i already have all the client-side usbnet scripts around
+[08:53] <Rjs> another tip for static IP configuration: I simply didn't specify any default route through the usb net, because it's easier that way and enough for ssh - if I did setup the default route, then I'd need something to switch defaultroute between wifi and usbnet (probably just have NetworkManager manage the usbnet interface as well)
+[08:54] <nils__> Rjs: Great to hear. Thx.
+[08:54] <raster> Rjs:  i just want usbnet for development
+[08:54] <raster> so i can ssh in
+[08:54] <raster> when at home i do it via wifi
+[08:54] <raster> but if u travel... thats not so useful
+[08:54] <raster> eg.. u're on a plane
+[08:54] <raster> :)
+[08:54] <raster> or in an airport
+[08:54] <raster> or hotel
+[08:54] <raster> or cafe...
+[08:55] <raster> or fosdem...
+[08:55] <raster> :)
+[08:55] <infinity> Also nice to turn off the wifi and still have network access without sucking your battery dry.
+[08:55] <infinity> (bonus points for network access and charging at the same time, oooo)
+[08:55] <nils__> btw. this is a great communication channel. I feel honored to be able to talk to people who are working already quite some time hard on making things work better.
+[08:55] <Rjs> a static IP on a private network without a default route is something you can easily keep always on and it doesn't affect any other network use (except if you happen to use the same IP address for something else by accident)... I guess the downside is that if you want to access the internet through it then you need to go through hoops (i.e., set the default route or use a http proxy as I sometimes do)
+[08:56] <Rjs> yes, I'm finding this channel quite useful as well :)
+[08:57] <dholbach> ogra_, hum, not sure you saw my message, but maybe let's just talk later
+[08:57] <infinity> dholbach: Oh, I saw it, but viciously ignored you becasue I was watching TV.
+[08:58] <infinity> dholbach: How's flash-kernel failing?  "it no workie" isn't helpful. :)
+[08:58] <dholbach> flash-kernel: installing version 3.1.10-9-nexus7
+[08:58] <dholbach> Couldn't find Android boot partition on /dev/mmcblk0
+[08:58] <dholbach> run-parts: /etc/initramfs/post-update.d//flash-kernel exited with return code 1
+[08:58] <infinity> Huh.
+[08:59] <infinity> You did naughty things to your partition table?
+[08:59] <Rjs> (hmm, now that I think of it, I might also want to configure sshd to listen only on the usbnet interface for a bit of added security, since I don't think I'll be needing ssh through wlan)
+[09:00] <raster> meh
+[09:00] <raster> if someone can attack my sshd.. go at it.. its just a tablet
+[09:00] <raster> :)
+[09:00] <raster> does vsync work with gl now?
+[09:00] <raster> or is it still tear-heaven?
+[09:00] <raster> (n7)
+[09:01] <raster> i havent updated my gl drivers in fear of them turning into a steaming pile of non-workingness
+[09:02] <raster> also... anyone noticed how video/audio decode is skip-city?  gst is using the hw codec it seems for mp3's .. but its skiporama land...
+[09:04] <infinity> raster: Hey, to be fair to NVIDIA (which I'm not often accused of), the tegra2/3 Linux drivers have nowhere to go but up. :P
+[09:04] <infinity> raster: If you think they're a steaming pile now, you should have seen them a year or two ago.
+[09:04] <raster> hahahahaha
+[09:05] <raster> well ... the 13.04 image when i tried ub for n7.. was all corrupted texel tile heaven
+[09:05] <raster> and garbage land
+[09:05] <raster> i stick to 12.10 because it worked
+[09:05] <raster> :)
+[09:05] <infinity> Heh.
+[09:05] <infinity> I can't quite sort out why it's not just the same dudes doing all their drivers on a common codebase.
+[09:05] <raster> so i already saw them take a toe and dip them in the steaming-pile pot :)
+[09:05] <raster> dunno either
+[09:05] <infinity> Or maybe it is, and they just have zero QA on the tegra side.
+[09:06] <raster> i was hoping there would be at least a few hanign here making sure they work awesome pants ++
+[09:06] <raster> :)
+[09:06] <raster> so wondering who i should direct my angst and anger
+[09:06] <raster> i know its not canonical/community :)
+[09:08] <kulve> is there a launchpad bug about that?
+[09:08] <raster> dunno
+[09:08] <raster> i though i searched but didnt find anything
+[09:09] <raster> but it could have been nvidias new "Soak up my cpu with vsycn swaps on desktop" fun instead
+[09:09] <raster> and i go direct to nvidia for those babies
+[09:09] <raster> :)
+[09:11] <kulve> could you briefly explain to me how the whole vsync stuff should work with gl apps with composited window manager on top of X11?
+[09:12] <raster> but even if there is a launchpad bug... its almost certainly an upstream binary blob issue... which means it just gets passed on anyway - so may as well go direct
+[09:12] <raster> ummm
+[09:12] <raster> i want it for my COMPOSITOR
+[09:12] <raster> for apps... that's a whole different bundle of joy
+[09:13] <raster> as such the regular logical way is that all apps also vsync to the blank interrupt so they effectively throttle to the refresh no matter what they try and do
+[09:13] <raster> if windows are borderless the driver can drop to front/back buffer exchanges for composited gl appo windows
+[09:13] <raster> and such exchanges are/can be atomic
+[09:14] <raster> tho any such exchanges need to be blocked while any gpu pipeline exists anywhere with pending commands that indicate the target swap texture as a source
+[09:14] <raster> to avoid mid-draw exchanges
+[09:14] <raster> :)
+[09:15] <raster> then u get seamless rendering
+[09:15] <raster> requires windows be borderless tho (Client-side rendered frames will do - or u are in a mobile/touch ui with no frames)
+[09:23] <suihkulokki> a
+=== yofel_ is now known as yofel
+[11:01] <ogra_> xnox, hmm, we offer home encryption in oem-config, but until we manage to get plymouth into the initrd (which becomes more and more unlikely due to size issues) it wont work ... should we probably hide the option in the UI ?
+[11:03] <xnox> true.
+[11:04] <xnox> no, why?
+[11:04] <xnox> home encryption in oem-config is pure ecryptfs which doesn't need plymouth or anything like that.
+[11:04] <xnox> home encryption != LUKS aka full disk encryption
+[11:05] <xnox> home encryption should just work =)
+[11:07] <ogra_> oh, indeed, lightdm does the decrypting, silly me
+[11:07] <ogra_> sorry for the noise :)
+[11:08]  * xnox thought it's pam, not lightdm. but close enough =) it's way past initrds and stuff =)
+[11:08] <ogra_> right
+[11:09] <ogra_> well, UI wise its lightdm :) indeed there is pam
+[11:09] <ogra_> hmm, so i see various uploads of upower but my nexus didnt upgrade upower since yesterday
+[11:20] <kulve> anybody here used nexus7 in host-usb mode? Do I need some special cable or should I be able to use normal micro USB cable with some female-female adapter to plug in e.g. a keyboard?
+[11:21] <ogra_> you neerd an adapter cable, but then it shoudl just work
+[11:22] <ogra_> (a so called OTG cable)
+=== chihchun is now known as zz_chihchun
+[12:03] <ogra_> hmm
+[12:03] <ogra_> while the interactive governor helps massively with powersaving, my dmesg explodes every time that thing is loaded, i wonder if one can quieten that a bit to make dmesg readable again
+[12:07] <kulve> ogra_: thanks. Looks like this so called OTG cables have standard wiring so nothing special there. Unlike with OMAPs you needed to use mini-A (or was is mini-B?) cables that had pin 4 grounded and those cables were hard to obtain originally..
+[12:08] <ogra_> yeah
+[12:08] <ogra_> i also onyl knew OTG as the OMAP cables with the shortened grounding before
+[12:08] <ogra_> and i still have a hard time calling these normal "adapters" OTG :)
+[12:24] <nils__> just wanted to express my gratitude. Yesterday i had installed my ubuntu today I managed to set up a new kernel with usbnet. Great support from here! Thank you!
+[12:27] <ogra_> did you by chance try with the composite gadget driver ?
+[12:27] <ogra_> (if that works and someone tested it we should be able to provide both, serial and usbnet)
+[12:29] <kulve> ogra_: do you need the serial login, if you have usbnet..?
+[12:30] <ogra_> i would like to have the choice
+[12:30] <nils__> i changed the configuration manually switched on USB_CDC_COMPOSITE and removed USB_G_SERIAL
+[12:30] <ogra_> and eventually we will have to provide usbnet anyway for file transfers etc
+[12:30] <ogra_> nils__, you rock, thats what i hoped
+[12:31] <ogra_> (for getting some data about g_composite)
+[12:32] <kulve> ogra_: I'm using g_multi with my Mer based rootfs
+[12:32] <nils__> I can connect via "sudo screen /dev/ttyACM0 115200"
+[12:33] <nils__> And with lsusb I can see this output "Bus 002 Device 050: ID 0525:a4aa Netchip Technology, Inc. Linux-USB CDC Composite Gadge (Ethernet and ACM)"
+[12:33] <ogra_> and you can set up a usbnet connetion too ?
+[12:34] <nils__> ifconfig shows usb0
+[12:34] <ogra_> great !
+[12:34] <nils__> but till now I haven't managed to set up the networking. But this is clearly because I have no clue yet how to do it. ;-) I am just starting.
+[12:36] <hrw> kulve: OTG cable is normal USB cable with ID pin grounded
+[12:36] <nils__> so I guess I will have to set up a little bit neworking stuff like ip adress, etc.
+[12:37] <kulve> hrw: so it is a special cable and I can't use the cable that came with the device and a basic female-female -adapter?
+[12:37] <hrw> kulve: if you have a way to configure device to switch to OTG in software you can
+[12:38] <hrw> on nokia 770/n810 it was easy
+[12:38] <kulve> ok. I thought that the devices could communicate with each other enough to realise who's the boss and who's the slave
+[12:38] <kulve> without that ID pin
+[12:39] <hrw> nope
+[12:39] <hrw> usb is pull not push
+[12:39] <hrw> host pulls slaves
+=== zz_chihchun is now known as chihchun
+[13:49] <janimo> ogra_, will we have onboard for 13.04 ?
+[13:50] <janimo> it has so many bugs apparently
+[13:51] <ogra_> i saw a workitem for Laney to get maliit into debian and ubuntu and to test it
+[13:51] <ogra_> but maliit has poor layout and no modifier keys
+[13:51] <Laney> I'm not doing that with the intent of it replacing onboard
+[13:51] <Laney> at least not yet
+[13:51] <ogra_> it might be less resource hungry but you pay with missing fuunctionality
+[13:51] <ogra_> Laney, well, for comparison reasons :)
+[13:52] <Laney> indeed
+[13:52] <ogra_> and its no secret that we inspect maliit as alternative :)
+[13:52] <ogra_> came up at UDS already
+[13:52] <plars> ogra_: I wasn't able to get far with the oem-preseeding still, but I'm doing upgrade and run tests now, and have things like baseline smem and mem testing to help do comparisons between n7 and amd64
+[13:53] <plars> ogra_: the baseline wakeups/sec from eventstat are *really* high by comparison on n7
+[13:53] <ogra_> well, make sure to upgrade to the very latest, there qwere several fixes yesterday and tonight
+[13:53] <ogra_> especially for wakeups
+[13:53]  * janimo installs eventstat
+[13:54] <plars>   Evnt/s PID   Task            Init Function             Callback
+[13:54] <plars>   207.97     0 [kern sched]    Load balancing tick       tick_sched_timer
+[13:54] <janimo> ogra_, so we have no xrotate calls or xorg rotation settings anymore by default ?
+[13:54] <ogra_> janimo, only from acceld
+[13:54] <plars> ogra_: I'll run again this morning
+[13:55] <plars> these were from yesterday
+[13:55] <janimo> ogra_, ok, I have the equivalent of acceld in g-s-d, I'll probably upload soon
+[13:55] <ogra_> plars, i uploaded a bunch of cpufreq configurations today ... and a fix for getty waking up 100 times per second when used with ttyGS0
+[13:55] <ogra_> that should sanitize it a bit
+[13:56] <janimo> I was just wondering what messed up colin's lightdm setup (he filed a bug 20 min ago)
+[13:56] <ubot2> Launchpad bug 20 in Launchpad itself "Sort translatable packages by popcon popularity and nearness to completion" [Low,Invalid] https://launchpad.net/bugs/20
+[13:56] <ogra_> janimo, well, cjwatson upgraded from quantal ...
+[13:56] <plars> ogra_: cool, we'll hopefully have graphs of this soon too, so that we can monitor over time
+[13:56] <ogra_> janimo, probably some leftover from some hack from the demo image
+[13:56] <ogra_> for me lightdm works fine
+[13:56] <janimo> same here
+[13:57] <janimo> always portrait btw
+[13:57] <ogra_> he already had issues with the kernel upgrade ...
+[13:57] <ogra_> yeah, lightdm just uses what xorg gives it as default
+[13:57] <ogra_> which now is always portrait
+[13:57]  * janimo checks if acceld rotated lightdm as well
+[13:57] <janimo> cause g-s-d does not
+[13:57] <ogra_> acceld doesnt either
+[13:58] <cjwatson> I didn't really have issues with the kernel upgrade
+[13:58] <janimo> ok, so this is a bug
+[13:58] <cjwatson> I just needed to know to do it
+[13:58] <ogra_> you would have to add acceld or g-s-d's rotation plugin  to the  lightdm session
+[13:58] <ogra_> cjwatson, vs "everyone else gets it automatically" :)
+[13:59] <cjwatson> Well, sure, but that was just at the apt level; I've cleaned all that up now
+[13:59] <cjwatson> (I'd deliberately pinned to the PPA back when raring didn't quite work right)
+[13:59] <ogra_> is your ubuntu-defaults-nexus7 at least at 0.44 ?
+[13:59] <cjwatson> 0.47
+[13:59] <cjwatson> All my packages are current raring now
+[13:59] <ogra_> (that ships the xorg.conf.d snippets)
+[13:59] <ogra_> weird
+[14:00] <cjwatson> Are the xorg.conf.d snippets read dynamically, or are they built somehow?
+[14:22] <plars> ogra_: I'm not using serial console, so that shouldn't be causing a problem for me, but I'm getting ~450 wakups/sec it seems on the test I just ran
+[14:22] <janimo> cjwatson, we have an installed snippet at /usr/share/X11/xorg.conf.d/21-nexus7-rotation.conf
+=== smartboyhw_ is now known as smartboyhw
+[14:27] <ogra_> cjwatson, just plain files, no generation
+[14:28] <cjwatson> Yeah, I have that file
+[14:30] <janimo> ogra_, do you have other uploads queued for u-d-nexus7 ?
+[14:31] <ogra_> janimo, well, i need some way to shut down usb0 on boot, i was just starting to work on an upstart job, nothing queued directly, no
+[14:31] <janimo> after the g-s-d patch is landed and working we need to disable acceld and add a new udev rule. And as minor cleanups disable Z axis reading and everything rotation related in the xorgs snippet
+[14:31] <janimo> ogra_, ok I'll paste you the changes so I don't step on your upload
+[14:31] <ogra_> well, just upload away
+[14:32] <janimo> with proposed gating I need to remember to use pull-lp-source not apt-get source as the latter can get older versions
+[14:32] <ogra_> i have meetings starting in an hour and am probably not getting to the usb0 stuff until they are done
+[14:52] <achiang> janimo: why did you mark this as invalid? https://bugs.launchpad.net/ubuntu/+source/rhythmbox/+bug/1031449
+[14:52] <ubot2> Ubuntu bug 1031449 in rhythmbox (Ubuntu Quantal) "rhythmbox leaking memory" [Undecided,Confirmed]
+[14:52] <janimo> achiang, let me check I don't recall
+[14:53] <janimo> ah, invalid on the nexus product, reasoning we cannot add affects nexus7 to any bug that happens to occur there as well.
+[14:53] <janimo> Or was this spotted on nexus7 only, in which case my bad?
+[14:54] <janimo> I tried cleaning up some bugs at one point and there were completely unrelated issues affecting nexus7, even bugs of rarely used universe  packages
+[14:54] <janimo> I am not sure that is how the project's tracker needs to be used.
+[14:55] <janimo> I know the rb-ubuntuone plugin was mstly nexus
+[14:55] <janimo> but that was a different bug
+[14:55] <ogra_> and was fixed early this cycle
+[14:55] <ogra_> we never had the issue on the raring images
+[14:56] <ogra_> (the -ubuntuone one)
+[14:56] <janimo> ogra_, right, just mentioning an example where I thought adding affects ubuntu-nexus7 makes sense
+[14:57] <janimo> I thought it is mostly an umbrella for bugs that either span multiplenexus related packages or are otherwise occuring mostly on this hw
+[14:58]  * ogra_ doesnt care as long as one task stays open so someone works on  it at some point
+[14:58] <janimo> I only care because filtering nexus bugs is easier if all bugs are specific to this image
+[14:59] <janimo> not generic app bugs and not even ARM specific issues
+[14:59] <ogra_> yah, makes sense
+[15:23] <achiang> janimo: maybe my blog on memory leaks asked people to file bugs in nexus7 so we could find them easily. :)
+[15:24] <achiang> janimo: it was kinda relevant due to the "optimize mobile" effort
+[15:25] <janimo> achiang, I agree it is ok to get people file bugs on memeory leaks.
+[15:26] <janimo> I just thought having a memleak or somesuch tag (I think we even had one initially) would be more appropriate
+[15:26] <achiang> janimo: fair enough. :)
+[15:26] <janimo> cause then people without nexus can join in without thinking they need specific hw to test and fixc
+[15:26] <janimo> fix
+[16:30] <angs> I have beagleboard that runs ubuntu-server (12.04). while it uncompress the kernel, it takes too long to wait on Starting configure network device step each time. how can I configure it to skip that step if there is no network connection on the device?
+[16:30] <angs> it takes more than 2 min to wait on that step on each boot
+[16:36] <Neko> do you have entries in /etc/network/interfaces besides lo ?
+[16:37] <angs> yes
+[16:37] <Neko> because removing any that say "dhcp" will fix it, or giving a fake static IP.. but what might be better is install network-manager and let it automatically handle everything for you
+[16:37] <ogra_> on a server ?
+[16:38] <Neko> network-manager has a command line :)
+[16:39] <Neko> besides this isn't really a "server" if we're talking about a beagleboard with usb ethernet
+[16:40] <Neko> the other alternative is write some nifty udev rule
+[16:40] <Neko> network-manager just solves the problem immediately though without introducing any behavior nobody can reproduce ;)
+[16:41] <ogra_> it is nontheless a bug if a server install behaves like that after installation
+[16:41] <ogra_> stgraber, i though that was fixed in an SRU ?
+[16:41] <angs> I have this version: Linux user 3.2.0-23-omap #36-Ubuntu Tue Apr 10 20:24:21 UTC 2012 armv7l armv7l armv7l GNU/Linux
+[16:42] <Neko> not really. if I disconnect my virtual ethernet from a VMware server instance, it does the same thing on every distro I've ever used... it's partially because the networking script hangs around waiting for the device to be probed isn't it?
+[16:42] <stgraber> ogra_: what bug?
+[16:42] <ogra_> angs, are you fully upgraded to the latest packages ?
+[16:42] <Neko> networking could be "starting" long before modules are probed, especially if dealing with drivers that do probe deferral
+[16:42] <ogra_> stgraber,  60sec timeout on boot to bring up networking
+[16:42] <angs> can't I skip that step without installing network-manager. I am told that network-manager has many bugs etc.
+[16:43] <angs> ogra_: I havenot updated it for months. I will do that now
+[16:43] <ogra_> network-manager is fine, the point is that it should work without it
+[16:43] <stgraber> ogra_: if you install a non-desktop version of Ubuntu and d-i writes an entry for eth0 in /etc/network/interfaces. If that interface doesn't exist at boot time, you need to wait 90s before the system hits the fallback and boots
+[16:43] <ogra_> ergh
+[16:44] <ogra_> any workaround ?
+[16:44] <angs> I have only lo and wlan on /etc/network/interfaces, I don't have eth interface written on that file
+[16:44] <ogra_> and you actually use eth and not wlan ?
+[16:45] <angs> yes, a cable is connected to the eth
+[16:45] <angs> is it the reason of my problem?
+[16:46] <ogra_> if you dont use the wlan i would indeed wipe it from /etc/network/interfaces ... did you use it at install time ?
+[16:46] <angs> I unplugged the ethernet cable and am rebooting the device now.
+[16:47] <angs> I wrote wlan0 info on that file long ago, but I am planning to use a wifi dongle soon
+[16:48] <angs> btw, it still waits long even ethernet cable is unplugged, it shows Waiting up to 60 more seconds for network configuration... and before
+[17:02] <Rjs> angs: maybe it waits for dhcp from the wlan? do you have "auto wlan0" or "allow-hotplug wlan0" in the interfaces file? (if you do, you can take it out and "ifup wlan0" will still work, then it's just not done automatically)
+[17:03] <ogra_> thats why i suggested commenting or removing the wlan entry
+[17:04] <Rjs> you can keep the entry ("iface wlan0" etc.) if you want: if you remove auto and allow-hotplug, the entry should never be used unless you run "ifup wlan0" manually (or at least that's how it works on debian without any network-managers; I don't know if ubuntu has something special there)
+[17:20] <Rjs> by the way, I just tested the usbnet gadget in nexus7 without having anything related to it in /etc/network/interfaces, and it does correctly detect whether it is plugged in:
+[17:20] <Rjs> I specified a static IP in the GUI ("Manual" IPv4 setting in the "Edit Connections" dialog, remembering to turn default route off in the Routes sub-dialog) and it seems to work: I get a notification about the "Wired connection" when I plug in the usb cable, and another when I plug it out
+[17:21] <ogra_> yeaah
+[17:21] <Rjs> so it appears to work just as it should (just like a normal wired Ethernet device)... except maybe that I noticed that the usb0 interface is always UP according to ifconfig, but only has an IP when plugged in (so I think NM sets and removes the static IP), but I don't think it matters
+[17:21] <ogra_> thanks for testing
+[17:22] <ogra_> yeah, we discussed NM behavior before in #ubuntu-devel
+[17:22] <ogra_> it will get fixed to not annoy you with autoconnect attempts
+[17:24] <Rjs> ok :) (though I don't think it annoys you with anything after you've set a static private IP, then it just thinks that it is connected whenever plugged in? and if the interface has no default route, nothing should send any packets there unless the private IP network is used?)
+[17:27] <ogra_> well, would your mom want to do that ?
+[17:27] <ogra_> if you plug the device in it should just be accessible but not pop up messages all the time :)
+[17:28] <Rjs> hmm, ok :) so you're somehow setting networkmanager's default so that it doesn't bring up the interface at all unless configured by the user first?
+[17:30] <Rjs> (I don't really know what would be a good overall default; my first idea was to automatically set a randomized static private IP, but then there's the problem of communicating the IP to the user when he wants to set it up; then I thought of setting up only the IPv6 link-level address and nothing else, but probably many users would have trouble with anything ipv6 even if on a private link)
+[17:32] <Rjs> but maybe it's ok to leave it completely up to the user (if (s)he wants to use the usbnet at all), though maybe it would be good to point out somewhere (in a "Tips" page in the wiki perhaps) that if you control both ends, a static IP may be much easier to configure than setting up a DHCP server on the host computer just for this
+[17:34] <Rjs> (of course, none of this is nexus7-specific but common to any device that runs ubuntu and works as an usb gadget, so it's good to have a solution that is as general-purpose as possible - but I guess you know that already)
+[17:36] <ogra_> yup
+=== Quintasan_ is now known as Quintasan
+=== solarcloud_3srcn is now known as solarcloud
+[20:35] <scientes> i cant figure out why my watchpoint isn't working
+[20:35] <scientes> i have a memory address that usually has a valid value in it
+[20:35] <scientes> but sometimes it has null which causes a null pointer dereference
+[20:35] <scientes> i did "watch 0x<fooaddr>", which is the same address as x <fooaddr> which returns a value sometime and othertimes null
+[20:36] <scientes> but the hardware watchpoint never breaks
+[20:36] <scientes>  i also tried watch *(int *) <address>

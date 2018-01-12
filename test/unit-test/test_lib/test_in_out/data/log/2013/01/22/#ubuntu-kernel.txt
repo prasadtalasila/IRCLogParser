@@ -1,0 +1,233 @@
+[00:10] <bjf> kano:  git://kernel.ubuntu.com/ubuntu/linux.git linux-3.5.y
+=== Guest54733 is now known as nuxninja
+[06:22] <nuxninja> hello
+[08:59] <ppisati> moin
+=== zequence_ is now known as zequence
+[10:01] <apw> moin
+[10:02] <smb> good morning apw ;-P
+[10:03] <psivaa> apw: smb: hello morning, would you know if anyone is looking at the issue in bug 1100386 ?
+[10:03] <ubot2> Launchpad bug 1100386 in linux (Ubuntu) "Raring server installations on VMs fail to reboot after the installations" [High,Confirmed] https://launchpad.net/bugs/1100386
+[10:05] <smb> psivaa, I think I had a quick look there yesterday and it seemed Joe was on it to some degree (or I got distracted and just forgot about it)
+[10:13] <psivaa> smb: ok thanks, it would be helpful, daily smoke is getting hit with this bug
+[10:17] <smb> psivaa, btw, just for future reference, I find it more helpful to have text files attached uncompressed. That gives you a bigger chance that I will actually look at them because I don't have to save them before that. ;)
+[10:18] <psivaa> smb: ack, ill remember that
+[10:24] <apw> psivaa, so this is server images only ?
+[10:25] <apw> ppisati, and is this xen or kvm, virtmanager can be either
+[10:25] <smb> Oh and is that virt-manager with xen or kvm or what?
+[10:27] <smb> psivaa, Hm, and not sure it is already in the report: how are those installs done? netboot /maas or really using any isos?
+[10:35] <apw> jodh, hey we have a case here where upstart is aborting, and dumping core, that seems utterly specious as the machine will panic instantly and not sync the dump
+[10:36] <apw> https://launchpadlibrarian.net/128694653/VBox_kernel_panic_i386_recovery.png
+[10:48] <psivaa> apw: smb: that is only for server images
+[10:49] <psivaa> it could be observed on both virt-manager and virtualbox as stated in the bug and the installation is using isos i did not use netboot or mass but preseeded and manual iso installations
+[10:49] <apw> virt-manager using KVM or virt-manager using Xen as the virtualisation tech ?
+[10:50] <psivaa> apw: virt-manager using KVM
+[10:59] <ppisati> brb
+[11:07] <rbasak> apw: hey, any known bugs with overlayfs and armadaxp? I have a regression between precise and quantal, looks like it affects raring as well.
+[11:07] <rbasak> Doesn't affect highbank
+[11:08] <rbasak> (in precise and quantal, not checked raring)
+[11:18] <apw> rbasak, nope, overlayfs is generic and used on other arm platforms ok
+[11:19] <rbasak> apw: I'll file a bug then. Thanks!
+[11:21] <apw> rbasak, what sort of regression is it ?
+[11:21] <rbasak> apw: it's broken :) http://paste.ubuntu.com/1558509/ - "mv" doesn't work for existing files in lowerdir. This breaks sbuild which is how I noticed it.
+[11:27] <apw> rbasak, what filesystem type is / in this case ?
+[11:27] <rbasak> apw: aha. That might be different between my armadaxp and highbank installs!
+[11:27]  * rbasak looks
+[11:28] <rbasak> apw: ext4 on both, but with slightly different options
+[11:28] <rbasak> armadaxp: /dev/sda2 / ext4 rw,relatime,data=ordered 0 0
+[11:28] <rbasak> highbank: /dev/disk/by-uuid/02fcfe14-c5ec-4371-9d59-7da564b2b428 / ext4 rw,relatime,errors=remount-ro,user_xattr,barrier=1,data=ordered 0 0
+[11:29] <apw> rbasak, user_xattr is likely your problem
+[11:29] <rbasak> I'll try ripping that out now
+[11:29] <apw> perhaps the armadaxp is missing support for them in the kernel config (assuming you cannot just turn them on)
+[11:30] <rbasak> apw: one of us has this backwards. armadaxp does not have user_xattr but does have the issue. highbank does have user_xattr but does not have the issue
+[11:30] <apw> as the last thing it does before that error is:
+[11:30] <apw>         err = vfs_setxattr(newdentry, ovl_whiteout_xattr, "y", 1, 0);
+[11:30] <rbasak> Both fstabs are identical
+[11:30] <rbasak> I think I might follow you now.
+[11:31] <apw> rbasak, that is consistent, you likely need xattrs for userspace enabled which is what that flag enabled
+[11:31] <apw> so i suspect that some XATTR related config option is off in the kernel config
+[11:31] <rbasak> I see
+[11:31] <rbasak> # CONFIG_EXT4_FS_XATTR is not set
+[11:32] <rbasak> Should overlayfs be #ifdef'ing that vfs_setxattr line?
+[11:33] <apw> nope, it need to mark it as a whiteout, that is what i uses, xattrs
+[11:33] <apw> it should be on, your config is spack
+[11:34] <rbasak> Then overlayfs should refuse to mount with an upper dir without xattr enabled surely?
+[11:34] <apw> well some of its functionality works, so perhaps, perhaps not
+[11:34] <rbasak> OK fair enough
+[11:34] <apw> if it hurts, stop
+[11:34] <rbasak> So what do we do to fix this? Raring - enable it? And Quantal?
+[11:34] <apw> fix the config
+[11:35] <apw> it is wrong in both
+[11:35] <rbasak> Is an config change SRU acceptable for quantal?
+[11:35] <apw> it fixes a bug, so i can't see a reason to say no, it is enableing something whihc is on in _all_ other configurations
+[11:35] <rbasak> It is nice for sbuild to work on armhf for development work as reinstalls take ages.
+[11:35] <rbasak> OK. Do you need a bug filed?
+[11:36] <apw> so its not something to be scared of
+[11:36] <apw> bug> yes, as all srus need them
+[11:36] <rbasak> OK I'll do that now.
+[11:36] <rbasak> apw: thanks. You just saved me hours of tracking this down. I would have started a bisection :-/
+[11:38] <apw> rbasak, always worth asking
+[11:38] <apw> psivaa, just did an install using virtmanager with xen and that worked just fine
+[11:39] <psivaa> apw: ok, i have not tried with xen though, could it be then KVM related?
+[11:40] <apw> psivaa, could be, though less likely when you say virtual box has the issue too
+[11:40] <apw> rbasak, as overlayfs doesn't work that means we have never tested livecds with this h/w
+[11:40] <psivaa> apw: yes virtual box had the issue, and is your installation amd64 or i386 server?
+[11:40] <smb> psivaa, Perhaps you could provide us with the seed file and the steps to apply that to the install in the bug report?
+[11:40] <rbasak> apw: not sure there is a live cd for armadaxp :)
+[11:41] <apw> psivaa, i did a 64 bit install on a 64bit raring host
+[11:46] <einonm> Hi, is there an easy way to remove old self-compiled kernel files from an ubuntu install? I used 'make modules_install install' to install them.
+[11:48] <psivaa> smb: apw: ok, the panic occurred with both amd64 and i386 installs on amd64 host. Although the occurrence is more frequent on i386 installs. Ill add the preseed and steps for auto installs in the bug anyway
+[12:00] <smb> einonm, Depends on whether you made the version numbers simple to be recognized... rm -rf is simple
+[12:02] <einonm> smb: It's a linux-next tree, and I know where most of the files are, like /lib/modules and in /boot. But there's grub2 scripts that have changed also.
+[12:03] <smb> einonm, No, just re-run update-grub after you removed the files from /boot
+[12:04] <einonm> ok, I've been doing that - I hoped there was a ready made way. thanks
+=== henrix_ is now known as henrix
+[12:20] <rbasak> apw: filed https://bugs.launchpad.net/ubuntu/+source/linux-meta-armadaxp/+bug/1102970 - should that be linux-armadaxp or linux-meta-armadaxp or something else?
+[12:20] <ubot2> Ubuntu bug 1102970 in linux-meta-armadaxp (Ubuntu) "Missing CONFIG_EXT{3,4}_FS_XATTR breaks overlayfs" [Undecided,New]
+[12:20] <rbasak> ubuntu-bug led me to linux-meta-armadaxp which seems wrong to me
+[12:42]  * henrix -> lunch
+[13:02] <apw> jodh, hey ... so are we using upstart in the initramfs now ?
+[13:41] <jodh> apw: no.
+[13:42] <jodh> apw: the problem is bug 1096531. I've fixed this upstream, but it's not in Ubuntu yet.
+[13:42] <ubot2> Launchpad bug 1096531 in upstart (Ubuntu) "After touch /forcefsck and reboot: Assertion failed in log_clear_unflushed" [High,In progress] https://launchpad.net/bugs/1096531
+[13:48] <psivaa> smb: apw: i have just attached a preseed file to the bug 1100386 with steps 
+[13:48] <ubot2> Launchpad bug 1100386 in linux (Ubuntu) "Raring server installations on VMs fail to reboot after the installations" [High,Confirmed] https://launchpad.net/bugs/1100386
+[14:02] <jodh> psivaa/apw: I'm looking at doing a cherry-pick fix for bug 1096531 today.
+[14:02] <ubot2> Launchpad bug 1096531 in upstart (Ubuntu) "After touch /forcefsck and reboot: Assertion failed in log_clear_unflushed" [High,In progress] https://launchpad.net/bugs/1096531
+[14:03] <psivaa> jodh: ack, thanks
+[14:10] <apw> jodh, ok so the issue is actually reproducible on random boots of the installed image, could that still be that bug ?
+[14:12] <jodh> apw: I'm sure this is the same issue. See comment https://bugs.launchpad.net/ubuntu/+source/upstart/+bug/1096531/comments/4 for the triggering factors.
+[14:12] <ubot2> Ubuntu bug 1096531 in upstart (Ubuntu) "After touch /forcefsck and reboot: Assertion failed in log_clear_unflushed" [High,In progress]
+[14:14] <jodh> psivaa/apw: ... but to be convinced, could you please try the workarounds in #5 to see if you can still reproduce the problem?
+[14:17] <apw> jodh, ok just added --no-log to the kernel command line, and it is still reproducible
+[14:18] <jodh> apw: are you sure? the failure is coming from the logger code which should not be used with that option.
+[14:18] <apw> jodh, it is definatly getting to upstart as --debug emits lots of upstart output
+[14:18] <apw> jodh, yes, confirmed that --no-log is in the boot options always (added to /etc/default/grub)
+[14:19] <apw> and on 1 boot in 2 (ish) i get this hang, so this is probabally not the issue you see i recon
+[14:19] <apw> jodh, so my symptoms are the boot just stopping, immediatly after the fsck output
+[14:23] <jodh> apw: that must be a different issue. What environment are you seeing this problem in?
+[14:23] <apw> jodh, i've only seen it with server cd installs booted under kvm
+[14:24] <apw> jodh, this is occuring in my installed image on around half my boots
+[14:25] <jodh> apw: what's the cpu usage for the kvm process when it hangs? Is it spinning do you think?
+[14:27] <apw> jodh, if i strace the kvm process it is waking up on a 1s basis and doing a small ammount, not spinning
+[14:28] <apw> jodh, just did a boot with --verbose and it definatly is in upstart, i see the upstart bridge start then it clears the console and does the fsck, and wedged
+[14:28] <sforshee> apw, I bisected the wireless problem and found a commit from broadcom that introduced a bug, so it's not a ucode issue after all
+[14:28] <sforshee> apw, they've supplied a patch, care to test it?
+[14:28] <apw> sforshee, sweet, it is pissing me off regularly
+[14:28] <apw> sforshee, YES :)
+[14:28] <sforshee> apw, http://people.canonical.com/~sforshee/brcmsmac-txstatus-build/
+[14:28] <sforshee> I'm about to give it a spin on my machine, but it looks like it should get the job done
+[14:29] <cking> nice one
+[14:29] <jodh> apw: can you try booting to a shell, remounting rw, removing /forcefsck, then rebooting?
+[14:29] <apw> jodh, i doubt it even has that file, but will check
+[14:32] <apw> jodh, yeah that forcefsck is _not_ there, so this is not that, whatever it is
+[14:32] <jodh> apw: when did your problem start?
+[14:33] <apw> jodh, i am booting todays images, i am only aware of it from today, i have no information from before
+[14:33] <apw> jodh, i am only aware because it was reported as above by psivaa 
+[14:33] <apw> jodh, be i think they imply it is a recent issue
+[14:35] <apw> jodh, is there any further debug i can ask for above --debug ?
+[14:36] <jodh> apw: no. can you get a serial console log though?
+[14:37] <apw> jodh, maybe
+=== cmagina_away is now known as cmagina
+=== henrix_ is now known as henrix
+[14:52] <apw> jodh, ok it is possible to add the serial being logs
+[14:53] <apw> jodh, but when i log the output to there as well it doesn't reproduce any more
+[14:53] <apw> jodh, any other ideas ?
+[14:54] <jodh> apw: you could boot to a shell, remount / rw then create tty8.conf to "start on startup". That should allow you to login and see the status of the existing jobs.
+[14:55] <jodh> apw: does friendly-recovery work btw?
+[14:56] <apw> jodh, i am a kernel engineer :)  what the heck is that
+[14:57] <apw> jodh, i am just using the rare good boot to change things
+[14:57] <jodh> apw: select the "recovery" option on the boot menu :)
+[14:57] <apw> oh that i've used a few times, always successfully
+[14:57] <jodh> apw: it would be worth trying as that *is* actually being started by upstart.
+[14:59] <apw> jodh, ok i have done two of those and get to the menu and select 'continue normal boot'
+[14:59] <apw> jodh, and it boots fine, i will do a coupkle more, but i just got 
+[14:59] <apw> initctl: Event failed
+[14:59] <apw> on the console
+[15:00] <apw> jodh, could that be indicative of a lost event?
+[15:04] <jodh> apw: probably related to a failed job. We really need to see the console log.
+[15:05] <apw> jodh, cannot get it for you without losing the issue
+[15:05] <jodh> apw: can you try the tty8 trick? atleast then you should be able to login and sniff around.
+[15:06] <apw> jodh, that sounds good, what the heck is it
+[15:06] <jodh> apw: see above. Either create tty8.conf or modify tty[1-6].conf to 'start on startup' and reboot.
+[15:07] <jodh> apw: make that tty[2-6].conf.
+[15:07] <apw> ack
+[15:10] <apw> jodh, ok i seemed to have a login on tty8 when it booted normally, but in the 'broken' state i do not
+[15:10] <apw> though i did see init: debug for many 100s of lines before the occurance
+[15:11] <apw> jodh, so now i am very confused
+[15:11] <jodh> apw: how about booting without --debug and seeing if you can login in the wedged state: we can still see that job state then.
+[15:12] <apw> ok
+[15:13] <jodh> apw: I've got a fully up-to-date server and can't reproduce what you're seeing. A list of jobs would also be useful. I'm going to do the cherry-pick now, but could you raise a bug on this so we can track it?
+[15:15] <davmor2> hey guys is there a guide on debugging bluetooth issues anywhere I have a new Lenovo Ideapad y580 and the bluetooth constantly say Bluetooth is disabled whether it is on or off.
+[15:16] <apw> jodh, ok i still have nothing on /dev/tty8 odd
+[15:17] <jodh> apw: could this be a weird udev issue maybe?
+[15:28]  * ogasawara back in 20
+[15:39] <apw> jodh, it could indeed, bloody thing
+[15:48] <thotypous> hi, which should be marked duplicated of which? https://bugs.launchpad.net/ubuntu/+source/linux/+bug/1101797  https://bugs.launchpad.net/ubuntu/+source/linux/+bug/1101355
+[15:48] <ubot2> Ubuntu bug 1101797 in linux (Ubuntu) "On shutdown: “umount2: Device or resource busy, umount:/dev/sda2 busy - remounted read-only” appears" [Undecided,Confirmed]
+[15:48] <ubot2> Ubuntu bug 1101355 in linux (Ubuntu) "can't umount home partition on 3.5.0-22-generic (works on 3.5.0-21-generic)" [Medium,Confirmed]
+[15:54] <jsalisbury> thotypous, 1101797 should probably be marked as a dup of 1101355
+[15:59]  * jsalisbury notices a famous guest on http://ubuntuonair.com/
+=== pgraner is now known as pgraner-afk
+=== pgraner-afk is now known as pgraner
+[17:11]  * ppisati goes out for a bit...
+=== jsalisbury changed the topic of #ubuntu-kernel to: Home: https://wiki.ubuntu.com/Kernel/ || Ubuntu Kernel Team Meeting - Tues January 29th, 2013 - 17:00 UTC || If you have a question just ask, and do wait around for an answer!
+[17:28] <jodh> psivaa: I'm just testing the fix for bug 1100386, but having issues on my SSD system. Looks like a kernel bug as opposed to an Upstart issue, but it's looking now like it'll be tomorrow realistically before the fix is uploaded to allow time to investigate.
+[17:28] <ubot2> Launchpad bug 1096531 in upstart (Ubuntu) "duplicate for #1100386 After touch /forcefsck and reboot: Assertion failed in log_clear_unflushed" [High,In progress] https://launchpad.net/bugs/1096531
+[17:31] <psivaa> jodh: ok thanks for the information, i assume you've seen the nomodeset related information that was added to the bug
+[17:33] <smb> Probably something in the cirrus drm module (or related). Not sure whether that can explain the virtualbox hang as well. 
+[17:34] <smb> Depends a bit what gfx hw they emulate. Xen for example has uses some different pci ids which do not cause the drm module to load. And I could not make it hang there.
+[17:36] <jodh> psivaa: yes - there seem to be 2 problems here.
+=== yofel_ is now known as yofel
+[19:31] <bguthro> I'm trying to google for the answer to this, but probably haven't gotten the right keywords. Is the ubuntu-raring.git repo planned on shipping with 3.8 - or will development continue to 3.9?
+[19:32] <ogasawara> bguthro: we'll ship Raring with a v3.8 kernel
+[19:33] <bguthro> ogasawara, thank you - much appreciated.
+[19:33] <ogasawara> bguthro: we'll eventually open a Raring+1, ie a 13.10 kernel, which will continue tracking the latest kernel, eg a 3.9 kernel once it opens
+[19:36] <bguthro> ogasawara, thanks. That seems to be a trend (or at least has been for the past 3, or 4 releases where I've been paying attention) - Is this done for all releases, or just the .04 releases?
+[19:37] <ogasawara> bguthro: it's something we try do for all releases, just makes maintenance going forward easier
+[19:37] <bguthro> ogasawara, understood. Thanks for the explanation.
+[19:46] <jsalisbury> bjf, herton, bug 1101666 appears to be a regression in Precise and Quantal related to inotify.  A bisect may be possible, just wanted to give you a heads up.
+[19:46] <ubot2> Launchpad bug 1101666 in linux (Ubuntu) "inotify fd leak" [Medium,Incomplete] https://launchpad.net/bugs/1101666
+[19:49] <bjf> jsalisbury, if you can get that identified "soonish" we can get that fixed for the point release. we (ogasawara) is working another regression at this time.
+[19:49] <jsalisbury> bjf, ack.  I'll kick off a bisect
+[19:53] <herton> jsalisbury, also this looks like related to the sauce/upstream fsnotify patches. Someone posted two day refering to two other bugs (1101355, 1101797). It looks related, so perhaps to cut time you can revert just the fsnotify patches and ask for testing.
+[19:53] <herton> *today
+[19:54] <jsalisbury> herton, ack, I'll do that.
+[21:03] <bjf> arges, you have any thoughts on bug 1101666
+[21:03] <ubot2> Launchpad bug 1101666 in linux (Ubuntu Quantal) "inotify fd leak" [Medium,In progress] https://launchpad.net/bugs/1101666
+[21:03] <arges> bjf: hi looking
+[21:05] <arges> bjf: jsalisbury : so which set of fsnotify patches are you reverting? the last set i cherry-picked from upstream
+[21:05] <jsalisbury> arges, yes, but just to build a test kernel for bug 1101666.
+[21:05] <ubot2> Launchpad bug 1101666 in linux (Ubuntu Quantal) "inotify fd leak" [Medium,In progress] https://launchpad.net/bugs/1101666
+[21:06] <arges> ok
+[21:08] <jsalisbury> bjf, arges, there seems to be another set of patches in comment #6 of bug 1101355 
+[21:08] <ubot2> Launchpad bug 1101355 in linux (Ubuntu) "can't umount home partition on 3.5.0-22-generic (works on 3.5.0-21-generic)" [Medium,Confirmed] https://launchpad.net/bugs/1101355
+[21:11] <bjf> jsalisbury, are you chasing both Precise and Quantal or focusing on one?
+[21:12] <jsalisbury> bjf, I figured I'd build a test kernel for both since there are reports for both
+[21:12] <bjf> jsalisbury, ack
+[21:12] <jsalisbury> bjf, for the revert anyway
+[21:13] <jsalisbury> bjf, hmm, I'm getting an ABI error during the build after reverting the patches:
+[21:13] <jsalisbury> II: Checking for changes to ABI...
+[21:13] <jsalisbury>     HASH : fsnotify_destroy_mark                    : 0x6f87a911 => 0xe80f7610
+[21:13] <jsalisbury>     HASH : fsnotify_alloc_group                     : 0xef67e06f => 0x81e56199
+[21:13] <jsalisbury>     HASH : fsnotify_init_mark                       : 0xfbfedde7 => 0x0098ed67
+[21:13] <jsalisbury>     HASH : fsnotify_add_mark                        : 0x82789f61 => 0x72e1be12
+[21:13] <jsalisbury>     HASH : fsnotify_put_group                       : 0x9ad3a0b6 => 0x95f2960e
+[21:13] <jsalisbury>     HASH : fsnotify_put_mark                        : 0x67507862 => 0x9e5033ad
+[21:13] <jsalisbury> EE: 6 symbols changed hash and weren't ignored
+[21:13] <jsalisbury> II: Module hash change summary...
+[21:13] <jsalisbury>     vmlinux                                 : 6
+[21:13] <jsalisbury> II: Done
+[21:13] <jsalisbury> make: *** [abi-check-generic] Error 1
+[21:15] <bjf> jsalisbury, i can believe that though i've not looked at the patches
+[21:15] <bjf> jsalisbury, is this P or Q that you are talking about?
+[21:15] <jsalisbury> bjf, what I posted above was from P.  But it happens to both P and Q
+[21:15] <bjf> jsalisbury, is 3.2.0-36.56 good or bad?
+[21:17] <jsalisbury> bjf, bad
+[21:18] <bjf> jsalisbury, and 3.2.0-36.57 is also bad?
+[21:19] <jsalisbury> bjf, actually 3.2.0-36.57 is bad.  I'm not sure about .56, but I can check
+[21:19] <bjf> jsalisbury, that would be best to try first
+[21:20] <jsalisbury> bjf, ack, testing 3.2.0-36.56 should be the same as reverting the fsnotify patches, correct?
+[21:21] <bjf> jsalisbury, it changes one set of fsnotify patches for another
+[21:21] <jsalisbury> bjf, right, got it.
+=== sabayonuser2 is now known as Tuxkalle
+=== lborda_ is now known as lborda

@@ -1,0 +1,107 @@
+=== SamB__ is now known as SamB
+=== r0bby is now known as robbyoconnor
+[13:03] <LarstiQ> lifeless: is there any web frontend for testrepository?
+[13:35] <jml> LarstiQ: I have vague recollections of lifeless making something along those lines.
+[13:38] <jelmer> you can convert to junitxml, and there is a thingy that can convert that to HTML
+[13:39] <LarstiQ> heh :)
+=== slank_away is now known as slank
+[14:27] <mthaddon> hi folks, is there a way for me to get all revisions since a certain date from bzr log ?
+[14:28] <elmo> mthaddon: yes
+[14:28] <elmo> mthaddon: bzr help revisionspec
+[14:28] <mthaddon> ah, thx
+[14:36] <mthaddon> elmo: am I missing something? http://paste.ubuntu.com/1541688/
+[14:38] <elmo> mthaddon: I think that just means there were no commits in 2013
+[14:38] <elmo> mthaddon: try e.g. 2012 ?
+[14:38] <jelmer> mthaddon: it's annoying, I think there has to be a revision that matches the date you specify
+[14:39] <mthaddon> jelmer: still no output from "bzr log -r date:2013-01-03.." even though the latest revision has a timestamp of Thu 2013-01-03 10:32:11 -0700
+[14:40] <jelmer> ah, hmm
+[14:40] <jelmer> not sure then, sorry
+[14:40] <mthaddon> interestingly, "bzr log -r date:2012-01-01.." gives me the the entire log (oldest revno is 2012-03-26)
+[14:41] <jelmer> Vila: do you know perhaps?
+[14:43] <vila> mthaddon, jelmer: out of the blue, I'd say -rdate:2013-01-03 evaluates to 2013-01-03 23:59:59 which is after the last rev ?
+[14:44] <mthaddon> vila: I've tried it with 2013-01-01 and it's still empty - I think it's because the merged revision is from 2012-11-30, so it's using that rather than the date it was actually merged
+[14:45] <jelmer> ah, hmm
+[14:45] <mthaddon> nope, not that either...
+[14:45] <mthaddon> "bzr log -r date:2012-11-29.." also empty
+[14:46] <mthaddon> have to go back to "bzr log -r date:2012-10-04.." to get any output
+[14:46] <LarstiQ> mthaddon: before:date:2012-11-29?
+[14:46] <LarstiQ> hmm
+[14:48] <xnox> what is the date of the for last commit?
+[14:48] <xnox> also did you add -n0 to the log command?
+[14:49]  * xnox thought date: resolves to the first commit after the specified date.
+[14:49] <mthaddon> the last commit is from "Thu 2013-01-03 10:32:11 -0700" - I'm not adding -n0
+[14:50] <xnox> and the one before? (forelast)
+[14:51] <mthaddon> Thu 2012-10-04 13:14:32 +0100
+[14:52] <mthaddon> it's like it's ignoring the last one for some reason
+[14:55] <vila> mthaddon: looks like a regression introduced in 2.5 :-( 2.4 gives the expected behavior, can you file a bug ?
+[14:55] <vila> mthaddon: you're using 2.5 or 2.6 right ?
+[14:55] <mthaddon> 2.6.0~beta2-0ubuntu1
+[14:56] <mthaddon> vila: will do, thanks
+[15:09] <mthaddon`> vila: any ideas how long it'd take to fix? - wondering whether to work around it for my use case, or if it'll just be a few days or so
+[15:13] <LarstiQ> vila: are you still using dvc?
+[15:13]  * LarstiQ is annoyed by windows jumping around
+[15:14] <vila> mthaddon`: no idea, get in touch with the lp team that is responsible for bzr maintenance :-/
+[15:15] <mthaddon`> vila: ok, thx
+[15:15] <vila> LarstiQ: yes, still using dvc, no window jumping here though, which windows ?
+[15:18] <LarstiQ> vila: I have a dvc-status and a regular file side by side. Hitting c in dvc-status throws up a log-edit buffer in the non-dvc window. ^C^C and the windows swap, now with a dvc-commit buffer in the non-dvc-status window
+[15:18] <LarstiQ> Hitting q there gets me back to my file
+[15:23] <vila> LarstiQ: wow, I never type anything in dvc-status, I'm always in dvc-diff instead
+[15:23] <LarstiQ> vila: maybe I need to learn that :)
+[15:24] <vila> LarstiQ: and I use 'bzr add RightPath' rather than adding from dvc-status (which I use only as a check)
+[15:26] <LarstiQ> vila: ah right, I forgot you can run a shell in emacs
+[15:27] <vila> LarstiQ: where else can you run a shell ? (Sorry couldn't resist)
+[15:27] <LarstiQ> vila: :)
+[15:29] <vila> LarstiQ: and by the way C-H m says that 'c' in dvc-status indeed calls dvc-log-edit, if you want to go to the file your cursor is on, just hit return
+[15:30] <LarstiQ> vila: ah but dvc-log-edit is what I want
+[15:31] <LarstiQ> or think I want :)
+[15:32] <vila> LarstiQ: what does dvc-log-edit ?
+[15:32] <LarstiQ> vila: prompt me for a commit message, and then commit
+[15:33] <vila> oh crap, yeah, that's what I use
+[15:33] <vila> meh, then I C-c C-c and that commits...
+[15:34] <vila> LarstiQ: sorry, I thought you were seeing a different workflow
+[15:35] <vila> LarstiQ: ok, I understand your concern
+[15:36] <vila> LarstiQ: the thing is, it's wired for me: after a commit I get the *dvc-commit* buffer, check that all went well and hit one of my shortcuts to get back to my file, I didn't even realize I was doing that
+[15:36] <vila> LarstiQ: i.e. I don't hit 'q' in the *dvc-commit* window which is where I lost track of your experience
+[15:37] <LarstiQ> vila: aha!
+[15:37]  * LarstiQ tries that workflow
+[15:41] <LarstiQ> vila: hmja, at the point I commit with ^C^C the windows already swap.
+[15:41]  * LarstiQ tries looking at the dvc code again.
+[15:43] <vila> LarstiQ: yeah, they swap here too and that's not ideal, but dvc-diff (which is lost) is one the commands I use the most so it's also bound and wired ;)
+[15:43] <LarstiQ> right
+[15:43] <vila> LarstiQ: but you're right, that's worth fixing !
+[15:43] <LarstiQ> vila: next question, if I'm not bothering you too much, can dvc-diff show things in ediff mode (by default)?
+[15:44]  * LarstiQ finds the plain emacs diff mode unreadable
+[15:47] <vila> LarstiQ: but ediff requires two buffers for each file plus a control one.. How would that work for a whole tree ?
+[15:47] <LarstiQ> vila: hmm. Wonder what magit uses then
+[15:48]  * LarstiQ is still quite getting to grips with emacs
+[15:49] <vila> LarstiQ: I may be misunderstanding again, what difference are you talking about ? ediff shows diffs *inside* the lines two, is that what you're after ?
+[15:51] <vila> s/two/too/ I hate that tyop more than the others ;)
+[15:52] <LarstiQ> vila: that, and highlighting of the hunks
+[15:52]  * LarstiQ has figured out how to make it stop wrapping lines
+[15:53] <LarstiQ> although that resets on refresh, hmm
+[15:55] <vila> LarstiQ: what kind of highlighting ? I have some tweaks locally, so old I had to check if they were where I thought
+[15:56] <vila> LarstiQ: http://paste.ubuntu.com/1541850/
+[15:56] <vila> LarstiQ: not ediff, but readable enough for me
+[15:56] <LarstiQ> vila: cheers!
+=== yofel_ is now known as yofel
+=== SamB__ is now known as SamB
+=== mthaddon` is now known as mthaddon
+=== deryck is now known as deryck[lunch]
+[18:57] <lifeless> LarstiQ: I keep threatening to make one
+[18:58] <lifeless> LarstiQ: but there isn't a canned one, no.
+[18:58] <lifeless> LarstiQ: openstack uses subunit to write html directly, their converter is on hithub
+[18:59] <LarstiQ> lifeless: ah, I'll tell hpk about that (he was the one asking about it)
+[19:19] <LarstiQ> lifeless: I'm having some trouble locating that, https://github.com/openstack-infra/nose-html-output is not quite it
+[19:29] <lifeless> LarstiQ: https://github.com/openstack-infra/config/blob/master/modules/jenkins/files/slave_scripts/subunit2html.py
+[19:29] <LarstiQ> lifeless: thanks!
+[19:29] <lifeless> (I had to ask in #openstack-infra :P)
+=== deryck[lunch] is now known as deryck
+[22:14] <Noldorin> how do i configure the commit message editor??
+[22:17] <Noldorin> anyone?
+[22:41] <bob2> what would you guess the answer to be?
+[22:45] <lifeless> Noldorin: there is an environment variable you can set
+[22:45] <lifeless> Noldorin: its in the docs
+[22:45] <Noldorin> lifeless, the docs also say i can use "bzr config editor=vim" to set it
+[22:45] <Noldorin> but that doesn't work...
+[22:46] <lifeless> hmm, thats since my time, I don't know anything about the new config stuff
+[22:52] <bob2> export VISUAL=vim

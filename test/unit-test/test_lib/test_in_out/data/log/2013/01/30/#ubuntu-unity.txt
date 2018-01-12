@@ -1,0 +1,427 @@
+[00:13] <bschaefer> MCR1, hmm strange, its alt+f5 for me one time, now its Ctrl+Super+Down, it seems like its random
+[00:13]  * bschaefer goes to check the default value in the generated code
+[00:14] <bschaefer> hmm it seems to want to set it as       <default>&lt;Alt&gt;F5</default>
+[00:15]  * bschaefer wonders if its using the wrong schemas
+[00:16] <bschaefer> MCR1, wait, i was looking at the wrong branch....mines getting generated to
+[00:16] <bschaefer>       <default>&lt;Control&gt;&lt;Super&gt;Down</default>
+[00:16] <bschaefer> which it shouldn't be...
+[00:16] <MCR1> hmmm
+[00:17] <bschaefer> MCR1, hmm im seeing it set to       <default>&lt;Control&gt;&lt;Super&gt;Down</default>
+[00:17] <bschaefer> in the metadata/core.xml.in
+[00:17] <MCR1> then you have to pull again probably
+[00:17]  * bschaefer 's fire fox crashed
+[00:18] <bschaefer> o nice, a new rev in the core.xml
+[00:19] <MCR1> :)
+[00:22] <bschaefer> MCR1, also add {}
+[00:22] <bschaefer> to your if/else
+[00:23] <bschaefer> its confusing to read when the cond ends and the statement begins
+[00:23] <MCR1> yep, you are right
+[00:23] <bschaefer> MCR1, usually always include a {} if you have an if/else
+[00:25] <bschaefer> MCR1, usually always include a {} if you have an if/else
+[00:25] <bschaefer> opps
+[00:25] <MCR1> ok, ack
+[00:25]  * bschaefer hit up on the wrong window
+[00:25] <bschaefer> :)
+[00:28] <MCR1> Done - how is the functionality ?
+[00:28] <MCR1> does it finally do what it is supposed to ?
+[00:28] <MCR1> ;)
+[00:32]  * bschaefer is having a window focus problem
+[00:33] <bschaefer> MCR1, sweet, works
+[00:33] <MCR1> phew
+[00:33] <MCR1> togh job for one shortcut ;)
+[00:33] <MCR1> *tough
+[00:33] <bschaefer> now ill approve that and poke Daniel about the patch...though he wont have anytime besides to point me in the right direction
+[00:33] <bschaefer> yeaah
+[00:34] <MCR1> cool - thanx - I count on you
+[00:34]  * bschaefer has a bunch of stuff on the stack
+[00:34]  * bschaefer goes to finish some other work
+[00:34] <MCR1> I'll do it if necessary...
+[08:51] <jibel> hey, there's no auto upload of unity to the release the morning
+[08:51] <jibel> there are failures in autopilot for unity and indicators
+[08:51] <jibel> and dbus-test-runner FTBFS (fatal warning, g_type_init deprecated)
+[08:51] <jibel> sil2100, ^
+[08:54] <sil2100> jibel: hi
+[08:55] <sil2100> jibel: yes, we had a talk with fginther and mterry
+[08:55] <sil2100> jibel: this week there was again some refactoring in the switcher and it broke all the switcher tests ;/
+[08:55] <sil2100> jibel: it was pretty late yesterday so I asked them to give me time today in the morning for fixing it
+[08:55] <sil2100> jibel: so I'm working on it now
+[08:57] <jibel> sil2100, k, thanks
+[10:13] <smspillaz> bregma: the recent refactoring on SwitcherController doesn't make a whole lot of sense to me
+[10:14] <smspillaz> bregma: it seems like we're putting bits of buisness logic inside the interface that we provide to clients. Was that intended or am I reading it wrong ?
+[10:15] <luv> rye: yo, morning - last night I tried to forward port the window list patch: http://killem.al/unity-612-launchericon-windowlist.patch
+[10:16] <sil2100> smspillaz: hi
+[10:16] <luv> though, I didnt' get it to compile because i used a week old (or so) branch and it ended up with g++ segfault even without my patch, but i'm kinda confident it will work :-)
+[10:17] <sil2100> smspillaz: I'm in the middle of fixing up switcher tests again, since bregma'a most recent changes removed the impl completely from introspection, breaking all switcher tests - do you intend on changing the switchercontroller again? Since I don't want to do the same work 3 times again ;p
+[10:17] <smspillaz> I don't know whats happening because I've seen a complete lack of communication from the PS team
+[10:18] <smspillaz> I suspect we should have a chat with bregma to figure what that was all about
+[10:18] <smspillaz> I appreciate the desire to make some methods nonvirtual, but doing that makes testing with other components later down the road a total PITA
+[10:19]  * sil2100 liked the SwitcherController when it was simple as in the beginning :(
+[10:19] <sil2100> luv: thanks! I'll also try looking at it and testing it later
+[10:19] <smspillaz> sil2100: it was completely untestable
+[10:19] <smspillaz> the original SwitcherController is why we have the sed script BS in unity
+[10:20] <sil2100> smspillaz: would be good if all the unity devs could discuss the whole concept and decide on a final version, so that we can rewrite autopilot to accomodate the changes once and for all
+[10:21] <sil2100> Since currently I'm most worried with the autopilot switcher tests being broken again, which is blocking daily releases
+[10:22] <MCR1> JohnLea: Hi :) Proud to announce to you: bug 966099 is in the process to be fixed :)
+[10:22] <ubot5> bug 966099 in Unity "Keyboard shortcut overlay says Ctrl+Super+Down "minimises" the current window, but it doesn't" [High,In progress] https://launchpad.net/bugs/966099
+[10:22] <MCR1> JohnLea: (properly)
+[10:23] <seb128> sil2100, fginther: hey, jibel said you are looking a indicators' stack test failures ... what is broken exactly? I would like to see the current libdbusmenu autoland ;-)
+[10:23] <JohnLea> MCR1; awesome! It will be super to get it fixed at long, long last ;-)
+[10:23] <MCR1> JohnLea: Next one is bug 890747
+[10:23] <ubot5> bug 890747 in gnome-settings-daemon (Ubuntu) "Keyboard shortcut - Ctrl Alt Del doesn't do what most people typing it would expect" [High,Triaged] https://launchpad.net/bugs/890747
+[10:24] <JohnLea> MCR1; cool ;-)
+[10:24] <luv> sil2100: nice, thanks
+[10:24] <MCR1> JohnLea: But for this we gotta remove a standard gnome-shortcut
+[10:24] <sil2100> seb128: hi! Ok, let me check that in a moment, since I was looking into unity-release autopilot tests right now, but I'll check it and get back to you in a moment
+[10:24] <MCR1> JohnLea: As currently gnome will propose to log you out
+[10:24] <JohnLea> MCR1; in this case that is ok
+[10:24] <MCR1> JohnLea: so no change ?
+[10:25] <JohnLea> MCR1; yes to change, in this case it is ok to change the gnome shortcut so that Ctrl Alt Del brings up the Processes tab of System Monitor
+[10:26] <MCR1> JohnLea: Ok, acknowledged. I yet have to find where this is hardcoded to fix it though... Last question:
+[10:27] <MCR1> JohnLea: What about the additional shortcut to toggle a selected window between fullscreen/un-fullscreen
+[10:27] <MCR1> JohnLea: It is Alt+Enter on most windows versions
+[10:27] <MCR1> JohnLea: This is Fullscreen, not maximize
+[10:28] <MCR1> JohnLea: Very useful - for media players for example, but it will also fullsceen/unfullscreen any other window
+[10:28] <luv> umm, making methods nonvirtual ... premature optimizatio?
+[10:29] <JohnLea> MCR1: At the moment it is usually F11, see VLC, Chrome, Firefox, etc...
+[10:29] <MCR1> JohnLea: Often it is F11, in apps like chromium -> then it will do the same like standard
+[10:29] <MCR1> JohnLea: Yep
+[10:29] <JohnLea> MCR1; this is also a windows shortcut as well
+[10:29] <MCR1> JohnLea: but media players won't work with F11...
+[10:30] <MCR1> JohnLea: Well, it is not that important, but we do currently have NO! shortcut for Fullscreening/Unfullscreening in Ubuntu
+[10:30] <MCR1> JohnLea: and it would be nice to have, I would say...
+[10:31] <JohnLea> MCR1; We can add Alt+Enter as long as it does not affect the existing F11 behaviour (which I suppose it shouldn't)
+[10:31] <MCR1> JohnLea: It won't. It is tested. I got it running here since ages.
+[10:31] <MCR1> JohnLea: The only problem we have, we already have in trunk
+[10:32] <JohnLea> MCR1; cool, can you ping me a bug # with *just* that change for me to ok?
+[10:32] <MCR1> JohnLea: It is the possibility to invoke the HUD while fullscreened
+[10:32] <MCR1> JohnLea: To reproduce: Hit F11 in Chromium and then Alt to invoke the HUD
+[10:33] <MCR1> JohnLea: It will come up (the hud) but will be invisible and block F11
+[10:33] <MCR1> JohnLea: So this should be fixed to avoid confusion
+[10:33] <MCR1> JohnLea: I propose to forbid the HUD for fullscreened apps
+[10:33] <JohnLea> MCR1; there are a bunch of other bugs with full screen mode at the moment, for example you can't reveal the Launcher by pushing against the left edge in full screen mode
+[10:33] <MCR1> JohnLea: but this is a design question
+[10:34] <MCR1> JohnLea: Also design question
+[10:34] <MCR1> JohnLea: What should be possible in Fullscreen mode ?
+[10:35] <JohnLea> It should be possible to:
+[10:35] <JohnLea> - reveal a auto-hidden launcher
+[10:35] <JohnLea> - use Alt-Tab
+[10:35] <JohnLea> - open the Dash
+[10:35] <JohnLea> - open the Hud
+[10:36] <JohnLea> etc...
+[10:36] <JohnLea> basically all of these things are broken now
+[10:36] <MCR1> urgh, - okay -> gotta think about that one first...
+[10:36] <MCR1> could be complicated to solve, because of various reasons
+[10:37] <JohnLea> yup, full screen mode is really broken atm
+[10:37] <MCR1> JohnLea: I will prepare the bug for you, regarding Alt+Enter Solo
+[10:37] <JohnLea> cool, thx!
+[10:37] <MCR1> JohnLea: might take a while, do not hold your breath
+[10:39] <MCR1> JohnLea: Thanx a lot 4 your time.
+=== larsu is now known as Guest15091
+[10:51] <MCR1> seb128: Hi :) I bet you know which package I have to manipulate to get rid of the hardcoded Ctrl+Alt+Del gnome shortcut to log out the user... Could you tell me ?
+[10:51] <sil2100> hah, I actually see how to easily fix this now
+[10:52]  * sil2100 talks about the switcher tests to himself
+[10:52] <sil2100> Don't mind me
+[10:52] <MCR1> hehe
+[10:52] <seb128> MCR1, is it hardcoded? I'm unsure, try gnome-settings-daemon or gnome-session...
+[10:53] <MCR1> seb128: I did not find it in the settings-daemon, I'll try gnome-session... thanks
+[10:54] <MCR1> sil2100: Btw, do not hate me - but my implementation needs a packaging change :-[
+[10:54] <MCR1> sil2100: Forget it, just the fullscreen stuff needs it...
+[10:55] <seb128> MCR1, gnome-settings-daemon/plugins/media-keys/gsd-media-keys-manager.c
+[10:56] <seb128>         case LOGOUT_KEY:
+[10:56] <seb128>                 do_logout_action (manager);
+[10:56] <seb128>                 break;
+[10:56] <MCR1> seb128: oh great - that is a big help - I must have missed it :)
+[10:56] <seb128> MCR1, isn't what you are looking for?
+[10:56] <sil2100> ;)
+[10:56] <MCR1> seb128: well, not exactly -> I am searching for the definition of LOGOUT_KEY
+[10:57] <seb128> it's in plugins/media-keys/shortcuts-list.h
+[10:57] <seb128>         { LOGOUT_KEY, "logout", NULL },
+[10:57] <MCR1> seb128: Top. Thanks. Should be Ctrl+Alt+Del somewhere...
+[10:58] <seb128> MCR1, gsettings: org.gnome.settings-daemon.plugins.media-keys logout '<Control><Alt>Delete'
+[10:59] <MCR1> seb128: Last question: Where exactly is this defined, what source file writes this gsettings key ?
+[11:00] <seb128> MCR1, the schemas/default value is in g-s-d: data/org.gnome.settings-daemon.plugins.media-keys.gschema.xml.in.in
+[11:01] <seb128> MCR1, gnome-control-center allows you to rebind it in its keybinding ui afaik, otherwise not sure if anything writes it
+[11:01] <MCR1> seb128: I am sorry for nerving, P E R F E C T ! ! !
+=== mmrazik is now known as mmrazik|lunch
+[11:01] <MCR1> seb128: Without you this would have taken me hours to find out...
+[11:01] <seb128> MCR1, no worry, glad that I was able to help you, happy hacking ;-)
+[11:01] <MCR1> thx
+[11:12] <sil2100> Could anyone test and review https://code.launchpad.net/~sil2100/unity/autopilot_fix_switcher_again/+merge/145578 with latest trunk?
+[11:12] <sil2100> If it also fixes switcher tests for them
+=== _salem is now known as salem_
+[11:17] <sil2100> seb128: looking into the failing tests, interesting
+[11:17] <seb128> sil2100, hum, for some definition of interesting right? ;-)
+[11:24] <MCR1> seb128: I now know how to perfectly fix bug 890747 without messing with gnome itself. I will upgrade the Compiz Gnome Compatibility plug-in to also deal with other gnome shortcuts (currently it just deals with showMainMenu, showRunDialog, CommandScreenshot, CommandWindowScreenshot and CommandTerminal)
+[11:24] <ubot5> bug 890747 in gnome-settings-daemon (Ubuntu) "Keyboard shortcut - Ctrl Alt Del doesn't do what most people typing it would expect" [High,Triaged] https://launchpad.net/bugs/890747
+[11:25] <seb128> MCR1, great!
+=== mmrazik|lunch is now known as mmrazik
+[11:25] <MCR1> 50% of credit goes to you, seb128 ;)
+[11:27] <MCR1> My fix will also have the positive side-effect that all will be perfectly configurable CCSM style, so you will be easily able to modify everything to your needs if it won't suit you...
+[11:27] <MCR1> Unfortunately (once again) I will have to deal with Ubuntu Compiz patches :P
+[11:28] <MCR1> smspillaz: New plan by MCR: Upgrading the Gnome Compatibility Plugin ! :)
+[11:33] <rye> luv: are the changes only in launcher/ApplicationLauncherIcon.{h,cpp} ?
+[11:33]  * rye is building
+[11:35] <luv> yup
+[11:36] <rye> luv: can't wait to see it built then :)
+[11:39] <luv> well, fingers crossed :-)
+=== mmrazik is now known as mmrazik|afk
+[12:06] <smspillaz> MCR1: cool, I guess
+[12:08] <MCR1> smspillaz: I guess (hope) too, that it will be cool ;)
+[12:09] <MCR1> smspillaz: it will enhance compatibility with gnome, while upgrading customization possibility and helping us fix the Ctrl+Alt+Del issue...
+[12:10] <MCR1> smspillaz: but I will keep the first upgrade simple and just add the logout command...
+=== mmrazik|afk is now known as mmrazik
+[12:21] <rye> luv: ok, built and it added the menu! However, in case there are more than one window with the same title it would show one entry and focus the first one. Should there be separators before window list? Where should the list be located - under quit or somewhere in between
+[12:22] <rye> luv: but this is maaaajor usability improvement for me :)
+[12:22] <luv> thanks .. right regarding the seperator:  http://killem.al/windowlist.ogv <- this is how it should work
+[12:24] <luv> regarding the problem with one entry for more windows with same title - right, it handles it in ubuntu 12.04, so I will need to fix the patch against raring
+[12:24] <luv> it really sucks, I can't get VBox guest additions running in raring so it's a nightmare using it
+[12:25] <luv> though, I'm happy it builds fine and mostly works! Could you make a screenshot of how the seperator is placed on raring - it'd be interested to see that.
+[12:25] <rye> luv: aha, in raring the window list is below all the other entries
+[12:26] <luv> well, if i had a fully working (virtual) box running raring, it'd be a matter of an hour getting all these details sorted out :-/
+[12:27] <rye> luv: at what point does vbox fail?
+[12:28] <luv> well there are two problems 1) can't compile unity because of g++ segfault (not vbox related), 2) the vbox - well - i can't install guest additions (tried both, the script coming with VBox and the packages in raring repo) - I am not sure why it doesn't install properly - I should investigate that.
+[12:29] <rye> luv: http://ubuntuone.com/5xzEdYJLFLcjntYP72siJ7
+[12:29] <rye> luv: are you compiling unity inside vbox and get the segfault?
+[12:30] <luv> yes, but somehow i don't think it is vbox related
+[12:30]  * rye installs vbox, why not
+[12:30] <luv> it's not that hard to get g++ segfault with c+11 even on bare metal
+[12:30] <luv> oh, i dont think you have to investigate there ...  i believe the segfault was caused by me not using latest trunk
+[12:31] <luv> i used a week trunk out of convenience (I just ran apt-src install in raring)
+[12:31] <rye> luv: well, i built stuff for quantal/raring/precise in vm under kvm and so far i had no failures of the compiler, so it is a bit strange
+[12:32] <rye> luv: well, i have a unity-team/staging ppa where I get trunk versions packaged and i just do dpkg-buildpackage to get the debs
+[12:33] <rye> luv: are you using amd64 or i386 image?
+[12:33] <luv> it'd be interesting if you could reproduce that segfault indeed ... it's amd64
+[12:34] <luv> could i just add unity-team/staging ppa to my raring install and use apt-src install and get latest trunk unity?
+[12:34]  * rye zsync the fresh iso
+[12:34] <rye> luv: yup, it will be re-built on every commit in compiz/unity/nux
+[12:35] <luv> very good
+[12:44] <luv> yeah, here is an example g++ segfault
+[12:44] <luv> http://pastebin.blesmrt.net/2881/
+[12:44] <luv> g++ -std=gnu++0x c11segfault.cpp -o c11segfault
+[12:44] <luv> segfaults on g++ in ubuntu 12.04 atleast
+[12:53] <rye> luv: ok, that code does segfault on 12.04 but works on raring
+[12:59] <luv> yeah, just tested w/ colleague and it is indeed fixed in gcc-4.7
+[13:08] <sil2100> https://code.launchpad.net/~sil2100/unity/autopilot_fix_switcher_again/+merge/145578 <- can anyone review and approve? Since we need this reviewed and in to fix the daily builds of unity
+=== MacSlow is now known as MacSlow|lunch
+[13:14] <sil2100> mterry: ^
+[13:14] <sil2100> fginther: ^
+[13:14] <bregma> sil2100, just approved it for you
+[13:15] <sil2100> bregma: thanks :)
+[13:15] <bregma> least I could do, given I caused all the trouble
+=== MacSlow|lunch is now known as MacSlow
+=== dandrader is now known as dandrader|afk
+=== dandrader|afk is now known as dandrader
+[14:05] <rye> aha, vbox guest additions cannot be compiled now
+[14:08] <luv> oh, good to get that confirmed, i will try to install raring on a usb drive when i get home
+[14:15] <rye> vboxvideo module cannot be loaded because it cannot be built
+[14:33] <Squarism> WHYY has ubuntu-unity per default occupied the majoryty of all CTRL/ALT/SHIFT + common keys. Do unity developers understand we use their window manager to run "application" that usually rely on keyboard shortcuts?!
+[14:37] <fginther> seb128, I'm looking at the indicators test failure, looks like a setup issue
+[14:38] <seb128> fginther, thanks for looking at it
+[14:43] <fginther> sil2100, do I need to do anything special to rerun the ps-indicators-autopilot-release-testing job?
+[14:50] <sil2100> fginther: huh
+[14:50] <sil2100> fginther: not sure, I usually just re-ran it through jenkins
+[14:50] <sil2100> But hm, I did so today and it resulted in a failure ;/
+[14:51] <fginther> sil2100, that's all I wanted to know, just in case I should start some other job
+[14:51] <fginther> sil2100, the failure may be due to a recent utah update, that's why I'm rerunning :-)
+[14:52] <sil2100> ;( ;) Thanks!
+=== dandrader is now known as dandrader|lunch
+[15:33] <Squarism> Stop hogging all damn hotkeys.. most IDE's are unusable on unity with factory settings
+[15:34] <Squarism> i mean please... in particular stop using combinations of ctrl+alt+shift - theres a win/mac key that can be used for OS specific things
+[15:35] <rye> Squarism: what ctrl+alt+shift keys are grabbed?
+[15:36] <Squarism> CTRL+ALT arrow keys for example
+[15:37] <rye> Squarism: well, that's been used to switch desktops for ages (as far as I remember, in gnome since 2006), ctrl+alt+shift+arrows - to move window to another workspace
+[15:37] <sil2100> I remember ctrl+alt+arrows in Ubuntu since a long time, never had any problems with it myself, I always thought metacity used this keycombination by default as well
+[15:37] <rye> Squarism: in raring by default there will be only one workspace
+[15:38] <Squarism> Well, that could be - but linux/ubuntu desktop was a "enthusiast" OS in those days
+[15:39] <Squarism> To gain market i would focus on catering to people who can develop the OS. Like i use Intellij - most popular ide for worlds most popular language
+[15:39] <Squarism> and its hell
+[15:39] <Squarism> ...ie cater to developers of all sorts
+[15:40] <sil2100> It's hard to have everyone satisfied, sadly
+[15:41] <rye> Squarism: well, what actions are triggered by ctrl+alt+shift+up/down/left/right (I tried to search but can't really find anything)
+[15:41] <rye> aha
+[15:41] <rye> Squarism: forward/back
+[15:41] <Squarism> i really wanna use linux but when i need to reassign all damn keys its problematic... biggest problem though is that some "Super" keys arent modifiable (wo CCSM)... like CTRL+Super + Left/Right
+[15:42] <Squarism> CTRL+ALT left/right is back/forward in intellij
+[15:42] <Squarism> if i could reassign window swithcing to ctrl + super + arrows it would be dandy.. but that is non modifiable
+[15:43] <Squarism> "CTRL+ALT left/right is back/forward in intellij" -> rye
+[15:43] <fginther> sil2100, https://code.launchpad.net/~sil2100/unity/autopilot_fix_switcher_again/+merge/145578 is merged
+[15:44] <popey> Squarism: reduce the number of desktops to 1 and then those key combinations will do nothing in Unity
+[15:44] <Squarism> also ALT+F7 and CTRL+ALT+F7 seems occupied by unity
+[15:44] <rye> Squarism: System Settings / Keyboard / Navigation has the Ctrl+Alt shortcuts
+[15:45] <popey> also, when you say "most IDEs" you mean, one specific IDE?
+[15:45] <Squarism> rye, i know.. but i cant ressagin them to Super combinations as many of them are unassignable
+[15:45] <Squarism> well i i know eclipse is shortcut heavy to.
+[15:47] <sil2100> fginther: yay! Thanks!
+[15:47] <rye> erm, ctrl+super+down does not appear to work for restoring window
+[15:47] <Squarism> I like unity as a whole.. and dont want anything else then flee from windows... but with unecessary hurdles like these i get a bit irritated
+[15:48] <Squarism> rye: and ctrl+super + left/right arent modifieable
+[15:48] <rye> Squarism: that is a good point
+[15:48] <MCR1> Squarism: There are a few key-combinations left, which are not configurable/hardcoded. We are working on fixing those as well.
+[15:49] <Squarism> MCR1, thanx - id really appreciate that!
+[15:49] <rye> MCR1: there is ccsm config for ctrl+super left/right
+[15:50] <Squarism> i read everywhere that CCSM isnt supported (ie can crash your desktop).
+[15:50] <MCR1> bug 1017539
+[15:50] <ubot5> bug 1017539 in compizconfig-settings-manager (Ubuntu) "Unity Dash/Compiz Unity plug-in: Missing possibility to change the keyboard shortcut (Ctrl+Tab) to switch between lenses" [Low,Confirmed] https://launchpad.net/bugs/1017539
+[15:50] <MCR1> bug 1022743
+[15:50] <ubot5> bug 1022743 in unity (Ubuntu) "Hardcoded Unity shortcuts responsible for several problems" [Low,In progress] https://launchpad.net/bugs/1022743
+[15:50] <MCR1> ^^ this one is partially fixed, but not fully yet
+[15:51] <dednick> Squarism: unfortunately there are always going to be conflicts with key-bindings, we can only do so much without making crazyily complicated ones. Do you use multiple workspaces? Or can you change the bindings in intellij?
+[15:51] <MCR1> Squarism: Unfortunately CCSM is not installed by default - yes...
+[15:52] <MCR1> Squarism: *maybe* this will change again as stability has improved a lot lately
+[15:52] <Squarism> dednick, i use multiple workspaces. One of the reasons i like unity/ubuntu
+[15:53] <rye> Squarism: CCSM is simply modifying the options that later read by compiz plugins (and unityshell as a plugin) and I personally rendered my unity session unusable several times with ccsm (or at other times got compiz to crash). But the config is stored in ~/.config/dconf/user and i usually reverted to removing that and relogin. OTOH I am running a bleeding edge version of ubuntu/unity
+[15:53] <rye> which reminds me I wanted to crash compiz and report that
+[15:54] <MCR1> hehe
+[15:54] <dednick> hmm. suspend menu button looked suspiciously like the system settings menu. Think i need sleep.
+[15:55] <Squarism> dednick, And as intellij is what I work with all days regardless of OS (sometimes on collegues machines, sometimes on client computer) - i prefer to use factory settings there
+=== jono is now known as Guest7503
+[15:57] <dednick> Squarism: Super+Ctrl+left/right work ok for me.
+[15:57] <Squarism> dednick, to reassign?
+[15:57] <rye> MCR1: by hardcoded shortcuts - do you mean that they are hardcoded in the code or that they are exposed via CCSM only?
+[15:57] <Squarism> ...wo CCSM?
+[15:58] <dednick> i just assigned it in the keyboard shortcuts section of system settings
+[15:58] <dednick> oh wait...
+[15:59] <dednick> no, i was right. it is working. I just assigned it to the move window to left/right workspace. But the same works for switch to left/right
+[15:59] <dednick> Squarism: ^
+[16:00] <MCR1> rye: unfortunately hardcoded in the code
+[16:01] <Squarism> dednick, hmm.. on 12.04 it doesnt work (tested right now) and at home i run 12.10 and there its not listed (in shortcut settings)  atleast
+[16:01] <dednick> Squarism: I'm on 12.10. You on latest updates?
+[16:02] <Squarism> i installed it 2 weeks ago
+[16:02] <Squarism> filed a bug on launchpad about then also
+[16:02] <dednick> Squarism: system settings -> keyboard -> shortcuts -> navigation . Not there?
+[16:03] <Squarism> dednick, no.. Exactly
+[16:04] <Squarism> "Semi-maximizes window" or whatever its called
+[16:04] <Squarism> dednick, you have such a setting?
+[16:06] <dednick> Squarism: er, no. that sounds like something to do with an on-screen keyboard.
+[16:07] <Squarism> "Semi maximize" = maximize to occupy half-right or half-right screen
+[16:09] <dednick> Squarism: http://ubuntuone.com/40X7ZumcAvJk9IUD4EdDId
+[16:12] <Squarism> dednick, sure - i can do that too.. but the default function "semi-maximize" is left on too / conflicts .. and it seems it has precedance
+[16:15] <dednick> Squarism: i see. Use Super + Alt then? :)
+[16:17] <fginther> sil2100, now that your switcher branch has landed, should we restart the daily testing?
+[16:18] <Squarism> can one get involved in unity in some way?
+[16:18] <Squarism> ie to release a patch on a released verison so to speak
+[16:19] <sil2100> fginther: yes, let's do that :)
+[16:19]  * sil2100 almost got the ibus tests fixed
+[16:19] <sil2100> Almost
+[16:20] <sil2100> I need to prepare something packaging related to dee now
+[16:20] <fginther> sil2100, ok
+=== dandrader|lunch is now known as dandrader
+[16:21] <Squarism> would appriciate a lead on where to start - ie fixing issues in unity
+[16:21] <sil2100> Squarism: yes, contributions are most welcome :)
+[16:21] <sil2100> Ok, so - which version of Ubuntu are you running?
+[16:22] <dednick> Squarism: I'll point you at the standard website. I'm not sure about the process for community contributions (but I'm sure there is one). http://unity.ubuntu.com/getinvolved/
+[16:22] <Squarism> sil2100, 12.04 and 12.10
+[16:24] <Squarism> I presented a choice here http://unity.ubuntu.com/getinvolved/development/
+[16:25] <Squarism> is shortcut stuff in unity, common components or common libraries
+[16:25] <sil2100> Squarism: the shortcut mechanism is in compiz, but Unity shortcut definitions are in the unity source code
+[16:26] <sil2100> Squarism: although some of the shortcuts you mentioned are not related to Unity but to other compiz plugins
+[16:26] <Squarism> oh ok
+[16:27] <sil2100> Squarism: but everything you need is defined in the bazaar branches of lp:unity and lp:compiz
+[16:27] <sil2100> But those repositories have the latest changes for the upcoming release 13.04
+[16:27] <sil2100> (bleeding edge)
+[16:27] <Squarism> oh.. hot!
+[16:28] <sil2100> 12.10 branches are in lp:unity/6.0 and lp:compiz/0.9.8
+[16:28] <sil2100> But the rule is that we prefer patches first being sent to trunk (bleeding edge) and then back-ported to the earlier releases
+[16:29] <Squarism> taking notes!
+[16:30] <Squarism> how does the typical unity developer work? I mean.. if u develop.. how do you view/test your changes?
+[16:31] <sil2100> Squarism: it's maybe a *bit* complicated, but well, the code is rather well readable
+[16:31] <sil2100> hmmm
+[16:31] <sil2100> I usually build packages from source and test them on my system
+[16:32] <MCR1> Squarism: Right now there is Ubuntu Developer Week on the #ubuntu-classroom channel
+[16:32] <MCR1> Squarism: http://ubuntuclassroom.wordpress.com/2013/01/30/ubuntu-developer-week-day-1-is-over-whats-up-on-day-2/
+[16:32] <Squarism> Will that require a reboot for every test then?
+[16:32] <sil2100> Squarism: it depends on developers - some prefer building packages directly from trunk and installing by make install, but I always prefer building a test package by using bzr builddeb and then testing
+[16:32] <sil2100> Since I can easily revert to an earlier version
+[16:33] <sil2100> Squarism: nooo, you just need to restart compiz/unity
+[16:33] <dednick> Squarism: smaller changes can be tested on standalone unity components (eg dash or launcher standalone apps). But with things that need system-wide integration like shortcuts, we have dev staging sets which use to test.
+[16:33] <sil2100> Squarism: it's usually a unity --replace call
+[16:34] <sil2100> We're welcome to all new, precious contributors
+[16:34] <Squarism> I do alot of programming in my free time so why not
+[16:35] <dednick> Squarism: http://unity.ubuntu.com/getinvolved/development/unity/ gives instruction on how to build a staging set. But it "may" be a bit out of date.
+[16:35] <Squarism> will need to get a working process up first though
+[16:36] <Squarism> Thanx guys!
+[16:36] <Squarism> Will try to bite my teeth into this when my current project is done.. (week or two)
+[16:41] <rperier> sil2100: What do you think about bug https://bugs.launchpad.net/unity/+bug/1108956 ? I meant, finally this is a real bug or not I am confused
+[16:41] <ubot5> Launchpad bug 1108956 in Unity "The dash closes when trying to switch from Command lens to home lens" [Undecided,New]
+[16:46] <rperier> (otherwise I will work on another bug, np)
+[16:47] <MCR1> rperier: IMHO the problem here is that Super is used to open/close the Dash primarily and Dash Home does not have a specific shortcut like the other lenses...
+[16:51] <rperier> MCR1: this is not a shortcuts problems, but a problem about the switch, the transition
+[16:52] <rperier> is it acceptable to have the dash closed when pressing "super" from the command lens ?
+[16:52] <rperier> if yes, np this is not a bug and it can be closed :)
+[16:54] <MCR1> If you change the behaviour the bug would be: Super does not close the Dash when Command Lens is opened
+[16:55] <MCR1> but I noticed that pressing Alt+F2 again it does not close, which it imho should...
+[17:03] <MCR1> rperier: But I confirmed the other related bug Dash->Command Lens, which you already fixed. And I can confirm your fix as well. Top job !
+[17:06] <rperier> MCR1: you're confusing me :D
+[17:08] <rperier> the code fix is valid, and not the bug ?
+[17:08]  * rperier needs a coffee
+[17:10] <MCR1> rperier: imho you should think about implementing a toggle function for Alt+F2 first, otherwise you will not be able to directly close the command lens
+[17:10] <rperier> ah !
+[17:11] <rperier> I see
+[17:11] <MCR1> rperier: as Alt+F2 does not close the command lens at the moment (which imho is a bug)
+[17:12] <MCR1> with your solution (which is nice) you would always HAVE to switch from command to home before being able to fully close everything with keys...
+[17:12] <rperier> MCR1: it works here, I meant If I press ALT+F2 it opens the command lens, if I press ALF+F2 a second time, it closes it
+[17:13] <rperier> mhhh... I see
+[17:13] <MCR1> raring, latest trunk ?
+[17:13] <rperier> raring from mirrors
+[17:13] <MCR1> does not close here
+[17:14] <rperier> okay so I need to add a toogle function for ALT+F2 (I agree now) and then my bug might be acceptable ?
+[17:15] <rperier> the correct solution would be:   switch from home.lens to command.lens , switch from command.lens to home.lens (both without closing the dash)  + toogle function for ALT+F2 ?
+[17:16] <rperier> ideally
+[17:16] <MCR1> I am just a community member adding his 2 cents -> you got to assign the bug to Ayatana Design and set it to incomplete
+[17:16] <rperier> ok :)
+[17:44] <sil2100> rperier: hi! Yes, I agree with MCR1 that it's best to poke design about this ;)
+[17:45] <sil2100> rperier: you can also try quickly poking JohnLea when he's around, usually a bit earlier
+[17:45] <sil2100> Since this seems like a small issue that can be commented on real quickly
+[17:48] <sil2100> fginther: hm, strangeness - the ps-indicators-autopilot-release-testing finished, but only ati tests ran for build 98
+[17:48] <sil2100> fginther: why do things like that happen?
+[17:48] <sil2100> I see you started job 99, hope we have more luck with that
+[18:03] <fginther> sil2100, there was a hang in the intel and nvidia so it was restarted
+[18:03] <fginther> sil2100,  there was a machine resource issue which I'm told is now resolved :-)
+[18:04] <sil2100> uuuu ;) Great to know, thanks!
+=== dandrader is now known as dandrader|afk
+=== dandrader|afk is now known as dandrader
+[18:56] <cwayne> mhall119: when is the switch to that new api?
+[19:00] <mhall119> cwayne: for scopes?
+[19:00] <cwayne> mhall119: yar
+[19:01] <mhall119> cwayne: nope, but soon
+[19:03] <mterry> Yay for the unity stack passing again
+[19:03]  * mterry looks at the dbus-test-runner failing because of g_type_init
+[19:03] <mterry> ah, tedg already merged that
+[19:12] <mterry> fginther, hello!  So about crashes that happen during autopilot tests, that cause the remainder of the tests not to be run.  Can we change the jenkins logic to fail the build if autopilot or X crashes or some such?
+[19:13] <fginther> mterry, yes, I think veebers was looking into implementing that
+[19:13] <fginther> mterry, we discussed it yesterday
+[19:13] <mterry> fginther, awesome, OK
+[19:15] <luv> oh, I see my merged got merged into lp:unity even though it's not working properly yet ;-)
+[19:15] <luv> s/merged/branch/
+[19:16] <luv> well, at least I have motivation to polish it out tonight :-)
+[19:17] <mterry> bregma, a couple focus test failures: http://10.97.0.1:8080/job/ps-indicators-autopilot-release-testing/label=autopilot-ati/lastCompletedBuild/testReport/
+[19:18]  * bregma give a quick glance
+[19:21]  * bregma suspects https://code.launchpad.net/~sil2100/unity/autopilot_enhance_test_hud/+merge/145595
+[19:26] <mterry> bregma, how would that fix the failures?  That just adds a new assert
+[19:37] <fginther> mterry, just a theory, but the assert will wait 10 seconds for it to become true, that might be enough to fix the test if it's timing related
+[19:38] <fginther> mterry, in this case, the test may be failing because the application window is not ready. the assert sil2100 added will fix that
+[19:39] <mterry> fginther, hrm.  OK.  We'll see if it helps
+[20:05] <luv> I see, it's just a proposal, missed that in the email. I was a bit scared that code would make it through.
+[20:08] <mterry> fginther, could jenkins have some -dbg packages installed when running?  That way, when apport creates a .crash file, it would have symbols built-in
+[20:09] <mterry> fginther, bryce can't get a good stack out of the Xorg crash
+[20:10] <fginther> mterry, if we know the list of packages, we can add it
+[20:10] <fginther> mterry, is that something that would normally be handled by apport-retrace?
+[20:12] <mterry> fginther, yeah I guess.  But apport can do it upfront if dbg symbols are already around
+[20:13] <mterry> fginther, we'd want at least xserver-xorg-core-dbg.  Asking bryce if there are other useful ones
+[20:22] <luv> Trevinho: hi, im just reading your review, thanks for the comments. I dont fully understand the comment " At that point call it into GetMenus() putting the items you computed into the result list." under line 22
+[20:23] <luv> also, does it really matter if I use "for (auto const& w : Windows())" instead of 'for ( auto w: Windows() ) {" ... Window is just a 64bit integer anyway
+[20:24] <luv> i am happy to change so it follows the project's way, indeed
+[20:24] <mterry> fginther, can we start with at least: libdconf-dbg libdconf-dbus-1-dbg xserver-xorg-core-dbg
+[20:24] <mterry> fginther, those seem to be related to the two crash files we have now
+[20:27] <fginther> mterry, got it
+[20:51] <Trevinho> luv: no, Windows() a list of WindowPtr... Yeah, copying a shared_ptr is not that much, but if we can save it it's better
+[20:52] <Trevinho> luv: I mean, you should add a call into GetMenus() to ensure that you build your _window_menus_items, then you merge these with the results... But it's better if you do that into GetMenus
+[20:56] <mterry> fginther, also libdrm2-dbg libgl1-mesa-dri-dbg  libgl1-mesa-glx-dbg
+[20:57] <mterry> fginther, is it also possible to have jenkins run ubuntu-bug --save=PATH and upload PATH too (for logs and stuff when it crashes)
+[20:57] <mterry> fginther, it can be run on a .crash file
+[20:57] <fginther> veebers, ^^
+[20:58] <veebers> mterry, fginther yep I can add that too
+[20:59] <fginther> mterry, we were seeing apport-retrace crash on the test machines
+[21:00] <fginther> mterry, which is causing the unprocessed crashes, hopefully these other steps will work
+=== salem_ is now known as _salem
+=== _salem is now known as salem_

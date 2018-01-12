@@ -1,0 +1,523 @@
+[00:00] <Note> the email i want it to send it to is hosted by google apps using the domain of my website
+[00:00] <Note> and i can receive/send emails to it normally
+[00:00] <Note> just not from a form or from my server
+[00:15] <RoyK> Note: try installing postfix
+[00:15] <Note> yeah i just installed postfix
+[00:15] <Note> still isn't sending it
+[00:15] <Note> no idea what I'm doing lol
+[00:15] <RoyK> read the mail logs
+[00:15] <Note> http://serverfault.com/questions/119105/setup-ubuntu-server-to-send-mail
+[00:15] <Note> i followed that
+[00:16] <patdk-lap> well, postfix would be way overkill
+[00:16] <RoyK> not really
+[00:16] <patdk-lap> a nullmailer would be much simpler
+[00:16] <RoyK> postfix is simple to setup
+[00:16] <Note> as long as i can get something to work
+[00:16] <Note> i don't really mind what it is
+[00:16] <Note> postfix is already set up with the settings and installed
+[00:16] <Note> it just won't send
+[00:16] <Note> o_o
+[00:16] <Note> hm
+[00:16] <Note> i just got
+[00:17] <Note> Heirloom mailx version 12.5 6/20/10.  Type ? for help.
+[00:17] <Note> "/var/mail/root": 2 messages 2 new
+[00:17] <Note> >N  1 Mail Delivery Syst Tue Jan 22 00:14   72/2154  Undelivered Mail Returned
+[00:17] <Note>  N  2 Mail Delivery Syst Tue Jan 22 00:15   65/1938  Undelivered Mail Returned
+[00:17] <RoyK> pastebin the content of one of those
+[00:17] <RoyK> !pastebin
+[00:17] <ubottu> For posting multi-line texts into the channel, please use http://paste.ubuntu.com | To post !screenshots use http://imagebin.org/?page=add | !pastebinit to paste directly from command line | Make sure you give us the URL for your paste - see also the channel topic.
+[00:19] <Note> but it has my domain on it
+[00:19] <Note> D:
+[00:19] <Note> can i pm you it?
+[00:20] <Note> instead of saying it publicy
+[00:20] <RoyK> sure
+[00:20] <RoyK> still
+[00:21] <RoyK> if you have the domain name in public, it shouldn't bother you to paste the name
+[00:24] <Note> patdk-lap,
+[00:24] <Note> do you know postfix?
+[00:28] <patdk-lap> yes
+[00:29] <Note> Ok, can I pm you with a problem? I pm'ed RoyK but he's tired and doesn't want to help
+[00:29] <Note> If you don't mind that is
+[00:29] <patdk-lap> I don't do pm's
+[00:29] <Note> :/
+[00:30] <Note> Don't really want to put this into a public channel but here goes
+[00:30] <patdk-lap> sorry if your stuff is that secret, you shouldn't be on the internet
+[00:30] <Note> [00:20:43] <Note>	 ok, so firstly this
+[00:30] <Note> [00:20:47] <Note>	 http://pastie.org/private/xhi5qzks9lh0dioopqfsq
+[00:30] <Note> [00:20:48] <Note>	 then
+[00:30] <Note> [00:20:54] <Note>	 http://pastie.org/private/amfpju8lt4awhzo9aea4qw
+[00:30] <patdk-lap> it's postless to post anything other than postconf -n and your mail.log
+[00:31] <Note> where would i find my mail.log?
+[00:31] <patdk-lap> in /var/log
+[00:32] <patdk-lap> I can guess though, that you messed up, mydestination
+[00:33] <Note> here is postconf -n
+[00:33] <Note> http://pastie.org/private/ns1yi2yocpal2nbczv9yqg
+[00:33] <patdk-lap> why is admoxly.me in mydestination?
+[00:33] <Note> what should it be instead?
+[00:33] <Note> i want it to go to my email, hosted by google apps
+[00:33] <Note> that uses @admoxly.me
+[00:33] <patdk-lap> whatever it handles email for
+[00:34] <patdk-lap> that it OWNS
+[00:34] <patdk-lap> basically empty
+[00:34] <patdk-lap> but localhost is fine too
+[00:34] <patdk-lap> next, myhostname and myorgin should be the full name of your server
+[00:35] <Note> here is the log
+[00:35] <Note> http://pastie.org/private/yvsbuhyi6nnsyeahge9lw
+[00:36] <patdk-lap> something like, web.admoxly.me, or whatever you call it
+[00:36] <patdk-lap> and then, the name you used there should match your dns entries
+[00:36] <patdk-lap> forward and reverse
+[00:36] <patdk-lap> but mydestination will fix your current issue
+[00:36] <Note> so if i remove admoxly.me from mydestination
+[00:37] <patdk-lap> fixing the others will stop it from always going to spam, or getting rejected
+[00:37] <Note> the full name of my server is admoxly.me
+[00:38] <Note> or do i have to create a subdomain?
+[00:47] <PatrickDK> you didn't give your server a hostname?
+[00:47] <PatrickDK> hostnames are required
+[00:48] <Note> yes, my hostname is admoxly.me
+[00:48] <Note> is that a problem?
+[00:48] <PatrickDK> that is a domain name, not a hostname
+[00:48] <PatrickDK> hostname.domainname
+[00:48] <PatrickDK> hostname = ???
+[00:48] <PatrickDK> domain = admoxly
+[00:49] <PatrickDK> tld = me
+[00:49] <PatrickDK> if you want to send email from a server, it must be setup 100% correct
+[00:49] <PatrickDK> or the receivers won't accept it
+[00:49] <Note> is there a command i can run in terminal to find out my hostname?
+[00:49] <PatrickDK> hostname :)
+[00:49] <Note> root@admoxly:~# hostname
+[00:49] <Note> admoxly
+[00:50] <PatrickDK> so you messed up the installation
+[00:50] <PatrickDK> but that doesn't matter at all
+[00:50] <PatrickDK> all that matters is what the postfix thinks it's name is, and that all your dns entries match
+[00:50] <Note> what is the main file that i need to edit to fix this all?
+[00:51] <Note> then if you don't mind ill ask if i get stuck on a certain part
+[00:52] <Note> postfix/main.cf
+[00:52] <Note> or
+[00:52] <Note> postfix/master.cf ?
+[00:53] <Note> what will my
+[00:53] <Note> myorigin = /etc/mailname
+[00:53] <Note> be?
+[00:53] <Note> is that correct?
+[00:54] <Note> ohhh
+[00:54] <Note> sendmail is now working in terminal
+[00:54] <Note> sending to my domain
+=== cpg|away is now known as cpg
+[01:11] <Note> finally got it fully working
+[01:11] <Note> thank you very much PatrickDK and patdk-lap
+[01:12] <Note> but when i receive an email from the contact form the email is www-data@admoxly.me
+[01:12] <Note> is it possible to change www-data to contact
+[01:13] <patdk-lap> you have to change that in php
+[01:13] <Note> i wrote the .php file myself and no where within that does it say www-data
+[01:13] <patdk-lap> that is why it says that
+[01:13] <patdk-lap> you lacked to specify what it SHOULD say
+[01:13] <Donks> :)
+[01:13] <Note> I'm guessing it would be $from
+[01:13] <Note> ?
+[01:14] <patdk-lap> not sure, but likely not
+[01:14] <patdk-lap> there are TWO from's in an email
+[01:14] <Note> there is?
+[01:14] <patdk-lap> the from header, that is meaningless
+[01:14] <patdk-lap> and the envelope from
+[01:14] <Note> ah, the $from is the from header
+[01:14] <Note> i need to change the envelope from (the sender) ?
+[01:14] <patdk-lap> that should be easily googlable
+[01:15] <Note> http://www.flynsarmy.com/2012/04/change-default-from-email-name-from-www-data/
+[01:15] <Note> got it
+[01:15] <Note> :)
+[01:15] <Note> thank you
+[02:15] <sixstring> mod_proxy_html is killing me. for three days, i've been trying to make it change link URLs in response content. i'm on precise, and i just can't get the right config settings. i've tried a million different ways. anyone have a *working* reverse proxy that rewrites URLs in HTML links?
+[02:21] <sixstring> http://blog.sam-pointer.com/2009/11/17/building-and-installing-mod_proxy_html-and-mod_xml2enc << this looks pretty comprehensive, but it's for apache, not apache2.
+[02:21] <sixstring> how the heck do i even verify that mod_proxy_html is alive? i can't see anything in the log related to it. can i force it to choke, so i at least know it's alive?
+[02:26] <sixstring> is there another way i can munge content from my webapp that i'm proxying?
+[02:30] <samba35> i have 3 linux system and some time confused with hostname and ip and port  so , is there any way to get login prompt with system name (and /or with  uname -a) detail at ssh login prompt
+[02:42] <sixstring> holy gcc, batman! looks like i'm going to have to build mod_xml2enc.so for myself. why is there no package via apt-get?
+[03:02] <sixstring> http://pastie.org/5802458 << it looks like mod_proxy_html isn't getting fired at all. any thoughts? (3 days of googling, and i'm about out of ideas myself)
+[03:15] <sixstring> OK, how about modproxyperlhtml, instead of mod_proxy_html ?
+=== ImFearless_ is now known as ImFearless
+[04:29] <hallyn> zul: I'm starting to think we need a newer libvirt for QMP stuff to work righth with qemu 1.3.0
+[04:30] <hallyn> don't suppose you have a candidate package sitting around somewhere?
+[05:31] <vhadil> hy how to fix this, i use ubuntu server 10.10
+[05:31] <vhadil> http://dpaste.com/886397/
+[05:33] <TheLordOfTime> vhadil, as i said in #ubuntu, 10.10 is end of life, which means unsupported, really, you should upgrade to a supported version
+[05:41] <hallyn> zul: ok, so yeah, we'll need newer libvirt.  It was a pretty painless merge, but i seem to recall you had some things in mind for it - so let me know if you'd rather do it yourself, or have me do it.  (this is for bug 1102487)
+[05:41] <uvirtbot> Launchpad bug 1102487 in libvirt "VM won't boot after recent qemu upgrade" [High,In progress] https://launchpad.net/bugs/1102487
+[05:42]  * hallyn out
+[05:44] <vhadil> damn reinstal again
+[05:52] <melvincv> hi all. We are a small web hosting company with around 80 websites. We run LAMP, postfix+courier-imap, FTP and DNS services. Optimal server configuration?
+[05:53] <melvincv> Plz let me know what hardware configuration to use to get a good performance.
+[06:09] <melvincv> guys?
+[06:09] <melvincv> We have a quad core AMD CPU with 8GB RAM, it's inadequate now.
+[06:10] <melvincv> (in fact, my desktop has the same config lol)
+[06:11] <mysteriousdaren> melvincv: how much load on that machine?
+[06:15] <melvincv> load average?
+[06:15] <melvincv> load avg is usually 1.5 to 2
+[06:16] <melvincv> now it's 1
+[06:47] <voxadam_> How do I mount a SMB file system on every boot?
+[08:04] <vhadil> hy i want to build server, what version stabel
+[08:04] <vhadil> 12. ???
+[08:04] <vhadil> plz comment
+[08:28] <voxadam_> 12.10
+[08:42] <stanman246> hi anyone using nfsen or cacti?
+[10:20] <alex88> hi guys, upstart shouldn't log jobs outputs into /var/log/upstart?
+[10:56] <daniel_-> anyone can help me? I get this when I try to deploy to my ubuntu server  "sudo: no tty present and no askpass program specified"
+=== security is now known as megha
+[11:48] <rbasak> daniel_-: I know what that means, but not how to help you. Can you describe how you got to that problem? How are you trying to deploy to your ubuntu server?
+=== cpg is now known as cpg|away
+[12:48] <zyga> hi, I'm using juju o quantal with the ppa:juju/pkgs ppa
+[12:48] <zyga> juju deploy $ANYTHING fails
+[12:49] <zyga> http://pastebin.ubuntu.com/1558994/
+[12:49] <zyga> it fails with "2013-01-22 13:48:50,275 ERROR Error processing 'cs:quantal/ubuntu': entry not found"
+[12:49] <zyga> any hints?
+=== a|way is now known as alein
+[13:12] <Tboat> hey all, was wondering if someone could help me to get my postfix mail to forward to gmail, I have an alias set up, but it does not seem to be working.  i can send mail to gmail via command line, however, it will not automatically forward mail from my user box to gmail
+[13:52] <zul> hallyn: do you want to do it or do you want me to do it (update libvirt)
+[14:01] <phretor> anybody using ipmitool? ipmitool -H ... -U ... -P ... sol set volatile-bit-rate 115.2 1
+[14:01] <phretor> Error setting SOL parameter 'volatile-bit-rate' to '115.2': Parameter out of range
+=== jon_e is now known as JonEdney
+=== ttx` is now known as ttx
+[14:30] <hallyn> zul: was there anything you wanted to play with first in this new release?  If not I can do it (later today).
+[14:30] <zul> hallyn: nope
+[14:30] <hallyn> zul: actually.... have you been just manually moving debian/ into the new release, or using uscan or something?
+[14:30] <zul> manually
+[14:30] <hallyn> zul: ok, i'll do it
+[14:36] <Linux39> Hi all
+[14:36] <Linux39> i have installed linux ubuntu 12.10
+[14:36] <Linux39> may i know how to publish a small html web site
+=== cmagina_away is now known as cmagina
+[14:43] <Pici> Linux39: Take a look at https://help.ubuntu.com/12.04/serverguide/httpd.html
+[14:47] <daniel_-> rbasak: I get the error "sudo: no tty present and no askpass program specified", when I push a git repo to /var/git/xxx which deploys to /var/www/xxx
+[14:48] <resno> daniel_-: this is more a #git question, but are you using post-recieve hook or what?
+[14:48] <daniel_-> using a deploy tool
+[14:49] <daniel_-> it worked 1 month ago when I deployed the last time. didnt change any server or repo settings, now I get the error
+[14:49] <rbasak> daniel_-: git just calls ssh, which by default doesn't allocate a tty when calling a command on the other end.
+[14:50] <rbasak> daniel_-: you could configure ssh to always request a tty for that host by default - see the ssh_config manpage, RequestTTY option.
+[14:50] <daniel_-> alright thx
+[14:50] <rbasak> daniel_-: or you could configure sudo to not prompt for your password on your server. That's the NOPASSWD option - see the sudoers manpage
+[14:51] <daniel_-> appreciate your help. Ill check it out
+[14:51] <rbasak> No problem
+[14:53] <minorix> hello all
+[14:53] <minorix> anyone familiar with Snort IDS?
+=== slank_away is now known as slank
+[14:59] <rbasak> !anyone | minorix
+[14:59] <ubottu> minorix: A high percentage of the first questions asked in this channel start with "Does anyone/anybody..." Why not ask your next question (the real one) and find out? See also !details, !gq, and !poll.
+[15:24] <Donks> was running an openmediavault server with 2 3tb drives in raid 0
+[15:24] <Donks> unmounted my rad array and installed frsh ubuntu server
+[15:24] <Donks> how can i a. mount my raid array  or b. break down and destroy the raid array so i can start fresh?
+[15:25] <xnox> Donks: use ubuntu-server cd to activate raid and install
+[15:26] <Donks> should i be able to take a raid array from 1 system and seemlessly mount it in another?
+[15:27] <xnox> Donks: or use mdadm --zero-superblock to wipe raid of each drive.
+[15:27] <xnox> Donks: if you keep the same host name you should be ok.
+[15:27] <Donks> changed hostnames
+[15:27] <xnox> Donks: to start clean, zero out the superblock and reinstall.
+[15:28] <Donks> i think ide like to start fresh for its just s fileserver.seedbox and im goiing to just rsync
+[15:28] <Donks> less headaches imo
+[15:29] <mwcampbell> It just occurred to me that a good use of Ubuntu's trademark policy would be to demand that all cloud infrastructure providers use Ubuntu's official cloud images for images bearing the name Ubuntu.
+[15:29] <mwcampbell> Is this already the case, by any chance?
+[15:29] <mwcampbell> It would be a means of quality control, and would help Canonical by further promoting Landscape and (I guess) Cloud Guest support
+=== matsubara is now known as matsubara-lunch
+[15:40] <pythonsnake> Hi.
+[15:41] <rbasak> mwcampbell: from http://www.ubuntu.com/aboutus/trademarkpolicy, any commercial use requires a licence, AFAICT. So cloud providers interested in providing Ubuntu images should contact Canonical. But IANAL, and I'm just reading the published trademark policy and can't represent any official position on this.
+[15:49] <zul> yolanda: ping https://code.launchpad.net/~zulcss/nova/nova-updates/+merge/144333
+[15:51] <yolanda> let me see
+[15:52] <yolanda> oh, a new package is being generated?
+[15:54] <Note> Hello, I have set up a virtual host with nginx however if i go to www.domain.tld it takes me to the 'Welcome to nginx!' screen, but if i do domain.tld it goes to my website
+[15:54] <Note> Why is this?
+[15:54] <qman__> because www.domain.tld is a different domain name than domain.tld
+[15:54] <qman__> you need to redirect www.domain.tld to domain.tld
+[15:55] <Note> In my default or my domain.tld sites-available ?
+[15:55] <qman__> or the opposite, whichever you prefer
+[15:55] <qman__> I'm not familiar with nginx's configuration, but you need to specify an additional virtualhost with a 301 redirect
+[15:56] <pythonsnake> What's a decent starting guide for NGinx?
+[15:59] <miguitas> pythonsnake: http://wiki.nginx.org/GettingStarted check cookbook section
+[16:00] <Note> nginx: configuration file /etc/nginx/nginx.conf test failed
+[16:00] <Note> ugh
+[16:02] <zul> yolanda: did you merge the other branches yet?
+[16:02] <yolanda> yes, i did it
+[16:03] <yolanda> i havent' checked in jenkins, should we try a rebuild?
+[16:21] <zul> yolanda: im doing that now
+[16:22] <yolanda> ok
+[16:23] <yolanda> are you building quantum and keystone also?
+[16:45] <kirkland> niemeyer: ping
+[16:45] <kirkland> niemeyer: we have a new server package written in golang, in the raring new queue, pending review for acceptance into universe
+[16:46] <kirkland> niemeyer: we were wondering if perhaps you or someone on your team might like to review it for packaging correctness and suggestions?
+[16:48] <hallyn> zul: pushing candidate libvirt-1.0.1 to ppa:serge-hallyn/crossc, will do some testing later
+[16:48] <zul> hallyn: okies
+=== pgraner is now known as pgraner-afk
+=== pgraner-afk is now known as pgraner
+=== matsubara-lunch is now known as matsubara
+[18:02] <zul> hallyn: hda-duplex with qemu/libvirt is telling me i need a newer libvirt right?
+[18:07] <zul> hallyn: im getting this when building locally http://pastebin.ubuntu.com/1560288/
+=== freeflyi1g is now known as freeflying
+[18:16] <hallyn> zul: yeah
+[18:16] <hallyn> unfortunatley the libvirti  uploaded has two build bugs
+[18:17] <zul> that being one of them :)
+[18:17] <hallyn> the one is trivial (get the RESUME patch from upstream), but the other is more work (the dnsmasq one to make it run as user)
+[18:17] <hallyn> oh,
+[18:17] <hallyn> yeah :)
+[18:18] <zul> looks like an incomplete transtion to me
+[18:18] <hallyn> just grab commit aedfcce33e4c2f266668a39fd655574fe34f1265 from git, and replace the backported one in our package with that
+=== cronus_ is now known as cronus
+=== yofel_ is now known as yofel
+=== megha is now known as account
+[18:56] <RoyK> If anyone here works with raid setups, this one is rather educational in terms of differences between drive types http://kurl.no/8gly
+[19:18] <HanP> How to increase the cmoncurrent connections?
+[19:19] <RoyK> of what?
+[19:20] <HanP> Of a ubuntu server
+[19:20] <RoyK> well, of what service?
+[19:20] <RoyK> linux/ubuntu supports rather a lot of concurrent connections
+[19:20] <RoyK> some services are more limited
+[19:21] <HanP> Last friday i had a promotion and 15 000 people connecting to my server and the apache processes was limited to 256 maxclients
+[19:21] <RoyK> that's apache, not ubuntu ;)
+[19:21] <HanP> Yes I know
+[19:22] <HanP> Wrong channel?
+[19:22] <RoyK> well, you might want to try #httpd, but I guess some people in here are able to help - what mpm?
+[19:23] <HanP> the normal one, just out of the box
+[19:23] <RoyK> with php?
+[19:23] <HanP> MPM prefork
+[19:24] <RoyK> that's normal with php (since it doesn't support -worker)
+[19:25] <sarnold> HanP: so... if you know the variable you want to change (maxclients), why are you asking us for help? I'm curious if I'm missing something...
+[19:25] <HanP> php 5.3.10
+[19:25] <HanP> Yeas I know but can I increase the number of Maxclients?
+[19:26] <HanP> to 15 000
+[19:26] <sarnold> you might wish to try e.g. 512 first :) doubling a tunable value is not a small start...
+[19:26] <HanP> Yes but I don't know how to test concurrent connections
+[19:27] <sarnold> HanP: the 'ab' tool may be able to help
+[19:27] <sarnold> (apache bench)
+[19:27] <HanP> I was trying JMeter, Tsung, ab
+[19:27] <RoyK> AFAICS, the default is 150 on 12.04
+[19:27] <qman__> HanP, those variables are not strictly maximum connections, you don't want to set it to 15000
+[19:27] <HanP> YEs I know but I allready increased it
+[19:27] <sarnold> .. but when your users are over a modem connection or on the other side of hte world, their connection may not handle quite the same way...
+[19:28] <qman__> if your server was completely overloaded, doubling is a good place to start
+[19:28] <RoyK> HanP: increasing that to 15k may not be a good idea, since you'll probably run out of memory
+[19:28] <HanP> 95% is fast connection and the promotion is only in our country
+[19:28] <qman__> and then you can use benchmarking tools to figure out what it can handle
+[19:29] <HanP> Yes I know but I don't know the benchmarking tools so good
+[19:29] <qman__> also, prefork and mod_php are not so great for handling lots of connections
+[19:29] <qman__> if you have a very high load you should probably look into setting it up differently
+[19:30] <HanP> Or is nginx a better solution?
+[19:30] <RoyK> HanP: there's a perfectly good reason for that limit to be low, the concurrent connections are the actual connections (typically per second, unless your hardware is really slow), so if you set it to something like 15k, DDOSing your server will be rather easy
+[19:30] <RoyK> even DoSing it from a single client
+[19:30] <HanP> Ok I understand
+[19:31] <qman__> HanP, there are lots of options, but even just changing to worker and php fastcgi instead will reduce the resources needed per connection
+[19:31] <qman__> that's not without consequence, though
+[19:31] <RoyK> HanP: if you have very high load, you also should consider using a caching server in front, like varnish or squid
+[19:31] <qman__> there's a reason prefork and mod_php are default
+[19:32] <RoyK> caching is important with high loads...
+[19:32] <RoyK> varnish is excellent for this, but takes a wee bit of time to get used to, especially if you're using cookies
+[19:32] <qman__> when you're talking about high volumes, it takes trial and error and some testing to get it right
+[19:32] <HanP> And what do you mean with caching because all de hostsjust getting 1 php file
+[19:33] <HanP> And all the images are hosted in a CDN
+[19:33] <RoyK> then, really, you shouldn't be hitting a limit
+[19:33] <sarnold> what was memory use like when you were getting hammered? were you going into swap already?
+[19:33] <RoyK> unless someone is trying to DoS you :P
+[19:35] <sarnold> it'd be possible to write a PHP script poorly enough that you'd be in a world of hurt on even light load..
+[19:36] <HanP> No totally not
+[19:36] <MraAlbertina> ello. what's the best way to achieve a private grid computing system in order to run a ubuntu server environment?
+[19:36] <RoyK> it's quite possible ;)
+[19:36] <MraAlbertina> hello, either :)
+[19:37] <HanP> Yes but the php script was not poorly written
+[19:37] <sarnold> MraAlbertina: have you seen maas.ubuntu.com yet?
+[19:37] <sarnold> HanP: okay, good :)
+[19:37] <HanP> It had just to insert 15 000 inserts on 1 second to register the product sales
+[19:37] <MraAlbertina> not yet sarnold. thanks
+[19:37] <RoyK> HanP: eh... url?
+[19:38] <HanP> That link is allready gone because the product isnt available anymore
+[19:38] <MraAlbertina> sarnold: i just started with this idea, did a couple net searches..
+[19:38] <HanP> But next friday we have a new bigger promotion
+[19:38] <RoyK> HanP: if you made a really good website and a good product etc, perhaps you should need a faster database, and perhaps front-end caching
+[19:39] <RoyK> HanP: but then, if the static material is offsite, you shouldn't need too much caching
+[19:39] <qman__> right, the database could be the bottleneck too
+[19:39] <RoyK> qman__++
+[19:39] <qman__> if you're running LAMP it's pretty common
+[19:40] <qman__> it's a superb small time setup but it doesn't scale well
+[19:40] <HanP> The only thing that the server must do is put all the clients together and at 18h00 they must insert into a database and get into a queue system
+[19:40] <RoyK> HanP: the default config of mysql uses rather little memory
+[19:40] <qman__> HanP, the only way to know where the problem is, is to watch the server while it's under that load
+[19:40]  * RoyK has almost stopped using mysql and sticks to postgresql instead - far better 
+[19:41] <qman__> so you need to set up a test page, aim some spammy benchmarks at it, and watch what happens
+[19:41] <HanP> I know but its difficult because it will last only a couple of minutes
+[19:41] <HanP> oke but what is a good benchmark tool?
+[19:41] <RoyK> HanP: the quick way is to apt-get install sysstat and enable it + start it - it'll show the load - probably high i/o load if it's related to mysql.
+[19:41] <sarnold> HanP: so you've got 15000 users all hitting "submit" on a form at the same second?
+[19:41] <HanP> Is ab really good with concurrent connections?
+[19:41] <HanP> Yes sarnold
+[19:42] <sarnold> wow ;)
+[19:42] <RoyK> sarnold: what sort of disk subsystem?
+[19:42] <HanP> That I don't know because it is just Amazon AWS xlarge
+[19:43] <RoyK> IIRC amazon has cluster setups for these type of things
+[19:43] <RoyK> with 15k users at once, a single host won't do
+[19:43] <RoyK> at least not if the mysql server is running on the same host
+[19:44] <HanP> But if I run a mysql server on another host will it be fast enough?
+[19:44] <HanP> Because it must connect to another server
+[19:44] <RoyK> usually the interconnect is 1Gbps, so it should do
+[19:44] <sarnold> what's the per-process filedescriptor limit for a default apache?
+[19:45] <RoyK> and a dedicated database server is usually better equipped with memory not used by apache etc
+[19:45] <RoyK> HanP: how much memory does the host have? how does your my.cnf look?
+[19:45] <sarnold> HanP: connection setup/teardown will be painful so be sure you've got some kind of connection pooling going on -- would that be better done through a fast_cgi interface?
+[19:45] <RoyK> HanP: using innodb or myisam?
+[19:45] <HanP> my.cnf is just default
+[19:45] <HanP> myisam
+[19:45] <RoyK> myisam is terrible at locking, innodb is better
+[19:45] <RoyK> then perhaps move to innodb
+[19:46] <HanP> Yes but I think I will use a dedicated database of amazon aws then
+[19:46] <RoyK> still, use innodb
+[19:46] <RoyK> not myisam
+[19:46] <RoyK> myisam is *not* good for 15k concurrent inserts
+[19:46] <HanP> oke thank you
+[19:47] <HanP> I'm going to test the server with ab
+[19:47] <RoyK> HanP: better start with converting those tables locally to innodb - take dump first, though
+[19:47] <RoyK> ok
+[19:48] <HanP> Thanks for the information
+[19:48] <qman__> yeah, myisam has table locking, so every time a change is made, it must lock the whole table, where innodb has row locking
+[19:49] <qman__> it's not faster at everything but I'm fairly certain it will help in this case
+[19:49] <RoyK> HanP: or just move to postgresql - it's better in many ways
+[19:49] <qman__> yeah
+[19:49] <RoyK> HanP: if you don't use mysql-specific syntax, the move will be easy
+[19:49] <HanP> Is postgres better then mysql?
+[19:50] <RoyK> yes
+[19:50] <qman__> yeah
+[19:50] <HanP> OK I will test that also
+[19:50] <qman__> I can't think of anything mysql does better
+[19:50] <RoyK> HanP: better try that first
+[19:50] <qman__> postgres has solved most of its issues in recent versions
+[19:51] <sarnold> qman__: I've heard from a friend that in a 99% read-dominated workload, mysql myisam is pretty speedy...
+[19:51] <sarnold> maybe 99.9? they did updates daily..
+[19:51] <qman__> yeah, myisam beats innodb in heavy reads
+[19:51] <qman__> but he's got heavy writes
+[19:51] <RoyK> HanP: mysql sticks to an old caching regime where the dbms must be allocated specific memory resources, where postgres uses the linux caching for most of it
+[19:52] <sarnold> qman__: oh, indeed, I'm just saying that a read-only environment, mysql may out-pace postgres. (which I'd otherwise recommend every time :) hehe
+[19:52] <RoyK> qman__: exactly - mysql is like a filesystem at read speeds, but sucks rather badly on transactions
+[19:53] <HanP> OK I will try
+[19:53] <qman__> the only reason I still use mysql is because I can set it up from memory, where I have to look stuff up for postgres
+[19:53] <qman__> but that will change as I use it more
+[19:53] <RoyK> qman__: heh - I know - but recently, I've gotten to learn the postgres way rather well too ;)
+[19:54] <qman__> I very much like that I don't need to set up and remember a root password
+[19:54] <qman__> just su postgres
+[19:54] <RoyK> or su - postgres
+[19:55] <RoyK> to get the environment correct
+[20:12] <hallyn> kirkland: hey, question...  do you remember why we moved to preferring pa over alsa in qemu?  The launchpad bug doesn't really explain why it's needed.
+[20:28] <HanP> Is ab a good benchmark tool?
+[20:28] <HanP> I use it with gnuplot and if I see the results with concurrent connections the server accpet 500 clients without a problem
+[20:34] <axisys> using arcconf I can turn on led for disk on slot 3.. but how do I find out if that is sdd? I need to replace 4 of those raid10 disks with bigger disks..
+[20:36] <axisys> I don't see fdisk with any option to trigger any read on disk sdd
+[20:36] <axisys> may be dd read lot of blocks while infront of the system ?
+[20:37] <freakynl> anyone have experience with LIO as iSCSI target? Want to enable one username/password for all initiators, but it doesn't work, the parameters don't seem to exist at all. Following http://linux-iscsi.org/wiki/ISCSI under the 'TPG Authentication' section
+[20:37] <freakynl> 12.10 server btw
+[20:38] <frojnd> mhm
+[20:40] <kirkland> hallyn: hmm
+[20:40] <kirkland> hallyn: I honestly don't remember
+[20:40] <kirkland> hallyn: what does upstream qemu default to?
+[20:40] <pythonsnake> What receives most of the load when I use a php application?
+[20:40] <pythonsnake> php-cgi?
+[20:43] <freakynl> pythonsnake: that would depend on how you run php and what it's doing
+[20:43] <pythonsnake> For example, owncloud
+[20:43] <pythonsnake> I run php with php-fpm?
+[20:43] <freakynl> don't know that :) just run it and monitor
+[20:43] <pythonsnake> I'm sorry for innacurate answers, I'm getting started with php and stuff
+[20:45] <pythonsnake> freakynl: What I'm trying to do is
+[20:45] <pythonsnake> I got a VM
+[20:45] <pythonsnake> in that VM is installed NGinx
+[20:45] <pythonsnake> I want to kind of lend the work/load when using the server to the host
+[20:46] <hallyn> kirkland: not sure about upstream, but i'm trying to merge debian as closely as possible, and they have alsa first
+[20:46] <pythonsnake> I thought of a php-cgi socket on the host then forward the port to the guest
+[20:46] <hallyn> kirkland: the lp bug mainly mentioned having alsa enabled, then later mentioned pa over alsa without justification
+[20:46] <hallyn> kirkland: ok - i'll probably sync that bit bck from debian and see what breaks...
+[20:47] <kirkland> hallyn: ack, I think you'll be fine there
+[20:47] <kirkland> hallyn: just make sure you can launch an Ubuntu desktop live ISO and hear the sound
+[20:47] <kirkland> hallyn: that was my test
+[20:47] <kirkland> hallyn: back when Ubuntu had a startup sound
+[20:47] <kirkland> hallyn: bum da bum bum budump bum bum badumbbbbbbbb
+[20:50] <pythonsnake> ubuntu-server is cool
+[21:00] <RoyK> freakynl: IMHO using a non-LTS release for a server, isn't too good
+[21:01] <hallyn> kirkland: whatever happend with your surround sound startup soundn :)
+=== matsubara is now known as matsubara-afk
+[21:25] <kirkland> hallyn: I still have the package in a PPA
+[21:25] <kirkland> hallyn: I use it in my theatre room
+[21:25] <hallyn> to freak out the cat
+[21:28] <axisys> how do you define ntp server IP in ntp.conf with preseed?
+[21:29] <axisys> d-i     clock-setup/ntp boolean true
+[21:29] <axisys> d-i     clock-setup/ntp-server string 192.168.1.24
+[21:30] <axisys> did not work
+=== moonligh- is now known as moonlight
+[21:56] <qman__> problem with virsh and libvirt
+[21:57] <qman__> I created a couple VMs with ubuntu-vm-builder, and they worked great, until my power went out
+[21:57] <qman__> after my system came back up, the machines are not shown in virsh
+[21:57] <qman__> I can start them manually using the run.sh, but this opens them in a foreground qemu
+[21:58] <qman__> apparently there's supposed to be an xml file, but I don't know where, it's not in the VMs' directories
+[22:00] <sarnold> qman__: /etc/libvirt/qemu/<vmname>.xml
+[22:00] <qman__> thanks
+[22:00] <qman__> so now I'm getting unable to create cgroup when trying to start
+[22:01] <sarnold> does mount | grep cgroup show you a pile of mounts? /sys/fs/cgroup/{cpuset, cpu, cpuacct, memory, devices, freezer}
+[22:02] <sarnold> .. on my aptop
+[22:02] <qman__> only one
+[22:02] <qman__> cgroup on /dev/cgroup/cpu type cgroup (rw,cpu)
+[22:03] <sarnold> qman__: hrm. what release? I seem to recall .. 12.04? added the cgroups..
+[22:03] <qman__> 10.04
+[22:03] <sarnold> I was afraid of that, not very experienced there :/
+[22:03] <qman__> hmm
+[22:03] <qman__> I know I ran into this when I first created them
+[22:04] <qman__> but I thought I fixed it by doing this: http://lists.opensuse.org/opensuse-bugs/2011-03/msg01816.html
+[22:04] <hallyn> qman__: easiest is to umount /dev/cgroup/cpu; remove that entry from /etc/fstab, and sudo apt-get install cgroup-lite
+[22:05] <qman__> ok
+[22:05] <qman__> hmm, nothing in fstab
+[22:05] <qman__> I'll search for it
+[22:07] <hallyn> might grep for it in /etc/init/* /etc/init.d/* ...
+[22:07] <qman__> yeah, I've got a /etc/init.d/cgconfig and /etc/init.d/cgred
+[22:08] <hallyn> qman__: d'oh.  do remove those.
+[22:08] <hallyn> (that's actually subject of an on-going SRU)
+[22:08] <qman__> just want to make sure they're not part of installed packages
+[22:08] <qman__> I've got cgroup-bin and libcgroup1 already
+[22:08] <hallyn> qman__: remove those
+[22:08] <qman__> ok
+[22:08] <hallyn> that is, apt-get purge them
+[22:09] <qman__> this is a really old system and I can't remember half the things I did to it, been upgraded since 7.04
+[22:11] <qman__> couldn't find cgroup-lite
+[22:11] <hallyn> you're on precise?
+[22:11] <qman__> no, lucid
+[22:11] <hallyn> oh!  sorry i thought you had just updated from 10.04 to 12.04
+[22:12] <hallyn> sigh.  then i guess you can run cgroup-bin if you like, though it can cause problems with libvirt
+[22:12] <hallyn> you can also just add 'cgroup /cgroup cgroup defaults 0 0' to fstab
+[22:16] <qman__> that doesn't seem to work either, when I try to mount I get already mounted or device or resource busy
+[22:16] <RoyK> qman__: did you manage to get those vms online?
+[22:17] <hallyn> qman__: grep cgroup /proc/self/mounts to see where it is mounted
+[22:17] <qman__> hallyn, nothing
+[22:17] <qman__> RoyK, not yet
+[22:18] <hallyn> qman__: can you pastebi /proc/1/mounts?
+[22:19] <qman__> hallyn, http://paste.ubuntu.com/1560950/
+=== railsraider_ is now known as railsraider
+[22:20] <hallyn> qman__: drat, maybe the kernel is not wanting to change existing compositions
+[22:21] <qman__> oh, I found some garbage in /etc/rc.local
+[22:22] <qman__> removed it, going to try rebooting
+[22:22] <qman__> brb
+[22:23] <hallyn> qman__: running out - will be back in several hours.
+[22:23] <qman__> ok
+[22:29] <qman__> that did the trick, thanks hallyn
+[22:30] <hallyn> qman__: \o/
+=== lborda_ is now known as lborda
+[22:58] <MraAlbertina> hi. i have a debian installation on a computer with no  graphics at all, even console. i have access to it trough ssh. I would like to install ubuntu server on it. could you please tell me what's the best way of doing it.
+[22:59] <TheLordOfTime> MraAlbertina, is it your own system or one hosted by some company somewhere?
+[22:59] <MraAlbertina> my own systems
+[22:59] <TheLordOfTime> okay, that's a basic quesiton, but i see it come up sometimes ;P
+[22:59] <MraAlbertina> is it possible to take advantage of debian installation and start from it?
+[23:00] <TheLordOfTime> hate to have to ask you to wait for someone more knowledgeable on the topic, but AFAIK you can't install ubuntu from within Debian...
+[23:00] <TheLordOfTime> but again, i'm not the most knowledgeable one there
+[23:00] <MraAlbertina> ohh :(
+[23:01] <MraAlbertina> i know it was tricky long ago when i did this debian install, due to console and graphics capabilities on the machine
+[23:01] <TheLordOfTime> pardon the asinine question, but why do you want to switch?
+[23:01] <TheLordOfTime> i mean, i know Ubuntu's awesome for servers, but... :P
+[23:02]  * TheLordOfTime almost exclusively uses Ubuntu for servers :P
+[23:02] <MraAlbertina> TheLordOfTime: i want to do a MAAS with this machine
+[23:02] <MraAlbertina> TheLordOfTime: on the other hand, ubuntu has more up to dated packages...
+[23:03] <sarnold> MraAlbertina: can you do the install on another machine and just swap hard drives?
+[23:03] <MraAlbertina> sander__: yes i could do it
+[23:04] <MraAlbertina> oops, sorry, damn tab + fingers, i mean sarnold
+[23:04] <TheLordOfTime> :P
+=== cpg|away is now known as cpg
+[23:05] <sarnold> if you had a console of some sort, it feels like it'd be alright to run .. the alternative installer? the net-install disc? .. but without even a console, it feelsl ike it'd be difficult enough to work with it that swapping drives feels appropriate, if annoying.
+[23:05] <MraAlbertina> sarnold: even the MAAS? do i go ahead with that configuration too or just unitl i have ssh?
+[23:05] <TheLordOfTime> agreed with sarnold on that one
+[23:06] <sarnold> MraAlbertina: no idea there :/
+[23:06] <MraAlbertina> TheLordOfTime: + 1 more; he was the one who suggested me to use MAAS a couple hrs ago :P
+[23:07] <MraAlbertina> sarnold: until i get ssh, then do the MAAS by package
+[23:07] <MraAlbertina> that's the hard way tough

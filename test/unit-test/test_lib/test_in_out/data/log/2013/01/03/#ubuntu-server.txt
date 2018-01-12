@@ -1,0 +1,251 @@
+[00:45] <F3Speech> looking for some help with a networking error using cli - basic prob is usb wifi adaptor will only connect to network is i reset my router
+=== slank is now known as slank_away
+=== cpg is now known as cpg|away
+[02:20] <genii-around> This is my last game, need to get going after
+[02:20] <genii-around> Misdirect :(
+=== cpg|away is now known as cpg
+=== cpg is now known as cpg|away
+[03:10] <Free99> Hello everyone. Trying to make a high-availability KVM setup, but the only thing that is giving me trouble is figuring out how to use iptables
+[03:11] <Free99> the setup is pretty simple, two machines that replicate the disk images for the VMs via drbd, and the VMs running on both machines for quick failover
+[03:11] <Free99> issue is, there would be an ip conflict for each VM... any suggestions?
+[03:13] <Free99> my idea is to use arptables and iptables to block off all of one of the machine's VMs while still letting DRBD and administrative access through
+[03:15] <sarnold> Free99: wild guess here, but could you solve your problem by giving each vm two interfaces? give both vms a private IP and one vm a public IP, and use linux-ha or similar tools to failover to the other VM and takeover the public IP on its other interface?
+[03:16] <sarnold> (you may be able to do it entirely with one interface, but two may be easier to use existing tools..?)
+[03:18] <Free99> sarnold: well... I don't really know anything about linux-HA.. I have DRBD setup already, bridged networking, etc.. I'd just like to block everything that isn't going to the host VM, then use a sysctl to disable iptables and arptables if the other host goes down
+[03:19] <Free99> I guess I'll go check on Linux-HA, but that implies adding new interfaces to every single one of my VMs, right?
+[03:20] <patdk-lap> heh, would be so simple to use linux-ha (pacemaker)
+[03:20] <patdk-lap> doesn't need to
+[03:20] <patdk-lap> all depends on how you do your iptables config
+[03:20] <Free99> oh wait, I'm using linux ha, specifically heartbeat! lol
+[03:21] <patdk-lap> that is really old
+[03:22] <Free99> patdk-lap: to be honest, haven't gotten to that point yet, still doing the DRBD setup, stuck on the iptables though
+[03:22] <Free99> oh I see, I should have said pacemaker
+[03:22] <Free99> my bad
+=== cpg|away is now known as cpg
+=== cpg is now known as cpg|away
+[05:53] <la_> need help understanding what im doing in Aptitude
+[05:55] <la_> i think it just so simple i do not understand
+=== cpg|away is now known as cpg
+[10:45] <blim_> hi, Does anyone know a guide on how to set the ToS (type of service) on a client os?
+[11:17] <jabba_> hello
+[11:17] <jabba_> i just setup a crypted partition (SR for a Xen-Server). and added it to the /etc/crypttab with the option "timeout=30". sadly the option seems to be ignored (as boot-process keeps going on) and i am not able to enter the passphrase at boot. anyone an idea what's wrong?
+[11:18] <jabba_> referring to this bugreport: https://bugs.launchpad.net/ubuntu/+source/cryptsetup/+bug/468208
+[11:18] <uvirtbot`> Launchpad bug 468208 in cryptsetup "cryptsetup passphrase prompt at boot not working if waiting too long (w/o usplash)" [Undecided,Triaged]
+[11:19] <jabba_> is it possible that it's an upstart relatet problem?
+[11:20] <xnox> jabba_: cryptsetup unlocking is done in initramfs while talking to plymouth (these days)
+[11:21] <xnox> jabba_: I didn't experience it timing out, but I did experience three attempts only.
+[11:22] <xnox> jabba_: is your root file system encrypted or some other partitions?
+[11:27] <jabba_> no, the encrypted partition in an SR (Storage Repository) for a Xen Hypervisor (XCP-XAPI). It is essential, that  this device is decrypted before the XCP-XAPI-Service starts.
+[11:27] <jabba_> -in +is
+[11:29] <jabba_> so is it possible at all to halt the boot-process for a defined time (waiting for the passphrase) and in the case of a timeout countinue booting without decrypting the partition?
+[11:31] <jabba_> why is the timout-option not listed in the crypttab-manpage anymore?
+[11:37] <jabba_> xnox: any idea?
+[11:38] <xnox> jabba_: so when root is not encrypted, indeed upstart jobs unlock the partitions. it should be accepting options.
+[11:45] <jabba_> xnox: so upstart is responsible for calling the cryptsetup scripts, BUT the main problem is, that the boot process doesn't get interrupted, for the defined time (timeout=30 in crypttab).
+=== mcclurmc_away is now known as mcclurmc
+[11:48] <xnox> the same way it does when rootfs is encrypted.
+[11:49] <xnox> jabba_: where did you find reference to crypttab "timeout" option?
+[11:49] <jabba_> http://manpages.ubuntu.com/manpages/hardy/man5/crypttab.5.html
+[11:50] <xnox> jabba_: but that's for hardy. Are you running hardy? that option is not present in lucid and later.
+[11:51]  * xnox is not entirely sure how cryptsetup is managed in hardy.
+[11:52] <jabba_> xnox: the timeout option i missing in precise... is there a new way to handle this?
+[11:52] <jabba_> *is
+[11:53]  * xnox is looking into the history behind this: http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=495509
+[11:53] <uvirtbot`> Debian bug 495509 in cryptsetup "cryptsetup: timeout option does not work anymore" [Important,Fixed]
+[11:55] <xnox> "* Completely remove support and documentation of the timeout option, document this in NEWS.Debian."
+[11:57] <jabba_> can't believe it... that's really sad
+[11:57] <xnox> well your problem seems to be that it's way too quick, instead of non-existing.
+[11:58] <jabba_> xnox: could you explain this please?
+[12:00] <xnox> jabba_: we are processing udev triggers and we should have approx. udev settle timeout to enter the passphrase which is ~30s long. yet earlier you said "i am not able to enter the passphrase at boot" meaning that even if there was a prompt, it vanished too quick.
+[12:02] <jabba_> ok.. i must admit: "i can't follow" :/
+[12:03] <jabba_> xnox: my udev settles to fast?
+[12:03] <xnox> jabba_: I guess I need to experiment with a setup similar to yours. E.g. regular install and one non-essential luks encrypted mountpoint.
+[12:03] <jabba_> and that's why the passphrase-promt timeouts to early?
+[12:04] <xnox> I am speculating a little bit. But i am not spotting anything that will block boot to capture passphrase-promt.
+[12:04] <xnox> for non-rootfs luks volumes.
+[12:05] <xnox> bug 518964
+[12:05] <uvirtbot`> Launchpad bug 518964 in cryptsetup "cryptsetup can't get input at boot." [Undecided,Confirmed] https://launchpad.net/bugs/518964
+[12:07] <jabba_> so i am lost :(
+[12:10] <jabba_> xnox: did you change the State of the bug-report?
+[12:11] <xnox> no, it's been there since 2010, I assigned it to myself to check if it can be fixed or not.
+[12:11] <jabba_> xnox: you're my hero :) , thanks!
+=== yofel_ is now known as yofel
+=== cpg is now known as cpg|away
+[13:38] <zul> yolanda: ping can you have a look at https://code.launchpad.net/~zulcss/python-cinderclient/fixtures/+merge/141751
+[13:39] <yolanda> hi
+[13:39] <yolanda> ok
+[13:44] <yolanda> done
+[13:46] <zul> yolanda: thanks one more https://code.launchpad.net/~zulcss/python-swiftclient/ftbfs/+merge/141754
+[13:51] <yolanda> done
+[14:02] <zul> yolanda: if you want to have a look at whats wrong with glance and quantum be my guest :)
+[14:03] <yolanda> zul, what's the problem? i saw a fbtfs in your other reviews, is that the same?
+[14:03] <zul> yolanda: glance patches need to be refreshed or dropped and quantum its the testsuite
+[14:04] <yolanda> ok, i'll take a look
+=== lamont` is now known as lamont
+=== slank_away is now known as slank
+=== Ursinha-afk is now known as Ursinha
+[15:03] <Lovelidge> Is anyone on this channel?
+[15:45] <Free99> hey everyone, I have a bridged connection that I need to filter. Should I use iptables+arptables, or will ebtables do the job of both?
+[15:46] <patdk-lap> heh?
+[15:46] <patdk-lap> that depends on what you want
+[15:46] <patdk-lap> all 3 of those do totally different things
+[15:46] <patdk-lap> if they did the same thing, they wouldn't all exist
+[15:47] <Free99> yeah, that's kind of why I'm a little confused. I basically need to isolate my VMs which are connected via a bridge.. the VMs are replicants of the VMs on a different physical host, so there would be an ip conflict
+[15:47] <Free99> the hosts watch each other using pacemaker, if one machine goes down, the other unblocks its VMs
+[15:48] <patdk-lap> are you doing some kind of memory replication?
+[15:48] <Free99> no, just DRBD. I had been wondering if that would work actually
+[15:49] <patdk-lap> ya, your whole setup is fail
+=== uksysadmin__ is now known as itarchitectkev
+[15:49] <patdk-lap> kind about this, what happens when two computers use the same harddisk?
+[15:49] <patdk-lap> it causes complete corruption
+[15:50] <patdk-lap> your vm should only be running at one location at a time ever, then no harddrive corruption, no ip issues, ...
+[15:50] <Free99> patdk-lap: so what could I do instead? I suppose I would just keep the VMs off on the other machine, keep their disk images synced though
+[15:50] <patdk-lap> drbd keeps the disk images synced
+[15:50] <patdk-lap> just have pacemaker start the vm on the other machine on failover
+[15:50] <Free99> lol I dunno why I thought that'd work
+[15:51] <Free99> well, just for my knowledge, if I need to filter these VMs, like for fencing or anything, how would I do that?
+[15:51] <patdk-lap> depends :)
+[15:51] <patdk-lap> you could use iptabls/ebtables/...
+[15:51] <patdk-lap> all depends on what level/layer you want to do it at
+[15:52] <Free99> getting conflicting advice saying iptables doesn't work on br0 and such, others saying it does
+[15:52] <Free99> kind of don't know my dick from my elbow when it comes to networking haha
+[15:52] <patdk-lap> heh?
+[15:52] <patdk-lap> iptables works on everything
+[15:53] <patdk-lap> lets put it this way
+[16:46] <uvirtbot`> New bug: #1095710 in linux-lts-quantal (main) "update-grub-legacy-ec2 does not consider 3.5.0-generic as valid for Xen (dup-of: 1005551)" [Undecided,New] https://launchpad.net/bugs/1095710
+[16:56] <uvirtbot`> New bug: #1005551 in cloud-init (main) "Quantal does not boot on EC2" [Critical,Fix released] https://launchpad.net/bugs/1005551
+=== ppetraki is now known as ppetraki-busy
+=== jfluhmann_ is now known as jfluhmann
+=== uksysadmin__ is now known as itarchitectkev
+=== samba35_ is now known as samba35
+=== mcclurmc is now known as mcclurmc_away
+[18:41] <uvirtbot`> New bug: #1095757 in krb5 (main) "krb5 packages should be updated to v. >=1.10.2 to workaround bug with gssapi kerberos authentication" [Undecided,New] https://launchpad.net/bugs/1095757
+[18:53] <tflgen2> hi guys, i asked this question on the #ubuntu channel but it may have fallen on deaf ears. I've just got a new installation of 12.04 and am trying to set up a mail server following this guide: http://flurdy.com/docs/postfix/edition11.html but I'm having issues with SASL. It shows up as Error: authentication failed: no mechanism available
+[18:57] <sarnold> tflgen2: anything in the logs?
+[18:58] <tflgen2> mail log shows "mailsrv postfix/smtpd[8927]: warning: unknown[192.168.40.180]: SASL PLAIN authentication failed: no mechanism available"
+[18:59] <genii-around> Sounds like a PAM issue
+[19:01] <tflgen2> in /etc/pam.d/smtp:                auth required pam_mysql.so user=mail passwd=QQuz43 host=127.0.0.1 db=maildb table=users usercolumn=id passwdcolumn=crypt crypt=1
+[19:01] <sarnold> tflgen2: looks like pam_mysql.so is part of that guide; do you have it installed?
+[19:02] <sarnold> tflgen2: does the guy say why he hsa both "mailPASSWORD" and "aPASSWORD"? Why are they different..?
+[19:02] <tflgen2> sarnold: no idea. i just use the same
+[19:03] <sarnold> tflgen2: and can you connect to your mysql database on the command line with the specified username and password?
+[19:03] <tflgen2> yep
+[19:06] <tflgen2> hang on
+[19:11] <tflgen2> for a sec there, thought I had missed some files to install……not the case
+[19:22] <tflgen2> sarnold: i'm kinda at a loss of where to look here. what else can i look at regarding pam?
+[19:23] <sarnold> tflgen2: are there any errors in the auth log?
+=== ppetraki-busy is now known as ppetraki
+[19:24] <tflgen2> no, it doesn't even look like it hits the auth log.
+[19:25] <sarnold> you could always strace it. it's not much fun (especially if its your first time iwth strace), but you can at least watch what it tries to do..
+[19:35] <tflgen2> https://bugs.launchpad.net/ubuntu/+source/cyrus-sasl2/+bug/875440
+[19:35] <uvirtbot`> Launchpad bug 875440 in cyrus-sasl2 "Cannot authenticate with saslauthd and mysql" [High,Confirmed]
+[19:41] <sarnold> tflgen2: wow. be sure to click the "oes this bug affect you?" thing..
+[19:42] <tflgen2> https://bugs.launchpad.net/ubuntu/+source/cyrus-sasl2/+bug/875440/comments/61 that is the fix
+[19:42] <uvirtbot`> Launchpad bug 875440 in cyrus-sasl2 "Cannot authenticate with saslauthd and mysql" [High,Confirmed]
+=== TheLordOfTime is now known as LordOfTime
+=== LordOfTime is now known as TheLordOfTime
+[19:46] <uvirtbot`> New bug: #1095775 in maas (main) "maas 0.1+bzr482 (precise) incompatible with python-django 1.4 (cloud-archive)" [Undecided,New] https://launchpad.net/bugs/1095775
+[19:46] <sarnold> tflgen2: oh, woo, so the guide is outdated and needs fixing. that's more pleasant. :)
+[19:52] <genewitch> so i am trying to use the cloud live image, the http://localhost comes up but does not accept the password in the GettingStarted.txt file
+[19:52] <genewitch> What up wit that
+[19:53] <tflgen2> case sensitive?
+[19:53] <genewitch> yeah it just says ubuntu:ubuntu123
+[19:55] <genewitch> i can't even think where to look for the config file with that password in it so i can change it
+[19:57] <tflgen2> "Point your browser to the public address of the openstack-dashboard node, "http://node-address/horizon" , login using admin/openstack"
+[19:58] <genewitch> horizon isn't a valid URI and that password combo doesn't work. it seems like the glance API isn't working on port 9292
+[19:58] <tflgen2> hrm
+[19:58] <genewitch> yeah the stock commands don't work.
+[19:59] <genewitch> It's ok, i mean i am sure i can set it up manually, i was a bit enthused by being able to check it out this way
+[20:01] <genewitch> oh, eth3 (the nic i am using) keeps getting unassigned
+[20:01] <genewitch> so this is a networking issue perhaps
+[20:01] <genewitch> and there it goes
+[20:03] <genewitch> it keeps getting wiped out
+[20:03] <RoyK> genewitch: pastebin ifconfig -a
+[20:03] <genewitch> what's the pastebin package called on ubuntu
+[20:04] <RoyK> pastebinit
+[20:04] <genewitch> i killed network-manager
+[20:05] <genewitch> should i not have done that
+[20:05] <genewitch> http://paste.ubuntu.com/1492939/
+[20:05] <RoyK> if you reconfigured /etc/network/interfaces and restarted first, yes
+[20:05] <genewitch> no
+[20:06] <RoyK> eth[012] not configured, eth3 configured with rfc1918 address, what do you want to know?
+[20:06] <genewitch> RoyK: It kept getting UNconfigured.
+[20:06] <genewitch> like 4 times.
+[20:07] <RoyK> pastebin /etc/network/interfaces
+[20:07] <genewitch> nothing in there but lo
+[20:08] <RoyK> well, then configure it
+[20:08] <RoyK> !interfaces
+[20:08] <RoyK> !network configuration
+[20:08] <RoyK> no idea how to get that from the bot - google ubuntu network configi
+[20:09] <genewitch> i know how to manually configure a network. My point was that's not in the GettingStarted guide.
+[20:11] <genewitch> nice: failed to get http://169.254.169.254/latest/meta-data/public-keys
+[20:11] <genewitch> this is a bang-up job.
+[20:27] <genii-around> Looks like no dhcp and it falls back to the 169.254.x.x
+[20:31] <genewitch> genii-around: no, 169.254.169.254 is a metadata server
+[20:32] <genewitch> i guess this cirros image is meant to boot on amazon cloud, and openstack doesn't have a metadata server by default
+[20:33] <genewitch> oh, it does have a metadata server, just doesn't have curl :-p
+[20:35] <tflgen2> genewitch: i just booted into the livecd of ubuntu cloud on virtual box and was able to get an instance of cirros to boot
+[20:38] <genewitch> yes, i have 3 running.
+[20:38] <genewitch> i'm testing ephemeral
+[20:38] <tflgen2> oh, my bad
+[20:39] <genewitch> it is KVM >.<
+[20:55] <Lovelidge> Question to all. Where can I get documentation on how to install mono on uBuntu server?
+[21:04] <Lovelidge> Hello?
+[21:07] <guntbert> Lovelidge: does http://askubuntu.com/questions/11921/how-to-install-mono-on-a-server help?
+[21:10] <tflgen2> has anyone here migrated from courier to dovecot? I'm gonna try and give dovecot a try to see if the imap behavior is better.
+[21:13] <guntbert> tflgen2: I never "migrated" - and dovecot gave no reason for complaints
+[21:15] <tflgen2> guntbert: i guess i'm not actually looking to migrate as this is a fresh install. Doing this for a customer, they currently are hosted elsewhere and using outlook with pop3. I'm hoping to get them on my server with courier/dovecot (preferably imap).
+[21:15] <tflgen2> do you have a good tutorial on installation of dovecot on 12.04?
+[21:23] <_KaszpiR_> Question - I have a home server running ubuntu-server LTS on some quite old motherboard, SATA (AHCI) in bios, booting form single drive
+[21:24] <genewitch> that's not a question
+[21:24] <_KaszpiR_> now, I'd like to migrate to  new motherboard that uses EFI - any suggestions what can go wrong/
+[21:24] <genewitch> _KaszpiR_: nothing, if you turn EFI off
+[21:24] <lastninja> witam można po polsku
+[21:25] <_KaszpiR_> hm
+[21:28] <_KaszpiR_> ok, looks like I've found some more info
+=== alaing_ is now known as alaing
+[21:33] <guntbert> tflgen2: sure - see https://help.ubuntu.com/12.04/serverguide/dovecot-server.html :)
+=== cpg|away is now known as cpg
+[21:56] <tflgen2> gah, dovecot sucks :( can't even get it to start "dovecot: config: Warning: Killed with signal 15 "
+[22:01] <patdk-lap> heh? dovecot is great
+[22:02] <patdk-lap> I switched to it in 2003 I think, and I wouldn't call anything else currently close to it
+[22:03] <tflgen2> i can't get the damn thing to start :)
+[22:03] <patdk-lap> well, it has a lot of config options
+[22:03] <patdk-lap> use dovecot -n, to see what you did
+[22:03] <tflgen2> ! thanks for that
+[22:03] <ubottu> tflgen2: I am only a bot, please don't think I'm intelligent :)
+[22:04] <patdk-lap> ubottu, oh, go get a life
+[22:04] <ubottu> patdk-lap: I am only a bot, please don't think I'm intelligent :)
+[22:07] <tflgen2> patdk-lap: ok, so that helped me weed out some crap. now i'm staring at fatal: unknown database driver 'mysql'
+[22:08] <patdk-lap> that is a debian/ubuntu thing
+[22:08] <patdk-lap> likely didn't install the dovecot-mysql package
+[22:08] <tflgen2> dovecot --build-options |tail -n4
+[22:08] <tflgen2> Mail storages: shared mdbox sdbox maildir mbox cydir raw
+[22:08] <tflgen2> SQL driver plugins: mysql postgresql sqlite
+[22:08] <guntbert> tflgen2: how did you install dovecot? I had no troubles at all
+[22:09] <patdk-lap> hmm
+[22:13] <tflgen2> turns out =i didn't have the dovecot-mysql package installed….
+[22:14] <tflgen2>  /facepalm
+[22:16] <uvirtbot`> New bug: #1095840 in nova (main) "No logrotate config for nova.log" [Undecided,New] https://launchpad.net/bugs/1095840
+=== cpg is now known as cpg|away
+[23:25] <anti-neutrino> hi guys
+[23:25] <anti-neutrino>  I have a ubuntu-11.10 (Desktop) installation.. which I was using as a server (not using any gui feature of it)
+[23:26] <anti-neutrino> can I just rip off the ubuntu-desktop package .. to make it as efficient as ubuntu-server
+[23:26] <anti-neutrino> as I see on the ubuntu website .. they merged the generic and server kernl after 12.04 .. but I have 11.10 installation
+[23:27] <anti-neutrino> this machine was suppoed to be only for testing .. but then we want to use it in the production too
+[23:27] <anti-neutrino> please suggest .. thanks!
+[23:28] <sarnold> anti-neutrino: feel free to uninstall any packages you don't use.
+[23:29] <sarnold> anti-neutrino: you'll make most impact by removing applications that are using the most amount of memory, but that can be a bit difficult to quantify
+[23:29] <anti-neutrino> thanks for the reply @sarnold
+[23:29] <sarnold> anti-neutrino: for my little pandaboard, I just asked upstart to not start X, it seemed like a nice half-way point. it doesn't run, but the libraries are all there in case I want to ssh -X an application some day.
+[23:30] <anti-neutrino> yeah I am removing all the unwanted services .. (making list  of resource hungry services from the top command)
+[23:30] <anti-neutrino> yeah I can do that too ..
+[23:31] <anti-neutrino> so once again a naive question .. if kill X  .. it pops up again
+[23:31] <anti-neutrino> i understand this should be in something like 'startup'
+[23:31] <sarnold> aha, here we go: http://upstart.ubuntu.com/cookbook/#override-files
+[23:32] <sarnold> anti-neutrino: the book says these override files were added in upstart 1.3; if so, something like: echo manual >> /etc/init/lightdm.override    ought to save you a few hundred megabytes of RAM/swap
+[23:34] <anti-neutrino> cool... thanks a lot sarnold
+[23:34] <anti-neutrino> I can try this on one of the VMs ..
+[23:35] <anti-neutrino> you guys are awesome .. this seems to do the trick :)
+=== cpg|away is now known as cpg
+[23:39] <sarnold> anti-neutrino: you may also wish to look at the powertop output and find which processes are responsible for the majority of your CPU wakeups

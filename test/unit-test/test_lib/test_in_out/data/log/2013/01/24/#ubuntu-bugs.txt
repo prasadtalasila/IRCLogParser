@@ -1,0 +1,99 @@
+[04:26] <psusi> jtaylor, that Stefano fellow has another batch of dup bugs if you still have that script handy
+[05:36] <amoma> gnome terminal wants to install a font. How disable it?
+=== yofel_ is now known as yofel
+=== Ursinha-afk is now known as Ursinha
+=== juk is now known as Guest95103
+[22:17] <touil76> Hello. Since the last update of ubuntu 12.04LTS, I cannot get sound through my headphone jack. The sound can still be heard with the external speaker jack, but not from my front headphones jack.
+[22:18] <jtaylor> touil76: quite likely a kernel issue, have you tried booting into an older version?
+[22:21] <touil76> Yes, and it doesn't work with the older kernel either.
+[22:21] <touil76> I've seen in my update list, that I recently received a pulseaudio update.
+[22:23] <jtaylor> 3 days from proposed to updates ...
+[22:23] <jtaylor> I don't like these super fast updates ...
+[22:23] <jtaylor> touil76: try reverting back to the old version of pulseaudio
+[22:24] <jtaylor> bug 1020471 seems to touch jacks
+[22:24] <ubot2> Launchpad bug 1020471 in pulseaudio (Ubuntu Quantal) ""Front Headphone Jack" ALSA kcontrol name not picked up by PulseAudio" [Undecided,Fix released] https://launchpad.net/bugs/1020471
+[22:24] <jtaylor> if the revert fixes it post to that bug and add the tag regression-release
+[22:24] <jtaylor> or open a new one
+[22:24] <jtaylor> not sure
+[22:29] <touil76> @jtaylor: how to revert back to the old version of pulseaudio ?
+[22:29] <meetingology> touil76: Error: "jtaylor:" is not a valid command.
+[22:29] <touil76> jtaylor: how to revert back to the old version of pulseaudio ?
+[22:30] <jtaylor> apt-cache policy <pulseaudio-packages-you-have-installed>
+[22:30] <jtaylor> will show you the regular and updates version
+[22:31] <jtaylor> install these with apt-get install <pkg>=<version>
+[22:31] <jtaylor> maybe reverting pulseaudio-module-jack is enough
+[22:31] <jtaylor> be sure not to remove anything when doing that
+[22:32] <touil76> I only get two answers : one from "precise", and the other from "precise-update".
+[22:32] <jtaylor> yes
+[22:33] <jtaylor> apt-get install pulseaudio-module-jack=1:1.1-0ubuntu15
+[22:34] <jtaylor> you may have to add more packages depending if it accepts that
+[22:34] <touil76> So, what should I do ? Revert to precise what has been installed with pulseaudio using precise-update ?
+[22:36] <jtaylor> revert to the old version and see if that fixes the issue
+=== zequence_ is now known as zequence
+[22:44] <touil76> Reverting to old version would need to remove too much packages
+[22:45] <touil76> What else can I do ?
+[22:45] <jtaylor> you need to revert all pulseautiopackages you have installed
+[22:45] <jtaylor> else it will try to remove
+[22:45] <jtaylor> here you can get a list: https://launchpad.net/ubuntu/+source/pulseaudio
+[22:46] <jtaylor> or dpkg -l | grep pulseaudio
+[22:48] <touil76> Couldn't I try a "new" version of pulseaudio instead ?
+[22:49] <jtaylor> sure but that won't really help pinpointing the issue
+[22:49] <jtaylor> also much higher risk of breaking your system
+[22:50] <touil76> How could I do that ?
+[22:51] <jtaylor> don't know, I'm also not going to help with that
+[22:53] <touil76> Ok. How could I report this bug ?
+[22:53] <jtaylor> first we need to figure out which update broke it
+[22:58] <touil76> Can I try it later ? Will you be there on tuesday or wednesday next week ?
+[22:58] <jtaylor> probably
+[23:00] <touil76> Thank you goodnight.
+[23:01] <jtaylor> touil76: dpkg -l | grep -E "^ii" |grep 1:1.1-0ubuntu15.2  | grep pulseaudio | awk '{print $2"="$3}' | xargs echo
+[23:01] <jtaylor> that should give you the line to put behind apt-get install
+[23:01] <jtaylor> no replace $3 with 1:1.1-0ubuntu15
+[23:02] <touil76> ?
+[23:02] <jtaylor> dpkg -l | grep -E "^ii" |grep 1:1.1-0ubuntu15.2  | grep pulseaudio | awk '{print $2"=1:1.1-0ubuntu15"}' | xargs echo
+[23:03] <touil76> and then ?
+[23:03] <jtaylor> add it behind apt-get install
+[23:03] <jtaylor> that should revert all your pulseaudio hopefully without removing anything
+=== zequence_ is now known as zequence
+[23:07] <touil76> Should it work without rebooting ?
+[23:07] <jtaylor> it might
+[23:07] <jtaylor> but if not try rebooting
+[23:08] <jtaylor> if it still does not work its probably not pulseaudio
+[23:08] <jtaylor> then you can upgrade again with a normal apt-get upgrade
+[23:09] <touil76> It doesn't work, I'm going to reboot.
+[23:15] <touil76> jtaylor : with the reboot and the older version installed, it works.
+[23:16] <jtaylor> k do ubuntu-bug pulseaudio
+[23:16] <jtaylor> explain your problem and make sure to mention that the latest update broke it
+[23:17] <touil76> In fact, with the latest update, when I plugged the headphone set, the sound settings window swithed from "speakers" to "headphones",
+[23:17] <touil76> now when I plug the headphone, the sound settings window stays on "speakers", but I hear the sound via the headphones.
+[23:18] <touil76> I'm french and my english is bad. How can I explain this properly ?
+[23:19] <jtaylor> what you said in the beginning is sufficient
+[23:19] <jtaylor> "Since the last update of ubuntu 12.04LTS, I cannot get sound through my headphone jack. The sound can still be heard with the external speaker jack, but not from my front headphones jack."
+[23:19] <jtaylor> also mention the sound settings window change
+[23:19] <jtaylor> and the version number 1:1.1-0ubuntu15.2
+[23:20] <touil76> I did what you say but the package shows the version 1:1.1-ubuntu15 not 15.2
+[23:20] <jtaylor> and that reverting back to 1:1.1-0ubuntu15 + reboot fixes it again
+[23:20] <jtaylor> yes because we reverted
+[23:20] <touil76> Should I reinstall so that the apport process show 15.2 ?
+[23:20] <jtaylor> do you have a launchpad account?
+[23:20] <touil76> Yes.
+[23:21] <jtaylor> doesn't ubuntu-bug offer an option to file anyway?
+[23:21] <jtaylor> if not you have to update to file the bug :/
+[23:21] <jtaylor> just: apt-get upgrade
+[23:25] <touil76> the sound settings windows change, was it understandable as I wrote it ?
+[23:27] <jtaylor> yes
+[23:29] <touil76> How it it : ?
+[23:29] <touil76> Since the last update of ubuntu 12.04LTS, I cannot get sound through my headphone jack. The sound can still be heard with the external speaker jack, but not from my front headphones jack.
+[23:29] <touil76> The version of pulseaudio that causes troubles has number  1:1.1-0ubuntu15.2.
+[23:29] <touil76> Reverting back to 1:1.1-0ubuntu15 and then rebooting fixes the problem.
+[23:29] <touil76> I noticed, with version 15.2 that when I plugged the headphone set, the sound settings window swithed from "speakers" to "headphones". On the contrary, with the older 15 version, when I plug the headphone, the sound settings window stays on "speakers", though I hear the sound via the headphones.
+[23:30] <jtaylor> thats fine
+[23:30] <jtaylor> you'll probably be asked to provide more detailed information
+[23:30] <touil76> Ok, thank you very much for you help. It was very appreciated.
+[23:30] <jtaylor> they'll tell you how
+[23:30] <touil76> Ok.
+[23:31] <jtaylor> please tell me the bug number when you filed it
+[23:31] <touil76> 1104565
+[23:36] <jtaylor> touil76: to stick with the working package see: https://help.ubuntu.com/community/PinningHowto#Introduction_to_Holding_Packages
+[23:36] <jtaylor> touil76: but remember to remove the holds again when the issue is fixed or you are asked to test the fix
+[23:37] <jtaylor> < offline now, bye

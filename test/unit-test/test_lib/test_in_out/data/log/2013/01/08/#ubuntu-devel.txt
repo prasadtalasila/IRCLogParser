@@ -1,0 +1,485 @@
+[00:05] <doko> infinity, cjwatson: for cross build db, I'm hit by debian bug #625484. this now fails on amd64 as a native build
+[00:05] <ubottu> Debian bug 625484 in libdb4.8 "libdb4.8: 'Build signature doesn't match environment' in 4.8.30-6" [Critical,Fixed] http://bugs.debian.org/625484
+[00:06] <bdmurray> I think we need the bug reporting in Launchpad as it provides a way for developers / reporters to communicate at least until we have server side hooks implemented in the crash database.
+[00:08] <infinity> doko: Weird.  That claims to have been fixed long before any DB version we have in the archive...
+=== slank is now known as slank_away
+[00:20] <doko> ahh, typo
+[01:32] <bkerensa> sabdfl: how is Las Vegas?
+[01:32] <bkerensa> :)
+[01:33] <sabdfl> just getting the stand ready, big opening is tomorrow, press event tonight
+[01:33] <bkerensa> very nice
+[01:33] <sabdfl> show looks to be as huge as ever
+[01:33] <sabdfl> we've already had folks taking photos of the stand as "i was there" keepsakes
+[01:33] <sabdfl> which is nice :)
+[01:33] <bkerensa> sabdfl: well good thing you have something really big to show those attendees :)
+[01:34] <lifeless> sabdfl: price of fame :)
+=== chiluk is now known as chiluk_away
+[02:08] <psusi> can anyone jog my memory on the bash syntax for matching part of a string?  It think it involved a #... like I want a for loop on *.patch, but I want to reference only the part before the .patch?
+[02:10] <sarnold> psusi: ${filename%.patch} -- http://tldp.org/LDP/abs/html/refcards.html
+[02:11] <psusi> ahh... heh, I could have sworn it was a #... thanks...
+[02:11] <infinity> psusi: # cuts in the other direction.
+[02:11] <sarnold> psusi: # is the front :)
+[02:11] <psusi> aha
+[02:12] <psusi> would be nice if I could have found that under brace substitution in the bash info page... heh...
+=== dayangkun_ is now known as dayangkun
+[06:11] <pitti> Good morning
+[06:11] <pitti> bdmurray: yes, I already enabled it in the packaging branch
+[06:11] <pitti> bdmurray: I'll release 2.8 today and then upload
+[06:12] <pitti> infinity: just keeping errors.u.c. for crashes is indeed the plan, but we are missing the extra developer hooks for those still
+[06:12] <pitti> and/or the request "the next person who experiences this, please file a LP bug"
+[06:12] <pitti> both are planned, we discussed it on the London sprint
+=== pcarrier_ is now known as pcarrier
+=== Ursinha_ is now known as Ursinha
+=== Tonio_aw is now known as Tonio_
+[08:53] <infinity> pitti: Minor nitpick you should fix in apport upstream before it hits Debian, that libc6-dbg dependency should be libc-dbg (all the libcN-dbg packages provide it).
+[08:53] <infinity> pitti: Accepting anyway, though, since it's fine for Ubuntu, where all our arches are libc6.
+[08:54] <pitti> infinity: ah, thanks; so in the spirit of "real dep first", libc6-dbg | libc-dbg ?
+[08:55] <infinity> pitti: That's not a real package on all arches.  If you really wanted to do that, you'd want "libc6-dbg | libc6.1-dbg | libc0.1-dbg | libc-dbg"
+[08:55] <infinity> (I feel like I might be missing one...)
+[08:55] <pitti> I don't want to pull in e. g. libc6-dbg-arm64-cross
+[08:56] <infinity> Ahh, 0.3 on hurd, that's the one I was missing.
+[08:56] <pitti> ok, I don't think I'm interested in those for Ubuntu
+[08:57] <infinity> So, yeah, if you want to do real|virt, "libc6-dbg | libc6.1-dbg | libc0.3-dbg | libc0.1-dbg | libc-dbg" for Debian.
+[08:57] <pitti> infinity: http://paste.ubuntu.com/1508926/ enough for ubuntu?
+[08:57] <infinity> For us, sure, libc6-dbg | libc-dbg is fine (or even what you have there is fine).
+[08:57] <infinity> Just pointing it out if the generic Debian packaging is upstream.
+[08:57] <pitti> no, trunk has no packaging
+[08:57] <infinity> (And, really, it doesn't hurt to have the extra deps in the Ubuntu package to keep the delta lower)
+[08:58] <pitti> *nod*
+[08:58] <pitti> I'm not sure how often the Debian maintainer syncs his packaging with our's, but I'll commit that for now
+[08:58] <pitti> thanks for pointing out!
+[08:58] <infinity> He's at 2.7-2 right now, uploaded on New Year's Eve.
+[08:58] <infinity> So, I'm guessing reasonably often.
+[08:59] <infinity> Oh, packaging, not upstream versions.  Yeah, no idea how out of sync the packaging is.
+[08:59] <infinity> Someone might want to look at that some day before we end up with an unreconcilable mess.
+[09:00] <pitti> http://anonscm.debian.org/gitweb/?p=collab-maint/apport.git;a=tree;f=debian; looks reasonably close to our's
+[09:00] <infinity> If they can be brought pretty close to in sync, we might want to just switch to a "maintain in experimental/sid, merge to Ubuntu" model.
+[09:00] <infinity> Personally, I find that helps keep the world lett fragmented, but YMMV.
+[09:01] <infinity> s/lett/less/
+[09:01] <pitti> yeah, and it's collab-maint anyway
+[09:01] <pitti> one of these days I'll walk through our remaining delta and see how it can be minimized
+[09:02] <infinity> Anyhow, that heads-up was mostly just cause Debian ftpmaster will (or should) have the same nitpick.  If you don't do the Debian packaging anyway, meh.
+[09:02] <infinity> s/do/have anything to do with/
+[09:04] <OdyX> … just get the person maintaining the thing for Debian in the discussion loop and get the diff to zero. There; a better world.
+[09:06] <pitti> that shouldn't be a problem, Ritesh contacts me rather often to fix things upstream in the debian backend, etc.
+=== smb` is now known as smb
+=== Tonio_ is now known as Tonio_aw
+=== henrix_ is now known as henrix
+=== Tonio_aw is now known as Tonio_
+=== elky` is now known as elky
+=== cpg is now known as cpg|away
+=== Ivanka_ is now known as Ivanka
+=== tkamppeter__ is now known as tkamppeter
+=== security is now known as fire
+=== _salem is now known as salem_
+=== funkyHat_ is now known as funkyHat
+=== doko_ is now known as doko
+[12:32] <mdeslaur> cjwatson: sure, I'll merge mcrypt today
+=== Tonio_ is now known as Tonio_aw
+[12:32] <mdeslaur> s/mcrypt/m2crypto/
+=== MacSlow is now known as MacSlow|lunch
+[12:59] <davmor2> who is responsible for failsafe mode in R?
+[12:59] <cjwatson> foundations
+[13:01] <davmor2> cjwatson: thanks networking mode dpkg mode and others don't work :(
+[13:08] <cjwatson> zul,adam_g: openstackx has been removed from Debian because it's no longer needed (Debian bug #679077); do you agree with this and can I remove it from Ubuntu too?
+[13:08] <ubottu> Debian bug 679077 in ftp.debian.org "RM: openstackx -- ROM; now useless" [Normal,Open] http://bugs.debian.org/679077
+[13:09] <zul> cjwatson: be my guest
+[13:09] <cjwatson> done, thanks
+[13:19] <cjwatson> stgraber: Do you still care about qtnx?  It's been removed from Debian (Debian bug #652377).
+[13:20] <ubottu> Debian bug 652377 in ftp.debian.org "RM: qtnx -- RoQA; unmaintained, dead upstream" [Normal,Open] http://bugs.debian.org/652377
+=== Tonio_aw is now known as Tonio_
+=== dayangkun_ is now known as dayangkun
+=== ppetraki_ is now known as ppetraki
+=== MacSlow|lunch is now known as MacSlow
+[14:13] <tjaalton> doko: the mesa/llvm issue should fix itself once we prepare the next mesa version for raring, since it got rid of the llvm-backend that caused trouble (moved to the llvm branch by tstellar, targeted for 3.3)
+[14:14] <doko> tjaalton, does this mean, that you need a 3.3 snapshot?
+[14:14] <tjaalton> doko: not necessarily, they said that the radeonsi driver isn't that useful yet anyway, so we could just disable it until 3.3 is released
+[14:15] <doko> ahh, good to know. I don't want to have a snapshot in main
+[14:15] <tjaalton> right
+[14:15] <tjaalton> we could also ship a version just for mesa
+[14:16] <tjaalton> but too much work for little benefit, I think
+[14:21] <stgraber> cjwatson: I think it can go now. It used to be handy to reproduce bugs for older versions of WebLive, but the last of those was natty, so I no longer care :)
+=== chiluk_away is now known as chiluk
+=== pgraner` is now known as pgraner
+=== slank_away is now known as slank
+[14:52] <roadmr> cyphermox: hey! got a minute? I'm preparing a checkbox upload and wanted to ask about the actual uploading process (http://developer.ubuntu.com/packaging/html/udd-uploading.html)
+[14:52] <roadmr> cyphermox: basically I'd push from my branch to ubuntu:checkbox, then dput the source.changes, and that's it?
+[15:10]  * xnox thought lp:checkbox is now used `as if it's lp:ubuntu/checkbox`
+[15:13] <cyphermox> roadmr: depends what your branch is
+[15:13] <cyphermox> if lp:checkbox is still different than ubuntu:checkbox you'll still want to apply a debdiff
+[15:14] <cyphermox> while it needed sponsoring it was easier, but now for your own sanity I'd figure out a way to bring the two branches in sync ;)
+[15:15] <cyphermox> but otherwise, yes, you do the changes on then push to ubuntu:checkbox, and dput the changes file
+[15:17] <roadmr> cyphermox, xnox : that's my next question, we want to ensure the branches at least have common ancestry, does bzr push --overwrite lp:ubuntu/checkbox sound good? (I'd then port the Ubuntu changelog to ensure that doesn't get lost)
+=== arges_ is now known as arges
+[15:18] <roadmr> cyphermox, xnox : having a common ancestor will greatly simplify post-FF merging
+[15:21] <cyphermox> roadmr: doesn't sound like the right way to achieve that
+[15:22] <roadmr> cyphermox: would going the other way do it?
+[15:22] <cyphermox> maybe
+[15:22] <cyphermox> currently looking at something entirely different. maybe try to see how well you can merge ubuntu:checkbox back into lp:checkbox?
+[15:24] <cyphermox> if lp:checkbox already has everything you need I'm not sure you need to worry too much about the rest though; if everything for upload goes through lp:checkbox, you can make your changes there, and build source packages from that branch with no issues
+[15:25] <roadmr> cyphermox: the problem is post-FF, when we have to be selective about which changes in lp:checkbox go into the lp:ubuntu/checkbox (and from there to the package)
+[15:25] <cyphermox> oh, right
+[15:25] <zyga> cjwatson: hey, do you know if there's been any change on the UEFI netboot story
+[15:25] <cjwatson> zyga: No
+[15:25] <roadmr> cyphermox: being selective using patch (because no common ancestry) is very error-prone since patch/diff is  dumber than bzr merge
+[15:25] <zyga> cjwatson: we've been following https://wiki.ubuntu.com/UEFI/PXE-netboot-install
+[15:26] <cjwatson> zyga: Somebody needs to give me a reproducible test case for the GRUB bug I've heard about
+[15:26] <cyphermox> roadmr: could you simply use branches to do that? e.g. branch for a new release and selectively merge from trunk?
+[15:26] <zyga> cjwatson: and got to a point where we have "error: variable `prefix' isn't set"
+[15:26] <cjwatson> One that I can follow using KVM
+[15:26] <zyga> cjwatson: well, if that's the stuff we're seeing we can certainly arrange something for you
+[15:27] <cjwatson> Something that I can run locally
+[15:27] <cjwatson> I'm not going to do this in the lab
+[15:27] <zyga> cjwatson: I see
+[15:27] <roadmr> cyphermox: hm, so branches of lp:checkbox for each release? what happens to lp:ubuntu/checkbox then?
+[15:27] <cjwatson> I need to compile test GRUB binaries and that sort of thing that's a right pain to arrange remotely
+[15:28] <cjwatson> zyga: have you tried using the pre-built secure boot UEFI images?
+[15:28] <zyga> cjwatson: no, do they support netbooting in any way?
+[15:28] <cyphermox> roadmr: it would just keep track of all the uploads. if you see something different there you'd just want to merge it back in, either via a merge of by taking the diff
+[15:28] <cjwatson> probably won't work either but might at least fail differently :-)
+[15:29] <cjwatson> zyga: in theory
+[15:29] <cjwatson> zyga: I'm not aware of any positive reports
+[15:29] <zyga> cjwatson: ok, we are willing to try that, what should we do?
+[15:30] <cjwatson> /ubuntu/dists/raring/main/uefi/grub2-amd64/current/gcdx64.efi rather than building your own with grub-mkimage
+[15:30] <cjwatson> or possibly grubx64.efi, not quite sure
+[15:30] <zyga> cjwatson: right, we'll find that
+[15:30] <lewis__> Will mobile be develop in a open model? Where is the git repository?
+[15:31] <cjwatson> zyga: hmm, actually maybe this is a waste of time
+[15:31] <cjwatson> zyga: I wonder if I can reproduce this problem in kvm based on that wiki page
+[15:33] <zyga> cjwatson: so if we give you access to some hardware remotely
+[15:33] <zyga> cjwatson: could you help us with that a little?
+[15:34] <cjwatson> zyga: my experiences with remote hardware access in Canonical have been excruciatingly painful
+[15:34] <cjwatson> zyga: I'm willing to go to some effort to avoid having to do that
+[15:35] <zyga> hmm
+[15:35] <zyga> maybe we can ship you one
+[15:35] <cjwatson> no thanks
+[15:35] <cjwatson> no space
+[15:35] <cjwatson> zyga: can you send me the test image you're currently using - the one you built with grub-mkimage?
+[15:35] <zyga> yeah
+[15:35] <zyga> roadmr: ^^
+[15:35] <cjwatson> zyga: the one I built just now based on raring produces that same error message, but it's just noise and it works
+[15:35] <zyga> ah
+[15:36] <cjwatson> so that error message is probably not actually the root cause of your problem
+[15:36] <zyga> roadmr: could we push the image to people.c.c?
+[15:36] <roadmr> cjwatson: mine uses quantal, I can certainly build a new one with raring, let me try that
+[15:36] <roadmr> zyga: we can
+=== Tonio_ is now known as Tonio_aw
+[15:37] <cjwatson> given the way this method works, it should be reproducible without actually netbooting
+[15:38] <zyga> cjwatson: what do you mean by that?
+[15:38] <zyga> cjwatson: you mean that it's actually just booting an ISO that was copied over the network?
+[15:38] <cjwatson> the firmware is acquiring the entire thing, grub and the iso, in one giant blob
+[15:38] <zyga> right
+[15:39] <cjwatson> so given that you've got into grub, it shouldn't require any more magic to get as far as the iso
+[15:39] <cjwatson> I mean nothing environment-dependent
+[15:39] <roadmr> cjwatson: this is what we were trying to use
+[15:39] <zyga> yeah, you are right
+[15:39] <roadmr> http://people.canonical.com/~roadmr/bootx64-quantal.efi
+[15:39] <cjwatson> therefore, should reproduce in kvm
+[15:39] <cjwatson> put it in an otherwise empty directory, kvm -L /path/to/built/ovmf/firmware -monitor stdio -m 1024 -hda fat:/path/to/that/directory, and execute the .efi binary from the efi shell
+[15:39] <cjwatson> roadmr: thanks, downloading
+[15:40] <cjwatson> zyga: do you have an OVMF build?
+[15:41] <zyga> cjwatson: yes
+[15:41] <zyga> well, a release actually, I didn't go to build it myself
+[15:41] <cjwatson> zyga: it would be worth trying with the method above to see if you get the same results that way, then
+[15:41] <cjwatson> I built one for SB support, but a release should od
+[15:41] <cjwatson> *do
+[15:41] <zyga> trying
+=== Tonio_aw is now known as Tonio_
+[15:42] <zyga> ok
+[15:42]  * zyga is rusty on his efi shell
+[15:42] <zyga> so what do I do after getting to uefi shell
+[15:43] <cjwatson> fs0:
+[15:43] <cjwatson> then 'dir' and you should see the name of the .efi file - you can then just type that in
+[15:43] <zyga> ah
+[15:43] <zyga> yeah
+[15:43] <zyga> man, like DOS
+[15:43] <zyga> volumes with names
+[15:43] <cjwatson> nostalgia, right
+[15:43] <zyga> yeah
+[15:43] <zyga> works
+[15:43] <cjwatson> remember, this is MODERN FIRMWARE
+[15:43] <zyga> LOL :D
+[15:44] <zyga> I saw that error
+[15:44] <zyga> but now I'm in grub menu
+[15:44] <cjwatson> likewise
+[15:45] <zyga> so install hangs for me, how do I switch to kvm serial console?
+[15:45] <zyga> ok
+[15:45] <zyga> in the KVM window, alt-ctrl-3
+[15:45] <zyga> actually 2
+[15:45] <zyga> hmm
+[15:46] <zyga> so I see the same error as we reported before ('error: variable `prefix isn't set.')
+[15:46] <roadmr> then ' error: no device connected. ' (repeated 8 times)
+[15:46] <zyga> I don't see that message
+[15:46] <zyga> what exactly is on the mini iso
+[15:47] <zyga> what should we be seeing after grub?
+[15:47] <cjwatson> well, you should get to the menu
+[15:48] <cjwatson> "no device connected" is a message from GRUB's PATA driver
+[15:48] <zyga> I tried it a number of times
+[15:48] <zyga> and I cannot even see the kernel booting
+[15:48] <cjwatson> hmm, this may be because you're (unwisely) building in every possible module rather than just the ones you need
+[15:48] <zyga> I just tried the rescue stuff
+[15:49] <cjwatson> so if one of GRUB's drivers gets stuck trying to operate some bit of hardware, it could hang
+[15:49] <zyga> ah
+[15:49] <zyga> that makes sense
+[15:49] <zyga> so for the sake of exercise, which drivers should I be loading for OVMF?
+[15:49] <cjwatson> let's see what minimal set would work
+[15:50] <zyga> and which for random real hardware
+[15:50] <cjwatson> give me a few minutes to experiment here
+[15:50] <cjwatson> shouldn't be hardware-dependent at all
+[15:50] <zyga> thanks, sure
+[15:50] <cjwatson> I mean, the minimal set you need
+[15:50] <cjwatson> after all it's loading the iso from its own image
+[15:54] <cjwatson> zyga: so, for raring, instead of that `...` expression, try:  all_video boot cat echo font gfxterm gzio iso9660 linux memdisk minicmd normal test video
+[15:54] <cjwatson> zyga: for precise/quantal, you'd probably want to replace "all_video" with "efi_gop efi_uga"
+[15:54] <zyga> cjwatson: ok, let me try this and get back to you
+[15:55]  * zyga has local family/kids interrupt
+[16:18] <cjwatson> stgraber: thanks, removed now
+[16:24] <xnox> doko: a cross-buildable libnih is uploaded, but it does _not_ declare two ":native" build-deps. One can work around that by manually running: apt-get build-dep libnih; apt-get build-dep libnih -aarmhf. Wiki updated to yellow/DEP status for sbuild :native support.
+[16:27] <xnox> jodh, libnih crossbuild fixes uploaded ^
+[16:29] <ev> mpt: bdmurray has pointed out that the rank of different problems on errors.u.c can swap quite often
+[16:30] <jodh> xnox: thanks!
+[16:30] <ev> we're wondering if there's a better way to handle this. Maybe a short hash of the problem instead of a ranking?
+[16:30] <roadmr> cyphermox: sorry for the delay, so say I prepare a branch of lp:checkbox with changes I want in ubuntu, how would I integrate them into lp:ubuntu/checkbox ?
+[16:30] <ev> so "9c3d" instead of "#10"
+[16:30] <ev> but you filed the original bug, so I want to make sure it covers your use cases
+[16:30] <bdmurray> ev: and what would that be used for?
+[16:31] <ev> bdmurray: identifying issues over the phone
+[16:31] <cyphermox> roadmr: you can apply the changes on the branch with a diff and upload/push, or just upload and let the importer do it
+[16:32] <cjwatson> ev: would a sequence number be workable?  it has the nice property that you can get a feel for how old an issue is
+[16:32] <roadmr> cyphermox: so you'd prefer to continue doing it the old way (with diff/patch) ?
+[16:32] <cjwatson> (perhaps it's too late to establish that, though)
+[16:32] <ev> we could always back populate them
+[16:33] <cyphermox> roadmr:  it would be much easier if it was branches you could work with directly
+[16:33] <mpt> ev, I suggest fixing bug 1033813 then seeing if that problem persists.
+[16:33] <ubottu> bug 1033813 in Errors "report of most common crashes "today" tracks calendar days, becomes useless when the clock rolls over" [High,Triaged] https://launchpad.net/bugs/1033813
+[16:33] <mpt> ev, because of that bug, early in any day, the rankings will take a while to settle.
+[16:34] <ev> mpt: yeah, you're absolutely right
+[16:34] <bdmurray> is it still early in the day now?
+[16:35] <roadmr> cyphermox: well "internally" that's the way I do it, I branch ubuntu/checkbox and patch my changes into that, but that gap where diff has to be used is the painful part :/
+[16:35] <doko> xnox, fixed ustr
+[16:35] <bdmurray> because the frequency difference between many crashes is quite small
+[16:35] <cyphermox> roadmr: right, but you can do away with this by using release branches and merging just the change you want when you're actually cherry-picking changes post-FF
+[16:36] <mpt> bdmurray, yeah, there are a lot of ties, even.
+[16:37] <mpt> bdmurray, for that reason, in bug 1068060 I suggested making "the past week" the default choice.
+[16:37] <ubottu> bug 1068060 in Errors ""the past week" is missing from table period menu" [Medium,Confirmed] https://launchpad.net/bugs/1068060
+[16:38] <bdmurray> so if that bug (default view of a week) were fixed then having the rank be a unique number would be more useful?
+[16:38] <mpt> I think so, yes.
+[16:39] <mpt> (Though it's hard to tell for sure, not being able to see those counts.)
+[16:39] <smoser> RAOF, around ?
+[16:41] <bdmurray> ev: would it be very challenging to see those counts?
+[16:44] <ev> bdmurray: when you say unique number do you mean the rank as we have it implemented or cjwatson's suggestion of using a sequence number?
+[16:45] <bdmurray> ev: I meant rank as it is currently implemented (without ties)
+[16:45] <seb128> bdrung, micahg, stgraber: hey ... I'm quite disappointed by the libreoffice ppu hostage situation, that's getting ridiculous that our maintainer who is handling for over 1.5 years and got strong endorsement from 3 coredev sponsors get rejected
+[16:45] <ev> so you're asking if making the week view the default is going to be challenging?
+[16:46] <zyga> roadmr: so you tell me it still hangs, after building just few modules in
+[16:46] <ev> yes - we'd first need to track a rolling 7 days and implement TPUT
+[16:46] <zyga> roadmr: can you confirm that it hangs in kvm with ovmf
+[16:46] <ev> we should do this though, definitely
+[16:46] <roadmr> zyga: yes, just the list cjwatson gave earlier, I get the very same error (variable 'prefix' isn't set). Sounds like a grub error to me
+[16:46] <bdmurray> ev: no, how hard would it be to use pycassa to figure out the frequency values for the top 50 for a week to see if there variance in frequency would be greater than now
+[16:47] <seb128> bdrung, micahg: what's this "lack of devel release uploads" btw? since when uploading devel release is a criterious to get upload rights?
+[16:47] <roadmr> zyga: sure, I don't have kvm with ovmf set up though so it'll take a bit
+[16:47] <zyga> roadmr: install kvm, I'll give you the stuff to download for ovmf
+[16:47] <bdmurray> because if the difference isn't greater we should move away from rank
+[16:47] <ev> oh, not terribly difficult. The date range selection lets us do something like that already.
+[16:48] <bdmurray> oh right! ;-)
+[16:49] <cjwatson> roadmr: the bit about prefix is a red herring
+[16:49] <zyga> roadmr: people.canonical.com/~zyga/ovmf.tar.gz -- careful the tarball has no directory inside
+[16:49] <cjwatson> it's basically just a minor misconfiguration such that grub tries to load something or other before it's got all its variables set up properly - but it continues on anyway
+[16:50] <roadmr> cjwatson: ok so we should focus on the next error then? error: no device connected. /me looks it up
+[16:51] <cjwatson> roadmr: you sure you removed pata?  what was your full grub-mkimage line?
+[16:52] <roadmr> cjwatson: http://paste.ubuntu.com/1509967/
+[16:53] <cjwatson> roadmr: please triple-check that that image is really the one you're booting, then, since it shouldn't be possible to get the message you're reporting with that configuration
+[16:53] <cjwatson> i.e. the code should simply not be present
+[16:53] <roadmr> cjwatson: you're right, I dumbly forgot to move it to the proper tftpboot location :/ fixing...
+[16:54] <roadmr> \o/
+[16:55] <cjwatson> better?
+[16:55] <roadmr> zyga, cjwatson : thanks! I got a grub menu now with several install options
+[16:55] <zyga> roadmr: try any
+[16:55] <cjwatson> great
+[16:55] <roadmr> yep, trying the first one, it put me in a d-i environment, install is proceeding now
+[16:56] <zyga> cool
+[16:56] <zyga> roadmr: is that on the desktop that failed before?
+[16:56] <roadmr> zyga: yep, the very same
+[17:03] <zyga> roadmr: so, what's it like?
+[17:04] <roadmr> zyga: it's like... heaven X-D
+[17:04] <roadmr> zyga: hehe install is progressing, no problems so far
+[17:04] <zyga> cool
+[17:04] <zyga> did you do that out of the existing certification infrastructure
+[17:06] <roadmr> zyga: yep, all I really had to change was the file that's sent to the client (in the dhcp server config)
+[17:06] <roadmr> zyga: that'd be quite easy to do with checkbox-satellite, with either a new plugin or a hack of an existing one
+[17:07] <zyga> that's very promising
+[17:07] <zyga> roadmr: we may need to differentiate systems
+[17:07] <zyga> roadmr: we don't have a 'boot via efi' flag, do we?
+[17:07] <roadmr> zyga: nope, that'd be one way to do it (in c3 for instance)
+[17:08] <zyga> roadmr: I'm not that familiar with that part of the system, how else could we do it?
+[17:08] <roadmr> zyga: for experimentation purposes we could add a parameter to launch_testrun to force efi boot for a batch of systems
+[17:08] <zyga> roadmr: dding a flag is not easy, that involves generating message files and those come from the cert site which we don't control
+[17:08] <roadmr> zyga: I think configuring it in one place, per-system, and not worrying about it anywhere else, would be the way to go
+[17:08] <zyga> roadmr: yeah
+[17:09] <kdub> hey all, say I have to have different build rules for different architectures (eg, armhf and amd64)... what is the best way to do this in debian/rules?
+[17:10] <zyga> kdub: I'd use ifeq sections
+=== Tonio_ is now known as Tonio_aw
+[17:10] <zyga> with a bunch of tests on DPKG_ARCHITECTURE (right?) althought I'm not recent on the cross building foo that was added everywhere
+[17:11] <kdub> zyga, its enough to start googling though, thanks, I just wanted to make sure I'm not totally barking up the wrong tree
+[17:12] <zyga> wookey: ^^
+[17:13] <roadmr> cyphermox: apologies for pestering you incessantly :) I'm not too clear on how your release branches idea would ease our lives, maybe an example?
+[17:14] <cjwatson> kdub,zyga: DEB_HOST_ARCH would be the variable to conditionalise on
+[17:14] <roadmr> zyga, cjwatson : install was successful, system is up and running now :D
+[17:14] <zyga> cjwatson: thanks, I need to do some native development once in a while
+[17:14] <zyga> roadmr: excellent
+[17:15] <zyga> roadmr: so
+[17:15] <cjwatson> (and isn't new - there's never been a DPKG_ARCHITECTURE that you might use in debian/rules, although some people might mistakenly have used DEB_BUILD_ARCH I suppose which would break under cross-building)
+[17:15] <cjwatson> roadmr: oh good
+[17:15] <zyga> roadmr: update the taskboard with the cool success story :)
+[17:15] <roadmr> zyga: yes!
+[17:15] <cjwatson> and update the wiki page if you'd be so kind, too
+[17:15] <zyga> cjwatson: ah, I was confused with dpkg-architecture that spits them out :)
+[17:15] <zyga> cjwatson: good point
+[17:16] <kdub> thanks cjwatson
+=== Tonio_aw is now known as Tonio_
+=== Tonio_ is now known as Tonio_aw
+=== yofel_ is now known as yofel
+=== alexlist` is now known as alexlist
+[17:52] <doko> cjwatson, xnox: uploaded build-essential to b-d on python3:any. but looking at your libnih upload, python3:native might be more appropriate? just want to make sure that the interpreter can be executed
+[17:58]  * xnox ponders if it's possible to cross-compile when the current machine arch != DEB_BUILD_ARCH. If that is possible, :any will work yet :native might not be executable.
+[17:59] <cjwatson> DEB_BUILD_ARCH must be of an arch you can execute
+[17:59] <cjwatson> and yes, it's possible, I do it all the time
+[18:00] <cjwatson> doko: I'm not sure it makes a practical difference, THB
+[18:00] <cjwatson> TBH
+[18:00] <xnox> interesting.
+=== henrix is now known as henrix_
+[18:00] <cjwatson> xnox: (specifically, i386 host system, amd64->armhf cross-build chroot)
+[18:00] <cjwatson> (though amd64 kernel)
+[18:01] <cjwatson> amd64 kernel and host system with i386->armhf cross-build chroot would work equally well
+=== henrix_ is now known as henrix
+[18:05] <infinity> cjwatson: Remind me of the location of your sbuild-cross wiki cheat sheet?  I'm redoing my whole setup, and that's falling off my stack since I last did it.
+[18:07] <cjwatson> infinity: https://wiki.ubuntu.com/CrossBuilding
+[18:09] <infinity> cjwatson: How am I ever supposed to find wiki pages with such clear, simple, and obvious naming schemes?
+[18:18] <kdub> when I'm making my chroot with pcreate, I can't seem to get it to take my keyring from the host's /etc/apt/trusted.db, the chroot always has the default keyring. any suggestions?
+=== Tonio_aw is now known as Tonio_
+[18:43] <infinity> tkamppeter: I assume there's already a cups upload in the works that will rm_conffile /etc/logrotate.d/cups from cups?
+[18:43] <infinity> tkamppeter: (Or some other way of avoiding the duplicate conffile between cups and cups-daemon that's making logrotate sad)
+=== salem_ is now known as _salem
+[19:20] <soren> Where can I find information about the tests that are run before packages move from proposed to release?
+[19:22] <infinity> soren: Nowhere, because none are run currently.
+[19:22] <soren> infinity: Oh, the autopkgtest stuff never happened?
+[19:23] <infinity> soren: It's in progress, but it's not plugged into proposed-migration/britney yet.
+[19:23] <soren> Hm. Ok. I must have misinterpreted some conversations then.
+[19:23] <soren> infinity: Alright, cool. Thanks!
+[19:33] <cjwatson> soren: Yeah, I meant to finish that integration last month but ran out of year
+[19:33] <soren> cjwatson: There was a lot of that going around a couple of weeks ago.
+[19:34] <soren> I don't even know... Are we running the auto-pkg-tests at all yet?
+[19:34] <infinity> soren: We are, yeah.  Just not tied into migration.
+[19:34] <soren> Cool.
+[19:34] <soren> Where can I see the output from those tests?
+[19:35] <cjwatson> jenkins.qa.ubuntu.com
+[19:35] <dkessel> https://jenkins.qa.ubuntu.com/view/Raring/view/AutoPkgTest/
+[19:35] <infinity> https://jenkins.qa.ubuntu.com/view/Raring/view/AutoPkgTest/
+[19:35] <dkessel> :)
+[19:35] <dkessel> hello. i wrote one or two of those tests in december
+[19:36] <soren> Oh, each package with autopkgtest tets get a corresponding Jenkins job?
+[19:37] <jtaylor> yes
+[19:37]  * infinity needs to sort out what to do about glibc's testsuite and kvm not getting along.
+[19:37] <infinity> I assume it's probably actually qemu bugs, but finding and fixing those sounds like serious effort.
+[19:40] <soren> One thing about these tests that I haven't really worked out... Why not run the tests during the package builds so that the build can be rejected earlier? I undertand some tests will have lots more dependencies, but some of the example use cases are simply the unit tests.
+[19:41] <infinity> soren: This isn't an either/or thing.  Packages that have build-time testsuites SHOULD be running them, and absolutely SHOULD fail the build if the test fails.
+[19:41] <infinity> soren: But autopkgtest is meant to test a slightly different thing, which is how the actual debs themselves work when installed.
+[19:41] <soren> infinity: So what's the benefit of adding an extra run of those same tests?
+[19:42] <cjwatson> there's stuff in the autopkgtest docs about rationale
+[19:42] <cjwatson> but aside from that, running them this way lets us rerun tests of reverse-dependencies when their dependencies change
+[19:42] <infinity> soren: Running the same tests against a build tree doesn't often make sense (unless it's an rdep rebuild test, as the toolchain does), but tearing out tests and running them against installed binaries can be quite enlightening.
+[19:42] <cjwatson> lets us catch the "somebody changed pygobject and it broke ubiquity" case
+[19:42] <cjwatson> (say)
+[19:42] <soren> That makes sense.
+[19:43] <soren> We've been doing that in Ubuntu-server for a while, actually.
+[19:43] <tumbleweed> and it lets you test that the installed package is functional (that you didn't miss out a vital file)
+[19:43] <Chipzz> infinity: I'ld say that a lot of software isn't designed with that in mind
+[19:43] <infinity> Chipzz: Yes, but that's fixable. :P
+[19:43] <soren> We had a cron job that would take a bunch of packages, bump the version and push it to a ppa to see if the test suites still passed.
+[19:44] <soren> I think it has caught a few things that were introduced by changes to a library the the package in question depended on.
+[19:44] <soren> It's been rare, though.
+[19:44] <Chipzz> infinity: it should also be documented how to run these tests. A couple of weeks ago I wanted to run a python test against my installed python, but it took me a bit to figure out how
+[19:45] <Chipzz> (wasn't on ubuntu though)
+[19:45] <infinity> Chipzz: In the later years of Maemo, Nokia QA was requiring that every single package that was part of the official published API also build a testsuite package (foo-tests depended on test-harness and foo), so their test harness could test debs on the fly.  It took some wrangling to decouple tests from builds, but when coverage increased, it became obviously useful.
+=== rickspencer3_ is now known as rickspencer3
+[19:46] <Chipzz> right. but there the tests are written with the intention of being able to run them outside the source tree
+[19:47] <cjwatson> If they're fixable, we fix them.  If they're not, (a) why wouldn't they be, this is free software, (b) it isn't actually mandatory to have autopkgtests
+[19:47] <infinity> Chipzz: Usually not.  The tests were often us tearing build-tree unit tests out and fixing them to not make in-tree assumptions (and skipping ones that obviously only make sense at build-time)
+[19:47] <Chipzz> I have no proof for this, but I would say that the majority of tests a) isn't designed to be run that way and b) isn't even tested outside the build tree at all
+[19:47] <cjwatson> Chipzz: This doesn't matter.
+[19:47] <cjwatson> It's a distraction.
+[19:47] <infinity> Anyhow, unlike Nokia, we're not mandating anything.
+[19:48] <infinity> So, if you don't want an autopkgtest suite, don't have one.  And wait for some clever fellow to come along and contribute fixes.
+[19:48] <cjwatson> So, sure, it might take some work.  Whatever.
+[19:48] <cjwatson> It's still better than nothing.
+[19:48] <Chipzz> cjwatson: not 100% sure how to interpret your statement. If you mean I'm derailing the discussion, I'll gladly shut up
+[19:48] <cjwatson> I don't see what useful thing it contributes to say that some tests aren't designed for this
+[19:49] <cjwatson> Yes, we know, but it's not relevant because either we fix them or we don't have autopkgtests for that package
+[19:49] <cjwatson> It manifestly hasn't stopped us from having quite a number of autopkgtests already
+[19:49] <cjwatson> And IME it in fact turns out that plenty of test suites already find it convenient for their own purposes to parameterise the locations of the things they're testing
+[19:50] <cjwatson> Sure, not all, and there are often lots of little glitches
+[19:50] <cjwatson> But it's not a doomed endeavour
+[19:52] <cjwatson> autopkgtest has an option to require a built tree to be present, which lets you not have to solve the whole problem at once: you get the feature of retesting things automatically when their dependencies change, without having to fully parameterise the test suite
+[19:54] <Chipzz> cjwatson: anyway my apologies. I tried to join a discussion when I was lacking some of the context I think
+[20:00] <jtaylor> python testsuites are usually very well suited for autopkgtest
+[20:00] <jtaylor> many run from installed locations out of the box
+[20:00] <jtaylor> if the package installs them
+[20:01] <jtaylor> on the otherhand many are not written for integration tests and are not particulary useful
+=== rickspencer3_ is now known as rickspencer3
+[20:09] <glesiak> Hi guys. I am planning to buy laptop and I wanted to ask ubuntu dev community if you have some exp with ulv cpus. Can ultrabook be a good machine for software developer ?
+[20:10] <zul> mterry: ping for some reason i cant get the testsuite to run for testrepository
+[20:11] <lifeless> zul: hi
+[20:12] <zul> lifeless: hey so i tried using make check and it doesnt work
+[20:12] <zul> at all
+[20:13] <lifeless> zul: make check 2>&1 | pastebinit
+[20:13] <lifeless> http://paste.ubuntu.com/1510422/
+[20:13] <lifeless> zul: thats what you should see from a source tree.
+[20:13] <mterry> zul, hyeo
+[20:14] <mterry> zul, I'm in a bit of a fire-fighting mode over here, my hard drive may have died
+[20:14] <zul> mterry: ok ill check back later
+[20:15] <zul> lifeless: http://paste.ubuntu.com/1510427/
+[20:15] <lifeless> zul: you're not running it from source?
+[20:16] <lifeless> zul: bzr branch lp:testrepository
+[20:16] <zul> no from the archive
+[20:16] <lifeless> oh, its not setup to dist all the ancilliary files
+[20:17] <lifeless> a quick look though suggests that that may be all thats missing, I'll add it to MANIFEST.in
+[20:19] <lifeless> theres no other inventory right now - trunk is 0.0.11 exactly.
+[20:19] <lifeless> zul: I'll roll another release after work today
+[20:19] <lifeless> zul: for now, you can get the .testr.conf from bzr and drop it in as a debian/patches patch
+[20:20] <zul> lifeless: ok cool
+=== sroecker_ is now known as sroecker
+[20:21] <lifeless> hmm, I really need to update this stack in debian
+[20:21] <lifeless> and/or hand over to the PPT
+[20:22] <carif> I just read https://help.ubuntu.com/community/SbuildLVMHowto to learn how to sbuild, but I still have a very basic question. What does the logical volume management provide? A fast way to make an initial copy of the chroot before a build?
+[20:23] <jtaylor> yes, via writable snapshots
+[20:23] <jtaylor> cowbuilder provides something similar and may be much simpler
+=== _salem is now known as salem_
+[21:16] <arges> tyhicks: hey
+=== henrix is now known as henrix_
+=== tkamppeter_ is now known as tkamppeter
+[22:07] <tkamppeter> infinity, I have fixed the conffile problems of CUPS in Raring yesterday, as -0ubuntu15.
+[22:09] <tkamppeter> infinity, for Debian CUPS is fixed in the GIT repo, so 1.6.1-1 will come out correctly.
+[22:13] <tyhicks> arges: hi
+[22:13] <arges> tyhicks: hope you had a good new years
+[22:13] <tyhicks> arges: I did. Hope yours went well, too.
+[22:14] <arges> tyhicks: yea pretty good. spent some time away from the computer so that helps : )
+[22:14] <tyhicks> same here :)
+[22:14] <arges> tyhicks: i was looking at bug 1052038
+[22:14] <ubottu> bug 1052038 in eCryptfs "ecryptfs_fnek_sig missing when login at the same time on cron session close" [Medium,In progress] https://launchpad.net/bugs/1052038
+[22:14] <arges> tyhicks: did you have any updates with that? i know there was something blocking it
+[22:15] <tyhicks> arges: I put a halt on it because hallyn had thought he found a regression. Turns out that there was no regression and the SRU should still be in the queue.
+[22:16] <tyhicks> arges: Let me review the wiki and make sure that I have the bug in all of the correct states and the correct teams sponsored
+[22:16] <arges> tyhicks: ok cool I appreciate it
+[22:16] <RAOF> smoser: Not at 3am
+[22:24] <tyhicks> arges: everything looks good, according to https://wiki.ubuntu.com/StableReleaseUpdates#Procedure
+[22:24] <tyhicks> arges: I think we're just waiting on someone from ubuntu-sru to start processing it
+[22:25] <arges> tyhicks: ok. I was just doing the rounds and I didn't see any updates on it.
+[22:25] <arges> cool
+[22:42] <marrusl> hey.  how is the "Supported" field generated generated?  I gather it's in Packages.gz, but I'm not sure how it gets there.
+[22:43] <marrusl> (IOW, how can end users generate them for their own repos)
+=== chiluk is now known as chiluk_away
+[23:00] <marrusl> there must be a better way than editing Packages.gz directly.  though I guess that would do the trick.
+=== kentb is now known as kentb-out
+=== cpg|away is now known as cpg
+=== fisted_ is now known as fisted

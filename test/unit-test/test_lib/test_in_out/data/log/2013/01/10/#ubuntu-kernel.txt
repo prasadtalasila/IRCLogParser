@@ -1,0 +1,348 @@
+=== smb` is now known as smb
+=== henrix_ is now known as henrix
+=== yofel_ is now known as yofel
+[10:36] <apw> maq/b smb
+[10:52]  * cking grabs a coffee
+[11:27] <skynix> hi , can someone tell me the timing for F2FS file system in the kernel comes in?
+[11:27] <skynix> only from curiosity
+[11:32] <infinity> skynix: Looks like it only made it into mainline just now, for 3.8
+[11:32] <infinity> apw: Does the upcoming 3.8 turn enable building the shiny new f2fs?
+[11:32] <infinity> s/turn //
+[11:35] <skynix> infinity: which were very good when it is incorporated in 3.8. thanks for the info
+[11:37] <ppisati> infinity: if it's buildable as a module, yes, it'll probably be there
+[11:38] <infinity> ppisati: I would hope it is.  I can't imagine Ted or Linux accepting a filesystem that couldn't be.
+[11:39] <infinity> s/Linux/Linus/
+[11:39] <infinity> It's obviously bed time for me.
+[11:39] <ppisati> infinity: of course, but could have $bad dependencies
+[11:40] <ppisati> infinity: anyhow, we usually build as far as we can so, i bet it'll be in R
+[11:47] <zequence-w> apw: I'm having trouble updating. All seems to go fine, but when I check the git log, no ABI bumb commit
+[11:47] <zequence-w> And I'm having trouble pushing
+[11:47] <skynix> thx bye
+[11:49] <apw> infinity, should do indeed, i seem to remember it is there
+[11:51] <apw> zequence-w, is there an abi bump in the original branch?  if not you won't need one
+[11:51] <apw> zequence-w, the scripting copies the base abi across, which can mean it is not needed if the fix on master was not a bump
+[11:52] <infinity> The fix in master was indeed not an ABI bump.
+[11:53] <zequence-w> apw: I see. Well, then perhaps my pushing problem was unrelated. Will try to push then
+[11:53] <apw> you will have to force the push as it is a rebase 
+[11:54] <apw> infinity, thanks
+[11:54] <apw> infinity, debian.master/config/config.common.ubuntu:CONFIG_F2FS_FS=m
+[11:55] <infinity> apw: \o/
+[11:55] <apw> not that one wants to be using a new filesystem in the first kernel it appears, ever
+[11:55] <infinity> I must have done something wrong.  This glibc_2.17 passed the testsuite on my first test build.
+[11:56] <infinity> No one rebases ~100 patches by hand and gets it right the first try, right...?
+[11:56] <ricotz> infinity, ;)
+[11:58] <apw> cking, you did the samsung fixes right, it prevented samsung_laptop loading on EFI right ?
+[11:58] <cking> yep
+[12:00] <apw> i have a report that the latest image we sent to them machine checks, and shows samsung_laptop loading
+[12:00] <apw> 3.2.0-29.46 would that contain the fix ?
+[12:01] <henrix> apw: if you're talking about bug #1040557 then it is not not
+[12:01] <ubot2`> Launchpad bug 1040557 in Ubuntu CD Images "UEFI boot live-usb bricks SAMSUNG 530U3C,np700z5c laptop" [Critical,Confirmed] https://launchpad.net/bugs/1040557
+[12:01] <henrix> apw: the fix for that bug is still on -proposed ( 3.2.0-36.57)
+[12:03] <apw> damn so whoever asked them to test, was somewhat premature, cking you are off the hook
+[12:04] <henrix> apw: this is the perfect timing for getting that tested, as we're on verification week ;)
+[12:04] <apw> well they can only test with a full CD image, due to the nature of the issue
+[12:04] <infinity> apw: 3.2.0-36.57 and 3.5.0-22.34 are the kernels we'd want tested.
+[12:05] <apw> and the CD images don't have -proposed in
+[12:05] <cking> testing that fix is problematic w/o the CD image
+[12:05] <infinity> apw: I can spin proposed images for them.
+[12:05] <apw> infinity, yeah they need a -proposed enabled image for them to do that
+[12:05] <apw> infinity, if you could do that then excellent, if you feed the details to langasek, he has been front man on this
+[12:06] <infinity> apw: Today's precise dailies should have the latest lts-quantal on them, BTW.
+[12:06] <infinity> Or, so the logs claim.
+[12:07] <infinity> Anyhow, I need a nap before I contemplate doing such things.
+[12:09] <infinity> apw: (PS: fix my MESH bug)
+[12:14] <apw> sigh :)
+[12:19] <zequence-w> apw: Ah, thanks. 
+[12:23] <apw> rtg, hey ... your -rc3 rebase seems to be lacking an updateconfigs; do you have it or should i push what i have
+[12:24] <rtg> apw, still working on it
+[12:25] <apw> rtg, ok
+[12:26] <rtg> apw, slammed HEAD, repull
+[12:27] <apw> rtg matches what i had, great
+[12:27]  * ppisati goes out for lunch
+[12:27] <rtg> apw, got distracted reading the maintenance manual for my laptop. got to replace a fan
+[12:30] <apw> rtg, heh :)  i have shied away from taking my laptops appart more than necessary to change disks
+[12:30] <rtg> apw, well, you know how I am with my 17" display. Can't live without it :)
+[12:31] <apw> rtg, oh _that_ machine, i am supprised it only needs a fan!
+[12:32] <rtg> apw, its a refurb, but the fan has always been a little noisy. now its getting intolerable. I'm gonna savage the old one for parts.
+[12:37] <rtg> apw, do you see that pitti rehosted ddeb.ubuntu.com ?
+[12:37] <apw> rtg, ahh no, whats changed
+[12:37] <rtg> big ass drive methinks
+[12:38] <apw> i thought they were going into the main pool
+[12:39] <rtg> http://ddebs.ubuntu.com now moved to a new host which has plenty of space, so we won't run into lost ddebs due to "out of space" conditions anytime soon \o/. I completed the migration now and rescued the last 5 days of ddebs from the buildds.
+[12:39] <rtg> from his g+ posting on Jan 8
+[12:41] <apw> yeah, and its still separate from teh archive ...
+[13:10] <xnox> rtg: are there any stats on how quick/slow it's growing in raring?
+[13:10] <xnox> we switched ddebs to xz.
+[13:14] <rtg> xnox, haven't the faintest idea
+[13:51] <rtg> apw, as soon as the armhf build is done I'm gonna upload Ubuntu-3.8.0-0.1. I think all the DKMS packages are in place.
+[13:56] <BenC> rtg: I've rebased on master-next and done a test build/boot on powerpc
+[13:56] <BenC> So I'll have that up shortly after you tag
+[14:07] <rtg> BenC, I've pushed the tag 'cause it looks like the armhf build is gonna complete OK. I'll likely upload within the hour.
+[14:13] <BenC> rtg: thanks…is abi=0 proper for starting? I assumed it was going to be abi=1?
+[14:14] <rtg> BenC, what is proper about an ABI ? It merely needs to be unique with the version number.
+[14:14] <BenC> I just didn't know the build would accept 0 as a real abi, since it used 0 internally
+[14:14] <BenC> Never seen it used before :)
+[14:15] <rtg> BenC, I think the only magic ABI-UPLOAD sequence is 0-0
+[14:16] <BenC> Works for me…just wanted to make sure before I do the same in the ppc
+[14:18] <apw> rtg, sorry been offline with wl hell, i don't think the WL update works, on 3.8 or 3.7
+[14:18] <rtg> apw, um, what is wl ? Broadcom ?
+[14:19] <apw> tseliot, i just installed a 3.8 kernel with your updated wl, and it seems to panic with 3.7 and 3.8
+[14:19] <apw> tseliot, [   27.716022] EIP is at wl_cfg80211_scan+0x2da/0x340 [wl]
+[14:19] <tseliot> apw: panic???
+[14:19] <apw> rtg, yeah brcm
+[14:20] <apw> tseliot, yeah
+[14:20] <tseliot> apw: what version of broadcom are you using and which one were you using before?
+[14:20] <apw> 6.20.155.1+bdcom-0ubuntu4 is what i just updated to
+[14:21] <apw> before that it wouldn't build with 3.8, so i assume a week or so sold
+[14:24] <tseliot> apw: I'm trying to understand if it's my patch that causes that or the new upstream release
+[14:24] <apw> tseliot, my main worry is it blammos with 3.7 as well, looked the same though it tended to break things bad
+[14:25] <rtg> tseliot, http://kernel.ubuntu.com/~rtg/Ubuntu-3.8.0-0.1/
+[14:25] <tseliot> apw: can you try this one, please? https://launchpad.net/ubuntu/+source/bcmwl/5.100.82.112+bdcom-0ubuntu3 (with kernel 3.7)
+[14:27] <apw> tseliot, working on it
+[14:27] <tseliot> apw: my patch shouldn't really affect 3.7 since it uses #if LINUX_VERSION_CODE < KERNEL_VERSION(3, 8, 0)
+[14:27] <tseliot> etc.
+[14:27] <tseliot> thanks
+[14:27] <apw> tseliot, yeah ...
+[14:28] <zequence-w> apw: precise and quantal lowlatencies are ready to be pulled
+[14:28] <apw> zequence-w, thanks
+[14:28] <rtg> apw, maybe I'll go tear my laptop apart whilst you dick around with wl. no use breaking all of those Broadcom users.
+[14:31] <apw> rtg ack
+[14:35] <zequence-w> apw: I had forgotten to push the tag. It's up now
+[14:38] <apw> tseliot, 5.100.82.112+bdcom-0ubuntu3 seems to work on 3.8 just fine
+[14:40] <tseliot> apw: sorry, I meant this one: https://launchpad.net/ubuntu/+source/bcmwl/6.20.155.1+bdcom-0ubuntu2
+[14:41] <tseliot> if 6.20.155.1+bdcom-0ubuntu2 works but 6.20.155.1+bdcom-0ubuntu3 doesn't, then it's my fault
+[14:44] <apw> tseliot, ok working on it, sadly my test box is this one
+[14:44] <tseliot> apw: that's still better than what I have - nothing ;)
+[14:55]  * smb sneaks out for an errand
+[15:00] <apw> tseliot, 6.20.155.1+bdcom-0ubuntu2 is no compile on 3.8 and same blammo on 3.7
+[15:01] <apw> tseliot, so that means it is the upstream update ?
+[15:01] <tseliot> apw: so it's a problem in the blob, not in my patch. The update was requested by hwe
+[15:02] <tseliot> apw: please file a bug report about that
+=== chiluk is now known as chiluk_away
+[15:22] <stgraber> cking: ping
+[15:22] <cking> stgraber, pong
+[15:22] <stgraber> cking: you have an x230 right? did you notice any brightness control problem starting with the 3.7 kernel?
+[15:23] <cking>  stgraber, I've not noticed any
+[15:24] <stgraber> cking: weird. I've been staying on 3.5 for a while for various reasons, including what I just reported as bug 1098216
+[15:24] <ubot2`> Launchpad bug 1098216 in linux (Ubuntu) "Regression in brightness control on Lenovo Thinkpad x230" [Undecided,New] https://launchpad.net/bugs/1098216
+[15:24] <stgraber> I'm now going through https://wiki.ubuntu.com/Kernel/Debugging/Backlight and adding some information to the bug
+[15:24] <cking> lemme see if I can reproduce
+[15:24] <stgraber> one detail that may be relevant is that I'm using mine with UEFI and without BIOS compatibility
+[15:25] <cking> ah, I'm not using UEFI on mine
+[15:26] <stgraber> it also appears that some tools use acpi_video0 and some others intel_backlight. The ones using intel_backlight (gnome-control-center) are still fine, those using acpi_video0 (gnome-settings-daemon + the hotkeys) can't change brightness anymore.
+[15:27] <Sarvatt> stgraber: https://bugzilla.kernel.org/show_bug.cgi?id=51231
+[15:27] <ubot2`> bugzilla.kernel.org bug 51231 in Power-Video "Backlight keys doesn't work on ThinkPad t430s" [Normal,Needinfo]
+[15:29] <cking> stgraber, works OK for me on 3.8-rc2
+[15:30] <stgraber> Sarvatt: definitely looks like it
+[15:30] <stgraber> cking: based on the kernel.org bug report above, my guess is that it only happens on UEFI-only systems
+[15:30] <Sarvatt> cking probably hasnt updated his bios in ages? :P
+[15:31] <stgraber> I'm using mine to test secureboot, so it's the latest firmware from Lenovo with UEFI+SB enabled (which forces BIOS compatibility off)
+[15:31]  * cking steering clear of UEFI on his own kit
+[15:34] <sforshee> stgraber, the firmware is obviously changing something. acpi_video0 only gives you 15 levels with 3.5 and 100 with 3.7.
+[15:34] <sforshee> stgraber, how about an apport-collect to attach the acpi tables?
+[15:37] <stgraber> sforshee: apport isn't terribly happy that I'm running a pre-release of the 3.8 kernel, but I'm now pushing everything that's listed on the wiki, including the acpi tables
+[15:38] <stgraber> sforshee: based on the workarounds on bugzilla, my guess is that the firmware does some version-specific tricks for Windows (as usual) and the kernel is now sending something slightly different, leading to different tables (explaining why acpi_osi="!Windows 2012" apparently fixes it)
+[15:39] <sforshee> stgraber, yep, that's what it sounds like. The relevant code should be in the DSDT
+[15:39] <stgraber> sforshee: bug updated with the tables
+[15:39] <sforshee> I wonder if Windows has some special requirements for the acpi backlight in win8
+[15:39] <sforshee> stgraber, thanks
+[15:40] <cking> sforshee, anything weird like that is expected
+[15:40] <sforshee> expect the unexpected ;-)
+[15:41] <stgraber> now to poke hallyn about my next >= 3.7 kernel bug (/me decided today was "let's make this laptop work with a recent kernel day") ;)
+[15:41] <apw> tseliot, https://bugs.launchpad.net/ubuntu/+source/bcmwl/+bug/1098225
+[15:41] <ubot2`> Launchpad bug 1098225 in bcmwl (Ubuntu) "[raring] bcmwl triggers panics with 3.7 and 3.8 kernels" [Undecided,New]
+[15:42] <tseliot> apw: thanks!
+[15:42] <rtg> apw, shall I hold off on uploading just yet ?
+[15:42] <tseliot> apw: also, please make sure to include your card model
+[15:44] <sforshee> yipee, If (\WIN8) conditions in the backlight code
+[15:45] <apw> tseliot, copied out of the lspci into the subject etc
+[15:45] <tseliot> apw: thanks
+[15:46] <cking> stgraber, your  x230 DSDT checks for Windows 2012, mine doesn't.
+[15:46] <apw> rtg, hard one, for me i am using brcmsmac, but it is not 1) default or 2) covers all the versions
+[15:46]  * cking did buy his x230 the week it first came out, so it has early release firmware
+[15:46] <stgraber> cking: you're probably on the old non-win8 firmware
+[15:46] <cking> yep
+[15:47] <apw> lucky cking 
+[15:47] <jwi> sforshee: makes sense, 3.7 is the first kernel that supports ACPI_OSI_WIN_8
+[15:47] <stgraber> cking: I bought mine a week or so after you bought yours but as I needed to do SB testing, I upgraded to the SB/win8 enabled firmware
+[15:47] <apw> rtg, i'd say give tseliot till EOW and decide then
+[15:47] <rtg> k
+[15:47] <sforshee> cking, stgraber: _BCM seems to do nothing if you don't say you're either Win7 or Vista
+[15:48] <sforshee> hmm, maybe. There are two sets of acpi backlight interfaces
+[15:48] <sforshee> wonder which one is being used
+[15:50] <sforshee> stgraber, what does 'cat /sys/class/backlight/acpi_video0/device/firmware_node/path' output on that machine?
+[15:52] <stgraber> \_SB_.PCI0.VID_
+[15:52] <hallyn> stgraber: i'm actually not remember that bug right now.
+[15:53] <stgraber> hallyn: http://paste.ubuntu.com/1412975/
+[15:53] <hallyn> stgraber: is it filed somewhere, or can you describe?
+[15:53] <hallyn> k
+[15:53]  * hallyn is happy to walk away from *($&%(*& cifs changes messing with userns patchset
+[15:53] <stgraber> hallyn: run that code and you get a stuck loop entry every time you call it. Only way to free it is to reboot
+[15:54] <hallyn> oh. right
+[15:54] <stgraber> hallyn: first spotted on 3.7 and still there with rtg's 3.8 kernel, so apparently I'm the only one doing that kind of weird things with loop devices as nobody else seem to have noticed :)
+[15:55] <hallyn> stgraber: now you don't get it without overlayfs, is that right?
+[15:56] <cking> sforshee, so my older firmware handles _BCM the same, but my _BCL does not have a Win8 special case 
+[15:56] <sforshee> cking, stgraber's is the same
+[15:56] <sforshee> I can't tell yet why it doesn't work
+[15:57] <stgraber> hallyn: I think that's right, let me see if I can easily try without it (ro bind-mount of / sohuld do it)
+[16:00] <stgraber> sforshee: oh, and something I just noticed. acpi_video0 appears to start working after I change the brightness in intel_backlight, but only in a limited range (actual_brightness shows 20 as being the minimum and 70 as being the maximum)
+[16:01] <hallyn> GAH - 2auth needed to d/l as text again 
+[16:01] <sforshee> stgraber, I suspect that there are only specific backlight levels that will affect any change
+[16:01] <hallyn> all right lemme play in a kvmbox.  
+[16:02] <stgraber> hallyn: a quick try with bind-mounting / ro into the test directory (instead of overlayfs) doesn't show the bug, though to be fair, that means that lxc won't actually touch the loop device, so it may take a completely different path and avoid the whole issue
+[16:03] <hallyn> stgraber: so i'm having my own new raring issue, attaching a tap device to virbr0 requires killing and restarting dnsmasq every time, else tap doesn't get an address.  <weird>
+[16:03] <stgraber> hallyn: the fact that everything unmounts cleanly and that nothing is reported to use the loop device is also very strange, as it's not what you'd expect if something was indeed keeping some kind of reference
+[16:05] <sforshee> stgraber, the code tries to find the level being written in a smaller list of values (which is the 16 levels you get with !Windows2012). If it doesn't find the value in the list it does nothing.
+[16:05] <sforshee> stgraber, I'll give you a list of values that ought to work, just a second
+[16:05] <hallyn> stgraber: yeah, i'll look clsely at the mountinfos, but...  it seems some inode may just be sticking around that's pinning the overlayfs...  or something
+[16:07] <sforshee> stgraber, 5 10 20 25 30 35 40 45 50 55 60 65 70 80 90 100
+[16:07] <sforshee> I think any of those value written to acpi_video0 ought to change the brightness
+[16:07] <stgraber> sforshee: yep, matches what I just got with trial and error :)
+=== chiluk_away is now known as chiluk
+[16:08] <stgraber> sforshee: setting anything else will change the value of brightness but not actual_brightness (and obviously not do any actual change)
+[16:08] <sforshee> stupid. Why report a bunch of brightness values that aren't supported?
+[16:09] <sforshee> stgraber, I'm not really sure what to do about this. It's just a case of stupid firmware afaict.
+[16:11] <sforshee> http://msdn.microsoft.com/en-us/library/windows/hardware/jj128256.aspx
+[16:11] <sforshee> "All Windows 8 systems are required to report 101 brightness levels to Windows"
+[16:11] <sforshee> so it's a dumb way of meeting the requirements of Win8 I guess
+[16:12] <stgraber> hehe, yeah, reportin 101 brightness levels, 90% of which don't actually do anything and aren't even rounded to the closest valid value
+[16:13] <sforshee> I bet lenovo supplies a driver which does the rounding or something like that
+[16:13] <stgraber> probably
+[16:15] <hallyn> stgraber: have you pinged apw on this issue?  
+[16:16] <hallyn> given overlayfs is his baby...
+[16:16] <stgraber> hallyn: yep, he was around when we last talked about it here. I can't remember it ringing any particular bell though :)
+[16:16] <hallyn> or have you tried using aufs in place of overlayfs
+[16:16] <hallyn> ok, i'll play - ttyl
+[16:17] <stgraber> hallyn: ah yeah, testing with aufs may be useful to confirm it's indeed limited to overlayfs
+[16:17] <stgraber> sforshee: are there still ACPI quirk tables in the kernel to workaround that kind of specific stupidity? (as getting a fixed firmware pushed to all those machines is fairly unlikely...)
+[16:18] <sforshee> stgraber, do you mean quirking it to report as an older version of Windows? I'm not sure.
+[16:19] <apw> or roudning the values presented to those listed
+[16:20] <sforshee> apw, I'm pretty sure there's no quirk like that
+[16:20] <stgraber> right, either way, that firmware appears to be quite common on Lenovo Ivy Bridge machines and we'll probably see other manufacturer implementing that requirement in a similarly stupid way...
+[16:21] <sforshee> the problem with the quirk apw suggest is that each machine might have it's own unique set of valid backlight levels
+[16:21] <apw> sforshee, and a thingy to list them right ?
+[16:21] <sforshee> that would get to be pretty onerous to maintain, methinks
+[16:21] <sforshee> apw, to list the valid ones?
+[16:22] <apw> right
+[16:22] <sforshee> getting that list is equally likely to be a firmware-specific implementation
+[16:22] <sforshee> the standard interface to get the list is returning crap
+[16:22] <sforshee> but it has a separate internal list of valid values
+[16:23] <sforshee> what that list is named isn't likely to be common across different vendors, maybe even not for a single vendor
+[16:24] <stgraber> hallyn: confirmed to be overlayfs specific, same code using aufs doesn't trigger the bug
+[16:25] <hallyn> stgraber: interesting as i saw nothing really in changelog to account for that.  i'll peruse the diff when ig et back - biab
+[16:27] <sforshee> stgraber, apw: there is a way to quirk it for the equivalent of acpi_osi="!Windows 2012". Not sure what other negative impacts there might be though.
+[16:28] <apw> bloody windows
+[16:28] <apw> i wish they would just go bust
+[16:28] <apw> and a pox on lenovo for their choice of bios vendors
+[16:30] <apw> and two on dell for the choice of wireless vendors
+[16:30] <sforshee> apw, heh
+[16:31] <sforshee> brcmsmac doesn't support your chipset?
+[16:32] <apw> sforshee, it does indeed a bit, but that doesn't stop wl asking to install, and indeed being installed already
+[16:32] <apw> sforshee, and it it not reliable either
+[16:32] <apw> a twice daily dose of rmmod modprobe to keep it working
+[16:33] <apw> not that wl is great either
+[16:33] <apw> but unless we make the decision to switch people, and implement it, etc ...
+[16:33] <sforshee> have you tried 3.8? I made some improvements to brcmsmac.
+[16:34] <apw> sforshee, just switching to it now, so i'll know in a day or two
+[16:34] <apw> the worry is knowing which other chipsets don't work
+[16:34] <apw> we know mine doesn't but ...
+[16:35] <sforshee> apw, cool, let me know. I've been making more changes to brcmsmac lately than Broadcom has been, so I might be able to help.
+[16:36] <apw> sforshee, :) 
+[16:44] <davmor2> hey guys I have this issue http://www.youtube.com/watch?v=1n27V7TsOqs on my lenovo y580 is there anything I can do to help track the cause?
+[16:46] <arges> davmor2: best way to track issues like this is to file a bug
+[16:46] <arges> davmor2: https://help.ubuntu.com/community/ReportingBugs should help explain the process
+[16:58] <melkor> My sounds stop working sometimes, and I was curious if this could be a kernel issue? I am using the 3.7 mainline kernel (which is awesome except for this sound issue).
+[16:58] <melkor> Actually I'm using the 3.7.1
+[17:06] <stgraber> sforshee: I'm adding the kernel cmdline option to workaround that bug for now. Let me know if you need anything else and I'll reboot without it.
+[17:07] <sforshee> stgraber, ack
+[17:08] <herton> hggdh, you don't need to test current ti-omap4 kernels for Precise and Quantal, they need a respin as the master kernels, you can leave it for now (bugs 1095810 and 1095810)
+[17:08] <ubot2`> Launchpad bug 1095810 in Kernel SRU Workflow verification-testing "linux-ti-omap4: 3.5.0-217.24 -proposed tracker" [Undecided,In progress] https://launchpad.net/bugs/1095810
+[17:09] <herton> I meant bugs 1095797 and 1095810
+[17:09] <ubot2`> Launchpad bug 1095797 in Kernel SRU Workflow verification-testing "linux-ti-omap4: 3.2.0-1424.31 -proposed tracker" [Undecided,In progress] https://launchpad.net/bugs/1095797
+[17:09] <ubot2`> Launchpad bug 1095810 in Kernel SRU Workflow verification-testing "linux-ti-omap4: 3.5.0-217.24 -proposed tracker" [Undecided,In progress] https://launchpad.net/bugs/1095810
+[17:12] <hggdh> herton: good to know, I thought they had already been respinned
+[17:14] <herton> hggdh, not yet, the tracking bugs for the respins are 1097912 and 1097595, I'll close the old ones as duplicates.
+[17:18]  * rtg successfully operates on his laptop fan
+[17:23] <hallyn> stgraber: well i do think there's a clue in the ext4-dio-unwrit process somewhere
+=== chiluk is now known as chiluk_away
+[17:32] <apw> rtg, ogasawara, ok the brcm issue is fixed once we have ubuntu5 in the archive
+[17:33] <ogasawara> rtg: did you already have an upload prepped?  if not, I can get it ready.
+[17:35] <sforshee> stgraber, keep an eye out for problems when running with the cmdline quirk. There are a number of places in the acpi tables where behavior depends on whether or not the OS reports itself as Win8. If nothing is broken though then a quirk to prevent claiming to be Win8 may be our best bet.
+[17:36] <stgraber> sforshee: well, I've been running a 3.5 kernel on that machine for the past 4 months without any problem, which I believe is pretty much identical to booting with that cmdline change
+[17:38] <sforshee> stgraber, okay. I'm going to wait a day or two to give the assignee on the upstream bug report a chance to respond, and if he doesn't I'll see what reaction there is to adding a quirk.
+[17:39] <stgraber> sforshee: ok, thanks
+[17:39] <rtg> ogasawara, everything is pushed and ready to go.
+[17:40] <rtg> just waiting on wl to get sorted.
+[17:41] <rtg> apw, so its good to go ?
+[17:42] <apw> tseliot says everything is good if bcm is good, and the last minute fix there in u5 fixes it for me
+[17:42] <rtg> apw, uploading as we chat...
+[17:43] <tseliot> \o/
+[17:43] <apw> rtg, fingers crossed
+[17:47] <rtg> ogasawara, suppose we outta crack a raring LBM one of these days ?
+[17:47] <ogasawara> rtg: oh probably.  do we have anything to shove in it?
+[17:48] <rtg> ogasawara, not that I know of.
+[17:48] <ogasawara> rtg: I can throw a stub package together
+[17:48] <rtg> ogasawara, we prolly have time yet, but it gets to be a PITA after release
+[17:48] <ogasawara> rtg: indeed and I always seem to forget until the last minute
+[17:48]  * ogasawara adds herself a work item reminder
+[17:49] <rtg> ogasawara, so feel free then.
+[17:49] <ogasawara> rtg: ack
+=== chiluk_away is now known as chiluk
+[18:10] <hallyn> stgraber: i wonder if the overlay bug is an opportunity to aks for better introspection of netns's...  though i'm not sur ewhat it would look like
+[18:13]  * jsalisbury watches his Internet connection crawl
+[18:21] <melkor> What is going on with this? https://bugs.launchpad.net/ubuntu/+source/linux/+bug/606238
+[18:21] <ubot2`> Launchpad bug 606238 in linux (Ubuntu Quantal) "synaptic touchpad not recognized on dell latitude e6510 and others" [Low,In progress]
+[18:27] <ppisati> anyne having issue with msmtp and TLS?
+[18:27] <ppisati> msmtp: TLS certificate verification failed: the certificate hasn't got a known issuer
+[18:32] <ppisati> ok, they issued a new cert
+[18:33]  * ppisati disappear for a bit
+=== henrix is now known as henrix_
+=== henrix_ is now known as henrix
+[19:26] <gQuigs> these instruction don't seem to work very well: https://wiki.ubuntu.com/Kernel/KernelBisection#Commmit_bisecting_upstream_kernel_versions
+[19:27] <gQuigs> the best upstream building instructions I've found on the wiki is https://wiki.ubuntu.com/KernelTeam/GitKernelBuild
+[19:27] <gQuigs> I was wondering if I could remove the build instructions using mainline-build-one, from KernelBisection and replace it with a link to GitKernelBuild (and then the actual bisect instructions are fine)
+[19:28] <rtg> jsalisbury, ^^
+[19:28] <jsalisbury> rtg, ack
+[19:29] <jsalisbury> gQuigs, that should be ok.  Or maybe add GitKernelBuild as an alternative to mainling-build-one in the document?
+[19:33] <gQuigs> jsalisbury: I'm trying to simplify the instructions while I am at it.... 
+[19:33] <gQuigs> what are the benefits of keeping people using mainline-build-one?
+[19:35] <jsalisbury> gQuigs, Some folks may find it easier or may have been using it for a while.  It's good to have multiple options in case one doesn't work.
+[19:36] <gQuigs> would mainline-build-one the recommended way of building it?
+[19:38] <dlynes> Is this an appropriate channel to ask about udev regex?
+[19:39] <jsalisbury> gQuigs, it's what I've reccomended in the past and I use.  However, I guess it's up what someone finds easiest.  Using mainline-one-build requires some pre-reqs to be setup, so it's more time consuming up front, but easier for multiple builds.  Whereas GitKernelBuild might be easier for someone that only needs to do a build one time.
+[19:40] <gQuigs> jsalisbury: my only problem is you cna'
+[19:41] <gQuigs> can't just follow the instructions on that page... they don't work as is -  one example: http://askubuntu.com/questions/209511/how-to-bisect-upstream-quntal-kernel-on-precise
+[19:45] <jsalisbury> gQuigs, That failure looks like a chroot was not setup.  That's one of the pre-reqs required for mainline-build-one.  There is a set of scripts in kteam-tools/chroot-setup that do that.  Maybe the wiki page needs updating with some info on the kteam-tools scripts. 
+[19:46] <jsalisbury> gQuigs, so for now, maybe it's best to do as you suggest and reccomend GitKernelBuild for now, until mainline-build-one can be better documented.
+[19:47] <gQuigs> ok will do, I will leave the current mainline-build at the end as an alternative - noting for people building a lot
+[19:48] <gQuigs> thanks jsalisbury
+[19:48] <jsalisbury> gQuigs, thanks.  I've made a note to update the documentation for mainline-build-one.
+[19:58] <rtg> apw, ogasawara, I'm fixing a build failure with the 3.8 upload. I added a dependency on libaudit-dev in order to build perf, but libaudit-dev is a universe package. doh!
+[19:58] <ogasawara> rtg: oops, ack
+=== henrix is now known as henrix_
+=== chiluk is now known as chiluk_away
+[21:14]  * rtg -> EOD
+=== chiluk_away is now known as chiluk
+=== chiluk is now known as chiluk_away
+=== chiluk_away is now known as chiluk
+=== chiluk is now known as chiluk_away
+[22:25] <hallyn> stgraber: the overlayfs thing has nothing to do with namesapces - http://paste.ubuntu.com/1518339/ reproduces
+[22:25] <hallyn> it simply appears to be a umount_tree() bug in overlayfs.  but i can't figure out why
+[22:42] <hallyn> stgraber: and finally, http://paste.ubuntu.com/1518435/
+[22:42] <hallyn> proves that it's doing 'mount' from inside a chroot (or pivot_root) that does it.  If I do the mounts without doing them under chroot, it doesn't do it.  under chroot, it does
+[22:42] <stgraber> hallyn: fun, so not even related to namespaces at all, interesting...
+[22:43] <hallyn> baffling
+[22:43] <stgraber> hallyn: and I'm assuming any kind of mount does that, not only devpts?
+[22:43] <hallyn> so why would current->fs-.root have anything to do with it
+[22:43] <hallyn> yeah
+[22:43] <hallyn> well, i've tried with proc, lemme try tmpfs
+[22:43] <hallyn> yup
+[22:52] <mrbojangles3> hello all, I am having some problems packaging a kernel module using debhelper v 8. right now the folder debian/*modules.in* is not getting created and causing the build to fail
+[22:53] <mrbojangles3> this is a storage driver, so if I understand correctly it needs to be built as a udeb?
+[22:53] <mrbojangles3> is this even the right place to ask about this? or should I head over to debian installer?
+[23:03] <JEEBsv> just a random question regarding the 3.8rcs from the mainline folder -- is the seeming disabling/removal of ath5k drivers (and some other ath stuff) intended?
+[23:16] <hallyn> stgraber: guess i should file a kernel bug (using http://people.canonical.com/~serge/stgraber.script.5), unless you've done it?
+[23:16] <hallyn> maybe smb or apw will have a good idea what's going on 
+[23:22] <stgraber> hallyn: I haven't so it's probably a good plan. You can drop all that lxc config from the script though
+[23:50] <mrbojangles3> maybe I can try this from a different angle, does anyone know how a file matching *modules.in* would be created? is that through the normal build process ?
+[23:50] <mrbojangles3> if I am trying to compile a module against the running kernel version?

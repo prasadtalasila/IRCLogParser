@@ -1,0 +1,412 @@
+=== rsalveti_ is now known as rsalveti
+[07:39] <didrocks> Trevinho: hey, around?
+[08:06] <didrocks> popey: hey! once you are around, some more free karma:
+[08:06] <didrocks> https://code.launchpad.net/~didrocks/dbus-test-runner/bootstrap/+merge/142258
+[08:06] <didrocks> https://code.launchpad.net/~didrocks/libdbusmenu/bootstrap/+merge/142256
+[08:16] <popey> morning didrocks
+[08:17] <didrocks> hey popey! how is the weather in uk?
+[08:18] <popey> Grey. As always. ☺
+[08:20] <didrocks> I share the same sky today! :)
+[08:20] <didrocks> what have you done to Lyon? You have broken my weather! :-)
+[08:41] <didrocks> thanks popey ;)
+[08:41]  * didrocks adds 2 to the list of bootstrapped projects now
+[08:41] <popey> np
+[08:43] <didrocks> seb128: popey: do you use standard icon size for unity?
+[08:43] <didrocks> or reduced one?
+[08:43] <popey> depends which way the wind is blowing
+[08:43] <popey> and which machine
+[08:43] <didrocks> :)
+[08:44] <seb128> didrocks, standard
+[08:44] <popey> reduced on laptop, not on desktop
+[08:44] <didrocks> seb128: when you press super, with the daily build ppa, you don't see any empty space between the launcher and the dash?
+[08:44] <seb128> didrocks, btw ppa from yesterday works fine on my laptop, no issue so far ... should I try tweaking the launcher settings?
+[08:44]  * popey tries
+[08:44] <didrocks> popey: you do use the daily build ppa, right?
+[08:45] <popey> on my desktop, yeah
+[08:45]  * popey boots it
+[08:45] <didrocks> seb128: well, I can reproduce it right away ;)
+[08:45] <didrocks> I see that: http://people.canonical.com/~didrocks/tmp/space_in_unity.png
+[08:46] <seb128> didrocks, I don't see it with the default icon size but I confirm when playing with the slider to change the setting
+[08:46] <seb128> it does it for some values
+[08:46] <didrocks> ok, let me open a bug :)
+[08:46] <didrocks> I see as well a bigger size at initialization for half a second
+[08:47] <seb128> k
+[08:49] <didrocks> seb128: mterry mentionned to me to have a super key which seems wonkey for him, I can't reproduce though
+[08:49] <didrocks> like some super press doesn't seem to be acked by the system
+[08:49] <didrocks> popey: if you can try to see if you reproduce this one ^
+[08:50] <didrocks> seb128: also, if you want to confirm https://bugs.launchpad.net/unity/+bug/1097184
+[08:50] <ubot5> Launchpad bug 1097184 in unity (Ubuntu) "Unity daily-build (07.01.13) empty space between launcher and dash in non default launcher size" [Undecided,New]
+[08:51] <popey> didrocks: i can't reproduce a gap between launcher and dash, with any size dash
+[08:51] <popey> s/dash/launcher/ ☺
+[08:52] <sil2100> Oh, I have the same issue
+[08:52] <popey> i did manage to catch it once as it shrunk while the dash was open
+[08:52] <sil2100> With the Super key
+[08:52] <didrocks> sil2100: ah, please file a bug, not sure if you have the time to investigate, nice to know you are not alone :)
+[08:52] <sil2100> Not sure what happened, but since some update in staging sometimes I have to wank Super key more than once to get it working now
+[08:52] <popey> hmm, not got latest unity from the ppa.. that'll be why
+[08:52] <didrocks> popey: interesting… maybe try to set it to 32 and restart unity
+[08:52] <didrocks> popey: ahhhh :)
+[08:53] <didrocks> popey: yeah, that's it! :)
+[08:53] <didrocks> sil2100: please signal that as soon as you catch it
+[08:53] <popey> i dist-upgraded, still showing archive version...
+[08:53] <popey> hmmm
+[08:53] <didrocks> sil2100: it's easier then to find where the regression comes from :)
+[08:53] <didrocks> popey: do you really have the daily-build ppa?
+[08:54] <seb128> didrocks, I had some issues opening the dash with super as well
+[08:54]  * popey stabs ppa-purge and add-apt-repository
+[08:54] <popey> ppa-purge adds a # in .list files, add-apt-repository doesn't notice this
+[08:54] <popey> so blindly says "okay, added repo" but actually doesn't uncomment the list file
+[08:54] <seb128> didrocks, it seems like if you act fat-finger and stay a bit too long on the key the tap doesn't work
+[08:55] <seb128> didrocks, not sure if that's new I tend to use the mouse rather than the keyboard to go to the dash
+[08:55] <didrocks> seb128: ah, indeed, with fat-finger
+[08:55] <didrocks> but the press was 250ms IIRC
+[08:55] <didrocks> maybe the delay should be a little bit longer, not sure if it changed though, didn't see that in the merges
+[08:56] <didrocks> sil2100: want to give it a shot? IIRC, it's a simple #define, you can try increment it
+[08:56] <seb128> didrocks, well in "normal" tapping it seems to work fine in any case
+[08:56] <didrocks> yeah, but slow tapping isn't triggered
+[08:56] <didrocks> and I think in some case of testing, it should
+[08:56] <didrocks> popey: interesting :)
+[08:57] <popey> annoying!
+[08:57] <didrocks> interestingly annoying? :)
+[08:57] <popey> very
+[08:58] <popey> didrocks: ok, i have a gap now ☺
+[08:58] <popey> "thanks"
+[08:58] <didrocks> popey: you can put a sticker on it, that's handy! :)
+[08:58] <didrocks> ok, a small one :p
+[08:58] <popey> and yes, it's losing super keypresses
+[08:59] <didrocks> ok, so 2 noticed issues to be fixed before releasing to distro
+[08:59] <didrocks> popey: seb128: do you mind if one of you open the bug for it?
+[09:01] <popey> sure, will do
+[09:01] <sil2100> didrocks: for fixing the Super key-press issue you mean?
+[09:02] <didrocks> yep :)
+[09:02] <sil2100> didrocks: will try, I'll dig and see if they actually changed something that could have caused it to (if the delay changed, or maybe the method how the delay is treated)
+[09:03] <didrocks> sil2100: thanks! :)
+[09:06] <popey> sil2100: bug 1097189
+[09:06] <ubot5> bug 1097189 in Unity "Super key not registered if held too long" [Undecided,New] https://launchpad.net/bugs/1097189
+[09:07] <davidcalle> didrocks, hey. mhr3 told me you would prefer a branch per scope (and I know why), but do you know how to deal with automated translations in this case?
+[09:08] <didrocks> davidcalle: I think we'll go on translation in the ubuntu package, or do you mean you want to activate the possibility to translate in the upstream project?
+[09:08] <davidcalle> didrocks, oh right, forgot about this possibility. Fine for me then.
+[09:09] <didrocks> because if you want to do that, it will be one launchpad project per scope, and it's not fun for you I guess :/
+[09:09] <didrocks> davidcalle: yeah, so don't enable the translation in the ubuntu-scopes launchpad projects
+[09:09] <didrocks> davidcalle: I think it's the easiest, I gave it another thought this week-end, that's why it changed since Friday ;)
+[09:09] <didrocks> and when I thought about it again, I guess you were during your lunch break, not online! :-)
+[09:10] <davidcalle> didrocks, no problem. ;-)
+[09:17] <didrocks> hey mmrazik, can you give it a look? https://code.launchpad.net/~didrocks/libdbusmenu/bootstrap/+merge/142256 it succeeded in one arch, not the other one
+[09:17] <didrocks> and the two pre-merging archs succeded
+[09:17] <didrocks> succeedeed*
+[09:18] <mmrazik> didrocks: looking at it but "xvfb-run: error: Xvfb failed to start" doesn't look very familiar
+[09:21] <didrocks> mmrazik: seems a configuration issue not making it runnable as it ran on i386 before the commit phase and succeeded in http://jenkins.qa.ubuntu.com/job/dbusmenu-ci/./build=pbuilder,distribution=raring,flavor=i386/20/console
+[09:22] <mmrazik> didrocks: don't understand
+[09:22] <didrocks> mmrazik: well, this one PASSED, isn't it? it's the same arch
+[09:22] <mmrazik> sure
+[09:22] <mmrazik> but I just don't see why xvfb-run suddenly stopped working
+[09:23] <mmrazik> not aware of any specific configuration for xvfb-run
+[09:23] <didrocks> mmrazik: if the machine you run on/the configuration is different, maybe there is a different X server started?
+[09:23] <didrocks> maybe just try otherwise rekicking it…
+[09:23] <mmrazik> didrocks: yes please, try to re-approve
+[09:24] <mmrazik> didrocks: the builder machine is shared so maybe some other test/build influenced the build
+[09:24] <mmrazik> but in case of xvfb-run I would expect it doesn't really care
+[09:24] <mmrazik> there is no X running on those builder machines
+[09:25] <didrocks> weird…
+[09:25] <didrocks> hey andyrock, how are you?
+[09:26] <andyrock> didrocks, good what's up?
+[09:26] <didrocks> andyrock: there is a regression in unity trunk, maybe you will know what happened: bug #1097184
+[09:26] <ubot5> bug 1097184 in unity (Ubuntu) "Unity daily-build (07.01.13) empty space between launcher and dash in non default launcher size" [Low,Confirmed] https://launchpad.net/bugs/1097184
+[09:27] <didrocks> andyrock: do you think you can/have time to work on it? As told on the bug report, the first hint is that on startup, the launcher has the regular size for 0.5s
+[09:28] <andyrock> didrocks, "the launcher has the regular size for 0.5s" it should not be the problem
+[09:28] <didrocks> ok, so another bug? :)
+[09:28] <andyrock> yup let me check DashController.cpp :)
+[09:29] <didrocks> thanks! :)
+[09:33] <duflu> didrocks, sil2100, popey: lp:unity 2970 made the timeout configurable and changed the default from 250 to 130ms. Change it back to 250 if you like :)
+[09:33] <didrocks> yeah, I think this will be saner value, most of tapping are between 250 and 300ms (it's 300ms on android)
+[09:33] <sil2100> I think 250ms was fine ;p
+[09:34] <sil2100> duflu: thanks for the info!
+[09:34]  * sil2100 prepares a merge request
+[09:34] <duflu> didrocks: In independent tests by myself and Brandon we both concluded anything above 130 was "too long". But I don't mind...
+[09:34] <duflu> didrocks: It's because Compiz reliable tap detection is turned off. If the Super timeout is 250 then it's too easy for Super+other_keys to trigger the dash
+[09:35] <didrocks> duflu: any reason than compiz reliable tap detection to be turned off btw?
+[09:35] <didrocks> sil2100: gimme gimme :)
+[09:35] <duflu> didrocks: To fix: https://bugs.launchpad.net/bugs/950160
+[09:35] <ubot5> Launchpad bug 950160 in OEM Priority Project precise "Unity blocks other programs from binding globally to Super+* (* = any key)" [Critical,In progress]
+[09:36] <didrocks> and we don't have anymore issue with alt + something?
+[09:36] <duflu> didrocks: It's not turned off for Alt. So not a problem :)
+[09:36] <didrocks> ah ok :)
+[09:45] <andyrock> didrocks, https://code.launchpad.net/~3v1n0/unity/launcher-options-single-emission
+[09:45] <andyrock> didrocks, i think it's causing the regression
+[09:46] <andyrock> fixing it
+[09:46] <didrocks> andyrock: ah, nice that you spotted the cause, yeah, it seems to be linked
+[09:46] <didrocks> andyrock: do you think that this position is testable?
+[09:47] <andyrock> maybe with autopilot
+[09:51] <didrocks> sil2100: so, now that I've been able to run against latest unity the indicator-unity tests, here are the results:
+[09:51] <Mirv> added a note to the bug report about the side effect reported by smagoun that brandon is currently looking at
+[09:51] <didrocks> sil2100: http://10.97.0.1:8080/job/ps-indicators-autopilot-release-testing/40/label=autopilot-ati/testReport/
+[09:51] <didrocks> sil2100: http://10.97.0.1:8080/job/ps-indicators-autopilot-release-testing/40/label=autopilot-nvidia/testReport/
+[09:51] <didrocks> so 7/8 to fix still (-4 you really did fix, isn't it?)
+[09:53] <sil2100> huh, still failures?
+[09:53] <sil2100> Let me see that :/
+[09:54] <sil2100> test_gedit_undo again?!
+[09:54] <didrocks> seems :/
+[09:54] <sil2100> This means war
+[09:54] <didrocks> on both
+[09:54] <didrocks> at least, the failing ones are common to both
+[09:57] <sil2100> Ok, but now gedit_undo fails differently
+[09:57] <sil2100> And a new failure
+[09:58] <didrocks> ah, at least, what you have done had an impact :)
+[09:59] <didrocks> sil2100: not sure how your load is, but maybe just finish the tap thing so that it's merged, then, I'll approve it and you can go on the failures?
+[10:03] <sil2100> didrocks: the tap thing is submitted for review, so I will look into those failures
+[10:03] <sil2100> (actually am now)
+[10:03] <didrocks> sil2100: jumping on your MP! :-)
+[10:03] <didrocks> sil2100: thanks ;)
+[10:03] <sil2100> https://code.launchpad.net/~sil2100/unity/unity_dash_tap_duration/+merge/142273
+[10:03] <didrocks> if only that was giving ingress points :)
+[10:04] <didrocks> sil2100: oh, yo udidn't link it to the bug report
+[10:04] <didrocks> let me do it
+[10:04] <sil2100> The undo and the one new failure I can try fixing, but the next/prev ones are really mystical - I thought that introducing a wait for the started application will help, but in the end it didn't
+[10:04] <sil2100> But I'll try looking a bit deeper
+[10:04] <sil2100> oh, sorry about that ;)
+[10:05] <didrocks> the 4 test_dash_hud is the one you fix and need another review, right?
+[10:05] <didrocks> maybe after the gedit_undo, you can try unity.tests.test_hud.HudBehaviorTests.test_closes_then_focuses_window_on_mouse_down before the next/prev black magic :)
+[10:37] <andyrock> didrocks, that was the problem. it's fixed now
+[10:37] <andyrock> need to write an ap test
+[10:37] <didrocks> andyrock: you rock! :-)
+[10:38] <andyrock> ;)
+[11:06] <didrocks> mmrazik: is this one stalled? https://code.launchpad.net/~didrocks/libdbusmenu/bootstrap/+merge/142256
+[11:06] <mmrazik> didrocks: I just received an e-mail about that
+[11:06] <didrocks> ah? good timing then :)
+=== mmrazik is now known as mmrazik|afk
+=== _salem is now known as salem_
+=== mmrazik|afk is now known as mmrazik
+[11:37] <didrocks> mmrazik: we disable the autopilot job as jibel is trying to make the intel box working with raring
+[11:37] <mmrazik> didrocks: ok
+[11:38] <didrocks> and then, once we have the daily build running, this will enable us to kill the staging ppa and this job :)
+[11:38] <mmrazik> didrocks: mhm. the dbusmenu job still failing :-/
+[11:38] <didrocks> mmrazik: urgh, I can't reproduce it here, with a pbuilder, everything is working
+[11:39] <mmrazik> randomly, as now it failed on differen builder host (the same where it passed previously) and different arch
+=== dandrader is now known as dandrader|afk
+=== dandrader|afk is now known as dandrader
+=== gatox is now known as gatox_brb
+[12:45] <didrocks> sil2100: any progress btw? :)
+=== gatox_brb is now known as gatox
+=== MacSlow is now known as MacSlow|lunch
+=== mmrazik is now known as mmrazik|afk
+[13:20] <petko10> hey guys , I have a question about developing for the Ubuntu phone OS - the native language is QML/Qt5/C++ right ?
+[13:22] <larsu> petko10, yes: http://developer.ubuntu.com/get-started/gomobile/
+[13:27] <petko10> ok ,nice (I asked , because , though i read most of the info on the gomobile, I didn't see any C++ code , but it's not hard to figure that qt=c++ as I think of it)
+[13:38] <sil2100> didrocks: yes, but now a short break for preparing lunch
+=== mmrazik|afk is now known as mmrazik
+=== MacSlow|lunch is now known as MacSlow
+=== dandrader is now known as dandrader|lunch
+=== mmrazik is now known as mmrazik|otp
+=== dandrader|lunch is now known as dandrader
+[16:27] <didrocks> mterry: hey! I think you saw that your regression you found was a real one :)
+[16:27] <mterry> didrocks, yeah, looks like it got fixed already
+[16:28] <didrocks> mterry: yeah, I pinged and harassed people
+[16:28] <didrocks> mterry: how full is our plate? do you have time for indicators and unity tests issues?
+[16:29] <mterry> didrocks, mmm, I've got stuff.  I can take some of it off your plate...
+[16:29] <didrocks> mterry: yeah, there are basically 2 kinds of thing, and they are quite urgent to have daily unity release
+[16:29] <mterry> didrocks, OK
+[16:30] <didrocks> mterry: first one is about bootstrapping dbusmenu and libappindicator
+[16:30] <didrocks> dbusmenu still has a test stability issue when merging
+[16:30] <didrocks> see https://code.launchpad.net/~didrocks/libdbusmenu/bootstrap/+merge/142256 for instance
+[16:30] <didrocks> so if you can give it a look, why it's failing on some archs…
+[16:32] <didrocks> the second is libappindicator, which needs bootstrapping and test passing during build, see it with cyphermox about where he stops
+[16:32] <didrocks> lp:~mathieu-tl/+junk/libappindicator for some debug infos
+[16:33] <didrocks> the second issue is what sil2100 is working on
+[16:33] <cyphermox> well, that's basically where I'm at
+[16:33] <cyphermox> didrocks: seems to me like dbusmenu is failing because the script run-xfvb.sh is probably very broken in some way
+[16:33] <sil2100> o/
+[16:34] <cyphermox> mterry: libappindicator: i'm trying to figure out what might be different between the gtk2 tests and gtk3 tests that would explain why the gtk3 tests reproducibly fail while the gtk2 tests pass
+[16:34] <didrocks> mterry: if you have knowledge about that, that would be great ^
+[16:35] <didrocks> mterry: second things is about indicator autopilot tests
+[16:36] <didrocks> mterry: we need to fix them all to be able to start releasing daily unity
+=== dandrader is now known as dandrader|afk
+[16:36] <didrocks> the list is at jenkins-qa/job/ps-indicators-autopilot-release-testing/
+[16:36] <didrocks> you can see the 3 archs
+[16:37] <mterry> didrocks,  https://jenkins.qa.ubuntu.com/view/PS/job/ps-indicators-autopilot-release-testing/
+[16:37] <mterry> oh
+[16:37] <mterry> OK, cool
+[16:37] <didrocks> we have 10/7/10 failures
+[16:37] <mterry> Was about to ask if that was right url
+[16:37] <didrocks> yeah, this is the public mirroring :)
+[16:37] <didrocks> so sil2100 has a regression fix for 4 of them
+[16:37] <didrocks> so normally this would be 6/3/6 remaining
+[16:38] <didrocks> can you please coordinate with sil2100 and bregma (who will put brandon on line) to get that to 0?
+[16:38] <didrocks> this can be either tests not stable
+[16:38] <mterry> OK
+[16:38] <didrocks> or real issues
+[16:38] <didrocks> mterry: sil2100 can help you to run autopilot
+[16:40] <sil2100> I see that some issues are still AP typical issues
+[16:45] <mterry> sil2100, is there a wiki for getting myself able to run the indicator autopilot tests?
+=== dandrader|afk is now known as dandrader
+[16:51] <sil2100> mterry: a wiki? hm, not really, sadly...
+[16:54]  * mterry goes on lunch+errands, but will come back.  sil2100, if you could leave some notes on running autopilot, unless it's literally as simple as running autopilot inside the indicator source somewhere
+[17:02] <sil2100> mterry: I'll send you an e-mail if that's fine with you?
+[17:03] <didrocks> sil2100: mterry is in the US, so if you can do that before going EOD, it would be awesome :)
+[17:17] <bschaefer> sil2100, mterry hey, I hear you guys are work on fixing the AP tests?
+[17:18] <sil2100> Yes, some failures regarding the indicators mostly
+[17:18] <bschaefer> sil2100, well I was going to join in, and wanted to make sure I didn't step on anyones toes :)
+[17:20] <sil2100> bschaefer: some of the failing tests, for instance, are due to AP not waiting for the application to get focus
+[17:20] <sil2100> (at least that's how it looks like it)
+[17:20] <bschaefer> sil2100, o dang...thomi had a nice ap-view branch that made a list of all the failing AP tests along with the video
+[17:21] <bschaefer> though the video isn't that hard to get from jenkins
+[17:21] <bschaefer> sil2100, this is the list your working through right? http://paste.ubuntu.com/1510013/
+[17:21] <sil2100> Yes, I'm using it all the time ;)
+[17:21] <sil2100> apview.html banzai!
+[17:21] <bschaefer> :)
+[17:21] <bschaefer> yup!
+[17:22] <sil2100> bschaefer: yes, more or less - there are even some more, since the latest indicator ap results have more test failed
+[17:23] <bschaefer> alright, ill keep checking jeninks for more.
+[17:23] <bschaefer> sil2100, I think i've noticed a bug in unity though....when you do a 'unity' and something is striping focus off the windows in the first say 60 seconds
+[17:24] <bschaefer> though i wasn't sure if it was something I was doing :)
+[17:24] <bschaefer> which could explain the AP tests losing focus of an application (since its a fresh reboot)
+[17:24] <sil2100> oh!
+[17:25] <sil2100> That would, hm, really answer the question of why gedit_undo failed last time
+[17:25] <sil2100> hm
+[17:25] <bschaefer> yeah... i was going to dig into it after I got over a bunch of other work I was doing
+[17:26] <bschaefer> im thinking it could be the switcher, but it would be nice to have someone else confirm it :)
+[17:26] <sil2100> Never noticed it though - you say it happens after start of unity?
+[17:26] <bschaefer> yeah
+[17:26] <sil2100> I'll try on a guest session now
+[17:26] <bschaefer> as I have been restarting unity a bunch now
+[17:26] <bschaefer> sil2100, well a compiz --replace
+[17:28]  * bschaefer goes to add debuging statment to nux event loop
+[17:35] <sil2100> Holy shat, you're right
+[17:36] <bschaefer> well dam...I should have filed a bug about it
+[17:36] <bschaefer> well either way, Ill work on fixing that
+[17:36] <sil2100> After like 20-25 seconds suddenly all apps loose focus
+[17:36] <bschaefer> yeah, its strange, ill see what window is doing this in the nux event loop...ill see shortly!
+[17:38] <sil2100> bschaefer: should I fill a bug?
+[17:38] <bschaefer> sil2100, sure, and assign it to me :)
+[17:39]  * bschaefer hopes this is the cause of the problems in the AP tests
+[17:42] <sil2100> This would make sense, since I tried fixing the issues by adding an assertion of window focus, but it didn't help - and it also answers the question why I was unable to reproduce it here
+[17:42] <sil2100> I only once reproduced one of the problems, and I think it might have been right after unity --replace
+[17:42] <bschaefer> sil2100, yeah, interesting, it looks like the switcher steals focus for some reason....
+[17:42] <sil2100> I didn't notice it
+[17:42] <sil2100> \o/
+[17:43] <bschaefer> though let me double check
+[17:43] <sil2100> bschaefer: anyway, great catch!
+[17:43] <bschaefer> a bunch of events when through when it happened
+[17:43] <bschaefer> thanks! You have no idea how annoying that bug was when trying to reset/compile/test/repeat haha
+[17:44] <bschaefer> sil2100, definitely the switcher....
+[17:45] <bschaefer> it sends a bunch of PropertyNotify events when it happens ... interesting ... time to go fix it
+[17:48] <sil2100> bschaefer: https://bugs.launchpad.net/ubuntu/+source/unity/+bug/1097368
+[17:48] <ubot5> Launchpad bug 1097368 in unity (Ubuntu) "Windows losing focus after the start/restart of Unity" [Undecided,New]
+[17:48] <bschaefer> sil2100, thanks for filing that!
+[17:49] <bschaefer> sil2100, sorry I hadnt yet, that could have saved you some time ...
+[17:52] <sil2100> bschaefer: no problem, good that you spotted it even now ;)
+[17:54] <bschaefer> yeah, hopefully the fix will be simple!
+=== me4oslav is now known as me4oslav-muffins
+[18:09] <bschaefer> sil2100, interesting, the problem appears to be in SwitcherController::ContructWindow, view_window_->EnableInputWindow(true, "Switcher", false, false);
+[18:09] <bschaefer> if you remove that line, everything works, as that chunk of code should be in ShowView (which it is)
+[18:10] <bschaefer> the switcher window it self was being focus (but since its just an nux::XInputWindow really there is no title)
+[18:12] <sil2100> bschaefer: does it need to steal focus?
+[18:12] <sil2100> I mean, hm
+[18:12] <bschaefer> sil2100, nope, it was happening when it was being created
+[18:12] <bschaefer> as there is a bit of a delay when things get created unless you force it
+[18:12] <bschaefer> like with the dash
+[18:13] <sil2100> bschaefer: excellent, well, we don't want it doing that then ;p!
+[18:13] <bschaefer> sil2100, it needs to take the focus when the switcher is started, but there is code in ShowView to do that, which it does :)
+[18:13] <bschaefer> sil2100, sooo now to test this ... hmm
+[18:13] <bschaefer> I don't want to have an AP test that is 30+ seconds long...for each arc
+[18:13] <sil2100> Not sure if that's easy autopilot-testable...
+[18:14] <bschaefer> yeha...
+[18:14] <sil2100> Right, and besides it would require a clean unity start
+[18:14] <bschaefer> plus having to do a compiz  --replace
+[18:14] <bschaefer> yup
+[18:14] <bschaefer> a unit test no...
+[18:14] <sil2100> So maybe an unit test? I know they're not really meant for such things
+[18:14] <bschaefer> i mean...
+[18:14] <bschaefer> hmm...well we could fake creating a the switcher
+[18:15] <bschaefer> which then we could possibly check the panel title
+[18:15] <bschaefer> as it will be empty if it steals focus
+[18:15] <sil2100> hoo, ok, that sounds nice
+[18:15] <bschaefer> well im not sure if I have access to the panel in a unit test
+[18:16] <bschaefer> but I think I can find something to check, I can dig into
+[18:16] <sil2100> Since normally I would say 'let's not test it', but then we'll forget about this issue and again after a while, if it gets reintroduced, we'll be thinking 'what the heck is going on' unnecessarily
+[18:17] <bschaefer> sil2100, yeah I agree, this is one of those regressions that is hard to detect
+[18:17] <bschaefer> as looking at the rev, it was introduced by me :), at like 2500
+[18:18] <bschaefer> sil2100, what are you running? 13.04 or 12.10?
+[18:18]  * bschaefer hopes this wasn't back ported to 12.04
+[18:20] <sil2100> I'm running 12.10, but from staging
+[18:20] <sil2100> I'll check on precise if it's there ;)
+[18:20] <bschaefer> cool, thanks!
+[18:22] <bschaefer> o interesting, it is on a 75ms timer, which is why the unit test atm don't catch it either
+[18:24] <bschaefer> actually no its 20 seconds...
+[18:24] <bschaefer> dam variables looking the same
+[18:30] <sil2100> heh ;)
+[18:30] <sil2100> See you tomorrow!
+[18:34] <bregma> bschaefer, what was the issue with the switcher messing up the AP tests?
+[18:35] <bschaefer> bregma, i haven't confirmed it, but I should run those AP tests
+[18:35] <bschaefer> bregma, it is leaning towards that
+[18:35] <bregma> I'm just looking at what needs to be done to get proper unit tests set up for the switcher
+[18:36] <bregma> so I'm particularly interested
+[18:37] <bschaefer> oo yeah, hmm well I was looking at the unit test, and creating the switcher doesn't appear to make it lose focus :(
+[18:37] <bschaefer> soo that either means there is a deeper problem...or you need to run the unity stack to get it to lose focus
+[18:44] <bregma> the unit tests don't take into account of the fact that a significant portion of the logic of the switcher is in the Unity compiz plugin:  there's a signal fired off when the Switcher is initialized later after its creation, and it's connected to something in the nuityshell somewhere
+[18:45] <bschaefer> bregma, hmm well that could explain that, it would just be nice to fail in a simple unit test :)
+[18:46] <bschaefer> there are bits in the unityshell.cpp that should be moved into the switchercontroller
+[18:46] <bschaefer> .cpp
+[18:46] <bregma> bschaefer, absolutely -- I'm working on a task list for that
+[18:46] <bregma> part of our new focus on total QA
+[18:47] <bschaefer> bregma, awesome, im guessing that is why we need those books haha
+[18:47] <bregma> Switcher seems like a good place to start because it (should be) pretty much self contained
+[18:47] <bschaefer> yes it should!
+[18:48]  * bschaefer wonders why autopilot is being mean
+[18:51] <bregma> hmm, nothing activated by that Switcher signal should be stealing focus
+[18:51] <bschaefer> well I need to dig into why EnableInput for the view steals focus when running unity vs a unit test
+[18:52] <bschaefer> as the problem is in SwitcherController::ContructWindow()
+[18:52] <bregma> how can you tell?
+[18:53] <bschaefer> if you do a compiz --replace and wait 20 secods
+[18:53] <bschaefer> seconds you lose window focus
+[18:53] <bschaefer> and by adding print statements I found it was in construct window, and I commented out enableinputs and then did a compiz --replace
+[18:53] <bschaefer> and then the window focus was no longer being lost
+[18:53] <bregma> ConstructWIndow() calls EnableInputWindow() (from Nux) ... would that do it?
+[18:54] <bschaefer> yeah, that is what the problem was
+[18:54] <bschaefer> but ... doing a unit test that just creates a switcher, and gets to that function doesn't cause unity to lose window focus...
+[18:55] <bschaefer> though...do the unit tests run on a different X Server?
+[18:55] <bschaefer> besides the :)
+[18:55] <bschaefer> :0
+[18:56] <bregma> technically, the unit tests should not need a server and should not uncover this problem
+[18:56] <bregma> that's another story
+[18:57] <bschaefer> very true, I don't think a unit test is proper for this...
+[18:57] <bschaefer> nor is an AP test
+[18:58] <bregma> either way, nux::BaseWindow::EnableInputWindow() is being called with take_focus set to false, so I would expect it to not grab the focus
+[18:58] <bschaefer> yeah I noticed that as well...I need to spend some more time in figuring out *why* that is enable input is causing it to lose window focus
+[18:58] <bregma> ...unless the Nux ABO has changed again and there's a misalignment, but I think that's unlikely
+[18:59] <bregma> *ABI
+[18:59] <bschaefer> yeah, ill do some digging into Nux to figure out why...
+[19:00] <bschaefer> also you can see something is sending the UBUS message to the panel, saying we lost focus
+=== salem_ is now known as _salem
+[19:00] <bschaefer> but it doesn't know the name of the window
+=== me4oslav-muffins is now known as me4olsav
+[19:01] <bschaefer> bregma, looking at BaseWindow...it shows the window if the first bool is true
+[19:01] <bschaefer> which simply showing the window could be the problem
+[19:02] <bregma> gorram badly named variables, we need to bring in the daeth penlaty for those
+[19:02] <bschaefer> yes... very
+[19:02] <bregma> no, daeth is too good for 'em
+[19:03] <bschaefer> the take_focus is just for the XInputWindow
+[19:03] <bregma> a boolean variable name 'b'
+[19:03] <bschaefer> haha
+[19:03] <bregma> it answers the question, 'is it b?'
+[19:03] <bschaefer> yes it is a b!
+[19:04] <bschaefer> now everyone knows, though since its an explicit typing system it should be easy to tell!
+[19:05] <bregma> well, it seems to be that creating an XInputWindow without take_focus set shouldn;t steal the focus, but now I have to brush up on XInputWindow
+[19:06] <bschaefer> yeah, the XInputWindow uses the the take_focus to send an PropertyNotify that it is taking focus
+[19:06] <bschaefer> so it sends an XEvent
+[19:06] <bschaefer> which is the event I was receiving  when the switcher was stealing focus
+[19:07] <bregma> so how has this ever worked properly?
+[19:08]  * bschaefer wonders the same thing
+[19:08] <bregma> second question:  why is the Switcher created as a persistent object and not created when needed?
+[19:08] <bschaefer> its the SwitcherController that is just created once
+[19:08] <bschaefer> the model gets created each time you hit alt+tab
+[19:09] <bschaefer> and why there is a timer...im guessing so there is a better start up time....(its done with the dash and the lenses as well)
+[19:10] <bregma> that's my guess, but having the Switcher (and dash et al) created when needed also saves time, and makes simpler more reliable code
+[19:11] <bregma> one of the things on my list is to see comparative timings of persistent vs. as-needed design for the Switcher
+[19:11] <bschaefer> yes...hmm ill see if the EnableTakeFocus is called when the switcher steals focus...
+[19:11] <bschaefer> that would be nice, we still need to get some timing done to work on improving the dash speed
+[19:11]  * bschaefer wonders who that was passed onto
+=== me4olsav is now known as me4oslav
+=== godbyk-feynman is now known as godbyk
+=== _salem is now known as salem_
+[23:34] <Stewi3_89> Hi can someone help me restoring unity desktop? I've tryied some Google tips but still not working
+[23:37] <bschaefer> Stewi3_89, could you explain the problem a bit more?

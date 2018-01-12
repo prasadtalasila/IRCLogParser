@@ -1,0 +1,168 @@
+[06:02] <wallyworld__> jam: hello, meeting time?
+[06:14] <jam> wallyworld__: it was, but I have to run to the grocery store for my wife. Will be back in a bit. Sorry I missed my alarm earlier.
+[06:26] <wallyworld__> jam: ok, ping me when you get back
+[06:31] <jam> wallyworld__: back
+[06:31] <wallyworld__> ok
+[08:07] <TheMue> Morning all.
+[08:12] <rogpeppe> TheMue, jam. wallyworld__: mornin'
+[08:12] <jam> morning rogpeppe
+[08:13] <rogpeppe> jam: how're you doing for snow?
+[08:14] <jam> rogpeppe: here in Dubai, the low is about 10deg C. Not much snow here :)
+[08:14] <rogpeppe> jam: ha, i thought you were in the uk...
+[08:14] <jam> (well, weather reports says low of 17 this week)
+[08:14] <jam> I used to be in NL
+[08:15] <jam> mgz is in UK
+[08:15] <rogpeppe> jam: doh, why did i think you were in the UK?
+[08:15] <rogpeppe> jam: i've no idea
+[08:15] <jam> i've been there for conferences and such, but I've never lived in UK
+[08:17] <rogpeppe> jam: anyway, lots of snow here, and more coming... definite advantages to working at home
+[08:17] <jam> rogpeppe: you usually still have to make it out for food. but yeah, not having hours of commuting in the snow is a good thing.
+[08:18] <rogpeppe> jam: still got a few carrots in the garden :-)
+[08:19] <jam> rogpeppe: ready frozen carrots :)
+[08:19] <rogpeppe> jam: mmm
+[08:29] <TheMue> We had some centimeters fresh snow this morning, but in south it seems to be more. The major airport yesterday also had ice rain.
+[08:32]  * TheMue likes new technology, his boarding pass for his flight tomorrow to MUC is now in passbook on his iphone.
+=== openpercept is now known as mohits
+[09:54] <jam> dimitern: cfx3ac2..
+[09:54] <jam> ugh
+[09:55] <jam> ignore that :)
+[09:55] <dimitern> jam: :) ok
+[10:53] <TheMue> lunchtime
+[11:15] <niemeyer> Good morning!
+[11:18] <dimitern> niemeyer: morning!
+[11:19] <TheMue> niemeyer: Morning.
+[11:28] <rogpeppe> niemeyer, dimitern: yo!
+[11:29] <dimitern> rogpeppe: hiya
+[11:29] <niemeyer> dimitern, TheMue, rogpeppe: Heya!
+[11:29] <niemeyer> Good weekends?
+[11:30] <dimitern> good :) and lazy
+[11:30] <rogpeppe> niemeyer: yes thanks - went to see some old friends in the Lake District
+[11:31] <rogpeppe> niemeyer: i now ache from too much energetic sliding around on an iced over pond
+[11:31] <rogpeppe> niemeyer: quick question about mgo
+[11:31] <niemeyer> rogpeppe: Wow, sounds fun :)
+[11:32] <niemeyer> rogpeppe: Sure
+[11:32] <rogpeppe> niemeyer: if a connection to mgo is broken, will mgo retry by making a new connection, or will that (and subsequent) requests just give an error?
+[11:33] <rogpeppe> niemeyer: it was. their kids loved it, after some initial trepidation (the ice did crack alarmingly!)
+[11:34] <niemeyer> rogpeppe: An on going request returns an error, since assumptions about that specific connection may change, but post-Refresh sessions will block until the connection is back
+[11:34] <jam> mgz: poke for great mumbling
+[11:34] <niemeyer> rogpeppe: Ugh, sounds dangerous :-)
+[11:34] <mgz> jam: I'm on
+[11:34] <rogpeppe> niemeyer: the subtext is: i want to test what happens in the machine agent if the different independent parts die, so i'm wondering about a good way to provoke that
+[11:35] <rogpeppe> niemeyer: it would have been dangerous... if the pond was more that 6 inches deep :-)
+[11:35] <rogpeppe> s/that/than/
+[11:35] <niemeyer> rogpeppe: Haha :)
+[11:35] <niemeyer> rogpeppe: Yeah, not a big deal :)
+[11:35] <niemeyer> rogpeppe: So
+[11:36] <niemeyer> rogpeppe: Provoke what, specifically?
+[11:36] <niemeyer> rogpeppe: Break the connection?
+[11:36] <rogpeppe> niemeyer: yeah
+[11:36] <niemeyer> rogpeppe: It's a normal TCP connection, so the usual goes.. mgo tests stop the server for a moment, for example
+[11:39] <rogpeppe> niemeyer: thanks. i might try that (i was thinking setting up a proxy address, but just stopping the server would probably be easier)
+[11:40] <niemeyer> rogpeppe: Yeah. In theory we actually already do that, just at a different time
+[11:58] <niemeyer> rogpeppe: ping
+[11:58] <rogpeppe> niemeyer: pong
+[11:59] <niemeyer> rogpeppe: Have you seen my previous messages, or was my connection broken already?
+[11:59] <rogpeppe> niemeyer: last message i saw was:
+[11:59] <rogpeppe> [11:40:25] <niemeyer> rogpeppe: Yeah. In theory we actually already do that, just at a different time
+[12:00] <niemeyer> rogpeppe: Okay
+[12:00] <niemeyer> rogpeppe: So I sent you a message about a SSL change coming in MongoDB
+[12:00] <niemeyer> rogpeppe: The only thing relevant there is the link, actually
+[12:00] <rogpeppe> niemeyer: ah, sounds useful
+[12:01] <niemeyer> rogpeppe: It says client certificates will be enforced in 2.4, and that we can actually force them with a flag explicitly before that
+[12:01] <niemeyer> rogpeppe: We should probably enable that flag
+[12:01] <niemeyer> rogpeppe: I'm slightly unsure of the consequences, though.. I don't know what OpenSSL does when one asks to verify the peer certificate, without actually providing any client CAs
+[12:02] <rogpeppe> niemeyer: hmm
+[12:02] <rogpeppe> niemeyer: who do we want to sign the client certificate?
+[12:03] <niemeyer> rogpeppe: I don't know.. I suppose the same CA would actually be fine.. but the question is really how validation occurs in this case. I'm unsure
+[12:03] <rogpeppe> niemeyer: i thought we were using passwods to verify the client
+[12:03] <niemeyer> rogpeppe: That's something else..
+[12:03] <rogpeppe> niemeyer: perhaps it's not a good idea to use the same CA, otherwise any of our clients can masquerade as a server, no?
+[12:04] <niemeyer> rogpeppe: It realliy depends on what approach we used
+[12:04] <rogpeppe> niemeyer: oh, perhaps i'm understanding something different by client-cert verification
+[12:04] <niemeyer> rogpeppe: Exactly.. I don't know what that really means for Mongo either.. the code looks pretty simplistic
+[12:04] <niemeyer> rogpeppe: It just calls SSL_get_verify_result on whatever cert was provided by the peer
+[12:05] <rogpeppe> niemeyer: the peer (as in the mongodb peer server)? or the client?
+[12:05] <dimitern> jam, mgz: so when you can PTAL https://codereview.appspot.com/7098074/ - landing this and the other branch https://codereview.appspot.com/7133043/ will unblock my bootstrap work
+[12:07] <rogpeppe> niemeyer: if it's going to do this by default, we definitely want to enable it early though, to see what effect it has on our stuff.
+[12:07] <niemeyer> rogpeppe: The client
+[12:08] <niemeyer> rogpeppe: I actually think we shouldn't worry by now
+[12:08] <niemeyer> rogpeppe: We should really focus on the API stuff so we can obsolete that stuff on our usage ASAP
+[12:08] <rogpeppe> niemeyer: yeah. i wonder what it does if the client doesn't present a cert
+[12:09] <niemeyer> rogpeppe: It fails
+[12:10] <rogpeppe> niemeyer: yeah, we defnitely want to get the API going properly before that's enabled. it makes sense for the way we'll be using mongo after we've got the API (the api server can make its own client cert for connection, if it wants)
+[13:08] <niemeyer> error: cannot upload tools: cannot write file "tools/juju-1.9.7-precise-amd64.tgz" to control bucket: Please re-send this request to the specified temporary endpoint. Continue to use the original request endpoint for future requests.
+[13:08] <niemeyer> I thought we had fixed this
+[13:08] <niemeyer> Oh, hmm
+[13:16] <niemeyer> No.. still broken
+[13:19] <niemeyer> Yeah, for some reason I can't make it work on sa-east-1
+[13:19] <niemeyer> Will ask David
+[13:22] <rogpeppe> niemeyer: i haven't seen that error before
+[13:25] <niemeyer> rogpeppe: Happens only when I try to use the local region
+[13:25] <rogpeppe> niemeyer: ah. i should probably try different regions.
+[13:25] <rogpeppe> niemeyer: BTW TestBootstrapWithDefaultSeries fails every time for me live
+[13:26] <rogpeppe> niemeyer: i've been meaning to get around to looking at it
+[13:26] <rogpeppe> niemeyer: because it's the only thing that consistently stops all the live tests passing
+[13:28] <niemeyer> rogpeppe: Would be great to know what's up with it
+[13:28] <rogpeppe> niemeyer: yeah. do you see the same problem, BTW?
+[13:28] <niemeyer> rogpeppe: No, I haven't run it
+[13:28] <rogpeppe> niemeyer: (i only get it when running all live tests)
+[13:29] <niemeyer> machines:
+[13:29] <niemeyer>   "0":
+[13:29] <niemeyer> That's a backwards incompatible change, I guess
+[13:29] <niemeyer> An unnecessary one at that
+[13:30] <rogpeppe> niemeyer: i guess that happened when we moved to string machine ids. i'd presumed the tests remained the same.
+[13:36] <rogpeppe> niemeyer: hmm, i'm not sure how TestBootstrapWithDefaultSeries can ever have worked in combination with the other tests - it doesn't destroy the environment before bootstrapping
+[13:37] <rogpeppe> niemeyer: actually, it can't do that either. more thought required.
+[13:47] <TheMue> Aaaah, back again, my MAAS server stolen my network connection. Sh*t.
+[14:05] <rogpeppe> ultra-trivial CL anyone? (code move only) https://codereview.appspot.com/7175043
+[14:06] <rogpeppe> TheMue, niemeyer: %
+[14:06] <rogpeppe> ^
+[14:08] <niemeyer> rogpeppe: Hmm.. -1 in principle..
+[14:08] <niemeyer> rogpeppe: They're close to the only location where the methods are used right now
+[14:09] <niemeyer> rogpeppe: Aren't they?
+[14:09] <rogpeppe> niemeyer: no, they're used by the tests for all agents that use agentSuite
+[14:09] <rogpeppe> niemeyer: that's why i made them methods on agentSuite - i just didn't move them in the original CL so that i minimised code churn
+[14:10] <niemeyer> rogpeppe: I see.. LGTM
+[14:11] <rogpeppe> niemeyer: after checking, they're not *all* used by all agents, but each one is used by at least one test outside upgrade_test.go
+[14:12] <rogpeppe> niemeyer: which i think makes it worth it
+[14:12] <rogpeppe> niemeyer: thanks
+=== TheRealMue is now known as TheMue
+[14:32] <niemeyer> rogpeppe: Any luck with the test?
+[14:32] <rogpeppe> niemeyer: yes, i've got a fix. it's not right, but it's ok for now i think - it's certainly no worse
+[14:32] <rogpeppe> niemeyer: one mo, i'll propose it
+[14:36] <rogpeppe> niemeyer: https://codereview.appspot.com/7179043
+[14:36] <rogpeppe> niemeyer: the comment is a bit hopeful BTW - i have no way of verifying that it works on openstack.
+[14:41] <niemeyer> rogpeppe: This seems crackful
+[14:43] <niemeyer> rogpeppe: The goal of the test was to not affect the real environment from the suite
+[14:43] <niemeyer> rogpeppe: I probably screwed that up
+[14:47] <niemeyer> rogpeppe: I think we should just remove that test for now
+[14:47] <niemeyer> rogpeppe: The amount of hackery going on there and the amount of time we've spent on this outweights its benefits
+[14:47] <niemeyer> rogpeppe: I was silly to propose this
+[14:47] <niemeyer> rogpeppe: We should have a functional test that runs that kind of verification from outsie
+[14:47] <niemeyer> outside
+[14:48] <niemeyer> rogpeppe: Instead of trying to build a complete environment within the suite that includes multiple distros, multiple environments, and whatnot
+[14:49] <rogpeppe> niemeyer: i think you're right
+[14:49] <rogpeppe> niemeyer: do you want to redo the test?
+[14:49] <niemeyer> rogpeppe: redo?
+[14:49] <rogpeppe> niemeyer: i'm just going for lunch, BTW
+[14:50] <rogpeppe> niemeyer: oh, sorry, i thought you'd written it
+[14:50] <niemeyer> <niemeyer> rogpeppe: I think we should just remove that test for now
+[14:50] <niemeyer> rogpeppe: Yes, I did
+[14:50] <rogpeppe> niemeyer: i was referring to your "we should have a function test" remark
+[14:50] <rogpeppe> al
+[14:51] <rogpeppe> niemeyer: ok, i'll remove it for now.
+[14:51] <niemeyer> rogpeppe: Thanks
+[14:51] <niemeyer> I'll go for lunch too
+[14:52] <rogpeppe> niemeyer: slightly longer lunch break today if that's ok - back in a couple of hours
+[14:56] <dimitern> fwereade: hey! arrived ok and ready for sprinting? ;)
+[16:40] <mgz> dimitern: is there anything else you need reviewing today to keep moving forward?
+[16:41] <dimitern> mgz: no, until those branches land and I propose my changes
+[16:42] <mgz> dimitern: ace, poke me if you need anything else
+[16:43] <dimitern> mgz: sure, thanks
+[17:02] <rogpeppe> back
+[18:38] <niemeyer> Hmpf
+[18:48]  * niemeyer curious about the sprint activities
+[19:51] <rogpeppe> niemeyer: actually running the API server now (not yet connecting to it though) https://codereview.appspot.com/7178044
+[19:52] <rogpeppe> and that's me for the day
+[19:52] <rogpeppe> g'night all
+[19:53] <niemeyer> rogpeppe: Sweet, have a great night

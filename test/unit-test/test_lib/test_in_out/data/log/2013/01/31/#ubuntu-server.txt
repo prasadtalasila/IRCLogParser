@@ -1,0 +1,730 @@
+[00:09] <zul> hallyn: i think im hitting that lxc oops bug again bug 861656
+[00:09] <uvirtbot> Launchpad bug 861656 in nova "Kernel oops when nbd device is removed before it is unmounted" [High,Confirmed] https://launchpad.net/bugs/861656
+=== megha is now known as gia
+[00:31] <hallyn> zul: this is with libvirt-lxc?
+[00:32] <zul> hallyn: yep
+[00:33] <hallyn> zul: that's one that i don't think is on any blueprint but i did at some poin twant want to revisit
+[00:36] <zul> hallyn: this is the cause of it
+[00:37] <zul> https://bugs.launchpad.net/nova/+bug/1091639 (why it is doing private containers)
+[00:37] <uvirtbot> Launchpad bug 1091639 in nova "LXC with LVM image backend: fail to delete instance" [Undecided,Fix released]
+[00:43] <dragonious> anyone on that can give me a hand. I have managed to chroot a user to a specified folder but he cant upload or make file changes or add directories/folders. I have also gone in and made changes for pam_umask but they aernt working.
+[00:45] <hallyn> zul: can't libvirt-lxc let you specify unmounted blockdev rootfs for container?
+[00:45] <zul> hallyn: i think im not sure
+[00:45] <hallyn> k
+[00:49] <zul> hallyn:  libvirt-lxc does support bind mounts so maybe we should look at that again
+[00:49] <dragonious> I followed a blog post I found at blog.swiftbyte.com/linux/allowing-sftp-access-while-chrooting-the-user-and-denying-shell-access
+[00:52] <dragonious> the only changes I made to his post was to add " -u 0002" after" subsystem sftp internal-sftp" in the sshd_config file
+[00:52] <dragonious> can anyone please help me figure this out I been at it all day and I can feel that im close lol
+[01:02] <dragonious> anyone on that can help me with this?
+[01:20] <dragonious> jrib: Im here
+[01:21] <jrib> dragonious: pastebin your sshd_config and ls -ld of the path for the chroot as well as all of its parent directories
+[01:22] <dragonious> jrib: ok one sec pls
+[01:25] <dragonious> jrib: here is the sshd_config http://pastebin.com/9ntC5wVE
+[01:26] <dragonious> jrib: unfortunatly im realy new to the terminal and I'm not positive how to run the ls -ld cammand do I need to sudo that ?
+[01:27] <jrib> dragonious: sudo shouldn't be required
+[01:28] <hallyn> zul: you know the linux bug doesn't make sense to me.  looking at the qemu-nbd source, it keeps an open fd on the file the whole time - so the rm of the backing file should do exactly nothing - inode sticks around.  weird.
+[01:28] <hallyn> yeah i'll need to revisit that one one day soon
+[01:29] <dragonious> jrib: so "ls -ld /var/www/dr/" ?
+[01:29] <jrib> dragonious: if that's the user's home directory, sure
+[01:30] <dragonious> dragonious@SNAPPERSERVER:~$ ls -ld
+[01:30] <dragonious> drwxr-xr-x 19 dragonious www-data 4096 Jan 30 19:22 .
+[01:30] <dragonious> dragonious@SNAPPERSERVER:~$ ls -ld /var/www/dr/
+[01:30] <dragonious> drwxr-xr-x 3 root root 4096 Jan 30 16:29 /var/www/dr/
+[01:30] <dragonious> dragonious@SNAPPERSERVER:~$
+[01:30] <dragonious> sorry to spam shoud have used the link
+[01:32] <jrib> dragonious: now the same with /var/www /var and /
+[01:34] <dragonious> http://pastebin.com/AWSjztv0
+[01:34] <jrib> dragonious: so what happens now when you try to use sftp?
+[01:36] <dragonious> jrib: when logging in via WinSCP I can view all the files in the home dir but can not add to or delet any files nor can I add folders
+[01:37] <dragonious> jrib: I havent tried from my personal login yet to see if it is affected
+[01:38] <jrib> dragonious: try on ubuntu with sftp
+[01:38] <jrib> dragonious: scp won't work if that's how winscp transfers file by default
+[01:38] <dragonious> jrib: the only ubuntu I have is the server itself
+[01:38] <jrib> dragonious: that will do :)
+[01:39] <dragonious> kk thats where I am ;)
+[01:39] <jrib> dragonious: alternatively, you can check winscp options but I'm not familiar with it
+[01:40] <jrib> dragonious: http://winscp.net/eng/docs/protocols apparently you can select at the login prompt which protocol to use
+[01:40] <dragonious> jrib: one sec pls
+[01:40] <dragonious> jrib: I will go check
+[01:41] <dragonious> jrib: it is currently set for sftp
+[01:42] <jrib> dragonious: I'd still suggest checking with sftp on ubuntu to make sure winscp isn't behaving strangely
+[01:42] <dragonious> jrib: ok will do looking for the sftp client now, my server here has Kubuntu desktop on it.
+[01:43] <jrib> dragonious: it's a command line program
+=== NomadJim_ is now known as NomadJim
+[01:43] <jrib> dragonious: sftp user@host
+[01:43] <dragonious> jrib: ahh I see
+[01:45] <dragonious> I appologize again Im very new to terminal as I said before
+[01:46] <dragonious> ok Im logged into sftp with the user account I set up to be chrooted
+[01:46] <dragonious> jrib: I am now logged in to the sftp
+[01:47] <jrib> dragonious: alright, you can do "ls" and make sure it looks like you're in the right place.  Then try to make a directory with "mkdir sftpisfun" (or whatever)
+[01:47] <dragonious> jrib: ok one sec
+[01:48] <dragonious> couldn't create directory: Permission denied
+[01:49] <jrib> dragonious: well that rules that out :)
+[01:49] <dragonious> jrib: im in the right place but couldn't create directory
+[01:49] <dragonious> jrib: sorry realy new linux in general just sucking it all in
+[01:50] <dragonious> jrib: does my sshd_config look right?
+[01:50] <chriys> hi guys i have an issue. I pointed my domain to the no-ip on my ubuntu-server. It works but i can only access the web server from home. But if i go outside of my local network i cannot access to my website even if i use the no-ip address or the ip address of my computer
+[01:51] <jrib> dragonious: it looks ok to me, but to troubleshoot, let's comment some lines and see if we can narrow down the issue.  If you commend both lines with "internal-sftp" in them, restart the ssh server, and then connect again, are you able to make a directory?
+[01:51] <jrib> s/commend/comment
+[01:51] <chriys> this kind of weird because 2 days ago i was able to access to my ssh using mydomain.com
+=== Jikan is now known as Jikai
+[01:52] <jrib> chriys: do you want to share the domain (pm if you don't want the whole internet to know)
+[01:52] <sarnold> dragonious: your user account cannot modify your directory because it is root owned and permissions are 755 -- you can either change the owner of the directory to whatever your user account is, or you can grant the user account write access -- either via a new group, or by giving _everybody_ write permission to the directory, or by use setfacl to give that specific user write access to the directory.
+[01:53] <jrib> sarnold: he's using ChrootDirectory in sshd_config
+[01:53] <sarnold> chriys: your provider may block incoming port 80 and allow inoming port 22
+[01:53] <sarnold> jrib: yes, he wants to try to limit the user to the one directory, and has chosen this method to do it.
+[01:53] <dragonious> like this http://pastebin.com/seatp4FQ
+[01:53] <jrib> sarnold: yes, isn't it correct to have the ChrootDirectory be root owned and only writable by root?  That is what the man page suggests
+[01:54] <sarnold> jrib: so it does; I assumed they were allowed to own their home directory though...
+[01:55] <chriys> sarnold i ran a test from grc.com to see which of my port are open but i don't very well understand the result of the test
+[01:55] <sarnold> chriys: heh, I'm not too shocked...
+[01:56] <dragonious> sarnold: I followed this blog post : blog.swiftbyte.com/linux/allowing-sftp-access-while-chrooting-the-user-and-denying-shell-access
+[01:56] <jrib> chriys: firewall issue perhaps?
+[01:57] <chriys> the ports are open on my router
+[01:57] <sarnold> dragonious: did you follow this step? sudo chown sally:sftponly -R /var/www/vhosts/domain.com/
+[01:57] <jrib> chriys: and you're forwarding port 80 to the server in your network?
+[01:57] <sarnold> ahhhhh, he undoes it a second later.
+[01:57] <jrib> heh
+[01:57] <sarnold> how is that supposed to be useful?
+[01:57] <dragonious> sarnold: the only change I made was to add "-u 0002" after the internal-sftp part of sshd_config
+[01:57] <chriys> jrid: yes i forward it to my network
+[01:58] <dragonious> sarnold: and yes I followed it exactly
+[01:58] <chriys> sarnold: how to see if the port is open.
+[01:58] <sarnold> dragonious: then create the user a directory under that, 'edit', change its ownership...
+[01:58] <sarnold> chriys: netstat -lp | grep :80
+[01:59] <chriys> oh crap i'm not home right now
+[01:59] <dragonious> sarnold: so make a folder inside of that directory and change its ownership to the user and not root
+[01:59] <arbittt> can some body help me solve juju and MAAS problem : I have also posted on ask ubuntu  http://askubuntu.com/questions/249350/juju-cannot-deploy-services-with-maas
+[02:00] <sarnold> arbittt: dang, edited by jcas tro and he didn't have an answer.. that's a good one. :) have you tried asking in #maas?
+[02:00] <sarnold> dragonious: yeah, then the user can upload and modify files in that directory.
+[02:00] <sarnold> ... I'm still upset about the home directory needing to be owned by root. seems silly.
+[02:01] <arbittt> sarnold: ok!! I'll go ask one
+[02:01] <sarnold> seems pointless. seems wrong.
+[02:01] <sarnold> chriys: ssh in? :)
+[02:01] <dragonious> sarnold: ok let me test that one sec
+[02:02] <chriys> no it doesn't work from here. even if it was 2 day ago.
+[02:02] <chriys> i also change the port of the ssh and it was working
+[02:02] <jrib> ah, I notice that ChrootDirectory will also change to the user's home relative to the ChrootDirectory.  So you can probably work around this by making /chroots, chroot to there, then move this dr directory in /chroots and make /chroots/dr the user's home.  Then  you can symlink to this from /var/www
+[02:02] <dragonious> OK that works! thank you so much
+[02:02] <dragonious> sarnold: Thank you so much
+[02:03] <sarnold> jrib: oh!
+[02:03] <sarnold> jrib: that makes me much less angry :D
+[02:03] <dragonious> jrib: and you as well thank you so much for your time
+[02:03] <sarnold> dragonious: don't go yet, jrib's got a good solution :)
+[02:03] <jrib> yeah, I had always assumed that the user got ownership of the chroot but obviously that was not correct :)
+[02:03] <dragonious> jrib: Thank you esspecially for coming over to this cannel and helpping me I appreciate it guys
+[02:04] <dragonious> jrib: sarnold: ok im here
+[02:04] <sarnold> jrib: the downside ot the symlink idea is that the webserver probably won't traverse symlinks.
+[02:05] <dragonious> jrib: let us also not forget that I have a very low knowledge lvl of this OS
+[02:05] <sarnold> dragonious: try this: chrootdirectory /var/www/%h  --- and chown -R user:group /var/www/dr/ (or whatever it was..)
+[02:05] <dragonious> sarnold: ok one sec
+[02:07] <dragonious> do i put " chrootdirectory /var/www/%h  --- and chown -R user:group /var/www/dr/ "  or do I split that at the ---   ?
+[02:09] <sarnold> dragonious: hrm. maybe just "chrootdirectory %h" ... (the sshd_config manpage has details on %u and %u..)
+[02:09] <sarnold> dragonious: the "chroot -R user:group /var/www/dr" is a command to run at the shell
+[02:10] <dragonious> sarnold: yes I understand it to be a command for shell is that part of the whole command or a seperate commend
+[02:10] <dragonious> sarnold: sorry im getting confused
+[02:11] <sarnold> dragonious: it's a separate command
+[02:11] <sarnold> dragonious: the "ChrootDirectory %h" goes in your sshd_config file
+[02:12] <dragonious> sarnold: ok that part is in the file
+[02:12] <dragonious> sarnold: I will now run the command
+[02:13] <dragonious> sarnold: ok and I should put my users name in instead of user and his group instead of group
+[02:14] <sarnold> dragonious: yes
+[02:15] <dragonious> sarnold: dragonious@SNAPPERSERVER:~$ chroot -R glen:sftponly /var/www/dr
+[02:15] <dragonious> chroot: invalid option -- 'R'
+[02:15] <sarnold> dragonious: "chown", not "chroot" :)
+[02:15] <sarnold> my mitsake there :(
+[02:15] <dragonious> sarnold: its all good
+[02:17] <dragonious> sarnold: http://pastebin.com/GjMwDckg
+[02:18] <sarnold> dragonious: prepend a 'sudo' to that :)
+[02:19] <dragonious> sarnold: I should have known that lol
+[02:19] <dragonious> ok that returned no output
+[02:20] <sarnold> good :)
+[02:20] <sarnold> dragonious: now try your sftp again
+[02:20] <dragonious> sarnold: ok one sec
+[02:22] <dragonious> sarnold: authentication failed
+[02:22] <dragonious> sarnold: one sec pls I need to bio break ;p
+[02:23] <dragonious> sarnold: ok im back
+[02:23] <dragonious> sarnold: fast like ninja ...
+[02:23] <sarnold> haha
+[02:23] <sarnold> dragonious: check "sudo tail /var/log/auth.log" to see if sshd logged anything about the authentication rejection
+[02:23] <dragonious> sarnold: I dont want to waste your valuable time
+[02:24] <sarnold> dragonious: oh, heh, try restarting sshd and try again :)
+[02:25] <dragonious> sarnold: http://pastebin.com/aSq9LYkc
+[02:26] <sarnold> at least sshd is nice and explicit, "fatal: bad ownership or modes for chroot directory"
+[02:26] <dragonious> sarnold: ok so I need to restart ssh what would be the correct terminal command for that
+[02:26] <dragonious> sarnold:  I will write it down
+[02:28] <sarnold> dragonious: sudo restart ssh
+[02:29] <dragonious> dragonious@SNAPPERSERVER:~$ sudo restart ssh
+[02:29] <dragonious> ssh start/running, process 8242
+[02:30] <sarnold> dragonious: now try sftp again
+[02:30] <dragonious> sarnold: ok one sec
+[02:31] <dragonious> sarnold: failed
+[02:32] <sarnold> dragonious: okay, check 'sudo tail /var/log/auth.log' to see if it said 'bad ownership or modes' again :(
+[02:33] <dragonious> sarnold: Jan 30 20:30:50 SNAPPERSERVER sshd[9459]: fatal: bad ownership or modes for chroot directory component "/var/www/dr/"
+[02:34] <sarnold> dragonious: damn. then I was wrong.
+[02:34] <sarnold> dragonious: okay, lets put it back the way you had it earlier, with the directory that you could create files in...
+[02:34] <dragonious> sarnold: its ok it was worth a try . can we go back to where it was working easily
+[02:35] <dragonious> sarnold: nice
+[02:35] <sarnold> dragonious: edit the sshd_config file again, and put back "ChrootDirectory /var/www/dr"
+[02:35] <dragonious> sarnold: and again thank you
+[02:35] <sarnold> dragonious: then run sudo chown -R root:root /var/www/dr
+[02:35] <sarnold> dragonious: then sudo restart sshd
+[02:35] <sarnold> .. then test again :)
+[02:38] <dragonious> sarnold: ok the directory in the sshd_config is already set to %h so now Im going to input the chown
+[02:38] <sarnold> dragonious: oh, yeah, %h ought to work :) hehe
+[02:40] <dragonious> sarnold: ok going to check if I can get in
+[02:40] <red82> any script (asssuming its correctly written, perms, etc.) placed into /etc/cron.daily will get executed daily no?
+[02:40] <hallyn> zul: jdstrand: mdeslaur: ok, libvirt/python/generator.py no longer puts a virGetLastError(): wrapper in /usr/share/pyshared/libvirt.py, that's the cause of the error I"m getting with libvirt 1.0.2.  (I'm out thursday, back friday)
+[02:41]  * hallyn out
+[02:41] <dragonious> sarnold: ok im in give me one quik sec here
+[02:43] <hallyn> muhaha.  i think i see why
+[02:43] <hatake> how to fix this  chroot . /bin/bash = groups : cannot find name for group ID 19
+[02:43] <hatake> my kernel panic and i use chroot, but can't every body can help my
+[02:44] <dragonious> sarnold: ok so far so good one more quik thing
+[02:44] <dragonious> sarnold: ok all looks good I can add and remove files and folders from his new folder
+[02:45] <dragonious> sarnold: I have one more quik question maybe you can help me with, everytime I reboot my server I have to goin and rewrite my resolv.conf file as all my nameservers get wiped how can I fix that
+[02:47] <sarnold> dragonious: woo
+[02:47] <sarnold> dragonious: add them to /etc/resolvconf/resolv.conf.d/tail
+[02:48] <dragonious> sarnold: not a quik question?
+[02:48] <dragonious> so "sudo vi /ect/resolvconf/resolv.conf.d/tail
+[02:49] <dragonious> sarnold:  would that be correct
+[02:50] <sarnold> dragonious: yes
+[02:50] <dragonious> sarnold: must not be as that command creates a new file ;p
+[02:52] <sarnold> dragonious: hunh.
+[02:53] <sarnold> dragonious: oh :) "etc", not "ect" :)
+[02:53] <dragonious> sarnold: sudo vi /etc/resolvconf/resolv.conf.d/tail   is what I input
+[02:54] <sarnold> do you get "[New DIRECTORY]" or "/etc/resolvconf/resolv.conf.d/tail" in vi's status line?
+[02:54] <dragonious> sarnold: I get new file
+[02:55] <dragonious>  sarnoldyup it says New File
+[02:55] <sarnold> dragonious: hrm, what's ls -l /etc/resolvconf/resolv.conf.d/ report?
+[02:56] <dragonious> sarnold: dragonious@SNAPPERSERVER:~$ ls -l /etc/resolvconf/resolv.conf.d/
+[02:56] <dragonious> total 8
+[02:56] <dragonious> -rw-r--r-- 1 root root   0 Jul 18  2012 base
+[02:56] <dragonious> -rw-r--r-- 1 root root 151 Jul 18  2012 head
+[02:56] <dragonious> -rw-r--r-- 1 root root  48 Jan 28 19:00 original
+[02:56] <sarnold> dragonious: well, you can add it to 'head' or 'base' then :)
+[02:57] <dragonious> sarnold: so Ill try base:)
+[02:57] <hallyn> zul: jdstrand: mdeslaur: woohoo!  nm, found the bug
+[02:58] <red82> TIL, filenames in cron.daily can't have periods in them.
+[02:58] <zul> hallyn: are you not suppose to be here :)
+[02:58] <hallyn> zul: the bug was bothering me
+[02:58] <red82> hence the failure of mydomain.com.backup
+[02:58] <hallyn> zul: yo'ure not supposed to be here :)
+[02:58] <zul> hallyn: lxc is bothering me
+[02:58] <hallyn> lol
+[02:58] <hallyn> zul: please qualify that
+[02:58] <hallyn> libvirt-lxc
+[02:58] <dragonious> sarnold: ok base is a valid file but is blank so just add it in here or try the other file
+[02:59] <sarnold> dragonious: sure, add it there
+[02:59] <hallyn> zul: so i'm going to send this patch upstream, push the patch onto the package, and drop your new libcurl3-dev from build-depends
+[02:59] <zul> hallyn: if you have time can you make me a debdiff?
+[03:00] <dragonious> sarnold: Ok i added it to base file :)
+[03:01] <hallyn> zul: yup
+[03:01] <zul> hallyn: merci buckets
+[03:03] <dragonious> sarnold: ok so now when I add my next user it should be all setup I just have to go in and make them a folder inside of thier "jail" that they have rights to correct?
+[03:03] <sarnold> dragonious: should be :)
+[03:04] <dragonious> sarnold:  jrib: I cant thank you guys enough I have this all writen down or printed out thank you so much once again.
+[03:04] <dragonious> sarnold:  jrib: you guys saved my evening!
+[03:04] <sarnold> dragonious: woot. have fun :)
+[03:05] <dragonious> sarnold: Thanks again and may the blue birds of happiness bring you songs of riches and joy!!
+[03:06] <hallyn> zul: d'oh, i just overwrote your .dsc
+[03:06] <dragonious> jrib: you as well thank you again
+[03:06] <zul> hallyn: or you could just send me the patch
+[03:06] <dragonious> night guys hopefully you wont see me again at least for a few days ;p
+[03:06] <hallyn> gimme a few more mins :)
+[03:07] <hallyn> zul: patch is at :
+[03:07] <hallyn> http://people.canonical.com/~serge/0001-complete-virterror-virerror-name-change.patch
+[03:08] <hallyn> zul: but dont' forget to also drop curl from build-deps
+[03:08] <zul> hallyn: and you just drop the libcurl stuff right?
+[03:08] <hallyn> right
+[03:08] <hallyn> you wanna just take it from there?
+[03:08] <zul> cool have a good night then :)
+[03:08] <zul> yeah
+[03:08] <hallyn> awesome - gnight
+[03:13] <hallyn> zul: ok (last ping i promise) - http://people.canonical.com/~serge/libvirt-1.0.2.debdiff is the full debdiff
+[03:13] <hallyn> but the patch i linked above has a better description i guess
+[03:14] <hallyn> oh well, i'm out
+[03:28] <dragonious> sarnold: you still around?
+[03:28] <sarnold> dragonious: yeah
+[03:28] <axisys> how to realize larger raid5 lun?
+[03:28] <axisys> megacli shows the virtual disk is bigger now
+[03:29] <dragonious> sarnold: I gave my user his login info and he is gettin a denial from outside my home network
+[03:29] <sarnold> dragonious: anything in /var/log/auth.log ?
+[03:31] <dragonious> sarnold: one sec user maybe inputting his info wrong
+[03:32] <dragonious> sarnold: lol yeah it seams to have been a case of operator error :)
+[03:33] <sarnold> dragonious: woo :)
+[03:33] <dragonious> sarnold: he is in and all is good for now, he is uploading a joomla! install for me now to makesure it works
+[03:33] <dragonious> sarnold: thank you again
+[03:33] <dragonious> sarnold:  i think im gonna hang out in here for a bit just in case ;p
+[03:34] <sarnold> dragonious: good idea, there's lots to learn :)
+[03:34] <dragonious> sarnold: and then some :) :)
+[03:34] <Linuks83> i think i figured out what my issue was earlier with the install disk not detecting the drives on my sil3114ctu. it is put out by rosewill and so is a usb wireless adapter i have. if i do not configure the usb wireless adapter then the system sees the drives on that controller.
+[03:34] <Linuks83> bizarre, but that's what happened
+[03:35] <sarnold> Linuks83: o_O odd.
+[03:35] <Linuks83> very
+[03:35] <Linuks83> just thought i'd post a follow up in case anyone cared, or was perusing the chat logs at some point in time for some tiny nugget of gold.
+[03:35] <Linuks83> lol!
+[03:35] <sarnold> Linuks83: file a bug? :)
+[03:36] <Linuks83> i want to go through the process a couple of more times before i settle on it being an actual bug, but if it happens again under the same circumstances, i will definitely file a bug.
+[03:37] <Linuks83> i hate it when people flood the devs for simple stuff that was actually user error, so i want to make positively sure. ;-)
+[03:38] <Linuks83> well... g'night all.
+[03:45] <axisys> so do I need to reboot to relaize the larger raid5 lun made by lsi megaraid ?
+[03:50] <jerry_l> hello room.
+[05:05] <chriys> -_-' hi guys i have no idea but my server won't work even in local. The server is running and error.log shows this caught SIGTERM, shutting down
+[05:06] <chriys> and also child process 24148 still did not exit, sending a SIGTERM
+[05:16] <alimj> Hello everyone. Anybody here who has experience with Zpanel (Web hosting Panel)?
+=== Dude is now known as Guest2389
+[05:34] <chriys> solution found the ethernet cable was unplugged -_-'
+=== Err404NotFound is now known as Error404NotFound
+[05:36] <TheLordOfTime> is there a substitute for landscape for managing a large group of systems?  because Landscape isn't free, afaict
+[05:45] <sarnold> TheLordOfTime: unattended-upgrade ?
+[05:46] <TheLordOfTime> sarnold:  unattended-upgrades + nagios (for nagging and status monitoring)
+[05:46] <TheLordOfTime> ?
+[05:58] <ScottK> TheLordOfTime: The usual suspects are puppet and chef and additionally Debian/Ubuntu has FAI.
+[06:27] <greppy> TheLordOfTime: I am currently looking into http://saltstack.org for managing systems.
+[06:29] <blkperl> TheLordOfTime: puppet, chef, salt are all good choices
+[07:23] <chriys> i set apache to listen on port 8080 and forward my domain to my computer i'm using virtualhost. How to automatically redirect user who want to access to my website without needing him to specify a port ?
+=== yofel_ is now known as yofel
+[07:30] <greppy> chriys: you can't.  Web browsers use the default port, which is 80.
+=== smb` is now known as smb
+=== Jikai is now known as Jikan
+=== th0mz_ is now known as th0mz
+[12:23] <jotterbot1234> Has anyone tried setting up an Adobe Update Server on an ubuntu server instance?
+[13:41] <kevinmthomas> hi everyone.  I am running Ubuntu Server and I have DNS and mail set up and I am trying to access my mail in Thunderbird however it is giving me a configuration could not be verified error
+[13:44] <kevinmthomas> does the server use imap or pop3
+[13:44] <kevinmthomas> ?
+[13:44] <AgMo> kevinmthomas: can you be more specific about the error msg?
+[13:45] <AgMo> kevinmthomas: what daemon did you install?
+[13:45] <kevinmthomas> sure.  When I try to configure and i click test, it passes me to the Done button, i am using THunderbird mail to check my mail
+[13:45] <kevinmthomas> on the server i can send and receive fine
+[13:45] <kevinmthomas> its just the 3rd party clint
+[13:45] <kevinmthomas> client
+[13:46] <kevinmthomas> im not sure if the server uses pop3 or smpt
+[13:46] <kevinmthomas> smtp
+[13:46] <kevinmthomas> when im checking remotely
+[13:46] <kevinmthomas> it says username or password invalid
+[13:47] <kevinmthomas> however it is the right ones
+[13:48] <kevinmthomas> the ssl is set to STARTTLS
+[13:48] <kevinmthomas> i tryto autodetect however when i test
+[13:48] <kevinmthomas> it takes me back to STARTTLS
+[13:48] <kevinmthomas> my first question should i be checking for imap
+[13:48] <kevinmthomas> or pop3?
+[13:49] <AgMo> if you just install postfix for example, then you cannot use imap or pop3
+[13:49] <kevinmthomas> oh
+[13:49] <AgMo> postfix is mta
+[13:49] <kevinmthomas> oh
+[13:49] <kevinmthomas> so how might i check email on a blackberry
+[13:50] <AgMo> ony use for sending email (smtp)
+[13:50] <kevinmthomas> or client
+[13:50] <AgMo> not for receiving
+[13:50] <kevinmthomas> is there a way to check for mail on a 3rd party client then?
+[13:50] <kevinmthomas> or am i forced to use the console
+[13:52] <AgMo> if you want to using mail client, you have to setup either pop3 or imap daemon first
+[13:52] <AgMo> you can refer to: https://help.ubuntu.com/community/PostfixCompleteVirtualMailSystemHowto
+[13:53] <AgMo> there is a pop3 and imap section
+[13:54] <AgMo> this one is more simple: https://help.ubuntu.com/community/PostfixBasicSetupHowto
+[13:54] <kevinmthomas> its quite confusing
+[13:54] <kevinmthomas> it refers to a virtual mailbox and setting up mysql
+[13:55] <AgMo> kevinmthomas: sorry, you could try using the 2nd link
+[13:57] <kevinmthomas> the 2nd link?
+[13:57] <AgMo> this link: https://help.ubuntu.com/community/PostfixBasicSetupHowto
+[13:58] <AgMo> i mean URL: https://help.ubuntu.com/community/PostfixBasicSetupHowto
+[13:58] <kevinmthomas> ok there are 45 options
+[13:58] <kevinmthomas> which one do I want?
+[13:59] <AgMo> kevinmthomas: 45 options?
+[13:59] <kevinmthomas> oh sorry
+[13:59] <kevinmthomas> i mityped
+[13:59] <kevinmthomas> mistyped my apoligies
+[13:59] <kevinmthomas> let me see now
+[14:01] <kevinmthomas> do i want to install pop3 or imap?
+[14:01] <kevinmthomas> which is better
+[14:01] <AgMo> which one do you want to use? :)
+[14:02] <kevinmthomas> im sorry im not sure
+[14:02] <kevinmthomas> does the blackberry device
+[14:02] <kevinmthomas> or mobile devices have a preference
+[14:02] <AgMo> blackberry device support both protocol (imap and pop3)
+[14:03] <kevinmthomas> thank you so uch
+[14:04] <AgMo> sure, and good luck :)
+[14:05] <kevinmthomas> thank you AgMo
+[14:05] <kevinmthomas> see you soon
+=== AgMo is now known as Guest6014
+[14:34] <zul> jdstrand: new libvirt on its way today
+[14:34] <jdstrand> nice, for hallyn's fix I presume
+[14:39] <kevinmthomas> Hi I have tried everything and thunderbird now says, Thunderbird has failed to find the settings for your email account
+[14:39] <kevinmthomas> i tried both pop3 and imap
+[14:39] <kevinmthomas> when i netcat mail.kevintown.net 110
+[14:39] <kevinmthomas> the console just hangs
+[14:41] <kevinmthomas> netcat mail.kevintown.net 25
+[14:41] <kevinmthomas> does work
+[14:41] <kevinmthomas> but 110 and 143 do not
+[14:42] <Akendo> kevinmthomas: Was does the error mess of nc say?
+[14:42] <kevinmthomas> nc?  You mean thunderbird?  It says Thunderbird failed to find the settings for your email account
+[14:43] <kevinmthomas> oh netcat
+[14:43] <kevinmthomas> it literally hangs
+[14:43] <kevinmthomas> 110 and 143 hang
+[14:43] <kevinmthomas> the console hangs and i hvae to ctrl z out
+[14:47] <kevinmthomas> any idea?
+=== slank_away is now known as slank
+[14:51] <Akendo> hm..
+[14:52] <Akendo> You not getting any reponse fromt he port?
+[14:52] <kevinmthomas> no
+[14:52] <Akendo> Nothing like; +OK Dovecot ready.
+[14:52] <kevinmthomas> nope
+[14:53] <kevinmthomas> only 25 works
+[14:53] <Akendo> What is with 993 ?
+[14:54] <Akendo> It could be that the IMAP/POP-3 Server on this server has crashed
+[14:54] <kevinmthomas> oh
+[14:54] <kevinmthomas> how can i reset them>
+[14:55] <Akendo> Try this first
+[14:55] <Akendo> openssl s_client -connect $MAILSERVER:993
+[14:56] <kevinmthomas> ok
+[14:56] <kevinmthomas> that just gave me a long menu
+[14:57] <kevinmthomas> gethostbyname failure
+[14:57] <kevinmthomas> connect:errno=110
+[14:58] <Akendo> hm..
+[14:58] <Akendo> The same for 995?
+[14:58] <kevinmthomas> yes
+[14:59] <kevinmthomas> now when i specificed my network it was 192.168.1.0/24
+[14:59] <kevinmthomas> but the server machine is 192.168.1.147
+[14:59] <kevinmthomas> does that matter
+[14:59] <Akendo> Can you access to the Host?
+[14:59] <kevinmthomas> how do i do that?
+[15:00] <Akendo> SSH ?
+[15:00] <kevinmthomas> i am in a console now
+[15:00] <kevinmthomas> what do i do
+[15:00] <Akendo> O.o
+[15:00] <Akendo> nc localhost 110
+[15:01] <Akendo> btw: is this a public mailserver?
+[15:01] <kevinmthomas> it hangs
+[15:01] <kevinmthomas> i beleive it is public
+[15:01] <kevinmthomas> nc localhost 110  cases the term to hang
+[15:01] <Akendo> netstat -tplan |grep "\:110"
+[15:01] <kevinmthomas> i have to CTRLz
+[15:02] <Akendo> It would be better to open another session
+[15:02] <Akendo> But
+[15:02] <Akendo> Do as you like
+[15:02] <kevinmthomas> i di open another session
+[15:02] <kevinmthomas> ok
+[15:03] <kevinmthomas> it gave me data
+[15:03] <kevinmthomas> some ports are listen
+[15:04] <kevinmthomas> that :grep
+[15:04] <kevinmthomas> its the colon right?
+[15:07] <Akendo> ps auxfw|grep Z
+[15:07] <Akendo> Check for a Zombie
+[15:07] <kevinmthomas> what is that character before the grep
+[15:07] <kevinmthomas> is it a colon?
+[15:07] <Akendo> |
+[15:07] <kevinmthomas> what is i
+[15:08] <Akendo> Vertical bar
+[15:08] <Akendo> Or a pipe
+[15:08] <kevinmthomas> ok
+[15:08] <kevinmthomas> now
+[15:08] <kevinmthomas> what am i lookign for
+[15:08] <kevinmthomas> shows USER
+[15:09] <kevinmthomas> ok now when i do the -tplan
+[15:09] <kevinmthomas> tcp 0 0.0.0.0:110   0.0.0.0:*  LISTEN
+[15:10] <kevinmthomas> 1060/dovecot
+[15:10] <kevinmthomas> tcp6 0   0 :::110   :::*  LISTEN
+[15:10] <kevinmthomas> 1060/covecot
+[15:12] <kevinmthomas> any idea?
+[15:13] <Akendo> What is this for a server Ubuntu?
+[15:14] <kevinmthomas> yes server
+[15:14] <Akendo> It looks like that the IMAP Server has a problem. You may like to check the logs for any error messages
+[15:15] <Akendo> tail -n 200 /var/log/dovecot.log
+[15:15] <Akendo> Or something like this
+[15:15] <Akendo> Never did run a doveco on ubuntu
+[15:16] <kevinmthomas> there is n o dovecot log
+[15:16] <kevinmthomas> just mail
+[15:17] <Akendo> log into the mail.log
+[15:17] <Akendo> I guess there is no real syslog on your system
+[15:17] <kevinmthomas> i am looking at the mail.err fiel now
+[15:17] <kevinmthomas> mail.err
+[15:18] <kevinmthomas> ahh!
+[15:18] <kevinmthomas> kevintown dovecot:  imap(kevin) error invalid ser settings refer to server log
+[15:18] <kevinmthomas> for more info
+[15:19] <kevinmthomas> mail_location not set and autodetectio failed mail storage autodetect failed with home=/home/kevin
+[15:21] <Akendo> :)
+[15:21] <kevinmthomas> ok
+[15:21] <kevinmthomas> so what does that all mean lol
+[15:21] <kevinmthomas> no folder
+[15:22] <kevinmthomas> perhaps
+[15:22] <Akendo> Maybe
+[15:22] <kevinmthomas> hmm
+[15:22] <Akendo> But
+[15:22] <Akendo> You have to check how the mapping between user and there foldering is happing inside of the /etc/dovecot/dovecot.conf
+[15:23] <kevinmthomas> no such folder
+[15:23] <kevinmthomas> wait
+[15:23] <kevinmthomas> ok
+[15:23] <Akendo> I recommend now to read some of the documentation http://www.dovecot.org/
+[15:23] <kevinmthomas> im in teh folder
+[15:23] <Akendo> :D
+[15:23] <Akendo> But
+[15:23] <kevinmthomas> i am in teh dovecot folder
+[15:23] <Akendo> ^^
+[15:23] <uvirtbot> Akendo: Error: "^" is not a valid command.
+[15:23] <zul> yolanda: https://code.launchpad.net/~zulcss/nova/nova-pydist/+merge/145884
+[15:24] <kevinmthomas> what log file am i looking for
+[15:24] <Akendo> ^help
+[15:24] <uvirtbot> Akendo: (help [<plugin>] [<command>]) -- This command gives a useful description of what <command> does. <plugin> is only necessary if the command is in more than one plugin.
+[15:24] <Akendo> :D
+[15:24] <Akendo> Cool
+[15:24] <Akendo> xD
+[15:24] <yolanda> ok
+[15:25] <kevinmthomas> there is conf.d dovecot.conf
+[15:25] <kevinmthomas> and then a bunch of .ext
+[15:25] <kevinmthomas> im installing mailutils as well
+[15:27] <Akendo> Why are you installing something?
+[15:27] <kevinmthomas> i wanted to make sure i had the folders perhaps
+[15:27] <kevinmthomas> not sure
+[15:27] <kevinmthomas> i am able to get and receive mail
+[15:27] <kevinmthomas> in the console
+[15:27] <kevinmthomas> just not in a client
+[15:27] <kevinmthomas> thunderbird failed to find the settings for your email account
+[15:28] <Akendo> You have first to check the service configuration for th mapping of user folder. When you see he'll use the home folder you can create it, I wonder just about. Normally you should have something virtual users
+[15:29] <kevinmthomas> netcat mail.kevintown.net 110
+[15:29] <kevinmthomas> hangs in the term
+[15:30] <kevinmthomas> ok i am in dovecot.conf
+[15:31] <Akendo> Just try to restart the service first
+[15:31] <Akendo> service dovecot restart (I think else use /etc/init.d/dovecot restart)
+[15:33] <kevinmthomas> ok i restarted
+[15:33] <kevinmthomas> still doesnt work
+[15:36] <Akendo> Ok
+[15:36] <Akendo> maybe the setting your using
+[15:36] <kevinmthomas> yea i think perhaps from the mailerr.log
+[15:36] <Akendo> One moment
+[15:38] <Akendo> do a connection to it via nc and run: "e logout"
+[15:38] <kevinmthomas> connect to mail.kevintown.net 110?
+[15:38] <kevinmthomas> what commmand line should i use?
+[15:39] <kevinmthomas> also there is no mail_location in dovecot.conf
+[15:44] <kevinmthomas> do a connection to what?
+[15:49] <Akendo> e logout
+[15:50] <Akendo> or
+[15:50] <Akendo> QUIT
+[15:50] <Akendo> nc mail.musicpictures.com 110
+[15:50] <Akendo> nc: using stream socket
+[15:50] <Akendo> +OK Dovecot ready.
+[15:50] <Akendo> QUIT
+[15:50] <Akendo> +OK Logging out
+[15:51] <kevinmthomas> brb
+[15:52] <Akendo> m2
+[15:52] <yolanda> zul, https://code.launchpad.net/~yolanda.robla/ceilometer/grizzly/+merge/145897
+[15:54] <kevinmthomas> ok
+[15:54] <kevinmthomas> now when i nc mail.kevintown.net 110
+[15:54] <kevinmthomas> it just returns nothing
+[15:54] <kevinmthomas> meaning i type it and another command prompt apears
+[16:00] <kevinmthomas> oh well i will keep trying
+[16:01] <kevinmthomas> thank you all for your help
+[16:31] <Linuks83> do i have to uninstall networkmanager to connect to a wifi connection using iwconfig and dhclient??
+[16:31] <Linuks83> from console
+[17:30] <Linuks83> i get a message that the interface is unknown when i try to bring it up with 'ifconfig wlan0 up', but lsusb shows the adapter as being detected...?
+=== kentb is now known as kentb-lunch
+[17:32] <sarnold> Linuks83: does 'ifconfig -a' show it under a different name perhaps?
+[17:33] <Linuks83> sarnold, i show eth0 and lo0 and wlan0
+=== ogra_ is now known as ogra
+[17:33] <Linuks83> i'm not sitting in front of it at the moment, but am trying to get info for when i am.
+[17:34] <Linuks83> i've been looking at articles on how to setup internet connection via console, since i've installed the server, for the purpose of keeping it lean, but they all assume that the wireless adapter is already setup and you arent getting weird messages when trying to bring up the if
+[17:34] <sarnold> Linuks83: hehe, okay... check lsmod, make sure its module(s) are loaded. check iwconfig and ip link show and ip addr show, make sure everything looks sane..
+[17:35] <sarnold> Linuks83: /etc/network/interfaces will also come in handy
+[17:35] <Linuks83> that's what i thought. i'm not sure what module it's supposed to use, and i didnt bring it with me... lol! i'll check it when i get home. i'll write those down and check. thanks for the tips.
+[17:36] <Linuks83> sarnold, is there a way to have the machine autodetect the module it's supposed to use?
+[17:36] <Linuks83> from console?
+[17:38] <sarnold> Linuks83: dunno.. I think I just poke aroud in /lib/modules/`uname -r`/kernel/drivers/net/wireless/ and its subdirectories looking for strings that look like my device..
+[17:39] <Linuks83> ah! good idea... d'oh!
+[17:40] <sarnold> (grep -l is your friend :)
+[17:40] <Linuks83> and 'strings'
+[17:40] <Linuks83> :)
+[17:40] <Linuks83> I usually administer SCO OpenServer boxes, but have gotten so used to the graphical interface in Linux, that I have not had the need to learn certain things.
+[17:40] <sarnold> *nod* :)
+[17:41] <Linuks83> SCO does things quite a bit differently as far as drivers are concerned....
+[17:41] <Linuks83> sarnold, you've been a great help
+[17:41] <sarnold> oh man, my condolances, I had a few SCO boxes under my care before. hated them. (We didn't spring for the $3000 dev kit, which made the thing nearly useless...)
+[17:41] <Linuks83> thanks
+[17:42] <Linuks83> sarnold, there are some 'skunkware' available (read as open source software compiled for SCO), but good luck finding anything even remotely 'obscure'
+[17:42] <sarnold> Linuks83: heh, yeah, I think it would have been intolerable without the skunkware stuff..
+[17:42] <Linuks83> agreed
+[17:43] <Linuks83> thanks again! i'm being summoned by the misses for lunch. ;-)
+[17:43] <sarnold> bon apetit
+[17:44] <Linuks83> merci
+[17:56] <dragonious> Good morning ubuntu guys :)
+[17:57] <dragonious> Im back with  a new problem today :( anyone got a min a 30 ?
+[17:59] <dragonious> Im working on configuring my Virual Hosts in apache2 and when I restart apache2 I get   "apache2 could not reliably determine the servers fully qualified domain name,using 127.0.1.1 for servername
+[18:01] <patdk-wk> that is *normal*, to fix it you have to mess around with your /etc/hosts file
+[18:01] <sarnold> patdk-wk: isn't there a ServerName directive that'd silence it?
+[18:02] <patdk-wk> hmm, ya
+[18:02] <patdk-wk> my *default* doesn't have servername, but others do, must be why I also get it
+[18:02] <dragonious> Im also getting [error] virtualhost *:80 -- mixing * with ports and non-* ports with a namevirtualhost address is not supported proceeding undefined results
+[18:03] <patdk-wk> well, that is a user config error :)
+[18:03] <patdk-wk> fix your virtualhosts :)
+[18:03] <dragonious> ok so the user config error is if Im seeing it right is that Im should be putting in my ip address to server in those files instaed of the *
+[18:04] <dragonious> man I cant type on this ketboard
+[18:04] <patdk-wk> how should I know? I can't see your system
+[18:04] <sarnold> I'd probably leave it * unless you've got good reason to restrict which IPs apache serves which content to
+[18:04] <dragonious> sarnold: I have a static Ip through comcast business
+[18:05] <sarnold> dragonious: how many? how many IPs does your web server have (in addition to the usual 127.0.0.1)?
+[18:06] <patdk-wk> the only time I would use ip's instead of *, is if I have multible ip's, and I specifically want to limit hostname x to ip address y
+[18:06] <dragonious> sarnold: I have 1 static ip for my server, the server is then behind my router and static ip'd as well
+[18:06] <patdk-wk> when doing that though, there are lots of things you need to modify
+[18:07] <dragonious> patdk-wk: I appologize my knowledge base in this area(obviusly) is limited
+[18:07] <sarnold> yeah. sometimes it's necessary / good idea, but really, * ought to suit 95% deployments..
+[18:08] <dragonious> sarnold: so what exactly is the error saying, I can link a copy of my Vhost file if it helps
+[18:08] <patdk-wk> it's saying you told it you wanted to use *, but then you turned around and didn't
+[18:08] <decci> Hi
+[18:09] <decci> I am unable to see compellent SAN during ubuntu 12.04 installation on dell c6100 server
+[18:09] <sarnold> dragonious: somewhere you probably have ip.add.res.s:80 in your config..
+[18:09] <decci> i350 network card installed and connected to Compellent SAN using iscsi
+[18:09] <decci> When I try to install ubuntu 12.04. The installation cannot see the SAN storage device as shown http://tracker.webtechnologyfocused.com.au/ehw/volumesnotdetected.jpg
+[18:09] <decci> this could be a driver issue with Ubuntu and may need the driver to see the storage device.
+[18:09] <patdk-wk> is your compellent san configured to AUTHORIZE your ubuntu install?
+[18:10] <decci> patdk-wk: How to check that?
+[18:10] <patdk-wk> this is very simple normal zoning issue, I bet
+[18:10] <patdk-wk> decci, no idea, I don't have a compellent san :)
+[18:10] <decci> patdk-wk: The iscsi appears as http://tracker.webtechnologyfocused.com.au/ehw/Capture6.JPG in the BIOS boot up. I am able to install Centos 6.3 fine as shown http://tracker.webtechnologyfocused.com.au/ehw/syd-sehw-3iscsi0.JPG http://tracker.webtechnologyfocused.com.au/ehw/syd-sehw-3iscsi1.JPG http://tracker.webtechnologyfocused.com.au/ehw/syd-sehw-3iscsi2.JPG.  The dmesg of Centos 6.3 running perfectly with the iscsi luns can be
+[18:10] <decci> patdk-wk: But its not working for Ubuntu 12.04
+[18:10] <patdk-wk> wait
+[18:11] <sarnold> decci: you got cut off at "iscsi luns can be"
+[18:11] <patdk-wk> you want to use hardware iscsi initiator?
+[18:11] <decci> patdk-wk: I did see some thread http://en.community.dell.com/support-forums/storage/f/4427/t/19410734.aspx
+[18:11] <patdk-wk> in that case, it will show up as a *local disk*
+[18:11] <dragonious> http://pastebin.com/VMvDMiwm
+[18:11] <decci> patdk-wk: http://tracker.webtechnologyfocused.com.au/ehw/volumesnotdetected.jpg
+[18:12] <sarnold> dragonious: check the rest of your configuration..
+[18:12] <patdk-wk> probably need to find the driver you need to load
+[18:12] <decci> patdk-wk: Can you suggest?
+[18:12] <decci> patdk-wk: whats open-iscsi
+[18:12] <dragonious> sarnold: so look at httpd.conf ?
+[18:12] <patdk-wk> that is if you want to ignore the iscsi on your i350, and use linux to do it instead
+[18:13] <sarnold> dragonious: yes, the whole config. Maybe grep -r :80 /etc/apache2/ to help you find what might be related...
+[18:13] <decci> patdk-wk: So what you suggest? How to find correct driver? I wonder how no-one encountered this issue
+[18:16] <decci> patdk-wk: ?
+[18:17] <dragonious> sarnold: http://pastebin.com/qHyAeBdt
+[18:18] <dragonious> sarnold: I omitted one line the last one as it had my ip in it but the file its reading is a trash file created after I updated the correct file
+[18:18] <sarnold> dragonious: ah, that might be it. delete that? move it out of the way?
+[18:18] <decci> patdk-wk: I tried googling but dint find single solution or mentioned anywhere
+[18:18] <dragonious> sarnold: ok one sec
+[18:20] <patdk-wk> decci, no idea :(
+[18:20] <dragonious> sarnold: ok im going to restart apache one sec pls
+[18:21] <patdk-wk> probably the simple way to know, would be to boot your centos install again, and do an lsmod
+[18:21] <patdk-wk> and compare that to the ubuntu one
+[18:23] <dragonious> sarnold: same error
+[18:23] <sarnold> dragonious: odd :/
+[18:24] <dragonious> sarnold: thats why I came here I followed every thing I could find on google to clean up my syntax and stuff Im lost now
+[18:33] <dragonious> sarnold: where is my httpd.conf and what should it look lik, if Im not mistaken mine was empty, there was a file with that name but had no data in it
+[18:35] <sarnold> dragonious: a fresh install of apache2 doesn't install an httpd.conf file (at least not on 12.10) -- instead it installs an apache2.conf file.
+[18:35] <dragonious> sarnold: ah let me look at that
+[18:38] <RoyK> dragonious: modules and virtualhosts are normally configured under separate directories
+[18:39] <dragonious> sarnold: I dont see anything in here that sends off alarms
+[18:40] <dragonious> RoyK: I m sorry Roy im very new to all this what exactly do you mean ?
+[18:41] <RoyK> dragonious: what are you trying to do?
+[18:46] <dragonious> RoyK: sorry roy I stepped away , Im having trouble setting up my virtual hosts im getting Could not reliably determine the servers fully qualified domain name,
+=== kentb-lunch is now known as kentb
+[18:47] <sarnold> dragonious: ignore that one, that's just a warning. :) ask RoyK about the error...
+[18:48] <dragonious> ro
+[18:49] <RoyK> dragonious: you can ignore that message - for general setup, see
+[18:49] <RoyK> !guide | dragonious
+[18:49] <ubottu> dragonious: The Ubuntu server guide may be found at http://help.ubuntu.com/12.04/serverguide/C/
+[18:50] <dragonious> RoyK: [error] VirualHost *:80 -- mixing * ports and non-* ports with a NameVirtuialHost address is not supported, proceeding  with undefined results
+[18:50] <dragonious> RoyK: sorry for typos I hate this ketboard
+[18:50] <RoyK> dragonious: check what NameVirtualHost is set to
+[18:51] <RoyK> grep -ri namevirtua /etc/apache2
+[18:51] <dragonious>  its *:80 I added the  line into one of my sites vhost file
+[18:52] <dragonious> dragonious@SNAPPERSERVER:~$ grep -ri namevirtua /etc/apache2
+[18:52] <dragonious> /etc/apache2/ports.conf:NameVirtualHost *:80
+[18:52] <dragonious> /etc/apache2/ports.conf:    # If you add NameVirtualHost *:443 here, you will also have to change
+[18:52] <dragonious> /etc/apache2/sites-enabled/www.snapperheadstudios.com:NameVirtualHost *
+[18:52] <dragonious> /etc/apache2/sites-available/www.snapperheadstudios.com:NameVirtualHost *
+[18:53] <dragonious> RoyK: sorry to spam I forget its going to do that
+[18:53] <RoyK> !pastebin
+[18:53] <ubottu> For posting multi-line texts into the channel, please use http://paste.ubuntu.com | To post !screenshots use http://imagebin.org/?page=add | !pastebinit to paste directly from command line | Make sure you give us the URL for your paste - see also the channel topic.
+[18:54] <RoyK> dragonious: just remove the namevirtualhost * settings from those vhosts, and use <VirtualHost *:80>
+[18:54] <dragonious> RoyK: yes I have it open and have linked my vhost file previously in this conversation again I appologize im very new to linux in general and I am trying to sponge it all up
+[18:55] <dragonious> RoyK: ok going to resart apache
+[18:56] <dragonious> RoyK: ok now im just gettingCould not reliably determine the servers fully qualified domain name,
+[18:57] <RoyK> dragonious: you can ignore that
+[18:58] <dragonious> RoyK:  the server fails to start after displaying that
+[18:58] <RoyK> then check the error log
+[18:58] <dragonious> RoyK: where can that be found
+[18:59] <dragonious> RoyK: and so you know I greatly appreciate your help
+[18:59] <RoyK> dragonious: /var/log/apache2/error.log
+[19:03] <dragonious> RoyK: http://pastebin.com/074yxxdS my error log from today
+[19:04] <RoyK> dragonious: don't try to put error logs under /etc
+[19:04] <RoyK> dragonious: redhat does that by symlinking, but it's still bad imho
+[19:05] <RoyK> change it to /var/log/apache2
+[19:05] <sarnold> logs under /etc??
+[19:05] <sarnold> RUN AWAY
+[19:05] <RoyK> sarnold++
+[19:06] <dragonious> RoyK: sarnold: Yeah the post I followed had the email line messed up as well but apache was kind enough to tell me exactly where and what the  error was
+[19:09] <dragonious> RoyK: do I also need to add a file in that folder as well?
+[19:09] <RoyK> no
+[19:09] <dragonious> RoyK: ok one sec I will make those changes to the files
+[19:09] <RoyK> given www-data has write access there, it'll create it
+=== wendar is now known as allisonrandal
+[19:19] <dragonious> RoyK: sarnold: restarting apache2
+[19:20] <dragonious> RoyK: ok I get what you told me to ignore and the server has started
+[19:21] <dragonious> RoyK: now unfortunatly I have an issue I need to get fixed by comcast that does not allow me to log back to my sites from the internet
+[19:21] <dragonious> RoyK: I can only view them internally
+[19:22] <dragonious> RoyK: sarnold: can one of you goto www.snapperheadstudios.com
+[19:22] <sarnold> RoyK: nice :) my mistake was to grep for :80. heh.
+[19:22] <sarnold> dragonious: "Joomla!® is free software released under the GNU General Public License. " and so forth
+[19:23] <dragonious> sarnold: thats what you see when you hit that .com huh??
+[19:23] <sarnold> dragonious: perhaps turn the servre back off until your buddy can configure joomla for you? you wouldn't want just anyone on the internet setting it up for you :)
+[19:24] <TheLordOfTime> dragonious:  joomla config screen...
+[19:24] <TheLordOfTime> you're aware that allowing that as live can be dangerous
+[19:24] <TheLordOfTime> right?
+[19:24] <dragonious> sarnold: unfortunatly you shouldnt see that at that domain name
+[19:24] <TheLordOfTime> dragonious:  then your server is misconfiguired
+[19:24] <TheLordOfTime> or the DNS is
+[19:24] <TheLordOfTime> or both
+[19:24] <dragonious> sarnold: you should see an undercunstruction site
+[19:25] <dragonious> TheLordOfTime: yes I am aware, as I have said Im still learning and it is one heck of a learning curve
+[19:25] <sarnold> dragonious: you might want to sudo stop apache2 [retty quickly :)
+[19:25] <TheLordOfTime> agreed
+[19:26] <TheLordOfTime> or not use apache *cough*  <-- biased
+[19:27] <dragonious> TheLordOfTime: we all have to start somewhere
+[19:27] <TheLordOfTime> true.
+[19:27] <TheLordOfTime> i prefer nginx or lighttpd over apache
+[19:27] <TheLordOfTime> but...
+[19:27] <TheLordOfTime> as i said i'm biased
+[19:28] <dragonious> TheLordOfTime: and much more knowledgable than I, I am sure :)
+[19:29]  * TheLordOfTime shrugs, and points to how he's running 6 domains/sites on one server with nginx
+[19:29] <TheLordOfTime> so perhaps... ;)
+[19:29] <TheLordOfTime> .... oops i broke it...
+[19:29]  * TheLordOfTime goes to fix PHP
+[19:31] <dragonious> TheLordOfTime: lol yes well I need to take a sec and wrap my head around exactly what is happening here.
+[19:40] <dragonious> sarnold: ok so im looking at this file I created and I dont under stand why its showyou a site that is in a differnet location what you saw should be at a subdoain I set up for it last night
+[19:42] <TheLordOfTime> random observation: i spent 3 months trying to get Apache to work right - never figured it out
+[19:42] <dragonious> sarnold: should the  line look like /var/www/snapper or /var/www/snapper/
+[19:43] <sarnold> dragonious: I don't know if apache cares.. other applications do care and require the trailing /
+[19:44] <sarnold> TheLordOfTime: yeah, I find nginx easier to configure too, but apache is supported by canonical, which is nice...
+[19:45] <dragonious> sarnold: another questiondoes it matter in what order I list the commands
+[19:45] <sarnold> dragonious: I don't _think_ so... i could be wrong.
+[19:47] <dragonious> sarnold: that being the case then this looks correct to my novice eyes Im pointing to the correct directories but it is obviously pointing to the wrong ones
+[19:47] <TheLordOfTime> sarnold:  albeit 5000 times more difficult to configure
+[19:48] <sarnold> it does require keeping the manual open all the time.. :)
+[19:51] <dragonious> sarnold: should I combine these files into one file ??
+[20:07] <sarnold> dragonious: well, you might find it easier to work with, but the layout of sites and plugins and so forth is designed to ease maintainence in the long run...
+[20:10] <bitfury> hello, I removed the default exim4 MTA
+[20:11] <bitfury> installed
+[20:11] <bitfury> ssmtp
+[20:11] <bitfury> but I don't see an init script to restart it
+[20:11] <bitfury> how would I do this?
+[20:11] <dragonious> sarnold: thanks Im just completly baffled I dont know where I going wrong here
+[20:13] <sarnold> bitfury: I dont think there is anything to start, programs run /usr/sbin/sendmail to deliver mail; there's no listening daemon..
+[20:13]  * RoyK just uses postfix
+[20:16] <dragonious> RoyK: any idea where Im going wrong ?
+[20:17] <RoyK> no
+[20:18] <dragonious> well thank you fot all your help guys I really do appreciate your time
+[20:26] <dragonious> RoyK: sarnold: ok heres a question when I set up the subdomains I set them up as A (host)Names  should they be set up as C Names??
+[20:27] <sarnold> dragonious: hrm,that's a bit out of my experience but I think both are fine.
+[20:27] <RoyK> dragonious: doesn't matter if you use an A record or a CNAME record - the apache config reads the Host: header and parses that
+[20:28] <dragonious> Ok
+[20:28] <dragonious> RoyK: ok ty
+[20:28] <RoyK> better use CNAME, it's better
+[20:28] <dragonious> RoyK: its the only thing I didnt do exactly as the walk through says
+[20:29] <dragonious> RoyK: so only thing I can think to check lol
+[20:29] <dragonious> RoyK: sarnold: ok guys give me  afew min here
+[21:06] <axisys> how to add GRUB_SERIAL_COMMAND="serial .." during install?
+[21:07] <axisys> I seem to be adding this after install even though I have this in the kernel line " -- console=ttyS0,9600n8 console=tty0"
+[21:08] <axisys> and I also have to write a /etc/init/ttyS0.conf after install.. I like to automate that
+[21:41] <dragonious> ok guys im back :)
+[21:41] <dragonious> I think I have it fixed now
+[21:43] <dragonious> I had a few issues with my domainname provider I think I cleared them up , my server is now correctly linked to the domain name, and I setup the correct subdomains for all the sites now hopefully it works

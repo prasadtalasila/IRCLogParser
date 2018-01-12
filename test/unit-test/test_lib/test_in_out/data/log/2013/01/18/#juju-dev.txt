@@ -1,0 +1,383 @@
+=== slank is now known as slank_away
+[08:04] <rogpeppe> fwereade, dimitern, jam1, wallyworld, mgz: morning!
+[08:04] <fwereade> rogpeppe, et al, heyhey
+[08:04] <wallyworld> g'day
+[08:25] <rogpeppe> fwereade: ping
+[08:25] <fwereade> rogpeppe, pong
+[08:26] <rogpeppe> fwereade: i wonder if you could have a look at some speculative stuff i've been working up before i run it past gustavo later
+[08:26] <fwereade> rogpeppe, sure
+[08:26] <rogpeppe> fwereade: it's to do with where we're aiming with the API server and how the machine agent will deal with that
+[08:26] <fwereade> rogpeppe, ok, cool
+[08:27] <rogpeppe> fwereade: here's some pseudocode: http://paste.ubuntu.com/1544082/
+[08:28] <rogpeppe> fwereade: the idea is to solve the problem of multiple API servers and state servers
+[08:28] <rogpeppe> fwereade: the main additions are the API server (obviously) and the publisher and locationer (provisional names) workers
+[08:30] <rogpeppe> fwereade: i also have a sketch for what i'm doing right now, which is a transitional step where we don't have multiple servers, but we are running an API server and connecting to it
+[08:30] <rogpeppe> fwereade: http://paste.ubuntu.com/1544098/
+[08:31] <fwereade> rogpeppe, still processing
+[08:31] <rogpeppe> fwereade: np
+[08:31] <rogpeppe> fwereade: i hope the pseudocode is reasonably clear
+[08:32] <fwereade> rogpeppe, yeah, I think so, I'm mainly just trying to get my head around the bootstrap process
+[08:32] <fwereade> rogpeppe, and how it fits in with davecheney's stater work
+[08:32] <rogpeppe> fwereade: i'm not sure i know about that
+[08:33] <rogpeppe> fwereade: what's the stater work?
+[08:33] <fwereade> rogpeppe, they're in review at the moment
+[08:33] <fwereade> rogpeppe, https://code.launchpad.net/~dave-cheney/juju-core/069-worker-stater-I/+merge/143629
+[08:33] <fwereade> rogpeppe, https://code.launchpad.net/~dave-cheney/juju-core/071-cmd-jujud-stater-I/+merge/143638
+[08:35] <fwereade> rogpeppe, I guess the heart of the problem is that you're working on the state API and he is working on HA state
+[08:35] <fwereade> rogpeppe, and they have a fair number of collision points...
+[08:35] <rogpeppe> fwereade: yeah
+[08:36] <rogpeppe> fwereade: it would be good to chat with dave at some point, but i haven't been online at the same time this year so far
+[08:36] <fwereade> rogpeppe, heh, I would suggest trying to arrange something
+[08:37] <fwereade> rogpeppe, communication by CL is ok for CLs but not so much for major design considerations
+[08:39] <fwereade> rogpeppe, but modulo bootstrap worries, and concerns about managing what machines will be running mongo (as opposed to just the API server) I think it's roughly sane
+[08:40] <rogpeppe> fwereade: bootstrap worries?
+[08:40] <rogpeppe> fwereade: yeah, i have entirely delegated the decisions about which machines run what to a higher level.
+[08:40] <fwereade> rogpeppe, I don't see how to fit it together with davecheney's stuff
+[08:41] <fwereade> rogpeppe, I'm on the fence as to whether state server maintenance should be separate from the machine agent
+[08:41] <rogpeppe> fwereade: i'm not sure there's a problem. from what i've seen so far, i think it'll fit in ok
+[08:41] <rogpeppe> fwereade: i think it's fine to be part of the MA
+[08:41] <rogpeppe> fwereade: (i'm assuming dfc's branch does that)
+[08:41] <fwereade> rogpeppe, yeah, me too, but that definitely collides badly with dave's direction
+[08:41] <fwereade> rogpeppe, nope
+[08:42] <fwereade> rogpeppe, IMO it's crack, but it's apparently pre-agreed with niemeyer
+[08:42] <rogpeppe> fwereade: oh, i see
+[08:43] <rogpeppe> fwereade: the question in my mind is how other things are going to know how to contact the state
+[08:43] <fwereade> rogpeppe, I also think that doing it in the MA will be fiddly, but still probably the right thing
+[08:44] <rogpeppe> fwereade: i don't think it should be *too* fiddly. i'll have a quick check to see how it fits into my plan.
+[08:44] <fwereade> rogpeppe, cool
+[08:45] <dimitern> rogpeppe, fwereade, wallyworld: morning :)
+[08:45] <rogpeppe> dimitern: hiya
+[08:46] <fwereade> dimitern, heyhey
+[08:54] <rogpeppe> fwereade: i think the stater worker fits in quite easily actually: http://paste.ubuntu.com/1544194/
+[08:57] <rogpeppe> fwereade: but i think i agree that it shouldn't be a new subcommand
+[08:57] <fwereade> rogpeppe, I don't see a stater involved in the bootstrap machine
+[08:58] <rogpeppe> fwereade: i'm not sure it needs to, although there's no harm if it does
+[08:59] <rogpeppe> fwereade: on a bootstrap machine, the state must be started manually
+[08:59] <fwereade> rogpeppe, I'm -1 on anything that makes machine 0 work differently from any other mchine with the same responsibilities
+[08:59] <rogpeppe> fwereade: or probably bootstrap itself would do it
+[08:59] <fwereade> rogpeppe, we may need to be clever in bootstrap, but after that it shoudl be just the same as any other
+[08:59] <rogpeppe> fwereade: machine 0 is fundamentally different, because there's no existing state to connect to
+[09:00] <rogpeppe> fwereade: but i agree in principle
+[09:00] <fwereade> rogpeppe, once there's state, if we treat it differently, I think we're Doing It Wrong
+[09:08] <rogpeppe> fwereade: ok, i think this might be better: http://paste.ubuntu.com/1544253/
+[09:12] <TheMue> Morning all.
+[09:13] <dimitern> TheMue: morning
+[09:15] <TheMue> dimitern: Hiya
+[09:15] <fwereade> TheMue, heyhey
+[09:17] <fwereade> rogpeppe, yeah, looks sane to me; lots of other details (do machine jobs change (I think they will have to), how do we deal with job changes (significant differences in task-running)) etc
+[09:17] <fwereade> rogpeppe, except, well, hmm
+[09:17] <rogpeppe> fwereade: yes, job changes are an interesting question.
+[09:18] <fwereade> rogpeppe, I guess I still don't quite know what a stater will be doing... watching for a job change and killing itself?
+[09:18] <fwereade> rogpeppe, (sorry, removing mongo and then killing itself?)
+[09:19] <rogpeppe> fwereade: yeah, when jobs can change
+[09:19] <rogpeppe> fwereade: in my sketch above, it does nothing after initial check-and-install
+[09:19] <fwereade> rogpeppe, indeed, that's what I'm waffling on about
+[09:21] <rogpeppe> fwereade: perhaps i should work out how we might deal with changing jobs. there are some interesting issues around that (perhaps we'd need to keep a count of api servers and state servers in the state, and disallow a job change if it will lose the last one of either)
+[09:27] <rogpeppe> wallyworld: i've just replied to https://codereview.appspot.com/7133043/; i'm interested if you think my suggestion is viable.
+[09:28] <fwereade> rogpeppe, yeah, I think so
+[09:28] <fwereade> rogpeppe, do you have a moment to revisit the destroy-* command plan?
+[09:28] <fwereade> rogpeppe, I'm pretty sure I convinced you of crack the other day
+[09:28] <rogpeppe> fwereade: lol
+[09:28] <fwereade> rogpeppe, but really all the possible approaches seem crackful one way or another
+[09:29] <rogpeppe> fwereade: what in particular was possibly crack?
+[09:29] <fwereade> rogpeppe, refusing if any unit's already Dying
+[09:29] <rogpeppe> fwereade: refusing what, sorry?
+[09:29] <fwereade> rogpeppe, to do anything :)
+[09:30] <fwereade> rogpeppe, it certainly doesn't fit well with the Destroy methods in state
+[09:30] <fwereade> rogpeppe, all of which are fine with dying/dead/removed entities
+[09:30] <fwereade> rogpeppe, that's the main problem for me
+[09:31] <rogpeppe> fwereade: are we talking about https://codereview.appspot.com/7138062/ here?
+[09:31] <fwereade> rogpeppe, not really, I'm doing destroy-machine -- with destroy-service I weakened and went with allow-if-exists
+[09:32] <rogpeppe> fwereade: or is this a general discussion, unrelated to any particular CL?
+[09:32] <fwereade> rogpeppe, but service for some reason only destroys one at a time
+[09:32] <fwereade> rogpeppe, (ok that is crazy too, but for another time)
+[09:34] <rogpeppe> fwereade: i'm a bit at sea here. are we talking about the "destroy gives an error if destroy has already been called on the enitity" decision?
+[09:34] <fwereade> rogpeppe, yes: from the perspective of the CLI
+[09:34] <rogpeppe> fwereade: (assuming there *was* such a decision, which i can't quite remember)
+[09:34] <fwereade> rogpeppe, such an approach is incoherent in state IMO
+[09:34] <fwereade> rogpeppe, "no error, it's being destroyed" makes a lot more sense at that level
+[09:35] <rogpeppe> fwereade: what if it's already been removed?
+[09:35] <fwereade> rogpeppe, no error -- the user had a *state.Whatever, it must have existed at some point, now it doesn't, everyone;s happy
+[09:36] <rogpeppe> fwereade: not from the perspective of the CLI though
+[09:36] <fwereade> rogpeppe, well, yeah, the question is: what *is* correct from that perspective
+[09:36] <rogpeppe> fwereade: you'll get a different error if it's been removed from if it's been destroyed-but-not-removed
+[09:36] <rogpeppe> fwereade: yeah
+[09:36] <rogpeppe> fwereade: i'm ok with the rm analogy
+[09:37] <rogpeppe> fwereade: actually, the kill(1) analogy is probably stronger
+[09:37] <rogpeppe> fwereade: 'cos processes can take a while to go away
+[09:39] <rogpeppe> fwereade: so i think i'm fine if we get no error if the entity is Dying, but we do get an error if it's been removed.
+[09:39] <fwereade> rogpeppe, the philosophical issue here is then how we treat Dead
+[09:40] <rogpeppe> fwereade: ha
+[09:40] <fwereade> rogpeppe, in theory, Dead/removed are not states we should really be distinguishing between
+[09:40] <fwereade> rogpeppe, in practice, I don't see how we can avoid it
+[09:40] <fwereade> rogpeppe, and I can't tell whether that matters or not ;p
+[09:41] <rogpeppe> fwereade: yeah, i think i agree. perhaps we should go with "if it doesn't show up in status, you should get an error trying to talk to it"
+[09:41] <fwereade> rogpeppe, hmm, yeah, does status strip Dead things yet?
+[09:41] <fwereade> rogpeppe, (and is it even sane for it to do so?)
+[09:41] <rogpeppe> fwereade: i dunno
+[09:42] <rogpeppe> fwereade: but if we go with the above guiding principle, it doesn't matter either way, just that we're consistent in that respect
+[09:42] <fwereade> rogpeppe, if we strip (say) dead units, then the user won't be able to understand why they can't terminate a machine that appears to have no units
+[09:42] <fwereade> rogpeppe, or possibly they'll see the unit on the machine, but see it as a dangling pointer
+[09:42] <fwereade> rogpeppe, actually, dangling pointers in status cannot be avoided in general
+[09:43] <rogpeppe> fwereade: i'm ok with status showing dead things
+[09:43] <rogpeppe> fwereade: so then the implementation all becomes obvious, no subterfuge required
+[09:43] <fwereade> rogpeppe, ok, yeah, that SGTM
+[09:44] <fwereade> rogpeppe, so as long as an identified entity can be obtained from state, we allow a destroy, even if it's a no-op
+[09:44] <rogpeppe> fwereade: yup
+[09:44] <fwereade> rogpeppe, if any entity in the list is not found, bail
+[09:45] <rogpeppe> fwereade: what about the other entities on the list? do they get destroyed or not?
+[09:45] <fwereade> rogpeppe, (not that we can destroy them all txnly anyway, so we're still vulnerable to conns dropping half way through processing...)
+[09:45] <rogpeppe> fwereade: i think that we should go through trying to destroy all the entities, even if one fails
+[09:46] <fwereade> rogpeppe, I'm imagining we collect up all the identified entities that are Alive, error if any isn't there, and then just Destroy the ones we found
+[09:46] <rogpeppe> fwereade: when you say "error if any isn't there", you mean "log an error" not "return an error
+[09:46] <rogpeppe> ", yes
+[09:46] <rogpeppe> ?
+[09:47] <fwereade> rogpeppe, meh, maybe -- so we keep track of any such errors and then exit 1 if we hit one?
+[09:47] <rogpeppe> fwereade: yup
+[09:47] <rogpeppe> fwereade: that's consistent with rm and kill, for example
+[09:48] <fwereade> rogpeppe, yeah, ok, I think that's sanest then
+[09:48] <rogpeppe> fwereade: it means that if you've got a big list of entities to destroy, it's less fragile if one of those has just been removed.
+[09:49] <fwereade> rogpeppe, yeah, sgtm
+[09:50] <fwereade> rogpeppe, hmm... I guess if we can't tell whether state is broken, we have to just keep on trying and failing when the conn goes down half way through
+[09:51] <rogpeppe> fwereade: no, i think that if the error is not "entity doesn't exist", we should abort
+[09:52] <rogpeppe> fwereade: that's the approach we take in other places.
+[09:52] <fwereade> rogpeppe, (incidentally, destroy-unit won't scale sanely anyway... we're going to need something like `juju resize wordpress 27`)
+[09:52] <fwereade> rogpeppe, hmm
+[09:52] <rogpeppe> fwereade: i totally agree
+[09:52] <rogpeppe> fwereade: having a target number of units makes much more sense than managing individual units
+[09:53] <fwereade> rogpeppe, ok, so if someone added a JobManageEnviron to a machine and made it unkillable, that should stop all the other machines from being destroyed?
+[09:53] <rogpeppe> fwereade: no
+[09:53] <rogpeppe> fwereade: ok, so there are probably other errors to check for :-)
+[09:53] <fwereade> rogpeppe, that is not an "entity doesn't exist" error ;)
+[09:53] <rogpeppe> fwereade: i really want us to be able to check for state upness
+[09:54] <fwereade> rogpeppe, yeah, agreed
+[09:54] <rogpeppe> fwereade: i was thinking recently that the best place for it is probably in mgo itself.
+[09:55] <fwereade> rogpeppe, hmm, yeah, if that could reliably give us ErrConnDown or something that would be great
+[09:55] <rogpeppe> fwereade: as that's the place that is actually (potentially) in the knowledge of whether it can still talk to the state or not.
+[09:55] <rogpeppe> fwereade: i was thinking more of mgo.Database.Up() bool
+[09:56] <fwereade> rogpeppe, ah, yeah, nice
+[09:56] <rogpeppe> fwereade: which would return false if any operations had failed permanently
+[09:59] <rogpeppe> fwereade: the problem is that i'm not sure it's possible to tell that, because there's a cluster, and just because one operation has failed doesn't mean that a subsequent op will. i don't know enough about mongodb and mgo's client implementation to be able to tell how feasible this is.
+[10:00] <fwereade> rogpeppe, indeed
+[10:00] <fwereade> rogpeppe, nor do I
+[10:12] <fwereade> rogpeppe, hmm -- in the absence of such a thing,how about: (1) collect what we can, ignore not-Alive, log removed, return other errors directly; (2) destroy everything we collected, logging all errors; (3) return an error if we encountered any
+[10:12] <fwereade> rogpeppe, except, no, maybe not
+[10:12] <rogpeppe> fwereade: perhaps we should not try to be clever
+[10:12] <fwereade> rogpeppe, state.IsCannotDestroy(err)
+[10:13] <rogpeppe> fwereade: just make all the attempts we can, logging each error as it happens
+[10:13] <fwereade> rogpeppe, the only things that are actually ever undestroyable are machines
+[10:13] <rogpeppe> fwereade: that won't be true for long
+[10:13] <rogpeppe> fwereade: we'll be able to get permission-denied errors, i think
+[10:14] <fwereade> rogpeppe, ah, yes, cool
+[10:14] <rogpeppe> fwereade: i think if we go with the naive approach for now, it'll be easy to retrofit state-upness checking if/when it's available
+[10:14] <fwereade> rogpeppe, hmm, are the destroy-machine errors really special cases of permission errors? I think they might be
+[10:15] <rogpeppe> fwereade: i don't think so
+[10:15] <rogpeppe> fwereade: or... nah, i don't think so
+[10:15] <fwereade> rogpeppe, yeah, maybe it's not quite right
+[10:16] <rogpeppe> fwereade: it's not that you don't have permission, it's that you haven't arranged things correctly to enable the operation
+[10:16] <TheMue> rogpeppe: ping
+[10:16] <fwereade> rogpeppe, heh, I'd seen it as "*nobody* has permission to do that, are you crazy?" ;p
+[10:17] <rogpeppe> fwereade: lol
+[10:17] <rogpeppe> TheMue: ping
+[10:17] <rogpeppe> TheMue: pong
+[10:17] <rogpeppe> TheMue: pung
+[10:17] <rogpeppe> TheMue: peng
+[10:17] <TheMue> rogpeppe: pang
+[10:17] <TheMue> rogpeppe: Did you read Daves mail?
+[10:17] <rogpeppe> TheMue: yeah
+[10:17] <TheMue> rogpeppe: Thoughts?
+[10:17] <fwereade> rogpeppe, apparently "pung" is an obscene swedish word; this was pointed out when I used it in test data once
+[10:17] <rogpeppe> TheMue: i'm just writing a reply actually
+[10:18] <TheMue> rogpeppe: OK, thx.
+[10:18] <rogpeppe> fwereade: "pung" is also a term for a set of three of the same tile in maj jong
+[10:18] <TheMue> rogpeppe: I'm a bit torn.
+[10:18] <fwereade> rogpeppe, when you say the "naive" approach, I'm not quite sure how maive you mean
+[10:18] <rogpeppe> TheMue: he's still off track - changing the delay in juju.Conn won't affect anything
+[10:19] <rogpeppe> fwereade: go through each thing, getting it, trying to destroy it, and log any errors. exit(1) if any error occurred.
+[10:20] <fwereade> rogpeppe, ok, sgtm
+=== jtv1 is now known as jtv
+[10:21] <TheMue> rogpeppe: I have to try if the error still exists w/o a change, because I've been able to reproduce it last year and now, with both approaches, it's gone.
+[10:22] <rogpeppe> TheMue: what error?
+[10:22] <TheMue> rogpeppe: That one that has been the reason for that change. In the LP ticket. Or lets call it "behavior", those quick retries.
+[10:26] <rogpeppe> TheMue: which LP ticket?
+[10:26] <rogpeppe> TheMue: (the CL doesn't seem to reference it)
+[10:29] <TheMue> rogpeppe: Yes, missed it, but the kanban card. *lol* It's https://bugs.launchpad.net/juju-core/+bug/1084867.
+[10:29] <_mup_> Bug #1084867: conn: conn connections should pause between retry attempts <juju-core:In Progress by themue> < https://launchpad.net/bugs/1084867 >
+[10:30] <rogpeppe> TheMue: ah, i thought you were talking about an actual error
+[10:31] <rogpeppe> TheMue: how were you checking whether the behaviour had changed?
+[10:33] <TheMue> rogpeppe: Calling status with debug like shown before and after.
+[10:34] <rogpeppe> TheMue: i haven't seen any before and after - have you got a paste?
+[10:38] <TheMue> rogpeppe: No. In the tests without a change I had the same retries. Afterwards one retry sometimes has been enough and sometimes some more (with a different timing then before due to the different delay).
+[10:38] <TheMue> rogpeppe: But never again in such an amount.
+[10:38] <rogpeppe> TheMue: were you calling status immediately after bootstrap?
+[10:39] <rogpeppe> TheMue: (because that's the only time when retries are significant)
+[10:40] <TheMue> rogpeppe: Yes, as immidiate as possible by typing or pasting the command.
+[10:41] <rogpeppe> TheMue: one mo, i'll try your branch and see if i see the same
+[10:41] <wallyworld> rogpeppe: hi, your suggestions are viable i think. my personal preference is still to run all the tests with the -local or -live flags since it will be a royal pita to have to comment out all the skips all the time
+[10:42] <TheMue> rogpeppe: Thanks
+[10:42] <rogpeppe> wallyworld: in practice, you'll probably just comment out the skips that you think will be fixed by the openstack changes you're making
+[10:42] <wallyworld> rogpeppe: that's part of the issue - it's hard to know what will be fixed each time
+[10:42] <rogpeppe> wallyworld: i think there's a significant advantage in being able to incrementally enable more tests
+[10:42] <wallyworld> since a small change to some of the provider stuff magically makes a bunch more tests pass
+[10:43] <rogpeppe> wallyworld: surely commenting out the skips is a single editor command - not a great hassle?
+[10:43] <wallyworld> sure, but it's still work to do, and changing code means there's always a possibility of accidentally committing something
+[10:43] <rogpeppe> wallyworld: we'll catch that!
+[10:44] <wallyworld> i guess my workflow the past few weeks has been very suited to having all the tests run with -live and seeing what improves with each change
+[10:45] <wallyworld> but if i can't change your mind then i'll put in the skips
+[10:45] <rogpeppe> wallyworld: i think that the tests that pass should be enabled by default in trunk, so that anyone running the tests will run them too.
+[10:45] <wallyworld> you mean the service double ones?
+[10:46] <rogpeppe> wallyworld: yeah
+[10:47] <wallyworld> part of the issue as well is that we seem to be making good progress (touch wood) and so there will be a lot of extra juju-core branches which simply uncomment skips, and all the overhead that involves getting reviews etc
+[10:47] <wallyworld> so it affects velocity
+[10:48] <dimitern> wallyworld: but these CLs uncommenting skipped tests should be trivial and easy to review
+[10:49] <wallyworld> sure, but the turn around time is still 12-24 hours, and by that time, you have several branches queued up. but is seems your mind is made up so i will add the skips
+[10:50] <rogpeppe> wallyworld: i think any CL that just uncomments skipped tests could be counted as trivial and submitted immediately.
+[10:51] <rogpeppe> wallyworld: although i'd check that out with others to make sure that's ok
+[10:51] <wallyworld> \o/ ok!
+[10:52] <rogpeppe> TheMue: i'm trying your branch now, and i don't see any backoff. it's redialling just as fast as ever.
+[10:52] <wallyworld> i've had several beers (it's friday evening after all), so i will tackle the skips tomorrow :-)
+[10:52] <rogpeppe> TheMue: http://paste.ubuntu.com/1544692/
+[10:52] <rogpeppe> TheMue: shit, one mo, i'm trying the wrong branch!
+[10:53] <dimitern> wallyworld: thanks for submitting the other CL btw
+[10:53] <TheMue> rogpeppe: I already wondered, because yesterday I had a different behavior. But I'll test too.
+[10:54] <wallyworld> dimitern: you mean the test double fixes? not submitted yet, still some more stuff to fix, but soon
+[10:54] <dimitern> wallyworld: no the one about fake tools
+[10:54] <wallyworld> ah ok
+[10:55] <rogpeppe> TheMue: testing with your branch now, and still no change, i'm afraid
+[10:56] <rogpeppe> TheMue: can you paste me the output of juju status --debug showing exponential backoff happening on the retries?
+[10:58] <TheMue> rogpeppe: Aaargh, just seeing it here too. Seems yesterday the net has been too good, now I have multiple retries too and can confirm your observation of no exponential delay.
+[10:59] <rogpeppe> TheMue: ok, good. nice to know i'm not going bonkers :-)
+[10:59] <TheMue> rogpeppe: Let me try to add it to state.Open(), like in my first approach. Just as a test, because there we dial mongo.
+[11:00] <TheMue> rogpeppe: That would confirm your idea of mongo having it as a feature.
+[11:03] <rogpeppe> TheMue: that will work - just revert to your earlier revision
+[11:18] <TheMue> rogpeppe: Currently it tries to connect, wonderfully with increasing delays.
+[11:18] <TheMue> rogpeppe: Bing, and now it's in.
+[11:22] <rogpeppe> TheMue: cool
+[11:22] <niemeyer> Hi all
+[11:23] <TheMue> rogpeppe: And beside that I now can connect the web console of MAAS from this VM while it is installed in another one. Hehe!
+[11:23] <TheMue> niemeyer: Hello
+[11:23] <rogpeppe> niemeyer: yo!
+[11:23] <dimitern> niemeyer: hiya
+[11:25] <fwereade> niemeyer, morning
+[11:28] <niemeyer> Wow, hi all! :-)
+[11:28] <niemeyer> What a warm welcome
+[11:29] <rogpeppe> niemeyer: when you have a moment for discussion about the API archtecture, please let me know.
+[11:29] <TheMue> niemeyer: Matching to your weather (21° more than here).
+[11:33] <niemeyer> rogpeppe: Sounds good
+[11:33] <niemeyer> rogpeppe: Just give me a few minutes and will be with you
+[11:33] <rogpeppe> niemeyer: cool
+[12:09] <niemeyer> rogpeppe: Alright
+[12:09] <rogpeppe> niemeyer: okeydokey
+[12:10] <rogpeppe> niemeyer: i've only realised this morning how actively dave cheney has been working on the HA stuff, so there's some overlap here.
+[12:45] <fwereade> niemeyer_, resync on the question "is it sane/meaningful for a service whose charm has a peer relation to ever not be in a peer relation?"
+[12:45] <fwereade> niemeyer_, I believe the answer is no, but I wanted to check your opinion
+[12:46] <niemeyer_> fwereade: Hmm
+[12:46] <niemeyer_> fwereade: If I get what you mean, yes, it will always be in that relation
+[12:46] <fwereade> niemeyer_, that was (roughly) the justification given for blocking peer relation interactions in the command line
+[12:47] <niemeyer_> fwereade: "be" is a bit vague, though, so maybe it's worth expanding
+[12:47] <niemeyer_> fwereade: The relation may always be there, even if there are no counterpart units
+[12:48] <fwereade> niemeyer_, yeah, I'm not thinking about units
+[12:48] <niemeyer_> fwereade: Well, this raises a few extra ideas
+[12:48] <niemeyer_> fwereade: That maybe we just shouldn't even worry right now, for the benefit of progress
+[12:48] <fwereade> niemeyer_, I'm thinking of whether or not the existence of a such a relation doc is tied to the existence of the service doc
+[12:49] <niemeyer_> fwereade: I'll just put something on the back of your mind for awareness:
+[12:49] <niemeyer_> fwereade: It's quite reasonable to, some day, have peer relations with multiple services in it
+[12:50] <fwereade> niemeyer_, yeah, I am aware of this, and I don't *think* it affects this problem
+[12:50] <fwereade> niemeyer_, the reaosn is that I just picked up https://bugs.launchpad.net/juju-core/+bug/1072750
+[12:50] <_mup_> Bug #1072750: deploy does not add relations transactionally <juju-core:In Progress by fwereade> < https://launchpad.net/bugs/1072750 >
+[12:51] <niemeyer_> fwereade: Ah, okay
+[12:51] <fwereade> niemeyer_, we can (1) ignore the bug; (2) implement peer-relation-addition within service addition; (3) allow direct control of peer relations; (4) ???
+[12:52] <niemeyer_> fwereade: I'd vote for (2) if it's not too much trouble
+[12:52] <fwereade> niemeyer_, such was my instinct too
+[12:52] <niemeyer_> fwereade: and for (4) postpone the solution, if it is
+[12:52] <fwereade> niemeyer_, IMO that's just a nicer way of saying (1) ;)
+[12:53] <fwereade> niemeyer_, ah ok, I misinterpreted
+[12:53] <fwereade> niemeyer_, yeah, I'll see how annoying it feels
+[12:53] <niemeyer_> fwereade: It actually is.. it was just a different way of saying "The bug is relevant, but maybe not worth fixing before other critical things on our pipeline"
+[12:54] <niemeyer_> fwereade: (1) felt a bit like "We don't care." :-)
+[12:54] <fwereade> niemeyer_, yeah, it's slightly better than (1) because it says "we have a plan but we won't do it yet"
+[12:55] <fwereade> niemeyer_, followup question -- state API and CLI are inconsistent wrt peer relations
+[12:56] <fwereade> niemeyer_, I think that to do this cleanly we want (1) AddRelation to reject peer relations and (2) Relation.Destroy to reject direct attempts to destroy a peer relation
+[12:56] <fwereade> niemeyer_, (they'd still get destroyed but only when their service was)
+[12:57] <niemeyer_> fwereade: +1.. sounds reasonable with the status quo
+[12:57] <fwereade> niemeyer_, cool, thanks
+[12:57] <niemeyer_> fwereade: We may have to fix if we add what I suggested above, but that's totally fine
+[12:58] <fwereade> niemeyer_, I don't think it collides with multi-endpoint peer relations at all actually -- that will require new code but I *think* not invalidate any that exists
+[12:58] <fwereade> niemeyer_, logic, that is, not code
+[13:16] <rogpeppe> lunch
+[13:41] <rogpeppe> mramm: when are the southern-hemisphere kanban meetings?
+=== slank_away is now known as slank
+[13:41] <mramm> 17:30 eastern time
+[13:41] <mramm> 22:00 GMT
+[13:41] <mramm> 22:30 GMT
+[13:43] <mramm> rogpeppe: if you want I can throw you on the invite list so you know about them
+[13:44] <rogpeppe> mramm: please. i'll try to make it along some time - it would be useful to have some interaction with dave.
+[13:44] <mramm> rogpeppe: yea, that would be good
+[13:51] <niemeyer_> rogpeppe: Re. "with regard to 3), Write *is* checking that the configuration is correct unless
+[13:51] <niemeyer_> i'm missing something stupid."
+[13:51] <niemeyer_> rogpeppe: Maybe I misunderstood then.. why is Change calling Check before WRite?
+[13:52] <rogpeppe> niemeyer_: ha, good question. i can't remember. the point is moot now, 'cos i've deleted Change.
+[13:52] <niemeyer_> rogpeppe: Cool
+[13:53] <rogpeppe> niemeyer_: but Write does call Check still
+[13:53] <niemeyer_> rogpeppe: Cool.. so it was probably just unnecessary
+[13:53] <rogpeppe> niemeyer_: probs, yeah
+[13:55] <rogpeppe> trivial CL anyone: https://codereview.appspot.com/7128055
+[13:57] <TheMue> lunchtime
+[14:09] <niemeyer_> rogpeppe: Done
+[14:10] <rogpeppe> niemeyer_: thanks
+[14:11] <rogpeppe> "<unknown job constant: %d>" would probably be better
+[14:11] <rogpeppe> niemeyer_: it's not a constant when it's printed :-)
+[14:11] <niemeyer_> rogpeppe: Hm?
+[14:11] <rogpeppe> niemeyer_: <unknown job value %d> ?
+[14:12] <rogpeppe> niemeyer_: although i actually think i prefer the unknown value being in the same form as the known value
+[14:12] <niemeyer_> rogpeppe: I don't understand what you mean
+[14:12] <niemeyer_> rogpeppe: JobFooBar are constants
+[14:12] <niemeyer_> rogpeppe: If we get a *constant* we don't recognize, we say so
+[14:13] <rogpeppe> niemeyer_: we're not getting a constant we don't recognise. we're getting a value we don't recognise...
+[14:13] <rogpeppe> niemeyer_: just <unknown job %d> would be better perhaps
+[14:13] <niemeyer_> rogpeppe: 42 is not a valid job constant.. it's a perfectly reasonable value :-)
+=== niemeyer_ is now known as niemeyer
+[14:14] <niemeyer> rogpeppe: I won't bikeshed over this, though. It's a pretty straightforward issue.
+[14:14] <rogpeppe> niemeyer: indeed. i'll go with <unknown job %d>, if that's ok
+[14:15] <niemeyer> rogpeppe: Sure, whatever works
+[14:16] <rogpeppe> niemeyer: if you might be able to take another look at https://codereview.appspot.com/7085062/, that would be great too, thanks.
+[14:17] <rogpeppe> niemeyer: that's the CL that deletes the Change method
+[14:17] <rogpeppe> niemeyer: (as well as the CL's stated purpose...)
+[14:19] <niemeyer> rogpeppe: Cool, will check agian
+=== TheRealMue is now known as TheMue
+[14:33] <niemeyer> rogpeppe: LGTM
+[14:36] <rogpeppe> niemeyer: thanks
+[14:44] <rogpeppe> niemeyer: there's a trivial followup that i seem to have neglected to unWIP: https://codereview.appspot.com/7128047
+[14:48] <niemeyer> rogpeppe: LGTM, with a couple of points to ponder aobut
+[14:48] <niemeyer> aobut
+[14:48] <niemeyer> about
+[14:48]  * niemeyer => lunch, so he can type again
+[15:39] <rogpeppe> i'm heading off early today to try and beat the snow. will be leaving in about an hour.
+[15:45] <fwereade_> niemeyer, ping
+[15:45] <fwereade_> rogpeppe, take care
+[15:46] <rogpeppe> fwereade_: and you - have a good trip to austin...
+[15:48] <fwereade_> rogpeppe, cheers :)
+[16:06] <niemeyer> fwereade_: pongus
+[16:07] <fwereade_> niemeyer, heyhey
+[16:07] <fwereade_> niemeyer, so, I got a little distracted with another bug, because I had a silly approach to the peer-relation one
+[16:08] <fwereade_> niemeyer, and ISTM that we can hugely simplify AddRelation if we're explicit about it taking 2 endpoints only
+[16:08] <niemeyer> fwereade_: Hmm
+[16:09] <fwereade_> niemeyer, how insane do you consider that suggestion to be? :)
+[16:09] <niemeyer> fwereade_: It sounds to me like a significant refactoring to change something that is already working
+[16:09] <niemeyer> fwereade_: All the logic around relations handles an arbitrary number of endpoints
+[16:10] <niemeyer> fwereade_: Hardcoding a limit on that seems like a step backwards for no great reason
+[16:13] <fwereade_> niemeyer, are you free for a very quick call?
+[16:13] <niemeyer> fwereade_: Let's do it
+[16:14] <fwereade_> https://plus.google.com/hangouts/_/142892326e0f515d55e499b071db37d660b0ba7e?authuser=0&hl=en#
+[16:14] <fwereade_> niemeyer, ^^
+[16:14] <niemeyer> fwereade_: ON th eway
+[16:47] <rogpeppe> niemeyer: here's a CL that changes agent.Conf.StateInfo and APIINfo to pointer types, after your remark earlier: https://codereview.appspot.com/7124062/
+[16:47] <rogpeppe> have a great weekend all
+[16:48] <TheMue> rogpeppe: Enjoy the snow. ;)
+[16:48] <TheMue> rogpeppe: And have a great weekend too.
+[16:48] <rogpeppe> TheMue: thanks, you too
+[16:49] <niemeyer> rogpeppe: Have a good one!
+[16:54] <niemeyer> rogpeppe: Reviewed, btw
+[17:04] <rogpeppe> niemeyer: thanks. yeah, it was just a debugging remnant, and i wondered about and/or there too!
+[17:04] <rogpeppe> niemeyer: have a great weekend, see ya monday
+[17:04] <niemeyer> rogpeppe: Cheers!

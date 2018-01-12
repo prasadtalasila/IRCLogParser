@@ -1,0 +1,292 @@
+=== _salem is now known as salem_
+=== hggdh_AFK is now known as hggdh
+=== salem_ is now known as _salem
+[06:07] <pitti> Good morning
+[07:19] <dholbach> good morning
+[07:34] <pitti> jibel: hm, when I try to manually restart a jhbuild jenkins job, it is immediately "done" with a copy of the last log
+[07:34] <pitti> jibel: it doesn't actually try to build it (I fixed the problem on rabisu, it does work now for gnome-terminal)
+[08:09] <jibel> pitti, good morning
+[08:09] <pitti> jibel: bonjour Monsieur, ça va?
+[08:10] <jibel> pitti, very well, thank you, und selbst?
+[08:10] <pitti> jibel: sehr gut, danke!
+[08:10] <jibel> pitti, right, it's a bit special, jenkins doesn't drive the tests, but just display the results
+[08:11] <pitti> jibel: is there a way to run a test manually that jenkins will pick up? I just did jhbuild buildone --check gnome-terminal
+[08:11] <jibel> pitti, to restart a test you must change the checksum on the test host in ~/jhbuild-data/jhbuild.modules
+[08:11] <jibel> just remove a character for example
+[08:11] <pitti> aah, then the next cron run will pick it up?
+[08:11] <jibel> pitti, yes
+[08:12] <pitti> ah, seems it re-ran it now anyway
+[08:12] <jibel> the problem I had is that you cannot have several jhbuild running in parallel
+[08:12] <pitti> but good to know for the future
+[08:13] <pitti> jibel: for modules that depend on each other? I often run stuff in parallel just fine
+[08:14] <jibel> there was something with a locking of the package database
+[08:17] <pitti> ah, I use "buildone" in parallel, not "build"; that might be it
+[08:23] <jibel> pitti, I used build for the automated runs because it supports the option -C to force a checkout and autogen on failure
+[08:24] <jibel> I think I could add it to buildone too
+[08:24] <pitti> *nod*
+[08:24] <pitti> ok, I think I defeated the glib tests now
+[08:24] <pitti> I just install xterm; we really want to test the Terminal=true code paths, but xterm is sufficient
+[08:25] <pitti> trying the "force rebuild" trick now with glib
+[08:37] <pitti> jibel: I guess we need an RT to remove the broken "jhbuild-amd64-gnome-doc-utils" job from public jenkins, right? I'll file one
+[08:38] <jibel> pitti, right, we do
+[08:38] <pitti> jibel: ok, sent
+[08:40] <jibel> pitti, I restarted gnome-control-center, it failed because .gitmodules was corrupted (unresolved conflict)
+[08:41] <pitti> jibel: right, someone pointed out that our setup might have some problem with nested git modules
+[08:41] <pitti> but they work for gstreamer, so probalby just a corrupted checkout indeed
+[08:41] <pitti> thanks
+[08:42] <jibel> pitti, it does, I rewrite urls in gitmodules on the fly to use git over http instead of native git and it sometimes break
+[08:44] <pitti> jibel: ah, because of our proxy?
+[08:44] <psivaa> bdmurray: thanks
+[08:45] <jibel> pitti, yes, I hope I won't have to continue this gym in a close future
+=== ayrton is now known as ayr_ton
+[10:28] <pitti> http://10.98.0.1:8080/view/Raring/view/JHBuild%20Gnome/job/jhbuild-amd64-glib/
+[10:28] <pitti> jibel: ^ \o/ il est vert à nouveau
+[10:28] <pitti> I also prodded Tim about applying the gst-plugins-* fixes
+[11:10] <jibel> pitti, awesome
+[11:10] <jibel> I'm still on gnome-control-center
+[11:11] <zyga> hey, can I get a quick ack on https://code.launchpad.net/~zkrynicki/checkbox/fixes/+merge/143477
+[11:12]  * zyga really wants certification people to work hewre
+=== _salem is now known as salem_
+[11:28] <zyga> seeking code reviews for https://code.launchpad.net/~zkrynicki/checkbox/test-cwd/+merge/143482
+[11:33] <pitti> jibel: looking at gtk+ now
+[11:52] <zyga> I've updated the integration tests branch
+[11:52] <zyga> it now has far less commits than before
+[11:52] <zyga> I removed some of the early mistakes
+[11:52] <zyga> and code that I dind't know existed in the standard library
+[11:52] <zyga> https://github.com/zyga/checkbox/compare/master...integration-tests
+[11:52] <zyga> this is how integration test patch looks like now
+[11:53] <zyga> it's still pretty big because TestCaseWithParameters patch has not landed to master so it's still here
+[11:53] <zyga> spineau, brendand, ara: ^^
+[11:53] <zyga> I would like to propose it to master now, unless there are any objections
+[11:54] <jibel> pitti, several autopkgtest failed with a unicode error on amd64
+[11:54] <jibel> https://jenkins.qa.ubuntu.com/view/Raring/view/AutoPkgTest/job/raring-adt-gobject-introspection/ARCH=amd64,label=adt/25/console for example
+[11:55] <jibel> it seems to be an error message that adt-run is trying to decode
+[11:55] <pitti> indeed, so the test fails, and then that autopkgtest bug runs into a bug in the failure reporting; great
+[11:55]  * zyga cannot wait to get this plainbox release into autopkgtests
+[11:57] <jibel> pitti, unicode quotes
+[11:57] <pitti> jibel: so this should probably .encode('UTF-8') the two arguments?
+[11:57] <jibel> https://jenkins.qa.ubuntu.com/view/Raring/view/AutoPkgTest/job/raring-adt-gobject-introspection/ARCH=amd64,label=adt/25/artifact/results/dsc0t-build-stderr
+[11:57] <pitti> (not sure what 'result' is, whether it's just "PASS" or so and thus doesn't need encoding)
+[11:58] <pitti> jibel: ooh -- that would be with the new glib?
+[11:58] <pitti> jibel: that's indeed a valid point, we want to update those I think
+[11:58] <jibel> pitti, right and adt-run failure is just a side effect
+[11:58] <jibel> pitti, you know how much I like adt-run code, I'll look into this
+[11:59] <jibel> (adt side that is)
+[11:59] <pitti> oh, that affects a whole bunch of stuff
+[11:59] <pitti> jibel: I'll get to it
+[12:00] <pitti> while this git bisect is running for figuring out the GTK regression
+[12:06] <zyga> brendand: thanks for the review
+=== zyga is now known as zyga-afk
+[12:11] <jibel> pitti,  gnome-control-center ist grün zurück
+[12:11] <pitti> \o/
+[12:11] <jibel> now geocode-glib which should be trivial, then my beloved WebKit <3
+[12:13] <pitti> go, jibel, go!
+[12:15] <pitti> jibel: libgdata fix uploaded, going to gconf, gdk-pixbuf now, and then g-i
+[12:47] <pitti> jibel: FYI, the GTK failure is real, I filed https://bugzilla.gnome.org/show_bug.cgi?id=691842 for it
+[12:47] <ubot5> Gnome bug 691842 in GtkTreeView "/TreeView/scrolling/specific/bug-111500 fails since "Kill gtk_tree_view_size_request" commit" [Normal,Unconfirmed]
+[12:58] <pitti> jibel: btw, "g-c-c ist wieder grün" :)
+[13:00] <jibel> pitti, ah thanks, I was not sure :)
+=== yofel_ is now known as yofel
+[13:30]  * zyga-afk really would love some reviews of https://code.launchpad.net/~zkrynicki/checkbox/test-parameters/+merge/143376
+=== zyga-afk is now known as zyga
+[13:49] <jibel> pitti, I filed bug 1100283 but couldn't find way to reproduce
+[13:49] <ubot5> bug 1100283 in autopkgtest (Ubuntu) "adt-run failed with "UnicodeDecodeError: 'ascii' codec can't decode byte 0xe2 in position 46" when stderr contains non-ascii charaters" [Undecided,New] https://launchpad.net/bugs/1100283
+[13:52]  * zyga needs reviews for https://code.launchpad.net/~zkrynicki/checkbox/test-job-origin/+merge/143508
+[14:01] <jibel> aha, found a reproducer
+[15:12] <pitti> argh, poppler too, fixing
+[16:02] <pitti> yay, the gobject-introspection autopkgtest discovered another upstream regression
+[16:10] <sk8r> does anyone know if there is a tester for the ubuntu phone os for a htc one s? cause i would be ok with being that guinea pig.
+[16:11] <balloons> sk8r, atm there are no images for the htc one s
+[16:12] <balloons> the only confirmed image is for the galaxy nexus, and it's not YET out :-) a few weeks and it should appear
+[16:12] <sk8r> but it should not take long to make it to other handsets, correct?
+[16:12] <balloons> that said, glad your interested, and there might be options for helping test without having a galaxy nexus
+[16:14] <sk8r> like i said i have a one s and would love to put it on there.
+[18:54] <dkessel> good evening. hm, what was the workaround for "testdrive gets stuck at 'configuring virtual machine'" again?
+[18:57] <dkessel> nevermind, i'll just use virtualbox directly
+[19:03] <dkessel> i need someone to confirm bug 1100006 . help? :)
+[19:03] <ubot5> bug 1100006 in apport (Ubuntu) "apport-collect complains about missing launchpadlib, but does not tell what to install" [Undecided,Incomplete] https://launchpad.net/bugs/1100006
+[19:22] <balloons> dkessel, indeed
+[19:23] <balloons> martin gave the proper response
+[19:23] <balloons> should be straighforward
+[19:25] <dkessel> balloons: yeah, i forgot the release. i should have known better. so you're trying?
+[19:26] <balloons> well, lol
+[19:26] <balloons> I'd have to uninstall pyhon-apport
+[19:26] <dkessel> :D
+[19:26] <dkessel> testdrive?
+[19:26] <dkessel> well i guess pitti will confirm this himself tomorrow anyway
+[19:27] <balloons> apport-collect
+[19:27] <balloons> You need to run 'sudo apt-get install python-apport' for apport-collect to work.
+[19:27] <dkessel> wt....
+[19:28]  * dkessel scratches head
+[19:28] <dkessel> maybe it doesn't even get that far in a clean live environment?
+[19:29] <balloons> yes.. to be fair, I already had the package
+[19:32] <balloons> and simply removed it
+[20:00] <dkessel> cprofitt, did you manage to "make uf" (friendly)? i tried and failed, but i can't find the problem
+[20:29] <dkessel> (see my mail if you read this later)
+[20:37] <letozaf_> Hey dkessel
+[20:37] <dkessel> hey letozaf_
+[20:38] <letozaf_> howzit ?
+[20:40] <dkessel> well, fine :) i have been filing bugs and confirming some the last evenings... :)
+[20:40] <dkessel> are you still working on autopilot tests?
+[20:40] <robotfuel> not at the moment, but I can answer questions if you have any
+[20:40] <thomi> dkessel: well, I'm working ona utopilot itself, rather than tests at the moment, why, what's up?
+[20:40] <letozaf_> well I had a kind of a break :)
+[20:40] <thomi> oh wait
+[20:40] <thomi> sorry, I got confused
+[20:41] <dkessel> thomi :)
+[20:41] <thomi> thought that was for me. Going to get more coffee,
+[20:41] <letozaf_> dkessel, I ran some tests on ARM
+[20:41] <letozaf_> dkessel, but I will get back to it soon
+[20:41] <robotfuel> I was in the wrong window sorry.
+[20:41] <letozaf_> thomi, hi
+[20:42] <dkessel> letozaf_, what ARM device do you have?
+[20:42] <letozaf_> dkessel, a Panda Board
+[20:42] <dkessel> thomi, i promise to get back to writing autopilot tests too :)
+[20:43] <letozaf_> dkessel, have you done something interesting on autopilot ?
+[20:44] <dkessel> letozaf_, nah. i started with the file-roller test and got stuck somewhere when trying to select an entry in a combobox and then paused...
+[20:45] <dkessel> and currently cprofitt, me and maybe some other guys are trying to get 'ubuntu friendly' to run on our machines
+[20:45] <letozaf_> dkessel, well when go get going, then you cannot stop :-D
+[20:45] <letozaf_> I mean with autopilot
+[20:47] <dkessel> yes, bad me...
+[20:49] <letozaf_> dkessel, no! I also get stuck, like now, but I'm confident things will get fixed
+[20:49] <dkessel> letozaf_, sure. we got thomi, after all :)
+[20:50] <letozaf_> dkessel, yeah! thats true! :)
+[20:51] <thomi> O.0
+[20:51] <thomi> ^-- that's my "strong coffee" face, BTW
+[20:52] <letozaf_> thomi, :-D
+=== salem_ is now known as _salem
+[21:21]  * balloons <3's packaging
+[21:25] <dkessel> balloons, trying to package the autopilot tests?
+[21:25] <balloons> yes.. I have such troubles getting the initial packages going on things
+[21:25] <balloons> I always seem to fall down somewhere on getting it to be what I want
+[21:31] <dkessel> yay, i'm the 200th member of the ubuntu quality team on lp - what is my prize? ;)
+[21:32] <letozaf_> dkessel, lol a new autopilot test to hack on ?
+[21:32] <thomi> balloons: you need a hand with the packaging? I managed to get the unity tests packaged OK
+[21:32] <dkessel> letozaf_, i better finish the last one first...
+[21:33] <letozaf_> dkessel, :-D
+[21:34]  * dkessel watches the cat watch tv
+[21:34] <dkessel> meta-watching...
+[21:35] <balloons> thomi, sure thing if you wish
+[21:35] <thomi> balloons: which branch?
+[21:36] <balloons> there's a breakdown in understanding.. or a lack of memory for me
+[21:36] <balloons> bzr branch lp:ubuntu-autopilot-tests
+[21:36] <balloons> i'd like to get that into a nice magical package for this ppa
+[21:36] <balloons> ppa:ubuntu-testcase/autopilot-tests
+[21:37] <thomi> balloons: OK - seems you're missing a setup.py file
+[21:37]  * thomi hacks one up quickly
+[21:44] <thomi> .... almost done
+[21:45] <balloons> yay!
+[21:45] <thomi> balloons: ok, one last issue - we need a top-level package name... right now they're being installed to 'terminal', 'nautilus' etc, which is likely to cause conflicts
+[21:45] <thomi> what should we use?
+[21:46] <balloons> yes.. I had attempted to call it ubuntu-autopilot-tests
+[21:46] <thomi> balloons: can't use '-' in a python module
+[21:46] <balloons> generically the same as the project, hah
+[21:47] <thomi> you can have '_' though :)
+[21:47] <balloons> yes.. and I don't like '_'
+[21:47] <balloons> hehe
+[21:47] <balloons> hmm
+[21:47] <dkessel> that sounds well known to me :)
+[21:47] <balloons> any name suggestions
+[21:48] <balloons> I don't really care.. keeping it simple would be nice
+[21:48] <balloons> but basically yes, ubuntu_autopilot_tests
+[21:49] <thomi> ok
+[21:52] <thomi> ok, I think this is done... just doing a test build
+[21:53] <balloons> dkessel, oww, #200 eh?  i missed that early
+[21:53] <balloons> here, let me get you a prize...
+[21:53]  * balloons prepares an amazing surprise for dkessel 
+[21:54]  * balloons rummages around on desk
+[21:54]  * dkessel closes eyes
+[21:54] <thomi> balloons: https://code.launchpad.net/~thomir/ubuntu-autopilot-tests/packaging-fixes/+merge/143597
+[21:55] <thomi> balloons: diff is still updating, but it works for me
+[21:55] <balloons> take my personal balloon
+[21:55] <balloons>         ,~-.
+[21:55] <balloons>          (  ' )-.          ,~'`-.
+[21:55] <balloons>       ,~' `  ' ) )       _(   _) )
+[21:55] <balloons>      ( ( .--.===.--.    (  `    ' )
+[21:55] <balloons>       `.%%.;::|888.#`.   `-'`~~=~'
+[21:55] <balloons>       /%%/::::|8888\##\
+[21:55] <balloons>      |%%/:::::|88888\##|
+[21:55] <balloons>      |%%|:::::|88888|##|.,-.
+[21:55] <balloons>      \%%|:::::|88888|##/    )_
+[21:55] <balloons>       \%\:::::|88888/#/ ( `'  )
+[21:55] <balloons>        \%\::::|8888/#/(  ,  -'`-.
+[21:55] <balloons>    ,~-. `%\:::|888/#'(  (     ') )
+[21:55] <balloons>   (  ) )_ `\__|__/'   `~-~=--~~='
+[21:55] <balloons>  ( ` ')  ) [VVVVV]
+[21:55] <balloons> (_(_.~~~'   \|_|/
+[21:55] <balloons>             [XXX]
+[21:55] <balloons>             `"""'
+[21:55] <balloons> ok, let me have a quick look and merge
+[21:55] <dkessel> wow, soo nice :D
+[21:56] <zyga> balloons: classy
+[21:57] <zyga> is there anyone that wants to have a look at some python test code?
+[21:57] <thomi> balloons: you may want to tweak the values in setup.py
+[21:57] <thomi> for example, the license
+[21:57] <thomi> I just copied & adapted the unity autopilot test one :)
+[21:57] <balloons> yes of course :-)
+[21:58] <balloons> after I look, I reserve the right to ask questions
+[21:59] <thomi> balloons: sure :)
+[21:59] <thomi> I reserve the right to say "I don't know"
+[21:59] <thomi> I'm really not a packaging expert, I've just packaged a few python modules before
+[22:00] <letozaf_> zyga, what python test code ? I mean what for?
+[22:01] <zyga> letozaf_: literally for unit testing
+[22:01] <zyga> https://code.launchpad.net/~zkrynicki/checkbox/test-parameters/+merge/143376
+[22:02] <balloons> hmm ok, so you added python2 switch, makes sense
+[22:02] <thomi> balloons: possibly you don't need that... since there's only a setup.py file
+[22:02] <balloons> still I like the explicitness
+[22:02] <thomi> if you have (for example) a 'Makefile' in the root dir then you need to tell dh which buildsystem to use
+[22:03] <letozaf_> zyga, would like to help but maybe someone more expert than me should do this, I just started with python :(
+[22:03] <thomi> exactly, explicit is good
+[22:05] <balloons> ohh shoot
+[22:05] <balloons> no key for ubuntu quality team
+[22:05] <balloons> hm..
+[22:05] <balloons> I had myself as maintainer, but I didn't want it to be owned by me
+[22:05] <thomi> hehe
+[22:06] <balloons> so I guess I have to be maintainer?
+[22:06] <thomi> I'm not really sure about that part - fginther would know more
+[22:07] <balloons> yea.. that doesn't seem right.. but it would solve the issue
+[22:07] <letozaf_> bye guys I'm going to bed, goodnight everyone :)
+[22:07] <balloons> night..
+[22:07] <balloons> ty letozaf_
+[22:07] <balloons> sorry for the troubles with evince
+[22:07] <letozaf_> balloons, night
+[22:07] <dkessel> night letozaf_
+[22:07] <letozaf_> dkessel, night
+[22:07] <letozaf_> balloons, no problem!!!
+[22:08] <dkessel> good idea, i'm going too - same time zone :)
+[22:08] <balloons> hehe!
+[22:08] <balloons> night
+[22:08]  * dkessel takes the giant balloon into his dreams
+[22:26] <fginther> balloons, what's the problem? who to set to maintainer?
+[22:26] <balloons> fginther, hello :-)
+[22:26] <balloons> I asked around, apparently I can use my own key via the -k switch
+[22:26] <balloons> and set the maintainer as the team
+[22:28] <fginther> balloons, glad you found the answer
+[22:28] <balloons> I'm not out of the woods yet, but.. yes
+[23:02] <Noskcaj> good morning everyone
+[23:06] <phillw> hiyas Noskcaj
+[23:06] <Noskcaj> hello phillw
+[23:08] <Noskcaj> so i missed the first classroom session?
+[23:11] <Noskcaj> balloons, for the autopilot tests, how can we make autopilot aware of what programs you have installed and what DE you are using?
+[23:11] <balloons> Noskcaj, yes.. we had 2 yesterday
+[23:11] <balloons> lol
+[23:11] <balloons> I don't know what day that was for you
+[23:11] <balloons> 2 days ago?
+[23:12] <Noskcaj> yeah
+[23:12] <balloons> Noskcaj, umm.. it's possible, but presumably someone is running the test
+[23:12] <balloons> it will just fail if you don't have the stuff installed
+[23:12] <balloons> we have no fancy runners in place yet for this
+[23:14] <Noskcaj> ok, i am making the manual version of the transmission testcase at the moment
+[23:15] <Noskcaj> balloons, where are the logs for the classroom session?
+[23:16] <balloons> sorry distracted
+[23:16] <balloons> I have the autopilot stuff to put up
+[23:16] <balloons> the classroom folks know
+[23:16] <Noskcaj> ok
+[23:18] <balloons> http://irclogs.ubuntu.com/2013/01/15/%23ubuntu-classroom.html
+[23:18] <balloons> :-)
+[23:18] <phillw> drat, balloons JUST beat me to it :P
+[23:19] <Noskcaj> thanks
+[23:20] <Noskcaj> lol
+[23:23] <phillw> as there are now simple work-arounds to the KVM bugs, I have scheduled https://wiki.ubuntu.com/Testing/Activities/Classroom#Section_3 up for KVM and VBox.
+[23:23] <phillw> I'll let the classroom people know.
+[23:31] <phillw> Noskcaj: do people need to have testdrive already installed for your session?

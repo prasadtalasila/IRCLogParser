@@ -1,0 +1,523 @@
+[00:20] <Guest26114> I'm running into an issue with trying to install Ubuntu ever since I replaced my motherboard and CPU several months ago. I'm using a Gigabyte Z77-D3H which uses a "UEFI Hybrid" from what I've been able to determine. I installed Win7 x64 Pro right when I got it so I could get up and running, but I would very much like to dual-boot and use Ubuntu primarily. I've downloaded 12.04, verified the MD5 and the burn. I switched th
+[00:21] <Guest26114> but every time that I boot into the disk it just states that there are no other operating systems detected. I've tried re-downloading and re-burning the disk. Using 12.04, and 12.10. I've had no luck at all getting it to determine that another OS is on the machine, and I unfortunately can't nuke my native Windows installation. Any ideas where I'm falling short?
+[00:31] <escott> Guest26114, are you booting win7 in EFI mode or in bios mode
+[00:32] <Guest26114> escott: I did change to "Legacy ROM" from "EFI ROM" in the BIOS. Perhaps I'm incorrectly assuming that means I'm booting in BIOS mode and not EFI mode.
+[00:33] <escott> Guest26114, yes that means it boots bios which is probably easier to work with anyways. you can select how to boot the cd/usb disk, make sure it is also set to bios mode boot
+[00:38] <Guest26114> escott: Maybe thats where I'm falling short. I'll need to try and figure out how to set the optical drives to Legacy mode as well.
+[00:38] <Guest26114> BRB, going to go dig around in the BIOS and look for it.
+=== Immo is now known as Guest90719
+[00:46] <Guest90719> escott: Unfortunately it looks like the settings are all correct. All HDD and CD/DVD drive options are showing as SATA. I don't even have the UEFI drive prefixes showing up for anything anymore (I'm not really sure why either)
+[00:47] <escott> Guest90719, what do you mean by UEFI drive prefixes
+[00:48] <Guest90719> escott: When selecting the drives in the boot order they used to show up as UEFI: or SATA: (if I remember correctly). Now they all just show up as SATA:.
+[00:49] <escott> Guest90719, gotta love EFI its still SATA in either case... they do say firmware authors are the worst
+[00:50] <Guest90719> escott: According to the manual (http://www.manualowl.com/m/Gigabyte/GA-Z77-D3H/Manual/272064) I'm gathering that the UEFI prefixes showed up for UEFI compatible removeable media if there was any inserted. This could potentially explain why it was showing previously. I may have had a USB drive plugged in or Win7 x64 disk in the drive.
+[00:52] <escott> Guest90719, EFI firmwares will generally prefer EFI boot when the media is EFI compatible. the ISO images from ubuntu/fedora/etc are all specially designed to be bootable in both EFI and BIOS mode. You should just go through and disable EFI boot options anywhere you can find it
+[00:53] <Guest90719> I have. I've gone through several times. It appears that the "PCI ROM Priority" and the individual drives in the boot order are the only places to select those options and I've check, verified, and tried about 15 or 20 times now. :(
+[00:54] <escott> Guest90719, when you boot efi the installer will want to do the right thing and setup an efi boot on the hard disk, which requires a different kind of partition table so its going to be a bit of a pain.
+[00:56] <Guest90719> escott: I am willing to reinstall Windows, if that makes it easier. Perhaps reinstalling it now that EFI options have been disabled would solve the issue and I could follow it up with an automated Ubuntu install afterwards (assuming that would create the right partition table type). Thoughts?
+[00:56] <escott> Guest90719, you could theoretically convert from an mbr partition to a gpt partition, then install with a gpt setup, and then revert back to mbr partition type and remove grub-efi and install the standard grub for a bios boot
+[00:56] <Guest90719> That sounds painful and frustrating.
+[00:57] <Guest90719> Would my reinstall plan work, do you think? Or would I still need to follow those steps even if I reinstalled now with EFI disabled?
+[00:58] <escott> Guest90719, yes it would be somewhat painful. a direct bios boot and bios install would be easier. you can verify you are booting in bios mode by making sure that the folder /sys/firmware/efi does not exist
+[00:59] <escott> Guest90719, at the end of the day the easiest path is to get the system to boot the installer in bios mode so that it just works
+[01:00] <Guest90719> My proposal then is to: 1) Verify (again) that all EFI options are disabled in the BIOS. 2) Wipe the entire drive clean. 3) Install a fresh copy of Win7 x64 4) Install Ubuntu and cross fingers that it recognizes the Win7 install.
+[01:00] <escott> Guest90719, you shouldnt need to reinstall win7
+[01:00] <escott> Guest90719, unless you did something to start the installer. but so long as you saw the installer wasnt recognizing windows and backed out you should be fine
+[01:02] <Guest90719> Are you suggesting to 1) boot Ubuntu Live CD 2)make sure /sts/firmware/efi does not exist 3) Manually partition and install Ubuntu without automated repartitioning 4) Manual install LILO/GRUB2?
+[01:02] <Guest90719> I apologize, I suspect I'm confused.
+[01:03] <escott> 1,2,3) install ubuntu normally no special manual partitioning should be necessary
+[01:03] <escott> Guest90719, the only reason you have a problem is that your disk is a bios disk, your install media is booted as efi
+[01:04] <Guest90719> So the trick is to, at this point, somehow force the install media to boot in BIOS mode? Do I understand that correctly?
+[01:04] <escott> Guest90719, the installer does the right thing and says "this is an efi system, I need to look for an efi disk. It sees a disk but its not an efi disk so from the perspective of the installer there is no bootable OS on that computer
+[01:05] <escott> because for all it knows the system can ONLY be booted in EFI mode
+[01:05] <escott> Guest90719, once you get the usb/cd booting in bios mode it should see the bios partitioned disk and the bios bootable windows and everything should be easy from tehre
+[01:06] <escott> Guest90719, cant tell you where those options are in the system firmware
+[01:06] <Guest90719> So then the question is just to get the disk and the boot media in the same mode.
+[01:07] <escott> but on my system it will list two boot options for every media that it sees. So it will show SATA1 bios and SATA1 UEFI and for each usb stick in the system at POST it shows an EFI and a BIOS option
+[01:07] <Guest90719> Hrm. Alright, sounds like back into the BIOS again for more digging. I can't imagine that I've missed a setting in there somewhere, but I'll keep taking a look.
+[01:07] <Guest90719> Thank you so much for your time and advice.
+[01:07] <Guest90719> I'll be sure to let you know if it works :)
+[01:08] <escott> Guest90719, if you cant find it there you can do it the long painful way with gdisks
+[01:08] <escott> but i would recommend reading rodsbooks.com first
+[01:08] <escott> so you know what you are doing
+[01:08] <Guest90719> Thank you :)
+[01:09] <escott> you would also have a spare junk partition ~100MB if you go the convert to gpt and convert back approach
+[01:11] <escott> given how long Win7 is likely to stick around it would probably be a good idea to file a bug on this (if there isn't one already) because the installer needs a way to be told to override the boot method and do a bios install despite being booted as efi
+[01:11] <escott> Guest90719, there may even be a flag you can pass to ubiquity to force it to install in bios mode
+[01:13] <escott> Guest90719, https://bugs.launchpad.net/ubuntu/+source/ubiquity/+bug/1015211 is probably pretty applicable
+[01:13] <ubot2> Ubuntu bug 1015211 in ubiquity (Ubuntu) "Ubiquity installed grub-efi when it should have installed grub-pc" [Undecided,Confirmed]
+[01:17] <Guest90719> Doesn't Win7 x64 automatically use GPT?
+[01:21] <escott> Guest90719, GPT is a partition table type, but its not directly related to EFI
+[01:22] <escott> Guest90719, it is preferred by EFI
+[01:22] <escott> but not required
+[01:22] <escott> msdos/mbr partitions are similarly preferred by BIOS but also not required
+[01:23] <escott> but you cannot change your installed Win7 from a BIOS boot to an EFI boot in any easy way
+[01:23] <escott> and i dont know how good Win7 EFI boot support is
+[01:24] <escott> it would have to be 64bit Win7 to even do EFI boot and then there are some additional restrictions... long and short you are stuck with BIOS on your system as long as you have that Win7 install
+[01:35] <Guest90719> escott: Thank you so much for your help tonight. I really appreciate your insight.
+[05:36] <amoma> gnome terminal wants to install a font. How disable it?
+[05:41] <holstein> amoma: you mean, not install the font?
+[05:42] <holstein> i would consider using a different terminal, or try to force the install without the recommended font
+[06:09] <amoma> holstein, i do not want to install those fonts.
+[06:10] <amoma> it is in all terminals, unless i turn of gnome gui.
+=== albert is now known as Guest19957
+=== Guest19957 is now known as Phryq
+=== yofel_ is now known as yofel
+[15:58] <holstein> amoma: fonts are pretty small, if its a space issue
+[15:58] <holstein> !tty | amoma
+[15:58] <ubot2> amoma: To get to the TTY terminals 1-6, use the keystroke ctrl + alt + F1-F6 respectively (Alt+F7 will get you back to your graphical login).  To change the resolution for your TTY, see https://help.ubuntu.com/community/ChangeTTYResolution
+[15:58] <holstein> ^^ that gets you a console.. maybe you dont need a desktop environment at all
+[16:41] <quantlinear_> Hi to all
+[16:41] <quantlinear_> Hi , I have been experincing a problem with the ubuntu in regard to re-boot which ended in the system crash    any body care to help me ,although i have recieved very great help from the moderator Alfred and few but i am still nowhere close to solve the problem
+[16:42] <quantlinear_> http://ubuntuforums.org/showthread.php?t=2107982&highlight=needed+start+Ubuntu+re-boot
+[16:50] <quantlinear_> anybody on here can help me with some issue
+[17:24] <holstein> quantlinear_: on first read, i would do a few things... i would test with a live CD with the hard drive removed if possible
+[17:26] <holstein> i would try and remove the hard drive from the equation, and test it
+[17:34] <quantlinear_> hard rive is fine
+[17:35] <quantlinear_> hard drive is fine ]
+[17:35] <holstein> quantlinear_: then you should be able to reproduce the error with a live CD
+[17:35] <holstein> if its hardware support related
+[17:35] <quantlinear_> any of you know anything about how to increase the sda1 which is the system root
+[17:36] <holstein> quantlinear_: i would resize from a live CD using gparted
+[17:36] <quantlinear_> I have inserted the live cd, chose "try ubuntu"
+[17:36] <holstein> quantlinear_: i might use a parted magic CD or the ultimate boot cd
+[17:37] <quantlinear_> so , are you saying to burn a new cd that has a Gparted , then insert to my pc and then increase the partition size
+[17:38] <quantlinear_> could you do me a favour and look at the link                                 http://ubuntuforums.org/showthread.php?t=2107982&highlight=needed+start+Ubuntu+re-boot
+[17:38] <holstein> quantlinear_: when i resize partitions, i use gparted from a live CD
+[17:39] <holstein> quantlinear_: i am looking at that, and i am sugesting it could be an issue with the hard drive, if you think its not, then you should be able to reproduce the error with a live CD
+[17:39] <quantlinear_> on the second page , well, If i can get back to my intial system, then i can install the new gparted
+[17:40] <quantlinear_> @ holsteinwell,   >>> second page
+[17:40] <holstein> quantlinear_: you use gparted from a live CD
+[17:40] <holstein> quantlinear_: you dont want to do that from the installed OS
+[17:40] <quantlinear_> No, I have the original ubuntu without the gparted
+[17:40] <quantlinear_> lets put the gparted on the side
+[17:41] <quantlinear_> i am on the installtion window after I have clicked on the
+[17:41] <quantlinear_> install butoon
+[17:41] <quantlinear_> button
+[17:42] <quantlinear_> I am on the  option "try ubuntu" after. If I click install Ubuntu,then it gave me two options (erase ubuntu -  something else )  then i followed SOMETHING ELSE :     so i have clicked on something else : then there is a installation type window     Devive   dev/dsa  dev/sda1/ext4    5498 MB   dev/sda5  dev/dsa3 ext4    993203        I have clicked on CHANGE @   dev/sda1/ext4    5498 MB    But
+[17:42] <holstein> quantlinear_: if the live cd is hanging you up, use a diferent one
+[17:43] <quantlinear_> the live CD is fine , read the above
+[17:43] <holstein> http://gparted.sourceforge.net/ http://www.ultimatebootcd.com/
+[17:43] <holstein> quantlinear_: ? choosing "something else" is the only way to run the live CD
+[17:43] <quantlinear_> yeh
+[17:43] <quantlinear_> so I did that
+[17:43] <holstein> i dont unerstand why that is mentioned above, unless you are having issues with it
+[17:43] <quantlinear_> but
+[17:43] <holstein> if so, use another live CD.. one with just gparted
+[17:44] <quantlinear_> ok
+[17:44] <holstein> if you need/want to resize a partition, use gparted from a live CD
+[17:44] <quantlinear_> but could I get your attention on this
+[17:44] <holstein> you will want to have all your data backedup
+[17:44] <holstein> quantlinear_: you have my attention
+[17:44] <quantlinear_> we both repeating the same thing
+[17:44] <quantlinear_> thank you
+[17:44] <holstein> quantlinear_: i suggest testing the drive
+[17:45] <holstein> quantlinear_: i think you are assuming the drive is OK.. unless you did a test that took an hour or so
+[17:45] <quantlinear_> right now, I have a window that says "EDIT A PARTION"
+[17:46] <holstein> http://gparted.sourceforge.net/display-doc.php?name=help-manual#gparted-resize-partition
+[17:48] <quantlinear_> under dev/sda1 ext4 which is my system root
+[17:48] <quantlinear_> I can increase the partition from here but i am stuck to what option to choose
+[17:49] <holstein> quantlinear_: ?
+[17:49] <quantlinear_> on the same window " EDIT PARTITION " under USE AS:
+[17:50] <holstein> i would have *all* data backedup ...and i would grow it out, if it can be
+[17:50] <holstein> there are cases where it cant be
+[17:50] <quantlinear_> do not use the partition
+[17:50] <holstein> quantlinear_: thats an installer sounds like
+[17:50] <holstein> quantlinear_: what are you trying to do? install? or just edit a partition?
+[17:51] <quantlinear_> the "edit the partition"
+[17:51] <holstein> quantlinear_: i would download a simpler, more appropriate CD, after backing up all data
+[17:51] <quantlinear_> in there i can increase the size
+[17:51] <holstein> i would consider just reinstalling as well
+[17:51] <quantlinear_> but there is glitch that i dont know which to choose
+[17:51] <quantlinear_> before i click OK
+[17:51] <holstein> quantlinear_: feel free to take screenshots and post to imagebin
+[17:52] <quantlinear_> the root partition which is sd1 is quiet small , just 5498
+[17:52] <holstein> i would *not* do *anything* without having the data backeup
+[17:52] <quantlinear_> hmm hold on i say screen shut check the same link as previous in 2minutes
+[17:52] <quantlinear_> please
+[18:12] <quantlinear_> @ holstein , are you there ?@
+[18:13] <quantlinear_> @ holstein , are you there ?@
+[18:13] <holstein> quantlinear_: sure.. you can just ask though, and one of the volunteers will help if they can.. not that i mind you pinging me
+[18:13] <quantlinear_> I have uploaded the image and you can see the updated of my comments on the belwo link
+[18:14] <holstein> quantlinear_: i think everyone will agree... have you tested the hard drive?
+[18:15] <holstein> quantlinear_: if you'll use imagebin, then i wont have to login
+[18:15] <quantlinear_> The hard drive was tested , I have been using linux only for 3 months
+[18:15] <quantlinear_> really didnt spent that much to learn the technical basis
+[18:16] <holstein> quantlinear_: how did you test the hard drive?
+[18:16] <quantlinear_> i am not paying for ignoring it
+[18:16] <holstein> quantlinear_: it literally wont hurt to test it
+[18:16] <holstein> if you are saying "i dont want to" then thats fine, but i am saying, you are assuming, and thats never a good idea when troubleshooting
+[18:16] <quantlinear_> the hard drive , I have tested before assemble the PC
+[18:17] <holstein> quantlinear_: then, what is the issue?
+[18:17] <holstein> you made a partition too small at install?
+[18:17] <quantlinear_> but , look at the screen , the hard drive is working fine , its responding
+[18:17] <holstein> quantlinear_: i am trying to login.. and then i can see the "screen" otherwise, you can post it to imagebin
+[18:17] <quantlinear_> i am hearing that you want me to be sure than going round the circle
+[18:17] <quantlinear_> please try to log-in
+[18:18] <holstein> quantlinear_: i want to be sure you are not missing something
+[18:18] <holstein> quantlinear_: i *will* login eventually.. but it would be easier for me and the other volunteers to do things in the easiest possible way
+[18:19] <holstein> quantlinear_: it'll have to be imagebin if you want me to look
+[18:19] <holstein> i can login right now
+[18:19] <holstein> i dont do the forums that often
+[18:19] <quantlinear_> good , thanks
+[18:19] <holstein> i cant*
+[18:19] <quantlinear_> How long have you been using linux ?
+[18:20] <holstein> http://imagebin.org/ quantlinear_ .. or you can explain your issure
+[18:20] <holstein> quantlinear_: years
+[18:20] <holstein> quantlinear_: i dont use the forums though... and i shouldnd be expected to to help you
+[18:20] <quantlinear_> sure , in future , i will use that site
+[18:20] <holstein> quantlinear_: you will use it now, or i cant see it
+[18:20] <quantlinear_> whats your background ,
+[18:21] <holstein> quantlinear_: i hang here, and help folks..
+[18:21] <quantlinear_> very nice of you mate
+[18:21] <holstein> quantlinear_: cheers!
+[18:21] <quantlinear_> good people like you and their help will not go unnoticed
+[18:22] <quantlinear_> I am in UK , London and you ?
+[18:22] <holstein> im in the #ubuntu-beginners-team offtopic channel where i can share information such as how i am from the states.. asheville NC
+[18:23] <holstein> i am unable to login there using my lanuchpad ID quantlinear_
+[18:24] <quantlinear_> let me re send the images on to that imagebin
+[18:27] <quantlinear_> its done
+[18:27] <quantlinear_> quantlinear ,nick name
+[18:28] <quantlinear_> edit a partition
+[18:29] <holstein> http://imagebin.org/244073
+[18:32] <holstein> quantlinear_: that is an installer screen
+[18:33] <holstein> quantlinear_: if you want to resize, i would make certain you have all the data you want/need backedup
+[18:33] <holstein> i would run a live CD.. not the installer.. a live CD with gparted
+[18:33] <holstein> i would resize
+[18:34] <holstein> if you are installing, thats is a different story...
+[18:38] <holstein> quantlinear_: you understang?
+[18:38] <holstein> quantlinear_: if you are wanting to resize a partition, then stop what you are doing
+[18:38] <quantlinear_> sure
+[18:39] <quantlinear_> so I have burned a CD  3 months a go from the Ubuntu site , I guess that doesnt have gparted
+[18:40] <quantlinear_> DOES IT ?
+[18:40] <holstein> quantlinear_: i think they do, if not, you can install it
+[18:41] <quantlinear_> well, question , the images that you have seen
+[18:42] <quantlinear_> did you see the partition
+[18:42] <quantlinear_> I had a crash because i have ran out of the space on the root partition
+[18:43] <quantlinear_> so, i was looking for ways to increase the partition because i was getting warning , but i was too late and then , i am standing here
+[18:44] <quantlinear_> the moderator sent me the below link
+[18:44] <quantlinear_> http://www.howtoforge.com/partitioning_with_gparted
+[18:45] <quantlinear_> but it seems that it says that i have to burn it to new CD and then partition the hardrive
+[18:46] <holstein> quantlinear_: what would i do?
+[18:46] <holstein> quantlinear_: i would take the data i have backed up and reinstall
+[18:46] <nothingspecial> gparted has been included as standard on all Ubuntu live cds since at least 7.04 and before that I imagine
+[18:46] <holstein> quantlinear_: what can you do? literally anything
+[18:46] <nothingspecial> you can do this from the live cd quantlinear_
+[18:46] <holstein> quantlinear_: you will need to boot a live CD and resize the partitions
+[18:47] <holstein> from *any* live CD
+[18:47] <quantlinear_> I have re-booted the live CD and i am here
+[18:47] <holstein> quantlinear_: if the ubuntu one is giving you a hard time, use one of the others i suggested
+[18:47] <holstein> quantlinear_: you booted the live CD into the installer, and you are here
+[18:47] <quantlinear_> all i have got at the intial point was, "try ubuntu" "install ubuntu"
+[18:47] <holstein> quantlinear_: reboot.. select "try" and not "install"... OR use one of the other live CD's i suggested
+[18:48] <quantlinear_> I did thr "try
+[18:48] <holstein> quantlinear_: i dont think so
+[18:48] <quantlinear_> the images you seen are from try
+[18:48] <quantlinear_> 100% mate
+[18:48] <holstein> quantlinear_: but, again, if that is giving you a hard time, use another Cd
+[18:48] <quantlinear_> its not giving me hard time
+[18:48] <holstein> quantlinear_: sure it is
+[18:49] <quantlinear_> how could i get access to the gparted ?
+[18:49] <holstein> quantlinear_: you are using the installer, and you dont need to be in the installer
+[18:49] <holstein> quantlinear_: *dont* run the installer
+[18:49] <quantlinear_> ok,
+[18:49] <holstein> OR, try another live CD http://partedmagic.com/doku.php?id=downloads
+[18:49] <quantlinear_> i can start from scratch
+[18:49] <holstein> http://gparted.sourceforge.net/livecd.php
+[18:49] <quantlinear_> i shut down and re-boot the same CD
+[18:49] <holstein> quantlinear_: no reason.. just boot the live CD, and select "try"
+[18:50] <holstein> OR, try one of the other options above if that is not working for you
+[18:50] <holstein> but, when you see "installer" above in text that is *not* the live CD
+[18:50] <nothingspecial> quantlinear_: can I just stop you a moment and ask a question ?
+[18:50] <nothingspecial> Did you try to boot into recovery mode yet ?
+[18:51] <nothingspecial> holstein: http://ubuntuforums.org/showthread.php?t=2107982
+[18:51] <holstein> recovery is a nice idea
+[18:52] <quantlinear_> I have got here by pressing CTRL+ALT and i think F9/F8
+[18:52] <quantlinear_> to go to BIOS
+[18:52] <quantlinear_> from there i chose the dvd/cd DRIVE
+[18:52] <nothingspecial> nevermind quantlinear_
+[18:52] <holstein> quantlinear_: nope... we can help you get to it though, if you like
+[18:53] <quantlinear_> very much i like to
+[18:53] <holstein> you hold or tap shift after the bios, and you'll see the grub menu... you'll see a recovery option
+[18:54] <quantlinear_> if you could in any chance loh-in to the forum and look at the thread then that may give you the history of what i have been doing and then you could see
+[18:54] <quantlinear_> fine
+[18:54] <quantlinear_> so shall i start the pc again
+[18:54] <quantlinear_> basically
+[18:54] <holstein> quantlinear_: you'll need to restart the machine for sure
+[18:57] <quantlinear_> alright
+[18:57] <quantlinear_> its asking select the boot device
+[18:57] <holstein> i would backup your data, and be prepared to reboot the machine many times
+[18:57] <holstein> OR, just reinstall
+[18:57] <holstein> quantlinear_: it?
+[18:57] <holstein> quantlinear_: the bios? that is speific to your machine
+[18:58] <quantlinear_> but i cant access the data to back them up
+[18:58] <holstein> quantlinear_: you can from a live CD, and better before resizing
+=== rastamouse is now known as nothingspecial
+[18:58] <nothingspecial> bah
+[18:58] <quantlinear_> hmm
+[18:58] <quantlinear_> how ?
+[18:58] <quantlinear_> live CD is in the drive
+[18:59] <quantlinear_> i am looking at the blue window of select BOOT DEVICE
+[18:59] <holstein> quantlinear_: i literally boot the live CD and backup.. i use the live CD, and the filemanger in the live CD to copypaste, or drag and drop, or in CLI
+[18:59] <holstein> quantlinear_: the blue window is specific to your machine
+[18:59] <quantlinear_> yes
+[19:00] <holstein> quantlinear_: i dont have a blue window.. the bood device is specific to your setup
+[19:00] <quantlinear_> but my main problem is getting my hand on the data
+[19:01] <quantlinear_> I have a RECOVERY MENUE
+[19:01] <quantlinear_> front of me
+[19:03] <nothingspecial> ok, can you boot into a root shell or whatever they call it these days
+[19:03] <nothingspecial> do you have an external drive you can copy the data to
+[19:03] <quantlinear_> nothingespecial: i have clicked on " NORMAL BOOT "
+[19:04] <holstein> i thought
+[19:04] <holstein> normal boot was failing?
+[19:04] <quantlinear_> it says, checking battery state
+[19:04] <nothingspecial> me too
+[19:04] <nothingspecial> Job 1 - get data
+[19:04] <quantlinear_> its not failing
+[19:04] <nothingspecial> Job 2 - fix partition sizes
+[19:04] <quantlinear_> well, thats i am trying to do
+[19:04] <holstein> if normal boot is failing, then reboot to the recovery prompt and let nothingspecial help you quantlinear_
+[19:04] <holstein> if you get in normally, then just copy the data over
+[19:05] <quantlinear_> past 3 days i have almost tried differnt ways
+[19:05] <quantlinear_> is the process is long ?
+[19:05] <holstein> quantlinear_: sure, but one of those ways was from using the installer, as earlier.. that will *not* work
+[19:05] <holstein> quantlinear_: i think you are mis-understanding some steps, and not waiting patiently
+[19:06] <quantlinear_> cause it seems stuck on the checking the battery
+[19:06] <holstein> quantlinear_: like booting normally...
+[19:06] <holstein> quantlinear_: if booting normally is failing, then it will fail
+[19:06] <holstein> quantlinear_: you can use the recovery console to fix issues
+[19:06] <nothingspecial> you need to either boot recovery mode or to the live cd, one or the other, it doesn't matter which
+[19:07] <holstein> you *dont* need to initiate the recovery console menu and then boot normally
+[19:07] <quantlinear_> Holstein / I was in boot recovery moode after i choose the Sata , last time that i went to installer i chose the CD drive
+[19:07] <holstein> quantlinear_: i dont think so
+[19:08] <holstein> quantlinear_: last time you went to the installer and chose install.. this time, you went to recovery and chose "start normally"
+[19:08] <holstein> quantlinear_: doesnt really matter.. there no need to "place blame"
+[19:08] <holstein> quantlinear_: just relax, and decide which way you want to proceed.. i suggest the live CD route since it has a GUI
+[19:08] <quantlinear_> I am back to square one , lol nothing solved
+[19:09] <holstein> quantlinear_: sure.. you solved that you shouldnt instigate the recovery console and boot normally
+[19:09] <holstein> quantlinear_: booting normally still fails
+[19:09] <geirha> nothing solved, but knowledge gained
+[19:10] <quantlinear_> ok, I have re-started the machine
+[19:10] <holstein> you should be prepared to reboot the machine
+[19:10] <nothingspecial> you have booted the live cd, and you did choose try ubuntu
+[19:10] <quantlinear_> PLEASE SELECT BOOT DEVICE
+[19:10] <nothingspecial> CD
+[19:11] <quantlinear_> holstein ? CD , I need consensus on this
+[19:11] <quantlinear_> cause i clicked on CD before
+[19:11] <holstein> quantlinear_: that is specific to your machine
+[19:11] <nothingspecial> you have a cd in the drive yeah ?
+[19:11] <holstein> quantlinear_: how ever your machine bios boots cd, select that.. if you want to boot the cd
+[19:11] <quantlinear_> well i have Cdrom/SATA
+[19:12] <quantlinear_> FINE
+[19:12] <quantlinear_> then its the CD
+[19:12] <quantlinear_> ok what next guys ?
+[19:12] <holstein> quantlinear_: i dont have that menu.. i have a different one.. *all* my machine have a different one.. but i choose the cd rom if i want to boot the cd rom
+[19:12] <quantlinear_> ok, CD is runing
+[19:12] <holstein> quantlinear_: you *dont* choose install.. you select the "try ubuntu" option
+[19:13] <nothingspecial> Then click the top icon in the sidebar
+[19:13] <quantlinear_> i can see the UBuntu and the CD is running like the horse on the track
+[19:13] <nothingspecial> good
+[19:13] <quantlinear_> still not there yet
+[19:13] <quantlinear_> bear with me please
+[19:13] <holstein> quantlinear_: it will boot at the speed that your cd can read...
+[19:13] <quantlinear_> sure
+[19:14] <quantlinear_> ok , we are getting there
+[19:14] <quantlinear_> the ubuntu is coming up
+[19:15] <quantlinear_> well, i am here
+[19:15] <holstein> when you boot the live cd (not to the installer) you'll have a familiar looking desktop enviroment
+[19:15] <quantlinear_> all ready
+[19:15] <nothingspecial> sorry quantlinear_, when you get the desktop you need to click the orange file icon, 3rd one down
+[19:15] <holstein> you can drag and drop files to whatever you want or need
+[19:15] <quantlinear_> Try ubuntu / install ubuntu
+[19:15] <quantlinear_> welcome window
+[19:16] <nothingspecial> Try
+[19:16] <quantlinear_> alright
+[19:17] <quantlinear_> try ubuntu
+[19:17] <nothingspecial> yep
+[19:17] <quantlinear_> holstein are you anywhere near your PC
+[19:17] <quantlinear_> right , its up and i can see
+[19:18] <quantlinear_> the files are all empty
+[19:18] <quantlinear_> i have got nothing on my documents
+[19:18] <nothingspecial> yeah
+[19:18] <nothingspecial> that's the live cd's Documents
+[19:18] <nothingspecial> Do you see some other "drives in the side bar ?
+[19:19] <quantlinear_> so , where could i recover the initial OS which i have my own data
+[19:19] <quantlinear_> yeh, few
+[19:19] <nothingspecial> click them
+[19:19] <nothingspecial> one will be computer
+[19:19] <quantlinear_> I also see the Sata , hard drive with green arrow around it
+[19:20] <quantlinear_> i can see that
+[19:20] <quantlinear_> i have 5.5 that is my root file
+[19:20] <nothingspecial> click the folder called home
+[19:20] <nothingspecial> then your username
+[19:20] <quantlinear_> ok
+[19:20] <quantlinear_> i did
+[19:21] <nothingspecial> your stuff is in there
+[19:21] <nothingspecial> Documents, Pictures and so on
+[19:21] <quantlinear_> no , empty as a vault has been rubbed
+[19:22] <holstein> quantlinear_: why would you have data there?
+[19:22] <holstein> quantlinear_: did you have a windows install? and install ubuntu? and you are expecting that old windows data?
+[19:22] <holstein> quantlinear_: what are you expecting to see where?
+[19:22] <quantlinear_> no, i had only a ubuntu OS on this machine , i was trying to learn linux
+[19:23] <holstein> quantlinear_: did you have any data? did you keep it in the /home directory?
+[19:23] <holstein> what are you missing?
+[19:23] <quantlinear_> i am enjoying getting hit on the head by it
+[19:23] <quantlinear_> well, i had a user name , HERMES
+[19:23] <holstein> had?
+[19:23] <quantlinear_> that us not there
+[19:23] <holstein> then, you are probably not on the correct drive
+[19:24] <quantlinear_> well on the firts installation 3 months a go
+[19:24] <holstein> maybe its not mounted.. maybe its corrupt
+[19:24] <quantlinear_> could you pleas log-in to the forum and look at this link
+[19:24] <nothingspecial> I'm looking at it quantlinear_
+[19:24] <quantlinear_> http://ubuntuforums.org/showthread.php?t=2107982&page=2
+[19:25] <quantlinear_> this one
+[19:25] <quantlinear_> ?
+[19:25] <holstein> quantlinear_: #11?
+[19:25] <nothingspecial> What have you done that oldfred has suggested ?
+[19:25] <nothingspecial> have you done fsck ?
+[19:25] <holstein> fsck is easy
+[19:26] <quantlinear_> well, yes , till the #11
+[19:26] <holstein> and can totally fix it
+[19:26] <holstein> quantlinear_: til #11?
+[19:26] <quantlinear_> yes
+[19:26] <holstein> quantlinear_: are you wanting me to look at and read #11? from the link you provided?
+[19:26] <quantlinear_> fact is this problem happen becaus eof lack of space on the root file
+[19:26] <quantlinear_> syatem crash
+[19:26] <quantlinear_> yes , till the end
+[19:27] <quantlinear_> please , read till #16
+[19:27] <holstein> i would get my data and reinstall
+[19:27] <holstein> it would be easiest for you
+[19:27] <quantlinear_> thats what i want to do
+[19:27] <quantlinear_> get the data
+[19:27] <quantlinear_> and then
+[19:28] <quantlinear_> i can get gparted
+[19:28] <holstein> quantlinear_: then do it.. if you cant find your data, then maybe its corrupt, or the drive has failed
+[19:28] <quantlinear_> but untill then
+[19:28] <holstein> quantlinear_: no, then you can reinstall
+[19:28] <holstein> quantlinear_: i would literally chalk this up to a lesson.. you *need* to keep your data backed up
+[19:28] <holstein> you need to back it up *before* issues happen
+[19:29] <quantlinear_> see the images on the #15-16
+[19:29] <quantlinear_> please
+[19:29] <holstein> quantlinear_: i can see no images
+[19:29] <quantlinear_> there are
+[19:29] <holstein> quantlinear_: you can paste them in imagebin
+[19:29] <quantlinear_> ok
+[19:29] <quantlinear_> i alread did
+[19:29] <quantlinear_> check under my name please
+[19:29] <nothingspecial> http://ubuntuforums.org/showpost.php?p=12471958&postcount=15
+[19:29] <quantlinear_> quantlinear
+[19:29] <nothingspecial> http://ubuntuforums.org/showpost.php?p=12471966&postcount=16
+[19:30] <holstein> nothingspecial: i cant login right now though
+[19:30] <nothingspecial> oh
+[19:30] <nothingspecial> :)
+[19:30] <holstein> nothingspecial: wont take my LP creds for some reason :/
+[19:30] <holstein> not sure whats up with that..
+[19:30] <nothingspecial> :/
+[19:30] <nothingspecial> will find out
+[19:30] <nothingspecial> hang on
+[19:30] <holstein> lemm try again too
+[19:31] <holstein> i get a "thank you for loggin in" page
+[19:31] <holstein> then, im just not logged in
+[19:31] <nothingspecial> k
+[19:31] <quantlinear_> thats the page
+[19:31] <quantlinear_> and the image
+[19:31] <quantlinear_> i was able to increase the size of the sd1
+[19:32] <holstein> quantlinear_: OH, so you already messed with it.. then maybe its just broken
+[19:32] <quantlinear_> but i wasnt sure about the
+[19:32] <nothingspecial> I agree
+[19:32] <holstein> quantlinear_: i always backup *before* resizing
+[19:32] <quantlinear_> i didnt click
+[19:32] <holstein> quantlinear_: ?
+[19:32] <holstein> quantlinear_: didnt click what?
+[19:32] <quantlinear_> to re-size
+[19:32] <quantlinear_> i stop on that edit partition
+[19:32] <quantlinear_> my question to holstein was
+[19:32] <holstein> quantlinear_: then how were you able to increase the size of sd1?
+[19:33] <holstein> quantlinear_: increasing the size of sd1 could have broken it
+[19:33] <quantlinear_> I could see there was an option change
+[19:33] <quantlinear_> but i didnt click ok
+[19:33] <nothingspecial> quantlinear_: the important thing is, can you see your data in any of the partitions that appear in the sidebar of the file browser ?
+[19:33] <holstein> yeah, just poke around and see if you find it.. open *everything*
+[19:34] <quantlinear_> under the device
+[19:34] <holstein> quantlinear_: under *any* device.. open *everything* and look
+[19:34] <nothingspecial> holstein: that issue has been fixed afaik, got some top people looking into it now ;)
+[19:34] <quantlinear_> i can see the 5.5 gb file system and 993 gb file system
+[19:34] <nothingspecial> look in there quantlinear_
+[19:34] <quantlinear_> similar to what in the i,mage
+[19:35] <quantlinear_> everything is there
+[19:35] <quantlinear_> like the initial OS of ubuntu
+[19:35] <nothingspecial> is your data there ?
+[19:35] <quantlinear_> BUT NOT MY DATA
+[19:35] <quantlinear_> like my coursework and few pictures
+[19:35] <holstein> nothingspecial: sweet!... its not a biggie, but i could see it hanging someone up
+[19:36] <nothingspecial> got hobgoblin/elfy looking at the ticket now holstein :)
+[19:36] <quantlinear_> I use to have a username "hermes "
+[19:36] <holstein> quantlinear_: i would look for that /home/hermes directory
+[19:36] <quantlinear_> if i could get to that then i can get them
+[19:37] <holstein> quantlinear_: i would look *everywhere*... if you broke something resizing, then it could be gone
+[19:37] <nothingspecial> yep
+[19:37] <holstein> in which case, you can use recovery tools.. photorec from testdisk.. its not trivial though
+[19:37] <quantlinear_> I have not re-size , the fact is sd1 which is my root is
+[19:37] <quantlinear_> exactly the same size as before
+[19:38] <holstein> quantlinear_: look on all the partitions.. im just going by when you said you resize it
+[19:38] <nothingspecial> but you have hard rebooted a few times quantlinear_
+[19:38] <quantlinear_> thats why i ran out of the space
+[19:38] <quantlinear_> yes
+[19:38] <holstein> yeah.. a hard reboot can break a hard drive
+[19:38] <quantlinear_> indeed
+[19:38] <quantlinear_> so they are gone ?
+[19:38] <quantlinear_> the data ?
+[19:38] <nothingspecial> holstein: have you tried logging in with username and password ?
+[19:38] <holstein> quantlinear_: you can always use photorec
+[19:39] <nothingspecial> http://www.cgsecurity.org/wiki/PhotoRec
+[19:39] <quantlinear_> well, the problem is i could not see the username
+[19:39] <nothingspecial> in the folder called "home"
+[19:39] <holstein> quantlinear_: thats not a problem.. if its gone, its gone.. but i would look in all partitions for it
+[19:39] <elfy> hey holstein - long time :)
+[19:40] <holstein> elfy: cheers!
+[19:40] <nothingspecial> see holstein, I told you ...... Top People ;)
+[19:40] <quantlinear_> maybe i should burn that recovery app
+[19:40] <elfy> holstein: re login to forum with launchpad
+[19:40] <holstein> nothingspecial: seems its still "funky"
+[19:41] <elfy> holstein: login with LP - it shows you as not logged in - go to any other forum and you should now see yourself as logged in
+[19:41] <holstein> yup.. im juiced up!
+[19:41] <quantlinear_> Guys you are really fine people , I ow you very much , if you are in UK and in london let me know , we go for a drink on me
+[19:41] <holstein> elfy: thanks!
+[19:41] <nothingspecial> quantlinear_: I would try that first
+[19:41] <nothingspecial> also, try fsck like oldfred suggested
+[19:41] <elfy> holstein: welcome - it's likely to appear like that until the forum gets it's vb4 upgrade
+[19:42] <nothingspecial> thanks for the offer quantlinear_
+[19:42] <quantlinear_> what if i go back to re-boot
+[19:42] <holstein> yeah im good now.. i can see images, which was the big thing in this case with quantlinear_
+[19:42] <quantlinear_> and try safe boot
+[19:42] <elfy> holstein: s/likely/will ;) and it might even carry on past that - who knows - we don't hold the keys to the servers unfortunately :)
+[19:42] <quantlinear_> rather than normal boot
+[19:43] <holstein> elfy: i think this is acceptable.. no worries :)
+[19:43] <elfy> k - cheers
+[19:43] <nothingspecial> If you can't see your data quantlinear_ it is most likely gone and photorec/testdisk is your best bet
+[19:43] <holstein> i'll spread the word if it comes up for others elfy
+[19:44] <elfy> holstein: you might want to use remember me option if you are at home
+[19:44] <holstein> elfy: i usually do, but this was a new-ish setup
+[19:44] <quantlinear_> nothingspecial , do you think i should go back and re-boot again at the BOOT DEVICE
+[19:44] <holstein> ok.. gotta run.. thanks again!
+[19:44] <elfy> cya
+[19:45] <nothingspecial> quantlinear_: I don't think that is going to help you quantlinear_
+[19:45] <nothingspecial> but you can give it a go
+[19:46] <quantlinear_> dont you think if the root file is there , then i can increase the partition size in "EDIT PARTITION"
+[19:46] <quantlinear_> without destroying the data , if there is any in there to recover
+[19:46] <nothingspecial> The issue you have is that you made your / partition too small, you hard rebooted a number of times, and you don't have a backup quantlinear_
+[19:46] <quantlinear_> or forget it and use the recovery software
+[19:47] <nothingspecial> I have to go too, I've subscribed to your forums thread
+[19:47] <quantlinear_> I didnt have access to right source at the time i was installing, Thanks , will be in touch
+[19:47] <quantlinear_> let you know what happen in any way
+[19:48] <nothingspecial> If no-one has replied in 24 hrs or so, bump it to the top
+[19:48] <quantlinear_> sure
+[19:48] <quantlinear_> thank you very much for all of your help
+[19:48] <nothingspecial> I would add what you have learned here to it though (which will bump it to the top ;)   )
+[19:49] <nothingspecial> laters
+[19:49] <quantlinear_> laters
+=== cortman is now known as john_barleycorn
+[20:42] <siluetas> hey, I've got a question: I'm looking to buy a laptop with the intention to run ubuntu on it and do some light gaming, whether through wine, steam or a win partition. However, I've run into trouble with hybrid graphics in the past and I really want to avoid it this time.
+[20:42] <siluetas> The one way I can think of doing that is to get a laptop that only has a dedicated graphics card, not a set of two GPUs. Can someone give me advice in this regard?
+[22:47] <JonEdney> Anyone know how I can change the date format on Ubuntu 12.10?

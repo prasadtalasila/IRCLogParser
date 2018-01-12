@@ -1,0 +1,65 @@
+[03:45] <Stavros> hello
+[03:46] <Stavros> i'm trying to push to bitbucket with a git format, and bzr is acting as if i'm using --force
+[03:46] <Stavros> is there a way to stop that?
+=== mmrazik is now known as mmrazik|lunch
+[11:33] <dmemdfd> Hi all. I've got a main bazaar repo on a remote machine A and on another remote machine B I've got a clone of such repository.  Now I need to swap the roles, i.e. repo on machine B should become main one while that on machine A should become the clone. Is there any simple way to accomplish this? Do I have to edit config urls of bazaar only or have to do something else?
+[11:35] <xnox> dmemdfd: on machine A - $ bzr pull --remember url://hostB/path/to/repo
+[11:35] <xnox> done
+[11:36] <xnox> you may want to push tip from a to b first, to make sure b has everything.
+[11:38] <dmemdfd> xnox: thanks!
+[11:55] <dmemdfd> xnox: sorry (bazaar beginner!) now that I've made machine A "pointing" to machine B, how can I convert repo on machine B as main repo so that when I run update working tree is updated to latest revision (maybe empty url in bzr config) ?
+[11:56] <xnox> on remote hosts working tree does not auto-update
+[11:56] <xnox> either do $ bzr up on host B to "refresh it"
+[11:57] <xnox> or get rid of working tree on host B all together with $ bzr remove-tree
+[11:57] <xnox> or use http://doc.bazaar.canonical.com/plugins/en/push-and-update-plugin.html
+[11:57] <xnox> dmemdfd: ^^^^
+[11:58] <dmemdfd> xnox:thanks for your help!
+[11:58] <xnox> to remove pull reference on host b, you can edit .bzr/branch/branch.conf
+[11:58] <xnox> but it really doesn't matter =)
+[11:58] <xnox> it's all "distributed" anyway =)
+[12:00] <dmemdfd> actually typing bzr up, it tries to get commits from A (which is now supposed to be a clone of A) because B is still configured as a clone of A...do I have to erase branch.conf content at all?
+[12:00] <dmemdfd> (sorry...supposed to be a clone of B of course)
+=== mmrazik|lunch is now known as mmrazik
+[12:12] <xnox> yeah, it will. Yeah just remove parent url from branch.conf.
+[12:16] <vila> xnox: and he felt... before I could mention 'bzr config --remore parent_location' which avoids editing branch.conf
+[12:18] <xnox> vila: i totally did not know that trick =)
+[12:18] <jdahlin> hi, are there any alternatives to fast-export when exporting a bzr repository?
+[12:18] <vila> xnox: that's what you get for helping people ;-)
+[12:19] <xnox> jdahlin: exporting for what purpose? (e.g. one can simply push using bzr-svn / bzr-git / bzr-hg) and or use rewrite plugin etc.
+[12:19] <vila> jdahlin: fast-import from the other dvcs ?
+[12:19] <jdahlin> xnox: exporting a repository to git
+[12:20] <jdahlin> there are bugs/issues with bzr-fastimport that prevents me from using it (improper rename handling afaict)
+[13:30] <jdahlin> bzr: ERROR: Unable to update remote HEAD branch. To update the master branch, specify the URL git://localhost/Users/johan/bzr/repo-git,branch=master.
+[13:30] <jdahlin> that's what I get when using bzr dpush, any ideas?
+[13:30] <jdahlin> on the server side I get; [71689] error: Could not read e244837180c5c3761c7a16944ef5aa7eb8f56848 [71689] fatal: bad tree object e244837180c5c3761c7a16944ef5aa7eb8f56848
+[13:31]  * jdahlin looks at jelmer
+[13:55] <jelmer> hi jdahlin
+[13:55] <jelmer> jdahlin: you have to specify the branch to push to, that's why it's suggesting that URL
+[14:27] <jelmer> xnox: \o/ you have plans to work on bzr-git?
+[14:28] <xnox> jelmer: in my limited free time. but yeah. I will still via bugs/code review, but i'd like to be able to manage bugs at least =)
+[14:28]  * xnox has some local forks of bzr-git & dulwich......
+[14:29] <jelmer> I'd be keen to see the improvements to dulwich (there's also #dulwich, btw)
+=== slank_away is now known as slank
+[15:38] <jdahlin> jelmer: actually, I switched over to using a git remote helper, which is a lot faster (2-3 minutes instead of ~1h)
+=== mmrazik is now known as mmrazik|afk
+[16:43] <Wiz_KeeD> hey guys!
+[16:43] <Wiz_KeeD> can anyone please tell me why this happens?
+[16:43] <Wiz_KeeD> http://pastie.org/5825338
+[16:43] <xnox> Hello =)
+[16:44] <xnox> Wiz_KeeD: not really bzr issue, but ubuntu. What's the output of $ apt-cache policy qbzr ?
+[16:45]  * xnox has qbzr installed fine on raring.
+[16:45] <Wiz_KeeD> http://pastie.org/5825430
+[16:48] <Wiz_KeeD> it's in the paste xnox
+[16:49] <xnox> ok. let me test that.
+[16:50] <Wiz_KeeD> could it be because of the mirror?
+[16:53] <xnox> Wiz_KeeD: dunno. almost finished creating precise install.
+[16:55] <Wiz_KeeD> okay
+[17:01] <xnox> Wiz_KeeD: works fine here. Please enable precise, precise-updates and precise-security repositories. apt-get update and try again.
+[17:01] <xnox> maybe there is something weird going on.
+[17:01] <xnox> Can you try "$ apt-cache policy python-qt4 " for me?
+[17:10] <Wiz_KeeD> yes
+[17:10] <Wiz_KeeD> my brother fixed it by using aptitude and downgrading
+[17:10] <Wiz_KeeD> but i want to find out more about this
+[17:10] <Wiz_KeeD> http://pastie.org/5825621
+=== yofel_ is now known as yofel
+=== bsd1 is now known as bsd

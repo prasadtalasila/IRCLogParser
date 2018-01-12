@@ -1,0 +1,15 @@
+[01:01] <SegFaultAX> I have a trivial upstart script (basically just the exec line). `service myserv start` works as expected, but `service myserv stop` does not (errors with "Unknown instance")
+[01:02] <SegFaultAX> The /var/run/myserv.pid is being updated correctly.
+[01:20] <stgraber> sounds like that service is forking and you're missing an "expect fork" or "expect daemon" statement
+[01:27] <SegFaultAX> stgraber: So that's the strange bit...
+[01:28] <SegFaultAX> stgraber: It seems like my program is actually writing its pre-daemonized pid to the pidfile.
+[01:28] <SegFaultAX> (uwsgi in this case). But I do have an expect fork, should it be expect daemon?
+[01:30] <SegFaultAX> stgraber: Pff, you're a king. Got it.
+[01:51] <SpamapS> seems like everybody has been fighting uwsgi + upstart these days
+[01:53] <stgraber> SegFaultAX: most daemons do double-fork, those need "expect daemon", for simple fork, "expect fork" is enough. If you're not familiar with the code of the daemon, you basically have to try and see which works.
+[01:58] <SpamapS> I dunno if I'd say most daemons do
+[01:58] <SpamapS> in my experience it has been 50/50
+[01:58] <SpamapS> since its not actually necessary to fork twice
+[02:08] <SegFaultAX> SpamapS: Is it not? I thought you need 2 to ensure your process doesn't reconnect to a tty by accident?
+[02:23] <SpamapS> nope
+[02:24] <SpamapS> SegFaultAX: you just have to close/setsid properly.

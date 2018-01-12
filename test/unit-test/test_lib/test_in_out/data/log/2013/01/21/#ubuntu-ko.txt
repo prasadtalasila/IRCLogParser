@@ -1,0 +1,391 @@
+[00:57] <Markers> 안녕하세요
+[01:15] <nanun> 비오지만 즐거운 아침입니다.
+[01:18] <yemharc> 안녕하세요
+[01:25] <Markers> 안녕하세요
+[01:29] <JSTae76> 안녕하세요
+[01:29] <LuHa> 안녕하세요~
+[01:29] <JSTae76> LuHa, 안녕하세요~ 좋은아침입니다
+[01:29] <yemharc> 안녕하세요
+[01:29] <JSTae76> yemharc, 안녕하세요~ 좋은아침입니다.
+[01:29] <LuHa> 비가 내리는 날이군요!
+[01:29] <JSTae76> LuHa, 넹, 저희도 비가 오네요
+[01:30] <JSTae76> 혹시 레드마인 설치해보신분 계신가요?
+[01:35] <yemharc> 레드마인이야 메뉴얼 많죠
+[01:35] <JSTae76> yemharc,토요일날 데비안 가상환경에서 레드마인 설치하니깐 (PPA) 아주 잘되서 어제 서버에다 설치를 시도하니깐 안되더라구요..
+[01:35] <JSTae76> Access denied for user 'redmine'@'localhost' (using password: NO)
+[01:36] <yemharc> SQL 에러네요
+[01:36] <JSTae76> yemharc, 음.. 혹시 해결법아시나요?
+[01:36] <yemharc> DB에 redmine이란 유저가 제대로 등록되어 있는지, 비번설정 되어 있는지 확인하세요
+[01:36] <JSTae76> 가상환경에서 설치한거랑 서버에서 한거랑 다를게 없는데 말입니다..
+[01:37] <JSTae76> yemharc, 계정이 있고 비밀번호도 설정되어있습니다.
+[01:37] <yemharc> 그리고 단순히 유저만 있는게 중요한게 아니라 그 유저에게 읽기쓰기 권한이 있는 테이블이 할당되어 있는지도요
+[01:38] <JSTae76> yemharc, redmine_default DB에 Grand를 제외한 모든 권한이 할당되어있습니다.
+[01:39] <yemharc> redmine 계정으로 mysql 접속 되요?
+[01:39] <yemharc> mysql -uredmine -p
+[01:40] <JSTae76> yemharc, 네
+[01:41] <yemharc> mysql -uroot -p
+[01:41] <yemharc> use mysql
+[01:41] <yemharc> GRANT ALL ON . to root@'localhost' IDENTIFIED BY 'password';
+[01:41] <yemharc> flush privileges;
+[01:42] <yemharc> 하고나서
+[01:42] <JSTae76> 네
+[01:42] <yemharc> rake db:migrated_plugins 해서 억세스 되나 테스트 해보세요
+[01:43] <JSTae76> 잠시만요..
+[01:43] <yemharc> 이래도 안되면 계정말고 레드마인쪽 sql 설정이 잘못된거니까
+[01:43] <Markers> yemharc님 근데 궁금한게 있는데 이번 나눔 모임때 어떻게 입장해야되요? 제 기억에 7층인가 9층인가에서 출입 카드 없으면 입장 못했던걸로 기억하는데
+[01:44] <yemharc> 누리꿈요?
+[01:44] <yemharc> 출입카드 필요한건 비즈니스 타워에요
+[01:44] <yemharc> 세미나는 그 옆건물
+[01:44] <JSTae76> yemharc, 음.. GRANT ~에서 안되네요
+[01:44] <Markers> 아 다른 건물인건가
+[01:44] <JSTae76> yemharc, ERROR 1064 (42000): You have an error in your SQL syntax;
+[01:44] <yemharc> 문법에러...
+[01:45] <yemharc> localhost를 ip로 바꿔보세요
+[01:45] <JSTae76> yemharc, 안되네요
+[01:49] <yemharc> JSTae76: GRANT ALL PRIVILEGES ON redmine.* TO 'redmine'@'localhost' IDENTIFIED BY '*******'
+[01:49] <yemharc> 여기서 패스워드만 입력하고 그대로 복붙해서 넣어보세요
+[01:49] <yemharc> redmine 계정 있다고 했으니 그걸로 로그인 해서요
+[01:49] <JSTae76> yemharc, redmine 계정으로 로그인하라고요?
+[01:50] <yemharc> 네
+[01:50] <yemharc> 그리고 아까 위에서 Access denied for user 'redmine'@'localhost' (using password: NO) 이거는
+[01:50] <yemharc> 패스워드 설정 안되어있다는거에요
+[01:51] <JSTae76> yemharc, Access denied
+[01:51] <yemharc> using password: YES 라고 떠야되요
+[01:51] <yemharc> 억세스 불가 뜨는거면 테이블은 루트가 만들어준거네요
+[01:51] <yemharc> 다시 루트로 들어가서 저 명령어 반복
+[01:52] <JSTae76> yemharc, 됬습니다~
+[01:53] <JSTae76> Query OK, 0 rows affected (0.00 sec)
+[01:53] <yemharc> 레드마인 DB접속 테스트 해보세요
+[01:53] <yemharc> 여기서 denied 안뜨면 sql관련은 정상처리 된거비니다
+[01:54] <JSTae76> yemharc, 접속은 잘됩니다..
+[01:54] <yemharc> 요 문제는 다른게 아니라 자신에게 할당된 DB테이블에 대한 권한이 없어서 발생하는겁니다
+[01:54] <JSTae76> yemharc, 흠.. 그렇군요!
+[01:54] <JSTae76> yemharc, 그럼 이제 또 재설치해야하는건가요?
+[01:55] <yemharc> 레드마인은 상황에 따라 추가적으로 DB를 만들어 쓰기 때문에 단순히 읽기/쓰기 혹은 테이블 하나만 할당해선 안 돌아가요
+[01:55] <yemharc> use mysql <- 요 부분이 DB명이니까, 바꿔말하면 테이블이 아니라 DB 자체를 추가해서 넘겨주는것도 방법이죠
+[01:56] <JSTae76> 오..
+[01:57] <JSTae76> yemharc, 그럼 이젠 어떻게해야할까요..
+[01:58] <yemharc> ?
+[01:58] <JSTae76> yemharc, 패키지 설치 중에 나타난 에러라서 접속을 해봐도 데이터베이스 파일이 없다고 실행이안되거든요..
+[01:59] <yemharc> ㅇㅅㅇ... DB파일 이름 제대로 넣었어요?
+[02:00] <JSTae76> yemharc, 넵..?
+[02:00] <JSTae76> yemharc, 그러니깐.. 레드마인 설치 중에 데이터베이스 문제로 에러가 난거라서..
+[02:00] <yemharc>  $REDMINE/config/databse.yml
+[02:00] <JSTae76> 접속하니깐 "No such file or directory - /etc/redmine/default/database.yml"
+[02:00] <yemharc> production 탭
+[02:00] <JSTae76> 이라는 에러가 발생합니다.
+[02:00] <yemharc> 말 그대로 파일 없다는거죠
+[02:01] <yemharc> redmine/config/database.yml.example 파일을
+[02:01] <JSTae76> yemharc, 파일을 열어보니 있네요
+[02:01] <yemharc> database.yml로 바꾸고
+[02:01] <JSTae76> 아..저건 기본값인가..
+[02:01] <yemharc> 그 파일 열어서 production 탭에서 설정하세요
+[02:01] <yemharc> 어뎁터는 mysql
+[02:01] <JSTae76> config폴더가 없네요.. 생성할까요
+[02:01] <yemharc> 없다고요?
+[02:01] <JSTae76> /etc/redmine/default/database.yml이라는 파일은 있습니다. (셋팅도 되어있고)
+[02:01] <JSTae76> 네
+[02:01] <yemharc> 그럼 레드마인 패키지 자체가 제대로 설치가 안된건데요
+[02:02] <yemharc> 파일이 있으면 그거 설정하세요
+[02:02] <JSTae76> yemharc, 음..어떻게하지..
+[02:02] <yemharc> 수동설치냐 자동설치냐 차이니까
+[02:02] <JSTae76> yemharc, 아뇨.. 이미 설정이 끝나있네요
+[02:02] <yemharc> 설정되어 있으면
+[02:02] <yemharc> rake generate_session_store
+[02:02] <yemharc> RAILS_ENV=production rake db:migrate
+[02:02] <JSTae76> rake aborted, No Rakefile found ~
+[02:03] <yemharc> redmine 폴더로 가서요
+[02:03] <yemharc>  /etc/redmine이겠네요
+[02:03] <JSTae76> 아..넵
+[02:03] <JSTae76> 어라..이미 redmine  폴더이네요...
+[02:03] <yemharc> RAILS_ENV=production rake redmine:load_default_data
+[02:03] <JSTae76> 아.. /usr/share/redmine에서 해보니 잘 됩니다ㅎ
+[02:03] <yemharc> Rakefile 이라는게 있으면 rake 명령이 작동하는겁니다
+[02:04] <yemharc> 제네레이트부터 마이그레이션, 로드 데이터까지 끝났으면
+[02:04] <yemharc>  /var/www/redmine 뭐 여튼 레드마인 웹 디렉토리로 가서
+[02:04] <yemharc> chmod -R 755 files log tmp public/plugin_assets
+[02:04] <yemharc> 권한설정 해주시고
+[02:05] <yemharc> 아파치 재시작
+[02:05] <yemharc> 그리고 레드마인 서비스는 ruby script/server webrick -e production
+[02:05] <JSTae76> yemharc, RAILS_ENV~과정에서 또 다시 Access denied가 나타납니다..
+[02:05] <yemharc> 레드마인에 할당한 DB명이 뭐에요
+[02:05] <JSTae76> redmine, redmine_default
+[02:06] <yemharc> 두개나 되요?....
+[02:06] <yemharc> database.yml에는 뭘로 넣었어요
+[02:06] <JSTae76> redmine_default입니다
+[02:06] <yemharc> mysql 들어가서 redmine_default에 권한설정
+[02:06] <yemharc> 아까의 GRANT ...
+[02:08] <JSTae76> yemharc, 안되네요..
+[02:08] <yemharc> 그냥 처음부터 하는게 낫겠네요
+[02:08] <JSTae76> yemharc, 음..
+[02:09] <yemharc> sudo apt-get install apache2 apache2-prefork-dev mysql-server mysql-admin mysql-query-browser redmine redmine-mysql ruby1.8-dev
+[02:09] <yemharc> 없는거 있으면 설치하세요
+[02:09] <yemharc> 설치 끝나면 sudo gem install passenger
+[02:10] <JSTae76> yemharc, passenger는 아까 libapache2-mod-passenger로 설치했는데 그렇게해도괜찮을까요?
+[02:10] <yemharc> 네
+[02:10] <JSTae76> 예. 알겠습니다.
+[02:11] <yemharc> passenger까지 됐으면 sudo gem install rails
+[02:13] <yemharc> mysql에서 redmine redmine_default는 삭제하세요
+[02:13] <JSTae76> yemharc, gem install passenger : getcwd(Errno::ENOENT)
+[02:13] <yemharc> sudo gem update --system
+[02:14] <JSTae76> yemharc, 같은 에러가 나타납니다
+[02:14] <yemharc> 음 에러가 그거 한줄인가요?
+[02:14] <yemharc> 더 나올거같은데
+[02:14] <JSTae76> /usr/lib/ruby/1.8/rubygems.rb:472:in `expand_path': No such file or directory - getcwd (Errno::ENOENT)
+[02:14] <JSTae76> 뒤에는 한 8 줄 정도됩니다.
+[02:15] <yemharc> sudo 붙여서 하신거죠?
+[02:15] <JSTae76> yemharc, su - 상태입니다.
+[02:15] <JSTae76> root login이 활성화된 상태라..
+[02:17] <yemharc> 음.. 저 에러가 왜 지금 나오지...
+[02:17] <yemharc> 일단 패신저는 패스
+[02:17] <yemharc> rails 설치하세요
+[02:17] <yemharc> 설치되어 있으면 다음
+[02:20] <JSTae76> yemharc, 명령어 입력하고 계속 조용하네요..일단 기다려보겠습니다.
+[02:22] <JSTae76> yemharc, 진행중입니다..
+[02:24] <nanun> 안녕하세요-
+[02:24] <JSTae76> nanun, 안녕하세요
+[02:24] <yemharc> Seony: Unclutter 세일중입니다
+[02:25] <JSTae76> Seony, 0.99$입니다.
+[02:26] <JSTae76> Seony, IconBox2, Ondesoft Screen Capture for Mac, VidConvert, Image Smith, Wallpaper Wizard, Type Fu, Sweetie, Clipbuddy를 무료로 받을 수 있는 번들 패키지도 출시되었습니다.
+[02:27] <nanun> JSTae76/ 아이폰용 앱인가요?
+[02:27] <JSTae76> nanun, Mac 프로그램 입니다 :)
+[02:27] <nanun> 아항~
+[02:27] <Seony> Unclutter라면, 리눅스의 그것과 똑같은 거죠?
+[02:28] <Seony> 마우스 커서 없애주는..
+[02:28] <JSTae76> Seony, 그 정리하는 프로그램..
+[02:28] <JSTae76> Seony, http://macnews.tistory.com/760
+[02:28] <JSTae76> Seony, 보면 아시겁니다 :)
+[02:29] <Seony> 오오.. 이런 거군요...
+[02:29] <Seony> 이름만 같고, 리눅스의 그것과는 완전히 다른거네요
+[02:29] <JSTae76> Seony, 괜찮아보입니다:)
+[02:30] <Seony> 근데 저는 이미 Yoink를 구입한 관계로... ㅎㅎ
+[02:31] <JSTae76> Seony, Coda 2 에디터 괜찮나요?
+[02:31] <JSTae76> yemharc, Rail 작업 끝났습니다 :)
+[02:31] <Seony> JSTae76: 웹사이트 만드는 웹디자이너들한테는 아주 좋은데, 프로그래머 성향이 강하다면 서브라임이 훨씬 나아요
+[02:32] <JSTae76> Seony, 음..그럼 아는 지인에게 추천할만하군요ㅋㅋ
+[02:32] <Seony> 프로그래밍이 가능한 웹디자이너...
+[02:32] <JSTae76> Seony, 혹시 Dock을 조금 깔끔하게 할 수 없을까요?
+[02:32] <Seony> 코다2 내에서 디비/FTP 접속까지 다 가능하거든요..
+[02:33] <Seony> Dock에 app 전부 빼고, 런처 쓰세요 ㅎㅎ
+[02:33] <Seony> 알프레드 추천합니다.
+[02:33] <JSTae76> Seony, 오..감사합니다.
+[02:33] <JSTae76> Dock에 아이콘이 세어보니 51개 이네요 =_=
+[02:34] <Seony> 저는 10개 미만... 나머지는 런처 쓰면 충분해요..
+[02:35] <JSTae76> Seony, Wow..
+[02:35] <yemharc> JSTae76: sudo gem install mysql
+[02:35] <yemharc> sql에선 디비생성
+[02:35] <yemharc> CREATE DATABSE redmine CHARCTER SET utf8;
+[02:36] <yemharc> GRANT ALL PRIVILEGES ON redmine.* TO 'redmine'@'localhost' IDENTIFIED BY 'password'
+[02:36] <yemharc> Seony: 전 저번에 드래곤드랍 이벤트때 구매하긴 했는데, 기능이 단순 파일이동 뿐이라 새로 구매했습니다
+[02:36] <JSTae76> yemharc, 첫 명령어에서 ERROR 1064에러 발생합니다..
+[02:37] <yemharc> 복붙해도 그러나요
+[02:37] <JSTae76> yemharc, 네
+[02:37] <yemharc> 그럼 cahrset은 빼고 해보세요
+[02:38] <JSTae76> yemharc, 같은 에러가..
+[02:38] <yemharc> 1064면 문법에러인데......
+[02:38] <yemharc> 오타네요
+[02:38] <yemharc> DATABSE -> DATABASE
+[02:39] <JSTae76> 아하..ㅋㅋ
+[02:39] <yemharc> 손톱 깎으니 오타가 작렬하네.....
+[02:39] <JSTae76> yemharc, chara 설정 빼고 하니 괜찮습니다
+[02:39] <JSTae76> yemharc, 둘다 성공했습니다 :)
+[02:40] <yemharc> config/database.yml 파일 점검
+[02:40] <yemharc> adapter: mysql
+[02:40] <JSTae76> 네
+[02:40] <yemharc> database: redmine
+[02:40] <yemharc> host: localhost
+[02:40] <yemharc> username: redmine
+[02:40] <yemharc> password: password <- 설정한것
+[02:40] <JSTae76> yemharc, /etc/redmine에는 defualt, /usr/share/redmine/에는 config폴더가 있네요..
+[02:40] <JSTae76> 어디로 할까요
+[02:41] <yemharc> 둘 다 바꿔보세요
+[02:41] <yemharc> apt-get으로 설치해서 양쪽에 있는거같은데
+[02:41] <JSTae76> 음.. /usr쪽에는 database.yml이 없으니 etc의 기본파일을 여기다가 복사해볼께요
+[02:42] <JSTae76> 음..이미 설정이 잘 되어있어요
+[02:42] <yemharc> 그럼 다음
+[02:42] <yemharc> rake generate_session_store
+[02:42] <yemharc> RAILS_ENV=production rake db:migrate
+[02:43] <yemharc> RAILS_ENV=production rake redmine:load_default_data
+[02:43] <JSTae76> yemharc, 두번쨰 명령어에서 또 다시 Access denied..
+[02:43] <JSTae76> RAILS_ENV=production rake db:migrate : rake aborted! Aesid for user ~
+[02:44] <yemharc> 음... 버전 바뀌면서 명령어도 바뀐건가.......
+[02:44] <yemharc> rake db:create:all
+[02:45] <JSTae76> yemharc, Couldn't create database for {"encoding"=>"utf8", "port"=>nil, ~
+[02:45] <JSTae76> 에러가 나타납니다..
+[02:45] <yemharc> 설정이 다 안된거같네요. 음 일단 점심먹고 오겠습니다
+[02:45] <JSTae76> yemharc, 넵 :)
+[02:53] <samahui> 점심 맛있게들 드세요 ^^
+[02:57] <Seony> 오늘 맥도날드 갔다가, 한국에서 오신 관광객 한 분을 만났는데, 경력 8년차 DBA라네요. 근데 여자분...
+[02:58] <nanun> 와우.
+[02:58] <Seony> 어떻게 하면 여기 취직할 수 있냐고... ㅎㅎ
+[02:58] <nanun> 여자분이 Seony님께 물어본 내용인가요? +_+
+[02:59] <Seony> 네
+[02:59] <Seony> 제가 직장을 다녀서 그런게 아니고, 여기 물정을 잘 몰라서 저한테 물어본 거였어요
+[02:59] <nanun> 아.. 그 여기가 그 여기군요~ ㅎㅎ
+[02:59] <Seony> 관광으로 와서 어학연수 중인데, 너무 좋아서 여기 눌러살고 싶대요..
+[03:00] <nanun> 아 ~.~
+[03:00] <Seony> 그래서 어떻게 할 수 있는지 물어보시더라구요 ㅎㅎ
+[03:00] <nanun> 여기저기 전도사 역할을 하시는 것 같으세요 ㅎㅎ
+[03:01] <Seony> 근데 경력 8년차 DBA라시길래, 리눅스 쓰실 줄 아냐고 물어보니까 유닉스에서 작업한다고 그러고, 그러면 유닉스 메인프레임에서 작업하시냐고 물어보니까 "그게 뭐에요?" ㅎㅎ
+[03:02] <nanun> 음???
+[03:03] <Seony> 뭐 암튼, IT직종이 직업이 많냐는 얘기부터 이것저것 얘기했는데, 여자분이 DBA라니까 좀 신기했어요 ㅎㅎ
+[03:03] <nanun> ㅋㅋㅋ
+[03:04] <Seony> 여성 유닉스 서버관리자는 20세기 이전부터 봐서 안신기했거든요 ㅋㅋ
+[03:04] <Seony> 아 21세기 ㅎㅎ
+[03:11] <JSTae76> razGon_web, Hello There?
+[03:13] <razGon_web> JSTae76: sorry. but i'm busy for my job.
+[03:13] <JSTae76> razGon_web, OK
+[03:14] <razGon_web> i have a problem.
+[03:14] <yemharc> 여성 DBA 꽤 있는 편이에요
+[03:14] <JSTae76> razGon_web, ?
+[03:14] <yemharc> 최근까지 넥슨 있다가 회사 옮기신 분도 경력 11년차 DBA셨죠
+[03:15] <Seony> 오.. 그렇군요
+[03:15] <razGon_web> That is the razgon_ppmt. my x11vnc is some thing wrong.
+[03:15] <JSTae76> razGon_web, Oh..
+[03:15] <razGon_web> so _ppmt is out of control to me.
+[03:16] <JSTae76> razGon_web, OMG..
+[03:17] <razGon_web> It's rainy sleepy day, aren't you?
+[03:17] <JSTae76> razGon_web, Yes, rainy day (but not sleepy :)
+[03:17] <JSTae76> angry day..
+[03:18] <razGon_web> I am tired d.t the conferrence in Seoul yesterday.
+[03:18] <JSTae76> oh..I see..
+[03:18] <razGon_web> JSTae76: why? what's up?
+[03:18] <JSTae76> razGon_web, Server..
+[03:19] <razGon_web> well, that's one...I guess..^^
+[03:19] <JSTae76> I was install require package for server system on virtual machine for test.
+[03:19] <JSTae76> but.. my server prompt errror
+[03:20] <Seony> 라이프 오브 파이 무쟈게 재밌네요
+[03:20] <razGon_web> Oh... a poor Boy.
+[03:20] <Seony> 정말 아무 생각없이 기대 안하고 봤는데..
+[03:20] <JSTae76> Seony, 영화인가요?
+[03:20] <JSTae76> razGon_web, :(
+[03:20] <razGon_web> 오웅.. 아무래도 스필버그거 만들은건데.
+[03:20] <Seony> 네 영화...
+[03:20] <Seony> 아뇨
+[03:20] <razGon_web> JSTae76: 엥? 한글이 되네?
+[03:20] <JSTae76> 그렇군요..
+[03:20] <Seony> 이안 감독인가...
+[03:20] <JSTae76> razGon_web, 넹ㅋㅋ
+[03:20] <razGon_web> 아.. 이안감독.ㅋ
+[03:21] <JSTae76> 설마 한글이 안되서 이런신건가요ㅎㅎ
+[03:21] <razGon_web> 나 속은 거야? ^^;
+[03:21] <Seony> 원작이 유명한 소실이라고 하던데, 암튼 무쟈게 재밌게 봤어요
+[03:21] <JSTae76> 하하..저는 장난(?)이였는데 말입니다.. 죄송해요
+[03:21] <razGon_web> 가끔 그런경우가 있어서 말이지.
+[03:21] <razGon_web> 배포판 설치하다보면 한글 안되어 있는채로 접속하는 경우가 있지요.ㅎ
+[03:21] <JSTae76> 아ㅎㅎ
+[03:21] <JSTae76> clear
+[03:21] <razGon_web> 한글되냐고 물어볼걸..큐.ㅇ.히ㅏㄴㅇ리;험지;ㄷㅅㅎ[
+[03:21] <JSTae76> ㅌㅋㅋㅋㅋㅋ그러셨군요
+[03:22] <JSTae76> 서버 해결하려면 IDC를 방문하는게 최선책인데.. 돈이 없네요 =_=
+[03:23] <razGon_web> 가면 되심.ㅎ
+[03:23] <yemharc> IDC 방문에 돈 드는거 아니잖아요
+[03:23] <razGon_web> 돈들겠죠.ㅎ
+[03:23] <razGon_web> 울산인데.ㅋ
+[03:24] <JSTae76> razGon_web, yemharc : 서울 방문할 돈이 없습니다 (__)
+[03:24] <razGon_web> idc는 서울.ㅋ
+[03:24] <JSTae76> razGon_web, 역시 라즈곤님ㅋㅋ큐ㅠ 저에 대해서 잘 알고계십니다ㅎ
+[03:24] <yemharc> 아하;;
+[03:24] <razGon_web> 돈이 업스므니다... 서버가 아니므니다!
+[03:24] <razGon_web> 문제 마니 이쓰므니다..
+[03:25] <yemharc> 어 근데 지방에는 아예 IDC가 없나요?
+[03:25] <JSTae76> razGon_web, 저.. 여기서 이러시면 안됩니다 ㅋ_ㅋ
+[03:25] <JSTae76> yemharc, 네..그럴꺼에요
+[03:25] <razGon_web> 뭐 지방살면 그럴거 같은셔서요.ㅎ
+[03:25] <JSTae76> 애초부터 제 서버는 서초에 있어요.
+[03:25] <yemharc> 과연 더러운 서울
+[03:25] <yemharc> 이런 시설이나 좀 전국에 뿌리고 집을 늘려달라고 (......)
+[03:26] <Seony> 오늘도 휴일 내일도 휴일... 오랫만에 좋네요 ㅋ
+[03:26] <JSTae76> JIRA, Redmine 같은 좋은 녀석 없을까요
+[03:26] <razGon_web> 그도 그럴것이 소비자가 기업들이 많으니 가까운 서울에 두겠죠. 인프라가 좋은 곳에.
+[03:26] <yemharc> github
+[03:26] <yemharc> (...)
+[03:26] <JSTae76> (...)
+[03:26] <razGon_web> Seony: ? 왠 휴일요?
+[03:26] <Seony> 오늘은 일요일이고 내일은 마틴루터킹 데이거든요 ㅎㅎ
+[03:26] <razGon_web> 오늘은 일요일이고. 내일은 월요일아닌가요?
+[03:26] <razGon_web> 아~!!
+[03:26] <JSTae76> 괜찮은 이슈 트래커 추천 부탁드립니다..
+[03:27] <yemharc> 간단한 설치형이라면 mantis가 있고
+[03:27] <razGon_web> 역시 사람은 꿈을 가지고 있어야 되네요.
+[03:27] <yemharc> 솔루션이라면 Trello가 있고
+[03:27] <yemharc> 근데 개인적으론 github 이슈가 제일 편하고요
+[03:27] <razGon_web> 최소한 다른 사람에게 휴식을 줄 수 있겠군요.
+[03:28] <JSTae76> yemharc, 내부적으로 사용해야되서요.. (무료로)
+[03:28] <yemharc> 어....저는 그런게 가장 이해가 안 가는 부분인데요
+[03:28] <yemharc> 사실 요즘 세상은 개인서버 운영하는것보다 깃헙같은거 계정하나 끊는게 훨씬 좋아요
+[03:28] <JSTae76> yemharc, 개인이 아닙니다..
+[03:28] <yemharc> 그룹으로 한다고 해도 달 3만원 정도면 저장소 위키 이슈트래커 등등 다 되는데
+[03:29] <JSTae76> 옹..
+[03:29] <JSTae76> 그럴 돈이 없네요 =_=
+[03:29] <yemharc> 프로젝트야 private으로 돌리면 되는거고
+[03:29] <yemharc> 아뇨 그러니까요
+[03:29] <JSTae76> 네
+[03:29] <yemharc> IDC에 서버 입주시킨거 아니에요?
+[03:29] <JSTae76> 네
+[03:29] <yemharc> 저라면 그거 빼고 저런 솔루션 쓰겠어요
+[03:29] <JSTae76> 음..
+[03:30] <yemharc> 제가볼땐 이제는 개개인이 서버 구축해서 유지/관리하고 운영하고.......
+[03:30] <yemharc> 이거 솔직히 뻘짓이라 생각하거든요
+[03:30] <yemharc> 용도가 무지 많아서, 혹은 그냥 집에다 두고도 사용 가능해서 별도 유지비가 안 들어서...
+[03:30] <yemharc> 뭐 이런거면 상관없지만요
+[03:30] <yemharc> 말 그대로 여러명이 동시에 업무에 쓰는정도 되면 저라면 솔루션 선택합니다
+[03:31] <yemharc> 이젠 그게 훨씬 싸고 좋고 안전해요
+[03:31] <JSTae76> 달에 3만이라..
+[03:38] <Markers> trello 괜찮은거 같은데..
+[03:38] <Markers> github은 현재 제대로 써보지를 못해서 잘 모르겟고 이슈 트래커 용으로 쓰는거라면 trello 추천 ;
+[03:39] <yemharc> 트렐로는 기능이 간편한데 그만큼 좀 약한 단점도 있죠
+[03:39] <yemharc> 근데 엄청나게 디테일한-예를들면 장문 로그 등등- 이슈트래커가 아니라면 가장 좋긴 해요
+[03:40] <JSTae76> 트렐로는 설치형이 아니네요?
+[03:40] <yemharc> 트렐로도 웹 솔루션요
+[03:40] <Markers> 그냥 웹에서
+[03:40] <yemharc> 폰 앱도 있고
+[03:40] <Markers> ㅇㅇ
+[03:40] <JSTae76> yemharc, 아..그렇군요~
+[03:40] <Markers> 전 단순히 일정관리( 목표 ) 용으로 쓰고 있는 ㅋㅋㅋㅋㅋㅋㅋㅋ
+[03:53] <JSTae76> yemharc님의 말씀에 따라 GITLAB을 실험해봐야겠습니다.
+[04:51] <autowiz2011> 우분투 방에서 죄송합니다만.
+[04:51] <autowiz2011> RHEL 4 iso 있으시거나 다운가능한곳 아시는분 계신지요?
+[07:20] <Seony> 이젠 아이패드에서 직접 프로그래밍도 하는 시대가 왔네요. http://twolivesleft.com/Codea/
+[07:20] <JSTae76> Seony, 안드로이드에서는 이미 오랜일입니다..ㅎㅎㅎ
+[07:20] <Seony> 루팅 안하고도요?
+[07:21] <JSTae76> Seony, 기억이 잘은 안나지만 되는걸로 알고있어요
+[07:21] <JSTae76> 아..맞아요
+[07:21] <JSTae76> 루팅 안하고도 프로그래밍 가능했었습니다.. 애플리케이션으로ㅎ
+[07:22] <Seony> 그렇군요.  아이폰/패드도 예전부터 파이썬 정도는 됐었는데요, 저 동영상 보면 제가 그 정도 수준을 말하는 건 아니라는걸 알게될 거에요...
+[07:22] <JSTae76> 안드로이드는 안드로이드 앱을 맞드는 녀석이 제일 나았어요
+[07:23] <Seony> ㅎㅎ 그렇군요.
+[07:23] <Seony> 참고로 저 동영상은 아마 Lua일 거에요
+[07:23] <JSTae76> 아까 친구들의 추천으로 롤을 해봤는데..재밌네요
+[07:45] <nanun> 터치를 활용하는것이 재미있네요 @.@
+[07:47] <nanun> 전 아트릭스에서 ssh 접속하는 것도 눈 아파서 긴급할 때만 쓰는데, ipad정도 되면 프로그래밍도 할 만 한가 봐요~
+[07:47] <nanun> 안녕하세요.
+[09:14] <samahui> 다들 퇴근하시는 군요. 즐거운 저녁시간 되세요
+[09:14] <samahui> 전 오늘도 즐겁게 야근~~~ 저녁이나 먹고 와야겠습니다 ^^
+[09:15] <nanun> 맛나게 드시고 오세요-
+[09:43] <razgon_ppmt> 후... 어제 학회의 여파로..힘들게 일하다가 왔네요...ㅠㅠ
+[09:44] <Seony> 고생하십니다
+[09:46] <razgon_ppmt> 뭐나름 새로운 것도 배우고 적용하시켜서 좋은 결과 나오고 해서 좋습니다.
+[09:46] <razgon_ppmt> 단, 마눌님의 눈빛이 무서울뿐...ㅠㅠ
+[10:14] <razgon_ppmt> 리하이요
+[10:39] <nanun> 저녁이 오고 있네요 +_+
+[10:48] <samahui> 월요일 저녁부터 치킨에 우동 먹고 왔네요 ㅎㅎ;;
+[10:48] <samahui> 배빵빵하니 좋은데요 ㅋㅋ
+[10:48] <samahui> 양치 좀 하고 슬슬 업무시작해야겠네요.
+[10:58] <samahui> 배불리 먹고 따땃하니 히터 틀고 시원한 단지우유(바나나맛우유) 마시니 기분이 좋은게... 퇴근하고 싶군요 ㅜㅜ
+[10:58] <samahui> 다 먹고 살자고 ... 잘살고 즐겁게 살자고 하는건데... 너무 빡빡하게 사는건 아닌지 생각이 드네요.
+[11:30] <kov1> 에구.
+[11:30] <kov1> 수고 하십니다.
+[11:30] <kov1> 저도 퇴근한지 30분되서
+[11:30] <kov1> ㅜ_-
+[13:22] <samahui> 다들 나가시는군요
+[13:22] <samahui> 밤이 깊어가니까 점점 더 일이 안되는데요
+[13:22] <samahui> 그냥 푹 쉬고 내일 열심히 해야 겠네요
+[13:23] <samahui> 다들 즐거운 밤 되시고 행복한 꿈 꾸세요
+[14:40] <razGon_web> 리하이요.ㅎ
+[23:35] <razGon_web> 안녕하세요?
+[23:36] <Seony> 안녕하세요
+[23:41] <razGon_web> 오늘은 지각했네요. 8시 전까지 와야 하는데...ㅠㅠ
+[23:42] <samahui> 안녕하세요
+[23:42] <razGon_web> 안녕하세요?
+[23:42] <samahui> ^^

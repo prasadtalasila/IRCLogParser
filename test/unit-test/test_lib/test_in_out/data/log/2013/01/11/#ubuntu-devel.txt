@@ -1,0 +1,252 @@
+=== chiluk_away is now known as chiluk
+=== slank_away is now known as slank
+=== Ivanka_ is now known as Ivanka
+=== truexfan404 is now known as truexfan81
+=== slank is now known as slank_away
+[03:47] <jamin> I'm somewhat surprised that this bug is still effectively ignored over a year later: https://bugs.launchpad.net/ubuntu/+source/network-manager-applet/+bug/825897
+[03:47] <ubottu> Ubuntu bug 825897 in network-manager-applet (Ubuntu) "network-manager becomes unresponsive, requiring a service restart" [Undecided,Confirmed]
+[03:53] <micahg> cyphermox: ^^
+[05:33] <pitti> Good morning
+[05:34] <sarnold> hey pitti :)
+[05:54] <tjaalton> infinity: https://bugs.freedesktop.org/show_bug.cgi?id=54226
+[05:54] <ubottu> Freedesktop bug 54226 in DRM/Intel "[snb 3.5] stale semaphore sync seqno (typically as seen on bcs->rcs)" [Normal,New]
+[05:54] <tjaalton> dunno why I'm not hit by it more often
+[06:37] <infinity> tjaalton: I got it like ten times yesterday. :/
+[07:32] <tjaalton> infinity: well there's things to try on that bug
+[07:38] <infinity> tjaalton: With a nasty performance and power draw hit, apparently.  I'm not sure it's worth the effort.  I can live with the lockups.
+[07:38] <infinity> tjaalton: I just don't think we can live with them for release.
+[07:44] <tjaalton> infinity: are you running 3.8 already, btw?
+[07:45] <infinity> tjaalton: No, I will be after a reboot, but can't reboot just now.
+[07:47] <tjaalton> infinity: ok, it should be better.. i'll be in touch with upstream after you've tried
+=== smb` is now known as smb
+[08:50] <mitya57> Does anybody have problems with logging in to errors.u.c?
+[08:50] <mitya57> I "The site has requested some personal information. Please choose what you would like to share:" page,
+[08:51] <mitya57> press "yes, log in" there, and after some five seconds the same page loads
+[08:51] <mitya57> I'm getting this in Chromium and Firefox (resetting cookies & cache doesn't help)
+=== yofel_ is now known as yofel
+[08:54] <infinity> mitya57: Works for me.  Are you actually in the group(s) it wants?
+[08:55] <mitya57> infinity: I'm in ubuntu-bug-control
+[08:55] <mitya57> and I was able to access that site in the past
+[08:56] <infinity> mitya57: I think it was further locked down, pending review of data privacy laws and other such madness.
+[08:56] <infinity> mitya57: When you log in, is there a more info expander or something that shows you that it's looking for a group you're not in?
+[08:56] <mitya57> no, nothing like that
+[08:57] <infinity> If I could remember how to log OUT of an SSO service...
+[08:57] <infinity> I guess I could just log out of login.launchpad.net entirely.
+[08:57] <mitya57> IIRC there was a "log out" link at the page bottom
+[08:57] <infinity> Oh, which doesn't do anything. :P
+[08:58] <infinity> No log out links on errors once logged in, no.
+[08:59] <mitya57> https://login.ubuntu.com/+logout ?
+[08:59] <infinity> That didn't actually log me out of errors.
+[08:59]  * infinity gives up and uses an incognito browser.
+[09:00] <infinity> Team membership: canonical-ubuntu-platform
+[09:00] <infinity> ^-- Yeah, it's looking for that right now.
+[09:01] <infinity> We're hoping to be able to open it up a bit more in the future, AFAIK, but it's a bit messy.
+[09:01] <infinity> mitya57: ev might know more about progress on that front.
+[09:02]  * mitya57 hopes it's possible to open it at least for ~ubuntu-dev
+[09:03] <infinity> I'd probably be happy even with just core-dev, but anything that isn't "just the company" gives lawyers heart attacks when it comes to users sending us data that could be, well, anything.
+[09:03] <infinity> (And rightfully so, I suppose)
+[09:04] <mitya57> ok, can you (or anybody else) show me a couple of tracebacks?
+[09:04] <mitya57> https://errors.ubuntu.com/bucket/?id=%2Fusr%2Fshare%2Funity-mail%2Funity-mail%3Aimaplib.abort%3A_command_complete%3A_get_tagged_response%3A_get_response%3A_get_line%3Aon_mm_item_clicked%3Amark_message_as_read%3Aselect%3A_simple_command%3A_command_complete
+[09:05] <mitya57> and https://errors.ubuntu.com/bucket/?id=%2Fusr%2Fshare%2Funity-mail%2Funity-mail%3Aemail.errors.HeaderParseError%3Astart_loop%3Astart_loop%3Adecode_header%3Adecode%3Aupdate%3Aupdate_single%3Aget_header_wrapper%3Adecode_wrapper%3Adecode_header
+[09:11] <infinity> mitya57: http://paste.ubuntu.com/1519349/ and http://paste.ubuntu.com/1519350/
+[09:11] <mitya57> thanks infinity!
+[09:14] <infinity> ev: So, apparently community developers do use errors.u.c (or, try to)
+=== tkamppeter_ is now known as tkamppeter
+=== henrix_ is now known as henrix
+[10:11] <mlankhorst> can some ubuntu sru admin look at the mesa I uploaded this morning?
+=== Tonio__ is now known as Tonio_aw
+=== Tonio_aw is now known as Tonio__
+[10:49] <ogra_> Laney, wow, thanks !!! what i dont get though is why would that be invoked if someone sends an error report
+[10:50] <Laney> ogra_: I'm not sure how it's all hooked up (pitti probably would know), but it seems like that's what invokes apport
+[10:50] <ogra_> oh
+[10:50] <Laney> it's probably something which can be converted to pkexec in any case
+[10:50] <pitti> ogra_: update-notifier gets invoked when a non-user crash happens, not when someone sends an error report
+[10:50] <pitti> Laney: nope, update-notifier still uses gksu
+[10:50] <ogra_> yeah, i thought about it the other way round ... didnt think that IT coudl eb invoking apport :)
+[10:50] <pitti> that's one of the two places which still need to be fixed
+[10:51] <ogra_> whats the other ? xdiagnose ?
+[10:52] <Laney> yeah I know it still does - was confirming that it was the source of ogra_'s bug from yesterday
+[10:53] <pitti> ogra_: yes
+[10:53] <ogra_> great
+=== Tonio__ is now known as Tonio_aw
+=== _salem is now known as salem_
+=== Tonio_aw is now known as Tonio__
+=== MacSlow is now known as MacSlow|lunch
+=== Tonio__ is now known as Tonio_aw
+=== doko__ is now known as doko
+[12:56] <ev> infinity: and we want them to be able to access the data. But we're waiting for an NDA to be written up.
+=== Tonio_aw is now known as Tonio__
+=== MacSlow|lunch is now known as MacSlow
+[13:26] <xnox> pitti: Program received signal SIGSEGV, Segmentation fault.  _dbus_watch_invalidate (watch=0x0) at ../../dbus/dbus-watch.c:171
+[13:28] <xnox> usb-creator-gtk in certain combinations often triggers that. bug #915626. In the past there were also bug #1043887 and bug #852342
+[13:28] <ubottu> bug 915626 in usb-creator (Ubuntu) "usb-creator-gtk crashed with SIGSEGV in _dbus_watch_invalidate" [High,In progress] https://launchpad.net/bugs/915626
+[13:28] <ubottu> Error: Bug #1043887 is a duplicate of bug #1036183, but it is private (https://launchpad.net/bugs/1036183)
+[13:28] <ubottu> bug 847578 in evolution-data-server "duplicate for #852342 e-calendar-factory crashed with SIGSEGV while importing ics data" [Critical,Fix released] https://launchpad.net/bugs/847578
+[13:28]  * xnox will try to sanitise that function in dbus & see if I can still trigger the bug.
+[13:29] <xnox> bdmurray: you are a rock star @ finding the right set of options that trigger above more often than others.
+[13:29] <pitti> xnox: I haven't seen this, but it's obviously passing a NULL argument to that function?
+[13:30] <xnox> yeap. the function accepts dbuswatch pointer, it's passed NULL and it tries to do two simple assignments NULL->fd=-1 and something else. which causes SIGSEGV
+[13:31] <xnox> I don't see how in high level python/dbus it could be causing this deliberately. the clean up looks racy to me.
+[13:32]  * xnox also notes that python3-dbg tracebacks are verbose and seem to hide stuff =)
+[13:32] <xnox> here is the full gdb log: https://launchpadlibrarian.net/128192354/gdb-dbus.txt
+[13:36] <ogra_> pitti, bug 871662 looks like it can be closed in favour of an update-notifier bug
+[13:36] <ubottu> bug 871662 in apport (Ubuntu) "Drop gksu dependency" [Low,Triaged] https://launchpad.net/bugs/871662
+[13:36] <pitti> ogra_: or just reassigned; apport lost its dependency a while ago already
+[13:37] <pitti> ah, there is one already, right
+[13:37] <ogra_> yes, thats what i wrote in my last comment, but i didnt want to close without asking
+[13:38] <pitti> ogra_: done, thanks for pointing out!
+[13:38] <ogra_> (the focus grabbing makes it nastier on tablets than it used to be due to onboard )
+=== slank_away is now known as slank
+=== slank is now known as slank_away
+=== slank_away is now known as slank
+[14:03] <zul> mterry:  hi..
+[14:03] <zul> mterry:  i disabled the failing test for testrepository although it runs fine not in a buildd
+[14:04] <mterry> zul, disabled the test?  :(
+[14:04] <mterry> zul, I got the failure locally
+[14:05] <zul> mterry:  if i just run make check then it runs fine
+=== cpg is now known as cpg|away
+=== Tonio__ is now known as Tonio_aw
+=== chuck_ is now known as zul
+=== Tonio_aw is now known as Tonio__
+=== cpg|away is now known as cpg
+=== cpg is now known as Guest53868
+[14:49] <dbarth> hey, i have an apparmor, pam and lightdm question
+[14:50] <xnox> go on =) sounds interesting so far.
+[14:50] <dbarth> setuid is failing in a lightdm child process and i'm not sure if that's really not normal, or if it's just an apparmor file that is missing
+[14:51] <mdeslaur> dbarth: do you have an apparmor denial in dmesg?
+[14:51] <dbarth> mdeslaur: not that i can see though
+[14:51] <mdeslaur> dbarth: then it's unlikely to be apparmor the problem
+[14:52] <dbarth> does it go in auth.log or syslog by default?
+=== Tonio__ is now known as Tonio_
+[14:52] <mdeslaur> dbarth: syslog unless you have the "audit" package installed
+[14:53] <dbarth> hmm, let me check that maybe first
+[14:53] <mdeslaur> s/audit/auditd/
+[14:54] <mdeslaur> if you have that package installed, it goes to /var/log/audit* somewhere
+[14:54] <mdeslaur> (can't recall off-hand)
+[14:54] <dbarth> no audit here
+[14:54] <dbarth> and nothing from the lightdm process in syslog
+[14:55] <dbarth> i will go through lightdm.log again
+[14:59] <mterry> bdmurray, remember you talked to me a bit ago about the two duplicity SRUs in quantal?  you haven't accepted the other duplicity yet.  Would it be wasting your review cycles to upload another duplicity to quantal that combined both uploads?
+[15:00] <dbarth> mdeslaur: i can see some old denial messages for the freerdp session though (in kern.log)
+[15:00] <dbarth> but that was fixed once the config. file for the wrapper executable was installed
+[15:01] <dbarth> (for the 12.10 release)
+[15:01] <mdeslaur> dbarth: ok, but if there's nothing newer, then your issue is probably elsewhere
+[15:01] <mdeslaur> all denials should be logged
+[15:02] <jdstrand> it goes to kern.log
+[15:02] <jdstrand> lightdm itself is not confined
+[15:02] <jdstrand> the guest session is
+[15:03] <ogra_> if lightdm already habnded over to the session manager if your issue happens, the errors would be in ~/.xsession-errors of teh user btw
+[15:03] <mdeslaur> oh, whoops, yes, kern.log
+[15:03] <dbarth> mdeslaur: ok, i'll dig deeper; thanks for pushing me further at least
+[15:03] <jdstrand> we don't have any explicit denials that would block setuid
+[15:03] <jdstrand> (even in the guest session)
+[15:04] <mdeslaur> dbarth: check kern.log first though
+[15:05] <dbarth> ogra_: the session opens fine if i make the pam session layer optional
+[15:05] <hallyn> zul: infinity: is the raring qemu upload still waiting for review, or is it hanging on something else I forgot?  (it was waiting on ipxe-qemu for awhile...)
+[15:05] <dbarth> the issue is when i re-enable the pam session part, to inject creds in the session
+[15:05] <hallyn> i'm just confused bc i still don't see it on the uploads page for qemu
+[15:06] <dbarth> jdstrand: ok, noted
+[15:08] <hallyn> (oh, i do see it in the NEW queue)
+[15:15] <zul> mterry:  can we get alembic looked at today as well please?
+[15:16] <mterry> zul, oh that is part of nova too?  I hadn't looked at that MIR yet
+[15:16] <mterry> zul, sure
+[15:16] <zul> mterry:  its apart of quantum actually :)
+[15:28] <cjwatson> bdrung: Are you planning to finish the libibmad/libibumad transition, having sponsored syncs of a soname change from experimental last month?
+[15:28] <cjwatson> bdrung: It's been sitting in -proposed unmigrated since then.
+=== henrix is now known as henrix_
+=== henrix_ is now known as henrix
+[15:39] <cjwatson> bdrung: srptools was an easy rebuild so I did that; ibsim and qlvnictools FTBFS
+[15:41] <mterry> zul, all approved I believe
+[15:42] <zul> mterry: cool thanks
+[15:43] <bdmurray> mterry: come to find out there was a 3rd upload of duplicity - https://launchpad.net/ubuntu/quantal/+queue?queue_state=1&queue_text=duplicity
+[15:44] <bdmurray> that one fixes bug 1080423
+[15:44] <ubottu> bug 1080423 in duplicity (Ubuntu Quantal) "UnicodeDecodeError when backing up to Ubuntu One in some locales" [Undecided,Confirmed] https://launchpad.net/bugs/1080423
+[15:44] <mterry> bdmurray, yeah, I had done that one a long time ago, and when I made my second upload, I included that fix, obsoleting that guy
+[15:44] <mterry> bdmurray, so 2 of the uploads were mine, one was this 07caching.dpatch fix
+[15:45] <bdmurray> mterry: okay, so one with all three seems fine to me
+[15:45] <mterry> bdmurray, will do
+[15:45] <bdmurray> mterry: thanks, just let me know and I'll review it
+[15:45] <mterry> bdmurray, k
+=== megha is now known as firewall
+[15:54] <dbarth> i found my issue; it's a segfault, but visible on the host system, not in the lxc-container!
+=== chiluk is now known as chiluk_away
+[16:16] <jamespage> mterry, thanks for the approval of alembic - I just subscribed ubuntu-server team to bug mail
+[16:16] <mterry> jamespage, awesome
+[16:31] <xnox> ev: is there a way to run  /usr/share/usb-creator/usb-creator-helper under debugger? everytime i start usb-creator-gtk it seems to spawn it's own helper.
+[16:33] <ev> xnox: it wont spawn it if there's one already running on the system bus
+[16:33] <ev> so just tack a sudo in front of that
+[16:33] <xnox> hmm...
+[16:34] <roadmr> Hey folks! So I netbooted a uefi installation with a few kernel parameters to boot to a desktop installer over nfs, but once installed, the grub menu entry "inherits" those parameters and won't boot out-of-the box; requires some editing :/
+[16:35] <roadmr> is there a way to tell the installer not to "inherit" those grub parameters? it properly ignored e.g. automatic-ubiquity but kept e.g. url, initrd, nfsroot and log_host
+[16:36] <xnox> ev: thanks, seems to work. I may have had a stale one already. =))))
+[16:36] <mterry> bdmurray, duplicity 0.6.19-0ubuntu2.1 uploaded to quantal-proposed, when you're ready.  I'm preparing a new precise upload too (that combines the two patches uploaded separately there)
+[16:36] <mterry> bdmurray, I'll be more careful about checking the queue next time
+[16:37] <ev> xnox: yay
+[16:38] <xnox> if only dbus.so would stop segfaulting.....
+[16:38] <bdmurray> mterry: okay, thanks
+[16:42] <cjwatson> roadmr: There's normally a "--" as a boot parameter (certainly is by default), which acts as a separator.  Parameters after that may be copied into the target system; parameters before that won't be.
+[16:44] <roadmr> cjwatson: oh, you're absolutely right, I'm putting them *after* the --, I'll try your suggestion, thanks as usual :)
+[16:54] <bdrung> cjwatson: i will contact the sponsoree if he is willing to do it (otherwise i probably have to do it)
+=== chiluk_away is now known as chiluk
+=== davidcalle_ is now known as davidcalle
+[17:05] <mterry> bdmurray, and now duplicity 0.6.18-0ubuntu3.1 uploaded to precise-proposed
+=== chiluk is now known as chiluk_away
+[17:15] <iBelieve> I just branched apport to work on a bug fix, and am getting the message "OUT-OF-DATE". What does this mean and how does this affect me?
+[17:16] <seb128> iBelieve, usually it means the vcs you checked out doesn't have the current version ... what vcs did you branch?
+[17:16] <iBelieve> seb128: I ran "bzr branch ubuntu:apport".
+[17:17] <seb128> iBelieve, you should probably make your patch against lp:apport
+[17:17] <seb128> but dunno why the ubuntu: one is out-of-date
+[17:17] <seb128> maybe pitti knows (if he's still around)
+[17:18] <iBelieve> seb128: Don't the developer docs (http://developer.ubuntu.com/packaging/html/udd-getting-the-source.html#branching) say to use "ubuntu:"? What is the difference?
+[17:19] <seb128> iBelieve, ubuntu: is the packaging branch
+[17:19] <seb128> lp:apport is the upstream project branch
+[17:19] <seb128> that's less obvious when upstream is on launchpad
+[17:21] <iBelieve> seb128: So I can use "lp:apport" instead, and that will work fine for working on a bug fix (LP #657275)?
+[17:21] <ubottu> Launchpad bug 657275 in apport (Ubuntu) "ubuntu-bug should save reports offline automatically rather than giving a cryptic error message" [Wishlist,In progress] https://launchpad.net/bugs/657275
+[17:22] <seb128> iBelieve, yes
+[17:22] <iBelieve> seb128: Great, thanks for your help!
+[17:23] <seb128> yw
+[18:13]  * Laney cries as he abandons trying to work with a SRU bzr branch
+[18:13] <Laney> an
+[18:15] <xnox> Laney: branch the sponsoree branch, generate source package, generate debdiff against the base, work with that =)
+[18:15] <Laney> I got some inexplicable error about .pc
+[18:15] <Laney> download diff of the (thankfully single) commit + apply to source package :-)
+[18:16] <Laney> branching sponsoree branch + generating diff from that would have also worked
+[18:16] <infinity> Which is much simpler anyway. :P
+=== chiluk_away is now known as chiluk
+=== Quintasan_ is now known as Quintasan
+=== chiluk is now known as chiluk_away
+=== chiluk_away is now known as chiluk
+=== henrix is now known as henrix_
+=== chiluk is now known as chiluk_away
+=== scott-work is now known as Guest11420
+=== chiluk_away is now known as chiluk
+=== chiluk is now known as chiluk_away
+=== salem_ is now known as _salem
+=== chiluk_away is now known as chiluk
+=== rsalveti_ is now known as rsalveti
+=== Ursinha_ is now known as Ursinha
+=== _salem is now known as salem_
+=== chiluk is now known as chiluk_away
+=== chiluk_away is now known as chiluk
+=== chiluk is now known as chiluk_away
+=== Ursinha is now known as Ursinha-afk
+=== Ursinha-afk is now known as Ursinha
+=== chiluk_away is now known as chiluk
+=== salem_ is now known as _salem
+[22:00] <infinity> pitti: You around?
+[22:02] <Aeyoun>  Regarding updating a upstream package. I have successfully followed[1] for version 1.0. Now I want to update to 1.1. But there seems to be a step missing regarding using bzr and launchpad on[2]. Is there another document that explains it all? [1] http://developer.ubuntu.com/packaging/singlehtml/index.html#document-ubuntu-packaging-guide/packaging-new-software [2] https://wiki.ubuntu.com/PackagingGuide/Complete#Creating_and_Using_a_deb
+[22:02] <Aeyoun> ian.2BAC8-watch_File
+[22:02] <Aeyoun> I end up with one packagename/ that is the bzr repo, and one packagename-1.1/ which is not a repo.
+[22:07] <infinity> Aeyoun: http://developer.ubuntu.com/packaging/singlehtml/index.html#merging-a-new-upstream-version
+[22:24] <Aeyoun> infinity, that would be exactly it. again: thank you so much. :-)
+=== truexfan404 is now known as truexfan81
+[22:53] <tjaalton> so on raring I have four separate dnsmasq's running, one of which should enable virbr0 for libvirt, but it can't create the socket for it
+[22:53] <tjaalton> this was supposed to be fixed ages ago, I think
+[22:54] <slangasek> I haven't had any problems with multiple dnsmasqs running
+[22:54] <slangasek> the nm one should be bound to a different interface than the virbr0 one
+[22:59] <tjaalton> so there's one for lxc, libvirt, nm, and one system-wide?
+[23:00] <tjaalton> seems as if it's running one extra
+[23:14] <tjaalton> eh, I had both dnsmasq and dnsmasq-base installed for some reason
+[23:19] <tjaalton> now it should work, but virtbr0 still doesn't have an address
+[23:50] <tjaalton> stopping libvirt-bin probably should stop it's dnsmasq too

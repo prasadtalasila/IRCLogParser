@@ -1,0 +1,412 @@
+=== ejat- is now known as ejat
+[05:33] <mitya57> Hey charles, can you please take a look at bug 958007 (or at least say what to blame — our patch or something else)?
+[05:33] <ubot2> Launchpad bug 958007 in gnome-settings-daemon (Ubuntu) "First switching of the keyboard layout doesn't update the layout indicator" [Medium,Confirmed] https://launchpad.net/bugs/958007
+[05:34] <mitya57> I can reproduce it when opening something just after system start
+[05:34] <mitya57> (but not after that)
+[06:28] <pitti> Good morning
+=== mitya57_ is now known as mitya57
+[07:07] <chrisccoulson> good morning everyone
+[07:12] <pitti> hey chrisccoulson, how are you? you're early
+[07:13] <chrisccoulson> pitti - yeah, i'm not too bad thanks. how are you? have you had snow over the weekend?
+[07:13] <chrisccoulson> we've had quite a bit here now :)
+[07:13] <pitti> chrisccoulson: hah, plenty :) we've had lots of snow since last week
+[07:13] <chrisccoulson> http://www.flickr.com/photos/67705534@N06/8394425637/
+[07:15] <pitti> cute!
+=== alex3f is now known as eg202_alex3f
+=== eg202_alex3f is now known as alex3f[eg202]
+[09:04] <Laney> morning
+[09:05] <Laney> cliking hdd of doom
+=== Zdra is now known as xclaesse
+[09:17] <Sweetsha1k> morning all.
+=== Sweetsha1k is now known as Sweetshark
+[09:24] <didrocks> good morning
+=== vrruiz_ is now known as rvr_
+[10:10] <didrocks> mpt: hey! I have a request from bochecha_ to know if we have a similar kind of requirement for specific language ibus engine with our future keyboard indicator: https://live.gnome.org/AllanDay/IMEGuidelines, do you know if we have any?
+[10:11] <chrisccoulson> hey didrocks
+[10:11] <didrocks> hey chrisccoulson, how are you?
+[10:11] <chrisccoulson> didrocks, yeah, not too bad thanks
+[10:11] <chrisccoulson> and you?
+[10:12] <mpt> didrocks, I don't know. As I understand it, options for an individual IME are usually accessed from a floating window, not from a menu.
+[10:13] <bochecha_> mpt: that depends
+[10:13] <didrocks> chrisccoulson: totally brain-damaged, will need today to be in a confortable timezone again ;)
+[10:13] <didrocks> chrisccoulson: especially as yesterday was quite epic
+[10:13] <bochecha_> mpt: also, as I was telling didrocks, that page is not yet finished, it only includes the menu properties for now, but could include other aspects later on
+[10:14] <didrocks> chrisccoulson: Paris was completely under snow: https://plus.google.com/110419250019099644591/posts/H9swxQrSrTQ
+[10:14] <chrisccoulson> heh, nice ;)
+[10:14] <bochecha_> mpt: basically, I'm writing an ibus engine and I'd like it to integrate as well as possible in big desktops. I'm doing it for GNOME based on their recommendation (which are in fact evolving as we go through it), and if you have something similar for Unity then I could try to follow it :)
+[10:14] <didrocks> chrisccoulson: so delay to park, delay to get the luggage, and… train daily from Paris to Lyon
+[10:14] <didrocks> (3h40)
+[10:15] <mpt> bochecha_, my text entry menu design is at <https://wiki.ubuntu.com/TextEntry>. If you could let me know anything that is missing or bad, that would be excellent. :-)
+[10:15] <chrisccoulson> i'm glad i've not had to travel anywhere ;)
+[10:15] <bochecha_> didrocks: 3h40 of delay... on a 2h trip? o_O
+[10:15] <bochecha_> mpt: will do :)
+[10:15] <mpt> ta
+[10:15] <didrocks> bochecha_: yep, the train arrived with 3h of delay already from Lille
+[10:16] <didrocks> (it's Lille -> Marseille which stops at the airport)
+[10:21] <bochecha_> mpt: "Each input source should have its own icon." what would be the size of the icon? also, is there a fallback? (I'm terrible at drawing icons or anything else, so I'm afraid I might not have one ready very soon)
+[10:22] <mpt> bochecha_, SVG, optimized for about 16*16
+[10:22] <bochecha_> (and gnome doesn't use an icon for the input source, so it's not really my main priority to be entirely honest)
+[10:22] <mpt> bochecha_, IBus has/had bitmap icons for each source
+[10:22] <bochecha_> well, it has for all engines which have one
+[10:22] <bochecha_> and I can tell you I haven't made an icon for my engine yet :)
+[10:28] <bochecha_> mpt: also, one thing I do not find in your guidelines page is how the settings ui for an input source can be started by the user
+[10:30] <mpt> bochecha_, again, I'm not really experienced with them myself, but from what I've seen, the floating window appears whenever the source is selected/reselected.
+[10:30] <bochecha_> so, input methods have two kinds of settings
+[10:31] <bochecha_> the properties, which can be changed from that floating popup (or in GNOME from the input source indicator), and are there because users frequently change them while typing
+[10:31] <bochecha_> and then, there are settings, which users will generally change once (or keep the defautl) according to their preferences, and then leave them as is
+[10:32] <bochecha_> these are in dedicated settings dialogs, e.g ibus-setup-cangjie
+[10:32] <bochecha_> my question was on the latter category: how should a Unity user run the settings dialog for an engine?
+[10:34] <mpt> I see
+[10:35] <mpt> bochecha_, is there a standard command for invoking the settings UI for an engine if there is one?
+[10:35] <bochecha_> not really
+[10:35] <bochecha_> GNOME Control Center finds a .desktop file with the same name as the engine
+[10:35] <bochecha_> and then runs the Exec= command
+[10:35] <mpt> That's the kind of standard I was meaning. :-)
+[10:36] <mpt> A way of telling whether to include a button for it or not.
+[10:36] <mpt> bbiab, meeting.
+[10:36] <bochecha_> mpt: I'll leave work soon, so I'll add here more details about how it works on gnome, so you can read it in the scrollback when you come back :)
+[10:37] <bochecha_> mpt: so let's take ibus-cangjie as an example. IBus knows it from its XML component file (/usr/share/ibus/component/cangjie.xml) which gives its "name" as "cangjie"
+[10:38] <bochecha_> mpt: so GNOME Control Center will search for /usr/share/applications/ibus-setup-$engine.desktop (following the ibus-cangjie example, that's ibus-setup-cangjie.desktop)
+[10:38] <bochecha_> it's as simple as this :)
+[11:23] <mhr3> didrocks, hey there, how are you doing?
+[11:24] <mhr3> read your g+ post, you should go via zurich next time, no delays there because of snow :)
+[11:24] <didrocks> mhr3: tired :)
+[11:24] <didrocks> mhr3: but arrived, which is the most important :)
+[11:24] <didrocks> mhr3: yeah, snow seems to be a suckfest if you include airport/train station/metro
+[11:24] <didrocks> all of the 3 were completely defective
+[11:25] <seb128> mhr3, hey, had a good flight back? I confirm the by Zurich one ;-)
+[11:25] <mhr3> seb128, yea, it was unusually un-eventful for my standards :)
+[11:26] <mhr3> we even arrived 20minutes before schedule
+[11:26] <didrocks> mhr3: nothing to put some salt in your trip? :)
+[11:26] <didrocks> come on, you have higher standards!
+[11:26] <mhr3> didrocks, right? i don't know how could everything go according to plans.. weird
+[11:27] <didrocks> heh
+[11:27] <mhr3> seb128, what about you? had fun waking up today?
+[11:27] <mhr3> i woke up at 3pm yesterday :P
+[11:28] <seb128> mhr3, no jetlag for me, but I slept from midnight to 11am today
+[11:28] <seb128> can't complain
+[11:28] <didrocks> waow, went to bed at 9pm for me, wake up at 10am ;)
+[11:28] <didrocks> still feeling slow, but functional :p
+[11:29] <seb128> the late plane works fine
+[11:29] <Laney> welcome back!
+[11:29] <didrocks> hey Laney, thanks!
+[11:29] <mhr3> seb128, although it would be better on the 1st class seats ;)
+[11:29] <seb128> the usual frankfurt one lands like at 6am, which doesn't let you time for sleeping well in the plane
+[11:29] <didrocks> seb128: did you stay a lot more under a sunny SFO?
+[11:29] <seb128> landing at 3pm lets you sleep
+[11:29] <seb128> didrocks, we went to the airport around 3pm
+[11:30] <didrocks> ok, did you walk a little before or stay at the same place?
+[11:30] <mhr3> i miss the california weather already, it's just snow and drizzle here
+[11:31] <didrocks> no snow here, as we have none in the """south""" of France :p
+[11:32] <mhr3> didrocks, just wait till wednesday
+[11:32] <didrocks> mhr3: yeah, seems so :)
+[11:39] <seb128> didrocks, we just stayed chatting at the terrasse in the sun for an hour or so and then went back
+[11:39] <didrocks> ok, nice ;)
+[11:39] <seb128> having a look around is easier without the bags
+[11:40] <didrocks> agreed
+[11:40] <seb128> it was a bit early at the airport for me, I still had to wait half an hour to be able to drop my bag and then I had 3 hours
+[11:40] <didrocks> well, the terrasse was a nice plan :)
+[11:40] <seb128> but it's ok, Florian still has a priority card, he let me in the lounge
+[11:40] <didrocks> urgh, yeah, quite long :/
+[11:40] <seb128> we got a beer there before he went for boarding
+[11:40] <didrocks> ah, this is before the security?
+[11:40] <seb128> no, just after
+[11:41] <seb128> but SFO has free wifi
+[11:41] <didrocks> so you did the security twice?
+[11:41] <didrocks> as you couldn't drop your bag
+[11:41] <seb128> no, I waited 30min reading emails to drop my bag
+[11:41] <didrocks> ok
+[11:41] <seb128> then I went through security
+[11:41] <seb128> then I had 3 hours that I spent at the lounge
+[11:41] <didrocks> yeah, in the lounge is fine :)
+[11:42] <seb128> but nice couchs, some beer and power
+[11:42] <seb128> can't complain ;-)
+[11:42] <didrocks> heh
+[11:42] <seb128> snacks as well
+[11:42] <didrocks> better than having to wait the same number of hours in a noisy freezing train station I guess :p
+[11:42] <didrocks> (without any available chair)
+[11:43] <didrocks> and almost no power to use your phone :p
+[11:44] <seb128> indeed
+[12:05] <Sweetshark> seb128: libreoffice4 review and upload would be awesome, Im only around for this week still.
+[12:05] <Sweetshark> *grumble*
+[12:06] <Sweetshark> didrocks: could you do a few rotations on the dynamo of sebs notebook, so that his wifi comes on again?
+[12:07] <didrocks> Sweetshark: we are not in SFO anymore, he's back on his weird connexion with unreliable network :)
+[12:07] <didrocks> Sweetshark: or maybe it's just a bug when you do mention "libreoffice" and review/sponsor in the same sentence
+[12:07] <didrocks> Sweetshark: try in two lines next time :p
+[12:08]  * Sweetshark sternly looks at didrocks as a deputy reviewer ...
+[12:08] <Sweetshark> thought so.
+[12:09] <didrocks> oh similar bug :p
+[12:09]  * Sweetshark nods: unconfirmed->new, priority: high
+[12:09] <didrocks> :)
+[12:10] <didrocks> Sweetshark: more seriously, let's see what's on seb128's plate this week, I'm here for this week only as well. if he can't, I'll try to give a hand
+[12:12] <Sweetshark> didrocks: yup. To get everyone more confidence, drive as many victims^Wsheep^Wtesters to the prereleases ppa at: https://launchpad.net/~libreoffice/+archive/libreoffice-prereleases/+packages?field.name_filter=&field.status_filter=published&field.series_filter=raring
+[12:13] <didrocks> maybe stgraber as he gave you a +0 on the per package upload rights should sponsor it, wdyt?
+[12:14] <didrocks> so that he can have some confidence in your uploads
+[12:16] <Laney> I believe bdrung explicitly offered to do that
+[12:16] <Laney> so you might want to ask him
+[12:16] <didrocks> Sweetshark: ^
+[12:16] <Laney> that would have highlighted :-)
+[12:20] <seb128> hum, IRC timeouted
+[12:20] <seb128> what's the discussion about? libreoffice?
+[12:21] <Laney> sponsoring it
+[12:22] <Sweetshark> bdrung, stgraber: yep, you are more than welcome to review the package changes at http://anonscm.debian.org/gitweb/?p=pkg-openoffice/libreoffice.git;a=shortlog;h=refs/heads/ubuntu-raring-4.0 .
+[12:23] <Sweetshark> bdrung, stgraber: package is currently waiting on chinstrap for upload/review, but I can move a copy to http://people.canonical.com/~bjoern/ if needed.
+[12:23] <Sweetshark> 13:04 < Sweetshark> seb128: libreoffice4 review and upload would be awesome, Im only around for this week still.
+[12:24] <seb128> Sweetshark, put it on the people page, bdrung doesn't have access to chinstrap to review it
+[12:24] <seb128> Sweetshark, where are you after this week?
+[12:37] <Sweetshark> seb128: skiing for two weeks
+[12:37] <Sweetshark> in France ;)
+[12:41] <ogra_> but, but ..... they all speak french there !
+[12:41] <pitti> hey seb128, didrocks, comment allez-vous?
+[12:41] <pitti> got back home alright?
+[12:43] <davmor2> ogra_: did you get off at the wrong stop again?
+[12:45] <ogra_> heh, nope, just got back from shoveling the 30cm snow we had today
+[12:45] <didrocks> pitti: ça va, mais lentement! returning was quite complicated as you saw on g+ due to the snow, otherwise, fine! :)
+[12:45] <didrocks> pitti: and you? how was your week?
+[12:45] <didrocks> Sweetshark: oh, were are you going to?
+[12:45] <pitti> didrocks: yeah, that's why I'm asking; that look out of the plane window looked scary
+[12:45] <pitti> didrocks: lots of snow here as well :) it was quite fine, thanks
+[12:46] <pitti> didrocks: did you get some good results?
+[12:46] <didrocks> pitti: it was, no more flight from Paris
+[12:46] <didrocks> metro stopped
+[12:46] <didrocks> and trains with 3h40 of delay
+[12:46] <didrocks> quite epic :)
+[12:46] <didrocks> pitti: yeah, I think we have some good decisions, now, just need to be able to execute them :)
+[12:46] <Sweetshark> didrocks: http://goo.gl/maps/nzcnV
+[12:47] <didrocks> Sweetshark: ah, famous station, I won't be very far next week :)
+[12:48] <Sweetshark> didrocks: really? were?
+[12:48] <didrocks> Sweetshark: http://goo.gl/NPhQI
+[12:48] <didrocks> urgh
+[12:48] <didrocks> so googl.gl fail :)
+[12:49] <didrocks> how do you have a /maps ones?
+[12:50] <didrocks> oh, there is a link button :)
+[12:50] <didrocks> http://goo.gl/maps/AfpS2
+[12:53] <Sweetshark> didrocks: oh, indeed not far. just far enough to make it unlikely we will meet on track ;)
+[12:53] <didrocks> Sweetshark: indeed :)
+[12:53] <didrocks> just one week of skiing here, but clearly enough for me :)
+[12:54] <Sweetshark> after one week, I only barely can drive again.
+=== MacSlow is now known as MacSlow|lunch
+[12:56] <seb128> Sweetshark, enjoy skiing!
+[12:57] <seb128> pitti, salut, I made it back alright, no issue with the planes, the tricky part was driving back from the airport yesterday evening, it was snowing and they said to be careful because of ice on the road
+[12:58] <seb128> pitti, but I've been driving slowly and made it back without issue
+[12:58] <pitti> seb128: indeed, we did a winter hike yesterday; some pavements were terribly slippery
+[12:58] <pitti> seb128: très bien
+[13:01] <Sweetshark> seb128: will do. they build a club med there last year, and this year I am determent to try the spa at least once. ;)
+[13:01] <seb128> nice
+[13:03]  * Sweetshark has to train his french again. There are distinct differences between french and etranger prices.
+[13:04] <didrocks> rohhhhh, this is FUD :p
+[13:04] <larsu> didrocks, seb128, hi! Did you make it home alright in the snow?
+[13:04]  * larsu reads scrollback and finds out they did :)
+[13:04] <pitti> "Combien pour cette massage de la nuque ?"
+[13:05] <didrocks> larsu: yeah, with some surprises, but at least, home!
+[13:05] <larsu> hi pitti, happy Monday!
+[13:05] <pitti> larsu: hey, wie gehts?
+[13:05] <larsu> pitti, sehr gut, danke
+[13:06] <larsu> didrocks, yeah, at least you didn't have a cancellation, only delays
+[13:06] <larsu> (I know this is probably not what you want to hear)
+[13:06]  * Sweetshark sneaks in the ubuntu CoC to libreoffice: http://skyfromme.wordpress.com/2013/01/19/brothers-in-arms/
+[13:07] <seb128> larsu, hey, made it alright yes ;-)
+[13:07] <didrocks> larsu: well, technically I took the train before mine
+[13:08] <didrocks> larsu: which was 4h40 late, so 2h40 compared to the one I was supposed to take :)
+[13:08] <seb128> larsu, it was like 19°C and sunny in SF, we had lunch in tshirt outside
+[13:08] <seb128> larsu, quite a change to be home under the snow
+[13:09] <larsu> seb128, haha I can imagine. It has been -14° here!
+[13:09] <larsu> but SNOW!!!
+[13:09] <didrocks> seb128: snow? you have that in the north (and apparently Paris Center) of France
+[13:09] <didrocks> thanks to lool positionning Lyon to south, we don't have any :p
+[13:09] <seb128> lol
+[13:10] <seb128> larsu, indeed, quite some snow here as well ;-) going to be cold for the week still it seems, forecast says -10°C during nights still until saturday
+[13:11] <Sweetshark> stgraber, bdrung: http://people.canonical.com/~bjoern/libreoffice4/
+[13:11] <larsu> seb128, let's hope it gets back to normal before I take the train to fosdem :)
+[13:12] <seb128> yeah
+[13:14] <Sweetshark> larsu, seb128: please take a close watch on the libreoffice booth and dev-room. I wont be there this year, and they might start a revolution.
+[13:14] <didrocks> larsu: seb128: worse, you can even start the revolution! :)
+[13:15] <didrocks> "let's swith to cmake" :)
+[13:15] <Sweetshark> didrocks: thats a good starter.
+[13:15]  * larsu runs
+[13:16] <Sweetshark> didrocks: did you know the clever guys at Apache OO started to reimplement GNU make in Java ... for performance?
+[13:18] <didrocks> ahah, sounds a good plan! :-)
+[13:18] <didrocks> next step will be python
+[13:22] <Sweetshark> didrocks: no, next step will be implementing the JVM it runs on in python.
+[13:22] <didrocks> oh nice idea ;)
+[13:22] <didrocks> sounds like we have a plan
+[13:40] <larsu> pitti, do you know if there are any docs for dbus-test-runner? Or is it better to use GTestDBus?
+[13:41]  * larsu is more clueless about testing dbus services than he should be
+[13:41] <pitti> larsu: I've never used dbus-test-runner; I pretty much always use dbus-launch
+[13:42] <pitti> larsu: GTestDBus is really nice if it works for you, but it has a few shortcomings
+[13:42] <pitti> (it also just calls dbus-daemon, but it cares about proper cleanup)
+[13:42] <larsu> pitti, what are the shortcomings?
+[13:43] <pitti> larsu: AFAIR, mostly that it doesn't do service activation, unless you add the directory explicitly
+[13:43] <pitti> and some other bits, but I forgot; but it does work in general
+[13:43] <larsu> I don't think I have esoteric needs though, I just want to start a service and see if the right things are ending up on the other side of the bus
+[13:43] <larsu> well, I'll try, it's much better documented that dbus-test-runner
+[13:44] <larsu> pitti, thanks!
+[13:45] <pitti> yeah, that should be fine
+=== vrruiz_ is now known as rvr_
+=== m_conley_away is now known as m_conley
+[15:06] <janimo> seb128, hi. which upstream channel would be most appropriate for g-s-d + plumbing talk ?
+[15:07] <seb128> janimo, #control-center or #gnome-hackers on irc.gnome.org
+[15:07] <janimo> seb128, thanks
+[15:07] <seb128> depending of what you define by "plumbing"
+[15:07] <seb128> if that's in the context of g-s-d, #control-center is probably good
+[15:07] <seb128> they cover g-c-c and g-s-d
+[15:08] <janimo> seb128, yes, g-s-d, to discuss the orientation plugin which makes use of udev as well
+[15:08] <seb128> k, #c-c ;-)
+[15:15] <janimo> seb128, that channel is so full of life :)
+[15:15] <seb128> janimo, well, it's IRC, it's slightly async :p
+[15:16] <seb128> bastien was talking with pitti on #gnome-hackers some minutes ago, so he's around
+[15:16] <seb128> wait a bit
+[15:16]  * pitti waves
+[15:17] <didrocks> have a nice evening pitti :)
+[15:17] <pitti> oh, I was just waving in response to seb128's highlight
+[15:17] <pitti> still debugging g-s-d
+[15:17] <Laney> get out while you have the chance!
+[15:17] <didrocks> ah ok :)
+[15:18] <pitti> trying to fix the tests and g-s-d's power plugin with Bastien since last Thursday or so
+[15:18] <seb128> laney, pitti: can you re-enable libglib-fam on linux next time you update glib in Debian?
+[15:18] <pitti> seb128: speaking of which, g-s-d 3.8 is a big "won't work" now :(
+[15:18] <seb128> desrt said the issues with it got fixed upstream and it's useful again, Joss is fine having it enabled again
+[15:18] <pitti> (it needs logind and all that)
+[15:19] <seb128> pitti, I though desrt did the work so logind was not an hard requirement?
+[15:19] <pitti> seb128: urgh, is anything still using this ancient fam lib?
+[15:19] <desrt> oh jesus christ
+[15:19] <desrt> pitti: it can use gamin as well
+[15:19] <pitti> seb128: not a build time requirement, but the power plugin will not work at all
+[15:19] <desrt> g-s-d has some BS systemd dependency now?
+[15:20] <pitti> for lid handling, suspend/hibernate, etc. what logind does
+[15:20] <pitti> well, we had that coming
+[15:20] <desrt> let seb128 talk to hadess about it
+[15:20] <desrt> he enjoys that :)
+[15:20] <desrt> there is no "we had that coming" this cycle
+[15:21] <desrt> unconditional systemd depends are officially off the table and upstream is opening requesting bugs filed about that
+[15:21] <desrt> *open to
+[15:21] <desrt> er. *openly, i guess i meant :)
+[15:23] <desrt> pitti: do you have a commit reference?
+[15:23] <pitti> desrt: I thought that only applied to building, not functionality?
+[15:24] <desrt> iirc there is something about 'base functionality'
+[15:24] <desrt> i'd think that power management is included?
+[15:24] <seb128> desrt, I think the consensus that GNOME would build/run but maybe miss some functionnalities and that they were ok with that
+[15:24] <desrt> i'd take it up with the release team
+[15:24] <desrt> i did a fair amount of chasing these issues already and they were always receptive
+[15:25] <desrt> even got some redhatters finishing off my patches for me
+[15:26] <desrt> meanwhile, aren't we supposed to be getting logind this cycle?
+[15:26] <desrt> or did that get bumped?
+[15:26] <pitti> desrt: oh, there are quite many; a1ab95f, 9efa97a, 6defe42, dropping lid handling (a95d9c and others), and quite a lot more
+[15:26] <seb128> desrt, it's still on the roadmap, I emailed slangasek about it last week but he was off sick some days, not sure how feasable it is
+[15:27] <desrt> oh look.  from bastien. :)
+[15:27] <pitti> desrt: yeah, one way or another we just have to implement the D-BUS API; quite frankly that's easier than playing whack-a-rat with all consumers
+[15:27] <desrt> pitti: i had an idea that we could write a compatibility libsystemd-logind that answered questions via CK
+[15:28] <pitti> desrt: we still need the d-bus API; gnome is using that over library calls for the "also builds/run on CK" requirement
+[15:28] <desrt> oh.  lovely.
+[15:28] <desrt> erm...
+[15:28] <desrt> +++ b/configure.ac
+[15:28] <desrt> +       libsystemd-login
+[15:28] <desrt> from a1ab95fae75dd61fd50165b4d8a08b5588245273
+[15:29] <desrt> pitti: this must be old news... this patch is from oct22
+[15:29] <desrt> i've built g-s-d on ubuntu fine many times since then
+[15:29] <pitti> desrt: yes, it builds
+[15:29] <pitti> that's what I said
+[15:29] <desrt> ah.  so he fixed up that part later
+[15:29] <desrt> ...by using dbus
+[15:29] <pitti> but its power plugin will not do anything
+[15:30] <desrt> cool!!
+[15:30] <pitti> desrt: above commits were runtime functionality changes, not build
+[15:30] <pitti> desrt: there are zero unbuildable modules in GNOME on Ubuntu right now :) https://jenkins.qa.ubuntu.com/view/Raring/view/JHBuild%20Gnome/
+[15:30] <desrt> seb128: i wonder if maybe we could help vorlon?
+[15:31] <desrt> pitti: you're doing god's work :)
+[15:31] <seb128> desrt, I'm waiting to hear back from him, robert_ancell said we might be better off adding those apis to lightdm (which does already track seats and sessions) if adapting logind is too hard
+[15:31] <seb128> desrt, but I want a status update before we take any action
+[15:32] <desrt> seb128: i know robert_ancell wanted logind for multi-seat udev integration stuff...
+[15:32] <seb128> desrt, I talked to him last week, he said the udev-tagging stuff should be easy to implement out of logind
+[15:33] <seb128> we just need to define which one of the two path is the easiest one
+[15:33] <desrt> the RH guys gave him a couple of those USB-plug-a-seat devices as a gift and he's stuck on being unable to support them with our present stack :/
+[15:33] <seb128> or the less costy over time
+[15:33] <desrt> ah.  cool.
+[15:33] <desrt> well, you know my opinion on this topic :)
+[15:33] <desrt> (and dave neary's)
+[15:34] <seb128> well, logind is part of systemd and we don't plan to use systemd
+[15:34] <desrt> ya, but these days so is udev :p
+=== MacSlow|lunch is now known as MacSlow
+[15:34] <seb128> so either we adapt logind and play catchup or interfaces changes
+[15:35] <seb128> well, they said udev will keep working standalone for a while ...
+[15:35] <seb128> I see where you are going :p
+[15:35] <desrt> pretty soon the kernel will be a systemd component :p
+[15:35] <seb128> let's see ;-)
+[15:36] <seb128> but, well, android does without systemd, we should be able to cope as well ;-)
+[15:36] <bdrung> Sweetshark: i will review the libreoffice package. i'll try to do it ASAP
+[15:37] <desrt> seb128: android isn't trying to run quasignome :)
+[15:37] <seb128> janimo, you might to want to ask bastien if he got your messages, he timeouted and rejoined with a _
+[15:37] <seb128> desrt, we are not either
+[15:37] <desrt> seb128: 'dpkg -l | grep' on my fresh ubuntu install tells a very very different story
+[15:37] <janimo> seb128, ok thanks
+[15:45] <Sweetshark> bdrung: thx
+[15:52] <stgraber> Sweetshark: I've also started a review (as I'm patch piloting anyway). I won't spend my whole shift on it though so I'll just send you and bdrung a summary of what I've spotted and let bdrung do some more detailed review of the changes.
+[15:55] <stgraber> oh, btw, I sent an upstream patch to gnome-control-center last week to support the 21:9 screen ratio. It's been merged there but my understanding is that we won't be getting the newer version in 13.04. Should I just cherry-pick and upload gnome-control-center or are you already planning an upload (and I should just poke one of you to have it included)?
+[16:02] <seb128> stgraber, do we have a bug open about that?
+=== jasoncwarner_ is now known as jasoncwarner
+[16:15] <stgraber> seb128: didn't think it was worth it for a 3 lines change. debdiff is at: http://paste.ubuntu.com/1555815/ (I'm currently running g-c-c built from this, so it works)
+[16:17] <seb128> stgraber, feel free to just commit to lp:~ubuntu-desktop/gnome-control-center/ubuntu
+[16:17] <seb128> stage it for the next upload
+[16:17] <stgraber> seb128: alright, done
+[16:18] <seb128> thanks
+[16:20] <seb128> jasoncwarner, hey, how are you?
+[16:34] <chrisccoulson> desrt, you around?
+[16:43] <jasoncwarner> hey seb128 , everyone else! don't forget for those not in the US, monday is MLK day here ( I just found out myself ;) )
+[16:44] <seb128> jasoncwarner, hey, indeed ;-)
+[16:44] <didrocks> hey jasoncwarner! apparently, europeans are not the only one having issues with US food? ;)
+[16:44] <jasoncwarner> didrocks: ;). YOu feeling better?
+[16:45] <didrocks> jasoncwarner: a lot, thanks! Saturday morning, I felt good enough to travel and didn't suffer from it during travelling
+[16:45] <didrocks> jasoncwarner: yourself? how are you?
+[16:45] <jasoncwarner> didrocks don't think it was the food, so feel better about that, more the flu thing that is going around.
+[16:46] <jasoncwarner> but, then again, who knows ;)
+[16:46] <didrocks> yeah, I don't know, didn't get any headache here nor felt coughing, but yeah, who knows… :)
+[16:47] <desrt> chrisccoulson: yes
+[16:47] <chrisccoulson> desrt, the recent glib changes to not require g_type_init make it very difficult to programatically disable the slice allocator
+[16:47] <desrt> chrisccoulson: i know
+[16:48] <chrisccoulson> ah ;)
+[16:48] <desrt> chrisccoulson: don't all firefox programs come with wrapper scripts anyway?
+[16:48] <desrt> s/firefox/mozilla/
+[16:48] <chrisccoulson> desrt, upstream got rid of the wrappper script ages ago, and ours is going away soon too ;)
+[16:48] <chrisccoulson> it's ok, i think i've figured out how to fix it after i pinged you
+[16:48] <desrt> sounds like you're in trouble
+[16:49] <desrt> of course, you could just ignore the problem
+[16:49] <chrisccoulson> heh
+[16:49] <desrt> i mean... it's not really a problem
+[16:50] <desrt> anyway... we have some vague ideas for how we could beat the slice allocator out of the gobject init process
+[16:50] <desrt> but it's generally considered to be not-worth-it
+[16:51] <chrisccoulson> i think i can beat it by adding a static initializer to libxul to disable it
+[16:51] <desrt> that's a dangerous game
+[16:51] <chrisccoulson> how come?
+[16:51] <desrt> it only works if you can guarantee that libxul loads before libgobject
+[16:52] <chrisccoulson> i can't think of any reason why libxul would load after gobject
+[16:52] <desrt> why is libgobject loading at all?
+[16:53] <desrt> i mean... shared libraries can be in any order, right?
+[16:53] <desrt> the only way to guarantee that one set of ctors runs before another is if A depends on B
+[16:53] <desrt> and libgobject doesn't depend on libxul
+[16:53] <desrt> so.... no guaranteed order
+[16:53] <chrisccoulson> the way this works currently is that firefox dlopen's libxul, which depends on gobject
+[16:54] <desrt> so you're in trouble, then
+[16:54] <desrt> that way gobject is guaranteed to run first
+[16:54] <chrisccoulson> ah, i see now
+[16:54] <desrt> you could dlopen libglib from firefox first and disable the slice allocator like that
+[16:54] <desrt> and then dlopen libxul
+[16:54] <desrt> that would work...
+[16:55] <desrt> i'm getting another idea, though
+[16:55] <desrt> i'm going to file a bug
+[16:55] <chrisccoulson> the problem is that it means making the same change in 3 places then :(
+[16:55] <chrisccoulson> (firefox, thunderbird and the webapp runtime)
+[16:57] <desrt> https://bugzilla.gnome.org/show_bug.cgi?id=692215
+[16:57] <ubot2> Gnome bug 692215 in general "add back support for configuring gmem, gslice, etc." [Normal,New]
+[16:58] <chrisccoulson> thanks
+=== gatox is now known as gatox_lunch
+[17:56]  * didrocks waves good evening
+=== gatox_lunch is now known as gatox
+[19:36] <larsu_> is anyone else having problems with jhbuilding gobject-introspection?
+[19:36] <larsu_> it is stuck on finding python headers
+[19:36] <larsu_> oh, pyconfig.h is in /usr/include/x86_64-linux-gnu/python2.7 instead of /usr/include/python2.7
+[19:37] <larsu_> the gobject-introspection configure doesn't add that to CPPFLAGS when looking for headers
+=== larsu_ is now known as larsu
+[21:58] <bjsnider> is anyone moderating the ml?
+[21:59] <bjsnider> i sent a message awhile back that hasn't been posted and hasn't been rejected
+=== m_conley is now known as m_conley_away
+=== mimico__ is now known as mimico

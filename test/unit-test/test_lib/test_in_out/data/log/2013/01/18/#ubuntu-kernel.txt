@@ -1,0 +1,234 @@
+[01:27] <datakid23> Hi, I"m having weird apt-get issues regarding a missing kernel image. It's a kernel from a while ago though - the issue happened as a result of having to move /boot (initial partition too small) coupled with updates that failed due to power failure. Pastebin of error after an apt-get upgrade: http://paste.ubuntu.com/1543233/
+[01:29] <datakid23> Error message is "Internal Error: Could not find image (/boot/vmlinuz-3.2.0-31-generic)". I've tried apt-get clean/remove/update etc Anyone know where I might find that boot image online? 
+[01:45] <datakid23> I am running 12.04
+[02:15] <datakid23> nothing? No one can tell me where the kernel image or deb for vmlinuz-3.2.0-31-generic is? I've tried google, this was a last resort
+[02:17] <lifeless> internal error from what?
+[02:18] <datakid23> internal error from an apt-get upgrade/dist-upgrade
+[02:19] <datakid23> apt is upgrading everything except the kernel atm, because of this unresolved config on an image that is AWOL
+[02:19] <datakid23> lifeless: sorry, I should have made that clear to start with
+[02:20] <lifeless> have you tried update-grub ?
+[02:21] <datakid23> lifeless: yes, updating grub works fine - but apt still fails on the missing vmlinuz file
+[02:21] <datakid23> the file isn't on my box at all - I'
+[02:21] <datakid23> ve done a updatedb/locate
+[02:21] <lifeless> well apt itself doesn't care about vmlinuz
+[02:22] <lifeless> update-initramfs may
+[02:22] <lifeless> and update-grub
+[02:22] <lifeless> which are shell scripts used to setup your boot environment
+[02:22] <lifeless> its likely one of those is the actual thing failing
+[02:22] <datakid23> lifeless: it seems to be a dpkg error
+[02:22] <lifeless> it may look like that
+[02:23] <datakid23> as per pastebin above
+[02:23] <lifeless> but dpkg, like apt, has no direct involvement with the kernel or those files.
+[02:23] <datakid23> it's true - but the problem isn't with the kernel per se, it's with dpkg --configure isn't it?
+[02:24] <lifeless> try dpkg -P linux-image-3.2.0-31-generic linux-image-3.2.0-31-generic-pae
+[02:27] <jwi> datakid23: you're looking for http://packages.ubuntu.com/precise-updates/linux-image-3.2.0-31-generic ?
+[02:28] <datakid23> lifeless: weird. It didn't create anything new, but it has changed the errors in and apt dist-up
+[02:28] <datakid23> jwi: I believe I am, thanks!
+[02:29] <datakid23> lifeless: now it's complaining htat "dpkg: dependency problems prevent configuration of linux-image-generic:  linux-image-generic depends on linux-image-3.2.0-31-generic; however:   Package linux-image-3.2.0-31-generic is not installed."
+[02:30] <datakid23> of course, apt install and apt -f install on linux-image-3.2.0-31-generic fail
+[02:30] <lifeless> datakid23: does it fail the same way ?
+[02:31] <datakid23> yes
+[02:32] <datakid23> lifeless: for clarification, if you mean does the apt -f install fail in the same way as the dist-up fails, after having done dpkg -P... yes
+[02:34] <lifeless> datakid23: did it unpack linux-image-3.2.0-31-generic to disk again ? if so the file should have been written now...
+[02:35] <datakid23> lifeless: I'm still downloading the deb - I'm on the wrong side of a satellite connection (Tarawa, Kiribati)
+[02:36] <datakid23> We just upgraded our network and the students are off for the summer, so there's finally enough bandwidth to look into this :|
+[03:00] <datakid23> lifeless: the deb puts the ubuntu software centre into a infinite loop of fail
+[03:00] <datakid23> will need to unpack/install via cli I think
+[03:07] <datakid23> lifeless: ok, done, and I repeated your dpkg -P line from above, and I now have a vmlinuz-generic and initrd.img-generic but no generic-pae for this kernel 
+[03:08] <datakid23> the number of errors has significantly reduced
+[03:08] <datakid23> which is nice
+[03:08] <datakid23> but it still fails
+[03:08] <lifeless> datakid23: -pae is a separate package
+[03:08] <lifeless> datakid23: you may need to repeat with that
+[03:09] <datakid23> lifeless: I know I was just coming here to facepalm
+[03:09] <lifeless> :)
+[03:09] <datakid23> apols :)
+[03:26] <datakid23> lifeless: and jwi: thanks! All sorted
+[03:26] <datakid23> apt get upgrade runs without error
+[03:26] <datakid23> wahoozi
+[03:26] <datakid23> ok, reboot time - out
+=== Traxer|on is now known as Traxer
+=== bambee is now known as rperier
+=== henrix_` is now known as henrix
+[10:18] <zequence> apw: infinity: I was testing linux-lowlatency precise-proposed. Accelerated graphics failed during first boot. Works now, after installing linux-generic (was going to see if it had the same problem). 
+[10:18] <zequence> I'm not much help tracking down errors. Any tips?
+[10:19] <infinity> zequence: I'm assuming that was because you didn't have headers installed and thus didn't get a dkms module build for your nvidia/fglrx drivers?
+[10:20] <infinity> zequence: How were you testing?  Just by installing "linux-image-$foo"?
+[10:20] <zequence> infinity: Intel graphics
+[10:20] <infinity> Oh.
+[10:20] <zequence> I just did a dist-upgrade to get the newer version (from proposed)
+[10:20] <infinity> Define failed...
+[10:21] <infinity> X went into crazy safe mode antics?
+[10:21] <zequence> Seemed ok, but gnome-shell went into fallback mode
+[10:21] <zequence> hmm, I accidentally went through recovery boot before I resumed normal boot though
+[10:22] <infinity> When you say "Works now, after installing linux-generic", do you mean that linux-lowlatency now works after installing linux-generic, or that you're currently running generic?
+[10:22] <zequence> linux-lowlatency works now, after installing -generic
+[10:22] <zequence> And -generic worked also
+[10:22] <infinity> Kay, then installing generic probably didn't fix/change anything.
+[10:27] <zequence> infinity: I just retried booting into recovery mode first, then resume normal boot
+[10:27] <zequence> That's what did it
+[10:27] <zequence> no accelerated graphics
+=== smb` is now known as smb
+[10:30] <infinity> zequence: Okay, so totally unrelated to the kernel update.  Good to know.
+[10:31] <infinity> zequence: Possibly still a bug, mind you, but not an issue with the SRU. :P
+[10:32] <zequence> infinity: Yeah :). So, I'm looking at the kernel-sru-workflow at the wiki, but if I'd try a shortcut and ask you directly. I've booted the kernel for precise. Anything else I should try? And, should I change a status in the bug for the kernel?
+[10:33] <infinity> zequence: Andy and I are going to have a talk with bjf about how best we should be mangling the verification tasks for those bugs.
+[10:34] <infinity> zequence: For now, just dumping your comments in the tracking bug "smoketested lowlatency/i386, lowlatency-pae/i386, lowlatency/amd64 and it worked fine" (pick whatever kernel(s) you actually tested), we'll figure out proper process for next time.
+[10:34] <zequence> infinity: All right
+=== henrix_ is now known as henrix
+=== henrix_ is now known as henrix
+=== henrix is now known as henrix_
+=== henrix_ is now known as henrix
+[11:11] <ppisati> brb
+[11:15] <apw> infinity, ok i've boot tested all 5 and put testing results in the bugs
+[11:19] <infinity> apw: Shiny.
+[11:27] <infinity> apw / zequence: Okay, so.  I think I've come up with something sane here without needing to talk to bjf, just from looking at how other derivatives are handled.
+[11:28] <infinity> The "Verification-testing" task should have someone quickly check and see if -lowlatency fixes any bug other than the ones fixed by master.  If not, set it to Fix Released.  If yes, verify them first, then Fix Released.
+[11:29] <infinity> And we should use Regression-testing to indicate that the install/reboot smoketesting has been done.
+[11:29] <infinity> apw / zequence: ^-- Seem reasonable?
+[11:31] <apw> infinity, seems a valid semantic to me, so mostly verification == noop as there are no patches, but if there are there is something to use
+[11:32] <apw> and r-t tells us it has been tested by someone to boot, ack
+[11:32] <infinity> Right.
+[11:32] <infinity> Also, the bot has a hissy fit if you don't set "qa-testing-passed" as a tag when setting Regression-testing to Fix Released.
+[11:33] <infinity> (I'm going to do all of this right now on the two current bugs)
+[11:35] <infinity> So, in an hour or two, while I slumber, the bot should update all of this and set my SRU releasy tasks appropriately.
+[11:35] <apw> sounds good
+[11:35] <apw> we need to get the thing to add that tag when missing :)
+[11:36] <infinity> Well, it's looking for qa-testing-passed or qa-testing-failed and assuming the QA engineer is a doofus if it finds neither.
+[11:36] <infinity> Which is probably a sane safeguard for Canonical-maintained kernels.
+[11:36] <infinity> Maybe overkill for others.  I dunno.
+[11:39] <infinity> Oh, depending on when Shankbot's "Friday" starts, it might not update the release tasks.
+[11:39] <infinity> I guess we'll see.
+[11:39] <infinity> It'll get around to it by Monday, at any rate. :P
+[11:40] <apw> heh
+=== yofel_ is now known as yofel
+[12:08] <infinity> Oh, look at that, Shankbot doesn't think it's Friday yet.
+[12:08] <infinity> apw / zequence: Releasing those kernels now.
+[12:21] <infinity> rtg: Any idea what the verification status of your linux-firmware/precise SRU is?
+[12:21] <infinity> rtg: (Or if you can hunt people down and find out?)
+[12:21] <rtg> infinity, bug # ? it has perhaps been so long that I've forgotten.
+[12:22] <infinity> rtg: https://bugs.launchpad.net/ubuntu/+source/linux/+bug/1024884
+[12:22] <ubot2> Launchpad bug 1024884 in linux (Ubuntu) "Bluetooth with AR9462 WLAN/BT-Combo don't work" [Medium,In progress]
+[12:23] <infinity> rtg: The bug log is pretty messy.  I get the impression the firmware update is mostly a no-op without a matching driver update...
+[12:23] <rtg> infinity, https://bugs.launchpad.net/ubuntu/+source/linux/+bug/1024884/comments/68 indicates that it might work...
+[12:23] <ubot2> Launchpad bug 1024884 in linux (Ubuntu) "Bluetooth with AR9462 WLAN/BT-Combo don't work" [Medium,In progress]
+[12:24] <rtg> infinity, they are new files, so it would be hard to regress methinks
+[12:25] <rtg> you'd think the cert dudes would notice since the added a blocks-hwcert tag
+[12:25] <infinity> Yeah, that's what I was thinking.
+[12:25] <rtg> hell, they added that tag yesterday
+[12:25] <infinity> I'll leave it over the weekend and ping them next week for some definitive "yeah, it's working for us" before I release it.
+[12:25] <rtg> wfm
+[12:26] <infinity> I just want the kernel SRU report to be empty. :P
+[12:27]  * rtg pushes rebase to v3.8-rc4. apw, ogasawara
+[12:35] <apw> rtg cool
+[12:35] <rtg> apw, build testing...
+[12:59]  * henrix -> lunch
+[14:58] <rtg> herton, ~/kteam-tools/stable/create-release-tracker: Exception: linux-3.8.0-1.5: can't figure out the distro series for it.
+[14:59] <herton> rtg, looking
+[15:03] <herton> rtg, please pull kteam-tools and try again, not tested but I think I fixed it
+[15:04] <rtg> herton, looks like its working
+[15:04] <herton> ok cool, let me know if it something else breaks
+[15:09]  * herton -> lunch
+[15:25] <diwic> the directory structure under /lib/modules/<version>/ changed between quantal and raring seems to have changed, is this intentional?
+[15:25]  * ogasawara back in 20
+[15:27] <diwic> ah wait
+[15:29]  * diwic just forgot to install linux-headers.
+[15:32]  * apw whines at sforshee
+[15:32] <rtg> herton, so that tracking bug will puke out an upload message as soon as 3.8.0-1.5 is done building, or when it is accepted ?
+[15:32] <apw> sforshee, i am seeing all sorts of badness with 3.8-rc3 raring on brcmsmac, locking up and generally going bad
+[15:33] <sforshee> apw, any errors in dmesg to share?
+[15:33] <sforshee> apw, this one has never worked well with brcmsmac, right?
+[15:34] <apw> sforshee, a couple i have seen transmit failures and not recovered, others i have seen upsetness
+[15:35] <sforshee> apw, do the errors say something about MI_TFS and then reset the hardware?
+[15:35] <sforshee> I was working with broadcom on that one, but last I heard they suspected a ucode problem
+[15:36] <apw> Jan 18 15:05:01 localhost kernel: [ 7538.086453] brcmsmac bcma0:0: queue 7 >= NFIFO
+[15:36] <apw> Jan 18 15:05:01 localhost kernel: [ 7538.086478] brcmsmac bcma0:0: MI_TFS: fatal
+[15:36] <apw> Jan 18 15:05:01 localhost kernel: [ 7538.086494] brcmsmac bcma0:0: wl0: fatal error, reinitializing
+[15:36] <apw> sforshee, so yes ... :/
+[15:36] <apw> but i have been using brcmsmac for the last 3-4 releases ok, and its only in 3.8 i have this poppage
+[15:37] <apw> oh has tim given me new shiney microcode
+[15:37] <sforshee> I don't think so
+[15:37] <sforshee> it's more that something changed in the driver to expose the bug
+[15:37] <rtg> apw, no changes for brcmsmac in -rc4
+[15:37] <sforshee> at least that's the theory
+[15:38] <apw> sigh
+[15:38] <sforshee> there's corrupt data in the tx status we're being handed from the ucode
+[15:38] <apw> qualtiy
+[15:38] <sforshee> it's show up in various manifestatins
+[15:38] <sforshee> *manifestations
+[15:38] <apw> well it is cirtanly utter broke for me
+[15:38] <sforshee> I'll ping broadcom about it
+[15:38] <apw> thanks
+[15:39]  * rtg notices that a Lenovo x120e now beeps just before S3
+[15:39] <sforshee> apw if they haven't made progress I'll start a bisect, as I can reproduce one minor instance of that problem in a contrived scenario
+[15:39] <apw> sforshee, ok thanks
+[15:40] <sforshee> apw, what's your wireless card?
+[15:54] <herton> rtg, when it enters proposed in the archive, I believe it'll be when it's accepted
+[15:57] <sforshee> apw, you did try brcmsmac in 3.7 and didn't see those problems?
+[15:59] <rtg> herton, ack
+[16:00] <herton> rtg, I assigned the tasks there to in progress, otherwise the bot will not act, I have yet to fix this so the bot automates more of it
+=== henrix is now known as henrix_
+=== henrix_ is now known as henrix
+=== chiluk is now known as chiluk_away
+=== chiluk_away is now known as chiluk
+=== henrix_ is now known as henrix
+=== henrix is now known as henrix_
+=== henrix_ is now known as henrix
+[17:13] <arges> jsalisbury: hi
+[17:13] <jsalisbury> arges, hey
+[17:13] <arges> jsalisbury: so bug 1097396 i bisected down to the bad commit, reverted it and things works fine now
+[17:13] <ubot2> Launchpad bug 1097396 in linux (Ubuntu Precise) "Unplugging USB Headset causes Kernel Panic" [High,In progress] https://launchpad.net/bugs/1097396
+[17:14] <arges> jsalisbury: however i'm still looking for a solution that isn't a revert
+[17:14] <jsalisbury> arges, ack
+[17:15] <jsalisbury> arges, maybe see how it was fixed in 3.3 and see if that can be backported?
+[17:15] <arges> jsalisbury: yea trying to do that... git blame on yields patches that seem to alrleady be in stable
+[17:16] <jsalisbury> arges, hmm
+[17:18] <jsalisbury> arges, maybe the fix is already queued for 3.2 and just hasn't made it yet.
+[17:19] <arges> jsalisbury: you mean in master-next ubuntu-precise
+[17:20] <jsalisbury> arges, maybe here: git://git.kernel.org/pub/scm/linux/kernel/git/stable/stable-queue.git
+[17:20] <jsalisbury> arges, did you find a specific commit that fixes the bug?  
+[17:21] <arges> jsalisbury: ok i'll test that
+[17:21] <arges> jsalisbury: yea i did its on the bug
+[17:23] <jsalisbury> arges, commit 10e44239f67d0b6fb74006e61a7e883b8075247a had a CC to stable, so if that is the fix, it should make it into 3.2
+[17:23] <arges> jsalisbury: yea that doesn't fix the issue
+[17:24] <arges> jsalisbury: so that's already in 3.2.0-36
+[17:24] <jsalisbury> arges, ahh, ok
+[17:24] <arges> jsalisbury: anyway i'll keep poking at this
+[17:24] <jsalisbury> arges, cool
+[17:37] <herton> arges, jsalisbury: this is looking like a buggy backport of the patch you reverted. The commit causing the problem was a backport sent to the stable mailing list for 3.2, it differs in some parts to the mainline commit
+[17:37] <arges> herton: ahh. this might be the issue then
+[17:38] <arges> herton: should I try to re-backport it?
+[17:39] <arges> herton: or send a mail to the stable list explaining that the stable patch is buggy
+[17:40] <herton> arges, this was the thread with the set of backports: http://www.mail-archive.com/stable@vger.kernel.org/msg22850.html
+[17:40] <herton> arges, better send an email I think
+[17:40] <arges> herton: ok i can do that. for the time being should we revert in ubuntu?
+[17:41] <herton> arges, perhaps, if we don't get a solution until next SRU time frame we could do it
+[17:41] <arges> herton: ok i'll start with an email
+[18:02] <jsalisbury> herton, arges, ack
+=== chiluk is now known as chiluk_away
+[18:03] <arges> ok sent
+[18:09]  * ppisati -> EOW
+[18:18]  * rtg -> lunch
+[18:31]  * cking -> EOW
+[18:32]  * henrix -> EOW too!
+=== henrix is now known as henrix_
+[19:13] <thotypous> hi, i've found a bug on 3.5.0-22-generic (which wasn't present on 3.5.0-21-generic), is this the correct place to report: https://bugs.launchpad.net/~ubuntu-kernel-team ?
+[19:15] <thotypous> I didn't check if it is upstream (I only tested Ubuntu kernels, not vanilla kernels)
+[19:21] <herton> thotypous, use this one: https://bugs.launchpad.net/ubuntu/quantal/+source/linux/+filebug
+[19:22] <herton> thotypous, actually like said in the link, use ubuntu-bug linux on a terminal on the affected machine
+[19:23] <thotypous> herton: thank you
+=== chiluk_away is now known as chiluk
+=== chiluk is now known as chiluk_away
+=== chiluk_away is now known as chiluk
+[20:35]  * rtg -> EOW
+=== chiluk is now known as chiluk_away
+=== cmagina is now known as cmagina_away
+=== cmagina_away is now known as cmagina
+=== cmagina is now known as cmagina_away
+=== cmagina_away is now known as cmagina
+=== chiluk_away is now known as chiluk
+=== cmagina is now known as cmagina_away
+=== cmagina_away is now known as cmagina
+=== cmagina is now known as cmagina_away
+=== cmagina_away is now known as cmagina
+=== cmagina is now known as cmagina_away

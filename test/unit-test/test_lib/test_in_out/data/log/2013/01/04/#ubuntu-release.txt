@@ -1,0 +1,190 @@
+[00:45] <infinity> cjwatson: Yeah, I mentioned postinst in my above rambling.
+[00:46] <infinity> 12:54 < infinity> cjwatson: Something like http://paste.ubuntu.com/1492918/ perhaps.
+[00:46] <infinity> 12:55 < infinity> (And a similar munging of postinst)
+[00:46] <infinity> cjwatson: Just without a nick hilight, I guess.
+[00:48] <cjwatson> ok
+=== hggdh_ is now known as hggdh
+=== Noskcaj is now known as Noskcaj_afk
+[06:35] <tjaalton> infinity: yo, about the sssd rejection.. I forgot to add a pointer to bug 1086304 in the changelog, would that have made a difference?
+[06:35] <ubot2> Launchpad bug 1086304 in sssd (Ubuntu Precise) "new upstream bugfix release from the LTM branch" [High,In progress] https://launchpad.net/bugs/1086304
+=== Noskcaj_afk is now known as Noskcaj
+[07:42] <infinity> tjaalton: Unless we have a bug for every single fix in that new upstream release, it's going to need an MRE, or at least some serious review.
+[07:43] <infinity> tjaalton: (And I'm guessing you don't have bugs with testcases for every change)
+[08:06] <tjaalton> infinity: no I don't
+[08:09] <tjaalton> hmm, technical-board@ is not listed on lists.u.c
+[08:37] <tjaalton> infinity: sent the MRE :)
+=== doko_ is now known as doko
+[10:03] <psivaa> would anyone know why precise desktop i386 images are not yet published to cdimage despite 'Build successfully added to the tracker' in the logs
+[10:54] <tjaalton> cjwatson: so, would something like this work for livecd-rootfs? http://pastebin.com/b3gzhpnf
+[11:28]  * ogra_ wuld rather put it into a flavour based case function instead of making it arch based
+[11:29] <ogra_> (if you actually mean what you say in the changelog ;) )
+[11:29] <cjwatson> tjaalton: on leave today
+[11:29] <cjwatson> ogra_: well it should probably go alongside the kernel -lts-quantal handling
+[11:30] <ogra_> cjwatson, yes but then the changelog describes it wrongly
+[11:30] <ogra_> since it says it is for ubuntu/edubuntu only
+[11:30] <ogra_> so just adjust the changelog to say i368/amd64 instead of mentioning the flavours
+[11:31] <cjwatson> it's per-flavour too
+[11:31] <cjwatson> so definitely not "instead of"
+[11:31] <ogra_> k
+[11:32] <tjaalton> yeah the diff just doesn't show the context fully :)
+[11:33] <ogra_> right, and i didnt look at the actual code only at the diff ... sorry, technically it looks fine
+[12:02] <gema> ogra_: any idea who's on duty for the release team today?
+[12:03] <gema> ogra_: we are missing precise desktop i386 images and unsure who to ask for them :)
+[12:04] <ogra_> gema, no idea, i just got back from vac. yesterday
+[12:04] <gema> ogra_: oh, welcome back!
+[12:04] <brendand> gema, there was a problem with yesterdays image and the kernels included
+[12:04]  * ogra_ will look for logs though, i havent got any failure mails for broken builds 
+[12:04] <gema> ogra_: thanks !
+[12:04] <brendand> gema, which might explain why i386 is not there since the issue only affected that
+[12:04] <gema> brendand: precise?
+[12:05] <gema> brendand: ok, that may be it then
+[12:05] <gema> thanks
+[12:05] <brendand> gema, yes the 12.04.2 dailies
+[12:05] <gema> brendand: is there a bug for that?
+[12:05] <ogra_> ah, yeah there were some kernel related uploads
+[12:05] <ogra_> and i dont get failure mails for 12.04 builds i think
+[12:06] <psivaa> brendand: gema: ogra_: but the images were built successfully
+[12:06] <gema> psivaa: yesterday?
+[12:06] <psivaa> gema: today as well
+[12:06] <gema> psivaa: so the only thing that failed is the publishing?
+[12:06] <brendand> gema, cjwatson was looking at it, not sure if there is a bug number
+[12:06] <gema> brendand: ack
+[12:06] <Laney> mv: cannot stat `/srv/cdimage.ubuntu.com/scratch/ubuntu/precise/daily-live/tmp/precise-i386/CD1/casper/filesystem.kernel-generic-pae': No such file or directory
+[12:06] <Laney> make: *** [/srv/cdimage.ubuntu.com/scratch/ubuntu/precise/daily-live/tmp/precise-i386/bootable-stamp] Error 1
+[12:07] <Laney> ERROR WHILE BUILDING OFFICIAL IMAGES !!
+[12:07] <gema> oh, so there is a problem :D
+[12:07] <Laney> http://people.canonical.com/~ubuntu-archive/cd-build-logs/ubuntu/precise/daily-live-20130104.log
+[12:08] <psivaa> gema: as far as i understood, yes it was a publishing issue, http://people.canonical.com/~ubuntu-archive/cd-build-logs/ubuntu/precise/daily-20130104.log
+[12:09] <gema> ok, thanks
+[12:09] <ogra_> yeah
+[12:09] <Laney> that's the alternate
+[12:09] <Laney> which is on there
+[12:10] <ogra_> http://people.canonical.com/~ubuntu-archive/cd-build-logs/ubuntu/precise/daily-live-20130104.log
+[12:10] <ogra_> has the same error
+[12:10] <cjwatson> I know about the precise thing and will fix it on Monday when I'm back
+[12:10] <cjwatson> no bug
+[12:10] <ogra_> gema, ^^^
+[12:10] <cjwatson> hm, mind you maybe I can make a really quick stab at it now
+[12:11] <ogra_> tsk
+[12:11] <gema> ogra_, cjwatson ack, monday is fine, as long as you guys are on the case, I am happy
+[12:15] <cjwatson> I've had a shot at fixing it; may or may not work
+[12:15] <cjwatson> if it doesn't work it'll have to wait 'til Monday or somebody else will have to figure it out
+[12:52] <cjwatson> If somebody wants to spend a bit of time tracking down an image build bug, I'd really appreciate somebody working out why the Chinese edition build is failing
+[12:53] <cjwatson> (precise)
+[12:53] <cjwatson> It seems to be producing a full log but no actual output, or exiting non-zero, or something
+=== yofel_ is now known as yofel
+[14:35] <lamont> should I be at all concerned that raring seems to not debootstrap atm?
+[14:38] <xnox> lamont: do you have a log? (with/without -proposed/universe)?
+[14:39] <lamont> xnox: I suppose I could cause one to exist.  let me do that
+[14:42] <lamont> dpkg-deb: file `.//var/cache/apt/archives/libglib2.0-0_2.34.3-1_amd64.deb' contains ununderstood data member data.tar.xz     , giving up
+[14:42] <lamont> that's debootstrapping raring on a lucid box
+[14:43] <lamont> and sounds like a dpkg-deb bug in lucid, albeit a feature request
+[14:43] <lamont> and a bug against dpkg to s/ununderstood/nonunderstood/
+[14:43] <lamont> :D
+[14:44] <lamont> I suspect that we don't want to call debootstrapping raring on precise "unsupported", so something gets a bug
+[14:44]  * xnox thought all /relevant/ lucid boxes had dpkg backported with xz patch.
+[14:44] <xnox> lamont: precise should be fine, as it does have .xz support in dpkg.
+[14:44] <lamont> ii  dpkg                            1.15.5.6ubuntu4.6               Debian package management system
+[14:44] <lamont> 0 upgraded, 0 newly installed, 0 to remove and 0 not upgraded.
+[14:44] <lamont> it's fully currnet
+[14:45] <lamont> lucid, lucid-updates, lucid-security
+[14:45] <xnox> lamont: yeah, we didn't upload xz support into lucid backport. Only into prod-ppa or something like that.
+[14:45] <lamont> so, iow, we didn't actually fix it for lucid. :(
+[14:46] <stgraber> lamont: looking around, you want >= 1.15.5.6ubuntu4.5.0.ISPATCHED.10.04
+[14:46] <lamont> stgraber: that is not available to our customers
+[14:47] <lamont> which package do I file the bug against that joe user cannot debootstrap raring on a lucid machine?
+[14:47] <xnox> lamont: can lucid bootstrap precise? & then bootstrap raring from that =))))
+[14:47]  * xnox hides
+[14:47] <lamont> xnox: IOW, lucid is no longer supported?
+[14:47] <lamont> also, HARDY is still supported, no?
+[14:48] <xnox> lamont: it is, on the server & what not. https://wiki.ubuntu.com/Releases
+[14:48] <stgraber> xnox: lucid should be able to bootstrap precise, yes.
+[14:48] <xnox> lamont: lucid until April 2015 (Server), hardy until April 2013 (Server).
+[14:48] <stgraber> lamont: the right package to file a bug against would be dpkg
+[14:48] <xnox> lamont: but you are asking for new features, not "support".
+[14:49] <stgraber> lamont: does lucid's debootstrap even know what raring is?
+[14:49] <lamont> true enough
+[14:50] <lamont> I'll file the bug against dpkg and we'll see where it goes
+[14:50] <lamont> ...
+[14:50] <stgraber> ls: cannot access /usr/share/debootstrap/scripts/raring: No such file or directory
+[14:50] <lamont> welll...
+[14:50] <stgraber> the most recent release in lucid's debootstrap is precise
+[14:51] <stgraber> which is the last one that's guaranteed to work
+[14:51] <lamont> everyone knows that's just a matter of ln -s gutsy /usr/share/debootstrap/scripts/raring
+[14:51] <lamont> I'll include that little tidbit in the bug for purposes of full disclosure
+[14:51] <stgraber> sure, just wanted to confirm that we're not shipping something that's broken (an SRUed debootstrap with the raring symlink) :)
+[14:52] <lamont> I have 1.0.39~0.IS.10.04
+[14:52]  * lamont shames
+[14:52] <xnox> stgraber: /me ponders if 1.15.5.6ubuntu4.5.0.ISPATCHED.10.04 can be rebased on top of 4.6 and published somewhere (ppa or backports)
+[14:53] <stgraber> xnox: well, it should probably be rebased on 4.6, yes, as it seems to be currently held to the 1.15.5.6ubuntu4.5.0.ISPATCHED.10.04 by puppet to avoid loosing the required features
+[14:54] <stgraber> pushing to a PPA should be fine, not sure it matches the backports policy as it's not an actual full backport
+[14:56] <xnox> ScottK: can we "cherry-pick" a feature into lucid-backport? (dpkg xz support in lucid, without bringing a full new dpkg)
+[14:56] <lamont> generally speaking, in the case of dpkg, if we backported a higher rev of it, it was because either (1) we had to, or (2) it was invasive enough that the gods of distro promised us that they were pretty sure it wouldn't regress anything (though I belive that said promise is specifically not intended to be sufficient for the purposes of this channel)
+[14:57] <ScottK> Generically, a cherry pick is fine.
+[14:57] <lamont> [do you like all that handwaving non-promise in (2)?]
+[14:57] <ScottK> Specifically, any dpkg backport would have to have significant testing.
+[14:58] <xnox> lamont: are you after "make it work" (with ppa/backports/whatever) or are you after "it should be SRUed into lucid" (which will not happen as far as I can see)
+[14:58] <ScottK> xnox: Also, I don't remember if lucid backports is NotAutomatic or not.  If it is, then that makes this less concerning.
+[14:58] <lamont> xnox: the current state is that before the porterbox gets any new chroots, it'll have to upgrade to precise
+[14:58] <xnox> ScottK: the xz cherry pick in question is extensively tested by a few production machines.
+[14:58] <Laney> notautomatic is natty
+[14:59] <xnox> lamont: why can you not pin ISPATCHED.10.04 version?
+[14:59] <lamont> xnox: hence it's actually me wearing my coredev hat going "da&*^*(it this should work"
+[14:59] <xnox> =))))
+[14:59] <lamont> xnox: well, I could trivially add the suite so that we get the ISPATCHED version
+[15:00] <lamont> OTOH, ISTR that machine should get scheduled for a precise upgrade anywya
+[15:00] <xnox> precise is the way to go....
+[15:01] <lamont> there's a schedule, and then there are the "this doesn't work on lucid, works on precise, ok" escalations to the head of the schedule
+[15:01] <lamont> so s/get/be/ in my prior statement
+[15:02] <xnox> lamont: yeah.... if it can linger another year there will be a new LTS =)))))
+[15:03]  * xnox remembers upgrading potato machine all the way to squeeze without reboots =) that was fun.
+[15:03] <xnox> only had to fetch a couple of packages from snapshots to do lockstep upgrade but overall it was fine.
+[15:03] <lamont> I'm not entirely sure that "without reboots" is an option these days
+[15:04] <xnox> lamont: heck I didn't even fully dist-upgraded to the intermittent release =)
+[15:04] <lamont> that would be an interesting test for someone: does the hardy -> lucid -> precise -> quantal (and maybe -> raring) path require reboots at any point in the path?
+[15:04] <lamont> I remember crosgrading sarge(?) to warty.  that was a wonderfully crazy time
+[15:05]  * xnox is pondering about crosgrading to x32, when we get it ;-)
+[15:06] <lamont> x32?
+[15:06] <xnox> https://lwn.net/Articles/456731/
+[15:07] <xnox> the crazy 64bit machine with 32bit long pointers.
+[15:31] <cjwatson> mm, IMO we should backport the dpkg xz patch to lucid-proposed; I'm pretty confident in standing behind it by now
+[15:31] <cjwatson> but not going to do so today
+[15:36]  * ScottK likes that plan.
+[23:31] <xnox> infinity: https://launchpad.net/ubuntu/+source/cunit/2.1-0.dfsg-10ubuntu1 can you make it build faster? =)
+[23:33] <infinity> xnox: Your debian/rules changes don't seem to be accounted for in the changelog...
+[23:34] <xnox> infinity: and?! =) it's not an SRU and the preferred way to do autoreconf.
+[23:34] <xnox> s/the/my/
+[23:34] <infinity> xnox: Sure, but you're submitting this to Debian, right?  (That was the other condition of the MIR)
+[23:35] <xnox> *sigh* /me missed that bit.
+[23:36] <infinity> Pretty sure we don't want to end up maintaining this when we haven't been so far.
+[23:36] <infinity> Which was the point. :)
+[23:36] <xnox> infinity: well I can do a more minimal fix. drop the "-ansi" flag and not add checks for c99, but imho I'm not sure what's best to do here. Minimal wise.
+[23:37] <xnox> just ignore the "implicit declaration of snprintf" warning from the compiler and get on with things?
+[23:37] <infinity> Ignoring implicit declarations is generally never the right thing to do.
+[23:37] <infinity> So, no, I'm okay with more intrusive and correct fixes, but they should go to Debian and get a second set of eyes.
+[23:38] <xnox> (snprintf is not in ansi (C90) only in C99, yet upstream currently builds with -ansi & uses snprintf)
+[23:38] <xnox> ack.
+[23:38]  * xnox has a stack of patches to push to debian from recent FTBFS fixes.....
+[23:39] <infinity> Yeah, upstream's clearly wrong about their target C.
+[23:39] <infinity> (Though, with no switches/defines, you'll end up with C11, not C99, so your changelog is still a lie)
+[23:39] <infinity> Not that C11 is a bad idea. :P
+[23:40] <infinity> (I love that we stuck with two digit dates for that, and 11 << 99... NOT CONFUSING AT ALL)
+[23:41] <xnox> infinity: I added AC_PROG_CC_C99 which defines C99 for a given compiler, if it supports it.
+[23:41] <infinity> Ahh, right, missed that bit.
+[23:42]  * xnox liked C0x
+[23:42] <xnox> infinity: but that macro is not available in autoconf2.59 ...... hence autoreconf to a brave new world.
+[23:43] <infinity> xnox: Just dropping -ansi would likely be fine too.
+[23:43] <infinity> xnox: Your fix is more complete for upsteam, mind you, if they care deeply.
+[23:43] <infinity> (Personally, I think people who insist on targetting a specific C standard instead of just keeping current are Doing It Wrong, but whatever)
+[23:43]  * xnox tries to recall last upstream commit - was it in this century?
+[23:44] <xnox> infinity: well it's a unit-test framework for C, any C, hence the original goal to target lowest one..... a bit of a fail with a single call to snprintf.
+[23:45] <infinity> Oh, fair point.  The other solution could be to not call snprintf. :P
+[23:48] <xnox> yeah, could do that. but sprintf is "less safe".
+[23:49] <infinity> Sure is.
+[23:49] <infinity> But our fancy overflow detection should catch that anyway, I would think?
+[23:50] <infinity> Of course, if they're doing tricky things with snprintf's return, that would need rethinking.
+[23:50] <xnox> no, they don't. Where can I learn about overflow detection?
+[23:53] <infinity> Actually, I'm only assuming that sprintf gets covered by FORTIFY_SOURCE, but I suspect it does.
+[23:54] <infinity> Yeah, it does.
+[23:55] <infinity> Not that snprintf isn't still saner, but if they really want to be targetting C89, it makes some sense to fudge it...
+[23:55] <infinity> And fudging it by calling a function that may not be defined isn't the right answer. :P

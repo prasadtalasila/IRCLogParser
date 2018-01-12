@@ -1,0 +1,43 @@
+[08:05] <np8> Hei! Osaisiko joku neuvoa tietämätöntä.. ?  Minulla on 30Gt osio, jossa on Ubuntu asennettuna (/dev/sda6, ext4). Kävin Windowsin puolella nappaamassa data-osioltani 80Gt lisätilaa, jonka haluaisin Ubuntun käyttöön (Näkyy nyt GPartedilla varaamattomana osiona). Onko se mahdollista, ja jos, niin miten?
+[08:10] <np8> GPartedissa näyttää tältä http://ubuntuone.com/1TjFW2bSBNm0n9XDTUFNe1
+[08:18] <Zastin> mun käsityksen mukaan sun pitäis käynnistää kone livecd:ltä ja sen kautta laajentaa tuota osiota
+[08:20] <n1ko> ei tarvitse, ext4:sta voi kyllä laajentaa lennosta
+[08:24] <Zastin> miten sen lukituksen saa poissa?
+[08:24] <paww> eli resize2fs-komennolla ainakin onnistuu.
+[08:24] <n1ko> minkä lukituksen?
+[08:25] <Zastin> kato tuota linkitettyä kuvaa
+[08:26] <Zastin> sda6 on avaimen kuva ja itellä on se käsitys ettei silloin voi muuttaa osiota
+[08:26] <Zastin> ja pika googletuksella ite sain kuvan, ettei ext4 root osiota voi muokata lennosta
+[08:26] <n1ko> en minä gpartedista tiedä, resize2fs:llä oon noita resizennyt ihan kivasti. myös roottia
+[08:26] <np8> Niin tätä Ubuntu-osiota ei saa irrotettua kun tää on käytössä.. :) Live-CD:tä (tai CD-asemaa) ei ole juuri nyt käytettävissä, mutta jos tää menee mahdottomaks ilman niitä niin teen tän myöhemmin.
+[08:26] <n1ko> ettei tuo lukko liittys vaan puuttuviin käyttöoikeuksiin
+[08:27] <np8> Aattelin et jos sen liittämisen vois tehdä jotenkin boottaamisen yhteydessä?
+[08:27] <tale> np8: USB-tikulta bootattu Live-ubuntu kelpaa myös.
+[08:29] <np8> tale: Ei oo tikkuakaan, mutta jos tää menee mahdottomaks ilman live-ubuntua, niin pitää hoitaa tää sit vaan myöhemmin.
+[08:30] <tale> np8: Levyosion koon muutos pitää tehdä kun osio ei ole käytössä, siis ei liitettynä/mountattuna. Live-ubuntu on helpoin tapa.
+[08:31] <tale> np8: Tai jos sinulla on toinen ubuntu tai linux asennettuna siihen koneeseen, siinä voisi tehdä niiden levyosioiden muokkaamisen jota se ubuntu tai linux ei käytä.
+[08:31] <np8> tale: Joo no pitää sit tehdä silleen. Kiitoksia avusta!
+[08:33] <np8> tale: Tuo kävi myös mielessä, että osioisin jonkun pikkuosion, johon lataan jonkun pienen linuxin ja teen sen sillä.. Mutta ehkä pääsen helpommalla kun odotan suosiolla että saan live-ubuntun käyttöön. Tosin ei semmosesta varalinuxistakaan varmaan mitään haittaa olis.
+[08:42] <olmi> eikös tuon pitäisi ihan tehtävissä olla samasta käyttöjärjestelmäinstanssistakin. resize2fs:n dokumentaatiosta: If the filesystem is mounted, it can be  used  to  expand  the
+[08:42] <olmi>        size  of  the  mounted filesystem, assuming the kernel supports on-line
+[08:42] <olmi>        resizing.  (As of this writing, the Linux 2.6 kernel  supports  on-line
+[08:42] <olmi> uups, sori
+[08:43] <olmi> kevyt pastevirhe, mutta siis http://manpages.ubuntu.com/manpages/precise/man8/resize2fs.8.html
+[08:43] <Fibubot> http://is.gd/FZ7kgW -> Ubuntu Manpage:       resize2fs - ext2/ext3/ext4 file system resizer
+[08:44] <tale> olmi: Ensin pitää levyosio saada suuremmaksi, sitten voi siinä olevaa tiedostojärjestelmää kasvattaa täyttämään se suurempi osio.
+[08:44] <olmi> eli fdiskillä partition poisto -> uusi, isompi tilalle, bootti, resize2fs:llä tiedostojärjestelmän kasvatus
+[08:45] <tale> olmi: Tuolla tavalla tuhoutuu tiedostot.
+[08:45] <olmi> ei tuhoudu
+[08:45] <tale> olmi: Levyosion poisto tuhoaa siinä olleen datan.
+[08:45] <olmi> kunhan huolehtii, että uusi partitio alkaa samasta kohtaa kuin vanhakin.
+[08:46] <olmi> väitän edelleen, että ei poista :)
+[08:46] <tale> olmi: Aika lailla heikoilla jäillä kulkemista tehdä noin. Varmempi ja helpompi on tuo jo aiemmin neuvottu tapa.
+[08:47] <olmi> ilman muuta on, enkä lähtisi ensimmäisenä testaamaan oikealla datalla.
+[08:47] <olmi> tehtävissä se kuitenkin on
+[08:57] <np8> Juu ei ole niin kova hätä että haluaisin ottaa riskiä, että pääsen eroon kovalevyni sisällöstä.. :)
+[09:13] <Zastin> olmi: sanoit,että uuden partition täytyy alkaa samasta kuin vanhan, mutta tuossa tuo laajennus tulee osion eteen, onnistuisko silloin tuolla tavalla?
+[09:14] <olmi> Zastin: enpä kyllä osaa suorilta sanoa. pitää kysyä herra hakukoneelta.
+[18:42] <czr> kasvatus resize2fs:lla onnistuu vain "eteenpain". ei taaksepain
+[18:42] <czr> eli toi partition"laajennus"kikkakin toimii vain eteenpain, ei taaksepain. uuden partition pitaa alkaa samasta kohdasta
+[18:43] <czr> toinen vaihtoehto on dumpata tiedostojarjestelma (dump2fs) ensin jonnekin talteen, sit poistaa partitio, luoda uusiksi minne nyt onkaan luomassa ja sit ajaa takas datat ja resizen sit
+[18:43] <czr> mut itse tekisin ihan vanhanaikaisesti moisen, paitsi tietty kaytan pelkastaan LVM:aa jolloin ei tuollaisia ongelmia juurikaan ole

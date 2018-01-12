@@ -1,0 +1,112 @@
+=== Prf_Jako1 is now known as Prf_Jakob
+=== jono is now known as Guest3379
+=== Quintasan_ is now known as Quintasan
+[11:16] <mlankhorst> wee and mplayer -vo nouveau vdpau bug found :)
+[11:16] <mlankhorst> erm swap nouveau and vdpau there
+[15:20] <bjsnider> mlankhorst, that shouldn't work, unless there's a gallium state tracker for vdpau
+[15:20] <bjsnider> nouveau users should use gl or gl3
+[15:23] <mlankhorst> $ glxinfo | grep -i nouv
+[15:23] <mlankhorst> OpenGL vendor string: nouveau
+[15:30] <mlankhorst> mesa.git even has hw decoding support on some cards
+=== schmidtm_ is now known as schmidtm
+[15:57] <bjsnider> so, doing a rotation with xrandr on ivb/sna takes down the xserver
+[15:57] <bjsnider> without sna, all is fine
+[15:58] <bjsnider> that was the only serious sna problem i encountered
+=== yofel_ is now known as yofel
+[17:38] <tjaalton> bjsnider: oh, filed a bug yet? assign it to me
+[17:39] <ricotz> tjaalton, hi :)
+[17:39] <ricotz> could you take a look at libwacom 0.7 and update?
+[17:40] <tjaalton> ricotz: tomorrow, sure
+[17:40] <ricotz> should be straight forward -- https://launchpad.net/~gnome3-team/+archive/gnome3-staging/+sourcepub/2851075/+listing-archive-extra
+[17:40] <ricotz> tjaalton, thanks!
+[17:40] <tjaalton> when was it released?
+[17:40] <ricotz> mid december i think
+[17:41] <ricotz> libwacom-0.7.tar.bz2 	2012-12-20 	403.5 kB 	30 	210 downloads
+[17:41] <tjaalton> huh
+[17:41] <ricotz> http://sourceforge.net/projects/linuxwacom/files/libwacom/libwacom-0.7.tar.bz2/download
+[17:42] <ricotz> xf86-input-wacom-0.19.0.tar.bz2 	2013-01-03 	528.6 kB 	103 	196 downloads
+[17:42] <ricotz> ;)
+[17:42] <tjaalton> not announced on any of the lists i'm on
+[17:43] <ricotz> don't worry, i hope you like to push them
+[17:47] <tjaalton> yep, sure
+[17:51] <ricotz> thanks you
+[18:46] <bdmurray> tjaalton: I've installed the new synaptics and I'm still having issue with my trackpad
+[18:46] <bjsnider> tjaalton, i was thinking about it but i thought i might wait until raring to see if it's fixed there. this is in quantal
+[19:07] <tjaalton> bdmurray: that's weird, same backtrace on the log?
+[19:08] <tjaalton> bjsnider: ah, good plan
+[19:08] <bdmurray> tjaalton: not exactly
+[19:08] <bdmurray> [    63.776] (--) synaptics: Apple Wireless Trackpad: touchpad found
+[19:08] <bdmurray> (EE) Apple Wireless Trackpad: Read error 19
+[19:08] <bdmurray> [    93.284] (II) config/udev: removing device Apple Wireless Trackpad
+[19:08] <bdmurray> [    93.307] (II) UnloadModule: "synaptics"
+[19:13] <tjaalton> bdmurray: that's a kernel bug then
+[19:13] <tjaalton> the crasher is fixed
+[19:13] <bryce> tjaalton, ah thanks for taking a look at it
+[19:14] <tjaalton> before it crashed trying to log the error :)
+[19:14] <tjaalton> try the kernel from quantal, should work with it
+[19:15] <bryce> did the kernel log anything?  dmesg?
+[19:16] <bdmurray> Jan 17 10:41:58 impulse kernel: [   63.698471] power_supply hid-c8:bc:c8:f9:78:3d-battery: driver failed to report `capacity' property: -5
+[19:16] <bdmurray> perhaps that?
+[19:16] <bryce> hmm, unlikely
+=== jcristau_ is now known as jcristau
+[19:17] <bryce> tjaalton, any debugging options for synaptics or kernel input he could flip on?
+[19:18] <bryce> tjaalton, what was the fix for the X crash?  a particular patch, or a new version?
+[19:26] <tjaalton> bryce: a patch for synaptics to use signal safe logging
+[19:26] <tjaalton> not aware  about any debugging options..
+[19:27] <tjaalton> whot released a new rc for synaptics, many moons late :)
+[19:27] <tjaalton> should've been out with xserver 1.13
+[19:30] <mlankhorst> heya
+[19:30] <mlankhorst> bryce: I've been fixing some vdpau crash bugs in mesa, I think it should be safe to turn on vdpau now
+[19:30] <mlankhorst> at least on master branch
+[19:38] <bryce> mlankhorst, ok
+[19:43] <mlankhorst> might actually be somewhat useful on fermi/kepler
+[19:45] <mlankhorst> surprised internet's finest news source didn't pick up on it yet
+[19:47] <tjaalton> so, sna or no sna? I'd say yes
+[19:47] <tjaalton> could do the switch tomorrow
+[19:47] <mlankhorst> didn't look like it broke that much
+[19:50] <tjaalton> right
+[19:50] <mlankhorst> I think there's no harm in enabling it as a default now, but have to watch out for all the bugs :)
+[19:51] <tjaalton> ickle is monitoring them as well
+[19:51] <tjaalton> occasionally anyway :)
+[19:59] <mlankhorst> I've pushed my old mesa patches upstream now that mplayer vdpau output no longer crashes
+[20:02] <tjaalton> next week might be a good time to push new mesa out for testing, in a ppa first
+[20:03] <mlankhorst> sure
+[20:03] <mlankhorst> updated http://nouveau.freedesktop.org/wiki/NVC0_Firmware
+[20:03] <mlankhorst> if you're feeling daring you could try to make it work
+[20:06] <tjaalton> ooh
+[20:07] <tjaalton> can't remember what my t420s has, but accelration at least is disabled on it by default
+[20:07] <mlankhorst> if you're really really lucky, try git master :P
+[20:07] <mlankhorst> of git
+[20:07] <mlankhorst> erm linux*
+[20:07] <tjaalton> enabling it results in a hang pretty quickly
+[20:07] <tjaalton> ah
+[20:07] <mlankhorst> there has been a hang recently, but nvd9 is still broken for most
+[20:07] <mlankhorst> hang fix*
+[20:07] <mlankhorst> gah.. tired :(
+[20:23] <bryce> tjaalton, yeah the two sna bugs reported were cosmetic.  Make sure upstream knows about those, and go ahead and flip on sna
+[20:25] <tjaalton> bryce: righty-o
+[21:51] <tjaalton> bryce: seen these before? https://launchpadlibrarian.net/128742080/HookError_source_xorg.txt
+[21:52] <bryce> tjaalton, I noticed them the other day.  Guessing the HookError* stuff is new?
+[21:52] <tjaalton> yeah
+[21:53] <bryce> tjaalton, the flaw in question is bad handling of Xorg.0.log when utf characters are in there.  I've actually got that fixed in my xdiagnose branch.  I've just got a couple more tasks (one of which is thorough testing...) before I can upload it.
+[21:53] <bryce> tjaalton, I found that sometimes invalid utf-8 chars can slip in via the parsed edid in the Xorg.0.log, and that breaks python...
+[21:54] <tjaalton> ah :)
+[21:55] <tjaalton> yeah it's not on every bugreport, but some
+[21:55] <bryce> tjaalton, I've set xdiagnose up with test cases and sample Xorg.0.log's.  So if we see HookErrors like this in the future, I can just add the given log to the test suite...
+[21:55] <tjaalton> nice
+[21:55] <bryce> also added a catch-all that if the parser fails, the bug reports still get filed, just without the details parsed from the log.
+[21:56] <bryce> tjaalton, so, maybe you can help with the other task...
+[21:56] <bryce> I am adding an xedid script which does stuff with edid's
+[21:57] <bryce> e.g. it can parse binary edid files into human readable listings, and convert hex edid from Xorg.0.log to binary ones, and so on and so forth
+[21:57] <bryce> when it extracts the edid from an Xorg.0.log, it can save it to a file, and I'm debating what to name that file by default
+[21:57] <bryce> 01.edid seems uncreative
+[21:58] <bryce> I've seen others use 1024x768.edid and similar, so might try that
+[21:58] <bryce> why this is important is because xedid also permits installing edids into the kernel firmware
+[21:58] <bryce> so we may start seeing these files floating around.  would be nice to ensure they have decent filenames by default...
+[21:58] <tjaalton> what's it for, debugging?
+[21:59] <bryce> no, for cases where something has broken the edid, e.g. kvms or adapters or whatnot.  Or replacing the edid if the monitor came with a bad edid
+[22:00] <bryce> it will probably also be useful for debugging but that's secondary
+[22:05] <bryce> hmm, maybe I'll just go with coded manufacturer-productid-serialno for now
+[22:06] <tjaalton> yeah, no strong opinion about those :)
+[22:07] <bryce> alright, now to the testing....
+=== cnd` is now known as cnd

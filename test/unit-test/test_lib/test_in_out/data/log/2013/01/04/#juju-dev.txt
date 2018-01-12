@@ -1,0 +1,152 @@
+[13:44] <fwereade> mgz, fwiw, I have 4 CLs with diffs of <100 lines that have 1 LGTM already -- if you're free at any point this afternoon I would be most grateful if you would look at them
+[13:44] <fwereade> mgz, they are: https://codereview.appspot.com/7001050/ https://codereview.appspot.com/7001053/ https://codereview.appspot.com/7005054/ https://codereview.appspot.com/7013048/
+[13:46] <fwereade> mgz, (and I have others too, if you happen to be bored... ;p)
+[13:47] <mgz> will do.
+[13:47] <fwereade> mgz, cheers
+[13:48] <mgz> have still not submitted to love of rietveld...
+[13:50] <mgz> the forced file-by-file review workflow just doesn't match what I want to do
+[13:52] <fwereade> mgz, I find it works pretty well for me, but mileage clearly varies -- I find that once I've done an initial skim for overall structure I'm fine
+[13:53] <fwereade> mgz, but then I'm probably misunderstanding how you like to review code
+[16:10] <fwereade> arosales, ping
+[16:10] <arosales> fwereade: hello
+[16:10] <fwereade> arosales, heyhey, hope you had a good xmas
+[16:11] <arosales> I did, spent some good time with the family.
+[16:11] <fwereade> arosales, I have a change I think we need to make to a few charms
+[16:11] <arosales> I hope yours was well too
+[16:11] <fwereade> arosales, cool, likewise :)
+[16:11] <arosales> good to hear
+[16:11] <fwereade> arosales, it's simple but may be annoying -- it's that several of them use relations with names starting with "juju-" and those are disallowed in juju-core
+[16:14] <fwereade> arosales, I think/hope you're the right person to talk to about how to move forward on changing them all
+[16:14] <arosales> I am
+[16:15] <fwereade> arosales, cool
+[16:15] <arosales> jimbaker: has also been working on reconciling differences in charms going to Go
+[16:15] <arosales> that sounds a bit weird
+[16:16] <arosales> but stated differently jimbaker has been working on the format2 work which is aimed at reconciling the differences in charms between py and Go
+[16:16] <fwereade> arosales, the issue is very simply that every charm implicitly provides juju-info (over the juju-info interface) -- and a charm that provides and requires relations with the same name are obviously insane
+[16:16] <fwereade> arosales, rather than just disallowing juju-info (which I believe is utterly necessary) it seemed smarter to reserve the juju-* namespace
+[16:17] <arosales> makes sense
+[16:17] <jimbaker> catching up
+[16:17] <arosales> fwereade: how do you feel about filing a bug to identify these charm porting issues
+[16:18] <fwereade> arosales, np at all -- the question is how you'd best like it
+[16:18] <arosales> I can then make a task against appropriate charms that need to be changed to support Go
+[16:18] <jimbaker> fwereade, i believe it was our intent to reserve the juju- namespace
+[16:18] <fwereade> arosales, ie what the bug should be filed against
+[16:18] <jimbaker> back when juju-info was first proposed after orlando 2011
+[16:19] <fwereade> jimbaker, excellent, I *thought* something like that had been agreed among, er, at least some of us all
+[16:19] <arosales> jimbaker: it sounds like we still have charm that are using a juju-* relation, correct fwereade?
+[16:19] <jimbaker> fwereade, i will try to dig up, although my thunderbird client has been extremely flaky recently
+[16:19] <fwereade> jimbaker, correct
+[16:20] <fwereade> jimbaker, IIRC the precise restrictions in go are as follows:
+[16:20] <fwereade> 1) no "juju" or "juju-*" relations are allowed
+[16:20] <fwereade> 2) no "juju" or "juju-*" filenames are allowed in the hooks dir
+[16:21] <jimbaker> well it's in our docs, https://juju.ubuntu.com/docs/implicit-relations.html
+[16:21] <jimbaker> "reserved namespace"
+[16:21] <fwereade> 3) no relations can provide the "juju" or "juju-*" interface
+[16:21] <fwereade> jimbaker, ok, that's fantastic -- at least it means that the charms are flat-out wrong and there's little justification for complaints about the change :)
+[16:22] <fwereade> jimbaker, (note that ofc it's fine to *require* over a reserved interface)
+[16:22] <jimbaker> fwereade, it's also restricted by the python code
+[16:22] <jimbaker> correct
+[16:22] <jimbaker> in that require is feasible (as it must!)
+[16:22] <fwereade> jimbaker, awesome -- we are all on the same page then, looks like it's just the charms :)
+[16:23] <jimbaker> i think the only additional restriction here is the juju interface name
+[16:23] <fwereade> arosales, against what would you like the bug to be filed?
+[16:23] <jimbaker> vs juju-*
+[16:23] <fwereade> jimbaker, I forget the reasoning behind that -- probably just that it's more confusing to allow it than to disallow it
+[16:24] <jimbaker> fwereade, we do have one example of the juju charm
+[16:24] <fwereade> jimbaker, (btw: merry xmas and happy new year :))
+[16:24] <jimbaker> where the name is used, although not for relation name/interface name
+[16:24] <fwereade> jimbaker, ah, yes, interesting -- but it doesn't quite collide -- yeah :)
+[16:24] <jimbaker> fwereade, thanks! and i hope it was a wonderful holiday and start of the new year too!
+[16:25] <fwereade> jimbaker, cheers, it was :)
+[16:25] <jimbaker> fwereade, in the case of the juju charm, it is a nice metahack, and makes a lot of sense. so at the least, grandfather that in
+[16:25] <fwereade> jimbaker, yeah, I'm fine with that
+[16:26] <fwereade> jimbaker, it's not disallowed by anything as it stands
+[16:26] <jimbaker> fwereade, cool
+[16:27] <jimbaker> fwereade, one thing that would be useful to do is to update charm proof for this sort of stuff
+[16:27] <jimbaker> such as requiring format: 2 to be declared
+[16:27] <jimbaker> it be warn for now, but err if a special flag is used
+[16:28]  * fwereade looks a bit guilty re format 2 -- he seems to recall someone else taking responsibility for that a few months ago but can't remember who, and sees that there are still open bugs related to it
+[16:28] <fwereade> (in juju-core, that is)
+[16:28] <fwereade> jimbaker, actually, *is* anything actually using format 2 yet?
+[16:28] <jimbaker> fwereade, i'm afraid widespread adoption is lacking
+[16:29] <jimbaker> the reality is that ascii usually works
+[16:29] <fwereade> jimbaker, I'm not certain that's actually such a bad thing, because I *think* most of the charms are working fine under juju-core anyway
+[16:29] <jimbaker> fwereade, where format: 2 presumably is implied
+[16:30] <fwereade> jimbaker, theoretically, yes -- it just seems like almost nothing actually depends on repr-style output
+[16:30] <jimbaker> fwereade, the reality is, you know it if you need it, or just working around via b65
+[16:30] <jimbaker> b64
+[16:31] <fwereade> jimbaker, ha, yes, I'd forgotten that side of it tbh -- the primary source of my own panic was entirely repr-style output
+[16:31] <jimbaker> fwereade, no doubt because it's difficult to parse in a shell script
+[16:31] <fwereade> jimbaker, yeah, lucky for us :)
+[16:32] <jimbaker> fwereade, indeed
+[16:32] <fwereade> jimbaker, just a thought - do the subordinates which use juju-* relations actually work at all under pyjuju?
+[16:33] <fwereade> jimbaker, I can't quite believe either that they do or that they don't ;p
+[16:33] <jimbaker> fwereade, i think the one thing we did get out of the exercise is making it quite well defined. there was no nearly testing of formatting. now there is, for both legacy and format 2
+[16:33] <fwereade> jimbaker, yeah, that's a definite win
+[16:33] <jimbaker> fwereade, they work. the real problem is lack of serialization between primary and subs
+[16:33] <fwereade> jimbaker, ha, that
+[16:34] <jimbaker> fwereade, now perhaps that's reasonable. but there's the special case of apt-get to consider
+[16:35] <fwereade> jimbaker, well, my view is that it's not reasonable at all, but I'm up against niemeyer and rogpeppe on that, so I don't hold out much hope
+[16:35] <jimbaker> so we have been going back & forth between recommending flock to guard, or use aptdcon (and make that a dependency of the juju package)
+[16:35] <jimbaker> fwereade, so the current status in goju is not to serialize then?
+[16:36] <fwereade> jimbaker, (I feel that it makes sense to see juju as ceding administratory-style control over the machine when running hooks, and that having multiple admins logged into the same machine is not a sane thing in general)
+[16:36] <fwereade> jimbaker, the current status in goju is to ignore the problem I'm afraid -- has pyju addressed it already?
+[16:36] <jimbaker> no, we ignore too
+[16:36] <jimbaker> hence the problem
+[16:37] <fwereade> jimbaker, the ?consensus? is that we should provide special apt tools
+[16:37] <fwereade> jimbaker, I think that's crack, so I haven't done it
+[16:37] <jimbaker> fwereade, you mean like a wrapper of apt-get?
+[16:37] <fwereade> jimbaker, (not that anyone has asked me to, but still)
+[16:37] <fwereade> jimbaker, yeah
+[16:37] <jimbaker> or a juju-apt-get?
+[16:38] <fwereade> jimbaker, I'm not quite sure -- there was talk of some sort of declarative magic, which also sounded kinda crackful to me, because you don't know what needs to be declared until you're running the charm, and config can change at any time
+[16:38] <jimbaker> fwereade, maybe that's the right solution - apt-get and friends always are guarded by flock /usr/bin/apt-get
+[16:39] <fwereade> jimbaker, honestly, I don't like that much, I feel that apt-get is a specific (and, ok, overwhelmingly common) case of a general problem
+[16:40] <fwereade> jimbaker, it may be that guarding apt-get fixes close enough to 100% of problems that it's actually the best way to go
+[16:40] <jimbaker> fwereade, well i do think it makes sense to support more declarative stuff in charms, eg charmhelpers
+[16:40] <fwereade> jimbaker, and at least it means we *don't* have to serialize hook execution across processes
+[16:41] <jimbaker> fwereade, maybe the right solution is:
+[16:41] <fwereade> jimbaker, yeah, that which can be done declaratively generally should be -- I just don;t think anyone's actually thought it through in enough detail yet
+[16:41] <jimbaker> we pick a standard lock file for flock
+[16:42] <jimbaker> apt-get and friends are wrapped by guards: flock /standard/file; this is on the path for any hooks
+[16:42] <jimbaker> then if a hook wants to participate in the locking, it also uses flock /standard/file/or/whatever
+[16:44] <fwereade> jimbaker, cautious +1, it is pretty clean
+[16:44] <jimbaker> fwereade, how does that proposal sound? then maybe the declarative stuff in charmhelpers could say: serialize: true, and it would automagically ensure all hooks get this treatment
+[16:44] <jimbaker> so opt-in for hooks, but it solves the biggest problem we have now
+[16:45] <fwereade> jimbaker, yeah, indeed -- would you take that proposal to the lists please? just in case someone else spots anything problematic?
+[16:45] <fwereade> jimbaker, but I think I like it
+[16:46] <jimbaker> fwereade, ok, sounds good to me - it's just an extension of what we've been discussing on #juju, including yesterday - so list discussion is definitely in order
+[16:47] <fwereade> jimbaker, awesome
+=== fss_ is now known as fss
+[20:58] <hazmat> fwereade, juju-* for interfaces is reserved.. but for rel names.. does it matter?
+[21:00] <hazmat> fwereade, so instead your suggesting they define hooks for the relation but not declare their requirement?
+[21:04] <hazmat> fwereade, its important for those charms to be able to define hooks for those relations.. i'm failing to see why this an issue in go.
+[21:04] <hazmat> effectively every generic subordinate uses them
+[21:04] <hazmat> http://jujucharms.com/interfaces/juju-info
+[21:04] <hazmat> jimbaker, arosales was there something i'm missing here
+[21:05] <hazmat> or are we confusing relation name with interface name
+[21:06] <jimbaker> hazmat, pyju restricts both relation and interface names to not be prefixed with juju-
+[21:06] <jimbaker> hazmat, i don't think there's much confusion here on that
+[21:06] <jimbaker> (if any ;)
+[21:06] <jimbaker> more of an issue that we were verifying goju vs pyju
+[21:07] <hazmat> jimbaker, not true
+[21:08] <arosales> hazmat: it sounded like there was a name space conflict, but perhaps that is not the issue
+[21:08] <hazmat> the not provide juju-info makes sense
+[21:08] <arosales> hazmat: fwereade may have more insights, but EOD for him
+[21:09] <hazmat> the change around no relation name with juju in it will cause some breakage
+[21:09] <jimbaker> hazmat, please clarify what you mean by not true, i suppose my short hand is for charms to provide such relations :)
+[21:09] <hazmat> jimbaker, <jimbaker> hazmat, pyju restricts both relation and interface names to not be prefixed with juju-
+[21:10] <hazmat> jimbaker, that statement is false given the number of charms i linked to which do it
+[21:10] <jimbaker> juju.charm.metadata.MetaData.parse restricts the namespace here
+[21:10] <jimbaker> hazmat, just looking at the code to see what is it says
+[21:11] <hazmat> jimbaker, that only applies to provides
+[21:11] <hazmat> jimbaker, the change he's talking about is to requires as well
+[21:12] <hazmat> jimbaker, the charms i linked require on juju-info and many have 'juju' in the relation name
+[21:13] <hazmat> and thus also hooks with that name
+[21:14] <jimbaker> hazmat, i didn't look at juju in the relation name, but we discuss this in charm proof. i suppose goju could be relaxed in this case
+[21:14] <jimbaker> needs to be discussed here i suppose
+[21:15] <jimbaker> i believe we described this as being restricted to provides, but can revisit w/ fwereade when he's back
+[21:15] <hazmat> there's close to 40 charms there that juju in the rel name.. maybe 15 unique
+[21:17] <jimbaker> hazmat, ack
+[21:17] <hazmat> er.. 24 unique
+[21:17] <jimbaker> so that's good evidence to change goju

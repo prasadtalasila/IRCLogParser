@@ -1,0 +1,87 @@
+=== Makyo is now known as Makyo|out
+=== _mup__ is now known as _mup_
+[13:48] <gary_poster> teknico, pair in 5 or so?
+[13:48] <teknico> gary_poster, yep, thanks
+[13:51] <teknico> gary_poster, https://plus.google.com/hangouts/_/02bb45411739e441fe107c9f66e2a8cc36ba4ba7?authuser=0&hl=en
+[14:09] <benji> Houston, we've had a problem.
+[14:09] <benji> gary_poster: do you know how to deploy a different backend to the ui stage?
+[14:10] <benji> We need to do so (or revert the login branch) before uistage will work again.
+[14:11] <gary_poster> benji, yes.  bac, you around to help or shall I? I'm on a call with Nicola atm
+[14:11] <bac> hi benji, gary_poster: yes i can help
+[14:11] <gary_poster> thanks bac
+[14:11] <benji> bac: great, thanks
+[14:11] <benji> gary_poster: thank you
+[14:11] <gary_poster> np
+[14:32] <bac> hazmat: ping
+[14:47] <gary_poster> benji, it looks like you only get one chance for a password.  If you type in a bad password, then it will reprompt you but it doesn't matter if you type in a good or bad password then: it will fail and you will never be challenged again.
+[14:47] <benji> gary_poster: yep, that is a bug in the backend; I was just trying to figure out where to file that and whether or not I should dig into it
+[14:48] <gary_poster> gotcha
+[14:48] <benji> (all channels with hyphens in their names are not the same)
+[14:48] <gary_poster> :-)
+[14:48] <benji> gary_poster: since I have your attention, my best guess is to make a card and send an email to the list; any better ideas?
+[14:50] <gary_poster> benji gotcha.  I'm talking with Nicola about the next UI login card.  Yeah, please make a bug/card and send an email to list.  I might have things to add but can do it there
+[14:50] <benji> cool, thanks
+[14:51] <gary_poster> benji, join us at https://docs.google.com/a/canonical.com/file/d/0B1IM--9A1RkTaTUwZjVDVWlybFk/edit for a sec maybe so we can pick your brain?
+[14:51] <benji> gary_poster: k
+[14:51] <gary_poster> thanks
+[14:52] <gary_poster> benji sorry https://plus.google.com/hangouts/_/02bb45411739e441fe107c9f66e2a8cc36ba4ba7?authuser=0&hl=en
+=== Makyo|out is now known as Makyo
+[15:20] <hazmat> bac, pong
+[15:21] <bac> hazmat: on uistaging ~/juju was updating.  it looks like it was changed to be a lightweight checkout and the cron 'bzr pull' was failing.
+[15:21] <bac> hazmat: i manually updated using 'bzr update' and changed the script.  just letting you know.
+[15:21] <hazmat> bac  cool, thanks
+[15:21] <bac> s/was updating/ was NOT updating/
+[15:26] <hazmat> benji, looking into login issue
+[15:26] <benji> hazmat: cool; let me know if there is anything I can do
+[15:28] <hazmat> benji, have you verified from the console that the correct credentials are being sent on the ws?
+[15:28] <hazmat> js console
+[15:29] <hazmat> benji, the unit test for login, does an invalid login, and then a valid login.
+[15:29] <benji> hazmat: not js console, but the backend reports the correct credentials on its stdout
+[15:29] <benji> hmm
+[15:30] <gary_poster> bac bcsaller1 benji frankban goodspud Makyo teknico call now (hazmat is sick I think)
+[15:30] <hazmat> benji, fwiw i'm referencing juju/rapi/tests/test_context.py
+[15:31] <hazmat> i'll try closer to the transport
+[15:31] <Makyo> hangout troubles..
+[15:34] <benji> frankban: there is a global you can set that will disable login attempts (that will only work as long as the backend ddoesn't actually require credentials)
+[15:36] <frankban> benji: cool. however, could you remind me what the password is?
+[15:36] <benji> frankban: "admin"
+[15:37] <frankban> benji: ack, ty
+[15:37] <benji> np
+[15:51] <teknico> sorry, phone call at the wrong time
+[16:13] <gary_poster> teknico, back to https://plus.google.com/hangouts/_/02bb45411739e441fe107c9f66e2a8cc36ba4ba7?authuser=0&hl=en
+[16:13] <gary_poster> ?
+[16:13] <teknico> gary_poster, yep
+[17:36] <robbiew> damn..yet another irc channel I need to be in...time to prune my list
+[18:00] <goodspud> Apologies for missing the meeting today. Alejandra and I were having a very long pow-wow and lost track of time.
+[18:21] <bac> bcsaller1: your viewport branch has some confusing conflicts
+[18:37] <bcsaller1> bac: vs trunk you mean? I'm doing the merge now
+[18:37] <bac> thanks bcsaller1.  yeah, that's what i meant.
+[18:38] <bcsaller1> bac: I think it was in the tests due to the merge of kapils stuff, did you see something else?
+[18:38] <bac> bcsaller1: test/index app.js and mega i think
+[18:47] <benji> Makyo: do you have a minute to help me?  I am working on hiding the gui's charm in the environment view and I have it hidden when it is first rendered, but it becomes visible if I move any other service because of the .show() method.
+[18:48] <benji> Perhaps I should give it a class with "display: none !important" or "opacity: 0 !important".
+[18:50] <Makyo> benji, sure, I've got a few.
+[18:51] <benji> Makyo: what do you think about the ideas above?
+[18:51] <Makyo> benji, give me a sec to check out show again, it's been a bit.
+[18:52] <benji> k
+[18:59] <Makyo> benji, I think either the 'display : none !important' or modify the selection passed to show would both work.  Something like topo.fire("show", vis.filter(function(d) { return d.id !== "juju-gui"; })) or however it works.  However, and maybe bcsaller1 would be the one to talk to about this, maybe it'd be best to just not draw it at all?
+[19:00] <benji> Makyo: thanks for the info.  Re. not drawing it: that is certainly a possibilty, but at this point I haven't been able to fine the right point to "cut" to get that behavior because so much code assumes that every service has a DOM representation
+[19:00] <Makyo> That'd be in mega.js in updateData.  Like services = services.filter(function(d) { return d.id !== 'juju-gui' }); or whatever.
+[19:00] <bcsaller1> yeah, I'd filter the input before it got that far, maybe even make an exception at the delta stream to ignore the name and not create a model
+[19:00] <Makyo> before this.services = services;
+[19:01] <bcsaller1> I don't think this is an env view issue, its a data issue
+[19:01] <benji> Makyo: unfortunetely that doesn't work, other code assumes that if there is an entry in db.service then there is a parallel DOM node
+[19:02] <benji> bcsaller1: I've considered that approach but I strongly suspect it will be even messier.  E.g., we also have to purge any reference to the GUI, like relations
+[19:02] <Makyo> Ah, hmm..
+[19:03] <Makyo> relations are only drawn in the env view if they have two endpoints, but I suppose that'd be an issue elsewhere..
+[19:04] <benji> right now the display: none approach is half way working and I /think/ it will end up being cleanest, since this is a display issue addressing it in the display layer may cause the least pain.
+[19:14] <Makyo> benji, all relations pointing to a hidden service (we had been talking about a class of service that wouldn't be displayed, dunno if that's still the case) would have to be made invisible, as well, and also in the service view, because you can destroy/unexpose a service from there or follow relations to the hidden service.
+[19:16] <benji> tep
+[19:16] <benji> s/t/y/
+[19:28] <bac> bcsaller1: was the essence of your zoom fix just turning off the mousewheel so that the default d3 zoom actions don't resize the rect?
+[19:30] <bcsaller1> bac: the essence was putting the rect in the proper place, syncing it with the viewport so its the proper size and then (like you mentioned) passing the events properly to vis. The way it was most different was placing the rect as a sibling of the vis so its not scaled with it.
+[19:38] <bac> gary_poster: what do you want to do with the zoom card?  just have it track ben's viewport one?  delete it?  putting it in review will be confusing.
+[19:39] <gary_poster> bac, yeah good question.  move it to landing (?)
+[19:39] <bac> i thought about that.  ok, will do
+[20:55]  * bac -> dogwalk
+[22:22]  * Makyo dogwalks.
