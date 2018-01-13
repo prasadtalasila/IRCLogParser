@@ -1,12 +1,15 @@
-import unittest
 import os
 import sys
+import unittest
 from os import path
+
+import matplotlib.pyplot as plt
+
 sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
 from lib import vis, util
-from lib import config
 from ddt import ddt, data, unpack
 import numpy as np
+from mock import patch
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 
@@ -29,7 +32,20 @@ class VisTest(unittest.TestCase):
         os.remove(current_dir + '/linear_plot_test.png')
         
         assert np.allclose(output, expected_result)
-    
+
+    @patch("matplotlib.pyplot.plot", autospec = True)
+    @patch("matplotlib.pyplot.savefig", autospec = True)
+    def test_plot_data(self,mock_savefig,mock_plot):
+        data = ([[0,1,2,3,4,5,6,7,8],[0,2,4,6,8,10,12,14,16]])
+        x_data, y_data = (d for d in data)
+        x = np.array(x_data)
+        y = np.array(y_data)
+
+        vis.plot_data(data,current_dir,'test')
+        np.testing.assert_array_equal(x, mock_plot.call_args[0][0])
+        np.testing.assert_array_equal(y, mock_plot.call_args[0][1])
+        plt.savefig.assert_called_once_with(current_dir + "/" + "test" + ".png")
+
     @data(([ [0,5], [1,10], [2,5], [3,7], [4,3] ], [float(5)/30, float(10)/30, float(5)/30, float(7)/30, float(3)/30], [0, 1, 2, 3, 4]))
     @unpack
     def test_generate_probability_distribution(self, data, expected_freq, expected_x):
