@@ -23,9 +23,6 @@ class CommunityTest(unittest.TestCase):
         dis = clustering.compare_communities(message_comm, expected_result) #calculate distance between two communities
         
         assert dis == 0.0
-    
-    def test_convert_id_name_community(self):
-        pass
 
 
 if __name__ == '__main__':
