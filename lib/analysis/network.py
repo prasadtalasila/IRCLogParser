@@ -35,7 +35,7 @@ def message_number_graph(log_dict, nicks, nick_same_list, DAY_BY_DAY_ANALYSIS=Fa
     G = util.to_graph(nick_same_list)
     conn_comp_list = list(connected_components(G))
 
-    util.create_connected_nick_list(conn_comp_list)
+    conn_comp_list = util.create_connected_nick_list(conn_comp_list)
 
     def msg_no_analysis_helper(rec_list, corrected_nick, nick, conn_comp_list,conversations,today_conversation):
         for receiver in rec_list:
@@ -73,7 +73,7 @@ def message_number_graph(log_dict, nicks, nick_same_list, DAY_BY_DAY_ANALYSIS=Fa
 
                     for nick in nicks:
                         rec_list = [e.strip() for e in line.split(':')]
-                        util.rec_list_splice(rec_list)
+                        rec_list = util.rec_list_splice(rec_list)
                         if not rec_list[1]:
                             break                        
                         rec_list = util.correct_last_char_list(rec_list)       
@@ -230,7 +230,7 @@ def channel_user_presence_graph_and_csv(nicks, nick_same_list, channels_for_user
                 user1 = user_channel_dict.keys()[i]
                 user2 = user_channel_dict.keys()[j]
                 no_of_common_channels_day = len(common_channels_on_that_day)
-                # print str(nicks_hash.index(user1))+"\t"+str(nicks_hash.index(user2))
+                #print str(nicks_hash.index(user1))+"\t"+str(nicks_hash.index(user2))
                 # "Uncomment for directed version"
                 # print str(nicks_hash.index(user2))+"\t"+str(nicks_hash.index(user1))
                 # print user1, user2
@@ -548,7 +548,7 @@ def message_time_graph(log_dict, nicks, nick_same_list, DAY_BY_DAY_ANALYSIS=Fals
                 nick_receiver = nick_receiver_from_conn_comp(nick_name, conn_comp_list)        
                 util.build_graphs(nick_sender, nick_receiver, line[1:6], year, month, day, graph_conversation, msg_time_aggr_graph)             
      
-    util.create_connected_nick_list(conn_comp_list)
+    conn_comp_list = util.create_connected_nick_list(conn_comp_list)
 
     for day_content_all_channels in log_dict.values():
         for day_content in day_content_all_channels:
@@ -565,7 +565,7 @@ def message_time_graph(log_dict, nicks, nick_same_list, DAY_BY_DAY_ANALYSIS=Fals
 
                     for nick_name in nicks:
                         rec_list = [e.strip() for e in line.split(':')]  #receiver list splited about :
-                        util.rec_list_splice(rec_list)
+                        rec_list = util.rec_list_splice(rec_list)
                         if not rec_list[1]:  #index 0 will contain time 14:02
                             break                        
                         rec_list = util.correct_last_char_list(rec_list)        
@@ -638,7 +638,7 @@ def message_number_bins_csv(log_dict, nicks, nick_same_list):
                         
                         for messager in nicks:
                             rec_list = [e.strip() for e in line.split(':')]
-                            util.rec_list_splice(rec_list)
+                            rec_list = util.rec_list_splice(rec_list)
                             if not rec_list[1]:
                                 break                            
                             rec_list = util.correct_last_char_list(rec_list)
@@ -720,7 +720,9 @@ def nick_receiver_from_conn_comp(nick, conn_comp_list):
     """
         creates nick_receiver from conn_comp_list,
         it is a helper function used in create_message_time_graph and message_number_graph
-    """    
+    """
+    nick_receiver = ""
+    
     for i in range(config.MAX_EXPECTED_DIFF_NICKS):
         if nick in conn_comp_list[i]:
             nick_receiver = conn_comp_list[i][0]

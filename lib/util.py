@@ -91,6 +91,7 @@ def get_year_month_day(day_content):
 
 def rec_list_splice(rec_list):
     rec_list[1] = rec_list[1][rec_list[1].find(">") + 1:len(rec_list[1])][1:]
+    return rec_list
 
 
 def check_if_msg_line (line):
@@ -114,6 +115,8 @@ def build_graphs(nick_sender, nick_receiver, time, year, month, day, day_graph, 
     """
     day_graph.add_edge(nick_sender, nick_receiver, weight=time)
     aggr_graph.add_edge(nick_sender, nick_receiver, weight=year+"/" + month + "/" + day + " - " + time)
+    
+    return day_graph, aggr_graph
         
 
 def HACK_convert_nx_igraph(nx_graph):
@@ -159,6 +162,8 @@ def create_connected_nick_list(conn_comp_list):
     """
     for i in range(len(conn_comp_list)):
         conn_comp_list[i] = list(conn_comp_list[i])
+        
+    return conn_comp_list
 
 def correct_last_char_list(rec_list):
     """
