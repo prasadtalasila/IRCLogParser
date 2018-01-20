@@ -94,7 +94,8 @@ def top_keywords_for_nick(user_keyword_freq_dict, nick, threshold, min_words_spo
         min_words_spoken(int): threhold on the minumum number of words spoken by a user to perform analysis on
 
     Returns:
-       null 
+        top_keywords(list) : top keywords used by the nick
+        top_keywords_normal_freq(list) : normalized frequency of occurrence of each keyword
 
     """
 

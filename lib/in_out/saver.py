@@ -34,7 +34,7 @@ def draw_nx_graph(nx_graph, output_directory, output_file_name):
 
     Args:
         nx_graph(str): networkx graph object to be drawn
-        output_drectory(str): location to save graph
+        output_directory(str): location to save graph
         output_file_name(str): name of the image file to be saved
 
     Returns:
@@ -62,7 +62,7 @@ def save_net_nx_graph(nx_graph, output_directory, output_file_name):
 
     Args:
         nx_graph(str): networkx graph object to be saved
-        output_drectory(str): location to save graph
+        output_directory(str): location to save graph
         output_file_name(str): name of the image file to be saved
 
     Returns:
@@ -81,7 +81,7 @@ def save_csv(matrix, output_directory, output_file_name):
 
     Args:
         matrix(list):  an array containing data to be saved
-        output_drectory(str): location to save graph
+        output_directory(str): location to save graph
         output_file_name(str): name of the csv file to be saved
 
     Returns:
@@ -105,7 +105,7 @@ def save_js_arc(reduced_CC_graph, channels_hash, output_directory, output_file_n
     Args:
         nx_graph: a networkx graph, here it is the reduced community community graph
         channels_hash(dict): list of channel names
-        output_drectory(str): location where to save the file
+        output_directory(str): location where to save the file
         output_file_name(str): name of the file to be saved
         
     Returns:
