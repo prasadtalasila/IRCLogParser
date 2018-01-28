@@ -9,14 +9,14 @@ sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
 from lib.analysis import network, user, channel
 from lib.nickTracker import nick_tracker
 from ddt import ddt, data, unpack
-from lib import config
+from lib import config, util
 from lib.in_out import reader
 import networkx as nx
 current_dir = os.path.dirname(__file__)
 
 log_directory = os.path.join(current_dir, 'data/input/')
 expected_output_directory = os.path.join(current_dir, 'data/output/')
-channel_name = config.CHANNEL_NAME
+channel_name = ["#kubuntu-devel"]
 log_for_jan = reader.linux_input(log_directory, channel_name, "2013-1-1", "2013-1-31")
 nicks_for_jan, nick_same_list_for_jan = nick_tracker(log_for_jan)
 log_for_aug = reader.linux_input(log_directory, channel_name, "2013-8-1", "2013-8-31")
@@ -222,3 +222,21 @@ class test_methods_performing_intermediate_analysis(unittest.TestCase):
         self.assertListEqual(user_words_dict, expected_user_word_dict[0], msg=None)
         self.assertListEqual(keywords_filtered,expected_keywords_filtered[0])
         self.assertListEqual(nicks_for_stop_words,expected_nicks_for_stop_words[0])
+    
+    @data((log_for_jan, nicks_for_jan, nick_same_list_for_jan), \
+          (log_for_aug, nicks_for_aug, nick_same_list_for_aug))
+    @unpack
+    def test_identify_hubs_and_experts(self, log_data, nicks, nick_same_list):
+        update_expected_output_directory(log_data)
+        message_graph, top_hub, top_keyword_overlap, top_auth = network.identify_hubs_and_experts(log_data, nicks, nick_same_list)
+        
+        expected_top_hub = util.load_from_disk(expected_output_directory+ "top_hub")
+        expected_top_keyword_overlap = util.load_from_disk(expected_output_directory+ "top_keyword_overlap")
+        expected_top_auth = util.load_from_disk(expected_output_directory+ "top_auth")
+        expected_message_graph = util.load_from_disk(expected_output_directory+ "message_graph")
+        
+        assert top_hub == expected_top_hub
+        assert top_keyword_overlap == expected_top_keyword_overlap
+        assert top_auth == expected_top_auth
+        assert nx.is_isomorphic(message_graph, expected_message_graph)
+        
