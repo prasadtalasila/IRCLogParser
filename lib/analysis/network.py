@@ -125,6 +125,11 @@ def channel_user_presence_graph_and_csv(nicks, nick_same_list, channels_for_user
     Args:
         nicks(list): list of all the nicks
         nick_same_list(list): list of lists mentioning nicks which belong to same users
+        channels_for_user(dict): dictionary with keys as nicks and value as list of 
+        channels on which user with nick is present
+        nick_channel_dict(dict):  channels and nicks present on them
+        nicks_hash(list): hash values of nicks
+        channels_hash(list): hash values of channels
 
     Returns:
         presence_graph_and_matrix (dict): contains adjacency matrices and graphs for Acc Auu Acu
@@ -432,8 +437,11 @@ def degree_analysis_on_graph(nx_graph, date=None, directed = True):
     
     Arguments:
         nx_graph (nx_object): object to perform analysis on
+        date(string): timestamp
+        directed(boolean): True if nx_graph is directed else False
     Returns:
-        null
+        dictionary: with in_degree, out_degree & total_degree for directed graphs
+                    and degree as key for undirected_graphs
     """
     
     def nodes_with_degree_populator(degree_values, label): 
@@ -532,6 +540,7 @@ def message_time_graph(log_dict, nicks, nick_same_list, DAY_BY_DAY_ANALYSIS=Fals
         log_dict (dictionary): Dictionary of logs data created using reader.py
         nicks(List) : List of nickname created using nickTracker.py
         nick_same_list(List) :List of same_nick names created using nickTracker.py
+        DAY_BY_DAY_ANALYSIS: True if graphs are produced for each day 
 
     Returns:
        msg_time_graph_list(List): List of message time graphs for different days
@@ -607,7 +616,8 @@ def message_number_bins_csv(log_dict, nicks, nick_same_list):
         nick_same_list(List) :List of same_nick names created using nickTracker.p
 
     Returns:
-       null 
+       bin_matrix(list of lists): a list of lists of 48 bins with number of messages sent in each bin
+       tot_msgs: total messages exchanged
     """   
     
     no_of_bins = (config.HOURS_PER_DAY * config.MINS_PER_HOUR) / config.BIN_LENGTH_MINS
@@ -738,6 +748,11 @@ def identify_hubs_and_experts(log_dict, nicks, nick_same_list):
         log_dict (dict): with key as dateTime.date object and value as {"data":datalist,"channel_name":channels name}
         nicks(list): list of all the nicks
         nick_same_list(list): list of lists mentioning nicks which belong to same users
+    Returns:
+        message_graph(nx graph): message number graph
+        top_hub(list): list of top hubs
+        top_keyword_overlap(list): top users from keywords digest
+        top_auth: list of top authorities
     """
     message_graph = message_number_graph(log_dict, nicks, nick_same_list)
     hubs, authority_values = nx.hits(message_graph)
