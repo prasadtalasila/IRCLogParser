@@ -29,7 +29,7 @@ class NetworkTest(unittest.TestCase):
     @mock.patch('lib.analysis.network.config.THRESHOLD_MESSAGE_NUMBER_GRAPH', 0)
     @mock.patch('lib.analysis.network.config.MINIMUM_NICK_LENGTH', 3)
     @mock.patch('lib.analysis.network.config.DEBUGGER', True)
-    @mock.patch('lib.analysis.network.util')
+    @mock.patch('lib.analysis.network.util', autospec=True)
     def test_message_number_graph(self, mock_util):
         to_graph_ret = util.load_from_disk(current_directory + "/data/message_number_graph/to_graph")
         
@@ -126,7 +126,7 @@ class NetworkTest(unittest.TestCase):
 
 
     @mock.patch('lib.analysis.network.config.MAX_EXPECTED_DIFF_NICKS', 5000)
-    @mock.patch('lib.analysis.network.util')
+    @mock.patch('lib.analysis.network.util', autospec=True)
     def test_message_time_graph(self, mock_util):
         to_graph_ret = util.load_from_disk(current_directory + "/data/message_time_graph/to_graph")
         
@@ -152,7 +152,7 @@ class NetworkTest(unittest.TestCase):
     @mock.patch('lib.analysis.network.config.HOURS_PER_DAY', 24)
     @mock.patch('lib.analysis.network.config.MINS_PER_HOUR', 60)
     @mock.patch('lib.analysis.network.config.BIN_LENGTH_MINS', 60)
-    @mock.patch('lib.analysis.network.util')
+    @mock.patch('lib.analysis.network.util', autospec=True)
     def test_message_number_bins_csv(self, mock_util):
 
         mock_util.correctLastCharCR.side_effect = util.load_from_disk(current_directory + "/data/message_number_bins_csv/correctLastCharCR")
@@ -168,7 +168,7 @@ class NetworkTest(unittest.TestCase):
         self.assertEqual(tot_msgs, tot_msgs_)
 
 
-    @mock.patch('lib.analysis.network.message_number_graph')
+    @mock.patch('lib.analysis.network.message_number_graph', autospec=True)
     def test_degree_node_number_csv(self, mock_msg_graph):
         
         msg_num_graph_day_list = util.load_from_disk(current_directory + "/data/msg_day_list")
@@ -198,8 +198,8 @@ class NetworkTest(unittest.TestCase):
     @mock.patch('lib.analysis.network.config.HOW_MANY_TOP_EXPERTS', 10)
     @mock.patch('lib.analysis.network.config.NUMBER_OF_KEYWORDS_CHANNEL_FOR_OVERLAP', 250)
     @mock.patch('lib.analysis.network.config.DEBUGGER', True)
-    @mock.patch('lib.analysis.network.message_number_graph')
-    @mock.patch('lib.analysis.network.user.keywords')
+    @mock.patch('lib.analysis.network.message_number_graph', autospec=True)
+    @mock.patch('lib.analysis.network.user.keywords', autospec=True)
     def test_identify_hubs_and_experts(self, mock_keywords, mock_msg_graph):
     
         top_hub_ = util.load_from_disk(current_directory+ "/data/top_hub")
