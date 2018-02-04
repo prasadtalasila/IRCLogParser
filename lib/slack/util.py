@@ -3,6 +3,7 @@ import numpy as np
 import igraph
 import lib.slack.config as config
 import pickle
+xyz = 0
 
 def correctLastCharCR(inText):#
     """ if the last letter of the nick is '\\' replace it by 'CR'
@@ -91,6 +92,7 @@ def get_year_month_day(day_content):
 
 def rec_list_splice(rec_list):
     rec_list[2] = rec_list[2][rec_list[2].find(">") + 1:len(rec_list[2])][1:]
+    return rec_list
 
 
 def check_if_msg_line (line):
@@ -159,6 +161,7 @@ def create_connected_nick_list(conn_comp_list):
     """
     for i in range(len(conn_comp_list)):
         conn_comp_list[i] = list(conn_comp_list[i])
+    return conn_comp_list
 
 def correct_last_char_list(rec_list):
     """
