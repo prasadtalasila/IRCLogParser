@@ -35,7 +35,7 @@ def message_number_graph(log_dict, nicks, nick_same_list, DAY_BY_DAY_ANALYSIS=Fa
     G = util.to_graph(nick_same_list)
     conn_comp_list = list(connected_components(G))
 
-    util.create_connected_nick_list(conn_comp_list)
+    conn_comp_list = util.create_connected_nick_list(conn_comp_list)
 
     def msg_no_analysis_helper(rec_list, nick_sender, nick, conn_comp_list,conversations,today_conversation):
         for receiver in rec_list:
@@ -369,7 +369,7 @@ def message_number_bins_csv(log_dict, nicks, nick_same_list):
                         
                         for messager in nicks:
                             rec_list = [e.strip() for e in line.split(':')]
-                            util.rec_list_splice(rec_list)
+                            rec_list = util.rec_list_splice(rec_list)
                             if not rec_list[2]:
                                 break                            
                             rec_list = util.correct_last_char_list(rec_list)
