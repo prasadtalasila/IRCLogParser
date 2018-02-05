@@ -121,8 +121,9 @@ class UserTest(unittest.TestCase):
         captured_output = StringIO.StringIO()
         sys.stdout = captured_output
         user.keywords_clusters(self.log_data, self.nicks, self.nick_same_list, current_directory + "/data/user_test/","temp_output_keywords_clusters")
-        sys.stdout = sys.__stdin__
+        sys.stdout = sys.__stdout__
         output = captured_output.getvalue()
+        captured_output.close()
 
         self.assertEqual(expected_captured_output, output)
         self.assertTrue(filecmp.cmp(current_directory + "/data/user_test/output_keywords_clusters.txt", current_directory + "/data/user_test/temp_output_keywords_clusters.txt"))
