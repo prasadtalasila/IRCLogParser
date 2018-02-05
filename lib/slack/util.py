@@ -3,9 +3,9 @@ import numpy as np
 import igraph
 import lib.slack.config as config
 import pickle
-xyz = 0
 
-def correctLastCharCR(inText):#
+
+def correctLastCharCR(inText):  #
     """ if the last letter of the nick is '\\' replace it by 'CR'
         for example rohan\ becomes rohanCR
         to avoid complications in nx because of the special char '\\'
@@ -17,24 +17,26 @@ def correctLastCharCR(inText):#
         str: updated string with '\\' replaced by CR (if it exists) 
 
     """
-    if(len(inText) > 1 and inText[len(inText)-1]=='\\'):
-        inText = inText[:-1]+'CR'
+    if (len(inText) > 1 and inText[len(inText) - 1] == '\\'):
+        inText = inText[:-1] + 'CR'
     return inText
+
 
 def correct_nick_for_(inText):
     """
     last letter of nick maybe _ and this produces error in nickmatching
-    
+
     Args:
         inText (str): input nick, checked for '_' at last position
 
     Returns:
         str: updated string with '_'  removed
     """
-    
-    if(inText and inText[len(inText)-1] == '_'):
+
+    if (inText and inText[len(inText) - 1] == '_'):
         inText = inText[:-1]
     return inText
+
 
 def to_graph(l):
     G = nx.Graph()
@@ -61,11 +63,12 @@ def to_edges(l):
     last = next(it)
     for current in it:
         yield last, current
-        last = current  
+        last = current
 
 
 def exponential_curve_func(x, a, b, c):
     return a * np.exp(-b * x) + c
+
 
 def get_year_month_day(day_content):
     """ A generator which
@@ -86,7 +89,9 @@ def get_year_month_day(day_content):
         Returns:
             str:year, str:month, str:day
     """
-    year, month, day = str(day_content["auxiliary_data"]["year"]), str(day_content["auxiliary_data"]["month"]), str(day_content["auxiliary_data"]["day"])
+    year, month, day = str(day_content["auxiliary_data"]["year"]),\
+                       str(day_content["auxiliary_data"]["month"]),\
+                       str(day_content["auxiliary_data"]["day"])
     return year, month, day
 
 
@@ -95,7 +100,7 @@ def rec_list_splice(rec_list):
     return rec_list
 
 
-def check_if_msg_line (line):
+def check_if_msg_line(line):
     return ("] <" in line and "> " in line)
 
 
@@ -112,11 +117,12 @@ def build_graphs(nick_sender, nick_receiver, time, year, month, day, day_graph, 
             aggr_graph(networkx directed graph): a whole time spans aggregate graph to which we add edges
 
         Returns:
-            None
+            Day graph, aggr_graph
     """
     day_graph.add_edge(nick_sender, nick_receiver, weight=time)
-    aggr_graph.add_edge(nick_sender, nick_receiver, weight=year+"/" + month + "/" + day + " - " + time)
-        
+    aggr_graph.add_edge(nick_sender, nick_receiver, weight=year + "/" + month + "/" + day + " - " + time)
+    return day_graph, aggr_graph
+
 
 def HACK_convert_nx_igraph(nx_graph):
     """ 
@@ -143,35 +149,38 @@ def extend_conversation_list(nick_sender, nick_receiver, conversation):
         Returns:
             conversation (list): list containg all the nick between whom messages have been shared
     """
-    for i in xrange(0,config.MAX_EXPECTED_DIFF_NICKS):
+    for i in xrange(0, config.MAX_EXPECTED_DIFF_NICKS):
         if (nick_sender in conversation[i] and nick_receiver in conversation[i]):
             if (nick_sender == conversation[i][1] and nick_receiver == conversation[i][2]):
                 conversation[i][0] += 1
                 break
-        if(len(conversation[i])==1):
+        if (len(conversation[i]) == 1):
             conversation[i].append(nick_sender)
             conversation[i].append(nick_receiver)
-            conversation[i][0]=conversation[i][0]+ 1
+            conversation[i][0] = conversation[i][0] + 1
             break
     return conversation
+
 
 def create_connected_nick_list(conn_comp_list):
     """ 
     A function that converts each individual list member to a list 
     """
-    for i in range(len(conn_comp_list)):
+    for i in xrange(len(conn_comp_list)):
         conn_comp_list[i] = list(conn_comp_list[i])
     return conn_comp_list
+
 
 def correct_last_char_list(rec_list):
     """
     corrects last char for all elements in rec_list
     """
-    for i in range(len(rec_list)):
-        if(rec_list[i]):
+    for i in xrange(len(rec_list)):
+        if (rec_list[i]):
             rec_list[i] = correctLastCharCR(rec_list[i])
 
     return rec_list
+
 
 def splice_find(line, search_param1, search_param2, splice_index):
     """
@@ -180,8 +189,9 @@ def splice_find(line, search_param1, search_param2, splice_index):
             search_param1(str): first string to search in line
             search_param2(str): second string to search in line
             splice_index(int): index used to splice eg if splice_index = 3 line[3:] will give us the string  from index 3 till the end.
-    """        
-    return correctLastCharCR(line[line.find(search_param1) + 1:line.find(search_param2)][splice_index:])    
+    """
+    return correctLastCharCR(line[line.find(search_param1) + 1:line.find(search_param2)][splice_index:])
+
 
 def get_nick_sen_rec(iter_range, nick_to_search, conn_comp_list, nick_sen_rec):
     """
@@ -192,8 +202,8 @@ def get_nick_sen_rec(iter_range, nick_to_search, conn_comp_list, nick_sen_rec):
             nick_sen_rec(str): nick sender/receiver that we wish to find
 
     """
-    for i in range(iter_range):
-        if((i < len(conn_comp_list)) and (nick_to_search in conn_comp_list[i])):
+    for i in xrange(iter_range):
+        if ((i < len(conn_comp_list)) and (nick_to_search in conn_comp_list[i])):
             nick_sen_rec = conn_comp_list[i][0]
             break
     return nick_sen_rec
@@ -202,14 +212,14 @@ def get_nick_sen_rec(iter_range, nick_to_search, conn_comp_list, nick_sen_rec):
 def get_nick_representative(nicks, nick_same_list, nick_to_compare):
     """
         Get representative nick for a nick ( from nick same_list)
-    """    
-    for i in range(len(nicks)):
+    """
+    for i in xrange(len(nicks)):
         if nick_to_compare in nick_same_list[i]:
             nick_sender_receiver = nick_same_list[i][0]
             break
         else:
             nick_sender_receiver = nick_to_compare
-    return nick_sender_receiver    
+    return nick_sender_receiver
 
 
 def find_top_n_element_after_sorting(in_list, index, reverseBool, n):
@@ -223,6 +233,7 @@ def find_top_n_element_after_sorting(in_list, index, reverseBool, n):
     """
     return sorted(in_list, key=lambda x: x[index], reverse=reverseBool)[:n]
 
+
 def count_number_of_users_on_channel(nick_same_list):
     '''
         Args: 
@@ -235,16 +246,18 @@ def count_number_of_users_on_channel(nick_same_list):
         total_users += 1
     return total_users
 
-def save_to_disk(data,file_name):
+
+def save_to_disk(data, file_name):
     """
     A function to save any data structure to a file using pickle module
     :param data: data structure that needs to be saved to disk
     :param file_name: name of the file to be used for saving the data
     :return: null
     """
-    fileObject = open(file_name,'wb')
-    pickle.dump(data,fileObject)
+    fileObject = open(file_name, 'wb')
+    pickle.dump(data, fileObject)
     fileObject.close()
+
 
 def load_from_disk(file_name):
     """
@@ -252,7 +265,7 @@ def load_from_disk(file_name):
     :param file_name: name of the file to be used for saving the data
     :return: data structure that exists in the file
     """
-    fileObject = open(file_name,'r')
+    fileObject = open(file_name, 'r')
     data = pickle.load(fileObject)
     fileObject.close()
     return data
