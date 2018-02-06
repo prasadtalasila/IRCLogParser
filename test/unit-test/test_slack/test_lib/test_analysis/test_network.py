@@ -50,6 +50,7 @@ class NetworkTest(unittest.TestCase):
         ret = network.message_number_graph(self.log_data, self.nicks, self.nick_same_list, DAY_BY_DAY_ANALYSIS=False)
         
         sys.stdout = sys.__stdout__
+        capturedOutput.close()
         
         self.assertFalse(nx.is_isomorphic(ret, util.load_from_disk(current_directory + "/data/message_number_graph/aggregate_message_number_graph")))
         mock_util.to_graph.assert_called_once_with(self.nick_same_list)
@@ -64,6 +65,7 @@ class NetworkTest(unittest.TestCase):
         f = open(current_directory +'/data/filter_edge_list_out.txt','r')
         expected_output = f.read()
         f.close()
+        capturedOutput.close()
         
         self.assertEqual(output, expected_output)
         
@@ -71,7 +73,13 @@ class NetworkTest(unittest.TestCase):
         directed_graph = util.load_from_disk(current_directory + '/data/directed_graph')
         directed_deg_analysis_expected = util.load_from_disk(current_directory + '/data/directed_deg_analysis_result')
         
+        capturedOutput = StringIO.StringIO()
+        sys.stdout = capturedOutput
+        
         directed_deg_analysis = network.degree_analysis_on_graph(directed_graph, directed=True)
+        
+        sys.stdout = sys.__stdout__
+        capturedOutput.close()
         
         self.assertEqual(directed_deg_analysis, directed_deg_analysis_expected)
     
@@ -93,7 +101,13 @@ class NetworkTest(unittest.TestCase):
         mock_util.get_year_month_day.side_effect = util.load_from_disk(current_directory + "/data/message_time_graph/get_year_month_day")
         mock_util.build_graphs.side_effect = util.load_from_disk(current_directory + "/data/message_time_graph/build_graphs")
         
+        capturedOutput = StringIO.StringIO()
+        sys.stdout = capturedOutput
+        
         ret = network.message_time_graph(self.log_data, self.nicks, self.nick_same_list, DAY_BY_DAY_ANALYSIS=False)
+        
+        sys.stdout = sys.__stdout__
+        capturedOutput.close()
         
         mock_util.to_graph.assert_called_once_with(self.nick_same_list)
         mock_util.create_connected_nick_list.assert_called_once_with(conn_list)
@@ -112,7 +126,13 @@ class NetworkTest(unittest.TestCase):
         bin_matrix_ = util.load_from_disk(current_directory + "/data/message_number_bins_csv/bin_matrix")
         tot_msgs_ = util.load_from_disk(current_directory + "/data/message_number_bins_csv/tot_msgs")
         
+        capturedOutput = StringIO.StringIO()
+        sys.stdout = capturedOutput
+        
         bin_matrix, tot_msgs = network.message_number_bins_csv(self.log_data, self.nicks, self.nick_same_list)
+        
+        sys.stdout = sys.__stdout__
+        capturedOutput.close()
         
         self.assertEqual(bin_matrix, bin_matrix_)
         self.assertEqual(tot_msgs, tot_msgs_)
@@ -127,7 +147,13 @@ class NetworkTest(unittest.TestCase):
         
         mock_msg_graph.return_value = msg_num_graph_day_list
         
+        capturedOutput = StringIO.StringIO()
+        sys.stdout = capturedOutput
+        
         out_degree, in_degree, total_degree = network.degree_node_number_csv(self.log_data, self.nicks, self.nick_same_list)
+        
+        sys.stdout = sys.__stdout__
+        capturedOutput.close()
         
         mock_msg_graph.assert_called_once_with(self.log_data, self.nicks, self. nick_same_list, True)
         self.assertEqual(out_degree, out_degree_)
@@ -166,6 +192,7 @@ class NetworkTest(unittest.TestCase):
         message_num_graph, top_hub, top_keyword_overlap, top_auth = network.identify_hubs_and_experts(self.log_data, self.nicks, self.nick_same_list)
         
         sys.stdout = sys.__stdout__
+        capturedOutput.close()
         
         self.assertEqual(top_hub, top_hub_)
         self.assertEqual(top_keyword_overlap, top_keyword_overlap_)
