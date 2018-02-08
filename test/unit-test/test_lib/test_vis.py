@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 import plotly.plotly as py
 import mock as Mock
 import numpy as np
+import networkx as nx
 import plotly.graph_objs as go
 from ddt import ddt, data, unpack
 
@@ -89,7 +90,17 @@ class VisTest(unittest.TestCase):
         # delete the plot created
         os.remove(current_dir + '/exponential_plot_test_shifted.png')
         assert np.allclose(output, expected_result)
-
+    
+    @patch("lib.config.DEBUGGER",1)
+    @patch("igraph.plot",autospec=True)
+    def test_plot_infomap_igraph_show_edges(self,mock_igraph_plot):
+        message_graph = util.load_from_disk(current_dir+'/data/message_graph')
+        membership = util.load_from_disk(current_dir+'/data/membership')
+        igraph = util.load_from_disk(current_dir+'/data/igraph')
+        vis.plot_infomap_igraph(message_graph,membership, current_dir, "message")
+        self.assertTrue(mock_igraph_plot.call_args[0][0].isomorphic_vf2(igraph))
+       
+       
     @data((util.load_from_disk(current_dir + "/data/degree_msg_number"),
            util.load_from_disk(current_dir + "/data/out_degree_analysis")))
     @unpack
