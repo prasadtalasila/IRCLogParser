@@ -22,7 +22,7 @@ class NetworkTest(unittest.TestCase):
         self.nicks = None
         self.nick_same_list = None
         
-    @unittest.skip("reason for skipping")
+    @unittest.expectedFailure
     @mock.patch('test_network.network.config.MAX_EXPECTED_DIFF_NICKS', 5000)
     @mock.patch('test_network.network.config.THRESHOLD_MESSAGE_NUMBER_GRAPH', 0)
     @mock.patch('test_network.network.config.MINIMUM_NICK_LENGTH', 3)
@@ -83,7 +83,7 @@ class NetworkTest(unittest.TestCase):
         
         self.assertEqual(directed_deg_analysis, directed_deg_analysis_expected)
     
-    @unittest.skip("reason for skipping")
+    @unittest.expectedFailure
     @mock.patch('lib.slack.analysis.network.config.MAX_EXPECTED_DIFF_NICKS', 5000)
     @mock.patch('lib.slack.analysis.network.util', autospec=True)
     def test_message_time_graph(self, mock_util):
