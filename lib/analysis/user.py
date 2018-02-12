@@ -149,6 +149,7 @@ def keywords(log_dict, nicks, nick_same_list):
         user_words_dict: keywods for user
         nicks_for_stop_words: stop words
     """
+
     user_words_dict = []
     user_keyword_freq_dict = []
     keywords_filtered = []
@@ -174,7 +175,8 @@ def keywords(log_dict, nicks, nick_same_list):
                     nick_receiver = ''
                     for nick_name in nicks:
                         rec_list = [e.strip() for e in line.split(':')] #receiver list splited about :
-                        util.rec_list_splice(rec_list)
+                        rec_list = util.rec_list_splice(rec_list)
+
                         if not rec_list[1]: #index 0 will contain time 14:02
                             break                        
                         rec_list = util.correct_last_char_list(rec_list)        
