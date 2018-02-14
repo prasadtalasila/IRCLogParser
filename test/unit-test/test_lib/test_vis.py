@@ -93,14 +93,42 @@ class VisTest(unittest.TestCase):
     
     @patch("lib.config.DEBUGGER",1)
     @patch("igraph.plot",autospec=True)
+    def test_plot_infomap_igraph_no_edges(self,mock_igraph_plot):
+        message_graph = util.load_from_disk(current_dir+'/data/message_graph')
+        membership = util.load_from_disk(current_dir+'/data/membership')
+        igraph = util.load_from_disk(current_dir+'/data/igraph')
+        
+        # test infomap plotting with edges not shown
+        vis.plot_infomap_igraph(message_graph,membership, current_dir, "message", show_edges=False)
+        self.assertTrue(mock_igraph_plot.call_args[0][0].isomorphic_vf2(igraph))
+        
+        # check infomap generation with None membership
+        vis.plot_infomap_igraph(message_graph,None, current_dir, "message")
+        self.assertTrue(mock_igraph_plot.call_args[0][0].isomorphic_vf2(igraph))
+        
+    @patch("lib.config.DEBUGGER",1)
+    @patch("igraph.plot",autospec=True)
     def test_plot_infomap_igraph_show_edges(self,mock_igraph_plot):
         message_graph = util.load_from_disk(current_dir+'/data/message_graph')
         membership = util.load_from_disk(current_dir+'/data/membership')
         igraph = util.load_from_disk(current_dir+'/data/igraph')
-        vis.plot_infomap_igraph(message_graph,membership, current_dir, "message")
+        
+        # test for infomap generation with edges
+        vis.plot_infomap_igraph(message_graph,membership, current_dir, "message", show_edges=True)
         self.assertTrue(mock_igraph_plot.call_args[0][0].isomorphic_vf2(igraph))
-       
-       
+        
+    @patch("lib.config.DEBUGGER",1)
+    @patch("igraph.plot",autospec=True)
+    def test_plot_infomap_igraph_aux_data(self,mock_igraph_plot):
+        message_graph = util.load_from_disk(current_dir+'/data/vis/message_exchange_graph')
+        membership = util.load_from_disk(current_dir+'/data/vis/message_exchange_graph_membership')
+        igraph = util.load_from_disk(current_dir+'/data/vis/message_exchange_igraph')
+        aux = util.load_from_disk(current_dir+'/data/vis/aux_data')
+        
+        # test for infomap generation with auxiliary data
+        vis.plot_infomap_igraph(message_graph,membership, current_dir, "message", aux_data = aux)
+        self.assertTrue(mock_igraph_plot.call_args[0][0].isomorphic_vf2(igraph))
+             
     @data((util.load_from_disk(current_dir + "/data/degree_msg_number"),
            util.load_from_disk(current_dir + "/data/out_degree_analysis")))
     @unpack
