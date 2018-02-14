@@ -316,11 +316,6 @@ def response_time(log_dict, nicks, nick_same_list, cutoff_percentile):
 			rt_cutoff_time_frac = numpy.mean(resp_frequency) + 2*numpy.std(resp_frequency)
 			rt_cutoff_time = int(numpy.ceil(rt_cutoff_time_frac))
 
-		elif config.CUTOFF_TIME_STRATEGY == "PERCENTILE":
-			# nothing further to do; truncate_table() already gives rt_cutoff_time
-			# based on percentile
-			pass
-
 	
 	return truncated_rt, rt_cutoff_time
 
