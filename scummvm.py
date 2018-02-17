@@ -182,7 +182,7 @@ for date in dates:
     starting_date = date[0]
     ending_date = date[1]
     log_data = reader.linux_input(log_directory, channel_name, starting_date, ending_date)
-    nicks, nick_same_list = nickTracker.nick_tracker(log_data, False)
+    nicks, nick_same_list = nickTracker.nick_tracker(log_data)
     for cutoff in cut_offs:
         print("dynamic community analysis for", starting_date, "with cutoff=", cutoff, 
 		"started at: ", datetime.datetime.now(), file=exec_times_file)
