@@ -71,7 +71,7 @@ def message_number_graph(log_dict, nicks, nick_same_list, DAY_BY_DAY_ANALYSIS=Fa
 
                     for nick in nicks:
                         rec_list = [e.strip() for e in line.split(':')]
-                        util.rec_list_splice(rec_list)
+                        rec_list = util.rec_list_splice(rec_list)
                         if not rec_list[2]:
                             break                        
                         rec_list = util.correct_last_char_list(rec_list)       
@@ -279,7 +279,7 @@ def message_time_graph(log_dict, nicks, nick_same_list, DAY_BY_DAY_ANALYSIS=Fals
                 nick_receiver = nick_receiver_from_conn_comp(nick_name, conn_comp_list)        
                 util.build_graphs(nick_sender, nick_receiver, line[1:6], year, month, day, graph_conversation, msg_time_aggr_graph)             
      
-    util.create_connected_nick_list(conn_comp_list)
+    conn_comp_list = util.create_connected_nick_list(conn_comp_list)
 
     for day_content_all_channels in log_dict.values():
         for day_content in day_content_all_channels:
@@ -296,7 +296,7 @@ def message_time_graph(log_dict, nicks, nick_same_list, DAY_BY_DAY_ANALYSIS=Fals
 
                     for nick_name in nicks:
                         rec_list = [e.strip() for e in line.split(':')]  #receiver list splited about :
-                        util.rec_list_splice(rec_list)
+                        rec_list = util.rec_list_splice(rec_list)
                         if not rec_list[2]:  #index 0 will contain time 14:02
                             break                        
                         rec_list = util.correct_last_char_list(rec_list)        
