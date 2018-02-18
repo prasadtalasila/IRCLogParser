@@ -25,48 +25,51 @@ class NetworkTest(unittest.TestCase):
         self.nick_same_list = None
 
 
-    @mock.patch('lib.analysis.network.config.MAX_EXPECTED_DIFF_NICKS', 5000)
-    @mock.patch('lib.analysis.network.config.THRESHOLD_MESSAGE_NUMBER_GRAPH', 0)
-    @mock.patch('lib.analysis.network.config.MINIMUM_NICK_LENGTH', 3)
-    @mock.patch('lib.analysis.network.config.DEBUGGER', True)
-    @mock.patch('lib.analysis.network.util', autospec=True)
-    def test_message_number_graph(self, mock_util):
+    @mock.patch('lib.config.MAX_EXPECTED_DIFF_NICKS', 5000)
+    @mock.patch('lib.config.THRESHOLD_MESSAGE_NUMBER_GRAPH', 0)
+    @mock.patch('lib.config.MINIMUM_NICK_LENGTH', 3)
+    @mock.patch('lib.config.DEBUGGER', True)
+    @mock.patch('lib.util.to_graph', autospec=True)
+    @mock.patch('lib.util.create_connected_nick_list', autospec=True)
+    @mock.patch('lib.util.check_if_msg_line', autospec=True)
+    @mock.patch('lib.util.correctLastCharCR', autospec=True)
+    @mock.patch('lib.util.rec_list_splice', autospec=True)
+    @mock.patch('lib.util.get_nick_sen_rec', autospec=True)
+    def test_message_number_graph(self, mock_get_nick_sen_rec, mock_rec_list_splice, mock_correctLastCharCR, \
+                                    mock_check_if_msg_line, mock_create_connected_nick_list, mock_to_graph):
         to_graph_ret = util.load_from_disk(current_directory + "/data/message_number_graph/to_graph")
         
         conn_list = list(connected_components(to_graph_ret))
         
-        mock_util.to_graph.return_value = to_graph_ret
-        mock_util.rec_list_splice.side_effect = util.load_from_disk(current_directory+ "/data/message_number_graph/rec_list_splice")
-        mock_util.create_connected_nick_list.return_value = util.load_from_disk(current_directory+ "/data/message_number_graph/conn_comp_list")
-        mock_util.check_if_msg_line.side_effect = util.load_from_disk(current_directory + "/data/message_number_graph/check_if_msg_line")
-        mock_util.correctLastCharCR.side_effect = util.load_from_disk(current_directory + "/data/message_number_graph/correctLastCharCR")
-        mock_util.get_nick_sen_rec.side_effect = util.load_from_disk(current_directory + "/data/message_number_graph/get_nick_sen_rec")
-        mock_util.extend_conversation_list.side_effect = util.load_from_disk(current_directory + "/data/message_number_graph/extend_conversation_list")
-        mock_util.get_nick_representative.side_effect = util.load_from_disk(current_directory + "/data/message_number_graph/get_nick_representative")
-        mock_util.correct_last_char_list.side_effect = util.load_from_disk(current_directory + "/data/message_number_graph/correct_last_char_list")
-        mock_util.get_year_month_day.side_effect = util.load_from_disk(current_directory + "/data/message_number_graph/get_year_month_day")
+        mock_to_graph.return_value = to_graph_ret
+        mock_rec_list_splice.side_effect = util.load_from_disk(current_directory+ "/data/message_number_graph/rec_list_splice")
+        mock_create_connected_nick_list.return_value = util.load_from_disk(current_directory+ "/data/message_number_graph/conn_comp_list")
+        mock_check_if_msg_line.side_effect = util.load_from_disk(current_directory + "/data/message_number_graph/check_if_msg_line")
+        mock_correctLastCharCR.side_effect = util.load_from_disk(current_directory + "/data/message_number_graph/correctLastCharCR")
+        mock_get_nick_sen_rec.side_effect = util.load_from_disk(current_directory + "/data/message_number_graph/get_nick_sen_rec")
         
         capturedOutput = StringIO.StringIO()
         sys.stdout = capturedOutput
         
         ret = network.message_number_graph(self.log_data, self.nicks, self.nick_same_list, DAY_BY_DAY_ANALYSIS=False)
+        util.save_to_disk(ret, 'ret')
         
         sys.stdout = sys.__stdout__
         capturedOutput.close()
         
-        mock_util.to_graph.assert_called_once_with(self.nick_same_list)
-        mock_util.create_connected_nick_list.assert_called_once_with(conn_list)
-        self.assertFalse(nx.is_isomorphic(ret, util.load_from_disk(current_directory + "/data/message_number_graph/aggregate_message_number_graph")))
+        mock_to_graph.assert_called_once_with(self.nick_same_list)
+        mock_create_connected_nick_list.assert_called_once_with(conn_list)
+        self.assertTrue(nx.is_isomorphic(ret, util.load_from_disk(current_directory + "/data/message_number_graph/aggregate_message_number_graph")))
 
 
-    @mock.patch('lib.analysis.network.config.STARTING_HASH_CHANNEL', 1000000)
-    @mock.patch('lib.analysis.network.config.FILTER_FOR_CHANNEL_USER_GRAPH', 0)
-    @mock.patch('lib.analysis.network.config.FILTER_FOR_USER_USER_GRAPH', 0)
-    @mock.patch('lib.analysis.network.config.CHANNEL_USER_MAX_DEG', 1000)
-    @mock.patch('lib.analysis.network.config.FILTER_TOP_USERS', 100)
-    @mock.patch('lib.analysis.network.config.FILTER_TOP_CHANNELS', 30)
-    @mock.patch('lib.analysis.network.config.GENERATE_DEGREE_ANAL', True)
-    @mock.patch('lib.analysis.network.config.PRINT_CHANNEL_USER_HASH', True)
+    @mock.patch('lib.config.STARTING_HASH_CHANNEL', 1000000)
+    @mock.patch('lib.config.FILTER_FOR_CHANNEL_USER_GRAPH', 0)
+    @mock.patch('lib.config.FILTER_FOR_USER_USER_GRAPH', 0)
+    @mock.patch('lib.config.CHANNEL_USER_MAX_DEG', 1000)
+    @mock.patch('lib.config.FILTER_TOP_USERS', 100)
+    @mock.patch('lib.config.FILTER_TOP_CHANNELS', 30)
+    @mock.patch('lib.config.GENERATE_DEGREE_ANAL', True)
+    @mock.patch('lib.config.PRINT_CHANNEL_USER_HASH', True)
     def test_channel_user_presence_graph_and_csv(self):
         nicks = util.load_from_disk(current_directory + '/data/test_presence_nicks')
         nick_same_list = util.load_from_disk(current_directory + '/data/test_presence_nick_same_list')
@@ -134,22 +137,25 @@ class NetworkTest(unittest.TestCase):
         self.assertEqual(undirected_deg_analysis, undirected_deg_analysis_expected)
 
 
-    @mock.patch('lib.analysis.network.config.MAX_EXPECTED_DIFF_NICKS', 5000)
-    @mock.patch('lib.analysis.network.util', autospec=True)
-    def test_message_time_graph(self, mock_util):
+    @mock.patch('lib.config.MAX_EXPECTED_DIFF_NICKS', 5000)
+    @mock.patch('lib.util.to_graph', autospec=True)
+    @mock.patch('lib.util.create_connected_nick_list', autospec=True)
+    @mock.patch('lib.util.check_if_msg_line', autospec=True)
+    @mock.patch('lib.util.rec_list_splice', autospec=True)
+    @mock.patch('lib.util.correct_last_char_list', autospec=True)
+    @mock.patch('lib.util.get_nick_sen_rec', autospec=True)
+    def test_message_time_graph(self, mock_get_nick_sen_rec, mock_correct_last_char_list, \
+                                mock_rec_list_splice, mock_check_if_msg_line, mock_create_connected_nick_list, mock_to_graph):
         to_graph_ret = util.load_from_disk(current_directory + "/data/message_time_graph/to_graph")
         
         conn_list = list(connected_components(to_graph_ret))
         
-        mock_util.to_graph.return_value = to_graph_ret
-        mock_util.rec_list_splice.side_effect = util.load_from_disk(current_directory+ "/data/message_time_graph/rec_list_splice")
-        mock_util.create_connected_nick_list.return_value = util.load_from_disk(current_directory+ "/data/message_time_graph/conn_comp_list")
-        mock_util.check_if_msg_line.side_effect = util.load_from_disk(current_directory + "/data/message_time_graph/check_if_msg_line")
-        mock_util.correctLastCharCR.side_effect = util.load_from_disk(current_directory + "/data/message_time_graph/correctLastCharCR")
-        mock_util.get_nick_sen_rec.side_effect = util.load_from_disk(current_directory + "/data/message_time_graph/get_nick_sen_rec")
-        mock_util.correct_last_char_list.side_effect = util.load_from_disk(current_directory + "/data/message_time_graph/correct_last_char_list")
-        mock_util.get_year_month_day.side_effect = util.load_from_disk(current_directory + "/data/message_time_graph/get_year_month_day")
-        mock_util.build_graphs.side_effect = util.load_from_disk(current_directory + "/data/message_time_graph/build_graphs")
+        mock_to_graph.return_value = to_graph_ret
+        mock_rec_list_splice.side_effect = util.load_from_disk(current_directory+ "/data/message_time_graph/rec_list_splice")
+        mock_create_connected_nick_list.return_value = util.load_from_disk(current_directory+ "/data/message_time_graph/conn_comp_list")
+        mock_check_if_msg_line.side_effect = util.load_from_disk(current_directory + "/data/message_time_graph/check_if_msg_line")
+        mock_get_nick_sen_rec.side_effect = util.load_from_disk(current_directory + "/data/message_time_graph/get_nick_sen_rec")
+        mock_correct_last_char_list.side_effect = util.load_from_disk(current_directory + "/data/message_time_graph/correct_last_char_list")
         
         capturedOutput = StringIO.StringIO()
         sys.stdout = capturedOutput
@@ -159,15 +165,15 @@ class NetworkTest(unittest.TestCase):
         sys.stdout = sys.__stdout__
         capturedOutput.close()
         
-        mock_util.to_graph.assert_called_once_with(self.nick_same_list)
-        mock_util.create_connected_nick_list.assert_called_once_with(conn_list)
-        self.assertFalse(nx.is_isomorphic(ret, util.load_from_disk(current_directory + "/data/message_time_graph/msg_time_aggr_graph")))
+        mock_to_graph.assert_called_once_with(self.nick_same_list)
+        mock_create_connected_nick_list.assert_called_once_with(conn_list)
+        self.assertTrue(nx.is_isomorphic(ret, util.load_from_disk(current_directory + "/data/message_time_graph/msg_time_aggr_graph")))
 
     
-    @mock.patch('lib.analysis.network.config.HOURS_PER_DAY', 24)
-    @mock.patch('lib.analysis.network.config.MINS_PER_HOUR', 60)
-    @mock.patch('lib.analysis.network.config.BIN_LENGTH_MINS', 60)
-    @mock.patch('lib.analysis.network.util', autospec=True)
+    @mock.patch('lib.config.HOURS_PER_DAY', 24)
+    @mock.patch('lib.config.MINS_PER_HOUR', 60)
+    @mock.patch('lib.config.BIN_LENGTH_MINS', 60)
+    @mock.patch('lib.util', autospec=True)
     def test_message_number_bins_csv(self, mock_util):
 
         mock_util.correctLastCharCR.side_effect = util.load_from_disk(current_directory + "/data/message_number_bins_csv/correctLastCharCR")
@@ -212,7 +218,7 @@ class NetworkTest(unittest.TestCase):
         self.assertEqual(total_degree, total_degree_)
 
 
-    @mock.patch('lib.analysis.network.config.MAX_EXPECTED_DIFF_NICKS', 5000)
+    @mock.patch('lib.config.MAX_EXPECTED_DIFF_NICKS', 5000)
     def test_nick_receiver_from_conn_comp(self):
         conn_comp_list = [["Rohit", "rohit", "kaushik"], ["krishna", "krish", "acharya"], ["Rohan", "rohan", "ron"]]
         conn_comp_list.extend([[]]*config.MAX_EXPECTED_DIFF_NICKS)
@@ -222,9 +228,9 @@ class NetworkTest(unittest.TestCase):
         assert network.nick_receiver_from_conn_comp("Rohan_goel", conn_comp_list) == ""
 
 
-    @mock.patch('lib.analysis.network.config.HOW_MANY_TOP_EXPERTS', 10)
-    @mock.patch('lib.analysis.network.config.NUMBER_OF_KEYWORDS_CHANNEL_FOR_OVERLAP', 250)
-    @mock.patch('lib.analysis.network.config.DEBUGGER', True)
+    @mock.patch('lib.config.HOW_MANY_TOP_EXPERTS', 10)
+    @mock.patch('lib.config.NUMBER_OF_KEYWORDS_CHANNEL_FOR_OVERLAP', 250)
+    @mock.patch('lib.config.DEBUGGER', True)
     @mock.patch('lib.analysis.network.message_number_graph', autospec=True)
     @mock.patch('lib.analysis.network.user.keywords', autospec=True)
     def test_identify_hubs_and_experts(self, mock_keywords, mock_msg_graph):
