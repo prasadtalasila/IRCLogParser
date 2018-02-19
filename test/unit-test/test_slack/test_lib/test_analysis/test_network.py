@@ -62,6 +62,48 @@ class NetworkTest(unittest.TestCase):
         mock_to_graph.assert_called_once_with(self.nick_same_list)
         mock_create_connected_nick_list.assert_called_once_with(conn_list)
         self.assertTrue(nx.is_isomorphic(ret, util.load_from_disk(current_directory + "/data/message_number_graph/aggregate_message_number_graph")))
+
+    @mock.patch('lib.slack.config.MAX_EXPECTED_DIFF_NICKS', 5000)
+    @mock.patch('lib.slack.config.THRESHOLD_MESSAGE_NUMBER_GRAPH', 0)
+    @mock.patch('lib.slack.config.MINIMUM_NICK_LENGTH', 3)
+    @mock.patch('lib.slack.config.DEBUGGER', True)
+    @mock.patch('lib.slack.util.to_graph', autospec=True)
+    @mock.patch('lib.slack.util.create_connected_nick_list', autospec=True)
+    @mock.patch('lib.slack.util.check_if_msg_line', autospec=True)
+    @mock.patch('lib.slack.util.get_nick_representative', autospec=True)
+    @mock.patch('lib.slack.util.get_year_month_day', autospec=True)
+    @mock.patch('lib.slack.util.get_nick_sen_rec', autospec=True)
+    @mock.patch('lib.slack.util.correctLastCharCR', autospec=True)
+    @mock.patch('lib.slack.util.rec_list_splice', autospec=True)
+    def test_message_number_graph_day_analysis(self, mock_rec_list_splice, mock_correctLastCharCR, mock_get_nick_sen_rec, mock_get_year_month_day,\
+                         mock_get_nick_representative, mock_check_if_msg_line, mock_create_connected_nick_list, mock_to_graph):
+        to_graph_ret = util.load_from_disk(current_directory + "/data/message_number_graph/to_graph")
+        
+        conn_list = list(connected_components(to_graph_ret))
+        
+        mock_to_graph.return_value = to_graph_ret
+        mock_rec_list_splice.side_effect = util.load_from_disk(current_directory+ "/data/message_number_graph/rec_list_splice")
+        mock_create_connected_nick_list.return_value = util.load_from_disk(current_directory+ "/data/message_number_graph/conn_comp_list")
+        #mock_correct_last_char_list.side_effect = util.load_from_disk(current_directory + "/data/message_number_graph/correct_last_char_list")
+        mock_check_if_msg_line.side_effect = util.load_from_disk(current_directory + "/data/message_number_graph/check_if_msg_line")
+        mock_correctLastCharCR.side_effect = util.load_from_disk(current_directory + "/data/message_number_graph/correctLastCharCR")
+        mock_get_nick_sen_rec.side_effect = util.load_from_disk(current_directory + "/data/message_number_graph/get_nick_sen_rec")
+        #mock_extend_conversation_list.side_effect = util.load_from_disk(current_directory + "/data/message_number_graph/extend_conversation_list")
+        mock_get_nick_representative.side_effect = util.load_from_disk(current_directory + "/data/message_number_graph/get_nick_representative")
+        mock_get_year_month_day.side_effect = util.load_from_disk(current_directory + "/data/message_number_graph/get_year_month_day_DAY_ANALYSIS")
+        
+        capturedOutput = StringIO.StringIO()
+        sys.stdout = capturedOutput
+        
+        ret = network.message_number_graph(self.log_data, self.nicks, self.nick_same_list, DAY_BY_DAY_ANALYSIS=True)
+        expected_graph_list = util.load_from_disk(current_directory + "/data/message_number_graph/message_number_day_list")
+        
+        sys.stdout = sys.__stdout__
+        capturedOutput.close()
+        
+        mock_to_graph.assert_called_once_with(self.nick_same_list)
+        mock_create_connected_nick_list.assert_called_once_with(conn_list)
+        self.assertTrue(nx.is_isomorphic(ret[0][0], expected_graph_list[0][0]))
         
     def test_filter_edge_list(self):
         capturedOutput = StringIO.StringIO()
@@ -123,7 +165,42 @@ class NetworkTest(unittest.TestCase):
         mock_to_graph.assert_called_once_with(self.nick_same_list)
         mock_create_connected_nick_list.assert_called_once_with(conn_list)
         self.assertTrue(nx.is_isomorphic(ret, util.load_from_disk(current_directory + "/data/message_time_graph/msg_time_aggr_graph")))
-    
+
+    @mock.patch('lib.slack.config.MAX_EXPECTED_DIFF_NICKS', 5000)
+    @mock.patch('lib.slack.util.to_graph', autospec=True)
+    @mock.patch('lib.slack.util.create_connected_nick_list', autospec=True)
+    @mock.patch('lib.slack.util.check_if_msg_line', autospec=True)
+    @mock.patch('lib.slack.util.get_nick_sen_rec', autospec=True)
+    @mock.patch('lib.slack.util.get_year_month_day', autospec=True)
+    @mock.patch('lib.slack.util.correctLastCharCR', autospec=True)
+    @mock.patch('lib.slack.util.rec_list_splice', autospec=True)
+    def test_message_time_graph_day_analysis(self, mock_rec_list_splice, mock_correctLastCharCR, mock_get_year_month_day, mock_get_nick_sen_rec, mock_check_if_msg_line, mock_create_connected_nick_list, mock_to_graph):
+        to_graph_ret = util.load_from_disk(current_directory + "/data/message_time_graph/to_graph")
+        
+        conn_list = list(connected_components(to_graph_ret))
+        
+        mock_to_graph.return_value = to_graph_ret
+        mock_rec_list_splice.side_effect = util.load_from_disk(current_directory+ "/data/message_time_graph/rec_list_splice")
+        mock_create_connected_nick_list.return_value = util.load_from_disk(current_directory+ "/data/message_time_graph/conn_comp_list")
+        mock_check_if_msg_line.side_effect = util.load_from_disk(current_directory + "/data/message_time_graph/check_if_msg_line")
+        mock_correctLastCharCR.side_effect = util.load_from_disk(current_directory + "/data/message_time_graph/correctLastCharCR")
+        mock_get_nick_sen_rec.side_effect = util.load_from_disk(current_directory + "/data/message_time_graph/get_nick_sen_rec")
+        #mock_correct_last_char_list.side_effect = util.load_from_disk(current_directory + "/data/message_time_graph/correct_last_char_list")
+        mock_get_year_month_day.side_effect = util.load_from_disk(current_directory + "/data/message_time_graph/get_year_month_day")
+        
+        capturedOutput = StringIO.StringIO()
+        sys.stdout = capturedOutput
+        
+        ret = network.message_time_graph(self.log_data, self.nicks, self.nick_same_list, DAY_BY_DAY_ANALYSIS=True)
+        expected_graph_list = util.load_from_disk(current_directory + "/data/message_time_graph/msg_time_graph_list")
+        
+        sys.stdout = sys.__stdout__
+        capturedOutput.close()
+        
+        mock_to_graph.assert_called_once_with(self.nick_same_list)
+        mock_create_connected_nick_list.assert_called_once_with(conn_list)
+        self.assertTrue(nx.is_isomorphic(ret[0], expected_graph_list[0]))
+        
     @mock.patch('lib.slack.config.HOURS_PER_DAY', 24)
     @mock.patch('lib.slack.config.MINS_PER_HOUR', 60)
     @mock.patch('lib.slack.config.BIN_LENGTH_MINS', 60)
