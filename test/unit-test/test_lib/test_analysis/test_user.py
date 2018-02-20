@@ -57,12 +57,48 @@ class UserTest(unittest.TestCase):
     @patch("lib.config.DEBUGGER", new = True)
     @patch("lib.config.PRINT_WORDS", new = True)
     def test_top_keywords_for_nick(self):
-        user_keyword_freq_dict = util.load_from_disk(current_directory + "/data/user_test/user_keyword_freq_dict")
-        expected_top_keywords = util.load_from_disk(current_directory + "/data/user_test/top_keywords")
-        expected_top_keywords_normal_freq = util.load_from_disk(current_directory + "/data/user_test/top_keywords_normal_freq")
+        user_keyword_freq_dict_data = util.load_from_disk(current_directory + "/data/user_test/user_keyword_freq_dict")
+        user_keyword_freq_dict = user_keyword_freq_dict_data
 
-        top_keywords, top_keywords_normal_freq = user.top_keywords_for_nick(user_keyword_freq_dict, user_keyword_freq_dict[0]['nick'], 0.01, 100)
+        expected_top_keywords = util.load_from_disk(current_directory + "/data/user_test/top_keywords1")
+        expected_top_keywords_normal_freq = util.load_from_disk(current_directory + "/data/user_test/top_keywords_normal_freq1")
+        expected_captured_output = util.load_from_disk(current_directory + "/data/user_test/stdout_captured_output_top_keywords_for_nick1")
 
+        captured_output = StringIO.StringIO()
+        sys.stdout = captured_output
+        top_keywords, top_keywords_normal_freq = user.top_keywords_for_nick(user_keyword_freq_dict, user_keyword_freq_dict[12]['nick'], 0.01, 100)
+        sys.stdout = sys.__stdout__
+        output = captured_output.getvalue()
+        captured_output.close()
+
+        self.assertEqual(output, expected_captured_output)
+        self.assertEqual(top_keywords, expected_top_keywords)
+        self.assertEqual(top_keywords_normal_freq, expected_top_keywords_normal_freq)
+
+
+        user_keyword_freq_dict = user_keyword_freq_dict_data
+        expected_top_keywords = util.load_from_disk(current_directory + "/data/user_test/top_keywords2")
+        expected_top_keywords_normal_freq = util.load_from_disk(current_directory + "/data/user_test/top_keywords_normal_freq2")
+
+        top_keywords, top_keywords_normal_freq = user.top_keywords_for_nick(user_keyword_freq_dict, user_keyword_freq_dict[12]['nick'], 0.01, 60)
+
+        self.assertEqual(top_keywords, expected_top_keywords)
+        self.assertEqual(top_keywords_normal_freq, expected_top_keywords_normal_freq)
+
+
+        user_keyword_freq_dict = user_keyword_freq_dict_data
+        expected_top_keywords = util.load_from_disk(current_directory + "/data/user_test/top_keywords3")
+        expected_top_keywords_normal_freq = util.load_from_disk(current_directory + "/data/user_test/top_keywords_normal_freq3")
+        expected_captured_output = util.load_from_disk(current_directory + "/data/user_test/stdout_captured_output_top_keywords_for_nick3")
+
+        captured_output = StringIO.StringIO()
+        sys.stdout = captured_output
+        top_keywords, top_keywords_normal_freq = user.top_keywords_for_nick(user_keyword_freq_dict, user_keyword_freq_dict[0]['nick'], 0.8, 20)
+        sys.stdout = sys.__stdout__
+        output = captured_output.getvalue()
+        captured_output.close()
+
+        self.assertEqual(output, expected_captured_output)
         self.assertEqual(top_keywords, expected_top_keywords)
         self.assertEqual(top_keywords_normal_freq, expected_top_keywords_normal_freq)
 
@@ -109,6 +145,7 @@ class UserTest(unittest.TestCase):
         self.assertEqual(expected_user_words_dict, user_words_dict)
         self.assertEqual(expected_nicks_for_stop_words, nicks_for_stop_words)
         self.assertEqual(expected_sorted_keywords_for_channels, sorted_keywords_for_channels)
+
 
     @patch("lib.analysis.user.keywords", autospec = True)
     @patch("lib.analysis.user.extended_stop_words", autospec = True)
