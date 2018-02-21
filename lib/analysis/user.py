@@ -110,22 +110,16 @@ def top_keywords_for_nick(user_keyword_freq_dict, nick, threshold, min_words_spo
 
     top_keywords = []
     top_keywords_normal_freq = []
-    
     if total_freq > min_words_spoken:
-        if keywords:
-            for keyword in keywords:
-                if keyword[2] >= threshold:
-                        top_keywords.append(keyword[0].encode('ascii', 'ignore'))
-                        top_keywords_normal_freq.append(keyword[2])
+        for keyword in keywords:
+            if keyword[2] >= threshold:
+                    top_keywords.append(keyword[0].encode('ascii', 'ignore'))
+                    top_keywords_normal_freq.append(keyword[2])
 
-            if len(top_keywords) == 0:
-                if config.DEBUGGER and config.PRINT_WORDS:
-                    print "No word's normalised score crosses the value of", threshold
-                top_keywords = None
-        else:
+        if len(top_keywords) == 0:
             if config.DEBUGGER and config.PRINT_WORDS:
-                print "No message sent by nick", nick
-            pass
+                print "No word's normalised score crosses the value of", threshold
+            top_keywords = None
     else:
         if config.DEBUGGER and config.PRINT_WORDS:
             print "Not enough words spoken by", nick, "; spoke" ,int(total_freq), "words only, required", min_words_spoken
@@ -160,7 +154,6 @@ def keywords(log_dict, nicks, nick_same_list):
             if(nick_to_compare != nick_name):                
                 nick_receiver = util.get_nick_representative(nicks, nick_same_list, nick_name)        
         return nick_receiver           
-
     for day_content_all_channels in log_dict.values():
         for day_content in day_content_all_channels:
             day_log = day_content["log_data"]
@@ -189,7 +182,6 @@ def keywords(log_dict, nicks, nick_same_list):
                             rec_list_2 = util.correct_last_char_list(rec_list_2)        
                             for rec in rec_list_2:
                                 nick_receiver = get_nick_receiver(nick_receiver, rec, nick_to_compare, nick_name, nicks, nick_same_list)                                
-
                         if(flag_comma == 0): #receiver list can be <Dhruv> Rohan, Hi!
                             rec = util.splice_find(line, ">", ", ", 1)                            
                             nick_receiver = get_nick_receiver(nick_receiver, rec, nick_to_compare, nick_name, nicks, nick_same_list)                           
@@ -202,6 +194,7 @@ def keywords(log_dict, nicks, nick_same_list):
                     if correctedNickReciever in message:
                         message.remove(correctedNickReciever)
 
+
                     lmtzr = WordNetLemmatizer()
                     
                     #limit word size = 3, drop numbers.
@@ -213,11 +206,8 @@ def keywords(log_dict, nicks, nick_same_list):
                         word = word.lower()
                         word_list.append(word.replace("'",""))
                     word_list_lemmatized = []
-                    
-                    try:     
-                        word_list_lemmatized = map(lmtzr.lemmatize, map(lambda x: lmtzr.lemmatize(x, 'v'), word_list))
-                    except UnicodeDecodeError:
-                        pass
+
+                    word_list_lemmatized = map(lmtzr.lemmatize, map(lambda x: lmtzr.lemmatize(x, 'v'), word_list))
 
                     fr = 1
                     for dic in user_words_dict:
