@@ -7,6 +7,22 @@ import networkx as nx
 import lib.slack.util as util
 import lib.slack.config as config
 from ddt import ddt, data, unpack
+from mock import patch
+
+
+def mock_to_edges(l):
+    it = iter(l)
+    last = next(it)
+    for current in it:
+        yield last, current
+        last = current
+
+
+def mock_correctLastCharCR(inText):
+    if(len(inText) > 1 and inText[len(inText)-1]=='\\'):
+        inText = inText[:-1]+'CR'
+    return inText
+
 
 @ddt
 class UtilTest(unittest.TestCase):
@@ -110,14 +126,18 @@ class UtilTest(unittest.TestCase):
 
     @data((["lethifer\\", "paper\\", "ThunderBolt\\"], ["lethiferCR", "paperCR", "ThunderBoltCR"]))
     @unpack
-    def test_correct_last_char_list(self, nick_list, expected_result):
+    @patch("lib.util.correctLastCharCR",autospec = True)
+    def test_correct_last_char_list(self, nick_list, expected_result, mock_correctLastChar):
+        mock_correctLastChar.side_effect = mock_correctLastCharCR
         self.assertListEqual(util.correct_last_char_list(nick_list), expected_result)
 
     @data(('=== benonsoftware is now known as Benny\n', "=", " is", 3, 'benonsoftware'), \
           ('=== benonsoftware is now known as Benny\n', "wn as", "\n", 5, 'Benny'), \
           ('[13:56] <Dhruv> lethifer, Hi!', ">", ", ", 1, "lethifer"))
     @unpack
-    def test_splice_find(self, line, search_param1, search_param2, splice_index, expected_result):
+    @patch("lib.util.correctLastCharCR",autospec = True)
+    def test_splice_find(self, line, search_param1, search_param2, splice_index, expected_result, mock_correctLastChar):
+        mock_correctLastChar.side_effect = mock_correctLastCharCR
         self.assertEqual(util.splice_find(line, search_param1, search_param2, splice_index), expected_result)
 
     @data((3, "lethifero", [["ThunderBolt", "Thunder"], ["lethifer", "lethifero"], ["paper", "paper101"]], "", "lethifer"), \
@@ -160,6 +180,7 @@ class UtilTest(unittest.TestCase):
     def test_load_from_disk(self):
         nicks = util.load_from_disk(self.current_directory + '/data/nicks')
         assert nicks == self.expected_nicks, "Failure to load from disk."
+
 
 if __name__ == '__main__':
     unittest.main()
