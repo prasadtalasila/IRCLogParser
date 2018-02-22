@@ -125,7 +125,7 @@ class NetworkTest(unittest.TestCase):
         capturedOutput = StringIO.StringIO()
         sys.stdout = capturedOutput
         
-        directed_deg_analysis = network.degree_analysis_on_graph(directed_graph, directed=True)
+        directed_deg_analysis = network.degree_analysis_on_graph(directed_graph)
         
         sys.stdout = sys.__stdout__
         capturedOutput.close()
