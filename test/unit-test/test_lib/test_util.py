@@ -7,8 +7,7 @@ import os
 import networkx as nx
 import igraph
 from ddt import ddt, data, unpack
-
-current_directory = os.path.dirname(os.path.realpath(__file__))
+from mock import patch
 
 
 # maybe try to refactor compare_graphs and compare_graph_outputs of tests.py
@@ -18,9 +17,24 @@ def compare_graphs(graph1, graph2):
     return False
 
 
+def mock_to_edges(l):
+    it = iter(l)
+    last = next(it)
+    for current in it:
+        yield last, current
+        last = current
+
+
+def mock_correctLastCharCR(inText):
+    if(len(inText) > 1 and inText[len(inText)-1]=='\\'):
+        inText = inText[:-1]+'CR'
+    return inText
+
+
 @ddt
 class UtilTest(unittest.TestCase):
     def setUp(self):
+        self.current_directory = os.path.dirname(os.path.realpath(__file__))
         self.nicks = ['BluesKaj', 'Peace-', 'LordOfTime', 'TheLordOfTime', 'benonsoftware', 'Benny', 'Guest43293',
                       'rdieter_work', 'rdieter', 'jjesse-home_', 'jjesse-home', 'rdieter1', 'Mamarok', 'Mamarok_',
                       'G4MBY', 'PaulW2U', 'jussi', 'shadeslayer', 'Tm_T', 'yofel', 'ScottK', 'Quintasan', 'mikhas',
@@ -28,18 +42,19 @@ class UtilTest(unittest.TestCase):
         self.expected_nicks = self.nicks
 
     def tearDown(self):
+        self.current_directory = None
         self.nicks = None
         self.expected_nicks = None
 
     def test_save_to_disk(self):
-        util.save_to_disk(self.nicks, current_directory + "/data/nicksTest")
+        util.save_to_disk(self.nicks, self.current_directory + "/data/nicksTest")
         status, output = commands.getstatusoutput(
-            'cmp ' + current_directory + '/data/nicks ' + current_directory + '/data/nicksTest')
-        subprocess.Popen(['rm', current_directory + '/data/nicksTest'])
+            'cmp ' + self.current_directory + '/data/nicks ' + self.current_directory + '/data/nicksTest')
+        subprocess.Popen(['rm', self.current_directory + '/data/nicksTest'])
         assert status == 0, "Failure to load from disk."
 
     def test_load_from_disk(self):
-        nicks = util.load_from_disk(current_directory + "/data/nicks")
+        nicks = util.load_from_disk(self.current_directory + "/data/nicks")
         assert nicks == self.expected_nicks, "Failure to load from disk."
 
     @data(("krishna\\", "krishnaCR"))
@@ -60,7 +75,9 @@ class UtilTest(unittest.TestCase):
     @data(([["krishna", "ka", "krish"], ["rohit", "rohitu", "rohita"]],
            [("krishna", "ka"), ("ka", "krish"), ("rohitu", "rohit"), ("rohita", "rohitu")]))
     @unpack
-    def test_to_graph(self, same_nick_list, edge_list):
+    @patch("lib.util.to_edges",autospec = True)
+    def test_to_graph(self, same_nick_list, edge_list, mock_to_edge):
+        mock_to_edge.side_effect = mock_to_edges
         expected_graph = nx.Graph()
         expected_graph.add_edges_from(edge_list)
         self.assertTrue(compare_graphs(util.to_graph(same_nick_list), expected_graph))
@@ -114,14 +131,18 @@ class UtilTest(unittest.TestCase):
 
     @data((["rohan\\", "rohit\\", "krishna\\"], ["rohanCR", "rohitCR", "krishnaCR"]))
     @unpack
-    def test_correct_last_char_list(self, nick_list, expected_result):
+    @patch("lib.util.correctLastCharCR",autospec = True)
+    def test_correct_last_char_list(self, nick_list, expected_result,mock_correctLastChar):
+        mock_correctLastChar.side_effect = mock_correctLastCharCR
         self.assertListEqual(util.correct_last_char_list(nick_list), expected_result)
 
     @data(('=== benonsoftware is now known as Benny\n', "=", " is", 3, 'benonsoftware'), \
           ('=== benonsoftware is now known as Benny\n', "wn as", "\n", 5, 'Benny'), \
           ('[13:56] <Dhruv> Rohan, Hi!', ">", ", ", 1, "Rohan"))
     @unpack
-    def test_splice_find(self, line, search_param1, search_param2, splice_index, expected_result):
+    @patch("lib.util.correctLastCharCR",autospec = True)
+    def test_splice_find(self, line, search_param1, search_param2, splice_index, expected_result, mock_correctLastChar):
+        mock_correctLastChar.side_effect = mock_correctLastCharCR
         self.assertEqual(util.splice_find(line, search_param1, search_param2, splice_index), expected_result)
 
     @data((3, "rohano", [["krishna", "krish"], ["rohan", "rohano"], ["rohit", "rohit101"]], "", "rohan"), \
