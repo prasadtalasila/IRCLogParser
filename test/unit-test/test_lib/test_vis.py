@@ -1,49 +1,53 @@
 import os
-import sys
 import unittest
-from os import path
-from mock import patch
+
 import matplotlib.pyplot as plt
-import plotly.plotly as py
-import mock as Mock
 import numpy as np
-import networkx as nx
 import plotly.graph_objs as go
 from ddt import ddt, data, unpack
+from mock import patch
 
 from lib import vis, util
 
-sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
-current_dir = os.path.dirname(os.path.abspath(__file__))
 
+def mock_exponential_curve_func(x, a, b, c):
+    return a * np.exp(-b * x) + c
+
+
+def mock_generate_probability_distribution(data):
+    topRows = [int(x[1]) for x in data]
+    total = sum(topRows)
+    freq = [x/float(total) for x in topRows]
+    return range(0, len(data)), freq
 
 @ddt
 class VisTest(unittest.TestCase):
     def setUp(self):
-        pass
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        self.test_data_dir = current_dir + "/../../data/test_lib/"
 
     def tearDown(self):
-        pass
+        self.test_data_dir = None
 
     @data(([0, 1, 2, 3, 4, 5], [0, 1, 2, 3, 4, 5], [1, 0, 1, 0]))
     @unpack
     @patch("lib.config.USE_PYPLOT", 1)
     def test_calc_plot_linear_fit_use_pylpot(self, x_in, y_in, expected_result):
-        output = vis.calc_plot_linear_fit(x_in, y_in, current_dir, "linear_plot_test")
+        output = vis.calc_plot_linear_fit(x_in, y_in, self.test_data_dir, "linear_plot_test")
         # remove the image generated from plot function
-        os.remove(current_dir + '/linear_plot_test.png')
+        os.remove(self.test_data_dir + '/linear_plot_test.png')
         assert np.allclose(output, expected_result)
 
     @data(([0, 1, 2, 3, 4, 5], [0, 1, 2, 3, 4, 5], [1, 0, 1, 0]))
     @unpack
     @patch("lib.config.USE_PYPLOT", 0)
     def test_calc_plot_linear_fit_use_pylpot(self, x_in, y_in, expected_result):
-        output = vis.calc_plot_linear_fit(x_in, y_in, current_dir, "linear_plot_test")
+        output = vis.calc_plot_linear_fit(x_in, y_in, self.test_data_dir, "linear_plot_test")
         # remove the image generated from plot function
-        os.remove(current_dir + '/linear_plot_test.png')
+        os.remove(self.test_data_dir + '/linear_plot_test.png')
         assert np.allclose(output, expected_result)
 
-        output = vis.calc_plot_linear_fit(None, None, current_dir, "linear_plot_test")
+        output = vis.calc_plot_linear_fit(None, None, self.test_data_dir, "linear_plot_test")
         expected_output = -1, -1, -1, -1
         self.assertEqual(output, expected_output)
 
@@ -55,10 +59,10 @@ class VisTest(unittest.TestCase):
         x = np.array(x_data)
         y = np.array(y_data)
 
-        vis.plot_data(data, current_dir, 'test')
+        vis.plot_data(data, self.test_data_dir, 'test')
         np.testing.assert_array_equal(x, mock_plot.call_args[0][0])
         np.testing.assert_array_equal(y, mock_plot.call_args[0][1])
-        plt.savefig.assert_called_once_with(current_dir + "/" + "test" + ".png")
+        plt.savefig.assert_called_once_with(self.test_data_dir + "/" + "test" + ".png")
 
     @data(([[0, 5], [1, 10], [2, 5], [3, 7], [4, 3]],
            [float(5) / 30, float(10) / 30, float(5) / 30, float(7) / 30, float(3) / 30], [0, 1, 2, 3, 4]))
@@ -73,69 +77,79 @@ class VisTest(unittest.TestCase):
         self.assertEqual(x, -1)
         self.assertEqual(freq, -1)
 
-    @data(
-        (util.load_from_disk(current_dir + "/data/conv_len"), util.load_from_disk(current_dir + "/data/conv_len_fit")))
-    @unpack
-    def test_exponential_curve_fit_and_plot(self, data, expected_result):
-        output = vis.exponential_curve_fit_and_plot(data, current_dir, "exponential_plot_test")
-        # remove the plot created
-        os.remove(current_dir + '/exponential_plot_test.png')
+    @patch("lib.vis.generate_probability_distribution", autospec=True)
+    @patch("lib.util.exponential_curve_func", autospec = True)
+    @patch("lib.vis.curve_fit", autospec=True)
+    def test_exponential_curve_fit_and_plot(self, mock_curve_fit, mock_curve_func, mock_probability_distribution):
+        data = util.load_from_disk(self.test_data_dir + "/vis/conv_len")
+        expected_result = util.load_from_disk(self.test_data_dir + "/vis/conv_len_fit")
+        mock_curve_fit.return_value = util.load_from_disk(self.test_data_dir+ "/vis/curve_fit")
+        mock_curve_func.side_effect = mock_exponential_curve_func
+        mock_probability_distribution.side_effect = mock_generate_probability_distribution
+
+        output = vis.exponential_curve_fit_and_plot(data, self.test_data_dir, "exponential_plot_test")
+        os.remove(self.test_data_dir + '/exponential_plot_test.png')
         assert np.allclose(output, expected_result)
 
-    @data((util.load_from_disk(current_dir + "/data/conv_ref_time"),
-           util.load_from_disk(current_dir + "/data/conv_ref_time_fit_params")))
-    @unpack
-    def test_exponential_curve_fit_and_plot_x_shifted(self, data, expected_result):
-        output = vis.exponential_curve_fit_and_plot_x_shifted(data, current_dir, "exponential_plot_test_shifted")
+    @patch("lib.vis.generate_probability_distribution", autospec=True)
+    @patch("lib.util.exponential_curve_func", autospec = True)
+    @patch("lib.vis.curve_fit", autospec=True)
+    def test_exponential_curve_fit_and_plot_x_shifted(self, mock_curve_fit, mock_curve_func, mock_probability_distribution):
+        data = util.load_from_disk(self.test_data_dir + "/vis/conv_ref_time")
+        expected_result = util.load_from_disk(self.test_data_dir + "/vis/conv_ref_time_fit_params")
+        mock_curve_fit.return_value = util.load_from_disk(self.test_data_dir + "/vis/curve_fit_x_shifted")
+        mock_curve_func.side_effect = mock_exponential_curve_func
+        mock_probability_distribution.side_effect = mock_generate_probability_distribution
+
+        output = vis.exponential_curve_fit_and_plot_x_shifted(data, self.test_data_dir, "exponential_plot_test_shifted")
         # delete the plot created
-        os.remove(current_dir + '/exponential_plot_test_shifted.png')
+        os.remove(self.test_data_dir + '/exponential_plot_test_shifted.png')
         assert np.allclose(output, expected_result)
     
     @patch("lib.config.DEBUGGER",1)
     @patch("igraph.plot",autospec=True)
     def test_plot_infomap_igraph_no_edges(self,mock_igraph_plot):
-        message_graph = util.load_from_disk(current_dir+'/data/message_graph')
-        membership = util.load_from_disk(current_dir+'/data/membership')
-        igraph = util.load_from_disk(current_dir+'/data/igraph')
+        message_graph = util.load_from_disk(self.test_data_dir+'/vis/message_graph')
+        membership = util.load_from_disk(self.test_data_dir+'/vis/membership')
+        igraph = util.load_from_disk(self.test_data_dir+'/vis/igraph')
         
         # test infomap plotting with edges not shown
-        vis.plot_infomap_igraph(message_graph,membership, current_dir, "message", show_edges=False)
+        vis.plot_infomap_igraph(message_graph,membership, self.test_data_dir, "message", show_edges=False)
         self.assertTrue(mock_igraph_plot.call_args[0][0].isomorphic_vf2(igraph))
         
         # check infomap generation with None membership
-        vis.plot_infomap_igraph(message_graph,None, current_dir, "message")
+        vis.plot_infomap_igraph(message_graph,None, self.test_data_dir, "message")
         self.assertTrue(mock_igraph_plot.call_args[0][0].isomorphic_vf2(igraph))
         
     @patch("lib.config.DEBUGGER",1)
     @patch("igraph.plot",autospec=True)
     def test_plot_infomap_igraph_show_edges(self,mock_igraph_plot):
-        message_graph = util.load_from_disk(current_dir+'/data/message_graph')
-        membership = util.load_from_disk(current_dir+'/data/membership')
-        igraph = util.load_from_disk(current_dir+'/data/igraph')
+        message_graph = util.load_from_disk(self.test_data_dir+'/vis/message_graph')
+        membership = util.load_from_disk(self.test_data_dir+'/vis/membership')
+        igraph = util.load_from_disk(self.test_data_dir+'/vis/igraph')
         
         # test for infomap generation with edges
-        vis.plot_infomap_igraph(message_graph,membership, current_dir, "message", show_edges=True)
+        vis.plot_infomap_igraph(message_graph,membership, self.test_data_dir, "message", show_edges=True)
         self.assertTrue(mock_igraph_plot.call_args[0][0].isomorphic_vf2(igraph))
         
     @patch("lib.config.DEBUGGER",1)
     @patch("igraph.plot",autospec=True)
     def test_plot_infomap_igraph_aux_data(self,mock_igraph_plot):
-        message_graph = util.load_from_disk(current_dir+'/data/vis/message_exchange_graph')
-        membership = util.load_from_disk(current_dir+'/data/vis/message_exchange_graph_membership')
-        igraph = util.load_from_disk(current_dir+'/data/vis/message_exchange_igraph')
-        aux = util.load_from_disk(current_dir+'/data/vis/aux_data')
+        message_graph = util.load_from_disk(self.test_data_dir+'vis/message_exchange_graph')
+        membership = util.load_from_disk(self.test_data_dir+'vis/message_exchange_graph_membership')
+        igraph = util.load_from_disk(self.test_data_dir+'vis/message_exchange_igraph')
+        aux = util.load_from_disk(self.test_data_dir+'vis/aux_data')
         
         # test for infomap generation with auxiliary data
-        vis.plot_infomap_igraph(message_graph,membership, current_dir, "message", aux_data = aux)
+        vis.plot_infomap_igraph(message_graph,membership, self.test_data_dir, "message", aux_data = aux)
         self.assertTrue(mock_igraph_plot.call_args[0][0].isomorphic_vf2(igraph))
-             
-    @data((util.load_from_disk(current_dir + "/data/degree_msg_number"),
-           util.load_from_disk(current_dir + "/data/out_degree_analysis")))
-    @unpack
-    def test_generate_log_plots(self, data, expected_result):
-        output = vis.generate_log_plots(data, current_dir, "log_plot_test")
-        # delete the plot created
-        os.remove(current_dir + '/log_plot_test.png')
+
+    @patch("lib.vis.calc_plot_linear_fit", autospec=True)
+    def test_generate_log_plots(self, mock_calc_plot):
+        data = util.load_from_disk(self.test_data_dir + "/vis/degree_msg_number")
+        expected_result = util.load_from_disk(self.test_data_dir + "/vis/out_degree_analysis")
+        mock_calc_plot.return_value = util.load_from_disk(self.test_data_dir + "vis/calc_plot_data")
+        output = vis.generate_log_plots(data, self.test_data_dir, "log_plot_test")
         assert np.allclose(output, expected_result)
 
     @patch("plotly.plotly.image.save_as")
@@ -157,7 +171,7 @@ class VisTest(unittest.TestCase):
 
         layout = go.Layout(barmode='group')
         fig = go.Figure(data=test_data, layout=layout)
-        vis.generate_group_bar_charts(y_values, x_values, trace_headers, current_dir, 'test_group_bar_chart')
+        vis.generate_group_bar_charts(y_values, x_values, trace_headers, self.test_data_dir, 'test_group_bar_chart')
         assert mock_py.call_count == 1
         self.assertEqual(fig.get('data')[0], mock_py.call_args[0][0].get('data')[0])
 
@@ -191,7 +205,7 @@ class VisTest(unittest.TestCase):
         layout = go.Layout(title='HeatMap', width=800, height=640)
         fig = go.Figure(data=final_data, layout=layout)
 
-        vis.csv_heatmap_generator_plotly(current_dir + "/data/", current_dir, "plotly_heatmap_test")
+        vis.csv_heatmap_generator_plotly(self.test_data_dir + "/vis/", self.test_data_dir, "plotly_heatmap_test")
         assert mock_py.call_count == 1
         self.assertTrue(fig.get('layout') == mock_py.call_args[0][0].get('layout'))
         np.testing.assert_array_equal(fig.data[0].get('z'), mock_py.call_args[0][0].data[0].get('z'))
@@ -204,18 +218,18 @@ class VisTest(unittest.TestCase):
                           1508],
                          [1578, 924, 409, 1115, 6088, 491, 1923, 10700, 16206, 8690, 1350, 3778, 237, 1095, 20639, 2669,
                           1956, 6015]])
-        vis.matplotlob_csv_heatmap_generator(current_dir + "/" + "data/test_heatmap.csv", current_dir,
+        vis.matplotlob_csv_heatmap_generator(self.test_data_dir + "/" + "vis/test_heatmap.csv", self.test_data_dir,
                                              "csv_heatmap_test")
-        plt.savefig.assert_called_once_with(current_dir + "/" + "csv_heatmap_test" + ".png")
+        plt.savefig.assert_called_once_with(self.test_data_dir + "/" + "csv_heatmap_test" + ".png")
 
     @patch("matplotlib.pyplot.boxplot", autospec=True)
     @patch("matplotlib.pyplot.savefig", autospec=True)
     def test_box_plot(self, mock_savefig, mock_boxplot):
         data = [0, 1, 2, 3, 4, 5, 6, 7, 8]
 
-        vis.box_plot(data, current_dir, 'box_plot_test')
+        vis.box_plot(data, self.test_data_dir, 'box_plot_test')
         plt.boxplot.assert_called_once_with(data)
-        plt.savefig.assert_called_once_with(current_dir + "/" + "box_plot_test" + ".png")
+        plt.savefig.assert_called_once_with(self.test_data_dir + "/" + "box_plot_test" + ".png")
 
 
 if __name__ == '__main__':

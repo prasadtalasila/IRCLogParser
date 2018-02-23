@@ -1,26 +1,24 @@
-import matplotlib as mpl
+import glob
+import math
+from random import randint
+
+import igraph
 import matplotlib.pyplot as plt
 plt.switch_backend('Agg')
 import numpy as np
+import plotly.graph_objs as go
+import plotly.plotly as py
+from numpy import genfromtxt
+from scipy import stats
 from scipy.optimize import curve_fit
 from sklearn.metrics import mean_squared_error
+
 import config
-import util
-import igraph
-from random import randint
-import math
-import matplotlib.pyplot as plt
-import os
 import lib.in_out.saver as saver
-from numpy.random import normal
-from scipy.optimize import curve_fit
-from scipy import stats
-import plotly.plotly as py
-import plotly.graph_objs as go
-from numpy import genfromtxt
-import glob
+import util
 
 py.sign_in(config.USER_NAME, config.TOKEN)
+
 
 def plot_data (data, output_directory, output_file_name):
     x_data, y_data = (d for d in data)

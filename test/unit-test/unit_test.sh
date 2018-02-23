@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+set -ex
 coverage run --source=. -m unittest discover -s test/unit-test
 coverage report -m
 codecov
