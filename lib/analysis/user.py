@@ -34,16 +34,16 @@ def nick_change_graph(log_dict, DAY_BY_DAY_ANALYSIS=False):
     Returns:
        list of the day_to_day nick changes if config.DAY_BY_DAY_ANALYSIS=True or else an aggregate nick change graph for the 
        given time period.
-    """     
+    """
 
     rem_time = None #remembers the time of the last message of the file parsed before the current file
     nick_change_day_list = []
     aggregate_nick_change_graph = nx.MultiDiGraph() # graph for nick changes in the whole time span (not day to day)
     
-    for day_content_all_channels in log_dict.values():      
+    for day_content_all_channels in log_dict.values():
         
-        for day_content in day_content_all_channels:            
-                day_log = day_content["log_data"]                   
+        for day_content in day_content_all_channels:
+                day_log = day_content["log_data"]
                 
                 today_nick_change_graph = nx.MultiDiGraph()   #using networkx
                 current_line_no = -1
@@ -53,18 +53,18 @@ def nick_change_graph(log_dict, DAY_BY_DAY_ANALYSIS=False):
                     
                     if(line[0] == '=' and "changed the topic of" not in line):  #excluding the condition when user changes the topic. Search for only nick changes
                         nick1 = util.splice_find(line, "=", " is", 3)
-                        nick2 = util.splice_find(line, "wn as", "\n", 5)                        
+                        nick2 = util.splice_find(line, "wn as", "\n", 5)
                         earlier_line_no = current_line_no
 
                         while earlier_line_no >= 0: #to find the line just before "=="" so as to find time of Nick Change
                             earlier_line_no = earlier_line_no - 1
-                            if(day_log[earlier_line_no][0] != '='):                             
+                            if(day_log[earlier_line_no][0] != '='):
                                 year, month, day = util.get_year_month_day(day_content)
-                                util.build_graphs(nick1, nick2, day_log[earlier_line_no][1:6], year, month, day, today_nick_change_graph, aggregate_nick_change_graph)
+                                today_nick_change_graph, aggregate_nick_change_graph = util.build_graphs(nick1, nick2, day_log[earlier_line_no][1:6], year, month, day, today_nick_change_graph, aggregate_nick_change_graph)
                                 break
 
                         if(earlier_line_no == -1):
-                            today_nick_change_graph.add_edge(nick1, nick2, weight=rem_time)                                              
+                            today_nick_change_graph.add_edge(nick1, nick2, weight=rem_time)
                             aggregate_nick_change_graph.add_edge(nick1, nick2, weight = rem_time)
                 
                 count = len(day_log) - 1 #setting up the rem_time for next file, by noting the last message sent on that file.
@@ -75,7 +75,7 @@ def nick_change_graph(log_dict, DAY_BY_DAY_ANALYSIS=False):
                         break
                     count = count-1
                 
-                nick_change_day_list.append(today_nick_change_graph)    
+                nick_change_day_list.append(today_nick_change_graph)
                         
     if DAY_BY_DAY_ANALYSIS:
         return nick_change_day_list
@@ -83,8 +83,8 @@ def nick_change_graph(log_dict, DAY_BY_DAY_ANALYSIS=False):
         return aggregate_nick_change_graph
             
 
-def top_keywords_for_nick(user_keyword_freq_dict, nick, threshold, min_words_spoken): 
-    """ 
+def top_keywords_for_nick(user_keyword_freq_dict, nick, threshold, min_words_spoken):
+    """
     outputs top keywords for a particular nick
 
     Args:
@@ -94,7 +94,7 @@ def top_keywords_for_nick(user_keyword_freq_dict, nick, threshold, min_words_spo
         min_words_spoken(int): threhold on the minumum number of words spoken by a user to perform analysis on
 
     Returns:
-       null 
+       null
 
     """
 
@@ -103,7 +103,7 @@ def top_keywords_for_nick(user_keyword_freq_dict, nick, threshold, min_words_spo
         if dicts['nick'] == nick:
             keywords = dicts['keywords']
             break
-    
+
     total_freq = 0.0
     for freq_tuple in keywords:
         total_freq += freq_tuple[1]
@@ -132,7 +132,7 @@ def keywords(log_dict, nicks, nick_same_list):
     """
     Returns keywods for all users
 
-    Args:   
+    Args:
         log_dict (str): Dictionary of logs data created using reader.py
         nicks(List) : list of nickname created using nickTracker.py
         nick_same_list :List of same_nick names created using nickTracker.py
@@ -149,11 +149,11 @@ def keywords(log_dict, nicks, nick_same_list):
     keywords_filtered = []
     no_messages = 0    
 
-    def get_nick_receiver(nick_receiver, rec, nick_to_compare, nick_name, nicks, nick_same_list):              
+    def get_nick_receiver(nick_receiver, rec, nick_to_compare, nick_name, nicks, nick_same_list):
         if(rec == nick_name):
-            if(nick_to_compare != nick_name):                
-                nick_receiver = util.get_nick_representative(nicks, nick_same_list, nick_name)        
-        return nick_receiver           
+            if(nick_to_compare != nick_name):
+                nick_receiver = util.get_nick_representative(nicks, nick_same_list, nick_name)
+        return nick_receiver
     for day_content_all_channels in log_dict.values():
         for day_content in day_content_all_channels:
             day_log = day_content["log_data"]
@@ -162,7 +162,7 @@ def keywords(log_dict, nicks, nick_same_list):
                 if(util.check_if_msg_line(line)):
                     m = re.search(r"\<(.*?)\>", line)
                     nick_to_compare = util.correctLastCharCR((m.group(0)[1:-1]))
-                    nick_sender = ''                    
+                    nick_sender = ''
                     nick_sender = util.get_nick_representative(nicks, nick_same_list, nick_to_compare)
                     
                     nick_receiver = ''
