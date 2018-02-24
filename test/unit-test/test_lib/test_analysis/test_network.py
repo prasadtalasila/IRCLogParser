@@ -328,27 +328,28 @@ class NetworkTest(unittest.TestCase):
     @mock.patch('lib.analysis.network.message_number_graph', autospec=True)
     @mock.patch('lib.analysis.network.user.keywords', autospec=True)
     def test_identify_hubs_and_experts(self, mock_keywords, mock_msg_graph):
-        top_hub_ = util.load_from_disk(self.current_directory + "/data/top_hub")
-        top_keyword_overlap_ = util.load_from_disk(self.current_directory + "/data/top_keyword_overlap")
-        top_auth_ = util.load_from_disk(self.current_directory + "/data/top_auth")
-        message_graph = util.load_from_disk(self.current_directory + "/data/test_hits_message_graph")
-        keyword_dict_list = util.load_from_disk(self.current_directory + "/data/keyword_dict_list")
-        user_keyword_freq_dict = util.load_from_disk(self.current_directory + "/data/user_keyword_freq_dict")
-        user_words_dict_list = util.load_from_disk(self.current_directory + "/data/user_words_dict_list")
-        nicks_for_stop_words = util.load_from_disk(self.current_directory + "/data/nicks_for_stop_words")
-        keywords_for_channels = util.load_from_disk(self.current_directory + "/data/keywords_for_channels")
-        keywords_return = util.load_from_disk(self.current_directory + "/data/keywords_return")
-
+        
+        log_data = util.load_from_disk(self.current_directory+ "/data/hits/log_data")
+        nicks = util.load_from_disk(self.current_directory+ "/data/hits/nicks")
+        nick_same_list = util.load_from_disk(self.current_directory+ "/data/hits/nick_same_list")
+        top_hub_ = util.load_from_disk(self.current_directory+ "/data/hits/top_hub")
+        top_keyword_overlap_ = util.load_from_disk(self.current_directory+ "/data/hits/top_keyword_overlap")
+        top_auth_ = util.load_from_disk(self.current_directory+ "/data/hits/top_auth")
+        message_graph = util.load_from_disk(self.current_directory+ "/data/hits/message_graph")
+        keyword_dict_list = util.load_from_disk(self.current_directory+ "/data/hits/keyword_dict_list")
+        user_keyword_freq_dict = util.load_from_disk(self.current_directory+"/data/hits/user_keyword_freq_dict")
+        user_words_dict_list = util.load_from_disk(self.current_directory+"/data/hits/user_words_dict_list")
+        nicks_for_stop_words = util.load_from_disk(self.current_directory+"/data/hits/nicks_for_stop_words")
+        keywords_for_channels = util.load_from_disk(self.current_directory+"/data/hits/keywords_for_channels")
+        
         # setup mock
         mock_msg_graph.return_value = message_graph
         mock_keywords.return_value = keyword_dict_list, user_keyword_freq_dict, user_words_dict_list, nicks_for_stop_words, keywords_for_channels
         capturedOutput = StringIO.StringIO()
         sys.stdout = capturedOutput
-
-        message_num_graph, top_hub, top_keyword_overlap, top_auth = network.identify_hubs_and_experts(self.log_data,
-                                                                                                      self.nicks,
-                                                                                                      self.nick_same_list)
-
+        
+        message_num_graph, top_hub, top_keyword_overlap, top_auth = network.identify_hubs_and_experts(log_data, nicks, nick_same_list)
+        
         sys.stdout = sys.__stdout__
         capturedOutput.close()
 
