@@ -157,7 +157,7 @@ def filter_edge_list(edgelist_file_loc, max_hash, how_many_top):
             if a in top_nodes and b in top_nodes:
                 print str(a) + "\t" + str(b)
 
-def degree_analysis_on_graph(nx_graph, date=None, directed = True):
+def degree_analysis_on_graph(nx_graph, date=None):
     """
     perform degree analysis of input graph object
     
@@ -203,57 +203,42 @@ def degree_analysis_on_graph(nx_graph, date=None, directed = True):
             nodes[i][2] = give_userlist_where_degree_helper(degree_map[degree_type], i - 1)
         return raw, nodes
  
-    if directed:
-        nodes_with_OUT_degree = nodes_with_degree_populator(nx_graph.out_degree().values(), "nodes_w_out_deg")
-   
-        nodes_with_IN_degree = nodes_with_degree_populator(nx_graph.in_degree().values(), "nodes_w_in_deg")
-        nodes_with_TOTAL_degree = nodes_with_degree_populator(nx_graph.degree().values(), "nodes_w_deg")    
+    nodes_with_OUT_degree = nodes_with_degree_populator(nx_graph.out_degree().values(), "nodes_w_out_deg")
 
-        nodes_with_OUT_degree.insert(0, ["total_nodes", sum(data[1] for data in nodes_with_OUT_degree)]) # sum of (number of nodes with degree 1 +number of nodes with degre 2..)
+    nodes_with_IN_degree = nodes_with_degree_populator(nx_graph.in_degree().values(), "nodes_w_in_deg")
+    nodes_with_TOTAL_degree = nodes_with_degree_populator(nx_graph.degree().values(), "nodes_w_deg")    
 
-        nodes_with_IN_degree.insert(0, ["total_nodes", sum(data[1] for data in nodes_with_IN_degree)])
+    nodes_with_OUT_degree.insert(0, ["total_nodes", sum(data[1] for data in nodes_with_OUT_degree)]) # sum of (number of nodes with degree 1 +number of nodes with degre 2..)
 
-        nodes_with_TOTAL_degree.insert(0, ["total_nodes", sum(data[1] for data in nodes_with_TOTAL_degree)])
+    nodes_with_IN_degree.insert(0, ["total_nodes", sum(data[1] for data in nodes_with_IN_degree)])
+
+    nodes_with_TOTAL_degree.insert(0, ["total_nodes", sum(data[1] for data in nodes_with_TOTAL_degree)])
 
 
-        raw_out = [str(date)]
-        raw_in = [str(date)]
-        raw_total = [str(date)]
+    raw_out = [str(date)]
+    raw_in = [str(date)]
+    raw_total = [str(date)]
 
-        degree_map = {"out":nx_graph.out_degree(),"in":nx_graph.in_degree(),"all":nx_graph.degree()}  
+    degree_map = {"out":nx_graph.out_degree(),"in":nx_graph.in_degree(),"all":nx_graph.degree()}  
 
-        raw_out, nodes_with_OUT_degree = raw_node_append(nodes_with_OUT_degree, raw_out, "out")
-        raw_in, nodes_with_IN_degree = raw_node_append(nodes_with_IN_degree, raw_in, "in")
-        raw_total, nodes_with_TOTAL_degree = raw_node_append(nodes_with_TOTAL_degree, raw_total, "all")   
+    raw_out, nodes_with_OUT_degree = raw_node_append(nodes_with_OUT_degree, raw_out, "out")
+    raw_in, nodes_with_IN_degree = raw_node_append(nodes_with_IN_degree, raw_in, "in")
+    raw_total, nodes_with_TOTAL_degree = raw_node_append(nodes_with_TOTAL_degree, raw_total, "all")   
 
-        return {
-            "out_degree": {
-                "formatted_for_csv": nodes_with_OUT_degree,
-                "raw_for_vis": raw_out
-                },
-            "in_degree": {
-                "formatted_for_csv": nodes_with_IN_degree,
-                "raw_for_vis": raw_in
-                },
-            "total_degree": {
-                "formatted_for_csv": nodes_with_TOTAL_degree,
-                "raw_for_vis": raw_total
-                }
+    return {
+        "out_degree": {
+            "formatted_for_csv": nodes_with_OUT_degree,
+            "raw_for_vis": raw_out
+            },
+        "in_degree": {
+            "formatted_for_csv": nodes_with_IN_degree,
+            "raw_for_vis": raw_in
+            },
+        "total_degree": {
+            "formatted_for_csv": nodes_with_TOTAL_degree,
+            "raw_for_vis": raw_total
             }
-    # for undirected        
-    else:        
-        nodes_with_degree_undirected = nodes_with_degree_populator(nx_graph.degree().values(), "nodes_w_deg")
-        nodes_with_degree_undirected.insert(0, ["total_nodes", sum(data[1] for data in nodes_with_degree_undirected)])
-        raw_degree = [str(date)]
-        degree_map = {"all":nx_graph.degree()}
-        raw_degree, nodes_with_degree_undirected = raw_node_append(nodes_with_degree_undirected, raw_degree, "all")
-
-        return  {
-            "degree":{
-                "formatted_for_csv" : nodes_with_degree_undirected,
-                "raw_for_vis" : raw_degree
-            }   
-         }
+        }
 
 def message_time_graph(log_dict, nicks, nick_same_list, DAY_BY_DAY_ANALYSIS=False):
     """ creates a directed graph where each edge denotes a message sent from a user to another user
