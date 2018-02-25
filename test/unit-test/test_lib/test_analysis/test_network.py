@@ -277,8 +277,8 @@ class NetworkTest(unittest.TestCase):
         mock_rec_list.side_effect = util.load_from_disk(
             self.current_directory + "/data/message_number_bins_csv/rec_list_splice")
 
-        bin_matrix_ = util.load_from_disk(self.current_directory + "/data/message_number_bins_csv/bin_matrix")
-        tot_msgs_ = util.load_from_disk(self.current_directory + "/data/message_number_bins_csv/tot_msgs")
+        expected_bin_matrix = util.load_from_disk(self.current_directory + "/data/message_number_bins_csv/bin_matrix")
+        expected_tot_msgs = util.load_from_disk(self.current_directory + "/data/message_number_bins_csv/tot_msgs")
 
         capturedOutput = StringIO.StringIO()
         sys.stdout = capturedOutput
@@ -288,15 +288,15 @@ class NetworkTest(unittest.TestCase):
         sys.stdout = sys.__stdout__
         capturedOutput.close()
 
-        self.assertEqual(bin_matrix, bin_matrix_)
-        self.assertEqual(tot_msgs, tot_msgs_)
+        self.assertEqual(bin_matrix, expected_bin_matrix)
+        self.assertEqual(tot_msgs, expected_tot_msgs)
 
     @mock.patch('lib.analysis.network.message_number_graph', autospec=True)
     def test_degree_node_number_csv(self, mock_msg_graph):
         msg_num_graph_day_list = util.load_from_disk(self.current_directory + "/data/msg_day_list")
-        out_degree_ = util.load_from_disk(self.current_directory + "/data/out_degree")
-        in_degree_ = util.load_from_disk(self.current_directory + "/data/in_degree")
-        total_degree_ = util.load_from_disk(self.current_directory + "/data/total_degree")
+        expected_out_degree = util.load_from_disk(self.current_directory + "/data/out_degree")
+        expected_in_degree = util.load_from_disk(self.current_directory + "/data/in_degree")
+        expected_total_degree = util.load_from_disk(self.current_directory + "/data/total_degree")
 
         mock_msg_graph.return_value = msg_num_graph_day_list
 
@@ -309,9 +309,9 @@ class NetworkTest(unittest.TestCase):
         sys.stdout = sys.__stdout__
         capturedOutput.close()
 
-        self.assertEqual(out_degree, out_degree_)
-        self.assertEqual(in_degree, in_degree_)
-        self.assertEqual(total_degree, total_degree_)
+        self.assertEqual(out_degree, expected_out_degree)
+        self.assertEqual(in_degree, expected_in_degree)
+        self.assertEqual(total_degree, expected_total_degree)
 
     @mock.patch('lib.config.MAX_EXPECTED_DIFF_NICKS', 5000)
     def test_nick_receiver_from_conn_comp(self):
@@ -332,9 +332,9 @@ class NetworkTest(unittest.TestCase):
         log_data = util.load_from_disk(self.current_directory+ "/data/hits/log_data")
         nicks = util.load_from_disk(self.current_directory+ "/data/hits/nicks")
         nick_same_list = util.load_from_disk(self.current_directory+ "/data/hits/nick_same_list")
-        top_hub_ = util.load_from_disk(self.current_directory+ "/data/hits/top_hub")
-        top_keyword_overlap_ = util.load_from_disk(self.current_directory+ "/data/hits/top_keyword_overlap")
-        top_auth_ = util.load_from_disk(self.current_directory+ "/data/hits/top_auth")
+        expected_top_hub = util.load_from_disk(self.current_directory+ "/data/hits/top_hub")
+        expected_top_keyword_overlap = util.load_from_disk(self.current_directory+ "/data/hits/top_keyword_overlap")
+        expected_top_auth = util.load_from_disk(self.current_directory+ "/data/hits/top_auth")
         message_graph = util.load_from_disk(self.current_directory+ "/data/hits/message_graph")
         keyword_dict_list = util.load_from_disk(self.current_directory+ "/data/hits/keyword_dict_list")
         user_keyword_freq_dict = util.load_from_disk(self.current_directory+"/data/hits/user_keyword_freq_dict")
@@ -353,9 +353,9 @@ class NetworkTest(unittest.TestCase):
         sys.stdout = sys.__stdout__
         capturedOutput.close()
 
-        self.assertEqual(top_hub, top_hub_)
-        self.assertEqual(top_keyword_overlap, top_keyword_overlap_)
-        self.assertEqual(top_auth, top_auth_)
+        self.assertEqual(top_hub, expected_top_hub)
+        self.assertEqual(top_keyword_overlap, expected_top_keyword_overlap)
+        self.assertEqual(top_auth, expected_top_auth)
         self.assertTrue(nx.is_isomorphic(message_graph, message_num_graph))
 
 
