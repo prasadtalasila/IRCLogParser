@@ -38,8 +38,8 @@ class UserTest(unittest.TestCase):
         mock_splice_find.side_effect = mock_splice_find_data
         mock_build_graphs.side_effect = mock_build_graphs_data
         mock_get_year_month_day.side_effect = mock_get_year_month_day_data
-        expected_nick_change_graph_list = util.load_from_disk(self.current_directory + "/data/user_test/nick_change_graph_list")
-        expected_aggregate_nick_change_graph = util.load_from_disk(self.current_directory + "/data/user_test/aggregate_nick_change_graph")
+        expected_nick_change_graph_list = util.load_from_disk(self.current_directory + "/../../../data/user_test/nick_change_graph_list")
+        expected_aggregate_nick_change_graph = util.load_from_disk(self.current_directory + "/../../../data/user_test/aggregate_nick_change_graph")
 
         nick_change_graph_list = user.nick_change_graph(self.log_data, True)
 
@@ -166,18 +166,18 @@ class UserTest(unittest.TestCase):
         mock_keywords.return_value = keywords_filtered, user_keyword_freq_dict, user_words_dict, nicks_for_stop_words, sorted_keywords_for_channels
         mock_extended_stop_words.return_value = util.load_from_disk(self.current_directory + "/data/user_test/extended_stop_words")
         mock_time.return_value = 0
-        expected_captured_output = util.load_from_disk( self.current_directory + "/data/user_test/stdout_captured_output_keywords_clusters");
+        expected_captured_output = util.load_from_disk( self.current_directory + "/../../../data/user_test/stdout_captured_output_keywords_clusters");
 
         captured_output = StringIO.StringIO()
         sys.stdout = captured_output
-        user.keywords_clusters(self.log_data, self.nicks, self.nick_same_list, self.current_directory + "/data/user_test/","temp_output_keywords_clusters")
+        user.keywords_clusters(self.log_data, self.nicks, self.nick_same_list, self.current_directory, "temp_output_keywords_clusters")
         sys.stdout = sys.__stdout__
         output = captured_output.getvalue()
         captured_output.close()
 
         self.assertEqual(expected_captured_output, output)
-        self.assertTrue(filecmp.cmp(self.current_directory + "/data/user_test/output_keywords_clusters.txt", self.current_directory + "/data/user_test/temp_output_keywords_clusters.txt"))
-        os.remove(self.current_directory + "/data/user_test/temp_output_keywords_clusters.txt")
+        self.assertTrue(filecmp.cmp(self.current_directory + "/../../../data/user_test/output_keywords_clusters.txt", self.current_directory + "/temp_output_keywords_clusters.txt"))
+        os.remove(self.current_directory + "/temp_output_keywords_clusters.txt")
 
 
     @unittest.expectedFailure
@@ -199,18 +199,18 @@ class UserTest(unittest.TestCase):
         mock_keywords.return_value = keywords_filtered, user_keyword_freq_dict, user_words_dict, nicks_for_stop_words, sorted_keywords_for_channels
         mock_extended_stop_words.return_value = util.load_from_disk(self.current_directory + "/data/user_test/extended_stop_words")
         mock_time.return_value = 0
-        expected_captured_output = util.load_from_disk( self.current_directory + "/data/user_test/stdout_captured_output_keywords_clusters");
+        expected_captured_output = util.load_from_disk( self.current_directory + "/../../../data/user_test/stdout_captured_output_keywords_clusters");
 
         captured_output = StringIO.StringIO()
         sys.stdout = captured_output
-        user.keywords_clusters(self.log_data, self.nicks, self.nick_same_list, self.current_directory + "/data/user_test/","temp_output_keywords_clusters")
+        user.keywords_clusters(self.log_data, self.nicks, self.nick_same_list, self.current_directory ,"temp_output_keywords_clusters")
         sys.stdout = sys.__stdout__
         output = captured_output.getvalue()
         captured_output.close()
 
         self.assertEqual(expected_captured_output, output)
-        self.assertTrue(filecmp.cmp(self.current_directory + "/data/user_test/output_keywords_clusters.txt", self.current_directory + "/data/user_test/temp_output_keywords_clusters.txt"))
-        os.remove(self.current_directory + "/data/user_test/temp_output_keywords_clusters.txt")
+        self.assertTrue(filecmp.cmp(self.current_directory + "/../../../data/user_test/output_keywords_clusters.txt", self.current_directory + "/temp_output_keywords_clusters.txt"))
+        os.remove(self.current_directory + "/temp_output_keywords_clusters.txt")
 
 
     def test_extended_stop_words(self):
