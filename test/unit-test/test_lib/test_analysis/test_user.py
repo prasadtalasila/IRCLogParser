@@ -16,13 +16,15 @@ class UserTest(unittest.TestCase):
 
     def setUp(self):
         self.current_directory = os.path.dirname(os.path.realpath(__file__))
-        self.log_data = util.load_from_disk(self.current_directory + "/../../../data/user_test/log_data")
-        self.nicks = util.load_from_disk(self.current_directory + "/../../../data/user_test/nicks")
-        self.nick_same_list = util.load_from_disk(self.current_directory + "/../../../data/user_test/nick_same_list")
+        self.test_data_dir = self.current_directory + "/../../../data/test_lib/test_analysis/user_test/"
+        self.log_data = util.load_from_disk(self.test_data_dir + "log_data")
+        self.nicks = util.load_from_disk(self.test_data_dir + "nicks")
+        self.nick_same_list = util.load_from_disk(self.test_data_dir + "nick_same_list")
 
 
     def tearDown(self):
         self.current_directory = None
+        self.test_data_dir = None
         self.log_data = None
         self.nicks = None
         self.nick_same_list = None
@@ -38,8 +40,8 @@ class UserTest(unittest.TestCase):
         mock_splice_find.side_effect = mock_splice_find_data
         mock_build_graphs.side_effect = mock_build_graphs_data
         mock_get_year_month_day.side_effect = mock_get_year_month_day_data
-        expected_nick_change_graph_list = util.load_from_disk(self.current_directory + "/../../../data/user_test/nick_change_graph_list")
-        expected_aggregate_nick_change_graph = util.load_from_disk(self.current_directory + "/../../../data/user_test/aggregate_nick_change_graph")
+        expected_nick_change_graph_list = util.load_from_disk(self.test_data_dir + "nick_change_graph_list")
+        expected_aggregate_nick_change_graph = util.load_from_disk(self.test_data_dir + "aggregate_nick_change_graph")
 
         nick_change_graph_list = user.nick_change_graph(self.log_data, True)
 
@@ -58,7 +60,7 @@ class UserTest(unittest.TestCase):
     @patch("lib.config.DEBUGGER", new = True)
     @patch("lib.config.PRINT_WORDS", new = True)
     def test_top_keywords_for_nick(self):
-        user_keyword_freq_dict_data = util.load_from_disk(self.current_directory + "/../../../data/user_test/user_keyword_freq_dict")
+        user_keyword_freq_dict_data = util.load_from_disk(self.test_data_dir + "user_keyword_freq_dict")
         user_keyword_freq_dict = user_keyword_freq_dict_data
 
         expected_top_keywords = util.load_from_disk(self.current_directory + "/data/user_test/top_keywords1")
@@ -127,11 +129,11 @@ class UserTest(unittest.TestCase):
         mock_rec_list_splice.side_effect = util.load_from_disk(self.current_directory + "/data/user_test/rec_list_splice_list")
         mock_extended_stop_words.return_value = util.load_from_disk(self.current_directory + "/data/user_test/keywords/extended_stop_words")
         mock_top_keywords_for_nick.side_effect = util.load_from_disk(self.current_directory + "/data/user_test/keywords/top_keywords_for_nick")
-        expected_keywords_filtered = util.load_from_disk(self.current_directory + "/../../../data/user_test/keywords/keywords_filtered")
-        expected_user_keyword_freq_dict = util.load_from_disk(self.current_directory + "/../../../data/user_test/user_keyword_freq_dict")
-        expected_user_words_dict = util.load_from_disk(self.current_directory + "/../../../data/user_test/keywords/user_words_dict")
-        expected_nicks_for_stop_words = util.load_from_disk(self.current_directory + "/../../../data/user_test/keywords/nicks_for_stop_words")
-        expected_sorted_keywords_for_channels = util.load_from_disk(self.current_directory + "/../../../data/user_test/keywords/sorted_keywords_for_channels")
+        expected_keywords_filtered = util.load_from_disk(self.test_data_dir + "keywords/keywords_filtered")
+        expected_user_keyword_freq_dict = util.load_from_disk(self.test_data_dir + "user_keyword_freq_dict")
+        expected_user_words_dict = util.load_from_disk(self.test_data_dir + "keywords/user_words_dict")
+        expected_nicks_for_stop_words = util.load_from_disk(self.test_data_dir + "keywords/nicks_for_stop_words")
+        expected_sorted_keywords_for_channels = util.load_from_disk(self.test_data_dir + "keywords/sorted_keywords_for_channels")
         expected_captured_output = util.load_from_disk(self.current_directory + "/data/user_test/keywords/stdout_captured_output")
         captured_output = StringIO.StringIO()
         sys.stdout = captured_output
@@ -157,16 +159,16 @@ class UserTest(unittest.TestCase):
     @patch("lib.config.SHOW_N_WORDS_PER_CLUSTER", new = 10)
     @patch("lib.config.CHECK_K_TILL", new = 20)
     def test_keywords_clusters(self, mock_time, mock_extended_stop_words, mock_keywords):
-        keywords_filtered = util.load_from_disk(self.current_directory + "/../../../data/user_test/keywords/keywords_filtered")
-        user_keyword_freq_dict = util.load_from_disk(self.current_directory + "/../../../data/user_test/user_keyword_freq_dict")
-        user_words_dict = util.load_from_disk(self.current_directory + "/../../../data/user_test/keywords/user_words_dict")
-        nicks_for_stop_words = util.load_from_disk(self.current_directory + "/../../../data/user_test/keywords/nicks_for_stop_words")
-        sorted_keywords_for_channels = util.load_from_disk(self.current_directory + "/../../../data/user_test/keywords/sorted_keywords_for_channels")
+        keywords_filtered = util.load_from_disk(self.test_data_dir + "keywords/keywords_filtered")
+        user_keyword_freq_dict = util.load_from_disk(self.test_data_dir + "user_keyword_freq_dict")
+        user_words_dict = util.load_from_disk(self.test_data_dir + "keywords/user_words_dict")
+        nicks_for_stop_words = util.load_from_disk(self.test_data_dir + "keywords/nicks_for_stop_words")
+        sorted_keywords_for_channels = util.load_from_disk(self.test_data_dir + "keywords/sorted_keywords_for_channels")
 
         mock_keywords.return_value = keywords_filtered, user_keyword_freq_dict, user_words_dict, nicks_for_stop_words, sorted_keywords_for_channels
         mock_extended_stop_words.return_value = util.load_from_disk(self.current_directory + "/data/user_test/extended_stop_words")
         mock_time.return_value = 0
-        expected_captured_output = util.load_from_disk( self.current_directory + "/../../../data/user_test/stdout_captured_output_keywords_clusters");
+        expected_captured_output = util.load_from_disk( self.test_data_dir + "stdout_captured_output_keywords_clusters");
 
         captured_output = StringIO.StringIO()
         sys.stdout = captured_output
@@ -176,7 +178,7 @@ class UserTest(unittest.TestCase):
         captured_output.close()
 
         self.assertEqual(expected_captured_output, output)
-        self.assertTrue(filecmp.cmp(self.current_directory + "/../../../data/user_test/output_keywords_clusters.txt", self.current_directory + "/temp_output_keywords_clusters.txt"))
+        self.assertTrue(filecmp.cmp(self.test_data_dir + "output_keywords_clusters.txt", self.current_directory + "/temp_output_keywords_clusters.txt"))
         os.remove(self.current_directory + "/temp_output_keywords_clusters.txt")
 
 
@@ -190,16 +192,16 @@ class UserTest(unittest.TestCase):
     @patch("lib.config.SHOW_N_WORDS_PER_CLUSTER", new = 10)
     @patch("lib.config.CHECK_K_TILL", new = 20)
     def test_keywords_clusters_expected_failure(self, mock_time, mock_extended_stop_words, mock_keywords):
-        keywords_filtered = util.load_from_disk(self.current_directory + "/../../../data/user_test/keywords/keywords_filtered")
-        user_keyword_freq_dict = util.load_from_disk(self.current_directory + "/../../../data/user_test/user_keyword_freq_dict")
-        user_words_dict = util.load_from_disk(self.current_directory + "/../../../data/user_test/keywords/user_words_dict")
-        nicks_for_stop_words = util.load_from_disk(self.current_directory + "/../../../data/user_test/keywords/nicks_for_stop_words")
-        sorted_keywords_for_channels = util.load_from_disk(self.current_directory + "/../../../data/user_test/keywords/sorted_keywords_for_channels")
+        keywords_filtered = util.load_from_disk(self.test_data_dir + "keywords/keywords_filtered")
+        user_keyword_freq_dict = util.load_from_disk(self.test_data_dir + "user_keyword_freq_dict")
+        user_words_dict = util.load_from_disk(self.test_data_dir + "keywords/user_words_dict")
+        nicks_for_stop_words = util.load_from_disk(self.test_data_dir + "keywords/nicks_for_stop_words")
+        sorted_keywords_for_channels = util.load_from_disk(self.test_data_dir + "keywords/sorted_keywords_for_channels")
 
         mock_keywords.return_value = keywords_filtered, user_keyword_freq_dict, user_words_dict, nicks_for_stop_words, sorted_keywords_for_channels
         mock_extended_stop_words.return_value = util.load_from_disk(self.current_directory + "/data/user_test/extended_stop_words")
         mock_time.return_value = 0
-        expected_captured_output = util.load_from_disk( self.current_directory + "/../../../data/user_test/stdout_captured_output_keywords_clusters");
+        expected_captured_output = util.load_from_disk( self.test_data_dir + "stdout_captured_output_keywords_clusters");
 
         captured_output = StringIO.StringIO()
         sys.stdout = captured_output
@@ -209,12 +211,12 @@ class UserTest(unittest.TestCase):
         captured_output.close()
 
         self.assertEqual(expected_captured_output, output)
-        self.assertTrue(filecmp.cmp(self.current_directory + "/../../../data/user_test/output_keywords_clusters.txt", self.current_directory + "/temp_output_keywords_clusters.txt"))
+        self.assertTrue(filecmp.cmp(self.test_data_dir + "output_keywords_clusters.txt", self.current_directory + "/temp_output_keywords_clusters.txt"))
         os.remove(self.current_directory + "/temp_output_keywords_clusters.txt")
 
 
     def test_extended_stop_words(self):
-        nicks_for_stop_words = util.load_from_disk(self.current_directory + "/../../../data/user_test/keywords/nicks_for_stop_words")
+        nicks_for_stop_words = util.load_from_disk(self.test_data_dir + "keywords/nicks_for_stop_words")
         stop_word_without_apostrophe = util.load_from_disk(self.current_directory + "/data/user_test/stop_word_without_apostrophe")
         expected_stop_words_extended = util.load_from_disk(self.current_directory + "/data/user_test/keywords/extended_stop_words")
 
