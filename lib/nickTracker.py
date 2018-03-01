@@ -12,11 +12,11 @@ def nick_tracker(log_dict, track_users_on_channels = False):
 
     Returns:
        nicks(list): all nicks
-       nick_same_list(list): list of lists with each list corresponding to nicks of same user 
+       nick_same_list(list): list of lists with each list corresponding to nicks of same user
 
     """
     nicks = []  # list of all the nicknames
-    nick_same_list = [[] for i in range(config.MAX_EXPECTED_DIFF_NICKS)]  
+    nick_same_list = [[] for i in range(config.MAX_EXPECTED_DIFF_NICKS)]
     nick_channel_dict = []
     channels_for_user = []
     nicks_hash = []
@@ -56,8 +56,8 @@ def nick_tracker(log_dict, track_users_on_channels = False):
                 if(line[0] == '=' and "changed the topic of" not in line):
                     old_nick = util.splice_find(line, "=", " is", 3)
                     new_nick = util.splice_find(line, "wn as", "\n", 5)
-                    nicks, nicks_today_on_this_channel = nick_append(old_nick, nicks, nicks_today_on_this_channel, track_users_on_channels)                
-                    nicks, nicks_today_on_this_channel = nick_append(new_nick, nicks, nicks_today_on_this_channel, track_users_on_channels)    
+                    nicks, nicks_today_on_this_channel = nick_append(old_nick, nicks, nicks_today_on_this_channel, track_users_on_channels)
+                    nicks, nicks_today_on_this_channel = nick_append(new_nick, nicks, nicks_today_on_this_channel, track_users_on_channels)
                     
                         #nicks.append(new_nick)
                     for i in range(config.MAX_EXPECTED_DIFF_NICKS):
@@ -115,7 +115,7 @@ def nick_tracker(log_dict, track_users_on_channels = False):
                         considered_nicks.append(user_nick)
 
         channels_for_user.append(channels_for_user_day)
-        
+
 
     for nick in nicks:
         for index in range(config.MAX_EXPECTED_DIFF_NICKS):
@@ -143,7 +143,7 @@ def nick_tracker(log_dict, track_users_on_channels = False):
             for channel in dicts['channels']:
                 if channel[0] not in channels_hash:
                     channels_hash.append(channel[0])
-        
+
         return [nicks, nick_same_list, channels_for_user, nick_channel_dict, nicks_hash, channels_hash]
 
 
