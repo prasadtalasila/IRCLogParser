@@ -14,13 +14,13 @@ class NickTrackerTest(unittest.TestCase):
 
     def tearDown(self):
         self.current_directory = None
-
+    
+    @patch("lib.config.MAX_EXPECTED_DIFF_NICKS", new = 5000)
+    @patch("lib.config.DEBUGGER", new = True)
     @patch("lib.nickTracker.searchChannel", autospec = True)
     @patch("lib.util.splice_find", autospec = True)
     @patch("lib.util.correctLastCharCR", autospec = True)
     @patch("lib.util.check_if_msg_line", autospec = True)
-    @patch("lib.config.MAX_EXPECTED_DIFF_NICKS", new = 5000)
-    @patch("lib.config.DEBUGGER", new = True)
     def test_nick_tracker(self, mock_check_if_msg_line, mock_correctLastCharCR, mock_splice_find, mock_searchChannel):
 
         log_data_dat = util.load_from_disk(self.current_directory + "/../../data/test_lib/nickTracker/log_data")

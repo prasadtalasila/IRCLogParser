@@ -7,17 +7,18 @@ import StringIO
 from mock import patch
 import re
 
-current_directory = os.path.dirname(os.path.realpath(__file__))
 
 class ReaderTest(unittest.TestCase):
 
     def setUp(self):
-        self.log_data = util.load_from_disk(current_directory+ "/data/log_data")
+        self.current_directory = os.path.dirname(os.path.realpath(__file__))
+        self.log_data = util.load_from_disk(self.current_directory+ "/data/log_data")
         self.starting_date = "2013-1-1" 
         self.ending_date = "2013-1-31"
 
 
     def tearDown(self):
+        self.current_directory = None
         self.log_data = None
         self.starting_date = None
         self.ending_date = None
@@ -25,11 +26,11 @@ class ReaderTest(unittest.TestCase):
 
     @patch("lib.config.DEBUGGER", new = True)
     def test_linux_input_slack(self):
-        expected_captured_output = util.load_from_disk(current_directory +"/data/stdout_captured_linux_input_slack")
+        expected_captured_output = util.load_from_disk(self.current_directory +"/data/stdout_captured_linux_input_slack")
 
         capturedOutput = StringIO.StringIO()
         sys.stdout = capturedOutput
-        log_data = reader.linux_input_slack(current_directory + "/data/slackware/", self.starting_date, self.ending_date)
+        log_data = reader.linux_input_slack(self.current_directory + "/data/slackware/", self.starting_date, self.ending_date)
         output = capturedOutput.getvalue()
         capturedOutput.close()
         sys.stdout = sys.__stdout__
@@ -56,12 +57,12 @@ class ReaderTest(unittest.TestCase):
 
     @patch("lib.config.DEBUGGER", new = True)
     def test_linux_input_non_existent_file_slack(self):
-        expected_captured_output = util.load_from_disk(current_directory + "/data/stdout_captured_linux_input_slack_non_existent_file")
-        expected_log_data = util.load_from_disk(current_directory + "/data/log_data_for_test_linux_input_non_existent_file_slack")
+        expected_captured_output = util.load_from_disk(self.current_directory + "/data/stdout_captured_linux_input_slack_non_existent_file")
+        expected_log_data = util.load_from_disk(self.current_directory + "/data/log_data_for_test_linux_input_non_existent_file_slack")
 
         capturedOutput = StringIO.StringIO()
         sys.stdout = capturedOutput
-        log_data = reader.linux_input_slack(current_directory + "/data/slackware_with_missing_files/", "2013-1-1","2013-1-6")
+        log_data = reader.linux_input_slack(self.current_directory + "/data/slackware_with_missing_files/", "2013-1-1","2013-1-6")
         output = capturedOutput.getvalue()
         capturedOutput.close()
         sys.stdout = sys.__stdout__

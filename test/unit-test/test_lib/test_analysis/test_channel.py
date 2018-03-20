@@ -17,9 +17,12 @@ class ChannelTest(unittest.TestCase):
         self.connected_nick_list = util.load_from_disk(self.test_data_dir + "/channel/connected_nick_list")
 
     def tearDown(self):
+        self.test_data_dir = None
         self.log_data = None
         self.nicks = None
         self.nick_same_list = None
+        self.to_graph = None
+        self.connected_nick_list = None
 
     def mock_create_connected_nick_list(self,conn_comp_list):
         for i in range(len(conn_comp_list)):
@@ -86,10 +89,10 @@ class ChannelTest(unittest.TestCase):
             channel.conv_len_conv_refr_time(self.log_data, self.nicks, self.nick_same_list,
                                             rt_cutoff_time, cutoff_percentile)
 
-        assert conv_len == expected_conv_len, \
-            "Error in computing conversation length correctly."
-        assert conv_ref_time == expected_conv_ref_time, \
-                "Error in computing conversation refresh time correctly."
+        self.assertEqual(conv_len, expected_conv_len, \
+            "Error in computing conversation length correctly.")
+        self.assertEqual(conv_ref_time, expected_conv_ref_time, \
+                "Error in computing conversation refresh time correctly.")
 
     @patch("lib.analysis.channel.truncate_table", autospec=True)
     @patch("lib.analysis.channel.build_stat_dist")
@@ -122,20 +125,20 @@ class ChannelTest(unittest.TestCase):
         expected_cutoff_time = 1
         resp_time, cutoff_time = channel.response_time(self.log_data, self.nicks,
                                           self.nick_same_list, cutoff_percentile)
-        assert resp_time == expected_resp_time, \
-                "Error in computing response time with 0% cutoff percentile."
-        assert cutoff_time == expected_cutoff_time, \
-                "Error in computing RT cutoff with 0% cutoff percentile."
+        self.assertEqual(resp_time, expected_resp_time, \
+                "Error in computing response time with 0% cutoff percentile.")
+        self.assertEqual(cutoff_time, expected_cutoff_time, \
+                "Error in computing RT cutoff with 0% cutoff percentile.")
 
         cutoff_percentile = 1.0
         expected_resp_time = util.load_from_disk(self.test_data_dir+ "/channel/truncated_rt_1percent")
         expected_cutoff_time = 1
         resp_time, cutoff_time = channel.response_time(self.log_data, self.nicks,
                                           self.nick_same_list, cutoff_percentile)
-        assert resp_time == expected_resp_time, \
-                "Error in computing response time with 1% cutoff percentile."
-        assert cutoff_time == expected_cutoff_time, \
-                "Error in computing RT cutoff with 1% cutoff percentile."
+        self.assertEqual(resp_time, expected_resp_time, \
+                "Error in computing response time with 1% cutoff percentile.")
+        self.assertEqual(cutoff_time, expected_cutoff_time, \
+                "Error in computing RT cutoff with 1% cutoff percentile.")
 
     @patch("lib.analysis.channel.truncate_table", autospec=True)
     @patch("lib.analysis.channel.build_stat_dist")
@@ -168,34 +171,36 @@ class ChannelTest(unittest.TestCase):
         expected_cutoff_time = 2
         resp_time, cutoff_time = channel.response_time(self.log_data, self.nicks,
                                           self.nick_same_list, cutoff_percentile)
-        assert resp_time == expected_resp_time, \
-                "Error in computing response time with 5% cutoff percentile."
-        assert cutoff_time == expected_cutoff_time, \
-                "Error in computing RT cutoff with 5% cutoff percentile."
+        self.assertEqual(resp_time, expected_resp_time, \
+                "Error in computing response time with 5% cutoff percentile.")
+        self.assertEqual(cutoff_time, expected_cutoff_time, \
+                "Error in computing RT cutoff with 5% cutoff percentile.")
 
         cutoff_percentile = 10.0
         expected_resp_time = util.load_from_disk(self.test_data_dir+ "/channel/truncated_rt_10percent")
         expected_cutoff_time = 3
         resp_time, cutoff_time = channel.response_time(self.log_data, self.nicks,
                                           self.nick_same_list, cutoff_percentile)
-        assert resp_time == expected_resp_time, \
-                "Error in computing response time with 10% cutoff percentile."
-        assert cutoff_time == expected_cutoff_time, \
-                "Error in computing RT cutoff with 10% cutoff percentile."
+        self.assertEqual(resp_time, expected_resp_time, \
+                "Error in computing response time with 10% cutoff percentile.")
+        self.assertEqual(cutoff_time, expected_cutoff_time, \
+                "Error in computing RT cutoff with 10% cutoff percentile.")
+
 
     def test_truncate_table_with_short_table(self):
         resp_time = [(0, 9), (1, 12), (2, 3), (3, 1), (4, 1), (5, 5), (6, 0), (7, 1), (8, 1), (9, 1), (10, 1), (11, 1), (12, 0), (13, 0), (14, 1), (15, 0), (16, 0), (17, 1), (18, 0), (19, 0), (20, 1)]
         expected_cutoff_time = 14
         cutoff_percentile = 5.0
         truncated_table, cutoff_time = channel.truncate_table(resp_time, cutoff_percentile)
-        assert cutoff_time == expected_cutoff_time, \
-                "Error in computing percentile cutoff value"
+        self.assertEqual(cutoff_time, expected_cutoff_time, \
+                "Error in computing percentile cutoff value")
 
         cutoff_percentile = 1.0
         expected_cutoff_time = 17
         truncated_table, cutoff_time = channel.truncate_table(resp_time, cutoff_percentile)
-        assert cutoff_time == expected_cutoff_time, \
-                "Error in computing percentile cutoff value"
+        self.assertEqual(cutoff_time, expected_cutoff_time, \
+                "Error in computing percentile cutoff value")
+
 
     def test_truncate_table_with_long_table(self):
         resp_time = util.load_from_disk(self.test_data_dir+ "/channel/resp_time")
@@ -203,22 +208,23 @@ class ChannelTest(unittest.TestCase):
         expected_cutoff_time = 989
         cutoff_percentile = 5
         truncated_table, cutoff_time = channel.truncate_table(resp_time, cutoff_percentile)
-        assert cutoff_time == expected_cutoff_time, \
-                "Error in computing percentile cutoff value"
+        self.assertEqual(cutoff_time, expected_cutoff_time, \
+                "Error in computing percentile cutoff value")
 
         cutoff_percentile = 1
         expected_cutoff_time = 1436
         truncated_table, cutoff_time = channel.truncate_table(resp_time, cutoff_percentile)
-        assert cutoff_time == expected_cutoff_time, \
-                "Error in computing percentile cutoff value"
+        self.assertEqual(cutoff_time, expected_cutoff_time, \
+                "Error in computing percentile cutoff value")
 
     def test_build_stat_dist(self):
-        assert channel.build_stat_dist([]) == [], "Unable to handle empty list"
+        self.assertEqual(channel.build_stat_dist([]), [], "Unable to handle empty list")
+
         number_list = [0, 9, 1, 0, 6, 3, 0, 0, 0, 0, 0, 13, 1, 0, 15, 6, 0, 0, 0, 0, 0, 0, 3, 7, 0, 7, 3, 0, 0]
         expected_stat_dist = [(0, 17), (1, 2), (2, 0), (3, 3), (4, 0), (5, 0), (6, 2), (7, 2), (8, 0), (9, 1), (10, 0), (11, 0), (12, 0), (13, 1), (14, 0), (15, 1)]
 
         stat_dist = channel.build_stat_dist(number_list)
-        assert stat_dist == expected_stat_dist, "Incorrect result"
+        self.assertEqual(stat_dist, expected_stat_dist, "Incorrect result")
 
 
 if __name__ == '__main__':

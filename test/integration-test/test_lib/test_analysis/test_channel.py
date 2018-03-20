@@ -15,7 +15,6 @@ class ChannelTest(unittest.TestCase):
 
     def tearDown(self):
         self.test_data_dir = None
-        self.test_data_dir = None
         self.log_data = None
         self.nicks = None
         self.nick_same_list = None

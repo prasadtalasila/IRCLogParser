@@ -105,7 +105,10 @@ class UserTest(unittest.TestCase):
         self.assertEqual(top_keywords, expected_top_keywords)
         self.assertEqual(top_keywords_normal_freq, expected_top_keywords_normal_freq)
 
-
+    @patch("lib.config.DEBUGGER", new = True)
+    @patch("lib.config.PRINT_WORDS", new = True)
+    @patch("lib.config.KEYWORDS_THRESHOLD", new = 0.01)
+    @patch("lib.config.KEYWORDS_MIN_WORDS", new = 100)
     @patch("lib.util.get_nick_representative", autospec = True)
     @patch("lib.util.check_if_msg_line", autospec = True)
     @patch("lib.util.correctLastCharCR", autospec = True)
@@ -115,10 +118,6 @@ class UserTest(unittest.TestCase):
     @patch("lib.util.rec_list_splice", autospec = True)
     @patch("lib.analysis.user.extended_stop_words", autospec = True)
     @patch("lib.analysis.user.top_keywords_for_nick", autospec = True)
-    @patch("lib.config.DEBUGGER", new = True)
-    @patch("lib.config.PRINT_WORDS", new = True)
-    @patch("lib.config.KEYWORDS_THRESHOLD", new = 0.01)
-    @patch("lib.config.KEYWORDS_MIN_WORDS", new = 100)
     def test_keywords(self, mock_top_keywords_for_nick, mock_extended_stop_words, mock_rec_list_splice, mock_correct_nick_for_, mock_splice_find, mock_correct_last_char_list, mock_correctLastCharCR, mock_check_if_msg_line, mock_get_nick_representative):
         mock_get_nick_representative.side_effect = util.load_from_disk(self.current_directory + "/data/user_test/get_nick_representative_list")
         mock_check_if_msg_line.side_effect = util.load_from_disk(self.current_directory + "/data/user_test/check_if_msg_line_list")
@@ -149,15 +148,14 @@ class UserTest(unittest.TestCase):
         self.assertEqual(expected_nicks_for_stop_words, nicks_for_stop_words)
         self.assertEqual(expected_sorted_keywords_for_channels, sorted_keywords_for_channels)
 
-
-    @patch("lib.analysis.user.keywords", autospec = True)
-    @patch("lib.analysis.user.extended_stop_words", autospec = True)
-    @patch("lib.analysis.user.time", autospec = True)
     @patch("lib.config.ENABLE_SVD", new = False)
     @patch("lib.config.ENABLE_ELBOW_METHOD_FOR_K", new = False)
     @patch("lib.config.NUMBER_OF_CLUSTERS", new = 11)
     @patch("lib.config.SHOW_N_WORDS_PER_CLUSTER", new = 10)
     @patch("lib.config.CHECK_K_TILL", new = 20)
+    @patch("lib.analysis.user.keywords", autospec = True)
+    @patch("lib.analysis.user.extended_stop_words", autospec = True)
+    @patch("lib.analysis.user.time", autospec = True)
     def test_keywords_clusters(self, mock_time, mock_extended_stop_words, mock_keywords):
         keywords_filtered = util.load_from_disk(self.test_data_dir + "keywords/keywords_filtered")
         user_keyword_freq_dict = util.load_from_disk(self.test_data_dir + "user_keyword_freq_dict")
@@ -183,14 +181,14 @@ class UserTest(unittest.TestCase):
 
 
     @unittest.expectedFailure
-    @patch("lib.analysis.user.keywords", autospec = True)
-    @patch("lib.analysis.user.extended_stop_words", autospec = True)
-    @patch("lib.analysis.user.time", autospec = True)
     @patch("lib.config.ENABLE_SVD", new = True)
     @patch("lib.config.ENABLE_ELBOW_METHOD_FOR_K", new = True)
     @patch("lib.config.NUMBER_OF_CLUSTERS", new = 11)
     @patch("lib.config.SHOW_N_WORDS_PER_CLUSTER", new = 10)
     @patch("lib.config.CHECK_K_TILL", new = 20)
+    @patch("lib.analysis.user.keywords", autospec = True)
+    @patch("lib.analysis.user.extended_stop_words", autospec = True)
+    @patch("lib.analysis.user.time", autospec = True)
     def test_keywords_clusters_expected_failure(self, mock_time, mock_extended_stop_words, mock_keywords):
         keywords_filtered = util.load_from_disk(self.test_data_dir + "keywords/keywords_filtered")
         user_keyword_freq_dict = util.load_from_disk(self.test_data_dir + "user_keyword_freq_dict")

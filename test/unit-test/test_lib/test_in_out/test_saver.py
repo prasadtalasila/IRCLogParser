@@ -19,7 +19,7 @@ class SaverTest(unittest.TestCase):
 
     def test_check_if_dir_exists(self):
         saver.check_if_dir_exists(self.current_directory + '/test/')
-        assert os.path.exists(os.path.dirname(self.current_directory + '/test/'))
+        self.assertTrue(os.path.exists(os.path.dirname(self.current_directory + '/test/')))
         os.rmdir(self.current_directory + '/test/')
 
     @patch("os.makedirs", autospec = True)
@@ -35,8 +35,8 @@ class SaverTest(unittest.TestCase):
         graph.add_edge(1,3)
         
         saver.draw_nx_graph(graph, self.current_directory, 'nx_graph')
-        assert os.path.exists(self.current_directory + '/nx_graph.svg')
-        assert os.path.isfile(self.current_directory + '/nx_graph.svg')
+        self.assertTrue(os.path.exists(self.current_directory + '/nx_graph.svg'))
+        self.assertTrue(os.path.isfile(self.current_directory + '/nx_graph.svg'))
         
         os.remove(self.current_directory + '/nx_graph.svg')
     
@@ -46,26 +46,26 @@ class SaverTest(unittest.TestCase):
         graph.add_edge(1,3)
         saver.save_net_nx_graph(graph, self.current_directory, 'test_save_net_nx')
         
-        assert os.path.exists(self.current_directory + '/test_save_net_nx.net')
-        assert os.path.isfile(self.current_directory + '/test_save_net_nx.net')
+        self.assertTrue(os.path.exists(self.current_directory + '/test_save_net_nx.net'))
+        self.assertTrue(os.path.isfile(self.current_directory + '/test_save_net_nx.net'))
         
         g = nx.read_pajek(self.current_directory + '/test_save_net_nx.net')
-        assert nx.is_isomorphic(graph, g)
+        self.assertTrue(nx.is_isomorphic(graph, g))
         
         os.remove(self.current_directory + '/test_save_net_nx.net')
         
     def test_save_csv(self):
         matrix = [[1, 2, 3], [1, 2, 3], [1, 2, 3]]
         saver.save_csv(matrix, self.current_directory, 'test_save_csv')
-        assert os.path.exists(self.current_directory + '/test_save_csv.csv')
-        assert os.path.isfile(self.current_directory + '/test_save_csv.csv')
+        self.assertTrue(os.path.exists(self.current_directory + '/test_save_csv.csv'))
+        self.assertTrue(os.path.isfile(self.current_directory + '/test_save_csv.csv'))
         
         filename = self.current_directory + '/test_save_csv.csv'
         with open(filename, 'rb') as f:
             reader = csv.reader(f, delimiter=',', quoting=csv.QUOTE_NONNUMERIC)
             try:
                 for row in reader:
-                    assert row == [1.0, 2.0, 3.0]
+                    self.assertEqual(row, [1.0, 2.0, 3.0])
             except csv.Error as e:
                 sys.exit('file %s, line %d: %s' % (filename, reader.line_num, e))
         
@@ -80,13 +80,13 @@ class SaverTest(unittest.TestCase):
         
         saver.save_js_arc(rCC, channels_hash, self.current_directory, '/save_js')
         
-        assert os.path.exists(self.current_directory + '/save_js')
-        assert os.path.isfile(self.current_directory + '/save_js')
+        self.assertTrue(os.path.exists(self.current_directory + '/save_js'))
+        self.assertTrue(os.path.isfile(self.current_directory + '/save_js'))
         
         with open(self.current_directory + '/save_js') as fh:
             dump = fh.readline()
             
-        assert expected_result == dump
+        self.assertEqual(expected_result, dump)
         
         os.remove(self.current_directory + '/save_js')
         # remove files copied from lib/protovis

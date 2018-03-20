@@ -19,6 +19,8 @@ class NetworkTest(unittest.TestCase):
         self.nick_same_list = util.load_from_disk(self.test_data_dir + "../nick_same_list")
 
     def tearDown(self):
+        self.current_directory = None
+        self.test_data_dir = None
         self.log_data = None
         self.nicks = None
         self.nick_same_list = None
@@ -254,17 +256,17 @@ class NetworkTest(unittest.TestCase):
         conn_comp_list = [["Rohit", "rohit", "kaushik"], ["krishna", "krish", "acharya"], ["Rohan", "rohan", "ron"]]
         conn_comp_list.extend([[]]*config.MAX_EXPECTED_DIFF_NICKS)
         
-        assert network.nick_receiver_from_conn_comp("kaushik", conn_comp_list) == "Rohit"
-        assert network.nick_receiver_from_conn_comp("krishna", conn_comp_list) == "krishna"
-        assert network.nick_receiver_from_conn_comp("Rohan_goel", conn_comp_list) == ""
+        self.assertEqual(network.nick_receiver_from_conn_comp("kaushik", conn_comp_list), "Rohit")
+        self.assertEqual(network.nick_receiver_from_conn_comp("krishna", conn_comp_list), "krishna")
+        self.assertEqual(network.nick_receiver_from_conn_comp("Rohan_goel", conn_comp_list), "")
         
     @mock.patch('lib.slack.analysis.network.message_number_graph', autospec=True)
     @mock.patch('lib.slack.analysis.network.user.keywords', autospec=True)
     def test_identify_hubs_and_experts(self, mock_keywords, mock_msg_graph):
     
-        top_hub_ = util.load_from_disk(self.test_data_dir + "hits/top_hub")
-        top_keyword_overlap_ = util.load_from_disk(self.test_data_dir + "hits/top_keyword_overlap")
-        top_auth_ = util.load_from_disk(self.test_data_dir + "hits/top_auth")
+        expected_top_hub = util.load_from_disk(self.test_data_dir + "hits/top_hub")
+        expected_top_keyword_overlap = util.load_from_disk(self.test_data_dir + "hits/top_keyword_overlap")
+        expected_top_auth = util.load_from_disk(self.test_data_dir + "hits/top_auth")
         message_graph = util.load_from_disk(self.test_data_dir + "hits/message_graph")
         keyword_dict_list = util.load_from_disk(self.test_data_dir + "hits/keyword_dict_list")
         user_keyword_freq_dict = util.load_from_disk(self.test_data_dir + "hits/user_keyword_freq_dict")
@@ -283,9 +285,9 @@ class NetworkTest(unittest.TestCase):
         sys.stdout = sys.__stdout__
         capturedOutput.close()
         
-        self.assertEqual(top_hub, top_hub_)
-        self.assertEqual(top_keyword_overlap, top_keyword_overlap_)
-        self.assertEqual(top_auth, top_auth_) 
+        self.assertEqual(top_hub, expected_top_hub)
+        self.assertEqual(top_keyword_overlap, expected_top_keyword_overlap)
+        self.assertEqual(top_auth, expected_top_auth)
         self.assertTrue(nx.is_isomorphic(message_graph, message_num_graph))
 
 if __name__ == '__main__':
