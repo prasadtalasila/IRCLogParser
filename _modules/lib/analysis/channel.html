@@ -67,392 +67,388 @@
 
 <div class="viewcode-block" id="conv_len_conv_refr_time"><a class="viewcode-back" href="../../../DocumentationForCode.html#lib.analysis.channel.conv_len_conv_refr_time">[docs]</a><span class="k">def</span> <span class="nf">conv_len_conv_refr_time</span><span class="p">(</span><span class="n">log_dict</span><span class="p">,</span> <span class="n">nicks</span><span class="p">,</span> <span class="n">nick_same_list</span><span class="p">,</span> <span class="n">rt_cutoff_time</span><span class="p">,</span> <span class="n">cutoff_percentile</span><span class="p">):</span>
 
-	<span class="sd">&quot;&quot;&quot; Calculates the conversation length (CL) that is the length of time for which two users communicate </span>
-<span class="sd">	i.e. if a message is not replied to within Response Time(RT), </span>
-<span class="sd">	then it is considered as a part of another conversation.</span>
-<span class="sd">	This function also calculates the conversation refresh time(CRT)</span>
-<span class="sd">	For a pair of users, this is the time when one conversation ends and another one starts.</span>
-<span class="sd">	Args:   </span>
-<span class="sd">		log_dict (str): Dictionary of logs data created using reader.py</span>
-<span class="sd">		nicks(List) : list of nickname created using nickTracker.py</span>
-<span class="sd">		nick_same_list :List of same_nick names created using nickTracker.py</span>
-<span class="sd">		rt_cutoff_time (int) : Response Time (RT) cutoff to be used for CL and CRT calculations</span>
-<span class="sd">	Returns:</span>
-<span class="sd">		row_cl(zip List): Conversation Length</span>
-<span class="sd">		row_crt(zip List) :Conversation Refresh time</span>
-<span class="sd">	   </span>
-<span class="sd">	&quot;&quot;&quot;</span> 
-	<span class="n">conv</span> <span class="o">=</span> <span class="p">[]</span>
-	<span class="n">conv_diff</span> <span class="o">=</span> <span class="p">[]</span>  
+    <span class="sd">&quot;&quot;&quot; Calculates the conversation length (CL) that is the length of time for which two users communicate</span>
+<span class="sd">    i.e. if a message is not replied to within Response Time(RT),</span>
+<span class="sd">    then it is considered as a part of another conversation.</span>
+<span class="sd">    This function also calculates the conversation refresh time(CRT)</span>
+<span class="sd">    For a pair of users, this is the time when one conversation ends and another one starts.</span>
+<span class="sd">    Args:</span>
+<span class="sd">        log_dict (str): Dictionary of logs data created using reader.py</span>
+<span class="sd">        nicks(List) : list of nickname created using nickTracker.py</span>
+<span class="sd">        nick_same_list :List of same_nick names created using nickTracker.py</span>
+<span class="sd">        rt_cutoff_time (int) : Response Time (RT) cutoff to be used for CL and CRT calculations</span>
+<span class="sd">    Returns:</span>
+<span class="sd">        row_cl(zip List): Conversation Length</span>
+<span class="sd">        row_crt(zip List) :Conversation Refresh time</span>
 
-	<span class="n">G</span> <span class="o">=</span> <span class="n">util</span><span class="o">.</span><span class="n">to_graph</span><span class="p">(</span><span class="n">nick_same_list</span><span class="p">)</span>
-	<span class="n">conn_comp_list</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">connected_components</span><span class="p">(</span><span class="n">G</span><span class="p">))</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">conv</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">conv_diff</span> <span class="o">=</span> <span class="p">[]</span>
 
-	<span class="n">util</span><span class="o">.</span><span class="n">create_connected_nick_list</span><span class="p">(</span><span class="n">conn_comp_list</span><span class="p">)</span>
+    <span class="n">G</span> <span class="o">=</span> <span class="n">util</span><span class="o">.</span><span class="n">to_graph</span><span class="p">(</span><span class="n">nick_same_list</span><span class="p">)</span>
+    <span class="n">conn_comp_list</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">connected_components</span><span class="p">(</span><span class="n">G</span><span class="p">))</span>
 
-	<span class="c1"># We use connected components algorithm to group all those nick clusters that have atleast one nick common in their clusters. So e.g.</span>
-	<span class="c1">#Cluster 1- nick1,nick2,nick3,nick4(some nicks of a user) #Cluster 2 -nick5,nick6,nick2,nick7. Then we would get - nick1,nick2,nick3,nick4,nick5,nick6,nick7 and we can safely assume they belong to the same user.</span>
+    <span class="n">util</span><span class="o">.</span><span class="n">create_connected_nick_list</span><span class="p">(</span><span class="n">conn_comp_list</span><span class="p">)</span>
 
-	<span class="n">conversations</span><span class="o">=</span><span class="p">[[]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">MAX_CONVERSATIONS</span><span class="p">)]</span> <span class="c1">#This might need to be incremented from 10000 if we have more users. Same logic as the above 7000 one. Applies to all the other codes too.</span>
-											 <span class="c1">## I would advice on using a different data structure which does not have an upper bound like we do in arrays.</span>
+    <span class="c1"># We use connected components algorithm to group all those nick clusters that have atleast one nick common in their clusters.</span>
+    <span class="c1"># So e.g.</span>
+    <span class="c1"># Cluster 1- nick1,nick2,nick3,nick4(some nicks of a user)</span>
+    <span class="c1"># Cluster 2 -nick5,nick6,nick2,nick7.</span>
+    <span class="c1"># Then we would get - nick1,nick2,nick3,nick4,nick5,nick6,nick7 and we can safely assume they belong to the same user.</span>
 
-	<span class="k">def</span> <span class="nf">build_conversation</span><span class="p">(</span><span class="n">rec_list</span><span class="p">,</span> <span class="n">nick</span><span class="p">,</span> <span class="n">send_time</span><span class="p">,</span> <span class="n">nick_to_search</span><span class="p">,</span>
-						   <span class="n">nick_receiver</span><span class="p">,</span> <span class="n">nick_sender</span><span class="p">,</span> <span class="n">dateadd</span><span class="p">,</span>
-						   <span class="n">conversations</span><span class="p">,</span> <span class="n">conn_comp_list</span><span class="p">,</span> <span class="n">line</span><span class="p">):</span>
-		<span class="k">for</span> <span class="n">names</span> <span class="ow">in</span> <span class="n">rec_list</span><span class="p">:</span>
-			<span class="n">conversations</span><span class="p">,</span> <span class="n">nick_receiver</span><span class="p">,</span> <span class="n">send_time</span> <span class="o">=</span> \
-				<span class="n">conv_helper</span><span class="p">(</span><span class="n">names</span><span class="p">,</span> <span class="n">nick</span><span class="p">,</span> <span class="n">send_time</span><span class="p">,</span> <span class="n">nick_to_search</span><span class="p">,</span>
-							<span class="n">nick_receiver</span><span class="p">,</span> <span class="n">nick_sender</span><span class="p">,</span> <span class="n">dateadd</span><span class="p">,</span>
-							<span class="n">conversations</span><span class="p">,</span> <span class="n">conn_comp_list</span><span class="p">,</span> <span class="n">line</span><span class="p">)</span>
-		<span class="k">return</span>  <span class="n">conversations</span><span class="p">,</span> <span class="n">nick_receiver</span><span class="p">,</span> <span class="n">send_time</span>
+    <span class="n">conversations</span><span class="o">=</span><span class="p">[[]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">MAX_CONVERSATIONS</span><span class="p">)]</span> <span class="c1"># This might need to be incremented from 10000 if we have more users. Same logic as the above 7000 one. Applies to all the other codes too.</span>
+                                             <span class="c1">## I would advice on using a different data structure which does not have an upper bound like we do in arrays.</span>
 
-	<span class="k">def</span> <span class="nf">conv_helper</span><span class="p">(</span><span class="n">rec</span><span class="p">,</span> <span class="n">nick</span><span class="p">,</span> <span class="n">send_time</span><span class="p">,</span> <span class="n">nick_to_search</span><span class="p">,</span> <span class="n">nick_receiver</span><span class="p">,</span>
-					<span class="n">nick_sender</span><span class="p">,</span> <span class="n">dateadd</span><span class="p">,</span> <span class="n">conversations</span><span class="p">,</span> <span class="n">conn_comp_list</span><span class="p">,</span> <span class="n">line</span><span class="p">):</span>
-		<span class="k">if</span><span class="p">(</span><span class="n">rec</span> <span class="o">==</span> <span class="n">nick</span><span class="p">):</span>
-			<span class="n">send_time</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">line</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="mi">6</span><span class="p">])</span>
-			<span class="k">if</span><span class="p">(</span><span class="n">nick_to_search</span> <span class="o">!=</span> <span class="n">nick</span><span class="p">):</span>
-				<span class="n">nick_receiver</span> <span class="o">=</span> <span class="n">util</span><span class="o">.</span><span class="n">get_nick_sen_rec</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">nicks</span><span class="p">),</span> <span class="n">nick</span><span class="p">,</span> <span class="n">conn_comp_list</span><span class="p">,</span> <span class="n">nick_receiver</span><span class="p">)</span>
-				<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">MAX_CONVERSATIONS</span><span class="p">):</span>
-					<span class="k">if</span> <span class="p">(</span><span class="n">nick_sender</span> <span class="ow">in</span> <span class="n">conversations</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="ow">and</span> <span class="n">nick_receiver</span> <span class="ow">in</span> <span class="n">conversations</span><span class="p">[</span><span class="n">i</span><span class="p">]):</span>
-						<span class="n">conversations</span> <span class="o">=</span> <span class="n">conv_append</span><span class="p">(</span><span class="n">conversations</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="n">dateadd</span><span class="p">,</span> <span class="n">line</span><span class="p">)</span>
-						<span class="k">break</span>
-					<span class="k">if</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">conversations</span><span class="p">[</span><span class="n">i</span><span class="p">])</span> <span class="o">==</span> <span class="mi">0</span><span class="p">):</span>
-						<span class="n">conversations</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">nick_sender</span><span class="p">)</span>
-						<span class="n">conversations</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">nick_receiver</span><span class="p">)</span>
-						<span class="n">conversations</span> <span class="o">=</span> <span class="n">conv_append</span><span class="p">(</span><span class="n">conversations</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="n">dateadd</span><span class="p">,</span> <span class="n">line</span><span class="p">)</span>
-						<span class="k">break</span>
-		<span class="k">return</span>  <span class="n">conversations</span><span class="p">,</span> <span class="n">nick_receiver</span><span class="p">,</span> <span class="n">send_time</span>
+    <span class="k">def</span> <span class="nf">build_conversation</span><span class="p">(</span><span class="n">rec_list</span><span class="p">,</span> <span class="n">nick</span><span class="p">,</span> <span class="n">send_time</span><span class="p">,</span> <span class="n">nick_to_search</span><span class="p">,</span>
+                           <span class="n">nick_receiver</span><span class="p">,</span> <span class="n">nick_sender</span><span class="p">,</span> <span class="n">dateadd</span><span class="p">,</span>
+                           <span class="n">conversations</span><span class="p">,</span> <span class="n">conn_comp_list</span><span class="p">,</span> <span class="n">line</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">names</span> <span class="ow">in</span> <span class="n">rec_list</span><span class="p">:</span>
+            <span class="n">conversations</span><span class="p">,</span> <span class="n">nick_receiver</span><span class="p">,</span> <span class="n">send_time</span> <span class="o">=</span> <span class="n">conv_helper</span><span class="p">(</span><span class="n">names</span><span class="p">,</span> <span class="n">nick</span><span class="p">,</span> <span class="n">send_time</span><span class="p">,</span> <span class="n">nick_to_search</span><span class="p">,</span>
+                                                                <span class="n">nick_receiver</span><span class="p">,</span> <span class="n">nick_sender</span><span class="p">,</span> <span class="n">dateadd</span><span class="p">,</span>
+                                                                <span class="n">conversations</span><span class="p">,</span> <span class="n">conn_comp_list</span><span class="p">,</span> <span class="n">line</span><span class="p">)</span>
+        <span class="k">return</span>  <span class="n">conversations</span><span class="p">,</span> <span class="n">nick_receiver</span><span class="p">,</span> <span class="n">send_time</span>
 
-	<span class="k">def</span> <span class="nf">conv_mat_diff</span><span class="p">(</span><span class="n">i</span><span class="p">,</span><span class="n">j</span><span class="p">,</span><span class="n">conversations</span><span class="p">):</span>
-		<span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">		i(int): matrix index for row</span>
-<span class="sd">		j(int): matrix index for column</span>
-<span class="sd">		&quot;&quot;&quot;</span>
-		<span class="k">return</span> <span class="p">(</span><span class="n">conversations</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">j</span><span class="p">]</span><span class="o">-</span><span class="n">conversations</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">j</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+    <span class="k">def</span> <span class="nf">conv_helper</span><span class="p">(</span><span class="n">rec</span><span class="p">,</span> <span class="n">nick</span><span class="p">,</span> <span class="n">send_time</span><span class="p">,</span> <span class="n">nick_to_search</span><span class="p">,</span> <span class="n">nick_receiver</span><span class="p">,</span>
+                    <span class="n">nick_sender</span><span class="p">,</span> <span class="n">dateadd</span><span class="p">,</span> <span class="n">conversations</span><span class="p">,</span> <span class="n">conn_comp_list</span><span class="p">,</span> <span class="n">line</span><span class="p">):</span>
+        <span class="k">if</span><span class="p">(</span><span class="n">rec</span> <span class="o">==</span> <span class="n">nick</span><span class="p">):</span>
+            <span class="n">send_time</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">line</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="mi">6</span><span class="p">])</span>
+            <span class="k">if</span><span class="p">(</span><span class="n">nick_to_search</span> <span class="o">!=</span> <span class="n">nick</span><span class="p">):</span>
+                <span class="n">nick_receiver</span> <span class="o">=</span> <span class="n">util</span><span class="o">.</span><span class="n">get_nick_sen_rec</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">nicks</span><span class="p">),</span> <span class="n">nick</span><span class="p">,</span> <span class="n">conn_comp_list</span><span class="p">,</span> <span class="n">nick_receiver</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">MAX_CONVERSATIONS</span><span class="p">):</span>
+                    <span class="k">if</span> <span class="p">(</span><span class="n">nick_sender</span> <span class="ow">in</span> <span class="n">conversations</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="ow">and</span> <span class="n">nick_receiver</span> <span class="ow">in</span> <span class="n">conversations</span><span class="p">[</span><span class="n">i</span><span class="p">]):</span>
+                        <span class="n">conversations</span> <span class="o">=</span> <span class="n">conv_append</span><span class="p">(</span><span class="n">conversations</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="n">dateadd</span><span class="p">,</span> <span class="n">line</span><span class="p">)</span>
+                        <span class="k">break</span>
+                    <span class="k">if</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">conversations</span><span class="p">[</span><span class="n">i</span><span class="p">])</span> <span class="o">==</span> <span class="mi">0</span><span class="p">):</span>
+                        <span class="n">conversations</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">nick_sender</span><span class="p">)</span>
+                        <span class="n">conversations</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">nick_receiver</span><span class="p">)</span>
+                        <span class="n">conversations</span> <span class="o">=</span> <span class="n">conv_append</span><span class="p">(</span><span class="n">conversations</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="n">dateadd</span><span class="p">,</span> <span class="n">line</span><span class="p">)</span>
+                        <span class="k">break</span>
+        <span class="k">return</span>  <span class="n">conversations</span><span class="p">,</span> <span class="n">nick_receiver</span><span class="p">,</span> <span class="n">send_time</span>
 
-	<span class="k">def</span> <span class="nf">conv_append</span><span class="p">(</span><span class="n">conversations</span><span class="p">,</span> <span class="n">index</span><span class="p">,</span> <span class="n">dateadd</span><span class="p">,</span> <span class="n">line</span><span class="p">):</span>
-		<span class="n">conversations</span><span class="p">[</span><span class="n">index</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">HOURS_PER_DAY</span><span class="o">*</span><span class="n">config</span><span class="o">.</span><span class="n">MINS_PER_HOUR</span><span class="o">*</span><span class="n">dateadd</span> <span class="o">+</span> <span class="nb">int</span><span class="p">(</span><span class="n">line</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="mi">6</span><span class="p">][</span><span class="mi">0</span><span class="p">:</span><span class="mi">2</span><span class="p">])</span><span class="o">*</span><span class="n">config</span><span class="o">.</span><span class="n">MINS_PER_HOUR</span> <span class="o">+</span> <span class="nb">int</span><span class="p">(</span><span class="n">line</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="mi">6</span><span class="p">][</span><span class="mi">3</span><span class="p">:</span><span class="mi">5</span><span class="p">]))</span>
-		<span class="k">return</span> <span class="n">conversations</span>
+    <span class="k">def</span> <span class="nf">conv_mat_diff</span><span class="p">(</span><span class="n">i</span><span class="p">,</span><span class="n">j</span><span class="p">,</span><span class="n">conversations</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        i(int): matrix index for row</span>
+<span class="sd">        j(int): matrix index for column</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">(</span><span class="n">conversations</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">j</span><span class="p">]</span><span class="o">-</span><span class="n">conversations</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">j</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
 
-	<span class="k">def</span> <span class="nf">parse_log_lines_for_conv</span><span class="p">(</span><span class="n">log_dict</span><span class="p">,</span> <span class="n">nicks</span><span class="p">,</span> <span class="n">conn_comp_list</span><span class="p">,</span> <span class="n">conversations</span><span class="p">):</span>
-		<span class="n">dateadd</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span> <span class="c1">#Variable used for response time calculation. Varies from 0-365.</span>
-		<span class="k">for</span> <span class="n">day_content_all_channels</span> <span class="ow">in</span> <span class="n">log_dict</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
-			<span class="k">for</span> <span class="n">day_content</span> <span class="ow">in</span> <span class="n">day_content_all_channels</span><span class="p">:</span>
-				<span class="n">day_log</span> <span class="o">=</span> <span class="n">day_content</span><span class="p">[</span><span class="s2">&quot;log_data&quot;</span><span class="p">]</span>
+    <span class="k">def</span> <span class="nf">conv_append</span><span class="p">(</span><span class="n">conversations</span><span class="p">,</span> <span class="n">index</span><span class="p">,</span> <span class="n">dateadd</span><span class="p">,</span> <span class="n">line</span><span class="p">):</span>
+        <span class="n">conversations</span><span class="p">[</span><span class="n">index</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">HOURS_PER_DAY</span><span class="o">*</span><span class="n">config</span><span class="o">.</span><span class="n">MINS_PER_HOUR</span><span class="o">*</span><span class="n">dateadd</span> <span class="o">+</span> <span class="nb">int</span><span class="p">(</span><span class="n">line</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="mi">6</span><span class="p">][</span><span class="mi">0</span><span class="p">:</span><span class="mi">2</span><span class="p">])</span><span class="o">*</span><span class="n">config</span><span class="o">.</span><span class="n">MINS_PER_HOUR</span> <span class="o">+</span> <span class="nb">int</span><span class="p">(</span><span class="n">line</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="mi">6</span><span class="p">][</span><span class="mi">3</span><span class="p">:</span><span class="mi">5</span><span class="p">]))</span>
+        <span class="k">return</span> <span class="n">conversations</span>
 
-				<span class="n">dateadd</span> <span class="o">=</span> <span class="n">dateadd</span> <span class="o">+</span> <span class="mi">1</span>
-				<span class="n">send_time</span> <span class="o">=</span> <span class="p">[]</span> <span class="c1">#list of all the times a user sends a message to another user</span>
-				<span class="c1">#code for making relation map between clients</span>
-				<span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">day_log</span><span class="p">:</span>
-					<span class="n">flag_comma</span> <span class="o">=</span> <span class="mi">0</span>
-					<span class="k">if</span><span class="p">(</span><span class="n">util</span><span class="o">.</span><span class="n">check_if_msg_line</span> <span class="p">(</span><span class="n">line</span><span class="p">)):</span>
-						<span class="n">nick_sender</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
-						<span class="n">nick_receiver</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
-						<span class="n">m</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;\&lt;(.*?)\&gt;&quot;</span><span class="p">,</span> <span class="n">line</span><span class="p">)</span>
-						<span class="n">nick_to_search</span> <span class="o">=</span> <span class="n">util</span><span class="o">.</span><span class="n">correctLastCharCR</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">0</span><span class="p">)[</span><span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
-						<span class="n">nick_sender</span> <span class="o">=</span> <span class="n">util</span><span class="o">.</span><span class="n">get_nick_sen_rec</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">nicks</span><span class="p">),</span> <span class="n">nick_to_search</span><span class="p">,</span> <span class="n">conn_comp_list</span><span class="p">,</span> <span class="n">nick_sender</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">parse_log_lines_for_conv</span><span class="p">(</span><span class="n">log_dict</span><span class="p">,</span> <span class="n">nicks</span><span class="p">,</span> <span class="n">conn_comp_list</span><span class="p">,</span> <span class="n">conversations</span><span class="p">):</span>
+        <span class="n">dateadd</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span> <span class="c1"># Variable used for response time calculation. Varies from 0-365.</span>
+        <span class="k">for</span> <span class="n">day_content_all_channels</span> <span class="ow">in</span> <span class="n">log_dict</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+            <span class="k">for</span> <span class="n">day_content</span> <span class="ow">in</span> <span class="n">day_content_all_channels</span><span class="p">:</span>
+                <span class="n">day_log</span> <span class="o">=</span> <span class="n">day_content</span><span class="p">[</span><span class="s2">&quot;log_data&quot;</span><span class="p">]</span>
 
-						<span class="k">for</span> <span class="n">nick</span> <span class="ow">in</span> <span class="n">nicks</span><span class="p">:</span>
-							<span class="n">rec_list</span> <span class="o">=</span> <span class="p">[</span><span class="n">e</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">line</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;:&#39;</span><span class="p">)]</span>
-							<span class="n">util</span><span class="o">.</span><span class="n">rec_list_splice</span><span class="p">(</span><span class="n">rec_list</span><span class="p">)</span>
-							<span class="k">if</span> <span class="ow">not</span> <span class="n">rec_list</span><span class="p">[</span><span class="mi">1</span><span class="p">]:</span>
-								<span class="k">break</span>
-							<span class="n">rec_list</span> <span class="o">=</span> <span class="n">util</span><span class="o">.</span><span class="n">correct_last_char_list</span><span class="p">(</span><span class="n">rec_list</span><span class="p">)</span>
-							<span class="n">conversations</span><span class="p">,</span> <span class="n">nick_receiver</span><span class="p">,</span> <span class="n">send_time</span> <span class="o">=</span> \
-								<span class="n">build_conversation</span><span class="p">(</span><span class="n">rec_list</span><span class="p">,</span> <span class="n">nick</span><span class="p">,</span> <span class="n">send_time</span><span class="p">,</span>
-												   <span class="n">nick_to_search</span><span class="p">,</span> <span class="n">nick_receiver</span><span class="p">,</span> <span class="n">nick_sender</span><span class="p">,</span>
-												   <span class="n">dateadd</span><span class="p">,</span> <span class="n">conversations</span><span class="p">,</span> <span class="n">conn_comp_list</span><span class="p">,</span> <span class="n">line</span><span class="p">)</span>
+                <span class="n">dateadd</span> <span class="o">=</span> <span class="n">dateadd</span> <span class="o">+</span> <span class="mi">1</span>
+                <span class="n">send_time</span> <span class="o">=</span> <span class="p">[]</span> <span class="c1"># list of all the times a user sends a message to another user</span>
+                <span class="c1"># code for making relation map between clients</span>
+                <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">day_log</span><span class="p">:</span>
+                    <span class="n">flag_comma</span> <span class="o">=</span> <span class="mi">0</span>
+                    <span class="k">if</span><span class="p">(</span><span class="n">util</span><span class="o">.</span><span class="n">check_if_msg_line</span> <span class="p">(</span><span class="n">line</span><span class="p">)):</span>
+                        <span class="n">nick_sender</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+                        <span class="n">nick_receiver</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+                        <span class="n">m</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;\&lt;(.*?)\&gt;&quot;</span><span class="p">,</span> <span class="n">line</span><span class="p">)</span>
+                        <span class="n">nick_to_search</span> <span class="o">=</span> <span class="n">util</span><span class="o">.</span><span class="n">correctLastCharCR</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">0</span><span class="p">)[</span><span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+                        <span class="n">nick_sender</span> <span class="o">=</span> <span class="n">util</span><span class="o">.</span><span class="n">get_nick_sen_rec</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">nicks</span><span class="p">),</span> <span class="n">nick_to_search</span><span class="p">,</span> <span class="n">conn_comp_list</span><span class="p">,</span> <span class="n">nick_sender</span><span class="p">)</span>
 
-							<span class="k">if</span> <span class="s2">&quot;,&quot;</span> <span class="ow">in</span> <span class="n">rec_list</span><span class="p">[</span><span class="mi">1</span><span class="p">]:</span>
-								<span class="n">flag_comma</span> <span class="o">=</span> <span class="mi">1</span>
-								<span class="n">rec_list_2</span> <span class="o">=</span> <span class="p">[</span><span class="n">e</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">rec_list</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;,&#39;</span><span class="p">)]</span>
-								<span class="n">rec_list_2</span> <span class="o">=</span> <span class="n">util</span><span class="o">.</span><span class="n">correct_last_char_list</span><span class="p">(</span><span class="n">rec_list_2</span><span class="p">)</span>
-								<span class="n">conversations</span><span class="p">,</span> <span class="n">nick_receiver</span><span class="p">,</span> <span class="n">send_time</span> <span class="o">=</span> \
-									<span class="n">build_conversation</span><span class="p">(</span><span class="n">rec_list_2</span><span class="p">,</span> <span class="n">nick</span><span class="p">,</span> <span class="n">send_time</span><span class="p">,</span>
-													   <span class="n">nick_to_search</span><span class="p">,</span> <span class="n">nick_receiver</span><span class="p">,</span>
-													   <span class="n">nick_sender</span><span class="p">,</span> <span class="n">dateadd</span><span class="p">,</span> <span class="n">conversations</span><span class="p">,</span>
-													   <span class="n">conn_comp_list</span><span class="p">,</span> <span class="n">line</span><span class="p">)</span>
+                        <span class="k">for</span> <span class="n">nick</span> <span class="ow">in</span> <span class="n">nicks</span><span class="p">:</span>
+                            <span class="n">rec_list</span> <span class="o">=</span> <span class="p">[</span><span class="n">e</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">line</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;:&#39;</span><span class="p">)]</span>
+                            <span class="n">util</span><span class="o">.</span><span class="n">rec_list_splice</span><span class="p">(</span><span class="n">rec_list</span><span class="p">)</span>
+                            <span class="k">if</span> <span class="ow">not</span> <span class="n">rec_list</span><span class="p">[</span><span class="mi">1</span><span class="p">]:</span>
+                                <span class="k">break</span>
+                            <span class="n">rec_list</span> <span class="o">=</span> <span class="n">util</span><span class="o">.</span><span class="n">correct_last_char_list</span><span class="p">(</span><span class="n">rec_list</span><span class="p">)</span>
+                            <span class="n">conversations</span><span class="p">,</span> <span class="n">nick_receiver</span><span class="p">,</span> <span class="n">send_time</span> <span class="o">=</span>  <span class="n">build_conversation</span><span class="p">(</span><span class="n">rec_list</span><span class="p">,</span> <span class="n">nick</span><span class="p">,</span> <span class="n">send_time</span><span class="p">,</span>
+                                                                                           <span class="n">nick_to_search</span><span class="p">,</span> <span class="n">nick_receiver</span><span class="p">,</span> <span class="n">nick_sender</span><span class="p">,</span>
+                                                                                           <span class="n">dateadd</span><span class="p">,</span> <span class="n">conversations</span><span class="p">,</span> <span class="n">conn_comp_list</span><span class="p">,</span> <span class="n">line</span><span class="p">)</span>
 
-							<span class="k">if</span><span class="p">(</span><span class="n">flag_comma</span> <span class="o">==</span> <span class="mi">0</span><span class="p">):</span>
-								<span class="n">rec</span> <span class="o">=</span> <span class="n">util</span><span class="o">.</span><span class="n">splice_find</span><span class="p">(</span><span class="n">line</span><span class="p">,</span> <span class="s2">&quot;&gt;&quot;</span><span class="p">,</span> <span class="s2">&quot;, &quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
-								<span class="n">conversations</span><span class="p">,</span> <span class="n">nick_receiver</span><span class="p">,</span> <span class="n">send_time</span>	<span class="o">=</span> \
-									<span class="n">conv_helper</span><span class="p">(</span><span class="n">rec</span><span class="p">,</span> <span class="n">nick</span><span class="p">,</span> <span class="n">send_time</span><span class="p">,</span> <span class="n">nick_to_search</span><span class="p">,</span>
-												<span class="n">nick_receiver</span><span class="p">,</span> <span class="n">nick_sender</span><span class="p">,</span> <span class="n">dateadd</span><span class="p">,</span>
-												<span class="n">conversations</span><span class="p">,</span> <span class="n">conn_comp_list</span><span class="p">,</span> <span class="n">line</span><span class="p">)</span>
+                            <span class="k">if</span> <span class="s2">&quot;,&quot;</span> <span class="ow">in</span> <span class="n">rec_list</span><span class="p">[</span><span class="mi">1</span><span class="p">]:</span>
+                                <span class="n">flag_comma</span> <span class="o">=</span> <span class="mi">1</span>
+                                <span class="n">rec_list_2</span> <span class="o">=</span> <span class="p">[</span><span class="n">e</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">rec_list</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;,&#39;</span><span class="p">)]</span>
+                                <span class="n">rec_list_2</span> <span class="o">=</span> <span class="n">util</span><span class="o">.</span><span class="n">correct_last_char_list</span><span class="p">(</span><span class="n">rec_list_2</span><span class="p">)</span>
+                                <span class="n">conversations</span><span class="p">,</span> <span class="n">nick_receiver</span><span class="p">,</span> <span class="n">send_time</span> <span class="o">=</span> <span class="n">build_conversation</span><span class="p">(</span><span class="n">rec_list_2</span><span class="p">,</span> <span class="n">nick</span><span class="p">,</span> <span class="n">send_time</span><span class="p">,</span>
+                                                                                           <span class="n">nick_to_search</span><span class="p">,</span> <span class="n">nick_receiver</span><span class="p">,</span>
+                                                                                           <span class="n">nick_sender</span><span class="p">,</span> <span class="n">dateadd</span><span class="p">,</span> <span class="n">conversations</span><span class="p">,</span>
+                                                                                           <span class="n">conn_comp_list</span><span class="p">,</span> <span class="n">line</span><span class="p">)</span>
 
-		<span class="k">return</span> 	<span class="n">conversations</span><span class="p">,</span> <span class="n">nick_receiver</span><span class="p">,</span> <span class="n">send_time</span>
+                            <span class="k">if</span><span class="p">(</span><span class="n">flag_comma</span> <span class="o">==</span> <span class="mi">0</span><span class="p">):</span>
+                                <span class="n">rec</span> <span class="o">=</span> <span class="n">util</span><span class="o">.</span><span class="n">splice_find</span><span class="p">(</span><span class="n">line</span><span class="p">,</span> <span class="s2">&quot;&gt;&quot;</span><span class="p">,</span> <span class="s2">&quot;, &quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+                                <span class="n">conversations</span><span class="p">,</span> <span class="n">nick_receiver</span><span class="p">,</span> <span class="n">send_time</span>	<span class="o">=</span> <span class="n">conv_helper</span><span class="p">(</span><span class="n">rec</span><span class="p">,</span> <span class="n">nick</span><span class="p">,</span> <span class="n">send_time</span><span class="p">,</span> <span class="n">nick_to_search</span><span class="p">,</span>
+                                                                                     <span class="n">nick_receiver</span><span class="p">,</span> <span class="n">nick_sender</span><span class="p">,</span> <span class="n">dateadd</span><span class="p">,</span>
+                                                                                    <span class="n">conversations</span><span class="p">,</span> <span class="n">conn_comp_list</span><span class="p">,</span> <span class="n">line</span><span class="p">)</span>
 
-
-	<span class="n">conversations</span><span class="p">,</span> <span class="n">nick_receiver</span><span class="p">,</span> <span class="n">send_time</span> <span class="o">=</span> <span class="n">parse_log_lines_for_conv</span><span class="p">(</span><span class="n">log_dict</span><span class="p">,</span> <span class="n">nicks</span><span class="p">,</span> <span class="n">conn_comp_list</span><span class="p">,</span> <span class="n">conversations</span><span class="p">)</span>
-
-	<span class="c1"># Consider all cases in which messages are addressed as - (nick1:nick2 or nick1,nick2</span>
-	<span class="c1"># or nick1,nick2:) and stores their response times in conversations.</span>
-	<span class="c1"># conversations[i] contains all the response times between userA and userB</span>
-	<span class="c1"># throughout a chosen time period.</span>
-
-	<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">conversations</span><span class="p">)):</span>
-		<span class="c1">#remove the first two elements from every conversations[i]</span>
-		<span class="c1"># as they are the UIDS of sender and receiver respectively(and not RTs)</span>
-		<span class="k">if</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">conversations</span><span class="p">[</span><span class="n">i</span><span class="p">])</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">):</span>
-			<span class="k">del</span> <span class="n">conversations</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">0</span><span class="p">:</span><span class="mi">2</span><span class="p">]</span>
-
-	<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">conversations</span><span class="p">)):</span>
-		<span class="k">if</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">conversations</span><span class="p">[</span><span class="n">i</span><span class="p">])</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">):</span>
-			<span class="n">first</span> <span class="o">=</span> <span class="n">conversations</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
-			<span class="c1"># response times are calculated starting from index 2.</span>
-			<span class="c1"># So now we have all the response times in conversations.</span>
-			<span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">conversations</span><span class="p">[</span><span class="n">i</span><span class="p">])):</span>
-					<span class="c1"># We are recording the conversation length in conv and CRT in conv_diff.</span>
-					<span class="k">if</span><span class="p">(</span><span class="n">conv_mat_diff</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">,</span> <span class="n">conversations</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">rt_cutoff_time</span><span class="p">):</span>
-						<span class="n">conv</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">conversations</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">j</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">first</span><span class="p">)</span>
-
-						<span class="n">conv_diff</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">conv_mat_diff</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">,</span> <span class="n">conversations</span><span class="p">))</span>
-						<span class="n">first</span> <span class="o">=</span> <span class="n">conversations</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">j</span><span class="p">]</span>
-					<span class="k">if</span><span class="p">(</span><span class="n">j</span> <span class="o">==</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">conversations</span><span class="p">[</span><span class="n">i</span><span class="p">])</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)):</span>
-						<span class="n">conv</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">conversations</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">j</span><span class="p">]</span> <span class="o">-</span> <span class="n">first</span><span class="p">)</span>
-						<span class="k">break</span>
-	<span class="c1">#To plot CDF we store the CL and CRT values and their number of occurences</span>
-	<span class="n">row_cl</span> <span class="o">=</span> <span class="n">build_stat_dist</span><span class="p">(</span><span class="n">conv</span><span class="p">)</span>
-	<span class="n">row_crt</span> <span class="o">=</span> <span class="n">build_stat_dist</span><span class="p">(</span><span class="n">conv_diff</span><span class="p">)</span>
-	<span class="n">truncated_cl</span><span class="p">,</span> <span class="n">cl_cutoff_time</span> <span class="o">=</span> <span class="n">truncate_table</span><span class="p">(</span><span class="n">row_cl</span><span class="p">,</span> <span class="n">cutoff_percentile</span><span class="p">)</span>
-	<span class="n">truncated_crt</span><span class="p">,</span> <span class="n">crt_cutoff_time</span> <span class="o">=</span> <span class="n">truncate_table</span><span class="p">(</span><span class="n">row_crt</span><span class="p">,</span> <span class="n">cutoff_percentile</span><span class="p">)</span>
-</div>
-	<span class="k">return</span> <span class="n">truncated_cl</span><span class="p">,</span> <span class="n">truncated_crt</span>
+        <span class="k">return</span> 	<span class="n">conversations</span><span class="p">,</span> <span class="n">nick_receiver</span><span class="p">,</span> <span class="n">send_time</span>
 
 
+    <span class="n">conversations</span><span class="p">,</span> <span class="n">nick_receiver</span><span class="p">,</span> <span class="n">send_time</span> <span class="o">=</span> <span class="n">parse_log_lines_for_conv</span><span class="p">(</span><span class="n">log_dict</span><span class="p">,</span> <span class="n">nicks</span><span class="p">,</span> <span class="n">conn_comp_list</span><span class="p">,</span> <span class="n">conversations</span><span class="p">)</span>
+
+    <span class="c1"># Consider all cases in which messages are addressed as - (nick1:nick2 or nick1,nick2</span>
+    <span class="c1"># or nick1,nick2:) and stores their response times in conversations.</span>
+    <span class="c1"># conversations[i] contains all the response times between userA and userB</span>
+    <span class="c1"># throughout a chosen time period.</span>
+
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">conversations</span><span class="p">)):</span>
+        <span class="c1"># remove the first two elements from every conversations[i]</span>
+        <span class="c1"># as they are the UIDS of sender and receiver respectively(and not RTs)</span>
+        <span class="k">if</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">conversations</span><span class="p">[</span><span class="n">i</span><span class="p">])</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">):</span>
+            <span class="k">del</span> <span class="n">conversations</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">0</span><span class="p">:</span><span class="mi">2</span><span class="p">]</span>
+
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">conversations</span><span class="p">)):</span>
+        <span class="k">if</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">conversations</span><span class="p">[</span><span class="n">i</span><span class="p">])</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">):</span>
+            <span class="n">first</span> <span class="o">=</span> <span class="n">conversations</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+            <span class="c1"># response times are calculated starting from index 2.</span>
+            <span class="c1"># So now we have all the response times in conversations.</span>
+            <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">conversations</span><span class="p">[</span><span class="n">i</span><span class="p">])):</span>
+                    <span class="c1"># We are recording the conversation length in conv and CRT in conv_diff.</span>
+                    <span class="k">if</span><span class="p">(</span><span class="n">conv_mat_diff</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">,</span> <span class="n">conversations</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">rt_cutoff_time</span><span class="p">):</span>
+                        <span class="n">conv</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">conversations</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">j</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">first</span><span class="p">)</span>
+
+                        <span class="n">conv_diff</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">conv_mat_diff</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">,</span> <span class="n">conversations</span><span class="p">))</span>
+                        <span class="n">first</span> <span class="o">=</span> <span class="n">conversations</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">j</span><span class="p">]</span>
+                    <span class="k">if</span><span class="p">(</span><span class="n">j</span> <span class="o">==</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">conversations</span><span class="p">[</span><span class="n">i</span><span class="p">])</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)):</span>
+                        <span class="n">conv</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">conversations</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">j</span><span class="p">]</span> <span class="o">-</span> <span class="n">first</span><span class="p">)</span>
+                        <span class="k">break</span>
+    <span class="c1"># To plot CDF we store the CL and CRT values and their number of occurences</span>
+    <span class="n">row_cl</span> <span class="o">=</span> <span class="n">build_stat_dist</span><span class="p">(</span><span class="n">conv</span><span class="p">)</span>
+    <span class="n">row_crt</span> <span class="o">=</span> <span class="n">build_stat_dist</span><span class="p">(</span><span class="n">conv_diff</span><span class="p">)</span>
+    <span class="n">truncated_cl</span><span class="p">,</span> <span class="n">cl_cutoff_time</span> <span class="o">=</span> <span class="n">truncate_table</span><span class="p">(</span><span class="n">row_cl</span><span class="p">,</span> <span class="n">cutoff_percentile</span><span class="p">)</span>
+    <span class="n">truncated_crt</span><span class="p">,</span> <span class="n">crt_cutoff_time</span> <span class="o">=</span> <span class="n">truncate_table</span><span class="p">(</span><span class="n">row_crt</span><span class="p">,</span> <span class="n">cutoff_percentile</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">truncated_cl</span><span class="p">,</span> <span class="n">truncated_crt</span></div>
 
 
 <div class="viewcode-block" id="response_time"><a class="viewcode-back" href="../../../DocumentationForCode.html#lib.analysis.channel.response_time">[docs]</a><span class="k">def</span> <span class="nf">response_time</span><span class="p">(</span><span class="n">log_dict</span><span class="p">,</span> <span class="n">nicks</span><span class="p">,</span> <span class="n">nick_same_list</span><span class="p">,</span> <span class="n">cutoff_percentile</span><span class="p">):</span>
 
-	<span class="sd">&quot;&quot;&quot; finds the response time of a message </span>
-<span class="sd">	i.e. the best guess for the time at which one can expect a reply for his/her message.</span>
+    <span class="sd">&quot;&quot;&quot; finds the response time of a message</span>
+<span class="sd">    i.e. the best guess for the time at which one can expect a reply for his/her message.</span>
 
-<span class="sd">	Args:</span>
-<span class="sd">		log_dict (str): Dictionary of logs data created using reader.py</span>
-<span class="sd">		nicks(List) : List of nickname created using nickTracker.py</span>
-<span class="sd">		nick_same_list :List of same_nick names created using nickTracker.py</span>
-<span class="sd">		cutoff_percentile (int): Cutoff percentile indicating statistical significance</span>
-<span class="sd">		</span>
-<span class="sd">	Returns:</span>
-<span class="sd">	   rows_RT(zip List): Response Time (This refers to the response</span>
-<span class="sd">		time of a message i.e. the best guess for the time at</span>
-<span class="sd">		which one can expect a reply for his/her message)</span>
+<span class="sd">    Args:</span>
+<span class="sd">        log_dict (str): Dictionary of logs data created using reader.py</span>
+<span class="sd">        nicks(List) : List of nickname created using nickTracker.py</span>
+<span class="sd">        nick_same_list :List of same_nick names created using nickTracker.py</span>
+<span class="sd">        cutoff_percentile (int): Cutoff percentile indicating statistical significance</span>
 
-<span class="sd">	&quot;&quot;&quot;</span>
-	<span class="n">G</span> <span class="o">=</span> <span class="n">util</span><span class="o">.</span><span class="n">to_graph</span><span class="p">(</span><span class="n">nick_same_list</span><span class="p">)</span>
-	<span class="n">conn_comp_list</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">connected_components</span><span class="p">(</span><span class="n">G</span><span class="p">))</span>
+<span class="sd">    Returns:</span>
+<span class="sd">       rows_RT(zip List): Response Time (This refers to the response</span>
+<span class="sd">        time of a message i.e. the best guess for the time at</span>
+<span class="sd">        which one can expect a reply for his/her message)</span>
 
-	<span class="n">util</span><span class="o">.</span><span class="n">create_connected_nick_list</span><span class="p">(</span><span class="n">conn_comp_list</span><span class="p">)</span>
-	
-	<span class="n">graph_cumulative</span> <span class="o">=</span> <span class="p">[]</span>
-	<span class="n">graph_x_axis</span> <span class="o">=</span> <span class="p">[]</span>
-	<span class="n">graph_y_axis</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">G</span> <span class="o">=</span> <span class="n">util</span><span class="o">.</span><span class="n">to_graph</span><span class="p">(</span><span class="n">nick_same_list</span><span class="p">)</span>
+    <span class="n">conn_comp_list</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">connected_components</span><span class="p">(</span><span class="n">G</span><span class="p">))</span>
 
-	<span class="k">def</span> <span class="nf">build_mean_list</span><span class="p">(</span><span class="n">conversations</span><span class="p">,</span> <span class="n">index</span><span class="p">,</span> <span class="n">mean_list</span><span class="p">):</span>
-		<span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">conversations</span><span class="p">[</span><span class="n">index</span><span class="p">])):</span>
-			<span class="n">mean_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">conversations</span><span class="p">[</span><span class="n">index</span><span class="p">][</span><span class="n">j</span><span class="p">])</span>
-		<span class="k">return</span> <span class="n">mean_list</span>
+    <span class="n">util</span><span class="o">.</span><span class="n">create_connected_nick_list</span><span class="p">(</span><span class="n">conn_comp_list</span><span class="p">)</span>
 
-	<span class="k">def</span> <span class="nf">resp_helper</span><span class="p">(</span><span class="n">rec</span><span class="p">,</span> <span class="n">nick</span><span class="p">,</span> <span class="n">send_time</span><span class="p">,</span> <span class="n">nick_to_search</span><span class="p">,</span> <span class="n">nick_receiver</span><span class="p">,</span> <span class="n">nick_sender</span><span class="p">,</span> <span class="n">conversations</span><span class="p">,</span> <span class="n">conn_comp_list</span><span class="p">):</span>
-		<span class="k">if</span><span class="p">(</span><span class="n">rec</span> <span class="o">==</span> <span class="n">nick</span><span class="p">):</span>
-			<span class="n">send_time</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">line</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="mi">6</span><span class="p">])</span>
-			<span class="k">if</span><span class="p">(</span><span class="n">nick_to_search</span> <span class="o">!=</span> <span class="n">nick</span><span class="p">):</span>
-				<span class="n">nick_receiver</span> <span class="o">=</span> <span class="n">util</span><span class="o">.</span><span class="n">get_nick_sen_rec</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">nicks</span><span class="p">),</span> <span class="n">nick</span><span class="p">,</span> <span class="n">conn_comp_list</span><span class="p">,</span> <span class="n">nick_receiver</span><span class="p">)</span>								
-				<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">MAX_RESPONSE_CONVERSATIONS</span><span class="p">):</span>
-					<span class="k">if</span> <span class="p">(</span><span class="n">nick_sender</span> <span class="ow">in</span> <span class="n">conversations</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="ow">and</span> <span class="n">nick_receiver</span> <span class="ow">in</span> <span class="n">conversations</span><span class="p">[</span><span class="n">i</span><span class="p">]):</span> 
-						<span class="n">conversations</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">line</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="mi">6</span><span class="p">])</span>
-						<span class="k">break</span>
-					<span class="k">if</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">conversations</span><span class="p">[</span><span class="n">i</span><span class="p">])</span> <span class="o">==</span> <span class="mi">0</span><span class="p">):</span>
-						<span class="n">conversations</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">nick_sender</span><span class="p">)</span>
-						<span class="n">conversations</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">nick_receiver</span><span class="p">)</span>
-						<span class="n">conversations</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">line</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="mi">6</span><span class="p">])</span>
-						<span class="k">break</span>		
-		<span class="k">return</span> <span class="n">conversations</span><span class="p">,</span> <span class="n">nick_receiver</span><span class="p">,</span> <span class="n">send_time</span>				
+    <span class="n">graph_cumulative</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">graph_x_axis</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">graph_y_axis</span> <span class="o">=</span> <span class="p">[]</span>
 
-	<span class="k">for</span> <span class="n">day_content_all_channels</span> <span class="ow">in</span> <span class="n">log_dict</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
-		<span class="k">for</span> <span class="n">day_content</span> <span class="ow">in</span> <span class="n">day_content_all_channels</span><span class="p">:</span>
-			<span class="n">day_log</span> <span class="o">=</span> <span class="n">day_content</span><span class="p">[</span><span class="s2">&quot;log_data&quot;</span><span class="p">]</span>
+    <span class="k">def</span> <span class="nf">build_mean_list</span><span class="p">(</span><span class="n">conversations</span><span class="p">,</span> <span class="n">index</span><span class="p">,</span> <span class="n">mean_list</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">conversations</span><span class="p">[</span><span class="n">index</span><span class="p">])):</span>
+            <span class="n">mean_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">conversations</span><span class="p">[</span><span class="n">index</span><span class="p">][</span><span class="n">j</span><span class="p">])</span>
+        <span class="k">return</span> <span class="n">mean_list</span>
 
-			<span class="n">send_time</span> <span class="o">=</span> <span class="p">[]</span>  <span class="c1">#list of all the times a user sends a message to another user</span>
-			<span class="n">meanstd_list</span> <span class="o">=</span> <span class="p">[]</span>
-			<span class="n">totalmeanstd_list</span> <span class="o">=</span> <span class="p">[]</span>
-			<span class="n">x_axis</span> <span class="o">=</span> <span class="p">[]</span>
-			<span class="n">y_axis</span> <span class="o">=</span> <span class="p">[]</span>
-			<span class="n">real_y_axis</span> <span class="o">=</span> <span class="p">[]</span>             
-			<span class="n">conversations</span> <span class="o">=</span> <span class="p">[[]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">MAX_RESPONSE_CONVERSATIONS</span><span class="p">)]</span>
+    <span class="k">def</span> <span class="nf">resp_helper</span><span class="p">(</span><span class="n">rec</span><span class="p">,</span> <span class="n">nick</span><span class="p">,</span> <span class="n">send_time</span><span class="p">,</span> <span class="n">nick_to_search</span><span class="p">,</span> <span class="n">nick_receiver</span><span class="p">,</span> <span class="n">nick_sender</span><span class="p">,</span> <span class="n">conversations</span><span class="p">,</span> <span class="n">conn_comp_list</span><span class="p">):</span>
+        <span class="k">if</span><span class="p">(</span><span class="n">rec</span> <span class="o">==</span> <span class="n">nick</span><span class="p">):</span>
+            <span class="n">send_time</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">line</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="mi">6</span><span class="p">])</span>
+            <span class="k">if</span><span class="p">(</span><span class="n">nick_to_search</span> <span class="o">!=</span> <span class="n">nick</span><span class="p">):</span>
+                <span class="n">nick_receiver</span> <span class="o">=</span> <span class="n">util</span><span class="o">.</span><span class="n">get_nick_sen_rec</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">nicks</span><span class="p">),</span> <span class="n">nick</span><span class="p">,</span> <span class="n">conn_comp_list</span><span class="p">,</span> <span class="n">nick_receiver</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">MAX_RESPONSE_CONVERSATIONS</span><span class="p">):</span>
+                    <span class="k">if</span> <span class="p">(</span><span class="n">nick_sender</span> <span class="ow">in</span> <span class="n">conversations</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="ow">and</span> <span class="n">nick_receiver</span> <span class="ow">in</span> <span class="n">conversations</span><span class="p">[</span><span class="n">i</span><span class="p">]):</span>
+                        <span class="n">conversations</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">line</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="mi">6</span><span class="p">])</span>
+                        <span class="k">break</span>
+                    <span class="k">if</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">conversations</span><span class="p">[</span><span class="n">i</span><span class="p">])</span> <span class="o">==</span> <span class="mi">0</span><span class="p">):</span>
+                        <span class="n">conversations</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">nick_sender</span><span class="p">)</span>
+                        <span class="n">conversations</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">nick_receiver</span><span class="p">)</span>
+                        <span class="n">conversations</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">line</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="mi">6</span><span class="p">])</span>
+                        <span class="k">break</span>
+        <span class="k">return</span> <span class="n">conversations</span><span class="p">,</span> <span class="n">nick_receiver</span><span class="p">,</span> <span class="n">send_time</span>
 
-			<span class="c1">#code for making relation map between clients       </span>
-			<span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">day_log</span><span class="p">:</span>
-				<span class="n">flag_comma</span> <span class="o">=</span> <span class="mi">0</span>
-				<span class="k">if</span><span class="p">(</span><span class="n">util</span><span class="o">.</span><span class="n">check_if_msg_line</span> <span class="p">(</span><span class="n">line</span><span class="p">)):</span>
-					<span class="n">nick_sender</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
-					<span class="n">nick_receiver</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
-					<span class="n">m</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;\&lt;(.*?)\&gt;&quot;</span><span class="p">,</span> <span class="n">line</span><span class="p">)</span>
-					<span class="n">nick_to_search</span> <span class="o">=</span> <span class="n">util</span><span class="o">.</span><span class="n">correctLastCharCR</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">0</span><span class="p">)[</span><span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
-					<span class="n">nick_sender</span> <span class="o">=</span> <span class="n">util</span><span class="o">.</span><span class="n">get_nick_sen_rec</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">nicks</span><span class="p">),</span> <span class="n">nick_to_search</span><span class="p">,</span> <span class="n">conn_comp_list</span><span class="p">,</span> <span class="n">nick_sender</span><span class="p">)</span>					         
-					<span class="k">for</span> <span class="n">nick</span> <span class="ow">in</span> <span class="n">nicks</span><span class="p">:</span>
-						<span class="n">rec_list</span> <span class="o">=</span> <span class="p">[</span><span class="n">e</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">line</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;:&#39;</span><span class="p">)]</span>
-						<span class="n">util</span><span class="o">.</span><span class="n">rec_list_splice</span><span class="p">(</span><span class="n">rec_list</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">day_content_all_channels</span> <span class="ow">in</span> <span class="n">log_dict</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+        <span class="k">for</span> <span class="n">day_content</span> <span class="ow">in</span> <span class="n">day_content_all_channels</span><span class="p">:</span>
+            <span class="n">day_log</span> <span class="o">=</span> <span class="n">day_content</span><span class="p">[</span><span class="s2">&quot;log_data&quot;</span><span class="p">]</span>
 
-						<span class="k">if</span> <span class="ow">not</span> <span class="n">rec_list</span><span class="p">[</span><span class="mi">1</span><span class="p">]:</span>
-							<span class="k">break</span>						
-						<span class="n">rec_list</span> <span class="o">=</span> <span class="n">util</span><span class="o">.</span><span class="n">correct_last_char_list</span><span class="p">(</span><span class="n">rec_list</span><span class="p">)</span>		
-						
-						<span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">rec_list</span><span class="p">:</span>
-							<span class="n">conversations</span><span class="p">,</span> <span class="n">nick_receiver</span><span class="p">,</span> <span class="n">send_time</span> <span class="o">=</span> <span class="n">resp_helper</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">nick</span><span class="p">,</span> <span class="n">send_time</span><span class="p">,</span> <span class="n">nick_to_search</span><span class="p">,</span> <span class="n">nick_receiver</span><span class="p">,</span> <span class="n">nick_sender</span><span class="p">,</span> <span class="n">conversations</span><span class="p">,</span> <span class="n">conn_comp_list</span><span class="p">)</span>							
-							
-						<span class="k">if</span> <span class="s2">&quot;,&quot;</span> <span class="ow">in</span> <span class="n">rec_list</span><span class="p">[</span><span class="mi">1</span><span class="p">]:</span> 
-							<span class="n">flag_comma</span> <span class="o">=</span> <span class="mi">1</span>
-							<span class="n">rec_list_2</span> <span class="o">=</span> <span class="p">[</span><span class="n">e</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">rec_list</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;,&#39;</span><span class="p">)]</span>							
-							<span class="n">rec_list_2</span> <span class="o">=</span> <span class="n">util</span><span class="o">.</span><span class="n">correct_last_char_list</span><span class="p">(</span><span class="n">rec_list_2</span><span class="p">)</span>		
-								
-							<span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">rec_list_2</span><span class="p">:</span>
-								<span class="n">conversations</span><span class="p">,</span> <span class="n">nick_receiver</span><span class="p">,</span> <span class="n">send_time</span> <span class="o">=</span> <span class="n">resp_helper</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">nick</span><span class="p">,</span> <span class="n">send_time</span><span class="p">,</span> <span class="n">nick_to_search</span><span class="p">,</span> <span class="n">nick_receiver</span><span class="p">,</span> <span class="n">nick_sender</span><span class="p">,</span> <span class="n">conversations</span><span class="p">,</span> <span class="n">conn_comp_list</span><span class="p">)</span>								
+            <span class="n">send_time</span> <span class="o">=</span> <span class="p">[]</span>  <span class="c1"># list of all the times a user sends a message to another user</span>
+            <span class="n">meanstd_list</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="n">totalmeanstd_list</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="n">x_axis</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="n">y_axis</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="n">real_y_axis</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="n">conversations</span> <span class="o">=</span> <span class="p">[[]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">MAX_RESPONSE_CONVERSATIONS</span><span class="p">)]</span>
 
-						<span class="k">if</span><span class="p">(</span><span class="n">flag_comma</span> <span class="o">==</span> <span class="mi">0</span><span class="p">):</span>
-							<span class="n">rec</span> <span class="o">=</span> <span class="n">util</span><span class="o">.</span><span class="n">splice_find</span><span class="p">(</span><span class="n">line</span><span class="p">,</span> <span class="s2">&quot;&gt;&quot;</span><span class="p">,</span> <span class="s2">&quot;, &quot;</span><span class="p">,</span><span class="mi">1</span><span class="p">)</span>							
-							<span class="n">conversations</span><span class="p">,</span> <span class="n">nick_receiver</span><span class="p">,</span> <span class="n">send_time</span> <span class="o">=</span> <span class="n">resp_helper</span><span class="p">(</span><span class="n">rec</span><span class="p">,</span> <span class="n">nick</span><span class="p">,</span> <span class="n">send_time</span><span class="p">,</span> <span class="n">nick_to_search</span><span class="p">,</span> <span class="n">nick_receiver</span><span class="p">,</span> <span class="n">nick_sender</span><span class="p">,</span> <span class="n">conversations</span><span class="p">,</span> <span class="n">conn_comp_list</span><span class="p">)</span>						
-			
-			<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">MAX_RESPONSE_CONVERSATIONS</span><span class="p">):</span>
-				<span class="k">if</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">conversations</span><span class="p">[</span><span class="n">i</span><span class="p">])</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">):</span>  
-					<span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">conversations</span><span class="p">[</span><span class="n">i</span><span class="p">])</span> <span class="o">-</span> <span class="mi">1</span><span class="p">):</span>
-						<span class="n">conversations</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">j</span><span class="p">]</span><span class="o">=</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">conversations</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">j</span><span class="o">+</span><span class="mi">1</span><span class="p">][</span><span class="mi">0</span><span class="p">:</span><span class="mi">2</span><span class="p">])</span><span class="o">*</span><span class="n">config</span><span class="o">.</span><span class="n">MINS_PER_HOUR</span><span class="o">+</span><span class="nb">int</span><span class="p">(</span><span class="n">conversations</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">j</span><span class="o">+</span><span class="mi">1</span><span class="p">][</span><span class="mi">3</span><span class="p">:</span><span class="mi">5</span><span class="p">]))</span> <span class="o">-</span> <span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">conversations</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">j</span><span class="p">][</span><span class="mi">0</span><span class="p">:</span><span class="mi">2</span><span class="p">])</span><span class="o">*</span><span class="n">config</span><span class="o">.</span><span class="n">MINS_PER_HOUR</span><span class="o">+</span><span class="nb">int</span><span class="p">(</span><span class="n">conversations</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">j</span><span class="p">][</span><span class="mi">3</span><span class="p">:</span><span class="mi">5</span><span class="p">]))</span>
-	
-			<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">MAX_RESPONSE_CONVERSATIONS</span><span class="p">):</span>
-				<span class="k">if</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">conversations</span><span class="p">[</span><span class="n">i</span><span class="p">])</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">):</span> 
-					<span class="k">if</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">conversations</span><span class="p">[</span><span class="n">i</span><span class="p">])</span> <span class="o">==</span> <span class="mi">3</span><span class="p">):</span>
-						<span class="n">conversations</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">conversations</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">2</span><span class="p">][</span><span class="mi">0</span><span class="p">:</span><span class="mi">2</span><span class="p">])</span><span class="o">*</span><span class="n">config</span><span class="o">.</span><span class="n">MINS_PER_HOUR</span><span class="o">+</span><span class="nb">int</span><span class="p">(</span><span class="n">conversations</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">2</span><span class="p">][</span><span class="mi">3</span><span class="p">:</span><span class="mi">5</span><span class="p">])</span>     
-					<span class="k">else</span><span class="p">:</span> 
-						<span class="k">del</span> <span class="n">conversations</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+            <span class="c1"># code for making relation map between clients</span>
+            <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">day_log</span><span class="p">:</span>
+                <span class="n">flag_comma</span> <span class="o">=</span> <span class="mi">0</span>
+                <span class="k">if</span><span class="p">(</span><span class="n">util</span><span class="o">.</span><span class="n">check_if_msg_line</span> <span class="p">(</span><span class="n">line</span><span class="p">)):</span>
+                    <span class="n">nick_sender</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+                    <span class="n">nick_receiver</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+                    <span class="n">m</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;\&lt;(.*?)\&gt;&quot;</span><span class="p">,</span> <span class="n">line</span><span class="p">)</span>
+                    <span class="n">nick_to_search</span> <span class="o">=</span> <span class="n">util</span><span class="o">.</span><span class="n">correctLastCharCR</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">0</span><span class="p">)[</span><span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+                    <span class="n">nick_sender</span> <span class="o">=</span> <span class="n">util</span><span class="o">.</span><span class="n">get_nick_sen_rec</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">nicks</span><span class="p">),</span> <span class="n">nick_to_search</span><span class="p">,</span> <span class="n">conn_comp_list</span><span class="p">,</span> <span class="n">nick_sender</span><span class="p">)</span>
+                    <span class="k">for</span> <span class="n">nick</span> <span class="ow">in</span> <span class="n">nicks</span><span class="p">:</span>
+                        <span class="n">rec_list</span> <span class="o">=</span> <span class="p">[</span><span class="n">e</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">line</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;:&#39;</span><span class="p">)]</span>
+                        <span class="n">util</span><span class="o">.</span><span class="n">rec_list_splice</span><span class="p">(</span><span class="n">rec_list</span><span class="p">)</span>
 
-		<span class="c1">#Explanation provided in parser-CL+CRT.py</span>
-			<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">MAX_RESPONSE_CONVERSATIONS</span><span class="p">):</span>
-				<span class="k">if</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">conversations</span><span class="p">[</span><span class="n">i</span><span class="p">])</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">):</span>					
-					<span class="n">totalmeanstd_list</span> <span class="o">=</span> <span class="n">build_mean_list</span><span class="p">(</span><span class="n">conversations</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="n">totalmeanstd_list</span><span class="p">)</span>
+                        <span class="k">if</span> <span class="ow">not</span> <span class="n">rec_list</span><span class="p">[</span><span class="mi">1</span><span class="p">]:</span>
+                            <span class="k">break</span>
+                        <span class="n">rec_list</span> <span class="o">=</span> <span class="n">util</span><span class="o">.</span><span class="n">correct_last_char_list</span><span class="p">(</span><span class="n">rec_list</span><span class="p">)</span>
 
-			<span class="k">if</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">totalmeanstd_list</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">):</span>
-				<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="n">totalmeanstd_list</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
-					<span class="n">x_axis</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+                        <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">rec_list</span><span class="p">:</span>
+                            <span class="n">conversations</span><span class="p">,</span> <span class="n">nick_receiver</span><span class="p">,</span> <span class="n">send_time</span> <span class="o">=</span> <span class="n">resp_helper</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">nick</span><span class="p">,</span> <span class="n">send_time</span><span class="p">,</span> <span class="n">nick_to_search</span><span class="p">,</span> <span class="n">nick_receiver</span><span class="p">,</span> <span class="n">nick_sender</span><span class="p">,</span> <span class="n">conversations</span><span class="p">,</span> <span class="n">conn_comp_list</span><span class="p">)</span>
 
-				<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">x_axis</span><span class="p">:</span>
-					<span class="n">y_axis</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">totalmeanstd_list</span><span class="o">.</span><span class="n">count</span><span class="p">(</span><span class="n">i</span><span class="p">))</span> <span class="o">/</span> <span class="nb">float</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">totalmeanstd_list</span><span class="p">)))</span>
-				
-				<span class="c1">#finding the probability of each RT to occur=No. of occurence/total occurences.</span>
-				<span class="n">real_y_axis</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">y_axis</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
-				<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">y_axis</span><span class="p">)):</span>
-					<span class="n">real_y_axis</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">real_y_axis</span><span class="p">[</span><span class="n">i</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span> <span class="o">+</span> <span class="nb">float</span><span class="p">(</span><span class="n">y_axis</span><span class="p">[</span><span class="n">i</span><span class="p">]))</span>
-			
-			<span class="c1">#to find cumulative just go on adding the current value to previously cumulated value till sum becomes 1 for last entry.</span>
-			<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">totalmeanstd_list</span><span class="p">)):</span>
-				<span class="n">graph_cumulative</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">totalmeanstd_list</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+                        <span class="k">if</span> <span class="s2">&quot;,&quot;</span> <span class="ow">in</span> <span class="n">rec_list</span><span class="p">[</span><span class="mi">1</span><span class="p">]:</span>
+                            <span class="n">flag_comma</span> <span class="o">=</span> <span class="mi">1</span>
+                            <span class="n">rec_list_2</span> <span class="o">=</span> <span class="p">[</span><span class="n">e</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">rec_list</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;,&#39;</span><span class="p">)]</span>
+                            <span class="n">rec_list_2</span> <span class="o">=</span> <span class="n">util</span><span class="o">.</span><span class="n">correct_last_char_list</span><span class="p">(</span><span class="n">rec_list_2</span><span class="p">)</span>
 
-			<span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">totalmeanstd_list</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
-				<span class="n">totalmeanstd_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">numpy</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">totalmeanstd_list</span><span class="p">))</span>
-				<span class="n">totalmeanstd_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">numpy</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">totalmeanstd_list</span><span class="p">)</span><span class="o">+</span><span class="mi">2</span><span class="o">*</span><span class="n">numpy</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">totalmeanstd_list</span><span class="p">))</span>
-		
-			<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">MAX_RESPONSE_CONVERSATIONS</span><span class="p">):</span>
-				<span class="k">if</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">conversations</span><span class="p">[</span><span class="n">i</span><span class="p">])</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">):</span>					
-					<span class="n">meanstd_list</span> <span class="o">=</span> <span class="n">build_mean_list</span><span class="p">(</span><span class="n">conversations</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="n">meanstd_list</span><span class="p">)</span>					
-					<span class="n">conversations</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">numpy</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">meanstd_list</span><span class="p">))</span>
-					<span class="n">conversations</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">numpy</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">meanstd_list</span><span class="p">)</span><span class="o">+</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">numpy</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">meanstd_list</span><span class="p">)))</span>
-					<span class="n">meanstd_list</span><span class="p">[:]</span> <span class="o">=</span> <span class="p">[]</span>
+                            <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">rec_list_2</span><span class="p">:</span>
+                                <span class="n">conversations</span><span class="p">,</span> <span class="n">nick_receiver</span><span class="p">,</span> <span class="n">send_time</span> <span class="o">=</span> <span class="n">resp_helper</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">nick</span><span class="p">,</span> <span class="n">send_time</span><span class="p">,</span> <span class="n">nick_to_search</span><span class="p">,</span> <span class="n">nick_receiver</span><span class="p">,</span> <span class="n">nick_sender</span><span class="p">,</span> <span class="n">conversations</span><span class="p">,</span> <span class="n">conn_comp_list</span><span class="p">)</span>
 
-	<span class="n">graph_cumulative</span><span class="o">.</span><span class="n">sort</span><span class="p">()</span>
+                        <span class="k">if</span><span class="p">(</span><span class="n">flag_comma</span> <span class="o">==</span> <span class="mi">0</span><span class="p">):</span>
+                            <span class="n">rec</span> <span class="o">=</span> <span class="n">util</span><span class="o">.</span><span class="n">splice_find</span><span class="p">(</span><span class="n">line</span><span class="p">,</span> <span class="s2">&quot;&gt;&quot;</span><span class="p">,</span> <span class="s2">&quot;, &quot;</span><span class="p">,</span><span class="mi">1</span><span class="p">)</span>
+                            <span class="n">conversations</span><span class="p">,</span> <span class="n">nick_receiver</span><span class="p">,</span> <span class="n">send_time</span> <span class="o">=</span> <span class="n">resp_helper</span><span class="p">(</span><span class="n">rec</span><span class="p">,</span> <span class="n">nick</span><span class="p">,</span> <span class="n">send_time</span><span class="p">,</span> <span class="n">nick_to_search</span><span class="p">,</span> <span class="n">nick_receiver</span><span class="p">,</span> <span class="n">nick_sender</span><span class="p">,</span> <span class="n">conversations</span><span class="p">,</span> <span class="n">conn_comp_list</span><span class="p">)</span>
 
-	<span class="n">truncated_rt</span> <span class="o">=</span> <span class="kc">None</span>
-	<span class="n">rt_cutoff_time</span> <span class="o">=</span> <span class="kc">None</span>
-	<span class="k">if</span> <span class="n">graph_cumulative</span><span class="p">:</span>
-		<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">graph_cumulative</span><span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">graph_cumulative</span><span class="p">)</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
-			<span class="n">graph_y_axis</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">graph_cumulative</span><span class="o">.</span><span class="n">count</span><span class="p">(</span><span class="n">i</span><span class="p">))</span>     <span class="c1"># problem when ti=0 count is unexpectedly large</span>
-			<span class="n">graph_x_axis</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>		
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">MAX_RESPONSE_CONVERSATIONS</span><span class="p">):</span>
+                <span class="k">if</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">conversations</span><span class="p">[</span><span class="n">i</span><span class="p">])</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">):</span>
+                    <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">conversations</span><span class="p">[</span><span class="n">i</span><span class="p">])</span> <span class="o">-</span> <span class="mi">1</span><span class="p">):</span>
+                        <span class="n">conversations</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">j</span><span class="p">]</span><span class="o">=</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">conversations</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">j</span><span class="o">+</span><span class="mi">1</span><span class="p">][</span><span class="mi">0</span><span class="p">:</span><span class="mi">2</span><span class="p">])</span><span class="o">*</span><span class="n">config</span><span class="o">.</span><span class="n">MINS_PER_HOUR</span><span class="o">+</span><span class="nb">int</span><span class="p">(</span><span class="n">conversations</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">j</span><span class="o">+</span><span class="mi">1</span><span class="p">][</span><span class="mi">3</span><span class="p">:</span><span class="mi">5</span><span class="p">]))</span> <span class="o">-</span> <span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">conversations</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">j</span><span class="p">][</span><span class="mi">0</span><span class="p">:</span><span class="mi">2</span><span class="p">])</span><span class="o">*</span><span class="n">config</span><span class="o">.</span><span class="n">MINS_PER_HOUR</span><span class="o">+</span><span class="nb">int</span><span class="p">(</span><span class="n">conversations</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">j</span><span class="p">][</span><span class="mi">3</span><span class="p">:</span><span class="mi">5</span><span class="p">]))</span>
 
-		<span class="c1">#Finally storing the RT values along with their frequencies in a csv file; no need to invoke build_stat_dist() function</span>
-		<span class="n">rows_rt</span> <span class="o">=</span> <span class="nb">zip</span><span class="p">(</span><span class="n">graph_x_axis</span><span class="p">,</span> <span class="n">graph_y_axis</span><span class="p">)</span>
-		<span class="n">truncated_rt</span><span class="p">,</span> <span class="n">rt_cutoff_time</span> <span class="o">=</span> <span class="n">truncate_table</span><span class="p">(</span><span class="n">rows_rt</span><span class="p">,</span> <span class="n">cutoff_percentile</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">MAX_RESPONSE_CONVERSATIONS</span><span class="p">):</span>
+                <span class="k">if</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">conversations</span><span class="p">[</span><span class="n">i</span><span class="p">])</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">):</span>
+                    <span class="k">if</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">conversations</span><span class="p">[</span><span class="n">i</span><span class="p">])</span> <span class="o">==</span> <span class="mi">3</span><span class="p">):</span>
+                        <span class="n">conversations</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">conversations</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">2</span><span class="p">][</span><span class="mi">0</span><span class="p">:</span><span class="mi">2</span><span class="p">])</span><span class="o">*</span><span class="n">config</span><span class="o">.</span><span class="n">MINS_PER_HOUR</span><span class="o">+</span><span class="nb">int</span><span class="p">(</span><span class="n">conversations</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">2</span><span class="p">][</span><span class="mi">3</span><span class="p">:</span><span class="mi">5</span><span class="p">])</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="k">del</span> <span class="n">conversations</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
 
-		<span class="k">if</span> <span class="n">config</span><span class="o">.</span><span class="n">CUTOFF_TIME_STRATEGY</span> <span class="o">==</span> <span class="s2">&quot;TWO_SIGMA&quot;</span><span class="p">:</span>
-			<span class="n">resp_time</span><span class="p">,</span> <span class="n">resp_frequency_tuple</span> <span class="o">=</span> <span class="nb">zip</span><span class="p">(</span><span class="o">*</span><span class="n">truncated_rt</span><span class="p">)</span>
-			<span class="n">resp_frequency</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">resp_frequency_tuple</span><span class="p">)</span>
-			<span class="n">rt_cutoff_time_frac</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">resp_frequency</span><span class="p">)</span> <span class="o">+</span> <span class="mi">2</span><span class="o">*</span><span class="n">numpy</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">resp_frequency</span><span class="p">)</span>
-			<span class="n">rt_cutoff_time</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">numpy</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="n">rt_cutoff_time_frac</span><span class="p">))</span>
+        <span class="c1"># Explanation provided in parser-CL+CRT.py</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">MAX_RESPONSE_CONVERSATIONS</span><span class="p">):</span>
+                <span class="k">if</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">conversations</span><span class="p">[</span><span class="n">i</span><span class="p">])</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">):</span>
+                    <span class="n">totalmeanstd_list</span> <span class="o">=</span> <span class="n">build_mean_list</span><span class="p">(</span><span class="n">conversations</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="n">totalmeanstd_list</span><span class="p">)</span>
 
-	</div>
-	<span class="k">return</span> <span class="n">truncated_rt</span><span class="p">,</span> <span class="n">rt_cutoff_time</span>
+            <span class="k">if</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">totalmeanstd_list</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">):</span>
+                <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="n">totalmeanstd_list</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
+                    <span class="n">x_axis</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+
+                <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">x_axis</span><span class="p">:</span>
+                    <span class="n">y_axis</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">totalmeanstd_list</span><span class="o">.</span><span class="n">count</span><span class="p">(</span><span class="n">i</span><span class="p">))</span> <span class="o">/</span> <span class="nb">float</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">totalmeanstd_list</span><span class="p">)))</span>
+
+                <span class="c1"># finding the probability of each RT to occur=No. of occurence/total occurences.</span>
+                <span class="n">real_y_axis</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">y_axis</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+                <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">y_axis</span><span class="p">)):</span>
+                    <span class="n">real_y_axis</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">real_y_axis</span><span class="p">[</span><span class="n">i</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span> <span class="o">+</span> <span class="nb">float</span><span class="p">(</span><span class="n">y_axis</span><span class="p">[</span><span class="n">i</span><span class="p">]))</span>
+
+            <span class="c1"># to find cumulative just go on adding the current value to previously cumulated value till sum becomes 1 for last entry.</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">totalmeanstd_list</span><span class="p">)):</span>
+                <span class="n">graph_cumulative</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">totalmeanstd_list</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">totalmeanstd_list</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">totalmeanstd_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">numpy</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">totalmeanstd_list</span><span class="p">))</span>
+                <span class="n">totalmeanstd_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">numpy</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">totalmeanstd_list</span><span class="p">)</span><span class="o">+</span><span class="mi">2</span><span class="o">*</span><span class="n">numpy</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">totalmeanstd_list</span><span class="p">))</span>
+
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">MAX_RESPONSE_CONVERSATIONS</span><span class="p">):</span>
+                <span class="k">if</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">conversations</span><span class="p">[</span><span class="n">i</span><span class="p">])</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">):</span>
+                    <span class="n">meanstd_list</span> <span class="o">=</span> <span class="n">build_mean_list</span><span class="p">(</span><span class="n">conversations</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="n">meanstd_list</span><span class="p">)</span>
+                    <span class="n">conversations</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">numpy</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">meanstd_list</span><span class="p">))</span>
+                    <span class="n">conversations</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">numpy</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">meanstd_list</span><span class="p">)</span><span class="o">+</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">numpy</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">meanstd_list</span><span class="p">)))</span>
+                    <span class="n">meanstd_list</span><span class="p">[:]</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="n">graph_cumulative</span><span class="o">.</span><span class="n">sort</span><span class="p">()</span>
+
+    <span class="n">truncated_rt</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">rt_cutoff_time</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="k">if</span> <span class="n">graph_cumulative</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">graph_cumulative</span><span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">graph_cumulative</span><span class="p">)</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
+            <span class="n">graph_y_axis</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">graph_cumulative</span><span class="o">.</span><span class="n">count</span><span class="p">(</span><span class="n">i</span><span class="p">))</span>     <span class="c1"># problem when ti=0 count is unexpectedly large</span>
+            <span class="n">graph_x_axis</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+
+        <span class="c1"># Finally storing the RT values along with their frequencies in a csv file; no need to invoke build_stat_dist() function</span>
+        <span class="n">rows_rt</span> <span class="o">=</span> <span class="nb">zip</span><span class="p">(</span><span class="n">graph_x_axis</span><span class="p">,</span> <span class="n">graph_y_axis</span><span class="p">)</span>
+        <span class="n">truncated_rt</span><span class="p">,</span> <span class="n">rt_cutoff_time</span> <span class="o">=</span> <span class="n">truncate_table</span><span class="p">(</span><span class="n">rows_rt</span><span class="p">,</span> <span class="n">cutoff_percentile</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">config</span><span class="o">.</span><span class="n">CUTOFF_TIME_STRATEGY</span> <span class="o">==</span> <span class="s2">&quot;TWO_SIGMA&quot;</span><span class="p">:</span>
+            <span class="n">resp_time</span><span class="p">,</span> <span class="n">resp_frequency_tuple</span> <span class="o">=</span> <span class="nb">zip</span><span class="p">(</span><span class="o">*</span><span class="n">truncated_rt</span><span class="p">)</span>
+            <span class="n">resp_frequency</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">resp_frequency_tuple</span><span class="p">)</span>
+            <span class="n">rt_cutoff_time_frac</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">resp_frequency</span><span class="p">)</span> <span class="o">+</span> <span class="mi">2</span><span class="o">*</span><span class="n">numpy</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">resp_frequency</span><span class="p">)</span>
+            <span class="n">rt_cutoff_time</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">numpy</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="n">rt_cutoff_time_frac</span><span class="p">))</span>
+
+    <span class="k">return</span> <span class="n">truncated_rt</span><span class="p">,</span> <span class="n">rt_cutoff_time</span></div>
 
 
 <div class="viewcode-block" id="build_stat_dist"><a class="viewcode-back" href="../../../DocumentationForCode.html#lib.analysis.channel.build_stat_dist">[docs]</a><span class="k">def</span> <span class="nf">build_stat_dist</span><span class="p">(</span><span class="n">number_list</span><span class="p">):</span>
-	<span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">	Summarize a list into a statistical distribution.</span>
-<span class="sd">	An empty input list generates an empty output list.</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Summarize a list into a statistical distribution.</span>
+<span class="sd">    An empty input list generates an empty output list.</span>
 
-<span class="sd">	Args:</span>
-<span class="sd">		number_list (List): List containing positive integers</span>
+<span class="sd">    Args:</span>
+<span class="sd">        number_list (List): List containing positive integers</span>
 
-<span class="sd">	Returns:</span>
-<span class="sd">	   rows_table(zip List): A tuple with two items in each element,</span>
-<span class="sd">	   in the (number, frequency) format</span>
-<span class="sd">	&quot;&quot;&quot;</span>
-	<span class="c1"># check for an empty input list</span>
-	<span class="k">if</span> <span class="ow">not</span> <span class="n">number_list</span><span class="p">:</span>
-		<span class="k">return</span> <span class="p">[]</span>
+<span class="sd">    Returns:</span>
+<span class="sd">       rows_table(zip List): A tuple with two items in each element,</span>
+<span class="sd">       in the (number, frequency) format</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># check for an empty input list</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">number_list</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">[]</span>
 
-	<span class="n">graph_x</span> <span class="o">=</span> <span class="p">[]</span>
-	<span class="n">graph_y</span> <span class="o">=</span> <span class="p">[]</span>
-	<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="n">number_list</span><span class="p">)</span><span class="o">+</span><span class="mi">1</span><span class="p">):</span>
-		<span class="n">graph_x</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
-		<span class="n">graph_y</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">number_list</span><span class="o">.</span><span class="n">count</span><span class="p">(</span><span class="n">i</span><span class="p">))</span>
+    <span class="n">graph_x</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">graph_y</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="n">number_list</span><span class="p">)</span><span class="o">+</span><span class="mi">1</span><span class="p">):</span>
+        <span class="n">graph_x</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+        <span class="n">graph_y</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">number_list</span><span class="o">.</span><span class="n">count</span><span class="p">(</span><span class="n">i</span><span class="p">))</span>
 
-	<span class="c1">#print zip(graph_x, graph_y)</span></div>
-	<span class="k">return</span> <span class="nb">zip</span><span class="p">(</span><span class="n">graph_x</span><span class="p">,</span> <span class="n">graph_y</span><span class="p">)</span>
+    <span class="c1"># print zip(graph_x, graph_y)</span>
+    <span class="k">return</span> <span class="nb">zip</span><span class="p">(</span><span class="n">graph_x</span><span class="p">,</span> <span class="n">graph_y</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="truncate_table"><a class="viewcode-back" href="../../../DocumentationForCode.html#lib.analysis.channel.truncate_table">[docs]</a><span class="k">def</span> <span class="nf">truncate_table</span><span class="p">(</span><span class="n">table</span><span class="p">,</span> <span class="n">cutoff_percentile</span><span class="p">):</span>
 
-	<span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">	The calculations of conversation characteristics, namely RT, CL and CRT, are</span>
-<span class="sd">	based on the cutoff values estimated for RT and CL. This generic function takes</span>
-<span class="sd">	a two column table and truncates the same to a required percentile value. Usually</span>
-<span class="sd">	the RT followed by CL tables are processed through this function.</span>
-<span class="sd">	cutoff_percentile (float) : Cutoff indicating the statistical significance of</span>
-<span class="sd">	observations on conversation characteristics. The value is expressed as a</span>
-<span class="sd">	floating point number.</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    The calculations of conversation characteristics, namely RT, CL and CRT, are</span>
+<span class="sd">    based on the cutoff values estimated for RT and CL. This generic function takes</span>
+<span class="sd">    a two column table and truncates the same to a required percentile value. Usually</span>
+<span class="sd">    the RT followed by CL tables are processed through this function.</span>
+<span class="sd">    cutoff_percentile (float) : Cutoff indicating the statistical significance of</span>
+<span class="sd">    observations on conversation characteristics. The value is expressed as a</span>
+<span class="sd">    floating point number.</span>
 
-<span class="sd">	Args:</span>
-<span class="sd">		table (zip List): List containing 2-tuple elements, ex: [(0,10),(1,5)]</span>
+<span class="sd">    Args:</span>
+<span class="sd">        table (zip List): List containing 2-tuple elements, ex: [(0,10),(1,5)]</span>
 
-<span class="sd">	Returns:</span>
-<span class="sd">   		truncated_table (zip List): A truncated version of table provided as input</span>
-<span class="sd">   		argument. The table is truncated to the level of statistical significance</span>
-<span class="sd">   		mentioned in the cutoff_percentile parameter.</span>
-<span class="sd">   		cutoff_time (int): Cutoff time value corresponding to the chosen level of</span>
-<span class="sd">   		statistical significance.</span>
+<span class="sd">    Returns:</span>
+<span class="sd">        truncated_table (zip List): A truncated version of table provided as input</span>
+<span class="sd">        argument. The table is truncated to the level of statistical significance</span>
+<span class="sd">        mentioned in the cutoff_percentile parameter.</span>
+<span class="sd">        cutoff_time (int): Cutoff time value corresponding to the chosen level of</span>
+<span class="sd">        statistical significance.</span>
 
-<span class="sd">	&quot;&quot;&quot;</span>
-	<span class="n">truncated_table</span> <span class="o">=</span> <span class="kc">None</span>
-	<span class="n">cutoff_time</span> <span class="o">=</span> <span class="kc">None</span>
-	<span class="k">if</span> <span class="n">table</span><span class="p">:</span>
-		<span class="n">times</span><span class="p">,</span> <span class="n">values</span> <span class="o">=</span> <span class="nb">zip</span><span class="p">(</span><span class="o">*</span><span class="n">table</span><span class="p">)</span>
-		<span class="n">total_value</span> <span class="o">=</span> <span class="mi">0</span>
-		<span class="k">for</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">values</span><span class="p">:</span>
-			<span class="n">total_value</span> <span class="o">=</span> <span class="n">total_value</span> <span class="o">+</span> <span class="n">value</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">truncated_table</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">cutoff_time</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="k">if</span> <span class="n">table</span><span class="p">:</span>
+        <span class="n">times</span><span class="p">,</span> <span class="n">values</span> <span class="o">=</span> <span class="nb">zip</span><span class="p">(</span><span class="o">*</span><span class="n">table</span><span class="p">)</span>
+        <span class="n">total_value</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">for</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">values</span><span class="p">:</span>
+            <span class="n">total_value</span> <span class="o">=</span> <span class="n">total_value</span> <span class="o">+</span> <span class="n">value</span>
 
-		<span class="n">index</span> <span class="o">=</span> <span class="mi">0</span>
-		<span class="n">cutoff_index</span> <span class="o">=</span> <span class="mi">0</span>
-		<span class="n">cumulative_value</span> <span class="o">=</span> <span class="mi">0</span>
-		<span class="k">while</span> <span class="p">(</span><span class="n">index</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">values</span><span class="p">)):</span>
-			<span class="k">if</span> <span class="p">(</span><span class="n">values</span><span class="p">[</span><span class="n">index</span><span class="p">]</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">):</span>
-				<span class="n">cumulative_value</span> <span class="o">=</span> <span class="n">cumulative_value</span> <span class="o">+</span> <span class="n">values</span><span class="p">[</span><span class="n">index</span><span class="p">]</span>
-				<span class="k">if</span> <span class="p">(</span><span class="n">cumulative_value</span> <span class="o">&lt;=</span> <span class="p">(</span><span class="mi">1</span><span class="o">-</span><span class="n">cutoff_percentile</span><span class="o">/</span><span class="mf">100.0</span><span class="p">)</span> <span class="o">*</span> <span class="n">total_value</span><span class="p">):</span>
-					<span class="n">cutoff_index</span> <span class="o">=</span> <span class="n">index</span>
-				<span class="k">else</span><span class="p">:</span>
-					<span class="k">break</span>
-			<span class="n">index</span> <span class="o">=</span> <span class="n">index</span> <span class="o">+</span> <span class="mi">1</span>
+        <span class="n">index</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">cutoff_index</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">cumulative_value</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">while</span> <span class="p">(</span><span class="n">index</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">values</span><span class="p">)):</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">values</span><span class="p">[</span><span class="n">index</span><span class="p">]</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">):</span>
+                <span class="n">cumulative_value</span> <span class="o">=</span> <span class="n">cumulative_value</span> <span class="o">+</span> <span class="n">values</span><span class="p">[</span><span class="n">index</span><span class="p">]</span>
+                <span class="k">if</span> <span class="p">(</span><span class="n">cumulative_value</span> <span class="o">&lt;=</span> <span class="p">(</span><span class="mi">1</span><span class="o">-</span><span class="n">cutoff_percentile</span><span class="o">/</span><span class="mf">100.0</span><span class="p">)</span> <span class="o">*</span> <span class="n">total_value</span><span class="p">):</span>
+                    <span class="n">cutoff_index</span> <span class="o">=</span> <span class="n">index</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="k">break</span>
+            <span class="n">index</span> <span class="o">=</span> <span class="n">index</span> <span class="o">+</span> <span class="mi">1</span>
 
-		<span class="c1">#slice counts the number of elements, which will be one greater than the index</span>
-		<span class="n">truncated_table</span> <span class="o">=</span> <span class="nb">zip</span><span class="p">(</span><span class="n">times</span><span class="p">[:</span><span class="n">cutoff_index</span><span class="o">+</span><span class="mi">1</span><span class="p">],</span> <span class="n">values</span><span class="p">[:</span><span class="n">cutoff_index</span><span class="o">+</span><span class="mi">1</span><span class="p">])</span>
-		<span class="n">cutoff_time</span> <span class="o">=</span> <span class="n">times</span><span class="p">[</span><span class="n">cutoff_index</span><span class="p">]</span>
-</div>
-	<span class="k">return</span> <span class="n">truncated_table</span><span class="p">,</span> <span class="n">cutoff_time</span>
+        <span class="c1"># slice counts the number of elements, which will be one greater than the index</span>
+        <span class="n">truncated_table</span> <span class="o">=</span> <span class="nb">zip</span><span class="p">(</span><span class="n">times</span><span class="p">[:</span><span class="n">cutoff_index</span><span class="o">+</span><span class="mi">1</span><span class="p">],</span> <span class="n">values</span><span class="p">[:</span><span class="n">cutoff_index</span><span class="o">+</span><span class="mi">1</span><span class="p">])</span>
+        <span class="n">cutoff_time</span> <span class="o">=</span> <span class="n">times</span><span class="p">[</span><span class="n">cutoff_index</span><span class="p">]</span>
+
+    <span class="k">return</span> <span class="n">truncated_table</span><span class="p">,</span> <span class="n">cutoff_time</span></div>
 </pre></div>
 
           </div>
@@ -475,7 +471,7 @@
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2016-2017, Prasad Talasila, Rohan Goel, Rohit Kaushik.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.7.1.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.7.2.
     </div>
   </body>
 </html>
