@@ -19,6 +19,8 @@ class NetworkTest(unittest.TestCase):
         self.nick_same_list = util.load_from_disk(self.test_data_dir + "../nick_same_list")
 
     def tearDown(self):
+        self.current_directory = None
+        self.test_data_dir = None
         self.log_data = None
         self.nicks = None
         self.nick_same_list = None

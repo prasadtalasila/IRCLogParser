@@ -35,7 +35,7 @@ class VisTest(unittest.TestCase):
         expected_output = vis.calc_plot_linear_fit(x_in, y_in, self.test_data_dir, "linear_plot_test")
         # remove the image generated from plot function
         os.remove(self.test_data_dir + '/linear_plot_test.png')
-        assert np.allclose(expected_output, expected_result)
+        self.assertTrue(np.allclose(expected_output, expected_result))
 
     @data(([0, 1, 2, 3, 4, 5], [0, 1, 2, 3, 4, 5], [1, 0, 1, 0]))
     @unpack
@@ -44,7 +44,7 @@ class VisTest(unittest.TestCase):
         expected_output = vis.calc_plot_linear_fit(x_in, y_in, self.test_data_dir, "linear_plot_test")
         # remove the image generated from plot function
         os.remove(self.test_data_dir + '/linear_plot_test.png')
-        assert np.allclose(expected_output, expected_result)
+        self.assertTrue(np.allclose(expected_output, expected_result))
 
         expected_output = vis.calc_plot_linear_fit(None, None, self.test_data_dir, "linear_plot_test")
         expected_result = -1, -1, -1, -1
@@ -88,7 +88,7 @@ class VisTest(unittest.TestCase):
 
         expected_output = vis.exponential_curve_fit_and_plot(data, self.test_data_dir, "exponential_plot_test")
         os.remove(self.test_data_dir + '/exponential_plot_test.png')
-        assert np.allclose(expected_output, expected_result)
+        self.assertTrue(np.allclose(expected_output, expected_result))
 
     @patch("lib.vis.generate_probability_distribution", autospec=True)
     @patch("lib.util.exponential_curve_func", autospec=True)
@@ -104,7 +104,7 @@ class VisTest(unittest.TestCase):
         expected_output = vis.exponential_curve_fit_and_plot_x_shifted(data, self.test_data_dir, "exponential_plot_test_shifted")
         # delete the plot created
         os.remove(self.test_data_dir + '/exponential_plot_test_shifted.png')
-        assert np.allclose(expected_output, expected_result)
+        self.assertTrue(np.allclose(expected_output, expected_result))
 
     @patch("lib.config.DEBUGGER", 1)
     @patch("igraph.plot", autospec=True)
@@ -150,7 +150,7 @@ class VisTest(unittest.TestCase):
         expected_result = util.load_from_disk(self.test_data_dir + "/vis/out_degree_analysis")
         mock_calc_plot.return_value = util.load_from_disk(self.test_data_dir + "vis/calc_plot_data")
         expected_output = vis.generate_log_plots(data, self.test_data_dir, "log_plot_test")
-        assert np.allclose(expected_output, expected_result)
+        self.assertTrue(np.allclose(expected_output, expected_result))
 
     @patch("plotly.plotly.image.save_as")
     def test_generate_group_bar_charts(self, mock_py):
@@ -172,7 +172,7 @@ class VisTest(unittest.TestCase):
         layout = go.Layout(barmode='group')
         fig = go.Figure(data=test_data, layout=layout)
         vis.generate_group_bar_charts(y_values, x_values, trace_headers, self.test_data_dir, 'test_group_bar_chart')
-        assert mock_py.call_count == 1
+        self.assertEqual(mock_py.call_count, 1)
         self.assertEqual(fig.get('data')[0], mock_py.call_args[0][0].get('data')[0])
 
     @patch("plotly.plotly.image.save_as")
@@ -206,7 +206,7 @@ class VisTest(unittest.TestCase):
         fig = go.Figure(data=final_data, layout=layout)
 
         vis.csv_heatmap_generator_plotly(self.test_data_dir + "/vis/", self.test_data_dir, "plotly_heatmap_test")
-        assert mock_py.call_count == 1
+        self.assertEqual(mock_py.call_count, 1)
         self.assertTrue(fig.get('layout') == mock_py.call_args[0][0].get('layout'))
         np.testing.assert_array_equal(fig.data[0].get('z'), mock_py.call_args[0][0].data[0].get('z'))
 

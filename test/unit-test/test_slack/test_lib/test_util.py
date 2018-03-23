@@ -175,11 +175,11 @@ class UtilTest(unittest.TestCase):
         util.save_to_disk(self.nicks, self.current_directory + "/data/nicksTest")
         status, output = commands.getstatusoutput('cmp '+ self.current_directory +'/data/nicks '+ self.current_directory+ '/data/nicksTest')
         subprocess.Popen(['rm', self.current_directory + '/data/nicksTest'])
-        assert status == 0, "Failure to load from disk."
+        self.assertEqual(status, 0, "Failure to load from disk.")
 
     def test_load_from_disk(self):
         nicks = util.load_from_disk(self.current_directory + '/data/nicks')
-        assert nicks == self.expected_nicks, "Failure to load from disk."
+        self.assertEqual(nicks, self.expected_nicks, "Failure to load from disk.")
 
 
 if __name__ == '__main__':

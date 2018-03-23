@@ -20,6 +20,7 @@ class NetworkIntegrationTest(unittest.TestCase):
 
     def tearDown(self):
         self.current_directory = None
+        self.test_data_dir = None
         self.log_data = None
         self.nicks = None
         self.nick_same_list = None

@@ -20,6 +20,7 @@ class NetworkTest(unittest.TestCase):
 
     def tearDown(self):
         self.current_directory = None
+        self.test_data_dir = None
         self.log_data = None
         self.nicks = None
         self.nick_same_list = None
@@ -213,14 +214,14 @@ class NetworkTest(unittest.TestCase):
         capturedOutput = StringIO.StringIO()
         sys.stdout = capturedOutput
 
-        ret = network.message_time_graph(self.log_data, self.nicks, self.nick_same_list, DAY_BY_DAY_ANALYSIS=False)
+        graph = network.message_time_graph(self.log_data, self.nicks, self.nick_same_list, DAY_BY_DAY_ANALYSIS=False)
 
         sys.stdout = sys.__stdout__
         capturedOutput.close()
 
         mock_to_graph.assert_called_once_with(self.nick_same_list)
         mock_create_connected_nick_list.assert_called_once_with(conn_list)
-        self.assertTrue(nx.is_isomorphic(ret, util.load_from_disk(
+        self.assertTrue(nx.is_isomorphic(graph, util.load_from_disk(
             self.test_data_dir + "message_time_graph/msg_time_aggr_graph")))
 
     @mock.patch('lib.config.MAX_EXPECTED_DIFF_NICKS', 5000)
@@ -319,9 +320,9 @@ class NetworkTest(unittest.TestCase):
         conn_comp_list = [["Rohit", "rohit", "kaushik"], ["krishna", "krish", "acharya"], ["Rohan", "rohan", "ron"]]
         conn_comp_list.extend([[]] * config.MAX_EXPECTED_DIFF_NICKS)
 
-        assert network.nick_receiver_from_conn_comp("kaushik", conn_comp_list) == "Rohit"
-        assert network.nick_receiver_from_conn_comp("krishna", conn_comp_list) == "krishna"
-        assert network.nick_receiver_from_conn_comp("Rohan_goel", conn_comp_list) == ""
+        self.assertEqual(network.nick_receiver_from_conn_comp("kaushik", conn_comp_list), "Rohit")
+        self.assertEqual(network.nick_receiver_from_conn_comp("krishna", conn_comp_list), "krishna")
+        self.assertEqual(network.nick_receiver_from_conn_comp("Rohan_goel", conn_comp_list), "")
 
     @mock.patch('lib.config.HOW_MANY_TOP_EXPERTS', 10)
     @mock.patch('lib.config.NUMBER_OF_KEYWORDS_CHANNEL_FOR_OVERLAP', 250)
