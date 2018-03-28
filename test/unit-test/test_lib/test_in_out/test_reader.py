@@ -39,8 +39,10 @@ class ReaderTest(unittest.TestCase):
         # string 'Working on: /any_valid_path/IRCLogParser/test/unit-test/test_lib/test_in_out/data/log/2013/01/04/#kubuntu-devel.txt\n' is replaced by
         # 'Working on: IRCLogParser/test/unit-test/test_lib/test_in_out/data/log/2013/01/04/#kubuntu-devel.txt\n'
         output = re.sub(r'(?P<begin>.+ )/.+/(?P<constant>IRCLogParser/.+\n)', r'\g<begin>\g<constant>', output)
+
         self.assertEqual(log_data, self.log_data)
         self.assertEqual(expected_capturedOutput, output)
+
 
     @patch("lib.config.DEBUGGER", new = True)
     def test_linux_input_all_channels(self):
@@ -49,17 +51,16 @@ class ReaderTest(unittest.TestCase):
 
         capturedOutput = StringIO.StringIO()
         sys.stdout = capturedOutput
-        log_data = reader.linux_input(self.current_directory + "/data/log_to_test_for_all_channels/", ["ALL"], "2013-1-1", "2013-1-1")
+        log_data = reader.linux_input(self.current_directory + "/data/log_to_test_for_all_channels/", ["ALL"], "2013-1-1", "2013-1-2")
         output = capturedOutput.getvalue()
         capturedOutput.close()
         sys.stdout = sys.__stdout__
-        
+
         #See https://docs.python.org/2/library/re.html for more details.
         output = re.sub(r'(?P<begin>.+ )/.+/(?P<constant>IRCLogParser/.+\n)', r'\g<begin>\g<constant>', output)
 
         self.assertEqual(expected_log_data, log_data)
         self.assertEqual(expected_capturedOutput, output)
-
 
 
     @patch("lib.config.DEBUGGER", new = True)
@@ -84,7 +85,6 @@ class ReaderTest(unittest.TestCase):
         output = re.sub(r'(?P<begin>.+ )/.+/(?P<constant>IRCLogParser/.+\n)',r'\g<begin>\g<constant>', output)
         self.assertEqual(self.log_data, expected_log_data)
         self.assertEqual(expected_captured_output, output)
-
 
 
 if __name__ == '__main__':
