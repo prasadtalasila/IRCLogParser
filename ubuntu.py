@@ -1,8 +1,10 @@
-from lib.in_out import reader, saver
-import lib.nickTracker as nickTracker, lib.config as config, lib.vis as vis, lib.validate as validate, lib.util as util
+import lib.config as config
+import lib.nickTracker as nickTracker
+import lib.validate as validate
+import lib.vis as vis
 from lib.analysis import network, channel, user, community
-import numpy as np
-import networkx as nx
+from lib.in_out import reader, saver
+
 log_directory = config.LOG_DIRECTORY
 channel_name = config.CHANNEL_NAME
 starting_date = config.STARTING_DATE
@@ -163,33 +165,8 @@ for date in dates:
 
         vis.plot_infomap_igraph(msg_graph, msg_comm.membership, output_directory, "message-exchange-" + starting_date + "-multi-cutoff-"+str(cutoff), aux_data = {"type": "MULTI_CH", "uc_adj": UC_adjacency_matrix, "user_hash": nicks_hash})
 
-# Correlational : statistical distribution as illustrated by box plot for RT, CL, CRT parameters
-percentiles = [0, 1, 5, 10, 20]
-for channel_name_iter in [["#kubuntu-devel"], ["#ubuntu-devel"], ["#kubuntu"]]:
-    for cutoff in percentiles:
-        conv_len_curve_fit_parameters = np.zeros((12, 4))
-        resp_time_curve_fit_parameters = np.zeros((12, 4))
-        conv_ref_time_curve_fit_parameters = np.zeros((12, 5))
-        for month in range(1, 13):
-            log_data = reader.linux_input(log_directory, channel_name_iter, "2013-"+str(month)+"-1", "2013-"+str(month)+"-31")
-            nicks, nick_same_list = nickTracker.nick_tracker(log_data)
-            default_cutoff = config.CUTOFF_PERCENTILE
-
-            config.CUTOFF_PERCENTILE = cutoff
-            truncated_rt, rt_cutoff_time = channel.response_time(log_data, nicks, nick_same_list, config.CUTOFF_PERCENTILE)
-            conv_len, conv_ref_time = channel.conv_len_conv_refr_time(log_data, nicks, nick_same_list, rt_cutoff_time, config.CUTOFF_PERCENTILE)
-            conv_len_curve_fit_parameters[month-1] = vis.exponential_curve_fit_and_plot(conv_len, output_directory, "conv_len_cutoff" + str(cutoff))
-            resp_time_curve_fit_parameters[month-1] = vis.exponential_curve_fit_and_plot(truncated_rt, output_directory, "resp_time_cutoff" + str(cutoff))
-            conv_ref_time_curve_fit_parameters[month-1] = vis.exponential_curve_fit_and_plot_x_shifted(conv_ref_time, output_directory, "conv_ref_time_cutoff" + str(cutoff))
-
-        parameters = ['a', 'b', 'c']
-        for para_ind in range(len(parameters)):
-            vis.box_plot(conv_len_curve_fit_parameters[:, para_ind], output_directory, "conv_len_"+str(parameters[para_ind])+"_2013_"+channel_name_iter[0]+"_cut_"+str(cutoff))
-            vis.box_plot(resp_time_curve_fit_parameters[:, para_ind], output_directory, "resp_time_"+str(parameters[para_ind])+"_2013_"+channel_name_iter[0]+"_cut_"+str(cutoff))
-            vis.box_plot(conv_ref_time_curve_fit_parameters[:, para_ind], output_directory, "conv_refr_"+str(parameters[para_ind])+"_2013_"+channel_name_iter[0]+"_cut_"+str(cutoff))
-
-            saver.save_csv([conv_len_curve_fit_parameters[:, para_ind].tolist()], output_directory, "conv_len_"+str(parameters[para_ind])+"_2013_"+channel_name_iter[0]+"_cut_"+str(cutoff))
-            saver.save_csv([resp_time_curve_fit_parameters[:, para_ind].tolist()], output_directory, "resp_time_"+str(parameters[para_ind])+"_2013_"+channel_name_iter[0]+"_cut_"+str(cutoff))
-            saver.save_csv([conv_ref_time_curve_fit_parameters[:, para_ind].tolist()], output_directory, "conv_refr_"+str(parameters[para_ind])+"_2013_"+channel_name_iter[0]+"_cut_"+str(cutoff))
-
-config.CUTOFF_PERCENTILE = default_cutoff 
+validate.correlational_CL_RT_CRT(log_directory, output_directory, starting_date, ending_date)
+validate.box_plot_for_degree(log_directory, output_directory, channel_name, starting_date, ending_date)
+validate.keywords_hits_overlap(log_directory, output_directory, channel_name, starting_date, ending_date)
+validate.codelengths(log_directory, output_directory, channel_name, starting_date, ending_date)
+validate.correlational_activity(log_directory, output_directory, channel_name, starting_date, ending_date)
