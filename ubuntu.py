@@ -3,6 +3,9 @@ import lib.nickTracker as nickTracker, lib.config as config, lib.vis as vis, lib
 from lib.analysis import network, channel, user, community
 import numpy as np
 import networkx as nx
+from dateutil.relativedelta import relativedelta
+from dateutil.rrule import rrule, MONTHLY
+import datetime
 log_directory = config.LOG_DIRECTORY
 channel_name = config.CHANNEL_NAME
 starting_date = config.STARTING_DATE
@@ -170,17 +173,20 @@ for channel_name_iter in [["#kubuntu-devel"], ["#ubuntu-devel"], ["#kubuntu"]]:
         conv_len_curve_fit_parameters = np.zeros((12, 4))
         resp_time_curve_fit_parameters = np.zeros((12, 4))
         conv_ref_time_curve_fit_parameters = np.zeros((12, 5))
-        for month in range(1, 13):
-            log_data = reader.linux_input(log_directory, channel_name_iter, "2013-"+str(month)+"-1", "2013-"+str(month)+"-31")
+        start_date = datetime.datetime(2013, 1, 1)
+        end_date = datetime.datetime(2013, 12, 31)
+        for dt in rrule(MONTHLY, dtstart=start_date, until=end_date):
+            last_day_of_the_month = dt + relativedelta(months=1) - datetime.timedelta(days=1)
+            log_data = reader.linux_input(log_directory, channel_name_iter, dt.strftime("%Y-%m-%d"), last_day_of_the_month.strftime("%Y-%m-%d"))
             nicks, nick_same_list = nickTracker.nick_tracker(log_data)
             default_cutoff = config.CUTOFF_PERCENTILE
 
             config.CUTOFF_PERCENTILE = cutoff
             truncated_rt, rt_cutoff_time = channel.response_time(log_data, nicks, nick_same_list, config.CUTOFF_PERCENTILE)
             conv_len, conv_ref_time = channel.conv_len_conv_refr_time(log_data, nicks, nick_same_list, rt_cutoff_time, config.CUTOFF_PERCENTILE)
-            conv_len_curve_fit_parameters[month-1] = vis.exponential_curve_fit_and_plot(conv_len, output_directory, "conv_len_cutoff" + str(cutoff))
-            resp_time_curve_fit_parameters[month-1] = vis.exponential_curve_fit_and_plot(truncated_rt, output_directory, "resp_time_cutoff" + str(cutoff))
-            conv_ref_time_curve_fit_parameters[month-1] = vis.exponential_curve_fit_and_plot_x_shifted(conv_ref_time, output_directory, "conv_ref_time_cutoff" + str(cutoff))
+            conv_len_curve_fit_parameters[dt.month-1] = vis.exponential_curve_fit_and_plot(conv_len, output_directory, "conv_len_cutoff" + str(cutoff))
+            resp_time_curve_fit_parameters[dt.month-1] = vis.exponential_curve_fit_and_plot(truncated_rt, output_directory, "resp_time_cutoff" + str(cutoff))
+            conv_ref_time_curve_fit_parameters[dt.month-1] = vis.exponential_curve_fit_and_plot_x_shifted(conv_ref_time, output_directory, "conv_ref_time_cutoff" + str(cutoff))
 
         parameters = ['a', 'b', 'c']
         for para_ind in range(len(parameters)):
