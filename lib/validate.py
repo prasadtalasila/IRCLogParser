@@ -97,7 +97,8 @@ def box_plot_for_degree(log_directory, output_directory, channel_name, start_dat
 def keywords_hits_overlap(log_directory, output_directory, channel_name, start_date, end_date):
     """
         The function iterates through the months in the given date range and produces the authorities, top keywords and
-        top hubs for the current month and the next month.
+        top hubs for the current month and the next month. It also produces the overlap of authorities, top keywords and
+        top hubs between the current and the next month.
 
     Args:
         log_directory(str): path to the location of Logs
@@ -146,7 +147,7 @@ def keywords_hits_overlap(log_directory, output_directory, channel_name, start_d
 def codelengths(log_directory, output_directory, channel_name, start_date, end_date):
     """
         The function iterate through the months in the given date range and computes the infomap number. It then plots a
-        box plot for the infomap numbers of the given month.
+        box plot for the infomap numbers of all the whole months in the given time period.
 
     Args:
         log_directory(str): path to the location of Logs
