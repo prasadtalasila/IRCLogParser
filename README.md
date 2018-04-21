@@ -18,7 +18,7 @@ Follow the steps to install dependencies and IRCLogParser library:-
 ```shell
 > git clone https://github.com/prasadtalasila/IRCLogParser.git
 > cd IRCLogParser
-> bash script/install
+> sudo script/install
 ```
 
 Ideally the installation takes not more than 10 minutes.
