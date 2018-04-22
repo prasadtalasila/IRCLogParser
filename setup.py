@@ -12,11 +12,6 @@ except ImportError:
 	pip.main(['install','numpy'])
 
 try:
-	import scipy
-except ImportError:
-	pip.main(['install','scipy'])
-
-try:
     import pypandoc
     long_description = pypandoc.convert('README.md', 'rst')
 except(IOError, ImportError):
@@ -35,7 +30,7 @@ setup(
     include_package_data=True,
     keywords='IRC parser data-analysis research development',
     packages=find_packages(exclude=['docs', 'tests']),
-    
+
     setup_requires=[
     	'graphviz'
     ],
@@ -52,7 +47,7 @@ setup(
         'plotly==2.4.1',
         'ddt',
         'mock'
-        
+
     ],
     extra_requires={
     	'dev': [
@@ -72,5 +67,5 @@ setup(
         	'snakefood'
     	]
     }
-        
+
 )
