@@ -15,12 +15,8 @@ import lib.in_out.saver as saver
 from numpy.random import normal
 from scipy.optimize import curve_fit
 from scipy import stats
-import plotly.plotly as py
-import plotly.graph_objs as go
 from numpy import genfromtxt
 import glob
-
-py.sign_in(config.USER_NAME, config.TOKEN)
 
 def plot_data (data, output_directory, output_file_name):
     x_data, y_data = (d for d in data)
@@ -291,132 +287,25 @@ def calc_plot_linear_fit(x_in, y_in, output_directory, output_file_name):
         print str(slope)+"\t"+str(intercept)+"\t"+str(r_value**2)+"\t"+str(mean_squared_error(y, line))
         saver.check_if_dir_exists(output_directory)
 
-        if config.USE_PYPLOT:
-            def trace_helper_pyplot(x, y, label, color):
-                return go.Scatter(
-                              x=x,
-                              y=y,
-                              mode='lines',
-                              marker=go.Marker(color=color),
-                              name=label
-                              )
+        axes = plt.gca()
+        axes.set_xlim([0, 3])
+        axes.set_ylim([0, 6])
+        plt.xlabel("log(degree)")
+        plt.ylabel("log(no_of_nodes)")
 
-            trace1 = trace_helper_pyplot(x, y, 'Data', 'rgb(255, 127, 14)')
-            trace2 = trace_helper_pyplot(x, line, 'Fit', 'rgb(31, 119, 180)')
+        # fit with np.polyfit
+        m, b = np.polyfit(x, y, 1)
 
-            layout = go.Layout(
-                            title='DegreeNode',
-                            xaxis=go.XAxis(zerolinecolor='rgb(255,255,255)', gridcolor='rgb(255,255,255)'),
-                            # yaxis=go.YAxis(zerolinecolor='rgb(255,255,255)', gridcolor='rgb(255,255,255)')
-                            )
-
-            data = [trace1, trace2]
-            fig = go.Figure(data=data, layout=layout)
-
-            py.image.save_as(fig, output_directory+"/"+output_file_name + ".png")
-
-        else:
-            # graph config
-            axes = plt.gca()
-            axes.set_xlim([0, 3])
-            axes.set_ylim([0, 6])
-            plt.xlabel("log(degree)")
-            plt.ylabel("log(no_of_nodes)")
-
-            # fit with np.polyfit
-            m, b = np.polyfit(x, y, 1)
-
-            plt.plot(x, y, '-')
-            plt.plot(x, m*x + b, '-')
-            plt.legend(['Data', 'Fit'], loc='upper right')
-            plt.savefig(output_directory+"/" + output_file_name+".png")
-            plt.close()
+        plt.plot(x, y, '-')
+        plt.plot(x, m*x + b, '-')
+        plt.legend(['Data', 'Fit'], loc='upper right')
+        plt.savefig(output_directory+"/" + output_file_name+".png")
+        plt.close()
             
         return slope,intercept,r_value**2,mean_squared_error(y, line)
     else:
         print "ERROR calc_plot_linear_fit"
         return -1, -1, -1, -1
-
-
-def generate_group_bar_charts(y_values, x_values, trace_header, output_directory, output_file_name):
-    """
-    Plots multiple bar graphs on same graph
-
-    example usage:
-    generate_group_bar_charts([
-    [5.10114882,    5.0194652482, 4.9908093076],
-    [4.5824497358,  4.7083614037,   4.3812775722],
-    [2.6839471308,  3.0441476209,   3.6403820447]
-    ], ['#kubuntu-devel', '#ubuntu-devel', '#kubuntu'],
-    ['head1', 'head2', 'head3'], '/home/rohan/Desktop/', 'multi_box'
-    )
-
-    Args:
-        x_in (list of int): x_axis data
-        y_in (list of int): y_axis data
-        output_drectory(str): location to save graph
-        output_file_name(str): name of the image file to be saved
-
-    Returns:
-        null
-    """
-
-    data = [
-        go.Bar(
-            x=x_values,
-            y=y_values[i],
-            name=trace_header[i]
-        ) for i in range(len(y_values))
-    ]
-
-    layout = go.Layout(
-        barmode='group'
-    )
-
-    fig = go.Figure(data=data, layout=layout)
-    py.image.save_as(fig, output_directory + "/" + output_file_name+".png")
-
-
-def csv_heatmap_generator_plotly(in_directory, output_directory, output_file_name):
-    """
-        Plots heatmaps for all the csv files in the given directory
-
-    Args:
-        in_directory (str):  location of input csv files
-        output_drectory(str): location to save graph
-        output_file_name(str): name of the image file to be saved
-
-    Returns:
-        null
-    """
-
-    file_list = glob.glob(in_directory+"*.csv")
-
-    for file in file_list:
-        csv_data = genfromtxt(file, delimiter=',')
-
-        trace = go.Heatmap(
-                z=csv_data,
-                x=list(range(48)),
-                y=list(range(1, 12)),
-                colorscale=[
-                [0, 'rgb(255, 255, 204)'],
-                [0.13, 'rgb(255, 237, 160)'],
-                [0.25, 'rgb(254, 217, 118)'],
-                [0.38, 'rgb(254, 178, 76)'],
-                [0.5, 'rgb(253, 141, 60)'],
-                [0.63, 'rgb(252, 78, 42)'],
-                [0.75, 'rgb(227, 26, 28)'],
-                [0.88, 'rgb(189, 0, 38)'],
-                [1.0, 'rgb(128, 0, 38)']
-            ]
-        )
-
-        data = [trace]
-        layout = go.Layout(title='HeatMap', width=800, height=640)
-        fig = go.Figure(data=data, layout=layout)
-
-        py.image.save_as(fig, filename=in_directory+file[file.rfind("/")+1:-4]+'_heatmap.png')
 
 
 def matplotlob_csv_heatmap_generator(csv_file, output_directory, output_file_name):

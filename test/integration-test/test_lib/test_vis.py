@@ -29,17 +29,7 @@ class VisTest(unittest.TestCase):
         os.remove(self.test_data_dir + '/exponential_plot_test_shifted.png')
         assert np.allclose(output, expected_result)
 
-    @patch("lib.config.USE_PYPLOT",0)
     def test_generate_log_plots(self):
-        data = util.load_from_disk(self.test_data_dir + "/vis/degree_msg_number")
-        expected_result = util.load_from_disk(self.test_data_dir + "/vis/out_degree_analysis")
-        output = vis.generate_log_plots(data, self.test_data_dir, "log_plot_test")
-        # delete the plot created
-        os.remove(self.test_data_dir + '/log_plot_test.png')
-        assert np.allclose(output, expected_result)
-
-    @patch("lib.config.USE_PYPLOT",1)
-    def test_generate_log_plots_use_pyplot(self):
         data = util.load_from_disk(self.test_data_dir + "/vis/degree_msg_number")
         expected_result = util.load_from_disk(self.test_data_dir + "/vis/out_degree_analysis")
         output = vis.generate_log_plots(data, self.test_data_dir, "log_plot_test")
