@@ -74,7 +74,7 @@ def box_plot_for_degree(log_directory, output_directory, channel_name, start_dat
         for dt in rrule(MONTHLY, dtstart=start_date, until=end_date):
             last_day_of_the_month = dt + relativedelta(months=1) - datetime.timedelta(days=1)
         # for month in range(1, 13):
-            log_data = reader.linux_input(log_directory, channel_name_iter, dt.strftime("%Y-%m-%d"),last_day_of_the_month.strftime("%Y-%m-%d"))
+            log_data = reader.linux_input(log_directory, [channel_name_iter], dt.strftime("%Y-%m-%d"),last_day_of_the_month.strftime("%Y-%m-%d"))
             nicks, nick_same_list = nickTracker.nick_tracker(log_data)
 
             message_number_graph = network.message_number_graph(log_data, nicks, nick_same_list, False)
