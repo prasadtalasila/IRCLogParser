@@ -64,8 +64,8 @@ def box_plot_for_degree(log_directory, output_directory, channel_name, start_dat
        null
 
     """
-    start_date = start_date.strptime('%Y-%m-%d')
-    end_date = end_date.strptime('%Y-%m-%d')
+    start_date = datetime.datetime.strptime(start_date,'%Y-%m-%d')
+    end_date = datetime.datetime.strptime(end_date,'%Y-%m-%d')
     cutoff = 0
     for channel_name_iter in channel_name:
         out_degree_fit_parameters = np.zeros((12, 4))
@@ -74,7 +74,7 @@ def box_plot_for_degree(log_directory, output_directory, channel_name, start_dat
         for dt in rrule(MONTHLY, dtstart=start_date, until=end_date):
             last_day_of_the_month = dt + relativedelta(months=1) - datetime.timedelta(days=1)
         # for month in range(1, 13):
-            log_data = reader.linux_input(log_directory, channel_name_iter, dt.strftime("%Y-%m-%d"),last_day_of_the_month.strftime("%Y-%m-%d"))
+            log_data = reader.linux_input(log_directory, [channel_name_iter], dt.strftime("%Y-%m-%d"),last_day_of_the_month.strftime("%Y-%m-%d"))
             nicks, nick_same_list = nickTracker.nick_tracker(log_data)
 
             message_number_graph = network.message_number_graph(log_data, nicks, nick_same_list, False)
@@ -111,8 +111,8 @@ def keywords_hits_overlap(log_directory, output_directory, channel_name, start_d
        null
 
     """
-    start_date = start_date.strptime('%Y-%m-%d')
-    end_date = end_date.strptime('%Y-%m-%d')
+    start_date = datetime.datetime.strptime(start_date,'%Y-%m-%d')
+    end_date = datetime.datetime.strptime(end_date,'%Y-%m-%d')
     for dt in rrule(MONTHLY, dtstart=start_date, until=end_date):
         last_day_of_the_month1 = dt + relativedelta(months=1) - datetime.timedelta(days=1)
         log_data_m1 = reader.linux_input(log_directory, channel_name, dt.strftime("%Y-%m-%d"),last_day_of_the_month1.strftime("%Y-%m-%d"))
@@ -160,8 +160,8 @@ def codelengths(log_directory, output_directory, channel_name, start_date, end_d
        null
 
     """
-    start_date = start_date.strptime('%Y-%m-%d')
-    end_date = end_date.strptime('%Y-%m-%d')
+    start_date = datetime.datetime.strptime(start_date,'%Y-%m-%d')
+    end_date = datetime.datetime.strptime(end_date,'%Y-%m-%d')
     codelengths = []
     for dt in rrule(MONTHLY, dtstart=start_date, until=end_date):
         last_day_of_the_month1 = dt + relativedelta(months=1) - datetime.timedelta(days=1)
@@ -210,8 +210,8 @@ def correlational_activity(log_directory, output_directory, channel_name, start_
        null
 
     """
-    start_date = start_date.strptime('%Y-%m-%d')
-    end_date = end_date.strptime('%Y-%m-%d')
+    start_date = datetime.datetime.strptime(start_date,'%Y-%m-%d')
+    end_date = datetime.datetime.strptime(end_date,'%Y-%m-%d')
     pearson = []
     for dt in rrule(MONTHLY, dtstart=start_date, until=end_date):
         last_day_of_the_month1 = dt + relativedelta(months=1) - datetime.timedelta(days=1)
@@ -259,8 +259,8 @@ def correlational_CL_RT_CRT(log_directory, output_directory, start_date, end_dat
        null
 
     """
-    start_date = start_date.strptime('%Y-%m-%d')
-    end_date = end_date.strptime('%Y-%m-%d')
+    start_date = datetime.datetime.strptime(start_date,'%Y-%m-%d')
+    end_date = datetime.datetime.strptime(end_date,'%Y-%m-%d')
     percentiles = [0, 1, 5, 10, 20]
     for channel_name_iter in [["#kubuntu-devel"], ["#ubuntu-devel"], ["#kubuntu"]]:
         for cutoff in percentiles:
