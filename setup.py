@@ -44,7 +44,6 @@ setup(
         'pandas',
         'python-igraph',
         'nltk',
-        'plotly==2.4.1',
         'ddt',
         'mock'
 
