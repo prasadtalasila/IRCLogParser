@@ -4,7 +4,7 @@ import re
 from parser_regex import log_regex
 
 
-class Parser:
+class Parser(object):
     def __init__(self, channel):
 
         # self.nicks maintains a list of current user nicks present \
