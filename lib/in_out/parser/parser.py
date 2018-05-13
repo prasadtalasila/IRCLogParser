@@ -1,8 +1,6 @@
+import importlib
 import logging
 import re
-import importlib
-
-# from lib.in_out.parser.parser_regex import log_regex
 
 
 class Parser(object):
@@ -14,13 +12,20 @@ class Parser(object):
         # <rohit> bhuvan: or <rohit> bhuvan, kausam, or
         # <rohit> nice work kausam.
 
+        # setup logging
+        logging.basicConfig(filename='logger_out.log', level=logging.DEBUG)
+
         self.nicks = []
         self.channel_name = channel
         regex_module_path = 'lib.in_out.parser.{}'.format(channel)
-        parser_regex = importlib.import_module(regex_module_path)
+        try:
+            parser_regex = importlib.import_module(regex_module_path)
+        except ImportError:
+            logging.exception('Unknown Channel Found')
+            raise
+
         self.regexes = parser_regex.log_regex
-        # setup logging
-        logging.basicConfig(filename='logger_out.log', level=logging.DEBUG)
+
 
     def __regex_data_extractor(self, matchObj, groups):
         """

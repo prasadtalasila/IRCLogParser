@@ -204,5 +204,18 @@ class ScummvmParserTest(unittest.TestCase):
         logging.exception.assert_called_once_with('Unknown Log Pattern Found')
 
 
+class UnknownParserTest(unittest.TestCase):
+
+    def setUp(self):
+        pass
+
+    def tearDown(self):
+        pass
+
+    @patch('logging.exception', autospec=True)
+    def test_unknown_parser(self, mock_logging):
+        self.assertRaises(ImportError, parser.Parser, 'google')
+
+
 if __name__ == '__main__':
     unittest.main()
