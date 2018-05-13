@@ -3,7 +3,7 @@ import unittest
 
 from mock import patch
 
-import lib.in_out.parser as parser
+from lib.in_out.parser import parser
 
 
 class UbuntuParserTest(unittest.TestCase):
@@ -68,7 +68,7 @@ class UbuntuParserTest(unittest.TestCase):
     @patch('logging.exception', autospec=True)
     def test_parse_log_unknown_format(self, mock_logging):
         data = 'This must go haywire'
-        a = self.UbuntuParser.parse_log(data)
+        expected_output = self.UbuntuParser.parse_log(data)
         logging.exception.assert_called_once_with('Unknown Log Pattern Found')
 
 
@@ -134,7 +134,7 @@ class SlackParserTest(unittest.TestCase):
     @patch('logging.exception', autospec=True)
     def test_parse_log_unknown_format(self, mock_logging):
         data = 'This must go haywire'
-        a = self.SlackParser.parse_log(data)
+        expected_output = self.SlackParser.parse_log(data)
         logging.exception.assert_called_once_with('Unknown Log Pattern Found')
 
 
@@ -200,9 +200,9 @@ class ScummvmParserTest(unittest.TestCase):
     @patch('logging.exception', autospec=True)
     def test_parse_log_unknown_format(self, mock_logging):
         data = 'This must go haywire'
-        a = self.ScummvmParser.parse_log(data)
+        expected_output = self.ScummvmParser.parse_log(data)
         logging.exception.assert_called_once_with('Unknown Log Pattern Found')
-        
+
 
 if __name__ == '__main__':
     unittest.main()

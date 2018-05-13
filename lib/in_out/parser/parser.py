@@ -1,7 +1,8 @@
 import logging
 import re
+import importlib
 
-from parser_regex import log_regex
+# from lib.in_out.parser.parser_regex import log_regex
 
 
 class Parser(object):
@@ -15,7 +16,9 @@ class Parser(object):
 
         self.nicks = []
         self.channel_name = channel
-        self.regexes = log_regex[channel]
+        regex_module_path = 'lib.in_out.parser.{}'.format(channel)
+        parser_regex = importlib.import_module(regex_module_path)
+        self.regexes = parser_regex.log_regex
         # setup logging
         logging.basicConfig(filename='logger_out.log', level=logging.DEBUG)
 
