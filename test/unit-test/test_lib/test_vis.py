@@ -3,7 +3,6 @@ import unittest
 
 import matplotlib.pyplot as plt
 import numpy as np
-import plotly.graph_objs as go
 from ddt import ddt, data, unpack
 from mock import patch
 
@@ -30,16 +29,6 @@ class VisTest(unittest.TestCase):
 
     @data(([0, 1, 2, 3, 4, 5], [0, 1, 2, 3, 4, 5], [1, 0, 1, 0]))
     @unpack
-    @patch("lib.config.USE_PYPLOT", 1)
-    def test_calc_plot_linear_fit_use_pylpot(self, x_in, y_in, expected_result):
-        expected_output = vis.calc_plot_linear_fit(x_in, y_in, self.test_data_dir, "linear_plot_test")
-        # remove the image generated from plot function
-        os.remove(self.test_data_dir + '/linear_plot_test.png')
-        self.assertTrue(np.allclose(expected_output, expected_result))
-
-    @data(([0, 1, 2, 3, 4, 5], [0, 1, 2, 3, 4, 5], [1, 0, 1, 0]))
-    @unpack
-    @patch("lib.config.USE_PYPLOT", 0)
     def test_calc_plot_linear_fit(self, x_in, y_in, expected_result):
         expected_output = vis.calc_plot_linear_fit(x_in, y_in, self.test_data_dir, "linear_plot_test")
         # remove the image generated from plot function
@@ -151,64 +140,6 @@ class VisTest(unittest.TestCase):
         mock_calc_plot.return_value = util.load_from_disk(self.test_data_dir + "vis/calc_plot_data")
         expected_output = vis.generate_log_plots(data, self.test_data_dir, "log_plot_test")
         self.assertTrue(np.allclose(expected_output, expected_result))
-
-    @patch("plotly.plotly.image.save_as")
-    def test_generate_group_bar_charts(self, mock_py):
-        x_values = [
-            [5.10114882, 5.0194652482, 4.9908093076],
-            [4.5824497358, 4.7083614037, 4.3812775722],
-            [2.6839471308, 3.0441476209, 3.6403820447]
-        ]
-        y_values = ['#kubuntu-devel', '#ubuntu-devel', '#kubuntu']
-        trace_headers = ['head1', 'head2', 'head3']
-        test_data = [
-            go.Bar(
-                x=x_values,
-                y=y_values[i],
-                name=trace_headers[i]
-            ) for i in range(len(y_values))
-        ]
-
-        layout = go.Layout(barmode='group')
-        fig = go.Figure(data=test_data, layout=layout)
-        vis.generate_group_bar_charts(y_values, x_values, trace_headers, self.test_data_dir, 'test_group_bar_chart')
-        self.assertEqual(mock_py.call_count, 1)
-        self.assertEqual(fig.get('data')[0], mock_py.call_args[0][0].get('data')[0])
-
-    @patch("plotly.plotly.image.save_as")
-    def test_csv_heatmap_generator_plotly(self, mock_py):
-        test_data = np.array([[5075, 507, 634, 7237, 3421, 7522, 12180, 9635, 7381, 7967, 6224, 2712, 4758, 2704, 1763,
-                               1869, 4428, 1680],
-                              [1652, 425, 269, 982, 2687, 15318, 3865, 3213, 4411, 6821, 1960, 7007, 883, 4592, 0, 3271,
-                               619, 1508],
-                              [1578, 924, 409, 1115, 6088, 491, 1923, 10700, 16206, 8690, 1350, 3778, 237, 1095, 20639,
-                               2669, 1956, 6015]])
-
-        trace = go.Heatmap(
-            z=test_data,
-            x=list(range(48)),
-            y=list(range(1, 12)),
-            colorscale=[
-                [0, 'rgb(255, 255, 204)'],
-                [0.13, 'rgb(255, 237, 160)'],
-                [0.25, 'rgb(254, 217, 118)'],
-                [0.38, 'rgb(254, 178, 76)'],
-                [0.5, 'rgb(253, 141, 60)'],
-                [0.63, 'rgb(252, 78, 42)'],
-                [0.75, 'rgb(227, 26, 28)'],
-                [0.88, 'rgb(189, 0, 38)'],
-                [1.0, 'rgb(128, 0, 38)']
-            ]
-        )
-
-        final_data = [trace]
-        layout = go.Layout(title='HeatMap', width=800, height=640)
-        fig = go.Figure(data=final_data, layout=layout)
-
-        vis.csv_heatmap_generator_plotly(self.test_data_dir + "/vis/", self.test_data_dir, "plotly_heatmap_test")
-        self.assertEqual(mock_py.call_count, 1)
-        self.assertTrue(fig.get('layout') == mock_py.call_args[0][0].get('layout'))
-        np.testing.assert_array_equal(fig.data[0].get('z'), mock_py.call_args[0][0].data[0].get('z'))
 
     @patch("matplotlib.pyplot.savefig", autospec=True)
     def test_matplotlob_csv_heatmap_generator(self, mock_savefig):

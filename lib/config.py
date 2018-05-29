@@ -1,13 +1,9 @@
 DEBUGGER = True
 LOG_DIRECTORY = "/home/rohan/parser_files/YearlyLogFiles/"
-OUTPUT_DIRECTORY = "/home/rohan/Desktop/temp"
+OUTPUT_DIRECTORY = "/home/rohan/Desktop/temp/"
 STARTING_DATE = "2013-1-1"
 ENDING_DATE = "2013-1-31"
 MINIMUM_NICK_LENGTH = 3
-
-# plotly login credentials
-USER_NAME = 'rohangoel963'
-TOKEN = 'WUqptWKXPareXfFMBtDG'
 
 # change to ["ALL"] if want to perform analysis over all channels
 CHANNEL_NAME = ["#kubuntu-devel"]
@@ -20,9 +16,6 @@ MAX_EXPECTED_DIFF_NICKS = 5000
 # message_number_graph
 THRESHOLD_MESSAGE_NUMBER_GRAPH = 0
 HOW_MANY_TOP_EXPERTS = 10
-
-#use pyplot
-USE_PYPLOT = True
 
 #Message Number CSV
 BIN_LENGTH_MINS = 60
