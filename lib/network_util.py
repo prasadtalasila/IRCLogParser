@@ -57,3 +57,8 @@ def write_pajek(G, path, encoding='UTF-8'):
 def hits(G, max_iter=100, tol=1.0e-8, nstart=None, normalized=True):
 
     return nx.hits(G, max_iter, tol, nstart, normalized)
+
+
+def node_link_data(G, attrs=None):
+
+    return nx.readwrite.json_graph.node_link_data(G, attrs)

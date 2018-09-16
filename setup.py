@@ -38,7 +38,7 @@ setup(
     install_requires=[
         'BeautifulSoup',
         'networkx==1.11',
-        'matplotlib',
+        'matplotlib==2.2.3',
         'pygraphviz',
         'scikit-learn',
         'pandas',
