@@ -11,11 +11,26 @@ class Graph(object):
     def __init__(self):
         self.graph = nx.Graph()
 
+    def add_nodes_from(self, nodes_for_adding, **attr):
+        self.graph.add_nodes_from(nodes_for_adding, attr)
+
+    def add_edge(self, u_of_edge, v_of_edge, **attr):
+        self.graph.add_edge(u_of_edge, v_of_edge, attr)
+
+    def add_edges_from(self, ebunch_to_add, **attr):
+        self.graph.add_edges_from(ebunch_to_add, attr)
+
 
 class DiGraph(Graph):
 
     def __init__(self):
         self.digraph = nx.DiGraph()
+
+    def add_edge(self, u_of_edge, v_of_edge, **attr):
+        self.digraph.add_edge(u_of_edge, v_of_edge, attr)
+
+    def add_nodes_from(self, nodes_for_adding, **attr):
+        self.digraph.add_nodes_from(nodes_for_adding, attr)
 
 
 class MultiGraph(Graph):
@@ -28,6 +43,9 @@ class MultiDiGraph(MultiGraph, DiGraph):
 
     def __init__(self):
         self.multidigraph = nx.MultiDiGraph()
+
+    def add_edge(self, u_for_edge, v_for_edge, key=None, **attr):
+        self.multidigraph.add_edge(u_for_edge, v_for_edge, key, attr)
 
 
 def read_pajek(path, encoding='UTF-8'):
