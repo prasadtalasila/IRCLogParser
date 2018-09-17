@@ -1,9 +1,8 @@
-import networkx as nx
+import lib.network_util as nx
 import os
 import csv
 import errno
 import sys
-from networkx.readwrite import json_graph
 import json
 sys.path.append('../lib')
 import lib.config as config
@@ -116,7 +115,7 @@ def save_js_arc(reduced_CC_graph, channels_hash, output_directory, output_file_n
     copy2("./lib/protovis/" + "arc_graph.html", output_directory) #copy required files to output_directory
     copy2("./lib/protovis/" + "ex.css", output_directory)
     copy2("./lib/protovis/" + "protovis-r3.2.js", output_directory)
-    jsondict = json_graph.node_link_data(reduced_CC_graph)
+    jsondict = nx.node_link_data(reduced_CC_graph)
     max_weight_val = max(item['weight'] for item in jsondict['links'])
     # the key names in the jsondict_top_channels are kept as the following so that index.html can render it
     jsondict_top_channels = {}

@@ -1,6 +1,6 @@
 import datetime
 
-import networkx as nx
+import lib.network_util as nx
 import numpy as np
 from dateutil.relativedelta import relativedelta
 from dateutil.rrule import rrule, MONTHLY

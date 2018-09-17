@@ -2,8 +2,7 @@ import sys
 from os import path
 sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
 import re
-import networkx as nx
-from networkx.algorithms.components.connected import connected_components
+import lib.network_util as nx
 from datetime import date
 import lib.util as util
 import csv
@@ -33,7 +32,7 @@ def message_number_graph(log_dict, nicks, nick_same_list, DAY_BY_DAY_ANALYSIS=Fa
     aggregate_message_number_graph = nx.DiGraph()  #graph with multiple directed edges between clients used
 
     G = util.to_graph(nick_same_list)
-    conn_comp_list = list(connected_components(G))
+    conn_comp_list = list(nx.connected_components(G))
 
     conn_comp_list = util.create_connected_nick_list(conn_comp_list)
 
@@ -549,7 +548,7 @@ def message_time_graph(log_dict, nicks, nick_same_list, DAY_BY_DAY_ANALYSIS=Fals
     msg_time_graph_list = []
     msg_time_aggr_graph = nx.MultiDiGraph()
     G = util.to_graph(nick_same_list)
-    conn_comp_list = list(connected_components(G))
+    conn_comp_list = list(nx.connected_components(G))
 
     def compare_spliced_nick(nick_to_compare, spliced_nick, nick_name, line):
         if(nick_to_compare == nick_name):

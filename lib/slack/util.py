@@ -1,4 +1,4 @@
-import networkx as nx
+import lib.network_util as nx
 import numpy as np
 import igraph
 import lib.slack.config as config

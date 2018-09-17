@@ -1,7 +1,7 @@
 import os
 import unittest
 
-import networkx as nx
+import lib.network_util as nx
 import numpy as np
 from igraph.clustering import compare_communities
 

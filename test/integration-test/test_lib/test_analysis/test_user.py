@@ -7,7 +7,7 @@ import os
 import StringIO
 import sys
 import filecmp
-import networkx as nx
+import lib.network_util as nx
 
 class UserTest(unittest.TestCase):
 

@@ -1,11 +1,10 @@
 import unittest
 from lib.slack.analysis import network
-import networkx as nx
+import lib.network_util as nx
 import lib.slack.util as util
 import lib.slack.config as config 
 import os, mock, sys
 import StringIO
-from networkx.algorithms.components.connected import connected_components
 from numpy.testing import assert_array_equal
 
     
@@ -32,7 +31,7 @@ class NetworkTest(unittest.TestCase):
     def test_message_number_graph(self):
         to_graph_ret = util.load_from_disk(self.test_data_dir + "message_number_graph/to_graph")
         
-        conn_list = list(connected_components(to_graph_ret))
+        conn_list = list(nx.connected_components(to_graph_ret))
         
         capturedOutput = StringIO.StringIO()
         sys.stdout = capturedOutput

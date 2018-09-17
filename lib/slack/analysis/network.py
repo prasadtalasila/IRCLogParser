@@ -2,7 +2,7 @@ import sys
 from os import path
 sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
 import re
-import networkx as nx
+import lib.network_util as nx
 from networkx.algorithms.components.connected import connected_components
 from datetime import date
 import lib.slack.util as util

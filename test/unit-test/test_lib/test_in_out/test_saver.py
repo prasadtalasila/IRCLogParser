@@ -3,7 +3,7 @@ import lib.in_out.saver as saver
 import lib.util as util
 import os
 import csv
-import networkx as nx
+import lib.network_util as nx
 import sys
 from mock import patch
 from errno import EACCES

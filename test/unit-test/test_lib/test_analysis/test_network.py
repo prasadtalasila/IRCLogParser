@@ -1,12 +1,11 @@
 import unittest
 from lib.analysis import network
-import networkx as nx
+import lib.network_util as nx
 import lib.util as util
 import lib.config as config
 import os, mock
 import StringIO
 import sys
-from networkx.algorithms.components.connected import connected_components
 from numpy.testing import assert_array_equal
 
 
@@ -39,7 +38,7 @@ class NetworkTest(unittest.TestCase):
                                   mock_check_if_msg_line, mock_create_connected_nick_list, mock_to_graph):
         to_graph_ret = util.load_from_disk(self.test_data_dir + "message_number_graph/to_graph")
 
-        conn_list = list(connected_components(to_graph_ret))
+        conn_list = list(nx.connected_components(to_graph_ret))
 
         mock_to_graph.return_value = to_graph_ret
         mock_rec_list_splice.side_effect = util.load_from_disk(
@@ -81,7 +80,7 @@ class NetworkTest(unittest.TestCase):
                                                mock_create_connected_nick_list, mock_to_graph):
         to_graph_ret = util.load_from_disk(self.test_data_dir + "message_number_graph/to_graph")
 
-        conn_list = list(connected_components(to_graph_ret))
+        conn_list = list(nx.connected_components(to_graph_ret))
 
         mock_to_graph.return_value = to_graph_ret
         mock_rec_list_splice.side_effect = util.load_from_disk(
@@ -197,7 +196,7 @@ class NetworkTest(unittest.TestCase):
                                 mock_to_graph):
         to_graph_ret = util.load_from_disk(self.test_data_dir + "message_time_graph/to_graph")
 
-        conn_list = list(connected_components(to_graph_ret))
+        conn_list = list(nx.connected_components(to_graph_ret))
 
         mock_to_graph.return_value = to_graph_ret
         mock_rec_list_splice.side_effect = util.load_from_disk(
@@ -236,7 +235,7 @@ class NetworkTest(unittest.TestCase):
                                              mock_create_connected_nick_list, mock_to_graph):
         to_graph_ret = util.load_from_disk(self.test_data_dir + "message_time_graph/to_graph")
 
-        conn_list = list(connected_components(to_graph_ret))
+        conn_list = list(nx.connected_components(to_graph_ret))
 
         mock_to_graph.return_value = to_graph_ret
         mock_rec_list_splice.side_effect = util.load_from_disk(
