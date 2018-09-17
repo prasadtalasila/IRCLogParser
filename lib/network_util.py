@@ -18,6 +18,12 @@ class DiGraph(Graph):
         self.digraph = nx.DiGraph()
 
 
+class MultiGraph(Graph):
+
+    def __init__(self):
+        self.multigraph = nx.MultiGraph()
+
+
 class MultiDiGraph(MultiGraph, DiGraph):
 
     def __init__(self):
