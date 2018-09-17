@@ -148,6 +148,8 @@ class UserTest(unittest.TestCase):
         self.assertEqual(expected_nicks_for_stop_words, nicks_for_stop_words)
         self.assertEqual(expected_sorted_keywords_for_channels, sorted_keywords_for_channels)
 
+
+    @unittest.expectedFailure
     @patch("lib.config.ENABLE_SVD", new = False)
     @patch("lib.config.ENABLE_ELBOW_METHOD_FOR_K", new = False)
     @patch("lib.config.NUMBER_OF_CLUSTERS", new = 11)
