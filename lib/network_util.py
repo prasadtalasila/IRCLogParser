@@ -23,6 +23,19 @@ class Graph(object):
     def is_directed(self):
         self.graph.is_directed()
 
+    def is_multigraph(self):
+        self.graph.is_multigraph()
+
+    def nodes(self):
+        self.graph.nodes()
+
+    def edges(self):
+        self.graph.edges()
+
+    @property
+    def name(self):
+        self.graph.name
+
 
 class DiGraph(Graph):
 
@@ -41,6 +54,18 @@ class DiGraph(Graph):
     def out_degree(self):
         self.digraph.out_degree()
 
+    @property
+    def nodes(self):
+        self.digraph.nodes()
+
+    @property
+    def edges(self):
+        self.digraph.edges()
+
+    @property
+    def name(self):
+        self.digraph.name
+
 
 class MultiGraph(Graph):
 
@@ -54,7 +79,7 @@ class MultiDiGraph(MultiGraph, DiGraph):
         self.multidigraph = nx.MultiDiGraph()
 
     def add_edge(self, u_for_edge, v_for_edge, key=None, **attr):
-        self.multidigraph.add_edge(u_for_edge, v_for_edge, key)
+        self.multidigraph.add_edge(u_for_edge, v_for_edge)
 
     def is_directed(self):
         self.multidigraph.is_directed()
@@ -67,7 +92,7 @@ def read_pajek(path, encoding='UTF-8'):
 
 def is_isomorphic(G1, G2, node_match=None, edge_match=None):
 
-    return nx.algorithms.isomorphism.is_isomorphic(G1, G2, node_match=node_match, edge_match=edge_match)
+    return nx.algorithms.isomorphism.is_isomorphic(G1, G2)
 
 
 def to_agraph(N):
@@ -82,19 +107,19 @@ def connected_components(G):
 
 def relabel_nodes(G, mapping, copy=True):
 
-    return nx.relabel.relabel_nodes(G, mapping, copy)
+    return nx.relabel.relabel_nodes(G, mapping)
 
 
 def write_pajek(G, path, encoding='UTF-8'):
 
-    return nx.readwrite.pajek.write_pajek(G, path, encoding)
+    return nx.readwrite.pajek.write_pajek(G, path)
 
 
 def hits(G, max_iter=100, tol=1.0e-8, nstart=None, normalized=True):
 
-    return nx.hits(G, max_iter, tol, nstart, normalized)
+    return nx.hits(G)
 
 
 def node_link_data(G, attrs=None):
 
-    return nx.readwrite.json_graph.node_link_data(G, attrs=attrs)
+    return nx.readwrite.json_graph.node_link_data(G)
