@@ -15,10 +15,13 @@ class Graph(object):
         self.graph.add_nodes_from(nodes_for_adding)
 
     def add_edge(self, u_of_edge, v_of_edge, **attr):
-        self.graph.add_edge(u_of_edge, v_of_edge, attr)
+        self.graph.add_edge(u_of_edge, v_of_edge)
 
     def add_edges_from(self, ebunch_to_add, **attr):
-        self.graph.add_edges_from(ebunch_to_add, attr)
+        self.graph.add_edges_from(ebunch_to_add)
+
+    def is_directed(self):
+        self.graph.is_directed()
 
 
 class DiGraph(Graph):
@@ -27,10 +30,10 @@ class DiGraph(Graph):
         self.digraph = nx.DiGraph()
 
     def add_edge(self, u_of_edge, v_of_edge, **attr):
-        self.digraph.add_edge(u_of_edge, v_of_edge, attr)
+        self.digraph.add_edge(u_of_edge, v_of_edge)
 
     def add_nodes_from(self, nodes_for_adding, **attr):
-        self.digraph.add_nodes_from(nodes_for_adding, attr)
+        self.digraph.add_nodes_from(nodes_for_adding)
 
     def is_directed(self):
         self.digraph.is_directed()
@@ -51,7 +54,7 @@ class MultiDiGraph(MultiGraph, DiGraph):
         self.multidigraph = nx.MultiDiGraph()
 
     def add_edge(self, u_for_edge, v_for_edge, key=None, **attr):
-        self.multidigraph.add_edge(u_for_edge, v_for_edge, key, attr)
+        self.multidigraph.add_edge(u_for_edge, v_for_edge, key)
 
     def is_directed(self):
         self.multidigraph.is_directed()
@@ -64,7 +67,7 @@ def read_pajek(path, encoding='UTF-8'):
 
 def is_isomorphic(G1, G2, node_match=None, edge_match=None):
 
-    return nx.algorithms.isomorphism.is_isomorphic(G1, G2, node_match, edge_match)
+    return nx.algorithms.isomorphism.is_isomorphic(G1, G2, node_match=node_match, edge_match=edge_match)
 
 
 def to_agraph(N):
@@ -94,4 +97,4 @@ def hits(G, max_iter=100, tol=1.0e-8, nstart=None, normalized=True):
 
 def node_link_data(G, attrs=None):
 
-    return nx.readwrite.json_graph.node_link_data(G, attrs)
+    return nx.readwrite.json_graph.node_link_data(G, attrs=attrs)
