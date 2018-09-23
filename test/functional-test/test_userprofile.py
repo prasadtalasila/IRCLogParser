@@ -2,14 +2,13 @@ import unittest
 from lib.analysis import network, user
 from lib.in_out import reader , saver
 from lib import nickTracker
-import networkx as nx
+import lib.network_util as nx
 import lib.util as util
 import lib.config as config
 import os
 import StringIO
 import sys
 import filecmp
-from networkx.algorithms.components.connected import connected_components
 from numpy.testing import assert_array_equal
 
 class UserProfileTest(unittest.TestCase):

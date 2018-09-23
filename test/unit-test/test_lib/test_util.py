@@ -4,7 +4,7 @@ import lib.config as config
 import commands
 import subprocess
 import os
-import networkx as nx
+import lib.network_util as nx
 import igraph
 from ddt import ddt, data, unpack
 from mock import patch

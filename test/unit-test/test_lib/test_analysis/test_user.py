@@ -4,7 +4,7 @@ import lib.config as config
 from lib.in_out import reader
 import lib.nickTracker as nickTracker
 from mock import patch
-import networkx as nx
+import lib.network_util as nx
 import lib.util as util
 import os
 import StringIO

@@ -3,7 +3,7 @@ import os
 import commands
 import subprocess
 import igraph
-import networkx as nx
+import lib.network_util as nx
 import lib.slack.util as util
 import lib.slack.config as config
 from ddt import ddt, data, unpack

@@ -1,11 +1,10 @@
 import unittest
 from lib.slack.analysis import network
-import networkx as nx
+import lib.network_util as nx
 import lib.slack.util as util
 import lib.slack.config as config 
 import os, mock, sys
 import StringIO
-from networkx.algorithms.components.connected import connected_components
 from numpy.testing import assert_array_equal
 
     
@@ -41,7 +40,7 @@ class NetworkTest(unittest.TestCase):
                          mock_get_nick_representative, mock_check_if_msg_line, mock_create_connected_nick_list, mock_to_graph):
         to_graph_ret = util.load_from_disk(self.test_data_dir + "message_number_graph/to_graph")
         
-        conn_list = list(connected_components(to_graph_ret))
+        conn_list = list(nx.connected_components(to_graph_ret))
         
         mock_to_graph.return_value = to_graph_ret
         mock_rec_list_splice.side_effect = util.load_from_disk(self.test_data_dir + "message_number_graph/rec_list_splice")
@@ -82,7 +81,7 @@ class NetworkTest(unittest.TestCase):
                          mock_get_nick_representative, mock_check_if_msg_line, mock_create_connected_nick_list, mock_to_graph):
         to_graph_ret = util.load_from_disk(self.test_data_dir + "message_number_graph/to_graph")
         
-        conn_list = list(connected_components(to_graph_ret))
+        conn_list = list(nx.connected_components(to_graph_ret))
         
         mock_to_graph.return_value = to_graph_ret
         mock_rec_list_splice.side_effect = util.load_from_disk(self.test_data_dir + "message_number_graph/rec_list_splice")
@@ -146,7 +145,7 @@ class NetworkTest(unittest.TestCase):
     def test_message_time_graph(self, mock_rec_list_splice, mock_correctLastCharCR, mock_get_year_month_day, mock_get_nick_sen_rec, mock_check_if_msg_line, mock_create_connected_nick_list, mock_to_graph):
         to_graph_ret = util.load_from_disk(self.test_data_dir + "message_time_graph/to_graph")
         
-        conn_list = list(connected_components(to_graph_ret))
+        conn_list = list(nx.connected_components(to_graph_ret))
         
         mock_to_graph.return_value = to_graph_ret
         mock_rec_list_splice.side_effect = util.load_from_disk(self.test_data_dir + "message_time_graph/rec_list_splice")
@@ -180,7 +179,7 @@ class NetworkTest(unittest.TestCase):
     def test_message_time_graph_day_analysis(self, mock_rec_list_splice, mock_correctLastCharCR, mock_get_year_month_day, mock_get_nick_sen_rec, mock_check_if_msg_line, mock_create_connected_nick_list, mock_to_graph):
         to_graph_ret = util.load_from_disk(self.test_data_dir + "message_time_graph/to_graph")
         
-        conn_list = list(connected_components(to_graph_ret))
+        conn_list = list(nx.connected_components(to_graph_ret))
         
         mock_to_graph.return_value = to_graph_ret
         mock_rec_list_splice.side_effect = util.load_from_disk(self.test_data_dir + "message_time_graph/rec_list_splice")
