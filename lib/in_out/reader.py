@@ -131,3 +131,4 @@ class ScummVMReader(Reader, object):
         
     def read_log(self, log_directory, start_date, end_date):
         return super(ScummVMReader, self).read_log(log_directory, ["scummvm"], start_date, end_date)
+
