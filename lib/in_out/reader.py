@@ -37,17 +37,23 @@ def linux_input(log_directory, channels_requested, starting_date, ending_date):
 
     for channel_name in channels_requested:            
         reader = linuxreaderfactory.reader_object(channel_name)
-        linux_input_logging(reader, log_directory, channel_name, start_date, end_date, logs);
+        logging_data = [log_directory, channel_name, start_date, end_date]
+        linux_input_logging(reader, logging_data, logs);
         
     return collections.OrderedDict(sorted(logs.items()))
 	    	    
     
-def linux_input_logging(reader, log_directory, channel_name, start_date, end_date, logs):
+def linux_input_logging(reader, logging_data, logs):
     
+        log_directory = logging_data[0]
+        channel_name = logging_data[1]
+        start_date = logging_data[2]
+        end_date = logging_data[3]
+
         if reader == None:
             logging.warn("Invalid channel name {}".format(channel_name))
             return
-            
+
         for channel, date, log in reader.read_log(log_directory, [channel_name], start_date, end_date):
             date_key = date		
             value = {
@@ -84,6 +90,7 @@ class MappingParser(ConfigParser.ConfigParser):
 class LinuxReaderFactory(ReaderFactory):
 
     def reader_object_name(self, channel_name, mapping):        
+
         reader_name = None
         for key in mapping['Channels'].keys():                
             if channel_name in mapping['Channels'][key].split(','):
@@ -92,11 +99,12 @@ class LinuxReaderFactory(ReaderFactory):
         
         return reader_name        
         
-    def reader_object(self, channel_name):       
+    def reader_object(self, channel_name):
+
         parser = MappingParser()
         parser.read('channel_reader_mapping.ini')
         mapping= parser.as_dict()
-        
+        print(mapping)
         reader = None
         reader_name = self.reader_object_name(channel_name, mapping)
         if reader_name == 'ubuntu':
@@ -117,7 +125,13 @@ class Reader:
     def _build_path(self, log_directory, current_date, channel):
         pass
 
-    def __read_single_channel_log(self, reader, log_directory, channel, start_date, end_date):
+    def __read_single_channel_log(self, reader, logging_data):
+
+        log_directory = logging_data[0]
+        channel = logging_data[1]
+        start_date = logging_data[2]
+        end_date = logging_data[3]
+
         one_day = datetime.timedelta(1)
         current_date = start_date
         
@@ -136,14 +150,20 @@ class Reader:
             
             current_date = current_date + one_day
         
-    def __read_log(self, reader, log_directory, channels, start_date, end_date): 
+    def __read_log(self, reader, logging_data):
+
+        log_directory = logging_data[0]
+        channels = logging_data[1]
+        start_date = logging_data[2]
+        end_date = logging_data[3]
+
         if len(channels) != 1 or "ALL" in channels:
             logging.warn("This Reader class doesnot support multi channel \
                         log read. If you wish to read ubuntu logs use \
                         UbuntuReader or else extend this class to create\
                         a subclass with multi channel read support")
             return
-            
+        
         return reader._read_single_channel_log(log_directory, channels[0], start_date, end_date)        
     
 
@@ -157,14 +177,14 @@ class UbuntuReader(Reader, object):
         return path    
 
     def _read_single_channel_log(self, log_directory, channel, start_date, end_date):
-        return super(UbuntuReader, self)._Reader__read_single_channel_log(self, log_directory, channel, start_date, end_date)
+        return super(UbuntuReader, self)._Reader__read_single_channel_log(self, [log_directory, channel, start_date, end_date])
               
     def _read_multi_channel_logs(self, log_directory, channels, start_date, end_date):
         for i in range(len(channels)):
             yield self._read_single_channel_log(log_directory, channels[i], start_date, end_date)
         
-    def _read_all_channel_logs(self, log_directory, start_date, end_date):
-        
+    def _read_all_channel_logs(self, log_directory, start_date, end_date):   
+
         channels_requested=list()        
         parser = MappingParser()
         parser.read('channel_reader_mapping.ini')
@@ -174,7 +194,8 @@ class UbuntuReader(Reader, object):
             
         return self._read_multi_channel_logs(log_directory, channels_requested, start_date, end_date)        
         
-    def read_log(self,log_directory, channels, start_date, end_date):       
+    def read_log(self,log_directory, channels, start_date, end_date):
+
         if len(channels) == 1 and channels[0] == "ALL":
             return self._read_all_channel_logs(log_directory, start_date, end_date)
         elif len(channels) == 1:
@@ -193,10 +214,10 @@ class SlackReader(Reader, object):
         return path
 
     def _read_single_channel_log(self, log_directory, channel, start_date, end_date): 
-        return super(SlackReader, self)._Reader__read_single_channel_log(self, log_directory, channel, start_date, end_date)
+        return super(SlackReader, self)._Reader__read_single_channel_log(self, [log_directory, channel, start_date, end_date])
                 
     def read_log(self, log_directory, channels, start_date, end_date):        
-        return super(SlackReader, self)._Reader__read_log(self, log_directory, channels, start_date, end_date)
+        return super(SlackReader, self)._Reader__read_log(self, [log_directory, channels, start_date, end_date])
     
     
 class ScummVMReader(Reader, object):
@@ -209,7 +230,7 @@ class ScummVMReader(Reader, object):
         return path  
 
     def _read_single_channel_log(self, log_directory, channel, start_date, end_date):        
-        return super(ScummVMReader, self)._Reader__read_single_channel_log(self, log_directory, channel, start_date, end_date)
+        return super(ScummVMReader, self)._Reader__read_single_channel_log(self, [log_directory, channel, start_date, end_date])
             
     def read_log(self, log_directory, channels, start_date, end_date):    
-        return super(ScummVMReader, self)._Reader__read_log(self, log_directory, channels, start_date, end_date)
+        return super(ScummVMReader, self)._Reader__read_log(self, [log_directory, channels, start_date, end_date])
