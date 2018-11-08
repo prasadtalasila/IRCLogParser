@@ -6,27 +6,26 @@ used in IRCLogParser from NetworkX and iGraph
 import networkx as nx 
 
 
-class Graph():
+class Graph(nx.Graph):
 
-    node_dict_factory = dict
-    adjlist_outer_dict_factory = dict
-    adjlist_inner_dict_factory = dict
-    edge_attr_dict_factory = dict
+    # node_dict_factory = dict
+    # adjlist_outer_dict_factory = dict
+    # adjlist_inner_dict_factory = dict
+    # edge_attr_dict_factory = dict
 
 
-    def to_directed_class(self):
-        return nx.DiGraph
+    # def to_directed_class(self):
+    #     return nx.DiGraph
 
-    def to_undirected_class(self):
-        return nx.Graph
+    # def to_undirected_class(self):
+    #     return nx.Graph
 
-    def __init__(self):
+    def __init__(self, incoming_graph_data=None, **attr):
         self.graph = nx.Graph()
-        self.graph.__init__()
 
-    @property
-    def adj(self):
-        return self.graph.adj
+    # @property
+    # def adj(self):
+    #     return self.graph.adj
 
     @property
     def name(self):
@@ -36,20 +35,20 @@ class Graph():
     def name(self, s):
         self.name = s       
 
-    def __str__(self):
-        return self.name
+    # def __str__(self):
+    #     return self.name
 
-    def __iter__(self):
-        return self.graph.__iter__()
+    # def __iter__(self):
+    #     return self.graph.__iter__()
 
-    def __contains__(self, n):
-        return self.graph.__contains__(n)
+    # def __contains__(self, n):
+    #     return self.graph.__contains__(n)
 
-    def __len__(self):
-        return self.graph.__len__()
+    # def __len__(self):
+    #     return self.graph.__len__()
 
-    def __getitem__(self, n):
-        self.graph.__getitem__(n)
+    # def __getitem__(self, n):
+    #     self.graph.__getitem__(n)
 
     def add_node(self, node_for_adding):
         self.graph.add_node(node_for_adding)
@@ -70,7 +69,7 @@ class Graph():
     def number_of_nodes(self):
         return self.graph.number_of_nodes()
 
-    def had_node(self, n):
+    def has_node(self, n):
         return self.graph.has_node(n)
 
     def add_edge(self, u_of_edge, v_of_edge, **attr):
@@ -85,9 +84,9 @@ class Graph():
     def is_multigraph(self):
         return self.graph.is_multigraph()
 
-    def update(self, edges=None, nodes=None):
-        # self.graph.update(edges=edges, nodes=nodes)
-        pass
+    # def update(self, edges=None, nodes=None):
+    #     # self.graph.update(edges=edges, nodes=nodes)
+    #     pass
 
     def edges(self):
         return self.graph.edges()
@@ -95,12 +94,12 @@ class Graph():
     def has_edge(self, u, v):
         return self.graph.has_edge(u, v)
 
-    def neighbors(self, n):
-        return self.graph.neighbors(n)
+    # def neighbors(self, n):
+    #     return self.graph.neighbors(n)
 
-    def adjacency(self):
-        # return self.graph.adjacency()
-        pass
+    # def adjacency(self):
+    #     # return self.graph.adjacency()
+    #     pass
 
     @property
     def degree(self):
@@ -110,49 +109,20 @@ class Graph():
 class DiGraph(Graph):
 
     def __init__(self):
-        self.digraph = nx.DiGraph()
-
-    def add_edge(self, u_of_edge, v_of_edge, **attr):
-        self.digraph.add_edge(u_of_edge, v_of_edge)
-
-    def add_nodes_from(self, nodes_for_adding, **attr):
-        self.digraph.add_nodes_from(nodes_for_adding)
-
-    def is_directed(self):
-        self.digraph.is_directed()
-
-    def out_degree(self):
-        self.digraph.out_degree()
-
-    @property
-    def nodes(self):
-        self.digraph.nodes()
-
-    @property
-    def edges(self):
-        self.digraph.edges()
-
-    @property
-    def name(self):
-        self.digraph.name
+        self.graph = nx.DiGraph()
 
 
 class MultiGraph(Graph):
 
     def __init__(self):
-        self.multigraph = nx.MultiGraph()
+        self.graph = nx.MultiGraph()
 
 
 class MultiDiGraph(MultiGraph, DiGraph):
 
     def __init__(self):
-        self.multidigraph = nx.MultiDiGraph()
+        self.graph = nx.MultiDiGraph()
 
-    def add_edge(self, u_for_edge, v_for_edge, key=None, **attr):
-        self.multidigraph.add_edge(u_for_edge, v_for_edge)
-
-    def is_directed(self):
-        self.multidigraph.is_directed()
 
 
 def read_pajek(path, encoding='UTF-8'):

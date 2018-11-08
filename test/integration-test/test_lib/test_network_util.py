@@ -80,12 +80,79 @@ class NetworkUtilTest(unittest.TestCase):
 
     def test_Graph(self):
         graph = network_util.Graph()
-        
+
         graph.add_node(1)
+        graph.add_node(2)
+        graph.add_nodes_from([3, 4, 5])
+        graph.add_edge(1, 2)
+        graph.add_edges_from([(3, 4)])
+        
+        self.assertTrue(graph.has_node(1))
+        self.assertTrue(graph.has_node(4))
+        self.assertTrue(graph.has_edge(1, 2))
+        self.assertTrue(graph.has_edge(3, 4))
+        self.assertFalse(graph.is_directed())
+        self.assertFalse(graph.is_multigraph())
+        self.assertEqual(list(graph.nodes), [1, 2, 3, 4, 5])
+        self.assertEqual(list(graph.edges()), [(1, 2), (3, 4)])
 
-        graph.name('s')
+    
+    def test_DiGraph(self):
+        graph = network_util.DiGraph()
 
-        self.assertEquals(graph.name, 'g')
+        graph.add_node(1)
+        graph.add_node(2)
+        graph.add_nodes_from([3, 4, 5])
+        graph.add_edge(1, 2)
+        graph.add_edges_from([(3, 4)])
+        
+        self.assertTrue(graph.has_node(1))
+        self.assertTrue(graph.has_node(4))
+        self.assertTrue(graph.has_edge(1, 2))
+        self.assertTrue(graph.has_edge(3, 4))
+        self.assertFalse(graph.is_multigraph())
+        self.assertEqual(list(graph.nodes), [1, 2, 3, 4, 5])
+        self.assertEqual(list(graph.edges()), [(1, 2), (3, 4)])
+        self.assertNotEqual(graph.is_directed(), False)
+
+
+    def test_MultiGraph(self):
+        graph = network_util.MultiGraph()
+
+        graph.add_node(1)
+        graph.add_node(2)
+        graph.add_nodes_from([3, 4, 5])
+        graph.add_edge(1, 2)
+        graph.add_edges_from([(3, 4)])
+        
+        self.assertTrue(graph.has_node(1))
+        self.assertTrue(graph.has_node(4))
+        self.assertTrue(graph.has_edge(1, 2))
+        self.assertTrue(graph.has_edge(3, 4))
+        self.assertTrue(graph.is_multigraph())
+        self.assertEqual(list(graph.nodes), [1, 2, 3, 4, 5])
+        self.assertEqual(list(graph.edges()), [(1, 2), (3, 4)])
+        self.assertEqual(graph.is_directed(), False)
+
+
+    def test_MultiDiGraph(self):
+        graph = network_util.MultiDiGraph()
+
+        graph.add_node(1)
+        graph.add_node(2)
+        graph.add_nodes_from([3, 4, 5])
+        graph.add_edge(1, 2)
+        graph.add_edges_from([(3, 4)])
+        
+        self.assertTrue(graph.has_node(1))
+        self.assertTrue(graph.has_node(4))
+        self.assertTrue(graph.has_edge(1, 2))
+        self.assertTrue(graph.has_edge(3, 4))
+        self.assertTrue(graph.is_multigraph())
+        self.assertEqual(list(graph.nodes), [1, 2, 3, 4, 5])
+        self.assertEqual(list(graph.edges()), [(1, 2), (3, 4)])
+        self.assertNotEqual(graph.is_directed(), False)
+
 
 if __name__ == '__main__':
     unittest.main()
