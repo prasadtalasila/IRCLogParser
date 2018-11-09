@@ -8,24 +8,8 @@ import networkx as nx
 
 class Graph(nx.Graph):
 
-    # node_dict_factory = dict
-    # adjlist_outer_dict_factory = dict
-    # adjlist_inner_dict_factory = dict
-    # edge_attr_dict_factory = dict
-
-
-    # def to_directed_class(self):
-    #     return nx.DiGraph
-
-    # def to_undirected_class(self):
-    #     return nx.Graph
-
     def __init__(self, incoming_graph_data=None, **attr):
         self.graph = nx.Graph()
-
-    # @property
-    # def adj(self):
-    #     return self.graph.adj
 
     @property
     def name(self):
@@ -35,32 +19,12 @@ class Graph(nx.Graph):
     def name(self, s):
         self.name = s       
 
-    # def __str__(self):
-    #     return self.name
-
-    # def __iter__(self):
-    #     return self.graph.__iter__()
-
-    # def __contains__(self, n):
-    #     return self.graph.__contains__(n)
-
-    # def __len__(self):
-    #     return self.graph.__len__()
-
-    # def __getitem__(self, n):
-    #     self.graph.__getitem__(n)
-
     def add_node(self, node_for_adding):
         self.graph.add_node(node_for_adding)
 
     def add_nodes_from(self, nodes_for_adding, **attr):
         self.graph.add_nodes_from(nodes_for_adding)
 
-    def remove_node(self, n):
-        self.graph.remove_node(n)
-
-    def remove_nodes_from(self, nodes):
-        self.graph.remove_nodes_from(nodes)
 
     @property
     def nodes(self):
@@ -84,26 +48,11 @@ class Graph(nx.Graph):
     def is_multigraph(self):
         return self.graph.is_multigraph()
 
-    # def update(self, edges=None, nodes=None):
-    #     # self.graph.update(edges=edges, nodes=nodes)
-    #     pass
-
     def edges(self):
         return self.graph.edges()
 
     def has_edge(self, u, v):
-        return self.graph.has_edge(u, v)
-
-    # def neighbors(self, n):
-    #     return self.graph.neighbors(n)
-
-    # def adjacency(self):
-    #     # return self.graph.adjacency()
-    #     pass
-
-    @property
-    def degree(self):
-        return self.graph.degree()    
+        return self.graph.has_edge(u, v)    
 
 
 class DiGraph(Graph):
