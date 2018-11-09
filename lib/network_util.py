@@ -56,21 +56,30 @@ class DiGraph(Graph):
 
     def __init__(self):
         self.graph = nx.DiGraph()
+        self.node = self.graph.node
+        self.adj = self.graph.adj
 
     def out_degree(self):
         return self.graph.out_degree()
+
+    def in_degree(self):
+        return self.graph.in_degree()
 
 
 class MultiGraph(Graph):
 
     def __init__(self):
         self.graph = nx.MultiGraph()
+        self.node = self.graph.node
+        self.adj = self.graph.adj
 
 
 class MultiDiGraph(MultiGraph, DiGraph):
 
     def __init__(self):
         self.graph = nx.MultiDiGraph()
+        self.node = self.graph.node
+        self.adj = self.graph.adj
 
 
 
