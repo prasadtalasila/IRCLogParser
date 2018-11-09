@@ -10,8 +10,6 @@ class Graph(nx.Graph):
 
     def __init__(self, incoming_graph_data=None, **attr):
         self.graph = nx.Graph()
-        self.node = self.graph.node
-        self.adj = self.graph.adj
 
     @property
     def name(self):
@@ -19,7 +17,15 @@ class Graph(nx.Graph):
 
     @name.setter
     def name(self, s):
-        self.graph.name = s      
+        self.graph.name = s
+
+    @property
+    def adj(self):
+        return self.graph.adj
+
+    @property
+    def node(self):
+        return self.graph.node      
 
     def add_node(self, node_for_adding):
         self.graph.add_node(node_for_adding)
@@ -56,8 +62,6 @@ class DiGraph(Graph):
 
     def __init__(self):
         self.graph = nx.DiGraph()
-        self.node = self.graph.node
-        self.adj = self.graph.adj
 
     def out_degree(self):
         return self.graph.out_degree()
@@ -70,16 +74,12 @@ class MultiGraph(Graph):
 
     def __init__(self):
         self.graph = nx.MultiGraph()
-        self.node = self.graph.node
-        self.adj = self.graph.adj
 
 
 class MultiDiGraph(MultiGraph, DiGraph):
 
     def __init__(self):
         self.graph = nx.MultiDiGraph()
-        self.node = self.graph.node
-        self.adj = self.graph.adj
 
 
 
