@@ -1,6 +1,6 @@
 import re
 import numpy
-from networkx.algorithms.components.connected import connected_components
+from lib.network_util import connected_components
 import lib.util as util
 import lib.config as config
 

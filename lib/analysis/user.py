@@ -1,4 +1,4 @@
-import networkx as nx
+import lib.network_util as nx
 import re
 import sys
 from sklearn.feature_extraction.text import CountVectorizer

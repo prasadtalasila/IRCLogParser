@@ -2,8 +2,8 @@ import sys
 from os import path
 sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
 import re
-import networkx as nx
-from networkx.algorithms.components.connected import connected_components
+import lib.network_util as nx
+from lib.network_util import connected_components
 from datetime import date
 import lib.util as util
 import csv
