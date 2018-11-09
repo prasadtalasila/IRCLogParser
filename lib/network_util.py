@@ -10,6 +10,8 @@ class Graph(nx.Graph):
 
     def __init__(self, incoming_graph_data=None, **attr):
         self.graph = nx.Graph()
+        self.node = self.graph.node
+        self.adj = self.graph.adj
 
     @property
     def name(self):
@@ -54,6 +56,9 @@ class DiGraph(Graph):
 
     def __init__(self):
         self.graph = nx.DiGraph()
+
+    def out_degree(self):
+        return self.graph.out_degree()
 
 
 class MultiGraph(Graph):
