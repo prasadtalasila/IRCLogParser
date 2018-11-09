@@ -25,7 +25,6 @@ class Graph(nx.Graph):
     def add_nodes_from(self, nodes_for_adding, **attr):
         self.graph.add_nodes_from(nodes_for_adding)
 
-    @property
     def nodes(self):
         return self.graph.nodes()
 

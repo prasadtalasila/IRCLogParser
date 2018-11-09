@@ -95,7 +95,7 @@ class NetworkUtilTest(unittest.TestCase):
         self.assertTrue(graph.has_edge(3, 4))
         self.assertFalse(graph.is_directed())
         self.assertFalse(graph.is_multigraph())
-        self.assertEqual(list(graph.nodes), [1, 2, 3, 4, 5])
+        self.assertEqual(list(graph.nodes()), [1, 2, 3, 4, 5])
         self.assertEqual(list(graph.edges()), [(1, 2), (3, 4)])
 
     
@@ -115,7 +115,7 @@ class NetworkUtilTest(unittest.TestCase):
         self.assertTrue(graph.has_edge(1, 2))
         self.assertTrue(graph.has_edge(3, 4))
         self.assertFalse(graph.is_multigraph())
-        self.assertEqual(list(graph.nodes), [1, 2, 3, 4, 5])
+        self.assertEqual(list(graph.nodes()), [1, 2, 3, 4, 5])
         self.assertEqual(list(graph.edges()), [(1, 2), (3, 4)])
         self.assertNotEqual(graph.is_directed(), False)
 
@@ -136,7 +136,7 @@ class NetworkUtilTest(unittest.TestCase):
         self.assertTrue(graph.has_edge(1, 2))
         self.assertTrue(graph.has_edge(3, 4))
         self.assertTrue(graph.is_multigraph())
-        self.assertEqual(list(graph.nodes), [1, 2, 3, 4, 5])
+        self.assertEqual(list(graph.nodes()), [1, 2, 3, 4, 5])
         self.assertEqual(list(graph.edges()), [(1, 2), (3, 4)])
         self.assertEqual(graph.is_directed(), False)
 
@@ -157,6 +157,6 @@ class NetworkUtilTest(unittest.TestCase):
         self.assertTrue(graph.has_edge(1, 2))
         self.assertTrue(graph.has_edge(3, 4))
         self.assertTrue(graph.is_multigraph())
-        self.assertEqual(list(graph.nodes), [1, 2, 3, 4, 5])
+        self.assertEqual(list(graph.nodes()), [1, 2, 3, 4, 5])
         self.assertEqual(list(graph.edges()), [(1, 2), (3, 4)])
         self.assertNotEqual(graph.is_directed(), False)
