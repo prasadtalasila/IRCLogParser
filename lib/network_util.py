@@ -17,7 +17,7 @@ class Graph(nx.Graph):
 
     @name.setter
     def name(self, s):
-        self.name = s       
+        self.graph.name = s      
 
     def add_node(self, node_for_adding):
         self.graph.add_node(node_for_adding)
@@ -25,13 +25,9 @@ class Graph(nx.Graph):
     def add_nodes_from(self, nodes_for_adding, **attr):
         self.graph.add_nodes_from(nodes_for_adding)
 
-
     @property
     def nodes(self):
         return self.graph.nodes()
-
-    def number_of_nodes(self):
-        return self.graph.number_of_nodes()
 
     def has_node(self, n):
         return self.graph.has_node(n)

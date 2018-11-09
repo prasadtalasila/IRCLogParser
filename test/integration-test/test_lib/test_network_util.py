@@ -86,7 +86,9 @@ class NetworkUtilTest(unittest.TestCase):
         graph.add_nodes_from([3, 4, 5])
         graph.add_edge(1, 2)
         graph.add_edges_from([(3, 4)])
+        graph.name = 'mygraph'
         
+        self.assertEqual(graph.name, 'mygraph')
         self.assertTrue(graph.has_node(1))
         self.assertTrue(graph.has_node(4))
         self.assertTrue(graph.has_edge(1, 2))
@@ -105,7 +107,9 @@ class NetworkUtilTest(unittest.TestCase):
         graph.add_nodes_from([3, 4, 5])
         graph.add_edge(1, 2)
         graph.add_edges_from([(3, 4)])
+        graph.name = 'mygraph'
         
+        self.assertEqual(graph.name, 'mygraph')
         self.assertTrue(graph.has_node(1))
         self.assertTrue(graph.has_node(4))
         self.assertTrue(graph.has_edge(1, 2))
@@ -124,7 +128,9 @@ class NetworkUtilTest(unittest.TestCase):
         graph.add_nodes_from([3, 4, 5])
         graph.add_edge(1, 2)
         graph.add_edges_from([(3, 4)])
+        graph.name = 'mygraph'
         
+        self.assertEqual(graph.name, 'mygraph')
         self.assertTrue(graph.has_node(1))
         self.assertTrue(graph.has_node(4))
         self.assertTrue(graph.has_edge(1, 2))
@@ -143,7 +149,9 @@ class NetworkUtilTest(unittest.TestCase):
         graph.add_nodes_from([3, 4, 5])
         graph.add_edge(1, 2)
         graph.add_edges_from([(3, 4)])
+        graph.name = 'mygraph'
         
+        self.assertEqual(graph.name, 'mygraph')
         self.assertTrue(graph.has_node(1))
         self.assertTrue(graph.has_node(4))
         self.assertTrue(graph.has_edge(1, 2))
@@ -152,7 +160,3 @@ class NetworkUtilTest(unittest.TestCase):
         self.assertEqual(list(graph.nodes), [1, 2, 3, 4, 5])
         self.assertEqual(list(graph.edges()), [(1, 2), (3, 4)])
         self.assertNotEqual(graph.is_directed(), False)
-
-
-if __name__ == '__main__':
-    unittest.main()
