@@ -92,8 +92,9 @@ class LinuxReaderFactory(ReaderFactory):
     def reader_object_name(self, channel_name, mapping):        
 
         reader_name = None
-        for key in mapping['Channels'].keys():                
-            if channel_name in mapping['Channels'][key].split(','):
+	channels = mapping[mapping.keys()[0]]
+        for key in channels.keys():                
+            if channel_name in channels[key].split(','):
                 reader_name = key
                 break
         
@@ -104,7 +105,6 @@ class LinuxReaderFactory(ReaderFactory):
         parser = MappingParser()
         parser.read('channel_reader_mapping.ini')
         mapping= parser.as_dict()
-        print(mapping)
         reader = None
         reader_name = self.reader_object_name(channel_name, mapping)
         if reader_name == 'ubuntu':
