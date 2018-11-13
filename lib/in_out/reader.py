@@ -104,7 +104,7 @@ class LinuxReaderFactory(ReaderFactory):
 
         parser = MappingParser()
         parser.read('channel_reader_mapping.ini')
-        mapping= parser.as_dict()
+        mapping = parser.as_dict()
         reader = None
         reader_name = self.reader_object_name(channel_name, mapping)
         if reader_name == 'ubuntu':
@@ -185,11 +185,12 @@ class UbuntuReader(Reader, object):
         
     def _read_all_channel_logs(self, log_directory, start_date, end_date):   
 
-        channels_requested=list()        
+        channels_requested = list()        
         parser = MappingParser()
         parser.read('channel_reader_mapping.ini')
-        mapping= parser.as_dict()
-        for channel_name in mapping['Channels']['ubuntu'].split(','):
+        mapping = parser.as_dict()
+	channels = mapping[mapping.keys()[0]]
+        for channel_name in channels['ubuntu'].split(','):
             channels_requested.append(channel_name)
             
         return self._read_multi_channel_logs(log_directory, channels_requested, start_date, end_date)        
