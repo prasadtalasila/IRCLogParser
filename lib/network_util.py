@@ -27,8 +27,8 @@ class Graph(nx.Graph):
     def node(self):
         return self.graph.node      
 
-    def add_node(self, node_for_adding):
-        self.graph.add_node(node_for_adding)
+    def add_node(self, node_for_adding, **attr):
+        self.graph.add_node(node_for_adding, **attr)
 
     def add_nodes_from(self, nodes_for_adding, **attr):
         self.graph.add_nodes_from(nodes_for_adding, **attr)
@@ -60,8 +60,8 @@ class Graph(nx.Graph):
 
 class DiGraph(Graph):
 
-    def __init__(self):
-        self.graph = nx.DiGraph()
+    def __init__(self, incoming_graph_data=None, **attr):
+        self.graph = nx.DiGraph(incoming_graph_data=incoming_graph_data, **attr)
 
     def out_degree(self):
         return self.graph.out_degree()
@@ -72,20 +72,20 @@ class DiGraph(Graph):
 
 class MultiGraph(Graph):
 
-    def __init__(self):
-        self.graph = nx.MultiGraph()
+    def __init__(self, incoming_graph_data=None, **attr):
+        self.graph = nx.MultiGraph(incoming_graph_data=incoming_graph_data, **attr)
 
 
 class MultiDiGraph(MultiGraph, DiGraph):
 
-    def __init__(self):
-        self.graph = nx.MultiDiGraph()
+    def __init__(self, incoming_graph_data=None, **attr):
+        self.graph = nx.MultiDiGraph(incoming_graph_data=incoming_graph_data, **attr)
 
 
 
 def read_pajek(path, encoding='UTF-8'):
 
-    return nx.readwrite.pajek.read_pajek(path, encoding)
+    return nx.readwrite.pajek.read_pajek(path, encoding=encoding)
 
 
 def is_isomorphic(G1, G2, node_match=None, edge_match=None):
