@@ -92,7 +92,8 @@ class LinuxReaderFactory(ReaderFactory):
     def reader_object_name(self, channel_name, mapping):        
 
         reader_name = None
-	channels = mapping[mapping.keys()[0]]
+	channel_key = mapping.keys()[0]
+	channels = mapping[channel_key]
         for key in channels.keys():                
             if channel_name in channels[key].split(','):
                 reader_name = key
@@ -189,7 +190,8 @@ class UbuntuReader(Reader, object):
         parser = MappingParser()
         parser.read('channel_reader_mapping.ini')
         mapping = parser.as_dict()
-	channels = mapping[mapping.keys()[0]]
+	channel_key = mapping.keys()[0]
+	channels = mapping[channel_key]
         for channel_name in channels['ubuntu'].split(','):
             channels_requested.append(channel_name)
             
