@@ -9,7 +9,7 @@ import networkx as nx
 class Graph(nx.Graph):
 
     def __init__(self, incoming_graph_data=None, **attr):
-        self.graph = nx.Graph()
+        self.graph = nx.Graph(incoming_graph_data=incoming_graph_data, **attr)
 
     @property
     def name(self):
@@ -31,7 +31,7 @@ class Graph(nx.Graph):
         self.graph.add_node(node_for_adding)
 
     def add_nodes_from(self, nodes_for_adding, **attr):
-        self.graph.add_nodes_from(nodes_for_adding)
+        self.graph.add_nodes_from(nodes_for_adding, **attr)
 
     def nodes(self):
         return self.graph.nodes()
@@ -40,10 +40,10 @@ class Graph(nx.Graph):
         return self.graph.has_node(n)
 
     def add_edge(self, u_of_edge, v_of_edge, **attr):
-        self.graph.add_edge(u_of_edge, v_of_edge)
+        self.graph.add_edge(u_of_edge, v_of_edge, **attr)
 
     def add_edges_from(self, ebunch_to_add, **attr):
-        self.graph.add_edges_from(ebunch_to_add)
+        self.graph.add_edges_from(ebunch_to_add, **attr)
 
     def is_directed(self):
         return self.graph.is_directed()
@@ -90,7 +90,7 @@ def read_pajek(path, encoding='UTF-8'):
 
 def is_isomorphic(G1, G2, node_match=None, edge_match=None):
 
-    return nx.algorithms.isomorphism.is_isomorphic(G1, G2)
+    return nx.algorithms.isomorphism.is_isomorphic(G1, G2, node_match=node_match, edge_match=edge_match)
 
 
 def to_agraph(N):
@@ -105,19 +105,19 @@ def connected_components(G):
 
 def relabel_nodes(G, mapping, copy=True):
 
-    return nx.relabel.relabel_nodes(G, mapping)
+    return nx.relabel.relabel_nodes(G, mapping, copy=copy)
 
 
 def write_pajek(G, path, encoding='UTF-8'):
 
-    return nx.readwrite.pajek.write_pajek(G, path)
+    return nx.readwrite.pajek.write_pajek(G, path, encoding=encoding)
 
 
 def hits(G, max_iter=100, tol=1.0e-8, nstart=None, normalized=True):
 
-    return nx.hits(G)
+    return nx.hits(G, max_iter=max_iter, tol=tol, nstart=nstart, normalized=normalized)
 
 
 def node_link_data(G, attrs=None):
 
-    return nx.readwrite.json_graph.node_link_data(G)
+    return nx.readwrite.json_graph.node_link_data(G, attrs=attrs)

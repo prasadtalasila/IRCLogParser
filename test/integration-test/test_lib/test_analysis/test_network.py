@@ -1,12 +1,12 @@
 import unittest
 from lib.analysis import network
-import network_util as nx
+import lib.network_util as nx
 import lib.util as util
 import lib.config as config
 import os, mock
 import StringIO
 import sys
-from network_util import connected_components
+from lib.network_util import connected_components
 from numpy.testing import assert_array_equal
 
 
