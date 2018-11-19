@@ -8,6 +8,11 @@ import networkx as nx
 
 class Graph(nx.Graph):
 
+    node_dict_factory = dict
+    adjlist_outer_dict_factory = dict
+    adjlist_inner_dict_factory = dict
+    edge_attr_dict_factory = dict
+
     def __init__(self, incoming_graph_data=None, **attr):
         self.g = nx.Graph(incoming_graph_data=incoming_graph_data, **attr)
         self.node_dict_factory = ndf = self.node_dict_factory
@@ -17,7 +22,12 @@ class Graph(nx.Graph):
 
         self.graph = {}   # dictionary for graph attributes
         self._node = ndf()  # empty node attribute dict
-        self._adj = self.adjlist_outer_dict_factory()
+        self._adj = self.adjlist_outer_dict_factory()  # empty adjacency dict
+        # attempt to load graph with data
+        if incoming_graph_data is not None:
+            convert.to_networkx_graph(incoming_graph_data, create_using=self)
+        # load graph attributes (must be after convert)
+        self.graph.update(attr)
 
     @property
     def name(self):
@@ -70,14 +80,25 @@ class DiGraph(Graph):
 
     def __init__(self, incoming_graph_data=None, **attr):
         self.g = nx.DiGraph(incoming_graph_data=incoming_graph_data, **attr)
-        self.node_dict_factory = ndf = self.node_dict_factory
+        self.node_dict_factory = self.node_dict_factory
         self.adjlist_outer_dict_factory = self.adjlist_outer_dict_factory
         self.adjlist_inner_dict_factory = self.adjlist_inner_dict_factory
         self.edge_attr_dict_factory = self.edge_attr_dict_factory
 
-        self.graph = {}   # dictionary for graph attributes
-        self._node = ndf()  # empty node attribute dict
-        self._adj = self.adjlist_outer_dict_factory()
+        self.graph = {}  # dictionary for graph attributes
+        self._node = self.node_dict_factory()  # dictionary for node attr
+        # We store two adjacency lists:
+        # the  predecessors of node n are stored in the dict self._pred
+        # the successors of node n are stored in the dict self._succ=self._adj
+        self._adj = self.adjlist_outer_dict_factory()  # empty adjacency dict
+        self._pred = self.adjlist_outer_dict_factory()  # predecessor
+        self._succ = self._adj  # successor
+
+        # attempt to load graph with data
+        if incoming_graph_data is not None:
+            convert.to_networkx_graph(incoming_graph_data, create_using=self)
+        # load graph attributes (must be after convert)
+        self.graph.update(attr)
 
     def out_degree(self):
         return self.g.out_degree()
