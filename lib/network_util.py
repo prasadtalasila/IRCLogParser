@@ -10,6 +10,14 @@ class Graph(nx.Graph):
 
     def __init__(self, incoming_graph_data=None, **attr):
         self.g = nx.Graph(incoming_graph_data=incoming_graph_data, **attr)
+        self.node_dict_factory = ndf = self.node_dict_factory
+        self.adjlist_outer_dict_factory = self.adjlist_outer_dict_factory
+        self.adjlist_inner_dict_factory = self.adjlist_inner_dict_factory
+        self.edge_attr_dict_factory = self.edge_attr_dict_factory
+
+        self.graph = {}   # dictionary for graph attributes
+        self._node = ndf()  # empty node attribute dict
+        self._adj = self.adjlist_outer_dict_factory()
 
     @property
     def name(self):
@@ -62,6 +70,14 @@ class DiGraph(Graph):
 
     def __init__(self, incoming_graph_data=None, **attr):
         self.g = nx.DiGraph(incoming_graph_data=incoming_graph_data, **attr)
+        self.node_dict_factory = ndf = self.node_dict_factory
+        self.adjlist_outer_dict_factory = self.adjlist_outer_dict_factory
+        self.adjlist_inner_dict_factory = self.adjlist_inner_dict_factory
+        self.edge_attr_dict_factory = self.edge_attr_dict_factory
+
+        self.graph = {}   # dictionary for graph attributes
+        self._node = ndf()  # empty node attribute dict
+        self._adj = self.adjlist_outer_dict_factory()
 
     def out_degree(self):
         return self.g.out_degree()
@@ -74,12 +90,28 @@ class MultiGraph(Graph):
 
     def __init__(self, incoming_graph_data=None, **attr):
         self.g = nx.MultiGraph(incoming_graph_data=incoming_graph_data, **attr)
+        self.node_dict_factory = ndf = self.node_dict_factory
+        self.adjlist_outer_dict_factory = self.adjlist_outer_dict_factory
+        self.adjlist_inner_dict_factory = self.adjlist_inner_dict_factory
+        self.edge_attr_dict_factory = self.edge_attr_dict_factory
+
+        self.graph = {}   # dictionary for graph attributes
+        self._node = ndf()  # empty node attribute dict
+        self._adj = self.adjlist_outer_dict_factory()
 
 
 class MultiDiGraph(MultiGraph, DiGraph):
 
     def __init__(self, incoming_graph_data=None, **attr):
         self.g = nx.MultiDiGraph(incoming_graph_data=incoming_graph_data, **attr)
+        self.node_dict_factory = ndf = self.node_dict_factory
+        self.adjlist_outer_dict_factory = self.adjlist_outer_dict_factory
+        self.adjlist_inner_dict_factory = self.adjlist_inner_dict_factory
+        self.edge_attr_dict_factory = self.edge_attr_dict_factory
+
+        self.graph = {}   # dictionary for graph attributes
+        self._node = ndf()  # empty node attribute dict
+        self._adj = self.adjlist_outer_dict_factory()
 
 
 
