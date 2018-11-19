@@ -9,77 +9,77 @@ import networkx as nx
 class Graph(nx.Graph):
 
     def __init__(self, incoming_graph_data=None, **attr):
-        self.graph = nx.Graph(incoming_graph_data=incoming_graph_data, **attr)
+        self.g = nx.Graph(incoming_graph_data=incoming_graph_data, **attr)
 
     @property
     def name(self):
-        return self.graph.name
+        return self.g.name
 
     @name.setter
     def name(self, s):
-        self.graph.name = s
+        self.g.name = s
 
     @property
     def adj(self):
-        return self.graph.adj
+        return self.g.adj
 
     @property
     def node(self):
-        return self.graph.node      
+        return self.g.node      
 
     def add_node(self, node_for_adding, **attr):
-        self.graph.add_node(node_for_adding, **attr)
+        self.g.add_node(node_for_adding, **attr)
 
     def add_nodes_from(self, nodes_for_adding, **attr):
-        self.graph.add_nodes_from(nodes_for_adding, **attr)
+        self.g.add_nodes_from(nodes_for_adding, **attr)
 
     def nodes(self):
-        return self.graph.nodes()
+        return self.g.nodes()
 
     def has_node(self, n):
-        return self.graph.has_node(n)
+        return self.g.has_node(n)
 
     def add_edge(self, u_of_edge, v_of_edge, **attr):
-        self.graph.add_edge(u_of_edge, v_of_edge, **attr)
+        self.g.add_edge(u_of_edge, v_of_edge, **attr)
 
     def add_edges_from(self, ebunch_to_add, **attr):
-        self.graph.add_edges_from(ebunch_to_add, **attr)
+        self.g.add_edges_from(ebunch_to_add, **attr)
 
     def is_directed(self):
-        return self.graph.is_directed()
+        return self.g.is_directed()
 
     def is_multigraph(self):
-        return self.graph.is_multigraph()
+        return self.g.is_multigraph()
 
     def edges(self):
-        return self.graph.edges()
+        return self.g.edges()
 
     def has_edge(self, u, v):
-        return self.graph.has_edge(u, v)    
+        return self.g.has_edge(u, v)    
 
 
 class DiGraph(Graph):
 
     def __init__(self, incoming_graph_data=None, **attr):
-        self.graph = nx.DiGraph(incoming_graph_data=incoming_graph_data, **attr)
+        self.g = nx.DiGraph(incoming_graph_data=incoming_graph_data, **attr)
 
     def out_degree(self):
-        return self.graph.out_degree()
+        return self.g.out_degree()
 
     def in_degree(self):
-        return self.graph.in_degree()
+        return self.g.in_degree()
 
 
 class MultiGraph(Graph):
 
     def __init__(self, incoming_graph_data=None, **attr):
-        self.graph = nx.MultiGraph(incoming_graph_data=incoming_graph_data, **attr)
+        self.g = nx.MultiGraph(incoming_graph_data=incoming_graph_data, **attr)
 
 
 class MultiDiGraph(MultiGraph, DiGraph):
 
     def __init__(self, incoming_graph_data=None, **attr):
-        self.graph = nx.MultiDiGraph(incoming_graph_data=incoming_graph_data, **attr)
+        self.g = nx.MultiDiGraph(incoming_graph_data=incoming_graph_data, **attr)
 
 
 
