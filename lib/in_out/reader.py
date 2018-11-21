@@ -76,38 +76,25 @@ class ReaderFactory:
 	    pass
 
 
-class MappingParser(ConfigParser.ConfigParser):
-    
-    def as_dict(self):        
-        d = dict(self._sections)
-        for k in d:
-            d[k] = dict(self._defaults, **d[k])
-            d[k].pop('__name__', None)
-        
-        return d
-
-
 class LinuxReaderFactory(ReaderFactory):
 
     def reader_object_name(self, channel_name, mapping):        
 
         reader_name = None
-	channel_key = mapping.keys()[0]
-	channels = mapping[channel_key]
-        for key in channels.keys():                
-            if channel_name in channels[key].split(','):
+        for key,value in mapping:  
+            if channel_name in value.split(','):
                 reader_name = key
-                break
-        
+                break        
         return reader_name        
         
     def reader_object(self, channel_name):
 
-        parser = MappingParser()
+        parser = ConfigParser.ConfigParser()
         parser.read('channel_reader_mapping.ini')
-        mapping = parser.as_dict()
+        mapping = parser.items('Channels')
         reader = None
         reader_name = self.reader_object_name(channel_name, mapping)
+        
         if reader_name == 'ubuntu':
             reader = UbuntuReader()
         elif reader_name == 'slack':
@@ -186,13 +173,11 @@ class UbuntuReader(Reader, object):
         
     def _read_all_channel_logs(self, log_directory, start_date, end_date):   
 
-        channels_requested = list()        
-        parser = MappingParser()
+        channels_requested = list() 
+        parser = ConfigParser.ConfigParser()
         parser.read('channel_reader_mapping.ini')
-        mapping = parser.as_dict()
-	channel_key = mapping.keys()[0]
-	channels = mapping[channel_key]
-        for channel_name in channels['ubuntu'].split(','):
+        mapping = parser.items('Channels')
+        for channel_name in mapping[0][1].split(','):
             channels_requested.append(channel_name)
             
         return self._read_multi_channel_logs(log_directory, channels_requested, start_date, end_date)        
