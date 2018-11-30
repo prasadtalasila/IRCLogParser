@@ -90,7 +90,7 @@ class LinuxReaderFactory(ReaderFactory):
     def reader_object(self, channel_name):
 
         parser = ConfigParser.ConfigParser()
-        parser.read('channel_reader_mapping.ini')
+        parser.read(os.path.join(os.getcwd(),'channel_reader_mapping.ini'))
         mapping = parser.items('Channels')
         reader = None
         reader_name = self.reader_object_name(channel_name, mapping)
@@ -175,7 +175,7 @@ class UbuntuReader(Reader, object):
 
         channels_requested = list() 
         parser = ConfigParser.ConfigParser()
-        parser.read('channel_reader_mapping.ini')
+        parser.read(os.path.join(os.getcwd(),'channel_reader_mapping.ini'))
         mapping = parser.items('Channels')
         for channel_name in mapping[0][1].split(','):
             channels_requested.append(channel_name)
